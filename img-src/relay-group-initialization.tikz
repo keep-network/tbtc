@@ -1,0 +1,36 @@
+% !TEX root = ../relay-states.tex
+\tikz{
+  \node[start state] (start) {};
+
+  \node[chain decision] (stake check) [right=of start] {Staked?\footnote{Local check to avoid doing unnecessary work.}};
+
+  \node[nested state] (joining) [right=of stake check,text width=2cm] {\hyperref[fig:libp2p-join]{Joining\\\tt{libp2p}}};
+
+  \node[chain decision] (state check) [below=2cm of joining] {Checking\\current state};
+
+  \node[nested state] (waiting) [below left=3cm of state check,text width=2cm] {\hyperref[fig:relay-group-assignment]{Waiting\\for group}};
+  \node[nested state] (setting up group) [below right=3cm of waiting,text width=2cm] {\hyperref[fig:relay-group-setup]{Setting up group}};
+
+  \node[nested state] (processing) [below right=3cm of state check,text width=1.7cm] {\hyperref[fig:relay-entry-request-processing]{Processing requests}};
+
+  \path [->] (start) edge (stake check)
+
+             (stake check) edge [chain transition,bend right=45] node [above] {No} (start)
+             (stake check) edge [chain transition] node [above] {Yes} (joining)
+
+             % NOTE We may not want to return to the stake check on failed join,
+             % NOTE we may just want to abort.
+             (joining) edge [bend right=45] node [above] {failed to join} (stake check)
+             (joining) edge node {joined} (state check)
+
+             (state check) edge [chain transition,bend right=40] node [left] {no group} (waiting)
+                           edge [chain transition] node [pos=0.6,text width=3cm,align=flush center] {in uninitialized group} (setting up group)
+                           edge [chain transition,bend left=40] node [right] {in initialized group} (processing)
+
+             (waiting) edge [bend left=40] node [left,pos=0.75,text width=2cm,align=flush center] {assigned to group} (setting up group)
+
+             (setting up group) [bend left=40] edge node [left] {setup failed} (waiting)
+             (setting up group) [bend right=40] edge node [right] {group activated} (processing)
+
+             (processing) [bend left=40] edge node [right,pos=0.75,text width=2cm,align=flush center] {group dissolved} (state check)
+}

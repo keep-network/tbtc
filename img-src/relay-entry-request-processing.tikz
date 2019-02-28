@@ -1,0 +1,28 @@
+% !TEX root = ../relay-states.tex
+\tikz{
+    \node[nested state] (initialization) [text width=1.7cm] {\hyperref[fig:relay-group-initialization]{Pending Activation}};
+
+    \node[chain state] (waiting) [right=of initialization,text width=1.5cm] {Waiting for request};
+
+    \node[decision] (determining) [right=3cm of waiting,text width=2cm] {Is group responsible?};
+
+    \node[state] (generating) [right=2cm of determining,text width=1.7cm] {Generating signature share};
+
+    % Brodcasting? Might just be part of generating.
+    \node[state] (verifying shares) [below=1cm of generating,text width=1.7cm] {Verifying shares};
+
+    \node[chain state] (submitting) [left=3cm of verifying shares,text width=1.7cm] {Submitting signature};
+
+    \path[->] (initialization) edge (waiting)
+
+              (waiting) edge [chain transition] node {request received} (determining)
+
+              (determining) edge [bend left=45] node [below] {no} (waiting)
+              (determining) edge node {yes} (generating)
+
+              (generating) edge [bend left=45] node [right,pos=0.45,text width=2cm] {share\\generated} (verifying shares)
+
+              (verifying shares) edge node {signature ready} (submitting)
+
+              (submitting) edge [chain transition,to path={[rounded corners=1.5cm] -| (\tikztotarget) \tikztonodes}] node [centered,pos=0.15,text width=2cm] {signature submitted} (waiting);
+}

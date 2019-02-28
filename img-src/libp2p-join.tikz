@@ -1,0 +1,23 @@
+% !TEX root = ../relay-states.tex
+\tikz{
+    \node[nested chain decision] (stake check) {\hyperref[fig:relay-group-initialization]{Staked?}};
+
+    \node[state] (connecting) [right=2cm of stake check] {Connecting to bootstrap host};
+
+    \node[state] (proving stake) [below=1cm of connecting] {Submitting stake proof};
+
+    \node[state] (receiving peers) [below=1cm of proving stake] {Receiving peerlist};
+
+    \node[nested chain decision] (state check) [left=2cm of receiving peers,text width=2cm] {\hyperref[fig:relay-group-initialization]{Checking\\current state}};
+
+    \path [->] (stake check) edge node {Yes} (connecting)
+
+               (connecting) edge node [pos=0.6] {connected} (proving stake)
+                            edge [bend right=30] node {failed to connect} (stake check)
+
+               (proving stake) edge node [pos=0.7] {proof accepted} (receiving peers)
+                               edge [bend left=45] node [right,pos=0.6,text width=1.5cm] {proof rejected} (stake check)
+
+               (receiving peers) edge node [centered,text width=1.4cm,align=flush center] {peers received} (state check)
+                                 edge [bend left=30] node [left,pos=0.3] {failed to receive peers} (stake check)
+}

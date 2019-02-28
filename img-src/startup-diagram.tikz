@@ -1,0 +1,14 @@
+% -*- root: relay-states-preview.tex -*-
+
+\tikz[every node/.style={node distance=2cm},
+      fan out/.style={to path={-- ++(0.5,0) -| ($ (\tikztotarget) - (1,0) $) -- (\tikztotarget)}}]{
+  \node[draw,circle] (start) {};
+
+  \node[thread] (group participation) [above right=2cm and 2cm of start] {\hyperref[fig:relay-group-initialization]{Relay group participation}};
+  \node[thread] (verification) [right=of start] {\hyperref[fig:relay-entry-verification]{Relay entry verification}};
+  \node[thread] (keep client) [below right=2cm and 2cm of start] {\hyperref[fig:keep-client-initialization]{Keep client}};
+
+  \path [->] (start) edge [fan out]  (group participation.west)
+             (start) edge [fan out]  (verification.west)
+             (start) edge [fan out]  (keep client.west);
+}

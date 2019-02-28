@@ -1,0 +1,17 @@
+% !TEX root = ../relay-states.tex
+\tikz{
+  \node [nested decision] (state check) [text width=2cm] {\hyperref[fig:relay-group-initialization]{Checking\\current state}};
+
+  \node [state] (waiting for entry) [right=2cm of state check] {Waiting for relay entry};
+
+  \node [decision] (checking) [right=3cm of waiting for entry] {Checking eligibility*};
+
+  \node [nested state] (setting up group) [right=2cm of checking,text width=2cm] {\hyperref[fig:relay-group-setup]{Setting up group}};
+
+  \path[->] (state check) edge node {no group} (waiting for entry)
+
+            (waiting for entry) edge node [centered,text width=2cm,align=center] {relay entry published} (checking)
+
+            (checking) edge [bend right=45] node {not eligible} (waiting for entry)
+                       edge node {eligible} (setting up group);
+}

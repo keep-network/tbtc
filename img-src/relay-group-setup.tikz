@@ -1,0 +1,54 @@
+% !TEX root = ../relay-states.tex
+\tikz{
+  \node[nested state,text width=2cm] (waiting) {\hyperref[fig:relay-group-initialization]{Waiting for group}};
+
+  \node[chain state] (awaiting entry) [right=of waiting] {Awaiting\\relay entry};
+
+  \node[decision] (eligibility check) [right=2.5cm of awaiting entry] {Eligible for group?};
+
+  \node[state] (joining channel) [right=2cm of eligibility check] {Joining broadcast channel};
+
+  \node[state] (generating) [below left=1cm and 3cm of joining channel] {Generating secret key share and proofs};
+
+  \node[state] (announcing) [left=2cm of generating] {Announcing secret key proofs};
+
+  \node[decision] (verifying) [below=1cm of announcing] {Verifying other proofs};
+
+  % FIXME Accusation process is incomplete and might be its own sub-diagram.
+  \node[state] (accusing) [below right=-0.8cm and 2cm of verifying] {Publishing invalidity accusation};
+  \node[state] (generating pubkey) [below left=2cm of verifying.south] {Generating public key};
+
+  \node[chain state] (submitting pubkey) [right=2cm of generating pubkey] {Submitting public key};
+
+  \node[chain state] (awaiting pubkey) [below=1cm of submitting pubkey] {Awaiting on-chain public key};
+  
+  \node[state] (pending activation delay) [right=2cm of awaiting pubkey] {Waiting for activation delay};
+
+  \node[nested state] (processing) [below=4cm of joining channel,text width=2cm] {\hyperref[fig:relay-entry-request-processing]{Processing requests}};
+
+   \path [->] (waiting) edge (awaiting entry)
+
+              (awaiting entry) edge [chain transition] node [above] {entry received} (eligibility check)
+
+              (eligibility check) edge [bend right=45] node [above] {No} (awaiting entry)
+                                  edge [pos=0.6] node {Yes} (joining channel)
+
+              (joining channel) edge [bend right=30] node {joining failed} (waiting)
+                                edge node [sloped] {joined} (generating)
+
+               (generating) edge node [centered,text width=1.5cm,align=flush center] {shares generated} (announcing)
+              
+               (announcing) edge [pos=0.65] node {shares announced} (verifying)
+              
+               (verifying) edge node [centered,text width=1.5cm,align=flush center] {invalid share} (accusing)
+                           edge [pos=0.65] node {shares valid} (generating pubkey)
+
+               (generating pubkey) edge node {generated} (submitting pubkey)
+
+               (submitting pubkey) edge [chain transition,pos=0.65] node {submitted} (awaiting pubkey)
+              
+               (awaiting pubkey) edge [chain transition,to path={[rounded corners=3cm] -| (\tikztotarget) \tikztonodes}] node [pos=0.15,centered,text width=2cm] {relay entry received} (waiting)
+                                 edge [chain transition] node [centered,text width=1.5cm,align=flush center] {pubkey published} (pending activation delay)
+
+               (pending activation delay) edge [bend right=15] node [right,text width=2cm] {activation delay elapsed} (processing)
+}

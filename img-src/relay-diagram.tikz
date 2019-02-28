@@ -1,0 +1,55 @@
+% !TEX root = ../relay-states.tex
+\usetikzlibrary{shapes.multipart}
+\tikz[
+    heading/.style={font=\bf},
+    op/.style={draw,rectangle},
+    plain/.style={minimum height=1cm},
+    generic block/.style={draw,rectangle split,rectangle split parts=#1,minimum width=1cm,rectangle split empty part height=0.2mm},
+    block/.style={draw,rectangle split,rectangle split parts=#1,minimum width=1cm,rectangle split empty part height=0.2mm},
+]{
+    \node[heading] (chain) {Chain};
+    \node[plain] (chain-elided) [below=0.1cm of chain.south] {...};
+    \node[generic block] (pre-request) [below=of chain-elided.south] {};
+    \node[block] (relay-request) [below=of pre-request.south] {\nodepart{two} Relay Request $r_i$};
+    \node[generic block] (post-request) [below=of relay-request.south] {};
+    \node[plain] (post-request-elided) [below=of post-request.south] {...};
+    \node[block] (relay-entry-block) [below=of post-request-elided.south] {\nodepart{three} Relay Entry $v_i$};
+
+    \path [<-,dashed] (chain-elided) edge (pre-request)
+               (pre-request) edge (relay-request)
+               (relay-request) edge (post-request)
+               (post-request) edge (post-request-elided)
+               (post-request-elided) edge (relay-entry-block);
+
+    \node[plain] (seed-entry) [right=7.5cm of relay-request.two east] {$v_s$ - seed entry};
+    \node[heading] (relay) [above=0.25cm of seed-entry] {Relay};
+    \node[plain] (relay-entry) [right=7.5cm of relay-entry-block.three east] {$v_i$ - relay entry};
+
+    \path [<-,dashed] (seed-entry) edge (relay-entry);
+
+    \node[op] (relay-entry-seed-generation) [right=4cm of relay-request.two east] {$\times$};
+    \node[plain] (relay-entry-seed) [below=of relay-entry-seed-generation] {$v_r$};
+    \node[plain] (relay-entry-seed-label) [left=0 of relay-entry-seed] {``relay entry seed''};
+    \node[op] (group-combiner) [below=of relay-entry-seed] {\texttt{fn}};
+    \node[draw,rectangle split,rectangle split horizontal,rectangle split parts=2]
+        (group-signature-fn) [below right=1cm and -0.7cm of group-combiner]
+        {$G_i$ \nodepart{two} $S_{G_i}$};
+    \node[plain] (signing-group-label) [left=0 of group-signature-fn] {``signing group"};
+    \node[plain] (groupsig-function-label) [below right=-0.1cm and 0 of group-signature-fn.north east,text width=2.6cm,align=center] {``group signature\\function"};
+    \node[plain] (group-signature) [right=4.75cm of relay-entry-block.three east] {$\sigma_{G_i}$};
+    \node[plain] (groupsig-label) [below=-0.3cm and 0 of group-signature,minimum height=2ex] {``group signature''};
+
+    \node[draw,circle,minimum width=2cm,minimum height=2cm] (groups) [left=of group-combiner]  {Groups};
+
+    \path [->] (relay-request.two east) edge (relay-entry-seed-generation)
+               (seed-entry) edge (relay-entry-seed-generation)
+               (relay-entry-seed-generation) edge (relay-entry-seed)
+               (relay-entry-seed) edge (group-combiner)
+               (groups) edge (group-combiner)
+               (group-combiner) edge (group-signature-fn.one north)
+               (group-signature-fn.two south) edge (group-signature);
+    \draw [->] (relay-entry-seed) .. controls +($([yscale=0]group-signature-fn.two north) - ([yscale=0]relay-entry-seed)$) .. (group-signature-fn.two north);
+
+    \path [->] (group-signature) edge (relay-entry)
+               (group-signature) edge (relay-entry-block.three east)
+}

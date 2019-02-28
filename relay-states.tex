@@ -1,0 +1,134 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{varwidth}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes.symbols}
+\usetikzlibrary{calc}
+
+\tikzset{
+  every node/.style={above},
+  start state/.style={draw,circle,text width=0},
+  state/.style={draw,circle,align=flush center,text width=2cm},
+  decision/.style={draw,rectangle,align=flush center},
+  thread/.style={draw,signal,signal to=east,fill=white},
+  % Nested states and decisions use doubled borders to indicate
+  % that you have to reference a different diagram.
+  nested state/.style={draw,circle,double,align=flush center},
+  nested decision/.style={draw,rectangle,double,align=flush center},
+  % Chain states and decisions use dashed borders to indicate
+  % that you have to interact with the chain.
+  chain state/.style={draw,circle,dashed,align=flush center,text width=2cm},
+  chain decision/.style={draw,rectangle,dashed,align=flush center},
+  chain transition/.style={draw,dashed},
+  % Nested chain decisions combine nested and chain styles to
+  % indicate a reference to a different diagram for a state that
+  % depends on chain interaction.
+  nested chain decision/.style={draw,rectangle,double,dashed,align=flush center},
+  % Set default arrow style to stealth.
+  >=Stealth
+}
+
+\begin{document}
+
+Below are state diagrams elaborating on the various pieces of a Keep node. Note
+that Keep nodes actually run multiple processes in parallel, for participation
+in the random beacon threshold relay as well as for participating in the Keep
+network. The startup diagram indicates this and links to the subprocess state
+diagrams.
+
+First, however, a legend:
+
+\vspace{0.5cm}
+
+\begin{center}
+  \tikz{
+      \node[thread] (thread) {A thread};
+
+      \node[nested state] (nested state) [below=1cm of thread] {A nested state};
+      \node[state] [left=1cm of nested state](state) {A regular state};
+      \node[chain state] (chain state) [right=1cm of nested state] {A state dependent on the chain};
+
+      \node[nested decision] (nested decision) [below=1cm of nested state] {A nested decision};
+      \node[decision] (decision) [left=1cm of nested decision] {A decision};
+      \node[chain decision,text width=2cm] (chain decision) [right=1cm of nested decision] {A decision dependent on the chain};
+
+      \draw [<-] (-4.5,0.25) -- node [centered,text width=2cm,align=center] {state\\transition} (-2.5,0.25);
+      \draw [->,dashed] (2,0.25) -- node [centered,text width=4cm,align=center] {chain-dependent\\state transition} (5.25,0.25)
+  }
+\end{center}
+
+\vspace{0.5cm}
+
+Nested states and decisions should link to the nested diagrams that indicate
+what is going on within these states or decisions.
+
+\vspace{0.5cm}
+
+\begin{center}
+  \input{img-src/startup-diagram.tikz}
+
+  \vspace{0.5cm}
+  Keep node startup process: processes run in parallel
+\end{center}
+
+
+
+\clearpage
+
+\begin{figure}
+  \centering
+  \input{img-src/relay-group-initialization.tikz}
+  
+  \caption{\label{fig:relay-group-initialization}Relay Group Initialization}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \input{img-src/relay-group-assignment.tikz}
+  
+  \caption{\label{fig:relay-group-assignment}Relay Group Assignment}
+
+  \vspace{0.5cm}
+  % Mildly abusing the itemize env...
+  \begin{itemize}
+  \item[*] Note that eligibility checking is done by combining the latest relay
+           entry with the latest participant registry in a way specified outside
+           this document.
+  \end{itemize}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \input{img-src/relay-group-setup.tikz}
+  
+  \caption{\label{fig:relay-group-setup}Relay Group Setup}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \input{img-src/relay-entry-request-processing.tikz}
+   
+  \caption{\label{fig:relay-entry-request-processing}Relay Entry Request Processing}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \input{img-src/libp2p-join.tikz}
+
+  \caption{\label{fig:libp2p-join}{\tt libp2p} Join Process}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \input{img-src/relay-entry-verification.tikz}
+
+  \caption{\label{fig:relay-entry-verification}Relay Entry Verification}
+\end{figure}
+
+\end{document}
