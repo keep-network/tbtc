@@ -45,6 +45,7 @@ jobs:
           at: /tmp/docs
       - store_artifacts:
           path: /tmp/docs
+          destination: .
 
 workflows:
   version: 2
