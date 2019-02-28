@@ -22,6 +22,8 @@ tbtc-diagrams.pdf: tbtc-diagrams.tex
 $(tikz_pngs): img/generated/%.png: img-src/%.tikz
 	bash scripts/generate-pngs.sh /tmp/png-generate img/generated $< $(basename $(*F))
 
+pdfs: tbtc-diagrams.pdf
+
 pngs: $(tikz_pngs)
 
 docs: tbtc-diagrams.pdf $(tikz_pngs)
