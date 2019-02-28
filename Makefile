@@ -15,13 +15,13 @@ clean:
 		img-src/*.dvi img-src/*.out img-src/*.fls img-src/*.fdb_latexmk; \
 	rm -rf img/generated
 
-relay-states.pdf: relay-states.tex
-	pdflatex -halt-on-error relay-states.tex; \
-	pdflatex -halt-on-error relay-states.tex
+tbtc-diagrams.pdf: tbtc-diagrams.tex
+	pdflatex -halt-on-error tbtc-diagrams.tex; \
+	pdflatex -halt-on-error tbtc-diagrams.tex
 
 $(tikz_pngs): img/generated/%.png: img-src/%.tikz
 	bash scripts/generate-pngs.sh /tmp/png-generate img/generated $< $(basename $(*F))
 
 pngs: $(tikz_pngs)
 
-docs: relay-states.pdf $(tikz_pngs)
+docs: tbtc-diagrams.pdf $(tikz_pngs)
