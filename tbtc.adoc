@@ -1,0 +1,12 @@
+= TBTC
+
+Below are state diagrams elaborating on the various pieces of a TBTC node. Note
+that TBTC nodes actually run multiple processes in parallel, for participation
+in the TBTC network. The startup diagram indicates this and links to the
+subprocess state diagrams.
+
+.Keep node startup process: processes run in parallel
+image::img/generated/startup-diagram.png[]
+
+.`libp2p` Join Process
+image::img/generated/libp2p-join.png[]
