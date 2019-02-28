@@ -11,7 +11,7 @@ jobs:
             make clean
             mkdir -p /tmp/docs/img
             make docs
-            cp relay-states.pdf /tmp/docs
+            cp *.pdf /tmp/docs
             cp -r img/generated /tmp/docs/img/generated
       - persist_to_workspace:
           root: /tmp/docs
@@ -45,6 +45,7 @@ jobs:
           at: /tmp/docs
       - store_artifacts:
           path: /tmp/docs
+          destination: .
 
 workflows:
   version: 2
