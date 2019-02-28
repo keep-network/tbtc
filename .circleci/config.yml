@@ -1,0 +1,58 @@
+version: 2
+jobs:
+  generate_docs_tex:
+    docker:
+      - image: keepnetwork/texlive:3
+    steps:
+      - checkout
+      - run:
+          name: Generate TeX Document Files
+          command: |
+            make clean
+            mkdir -p /tmp/docs/img
+            make docs
+            cp relay-states.pdf /tmp/docs
+            cp -r img/generated /tmp/docs/img/generated
+      - persist_to_workspace:
+          root: /tmp/docs
+          paths:
+            - ./*.pdf
+            - img/generated/*.png
+  generate_docs_asciidoctor:
+    docker:
+      - image: asciidoctor/docker-asciidoctor
+    steps:
+      - checkout
+      - run:
+          name: Generate Asciidoctor PDF/HTML Files
+          command: |
+            set -ex
+            shopt -s extglob globstar nullglob
+            asciidoctor --failure-level=ERROR *.adoc **/*.adoc
+            for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            set -x
+            asciidoctor-pdf *.adoc **/*.adoc
+            for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+      - persist_to_workspace:
+          root: /tmp/docs
+          paths:
+            - ./
+  upload_docs:
+    docker:
+      - image: google/cloud-sdk:slim
+    steps:
+      - attach_workspace:
+          at: /tmp/docs
+      - store_artifacts:
+          path: /tmp/docs
+
+workflows:
+  version: 2
+  docs:
+    jobs:
+      - generate_docs_tex
+      - generate_docs_asciidoctor
+      - upload_docs:
+          requires:
+            - generate_docs_tex
+            - generate_docs_asciidoctor
