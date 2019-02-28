@@ -1,5 +1,20 @@
 version: 2
 jobs:
+  generate_pngs:
+    docker:
+      - image: keepnetwork/texlive:3
+    steps:
+      - checkout
+      - run:
+          name: Generate TeX-based PNGs
+          command: |
+            mkdir -p /tmp/docs/img
+            make pngs
+            cp -r img/generated /tmp/docs/img/generated
+      - persist_to_workspace:
+          root: /tmp/docs
+          paths:
+            - img/generated/*.png
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:3
@@ -8,21 +23,20 @@ jobs:
       - run:
           name: Generate TeX Document Files
           command: |
-            make clean
-            mkdir -p /tmp/docs/img
-            make docs
+            mkdir -p /tmp/docs
+            make pdfs
             cp *.pdf /tmp/docs
-            cp -r img/generated /tmp/docs/img/generated
       - persist_to_workspace:
           root: /tmp/docs
           paths:
             - ./*.pdf
-            - img/generated/*.png
   generate_docs_asciidoctor:
     docker:
       - image: asciidoctor/docker-asciidoctor
     steps:
       - checkout
+      - attach_workspace:
+          at: ./
       - run:
           name: Generate Asciidoctor PDF/HTML Files
           command: |
@@ -51,8 +65,11 @@ workflows:
   version: 2
   docs:
     jobs:
+      - generate_pngs
       - generate_docs_tex
-      - generate_docs_asciidoctor
+      - generate_docs_asciidoctor:
+          requires:
+            - generate_pngs
       - upload_docs:
           requires:
             - generate_docs_tex
