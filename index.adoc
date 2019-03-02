@@ -50,7 +50,51 @@ deposit freely is what distinguishes a backed currency from fiat money.
 
 == Developing Intuition: A simple single-signer protocol
 
-=== The downsides of a single signer
+To understand how we might develop a protocol and token that satisfies those
+requirements, it's useful to consider a simple, under-specified variant that
+could theoretically do the job.
+
+Imagine an off-chain actor, which we'll call `Signer`, an Ethereum smart
+contract that implements the ERC-20 interface, `PeggedBitcoin`, with ticker
+`PBTC`, and another contract with the permission to mint and burn
+`PBTC` called `PeggedBitcoinReserve`.
+
+Another off-chain actor, `Depositor`, wants to mint a token on the
+`PeggedBitcoin` contract. `Depositor` requests the `PeggedBitcoinReserve`
+accept a 1 BTC deposit. `PeggedBitcoinReserve` waits for `Signer` to
+acknowledge and return a new BTC address, as well as depositing 150% collateral
+of the deposit's value in ETH into the `PeggedBitcoinReserve`. `Depositor`
+deposits 1 BTC into the new BTC address, and provides proof to
+`PeggedBitcoinReserve` - which in turn mints 1 `PBTC`, sending 0.99 to
+`Depositor` and .01 to `Signer` for the convenience.
+
+Withdrawals happen in reverse- any participant can send 1 `PBTC` to
+`PeggedBitcoinReserve` with a Bitcoin address. `Signer` pays that Bitcoin
+address 1 BTC minus any transaction fees, and provides proof of payment to
+`PeggedBitcoinReserve`, which burns the remaining 1 `PBTC`, maintaining a 1:1
+backing of `PBTC`. `Signer` is now free to withdraw the corresponding
+collateral from `PeggedBitcoinReserve`.
+
+===  Flaws
+
+While this simple design is attractive, it's skipped over some of the more
+difficult issues- efficient Bitcoin proof of payment validation on the EVM and
+a reliable price feed implementation, for example.
+
+It's also based on a deeply insecure custody solution.
+
+First, the protocol relies on a single signer. If the value of deposits ever
+exceeds the value of the collateral `Signer` has put down, there's nothing
+stopping `Signer` from walking with the BTC. If that never happens, `Signer`
+can still decide or be coerced to censor particular withdrawals.
+
+Second, the protocol relies on a single *hot wallet*. As the market cap of
+`PBTC` conceivably grows, the risk due to hacking that wallet increases
+tremendously.
+
+Finally, the protocol does nothing to localize failure. If there's an issue
+with a single deposit or withdrawal, it could impact the entire `PeggedBitcoin`
+supply, blocking all further deposits and withdrawals.
 
 == System Architecture: Designing a robust multi-wallet multi-signer protocol
 
