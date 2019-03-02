@@ -7,3 +7,5 @@
 *.fdb_latexmk
 img/generated
 *.html
+**.swp
+**.swo
