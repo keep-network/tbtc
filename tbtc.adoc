@@ -1,12 +1,66 @@
-= TBTC
+:toc: macro
+:toclevels: 4
+:tbtc:
 
-Below are state diagrams elaborating on the various pieces of a TBTC node. Note
-that TBTC nodes actually run multiple processes in parallel, for participation
-in the TBTC network. The startup diagram indicates this and links to the
-subprocess state diagrams.
+= TBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
 
-.Keep node startup process: processes run in parallel
-image::img/generated/startup-diagram.png[]
+toc::[]
 
-.`libp2p` Join Process
-image::img/generated/libp2p-join.png[]
+[abstract]
+.Abstract
+--
+--
+
+== Overview
+
+== Prior Work
+
+* Liquid - centralized, fiat, provable, redeemable
+* WBTC - centralized, fiat, provable, redeemable
+* Maker - decentralized, synthetic (irredeemable)
+
+downsides of a "fiat" BTC peg
+* note this includes all current sidechain implementations AFAIK
+
+downsides of a synthetic BTC
+* need more diverse / resilient collateral, and that's difficult to find on-chain
+* upsides - there might be some value to having an asset pegged to BTC that doesn't
+
+== Desired Properties
+
+Maintains "hard money" status
+- censorship and seizure resistant
+- minting only possible with a BTC deposit
+- no additional leverage or exposure on the pegged asset (avoid artificially inflating the supply)
+
+Redeemable
+
+== Developing Intuition: A simple single-signer protocol
+
+=== The downsides of a single signer
+
+== System Architecture: Designing a robust multi-wallet multi-signer protocol
+
+Include high-level components
+
+expected components outside the scope of this doc
+* random beacon
+* well-distributed work token
+
+components in this protocol
+* deposits
+** mechanic
+*** DKG
+*** payment requests
+*** fixed lots
+*** BTC work proof
+** signer bonding
+** custodial fee
+* signing
+** single vs multisig vs threshold sig
+* handling failure
+** slashing
+** aborts
+** liveness
+** fraud
+* redemption
