@@ -28,12 +28,24 @@ downsides of a synthetic BTC
 
 == Desired Properties
 
-Maintains "hard money" status
-- censorship and seizure resistant
-- minting only possible with a BTC deposit
-- no additional leverage or exposure on the pegged asset (avoid artificially inflating the supply)
+The goal of TBTC is the creation an ERC-20 token that maintains the most
+important property of Bitcoin- its status as "hard money".
 
-Redeemable
+To maintain the "hard money" status of its backing BTC deposits, TBTC must
+remain
+
+.Bulleted
+* Censorship and seizure resistant, across friendly and unfriendly
+jurisdictions
+* Inflation-resistant. TBTC may only be minted after proof is provided of a
+backing BTC deposit.
+* Leverage-resistant. The existence of TBTC shouldn't let a Bitcoin holder
+* Without middlemen, in the same sense as Bitcoin. The only rent extraction
+should be from the minimal participation of signers required to secure the
+network, similar to miners on the Bitcoin network.
+
+Finally, TBTC must be *redeemable*. The ability to trade scrip for its backing
+deposit freely is what distinguishes a backed currency from fiat money.
 
 == Developing Intuition: A simple single-signer protocol
 
