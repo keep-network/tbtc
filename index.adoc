@@ -20,9 +20,11 @@ toc::[]
 * Maker - decentralized, synthetic (irredeemable)
 
 downsides of a "fiat" BTC peg
+
 * note this includes all current sidechain implementations AFAIK
 
 downsides of a synthetic BTC
+
 * need more diverse / resilient collateral, and that's difficult to find on-chain
 * upsides - there might be some value to having an asset pegged to BTC that doesn't
 
@@ -34,7 +36,6 @@ important property of Bitcoin- its status as "hard money".
 To maintain the "hard money" status of its backing BTC deposits, TBTC must
 remain
 
-.Bulleted
 * Censorship and seizure resistant, across friendly and unfriendly
 jurisdictions
 * Inflation-resistant. TBTC may only be minted after proof is provided of a
@@ -56,12 +57,15 @@ deposit freely is what distinguishes a backed currency from fiat money.
 Include high-level components
 
 expected components outside the scope of this doc
+
 * random beacon
 * well-distributed work token
 
 components in this protocol
+
 * deposits
 ** mechanic
+*** Deposit object
 *** DKG
 *** payment requests
 *** fixed lots
@@ -76,3 +80,5 @@ components in this protocol
 ** liveness
 ** fraud
 * redemption
+** owner redemption
+** custodial fee redemption
