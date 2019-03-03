@@ -126,34 +126,18 @@ all of which are implemented by the Keep network.
 
 The architecture is broken down into
 
+* Deposits
+* Signing
+* Price feeds
+* Wallet and collateral failure
+* Redemption
+
 include::deposits/index.adoc[leveloffset=+2]
 
 include::signing/index.adoc[leveloffset=+2]
 
+include::price-feeds/index.adoc[leveloffset=+2]
+
 include::failure/index.adoc[leveloffset=+2]
 
 include::redemption/index.adoc[leveloffset=+2]
-
-include::glossary.adoc[]
-
-components in this protocol
-
-* deposits
-** mechanic
-*** Deposit object
-*** DKG mechanics
-*** payment requests
-*** fixed lots
-*** BTC work proof
-** signer bonding
-** custodial fee
-* signing
-** single vs multisig vs threshold sig
-* handling failure
-** slashing
-** aborts
-** liveness
-** fraud
-* redemption
-** owner redemption
-** custodial fee redemption

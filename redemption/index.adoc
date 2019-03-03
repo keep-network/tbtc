@@ -1,0 +1,9 @@
+:toc: macro
+
+= Redemption
+
+ifndef::tbtc[toc::[]]
+
+== Deposit owner redemption
+
+== Custodial fee redemption

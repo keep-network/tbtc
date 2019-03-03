@@ -1,0 +1,25 @@
+:toc: macro
+
+= Handling Failure
+
+ifndef::tbtc[toc::[]]
+
+== Deposits
+
+=== Overpayments
+
+=== Maintenance
+
+* Foreclosure and deposit auctions
+
+== Signers
+
+=== Undercollateralization
+
+* Withdraw deposit?
+* Recollateralize
+* Auction off bond for TBTC
+
+=== Aborts / Liveness
+
+=== Fraud
