@@ -4,6 +4,22 @@
 
 = TBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
 
+ifndef::release[]
+.DRAFT
+****
+NOTE: This document is a rough draft. The contents may be inaccurate, not fully
+fleshed out, and are certainly not final.
+****
+endif::[]
+
+ifndef::public[]
+.CONFIDENTIAL
+****
+WARNING: This document is currently CONFIDENTIAL. Sharing with anyone without
+the express authorization of Keep SEZC is not permitted.
+****
+endif::[]
+
 toc::[]
 
 [abstract]
