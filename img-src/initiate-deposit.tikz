@@ -30,16 +30,8 @@
     \node[decision,on chain=ethereum,join=by <-] (ethereum block 5) {\hspace*{1cm}};
     \node[on chain=ethereum,join=by <-] (ethereum end) {$$\vdots$$};
 
-    % \path [<-] (ethereum start)   edge (ethereum block 1)
-    %            (ethereum block 1) edge (ethereum block 2)
-    %            (ethereum block 2) edge (ethereum block 3)
-    %            (ethereum block 3) edge (ethereum block 4)
-    %            (ethereum block 4) edge (ethereum block 5)
-    %            % TODO Figure out how to get this edge to go further down.
-    %            (ethereum block 5) edge (ethereum end);
 
-    \node[state,on chain=depositor]                  (deposit request) {request deposit creation};
-    \node[state,on chain=depositor,text width=2.1cm] (deposit send)    {\\send deposit to signing group};
+    \node[state,on chain=depositor]                  (deposit request) {request deposit creation};    \node[state,on chain=depositor,text width=2.1cm] (deposit send)    {\\send deposit to signing group};
     \node[state,on chain=depositor,text width=2.1cm] (deposit proof)   {\\prove deposit transaction block};
     \node[state,on chain=depositor]                  (tbtc request)    {request TBTC};
 
