@@ -30,24 +30,24 @@
     \node[decision,on chain=ethereum,join=by <-] (ethereum block 5) {\hspace*{1cm}};
     \node[on chain=ethereum,join=by <-] (ethereum end) {$$\vdots$$};
 
+    \node[state,on chain=depositor] (deposit request) at ($(depositor label)-(0,1cm)$) {request deposit creation};
+    \node[nested state,on chain=tbtc] (signing group request) at ($(tbtc label)-(0,2.5cm)$) {create signing group};
+    \node[state,on chain=depositor] (deposit send)    {send deposit to signing group};
+    \node[state,on chain=depositor,text width=2.8cm] (deposit proof) at ($(deposit send)+(0,1cm)$)   {prove deposit transaction block};
+    \node[state,on chain=tbtc]        (deposit confirmation) at ($(signing group request)-(0,2.5cm)$) {enable TBTC mint for deposit};
 
-    \node[state,on chain=depositor]                  (deposit request) {request deposit creation};    \node[state,on chain=depositor,text width=2.1cm] (deposit send)    {\\send deposit to signing group};
-    \node[state,on chain=depositor,text width=2.1cm] (deposit proof)   {\\prove deposit transaction block};
-    \node[state,on chain=depositor]                  (tbtc request)    {request TBTC};
+    \node[state,on chain=depositor] (tbtc request) at ($(deposit proof)-(0,1cm)$)   {request TBTC};
+    \node[state,on chain=tbtc]      (tbtc minting)    {mint and assign TBTC};
 
 
-    \node[nested state,on chain=tbtc,text width=1.5cm] (signing group request) [below right=2cm of deposit request.east] {create signing group};
-    \node[state,on chain=tbtc]                         (deposit confirmation)  {enable TBTC mint for deposit};
-    \node[state,on chain=tbtc]                         (tbtc minting)          {mint and assign TBTC};
-
-    \path [->] (deposit request) edge [bend left] (ethereum block 1)
-               (ethereum block 1) edge [bend right,dashed] (signing group request)
-               (signing group request) edge [] node [sloped,text width=2cm,align=center,anchor=center] {public wallet address} (ethereum block 2)
-               (ethereum block 2) edge [bend left=20,dashed] (deposit send)
-               (deposit send) edge [bend right] (bitcoin block 3)
-               (bitcoin block 3) edge [bend left,dashed] (deposit proof)
-               (deposit proof) edge [bend left] (ethereum block 3)
-               (ethereum block 3) edge [dashed] (deposit confirmation)
-               (tbtc request) edge [bend left] (ethereum block 4)
-               (ethereum block 4) edge [bend left] (tbtc minting);
+    \path [->] (deposit request) edge [out=10,in=135] (ethereum block 1)
+               (ethereum block 1) edge [dashed] (signing group request)
+               (signing group request) edge [bend left=15] node [sloped,text width=2cm,align=center,anchor=center] {public wallet address} (ethereum block 2)
+               (ethereum block 2) edge [dashed] (deposit send)
+               (deposit send) edge [bend right=15] (bitcoin block 2)
+               (bitcoin block 2) edge [bend right=15,dashed] (deposit proof)
+               (deposit proof) edge [out=10,in=140] (ethereum block 3)
+               (ethereum block 3) edge [out=210,in=0,dashed] (deposit confirmation)
+               (tbtc request) edge (ethereum block 4)
+               (ethereum block 4) edge [bend left=15] (tbtc minting);
 }
