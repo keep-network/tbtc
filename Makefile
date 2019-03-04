@@ -6,6 +6,8 @@ tikz_files := $(wildcard img-src/*.tikz)
 
 tikz_pngs := $(foreach file, $(tikz_files), $(generated_img_dir)/$(notdir $(basename $(file))).png)
 
+.DEFAULT_GOAL := docs
+
 .PHONY: clean docs pngs
 
 clean:
