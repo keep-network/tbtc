@@ -8,22 +8,23 @@
 
 \usetikzlibrary{positioning}
 \usetikzlibrary{arrows.meta}
+\usetikzlibrary{shapes.geometric}
 \usetikzlibrary{shapes.symbols}
 \usetikzlibrary{calc}
 
 \tikzset{
   every node/.style={above},
-  start state/.style={draw,circle,text width=0},
-  state/.style={draw,circle,align=flush center,text width=2cm},
+  start state/.style={draw,ellipse,text width=0},
+  state/.style={draw,ellipse,align=flush center,text width=2.5cm},
   decision/.style={draw,rectangle,align=flush center},
   thread/.style={draw,signal,signal to=east,fill=white},
   % Nested states and decisions use doubled borders to indicate
   % that you have to reference a different diagram.
-  nested state/.style={draw,circle,double,align=flush center,text width=2cm},
+  nested state/.style={draw,ellipse,double,align=flush center,text width=2.5cm},
   nested decision/.style={draw,rectangle,double,align=flush center},
   % Chain states and decisions use dashed borders to indicate
   % that you have to interact with the chain.
-  chain state/.style={draw,circle,dashed,align=flush center,text width=2cm},
+  chain state/.style={draw,ellipse,dashed,align=flush center,text width=2.5cm},
   chain decision/.style={draw,rectangle,dashed,align=flush center},
   chain transition/.style={draw,dashed},
   % Nested chain decisions combine nested and chain styles to
