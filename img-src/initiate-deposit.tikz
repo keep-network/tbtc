@@ -1,0 +1,53 @@
+% !TEX root = ../tbtc-diagrams.tex
+% Underline that goes through descender.
+\usetikzlibrary{chains}
+
+\newcommand{\evenunderline}[1]{%
+  \underline{\smash{#1}\vphantom{T}}\vphantom{#1}%
+}
+
+\tikz[start chain=bitcoin going below,
+      start chain=depositor going below,
+      start chain=tbtc going below,
+      start chain=ethereum going below,
+      node distance=2cm]{
+    \node [on chain=bitcoin] (bitcoin label) {\underline{Bitcoin}};
+    \node [on chain=depositor] (depositor label) [right=3cm of bitcoin label] {\evenunderline{Depositor}};
+    \node [on chain=tbtc] (tbtc label) [right=2cm of depositor label] {\underline{TBTC}};
+    \node [on chain=ethereum] (ethereum label) [right=3cm of tbtc label] {\underline{Ethereum}};
+
+    \node[on chain=bitcoin] (bitcoin start) {$$\vdots$$};
+    \node[decision,on chain=bitcoin,join=by <-] (bitcoin block 1) {\hspace*{1cm}};
+    \node[decision,on chain=bitcoin,join=by <-] (bitcoin block 2) {\hspace*{1cm}};
+    \node[decision,on chain=bitcoin,join=by <-] (bitcoin block 3) {\hspace*{1cm}};
+    \node[on chain=bitcoin,join=by <-] (bitcoin end) {$$\vdots$$};
+
+    \node[on chain=ethereum] (ethereum start) {$$\vdots$$};
+    \node[decision,on chain=ethereum,join=by <-] (ethereum block 1) {\hspace*{1cm}};
+    \node[decision,on chain=ethereum,join=by <-] (ethereum block 2) {\hspace*{1cm}};
+    \node[decision,on chain=ethereum,join=by <-] (ethereum block 3) {\hspace*{1cm}};
+    \node[decision,on chain=ethereum,join=by <-] (ethereum block 4) {\hspace*{1cm}};
+    \node[decision,on chain=ethereum,join=by <-] (ethereum block 5) {\hspace*{1cm}};
+    \node[on chain=ethereum,join=by <-] (ethereum end) {$$\vdots$$};
+
+    \node[state,on chain=depositor] (deposit request) at ($(depositor label)-(0,1cm)$) {request deposit creation};
+    \node[nested state,on chain=tbtc] (signing group request) at ($(tbtc label)-(0,2.5cm)$) {create signing group};
+    \node[state,on chain=depositor] (deposit send)    {send deposit to signing group};
+    \node[state,on chain=depositor,text width=2.8cm] (deposit proof) at ($(deposit send)+(0,1cm)$)   {prove deposit transaction block};
+    \node[state,on chain=tbtc]        (deposit confirmation) at ($(signing group request)-(0,2.5cm)$) {enable TBTC mint for deposit};
+
+    \node[state,on chain=depositor] (tbtc request) at ($(deposit proof)-(0,1cm)$)   {request TBTC};
+    \node[state,on chain=tbtc]      (tbtc minting)    {mint and assign TBTC};
+
+
+    \path [->] (deposit request) edge [out=10,in=135] (ethereum block 1)
+               (ethereum block 1) edge [dashed] (signing group request)
+               (signing group request) edge [bend left=15] node [sloped,text width=2cm,align=center,anchor=center] {public wallet address} (ethereum block 2)
+               (ethereum block 2) edge [dashed] (deposit send)
+               (deposit send) edge [bend right=15] (bitcoin block 2)
+               (bitcoin block 2) edge [bend right=15,dashed] (deposit proof)
+               (deposit proof) edge [out=10,in=140] (ethereum block 3)
+               (ethereum block 3) edge [out=210,in=0,dashed] (deposit confirmation)
+               (tbtc request) edge (ethereum block 4)
+               (ethereum block 4) edge [bend left=15] (tbtc minting);
+}
