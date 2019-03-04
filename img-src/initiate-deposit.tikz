@@ -20,9 +20,7 @@
     \node[decision,on chain=bitcoin,join=by <-] (bitcoin block 1) {\hspace*{1cm}};
     \node[decision,on chain=bitcoin,join=by <-] (bitcoin block 2) {\hspace*{1cm}};
     \node[decision,on chain=bitcoin,join=by <-] (bitcoin block 3) {\hspace*{1cm}};
-    \node[decision,on chain=bitcoin,join=by <-] (bitcoin block 4) {\hspace*{1cm}};
-    \node[decision,on chain=bitcoin,join=by <-] (bitcoin block 5) {\hspace*{1cm}};
-    \node[on chain=bitcoin,join=by <-] (bitcoin end) [below=0.3cm of bitcoin block 5] {$$\vdots$$};
+    \node[on chain=bitcoin,join=by <-] (bitcoin end) {$$\vdots$$};
 
     \node[on chain=ethereum] (ethereum start) {$$\vdots$$};
     \node[decision,on chain=ethereum,join=by <-] (ethereum block 1) {\hspace*{1cm}};
