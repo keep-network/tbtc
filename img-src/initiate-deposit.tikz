@@ -9,7 +9,8 @@
 \tikz[start chain=bitcoin going below,
       start chain=depositor going below,
       start chain=tbtc going below,
-      start chain=ethereum going below]{
+      start chain=ethereum going below,
+      node distance=2cm]{
     \node [on chain=bitcoin] (bitcoin label) {\underline{Bitcoin}};
     \node [on chain=depositor] (depositor label) [right=3cm of bitcoin label] {\evenunderline{Depositor}};
     \node [on chain=tbtc] (tbtc label) [right=2cm of depositor label] {\underline{TBTC}};
