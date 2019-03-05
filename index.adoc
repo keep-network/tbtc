@@ -122,7 +122,7 @@ other risks. A synthetic peg to a volatile asset like Bitcoin, backed by a
 volatile, under-diversified reserve entirely of Ether, is a dangerous
 combination.
 
-== Desired Properties
+== Design Goals
 
 The goal of TBTC is the creation an ERC-20 token that maintains the most
 important property of Bitcoin- its status as "hard money".
