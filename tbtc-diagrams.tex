@@ -11,6 +11,7 @@
 \usetikzlibrary{shapes.geometric}
 \usetikzlibrary{shapes.symbols}
 \usetikzlibrary{calc}
+\usetikzlibrary{chains}
 
 \tikzset{
   every node/.style={above},
@@ -71,12 +72,12 @@ what is going on within these states or decisions.
 
 \vspace{0.5cm}
 
-\begin{center}
+\begin{figure}
+  \centering
   \input{img-src/initiate-deposit.tikz}
 
-  \vspace{0.5cm}
-  Deposit initiation.
-\end{center}
+  \caption{\label{fig:deposit-initiation}Deposit initiation.}
+\end{figure}
 
 
 
