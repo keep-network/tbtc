@@ -4,13 +4,19 @@
 
 ifndef::tbtc[toc::[]]
 
-// TODO insert deposit flow diagram
+== Overview
+
+// TODO wallet architecture
+
+image::img/generated/initiate-deposit.png[]
 
 == Deposit request
 
 * fixed lots
 
 == Signer selection
+
+image::img/generated/signing-group-creation.png[]
 
 === Bonding
 
@@ -22,5 +28,3 @@ ifndef::tbtc[toc::[]]
 
 * "Earnest money"
 * Deposit ownership
-
-== Withdrawing TBTC from a Deposit
