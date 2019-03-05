@@ -11,6 +11,7 @@
 \usetikzlibrary{shapes.geometric}
 \usetikzlibrary{shapes.symbols}
 \usetikzlibrary{calc}
+\usetikzlibrary{chains}
 
 \tikzset{
   every node/.style={above},
@@ -71,12 +72,12 @@ what is going on within these states or decisions.
 
 \vspace{0.5cm}
 
-\begin{center}
+\begin{figure}
+  \centering
   \input{img-src/initiate-deposit.tikz}
 
-  \vspace{0.5cm}
-  Deposit initiation.
-\end{center}
+  \caption{\label{fig:deposit-initiation}Deposit initiation.}
+\end{figure}
 
 
 
@@ -84,9 +85,9 @@ what is going on within these states or decisions.
 
 \begin{figure}
   \centering
-  \input{img-src/libp2p-join.tikz}
+  \input{img-src/signing-group-creation.tikz}
 
-  \caption{\label{fig:libp2p-join}{\tt libp2p} Join Process}
+  \caption{\label{fig:signing-group-creation}Signing group creation.}
 \end{figure}
 
 \end{document}

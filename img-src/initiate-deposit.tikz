@@ -1,6 +1,5 @@
 % !TEX root = ../tbtc-diagrams.tex
 % Underline that goes through descender.
-\usetikzlibrary{chains}
 
 \newcommand{\evenunderline}[1]{%
   \underline{\smash{#1}\vphantom{T}}\vphantom{#1}%
