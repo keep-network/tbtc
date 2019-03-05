@@ -20,7 +20,7 @@
     {\tikzset{node distance=1cm}
         \node[state,on chain=keep] (random seed request) at ($(keep label)-(0,0.5cm)$) {request random seed};
         \node[state,on chain=keep] (random seed response)       {service random seed request};
-        \node[state,on chain=keep] (group member selection)    at ($(random seed response)-(2cm,0)$) {choose signing group members};
+        \node[state,on chain=keep] (group member selection)    at ($(random seed response)-(2.4cm,0)$) {choose signing group members};
         \node[state,on chain=keep,right=of group member selection] (group dkg)                  {group member DKG};
         \node[state,on chain=keep] (wallet address generation) at ($(group dkg)-(2.5cm,0cm)$) {generate wallet address};
     }
