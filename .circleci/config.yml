@@ -42,10 +42,10 @@ jobs:
           command: |
             set -ex
             shopt -s extglob globstar nullglob
-            asciidoctor --failure-level=ERROR *.adoc **/*.adoc
+            asciidoctor -a revdate=`date +%Y-%m-%d` --failure-level=ERROR *.adoc **/*.adoc
             for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
             set -x
-            asciidoctor-pdf *.adoc **/*.adoc
+            asciidoctor-pdf -a revdate=`date +%Y-%m-%d` *.adoc **/*.adoc
             for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
       - persist_to_workspace:
           root: /tmp/docs
