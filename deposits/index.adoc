@@ -1,0 +1,26 @@
+:toc: macro
+
+= Deposits
+
+ifndef::tbtc[toc::[]]
+
+// TODO insert deposit flow diagram
+
+== Deposit request
+
+* fixed lots
+
+== Signer selection
+
+=== Bonding
+
+== Distributed key generation
+
+== Payment request
+
+== Custodial fees
+
+* "Earnest money"
+* Deposit ownership
+
+== Withdrawing TBTC from a Deposit

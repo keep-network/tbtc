@@ -1,0 +1,12 @@
+:toc: macro
+
+= Redemption
+
+ifndef::tbtc[toc::[]]
+
+// TODO backrefs to signing
+// TODO withdrawing party broadcasts BTC tx
+
+== Deposit owner redemption
+
+== Custodial fee redemption
