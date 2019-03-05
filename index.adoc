@@ -31,8 +31,69 @@ toc::[]
 
 == Prior Work
 
-* Liquid - centralized, fiat, provable, redeemable
-* WBTC - centralized, fiat, provable, redeemable
+Prior efforts toward a cross-chain Bitcoin peg are well-known. A Bitcoin peg is
+desirable for sidechains- functionality and scalability extensions to the
+conservatively upgraded main Bitcoin blockchain. Due to early interest in
+sidechains, a number of pegged Bitcoin approaches predate Ethereum.
+
+=== Centralized, Provable, Redeemable
+
+Two solutions in the wild today provide centralized pegs that rely on trusted
+third parties based on variants of the "federated peg" model.
+
+In a federated peg, a multi-sig wallet is used to lock up bitcoins. Another
+blockchain then issues tokens representing those bitcoin. The signers of the
+multisig on the Bitcoin chain are expected to validate the sidechain, and only
+allow issued tokes to be burned in exchange for bitcoin withdrawals following
+the rules of the sidechain.
+
+https://blockstream.com/liquid/[Liquid], a sidechain developed by
+https://blockstream.com/[Blockstream], is an inter-exchange settlement network
+based on a federated peg sidechain. Bitcoin is locked in a 15-signer multi-sig
+wallet comprised of exchanges and Liquid participants pre-vetted by Blockstream.
+These signers validate the sidechain in an approach the team calls "strong
+federation", where a majority vote to sign blocks, and agree to approve exits
+to the main chain.
+
+https://wbtc.network[WBTC] is a Bitcoin-backed ERC-20 token using a similar
+approach. The token is part of a greater effort called "Wrapped Tokens".
+
+[quote, the Wrapped Tokens whitepaper]
+____
+Wrapped tokens follow the centralized model, but instead of relying entirely on
+one institution, they rely on a consortium of institutions performing different
+roles in the network.
+____
+
+The WBTC consortium votes on adding and removing custodians that manage the
+token's Bitcoin reserves. Each custodian operates a multi-sig Bitcoin wallet,
+with control of all keys. Custodians are able to move custodied bitcoin at
+will, and are responsible for minting WBTC on Ethereum.
+
+Together, the custodians act similarly to a traditional federated peg. Instead
+of requiring a majority to sign Bitcoin withdrawals, however, a single member
+can withdraw their share of the Bitcoin reserves at any time.
+
+==== Trade-offs
+
+These approaches have a few clear benefits
+
+* They each effectively peg Bitcoin on other blockchains.
+* Backing reserves are easily audited on-chain at any time.
+* Both are simple mechanisms, lowering the chance of operational failure as
+well as the total cost to operate.
+
+However, there are downsides. The most obvious is introducing a trust model
+incompatible with Bitcoin.
+
+Custodians need to be fully trusted, either as a group, as in Liquid's model,
+or individually, following the Wrapped Tokens model. A malicious custodian can
+block withdrawals and in some cases collude to abscond with funds. Custodians
+may also be compelled by governments, hackers, or other forces to tamper with
+reserves, despite their good intentions.
+
+=== Decentralized, Synthetic, Irredeemable
+
 * Maker - decentralized, synthetic (irredeemable)
 
 downsides of a "fiat" BTC peg
