@@ -94,16 +94,33 @@ reserves, despite their good intentions.
 
 === Decentralized, Synthetic, Irredeemable
 
-* Maker - decentralized, synthetic (irredeemable)
+An alternative approach to a centralized peg is to create a decentralized
+synthetic asset.
 
-downsides of a "fiat" BTC peg
+One approach that's been popular on Ethereum is
+https://makerdao.com/whitepaper/[Maker's] Dai stablecoin.
 
-* note this includes all current sidechain implementations AFAIK
+Dai is a token synthetically pegged to the US dollar. Ether is locked up in
+reserves, which, coupled with a robust price feed and a number of stability
+mechanisms, allow for maintenance of the peg under adverse conditions.
 
-downsides of a synthetic BTC
+While Maker hasn't launched a Bitcoin synthetic, the same network maintaining
+Dai's peg could easily be applied to maintain a similar Bitcoin product.
 
-* need more diverse / resilient collateral, and that's difficult to find on-chain
-* upsides - there might be some value to having an asset pegged to BTC that doesn't
+==== Trade-offs
+
+The biggest benefit of a synthetic Bitcoin peg is its flexibility. A synthetic
+doesn't need to follow the rules governing the pegged asset, for better or
+worse.
+
+For example, a synthetic might effectively "inflate" the supply of the
+underlying asset, which might be desirable for some financial systems- and
+directly fly in the face of the purpose of a currency aspiring to be hard money.
+
+Despite the potential reuse of Maker's network, launching such a synthetic has
+other risks. A synthetic peg to a volatile asset like Bitcoin, backed by a
+volatile, under-diversified reserve entirely of Ether, is a dangerous
+combination.
 
 == Desired Properties
 
