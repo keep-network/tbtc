@@ -6,15 +6,27 @@ ifndef::tbtc[toc::[]]
 
 == Overview
 
+TBTC provides a mechanism for creating a token, TBTC, that is 1-to-1 backed by
+Bitcoin. Parties interested in minting TBTC <<Deposit Request,request>> that the
+TBTC system provide them with a Bitcoin wallet address. The system selects a set
+of _signers_, which are tasked with generating a private/public keypair and
+furnishing it to the system. The interested party then becomes a _depositor_ by
+sending Bitcoin to the wallet (the amount of required Bitcoin is discussed
+separately in the section on <<Lots,lots>>). The Bitcoin that is sent to the
+wallet is in two parts: one is eligible for 1-to-1 minting into TBTC, while the
+other is reserved as incentive for the wallet signers.
+
+Each of these steps is discussed in detail below.
+
 // TODO wallet architecture
 
 image::img/generated/initiate-deposit.png[]
 
 == Deposit request
 
-* fixed lots
+=== Lots
 
-== Signer selection
+=== Signer selection
 
 image::img/generated/signing-group-creation.png[]
 
