@@ -1,0 +1,80 @@
+:toc: macro
+
+= Bonding
+
+ifndef::tbtc[toc::[]]
+
+Because signers are able to collude to censor withdrawals or abscond with funds,
+a bond is required per deposit from each backing signer.
+
+Unlike the staked work tokens used to choose signers, signer bonds need to be a
+liquid asset with a large market cap. This restriction increases the cost of
+market-based attacks, where the price of bonded collateral can be pushed up or
+down by market manipulation.
+
+Bonded signers offer depositors recourse in the case of colluding signers
+interfering with operation. A signing group that doesn't sign within a timeout
+forfeits their bond; a signing group that provably signs unauthorized material
+forfeits their bond, and risks their work token stake.
+
+== Acceptable collateral
+
+Two tokens present themselves as obvious choices for signing bond collateral-
+tBTC and the underlying work token. During the bootstrap phase of the network,
+neither is an appropriate candidate due to low liquidity.
+
+Since signer bonds need to be denominated in a widely traded asset to avoid
+market manipulation, the next most obvious pick for bonding is ETH. As the
+system matures, other bond collateral options might become feasible at the
+expense of a more complex price feed implementation.
+
+=== Measuring security
+
+Clearly, security concerns require signing bonds that are proportional to the
+size of a `Deposit`. To maintain a negative expected value from signers
+colluding, the amount forfeited by a misbehaving signer must be strictly greater
+than the amount they have to gain.
+
+In the case of n-of-n wallets backing each `Deposit`, the minimum collateral
+from each signer is _ethValue(btcDeposit)/n_. In the general case of an m-of-n
+wallet, the minimal set of signers required to collude is _m_, suggesting that
+each signer should bond _ethValue(btcDeposit)/n*m_.
+
+=== Pricing currency fluctuations
+
+The above assumes a constant exchange rate between BTC and ETH, but in truth
+the two currency fluctuate relative to eachother, sometimes wildly.
+
+If the value of ETH drops precipitously relative to BTC, a group of malicious
+signers will realize that the expected value of theft of the BTC collateral
+they protect outweights the cost of loss to their bonds. For this reason, the
+value bonded by each signer requires a multiple on the minimum. If the value
+of ETH crosses a security threshold, open `Deposit` s will enter
+<<Undercollateralization>>.
+
+// TODO insert a little historical analysis for a decent starting number
+
+This threshold will be determined by the contract owner.
+
+If the value of BTC drops precipitously, signers won't make the return on their
+bonded capital that they'd hoped- as <<Custodial Fees>> are denominated in tBTC.
+This doesn't pose a problem for tBTC reserves, but is expensive to signers,
+lessening their value proposition.
+
+// TODO insert a little historical analysis for a decent starting number
+
+This threshold will also be determined by the contract owner.
+
+== A resilient price feed
+
+Unlike popular synthetic stablecoin schemes, the tBTC system design makes no
+effort to stabilize the value of tBTC relative to BTC- tBTC will be priced by
+the market. Instead, the goal is to ensure that the tBTC supply is strictly
+less than its backing BTC reserves.
+
+For this reason, the only price relationship the system needs to understand is
+between the signing bond collateral and BTC.
+
+In concrete terms, that means the price of ETH to BTC. Due to only needing
+prices for a single pair of assets, tBTC will initially use a simple price feed
+based on MakerDAO's https://developer.makerdao.com/feeds/[Medianizer].
