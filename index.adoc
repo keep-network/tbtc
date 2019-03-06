@@ -228,6 +228,8 @@ The architecture is broken down into
 
 include::deposits/index.adoc[leveloffset=+2]
 
+include::custodial-fees/index.adoc[leveloffset=+2]
+
 include::signing/index.adoc[leveloffset=+2]
 
 include::price-feeds/index.adoc[leveloffset=+2]

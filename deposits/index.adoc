@@ -18,13 +18,17 @@ image::img/generated/initiate-deposit.png[]
 
 image::img/generated/signing-group-creation.png[]
 
+// selection by random beacon
+
 === Bonding
 
-== Distributed key generation
+// ETH bond
 
-== Payment request
+=== Distributed key generation
 
-== Custodial fees
+// undertaking distributed key generation
+// reference to bigger DKG
 
-* "Earnest money"
-* Deposit ownership
+=== Payment request
+
+== Proof of deposit
