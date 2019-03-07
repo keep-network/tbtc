@@ -6,29 +6,99 @@ ifndef::tbtc[toc::[]]
 
 == Overview
 
-TBTC provides a mechanism for creating a token, TBTC, that is 1-to-1 backed by
-Bitcoin. Parties interested in minting TBTC <<Deposit Request,request>> that the
-TBTC system provide them with a Bitcoin wallet address. The system selects a set
-of _signers_, which are tasked with generating a private/public keypair and
-furnishing it to the system. The interested party then becomes a _depositor_ by
-sending Bitcoin to the wallet (the amount of required Bitcoin is discussed
-separately in the section on <<Lots,lots>>). The Bitcoin that is sent to the
-wallet is in two parts: one is eligible for 1-to-1 minting into TBTC, while the
-other is reserved as incentive for the wallet signers.
+TBTC provides a mechanism for creating a token, TBTC, on a non-Bitcoin _anchor
+chain_, that is 1-to-1 backed by Bitcoin. Parties interested in minting TBTC
+<<Deposit Request,request>> that the TBTC system provide them with a Bitcoin
+wallet address. The system selects a set of _signers_, which are tasked with
+generating a private/public keypair and furnishing it to the system. The
+interested party then becomes a _depositor_ by sending Bitcoin to the wallet
+(the amount of required Bitcoin is discussed separately in the section on
+<<Lots,lots>>). The Bitcoin that is sent to the wallet is in two parts: one is
+eligible for 1-to-1 minting into TBTC, while the other is reserved as incentive
+for the wallet signers.
 
-Each of these steps is discussed in detail below.
+Each of these steps is shown in the diagram below and discussed in subsequent
+sections.
 
-// TODO wallet architecture
-
-image::img/generated/initiate-deposit.png[]
+image::../img/generated/initiate-deposit.png[]
 
 == Deposit request
 
-=== Lots
+The starting point for acquiring TBTC is generating a _deposit request_. This is
+a transaction to a smart contract on TBTC's anchor chain that informs the TBTC
+system that the sender account is interested in creating a TBTC deposit. It
+carries no additional information; it's purely a signal that the sender is
+interested in a signing group to back a wallet that will receive Bitcoin from
+a wallet the sender controls, in order to produce TBTC.
+
+// TODO Do we want to include a bond of some sort in the request in case the
+// TODO requestcomes in, we create a signing group, and no BTC is ever sent into
+// TODO the wallet? We would refund the bond, I think, when proof of deposit
+// TODO processes successfully. We may also want to provide a "cancel deposit"
+// TODO thing in that case.
+// TODO
+// TODO Also, presumably the deposit request is when we would include a "safety
+// TODO factor" if we wanted it; that is, the parameter that would change how
+// TODO many signers would back the wallet.
 
 === Signer selection
 
-image::img/generated/signing-group-creation.png[]
+Once the deposit request is received, the signing group is created by randomly
+selecting a set of _signers_ to back a Bitcoin wallet. This is a multi-part
+process described in the diagram below.footnote:[The TBTC system participates
+in fairly limited fashion here, mostly coordinating work done in a secondary
+system responsible for managing the secure random number generation, private
+data storage, and multiparty computation needed to provide the system's relevant
+security properties. In this diagram, that role is fulfilled by the Keep
+network.]
+
+// TODO Should we just do high-level description regarding the Keep side and
+// TODO reference a Keep document for it?
+
+image::../img/generated/signing-group-creation.png[]
+
+When a request comes in to create a signing group, the TBTC system requests a
+random seed from a secure decentralized random beacon.footnote:[A system is only
+as decentralized as its most centralized component, so the beacon must be
+decentralized to achieve proper decentralization of the TBTC system as a whole.]
+The resulting random seed is used to randomly select signing group members from
+the eligible pool of signers. Finally, these signers coordinate a distributed
+key generation protocol that results in a public ECDSA key for the group, which
+is used to produce a wallet address that is then published to the anchor chain.
+This completes the signer selection phase.
+
+==== Deposit
+
+Once the TBTC system has a wallet address available for a given deposit request,
+the _depositor_ can issue a Bitcoin transaction sending BTC from a wallet they
+control to the wallet address for the signing group. Once the transaction has
+been confirmed, the depositor has to issue a transaction to the TBTC system's
+anchor chain proving the deposit has occurred.
+
+// TODO “Once the transaction has been confirmed”: need to discuss how confirmed
+// TODO I guess?
+
+== Proof of deposit
+
+The only link between the Bitcoin chain and the anchor chain is the TBTC system,
+which runs as a set of smart contracts on the anchor chain. As such, the Bitcoin
+transaction issued by the depositor has to be proven to the TBTC system before
+the TBTC system allows the depositor to behave as if they have successfully
+deposited their TBTC into the custodial wallet. To prove this, the depositor
+constructs a transaction for the anchor chain that provides proof that the
+transaction was accepted on the Bitcoin chain and has had sufficient work built
+on top of the block that included the deposit transaction.
+
+// TODO What is "sufficient"? Defined as a system property? Dynamic?
+
+=== Distributed key generation
+
+// undertaking distributed key generation
+// reference to bigger DKG
+
+// TODO wallet architecture
+
+=== Lots
 
 // selection by random beacon
 
@@ -36,11 +106,4 @@ image::img/generated/signing-group-creation.png[]
 
 // ETH bond
 
-=== Distributed key generation
-
-// undertaking distributed key generation
-// reference to bigger DKG
-
 === Payment request
-
-== Proof of deposit
