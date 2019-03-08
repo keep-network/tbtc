@@ -26,20 +26,13 @@ image::../img/generated/initiate-deposit.png[]
 
 The starting point for acquiring TBTC is generating a _deposit request_. This is
 a transaction to a smart contract on TBTC's anchor chain that informs the TBTC
-system that the sender account is interested in creating a TBTC deposit. It
-carries no additional information; it's purely a signal that the sender is
-interested in a signing group to back a wallet that will receive Bitcoin from
-a wallet the sender controls, in order to produce TBTC.
-
-// TODO Do we want to include a bond of some sort in the request in case the
-// TODO requestcomes in, we create a signing group, and no BTC is ever sent into
-// TODO the wallet? We would refund the bond, I think, when proof of deposit
-// TODO processes successfully. We may also want to provide a "cancel deposit"
-// TODO thing in that case.
-// TODO
-// TODO Also, presumably the deposit request is when we would include a "safety
-// TODO factor" if we wanted it; that is, the parameter that would change how
-// TODO many signers would back the wallet.
+system that the sender account is interested in creating a TBTC deposit. The
+transaction is a signal that the sender is interested in a signing group to back
+a wallet that will receive Bitcoin from a wallet the sender controls, in order
+to produce TBTC. Because signing groups are not free to create, deposit requests
+include a small bond in the anchor chain's native token to cover the creation of
+the signing group. The bond is refunded when a successful deposit is made to the
+generated wallet.
 
 === Signer selection
 
@@ -50,10 +43,9 @@ in fairly limited fashion here, mostly coordinating work done in a secondary
 system responsible for managing the secure random number generation, private
 data storage, and multiparty computation needed to provide the system's relevant
 security properties. In this diagram, that role is fulfilled by the Keep
-network.]
-
-// TODO Should we just do high-level description regarding the Keep side and
-// TODO reference a Keep document for it?
+network, described in http://keep.network/whitepaper[its whitepaper]. The Keep
+Random Beacon is described in more detail in the
+http://docs.keep.network/random-beacon/[Keep Random Beacon yellowpaper].]
 
 image::../img/generated/signing-group-creation.png[]
 
@@ -88,6 +80,11 @@ deposited their TBTC into the custodial wallet. To prove this, the depositor
 constructs a transaction for the anchor chain that provides proof that the
 transaction was accepted on the Bitcoin chain and has had sufficient work built
 on top of the block that included the deposit transaction.
+
+When a deposit proof is accepted by the system, the deposit bond is refunded to
+the depositor. If a deposit proof is not received within a given timeout window,
+the signing group will disband and the system will seize the bond's value,
+making it available to the signing group members to reclaim.
 
 // TODO What is "sufficient"? Defined as a system property? Dynamic?
 
