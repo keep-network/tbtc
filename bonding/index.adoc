@@ -20,13 +20,14 @@ forfeits their bond, and risks their work token stake.
 == Acceptable collateral
 
 Two tokens present themselves as obvious choices for signing bond collateral-
-tBTC and the underlying work token. During the bootstrap phase of the network,
+TBTC and the underlying work token. During the bootstrap phase of the network,
 neither is an appropriate candidate due to low liquidity.
 
 Since signer bonds need to be denominated in a widely traded asset to avoid
-market manipulation, the next most obvious pick for bonding is ETH. As the
-system matures, other bond collateral options might become feasible at the
-expense of a more complex price feed implementation.
+market manipulation, the next most obvious pick for bonding is the host chain's
+native token. For the initial release of tBTC, that means ETH. As the ecosystem
+matures, other bond collateral options might become feasible at the expense of a
+more complex price feed implementation.
 
 === Measuring security
 
@@ -72,8 +73,8 @@ This threshold will also be determined by the contract owner.
 == A resilient price feed
 
 Unlike popular synthetic stablecoin schemes, the tBTC system design makes no
-effort to stabilize the value of tBTC relative to BTC- tBTC will be priced by
-the market. Instead, the goal is to ensure that the tBTC supply is strictly
+effort to stabilize the value of TBTC relative to BTC- TBTC will be priced by
+the market. Instead, the goal is to ensure that the TBTC supply is strictly
 less than its backing BTC reserves.
 
 For this reason, the only price relationship the system needs to understand is
@@ -132,7 +133,6 @@ If the owner doesn't exercise this option, an auction begins.
 auction's time window wins. If no such bid is made, signers forfeit
 progressively more of their backing work token, and the signing bond plus the
 additional funds siezed are put back up for auction.
-. The best TBTC bid in the auction's time window wins.
 . All TBTC, including funds unwithdrawn by the `Deposit` owner, custodial fees
 earned by signers, as well as the proceeds of the auction, are burned. This burn
 lowers the TBTC supply to exclude the now-unprotected BTC collateral.
