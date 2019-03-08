@@ -135,7 +135,7 @@ collateral from the reserves.
 . The best TBTC bid larger than a minimum bid of the outstanding TBTC within the
 auction's time window wins. If no such bid is made, signers forfeit
 progressively more of their backing work token, and the signing bond plus the
-additional funds seized are put back up for auction.
+additional work token funds seized are put back up for auction.
 . All TBTC, including funds unwithdrawn by the `Deposit` owner, custodial fees
 earned by signers, as well as the proceeds of the auction, are burned, up to a
 ceiling of the TBTC surplus. If any TBTC is left over after, it's given to the
