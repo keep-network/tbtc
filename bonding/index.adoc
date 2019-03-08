@@ -57,13 +57,17 @@ of ETH crosses a security threshold, open `Deposit` s will enter
 This threshold will be determined by the contract owner.
 
 If the value of BTC drops precipitously, signers won't make the return on their
-bonded capital that they'd hoped- as <<Custodial Fees>> are denominated in tBTC.
+bonded capital that they'd hoped- as <<Custodial Fees>> are denominated in TBTC.
 This doesn't pose a problem for tBTC reserves, but is expensive to signers,
 lessening their value proposition.
 
-// TODO insert a little historical analysis for a decent starting number
+At a certain threshold, a `Deposit` whose BTC collateral has devalued will move
+into a variant of the <<preliq, pre-liquidation>> phase that allows bond
+rebalancing without the fallback of signer bond forfeiture.
 
 This threshold will also be determined by the contract owner.
+
+// TODO insert a little historical analysis for a decent starting number
 
 == A resilient price feed
 
@@ -85,6 +89,7 @@ based on MakerDAO's https://developer.makerdao.com/feeds/[Medianizer].
 // TODO initially parameters will be set by contract owners
 
 === Pre-liquidation: the "danger zone"
+[[preliq]]
 
 At the first threshold, a `Deposit` enters pre-liquidation.
 
