@@ -133,20 +133,13 @@ improving the resilience of the system to signing group failure.
 
 == TBTC Minting
 
-:collateral: 200%
-:custodial-fee: 20%
-:base-custodial-time: 2 months
+Once a deposit has been made and funded, the backing TBTC are minted. The
+_custodial fee rate_ coupled with the _minimum custodial lockup period_
+determines how much TBTC is immediately available for withdrawal by the
+_depositor_, who is now the owner of a funded `Deposit`.
 
-Once a deposit has been made and funded, the _depositor_ is authorized to mint
-an amount of TBTC that provides for {collateral} collateralization plus
-a custodial fee of {custodial-fee} of the deposit for maintaining the deposit up
-to {base-custodial-time}. The amount of mintable TBTC is expressed by this
-equation:
+A _custodial fee rate_ of 1% a year with a _minimum custodial lockup period_
+of 1 year would immediately enable 99% of the `Deposit` to be withdrawn as TBTC.
 
-`TBTC = {lot-size} / ({collateral} + {custodial-fee})`
-
-The depositor mints their allowed TBTC by sending a transaction to the tBTC
-system, which in turn credits their account with the full amount of TBTC they
-are due.
-
-Custodial fees are described in more detail in <<../custodial-fees/index#,their own section>>.
+Custodial fees are described in more detail in
+<<../custodial-fees/index#,their own section>>.
