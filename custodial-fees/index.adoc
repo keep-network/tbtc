@@ -16,12 +16,12 @@ that a centralized custodian protects a bitcoin deposit, that's as much as
 0.75% lost to the costs of custody.
 
 A decentralized model should allow a lower effective fee on custody by
-introducing more competition to the space. There's a caveat, however- a
+introducing more competition to the space. There's a caveat, however-- a
 decentralized approach to custodianship makes legal recourse more difficult,
 requiring additional bonded collateral to ensure recompense in case of failure.
 
 Applying this pricing model to tBTC's bonding, it's clear that a signer would
-like to make a similar return on the total capital it's responsible for- its
+like to make a similar return on the total capital it's responsible for-- its
 portion of `Deposit` security. In the full threshold case, that's
 `(n - m - 1) / n` in deposit security and
 `(n - m - 1) / n * OverCollateralizationFactor` in  bonds, assuming for a moment
