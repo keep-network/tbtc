@@ -130,7 +130,8 @@ If the owner doesn't exercise this option, an auction begins. The purpose of
 the auction is to lower the TBTC supply, excluding the now-unprotected BTC
 collateral from the reserves.
 
-. Any unwithdrawn TBTC is exchanged pro rata for its portion of the bond.
+. Any unwithdrawn TBTC is exchanged pro rata for its portion of the bond, which
+is set aside for the `Deposit` owner.
 . The remaining signing bond is put up for auction for TBTC.
 . The best TBTC bid larger than a minimum bid of the outstanding TBTC within the
 auction's time window wins. If no such bid is made, signers forfeit
