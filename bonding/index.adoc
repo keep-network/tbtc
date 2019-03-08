@@ -78,3 +78,59 @@ between the signing bond collateral and BTC.
 In concrete terms, that means the price of ETH to BTC. Due to only needing
 prices for a single pair of assets, tBTC will initially use a simple price feed
 based on MakerDAO's https://developer.makerdao.com/feeds/[Medianizer].
+
+== Undercollateralization
+
+// TODO explain the undercollateralization curve
+// TODO initially parameters will be set by contract owners
+
+=== Pre-liquidation: the "danger zone"
+
+At the first threshold, a `Deposit` enters pre-liquidation.
+
+Pre-liquidations gives live signers an opportunity to rebalance bonds by opening
+a new deposit. A new <<Deposit Request,deposit request>> totalling the backing
+BTC collateral less custodial and BTC tx fees is issued, and the resulting
+payment request is used to construct a withdrawal. On
+<<Proof of deposit,proof of deposit>>, the undercollateralized `Deposit` is
+closed and the signing bond returned. They're paid out their earned custodial
+fees minus the tx fee.
+
+At any time during this process, changes from the price feed can move the
+`Deposit` out of pre-liquidation. If no new `Deposit` is funded within a time
+window, or the signing collateral continues to devalue, the `Deposit` moves into
+liquidation.
+
+// TODO note this violates fixed lot size assumptions as described in
+// https://github.com/keep-network/tbtc/issues/3. We can either ask for more
+// BTC (ugh), deal with many non-standard deposit sizes, or introduce a
+// non-uniform reserve wallet architecture
+// https://github.com/keep-network/tbtc/issues/6
+
+=== Liquidation
+
+At some point, either because signers didn't produce a valid signature to move
+`Deposit` funds, or because the value of the signing bond continued to quickly
+decline, signers' bonded funds will be forfeit.
+
+Forced `Deposit` liquidation favors the `Deposit` owner, first, who's losing
+access to their BTC collateral and the benefit of a guaranteed withdrawal.
+
+The owner is given a time window to return all withdrawn TBTC. If they do so,
+the owner receives *all* signing bond collateral.
+
+If the owner doesn't exercise this option, an auction begins.
+
+. Any unwithdrawn TBTC is exchanged pro-rata for its portion of the bond.
+. The remaining signing bond is put up for auction for TBTC.
+. The best TBTC bid larger than a minimum bid of the outstanding TBTC within the
+auction's time window wins. If no such bid is made, signers forfeit
+progressively more of their backing work token, and the signing bond plus the
+additional funds siezed are put back up for auction.
+. The best TBTC bid in the auction's time window wins.
+. All TBTC, including funds unwithdrawn by the `Deposit` owner, custodial fees
+earned by signers, as well as the proceeds of the auction, are burned. This burn
+lowers the TBTC supply to exclude the now-unprotected BTC collateral.
+
+What the unresponsive signers do with the BTC outside the tBTC system design is
+for them to decide- it might be split up, stolen by a signing majority, or lost.
