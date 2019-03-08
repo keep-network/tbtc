@@ -126,7 +126,9 @@ withdrawal.
 The owner is given a time window to return all withdrawn TBTC. If they do so,
 the owner receives *all* signing bond collateral.
 
-If the owner doesn't exercise this option, an auction begins.
+If the owner doesn't exercise this option, an auction begins. The purpose of
+the auction is to lower the TBTC supply, excluding the now-unprotected BTC
+collateral from the reserves.
 
 . Any unwithdrawn TBTC is exchanged pro rata for its portion of the bond.
 . The remaining signing bond is put up for auction for TBTC.
@@ -135,8 +137,9 @@ auction's time window wins. If no such bid is made, signers forfeit
 progressively more of their backing work token, and the signing bond plus the
 additional funds seized are put back up for auction.
 . All TBTC, including funds unwithdrawn by the `Deposit` owner, custodial fees
-earned by signers, as well as the proceeds of the auction, are burned. This burn
-lowers the TBTC supply to exclude the now-unprotected BTC collateral.
+earned by signers, as well as the proceeds of the auction, are burned, up to a
+ceiling of the TBTC surplus. If any TBTC is left over after, it's given to the
+`Deposit` owner.
 
 What the unresponsive signers do with the BTC outside the tBTC system design is
 for them to decide- it might be split up, stolen by a signing majority, or lost.
