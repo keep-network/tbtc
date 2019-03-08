@@ -6,7 +6,7 @@ ifndef::tbtc[toc::[]]
 
 == Overview
 
-tBTC provides a mechanism for creating a token, TBTC, on a non-Bitcoin _anchor
+tBTC provides a mechanism for creating a token, TBTC, on a non-Bitcoin _host
 chain_, that is 1-to-1 backed by bitcoin. Parties interested in minting TBTC
 <<Deposit Request,request>> that the tBTC system provide them with a Bitcoin
 wallet address. The system selects a set of _signers_, which are tasked with
@@ -25,12 +25,12 @@ image::../img/generated/initiate-deposit.png[]
 == Deposit request
 
 The starting point for acquiring TBTC is generating a _deposit request_. This is
-a transaction to a smart contract on tBTC's anchor chain that informs the tBTC
+a transaction to a smart contract on tBTC's host chain that informs the tBTC
 system that the sender account is interested in creating a tBTC deposit. The
 transaction is a signal that the sender is interested in a signing group to back
 a wallet that will receive bitcoin from a wallet the sender controls, in order
 to produce TBTC. Because signing groups are not free to create, deposit requests
-include a small bond in the anchor chain's native token to cover the creation of
+include a small bond in the host chain's native token to cover the creation of
 the signing group. The bond is refunded when a successful deposit is made to the
 generated wallet.
 
@@ -56,17 +56,17 @@ decentralized to achieve proper decentralization of the tBTC system as a whole.]
 The resulting random seed is used to randomly select signing group members from
 the eligible pool of signers. Finally, these signers coordinate a distributed
 key generation protocol that results in a public ECDSA key for the group, which
-is used to produce a wallet address that is then published to the anchor chain.
+is used to produce a wallet address that is then published to the host chain.
 This completes the signer selection phase.
 
 ==== Bonding
 
 Before the selected members of a signing group can perform distributed key
 generation, they must agree to become members of the signing group by putting up
-a bond in the native token of the anchor chain. This bond is used to penalize
-the members of the signing group if an unauthorized piece of data is signed by
-the signing group once distributed key generation is complete; it is also used
-to penalize a given member if the distributed key generation fails due to an
+a bond in the native token of the host chain. This bond is used to penalize the
+members of the signing group if an unauthorized piece of data is signed by the
+signing group once distributed key generation is complete; it is also used to
+penalize a given member if the distributed key generation fails due to an
 attributed misbehavior of that member.
 
 Bonding is described in more detail in the section on <<../bonding/index#,their own section>>.
@@ -77,7 +77,7 @@ Some small notes about the distributed key generation a signing group undergoes.
 The distributed key generation protocol should result in three properties:
 
 1. The signing group as a whole should have an _ECDSA public key_, which will be
-   shared on the anchor chain and will correspond to the Bitcoin wallet
+   shared on the host chain and will correspond to the Bitcoin wallet
    owned by that signing group.
 2. Each member of the signing group should have a _threshold ECDSA secret key
    share_, which can be used to create a _threshold ECDSA signature share_ for
@@ -93,19 +93,19 @@ Once the tBTC system has a wallet address available for a given deposit request,
 the _depositor_ can issue a Bitcoin transaction sending BTC from a wallet they
 control to the wallet address for the signing group. Once the transaction has
 been confirmed, the depositor has to issue a transaction to the tBTC system's
-anchor chain proving the deposit has occurred.
+host chain proving the deposit has occurred.
 
 // TODO “Once the transaction has been confirmed”: need to discuss how confirmed
 // TODO I guess?
 
 === Proof of deposit
 
-The only link between the Bitcoin chain and the anchor chain is the tBTC system,
-which runs as a set of smart contracts on the anchor chain. As such, the Bitcoin
+The only link between the Bitcoin chain and the host chain is the tBTC system,
+which runs as a set of smart contracts on the host chain. As such, the Bitcoin
 transaction issued by the depositor has to be proven to the tBTC system before
 the tBTC system allows the depositor to behave as if they have successfully
 deposited their BTC into the custodial wallet. To prove this, the depositor
-constructs a transaction for the anchor chain that provides proof that the
+constructs a transaction for the host chain that provides proof that the
 transaction was accepted on the Bitcoin chain and has had sufficient work built
 on top of the block that included the deposit transaction.
 
