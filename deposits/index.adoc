@@ -59,7 +59,37 @@ key generation protocol that results in a public ECDSA key for the group, which
 is used to produce a wallet address that is then published to the anchor chain.
 This completes the signer selection phase.
 
-==== Deposit
+==== Bonding
+
+Before the selected members of a signing group can perform distributed key
+generation, they must agree to become members of the signing group by putting up
+a bond in the native token of the anchor chain. This bond is used to penalize
+the members of the signing group if an unauthorized piece of data is signed by
+the signing group once distributed key generation is complete; it is also used
+to penalize a given member if the distributed key generation fails due to an
+attributed misbehavior of that member.
+
+
+// TODO Amount of the bond? Does/should this link to or be replaced by the whole
+// TODO section on bonding at ../bonding/index.adoc?
+
+==== Distributed key generation
+
+Some small notes about the distributed key generation a signing group undergoes.
+The distributed key generation protocol should result in three properties:
+
+1. The signing group as a whole should have an _ECDSA public key_, which will be
+   shared on the anchor chain and will correspond to the Bitcoin wallet
+   owned by that signing group.
+2. Each member of the signing group should have a _threshold ECDSA secret key
+   share_, which can be used to create a _threshold ECDSA signature share_ for
+   any transactions involving the signing group's wallet.
+3. Each member of the signing group should be able to combine a threshold number
+   of signature shares from itself and other members of the group to produce a
+   signed version of a given transaction to be performed on behalf of the
+   signing group.
+
+=== Deposit
 
 Once the TBTC system has a wallet address available for a given deposit request,
 the _depositor_ can issue a Bitcoin transaction sending BTC from a wallet they
