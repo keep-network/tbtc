@@ -44,7 +44,7 @@ each signer should bond _ethValue(btcDeposit)/n*(n - m + 1)_.
 === Pricing currency fluctuations
 
 The above assumes a constant exchange rate between BTC and ETH, but in truth
-the two currency fluctuate relative to eachother, sometimes wildly.
+the two currencies fluctuate relative to each other, sometimes wildly.
 
 If the value of ETH drops precipitously relative to BTC, a group of malicious
 signers will realize that the expected value of theft of the BTC collateral
