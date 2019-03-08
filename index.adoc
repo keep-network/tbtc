@@ -2,6 +2,9 @@
 :toclevels: 4
 :tbtc:
 
+// Blank root prefix since this is the root doc.
+:root-prefix:
+
 = TBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
 
 ifndef::release[]

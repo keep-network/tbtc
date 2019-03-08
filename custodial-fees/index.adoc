@@ -1,3 +1,4 @@
+[#custodial-fees]
 = Custodial Fees
 
 Signers put their own <<Bonding,funds at risk>> to assure depositors there will
