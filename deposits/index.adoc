@@ -69,9 +69,7 @@ the signing group once distributed key generation is complete; it is also used
 to penalize a given member if the distributed key generation fails due to an
 attributed misbehavior of that member.
 
-
-// TODO Amount of the bond? Does/should this link to or be replaced by the whole
-// TODO section on bonding at ../bonding/index.adoc?
+Bonding is described in more detail in the section on link:../bonding/index.adoc[Bonding].
 
 ==== Distributed key generation
 
