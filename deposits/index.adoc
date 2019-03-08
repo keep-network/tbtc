@@ -118,19 +118,31 @@ making it available to the signing group members to reclaim.
 
 // TODO What is "sufficient"? Defined as a system property? Dynamic?
 
-=== Distributed key generation
+== Lots
 
-// undertaking distributed key generation
-// reference to bigger DKG
+:lot-size: 0.1
 
-// TODO wallet architecture
+Deposits will be managed in fixed-size _lots_. Each deposit therefore will
+have to be of the same amount: {lot-size} BTC. Thus, a depositor submitting
+their <<Proof of deposit,proof of deposit>> must prove that they deposited
+{lot-size} into the deposit's signing group wallet.
 
-=== Lots
+// TODO Actually set the right bitcoin amount. Explain reasoning a bit more.
 
-// selection by random beacon
+== TBTC Minting
 
-=== Bonding
+:collateral: 200%
+:custodial-fee: 20%
+:base-custodial-time: 2 months
 
-// ETH bond
+Once a deposit has been made and funded, the _depositor_ is authorized to mint
+an amount of TBTC that provides for {collateral} collateralization plus
+a custodial fee of {custodial-fee} of the deposit for maintaining the deposit up
+to {base-custodial-time}. The amount of mintable TBTC is expressed by this
+equation:
 
-=== Payment request
+`TBTC = {lot-size} / ({collateral} + {custodial-fee})`
+
+The depositor mints their allowed TBTC by sending a transaction to the TBTC
+system, which in turn credits their account with the full amount of TBTC they
+are due.
