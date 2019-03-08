@@ -7,13 +7,13 @@ ifndef::tbtc[toc::[]]
 == Overview
 
 TBTC provides a mechanism for creating a token, TBTC, on a non-Bitcoin _anchor
-chain_, that is 1-to-1 backed by Bitcoin. Parties interested in minting TBTC
+chain_, that is 1-to-1 backed by bitcoin. Parties interested in minting TBTC
 <<Deposit Request,request>> that the TBTC system provide them with a Bitcoin
 wallet address. The system selects a set of _signers_, which are tasked with
 generating a private/public keypair and furnishing it to the system. The
-interested party then becomes a _depositor_ by sending Bitcoin to the wallet
-(the amount of required Bitcoin is discussed separately in the section on
-<<Lots,lots>>). The Bitcoin that is sent to the wallet is in two parts: one is
+interested party then becomes a _depositor_ by sending bitcoin to the wallet
+(the amount of required bitcoin is discussed separately in the section on
+<<Lots,lots>>). The bitcoin that is sent to the wallet is in two parts: one is
 eligible for 1-to-1 minting into TBTC, while the other is reserved as incentive
 for the wallet signers.
 
@@ -28,7 +28,7 @@ The starting point for acquiring TBTC is generating a _deposit request_. This is
 a transaction to a smart contract on TBTC's anchor chain that informs the TBTC
 system that the sender account is interested in creating a TBTC deposit. The
 transaction is a signal that the sender is interested in a signing group to back
-a wallet that will receive Bitcoin from a wallet the sender controls, in order
+a wallet that will receive bitcoin from a wallet the sender controls, in order
 to produce TBTC. Because signing groups are not free to create, deposit requests
 include a small bond in the anchor chain's native token to cover the creation of
 the signing group. The bond is refunded when a successful deposit is made to the
