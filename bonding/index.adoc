@@ -39,7 +39,7 @@ than the amount they have to gain.
 In the case of n-of-n wallets backing each `Deposit`, the minimum collateral
 from each signer is _ethValue(btcDeposit)/n_. In the general case of an m-of-n
 wallet, the minimal set of signers required to collude is _m_, suggesting that
-each signer should bond _ethValue(btcDeposit)/n*m_.
+each signer should bond _ethValue(btcDeposit)/n*(n - m + 1)_.
 
 === Pricing currency fluctuations
 
