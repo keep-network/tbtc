@@ -1,3 +1,4 @@
+[#custodial-fees]
 = Custodial Fees: Paying for security
 
 * Custodial fee rate

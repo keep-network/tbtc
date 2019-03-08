@@ -2,7 +2,11 @@
 
 = Deposits
 
-ifndef::tbtc[toc::[]]
+ifndef::tbtc[]
+toc::[]
+
+:root-prefix: ../
+endif::tbtc[]
 
 == Overview
 
@@ -20,7 +24,7 @@ and collateral for the wallet signers.
 Each of these steps is shown in the diagram below and discussed in subsequent
 sections.
 
-image::../img/generated/initiate-deposit.png[]
+image::{root-prefix}img/generated/initiate-deposit.png[]
 
 == Deposit request
 
@@ -47,7 +51,7 @@ network, described in http://keep.network/whitepaper[its whitepaper]. The Keep
 Random Beacon is described in more detail in the
 http://docs.keep.network/random-beacon/[Keep Random Beacon yellowpaper].]
 
-image::../img/generated/signing-group-creation.png[]
+image::{root-prefix}img/generated/signing-group-creation.png[]
 
 When a request comes in to create a signing group, the tBTC system requests a
 random seed from a secure decentralized random beacon.footnote:[A system is only
@@ -69,7 +73,8 @@ signing group once distributed key generation is complete; it is also used to
 penalize a given member if the distributed key generation fails due to an
 attributed misbehavior of that member.
 
-Bonding is described in more detail in the section on <<../bonding/index#,their own section>>.
+Bonding is described in more detail in
+<<{root-prefix}bonding/index#bonding,its own section>>.
 
 ==== Distributed key generation
 
@@ -149,4 +154,5 @@ The depositor mints their allowed TBTC by sending a transaction to the tBTC
 system, which in turn credits their account with the full amount of TBTC they
 are due.
 
-Custodial fees are described in more detail in <<../custodial-fees/index#,their own section>>.
+Custodial fees are described in more detail in
+<<{root-prefix}custodial-fees/index#custodial-fees,their own section>>.
