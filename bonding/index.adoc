@@ -119,8 +119,9 @@ At some point, either because signers didn't produce a valid signature to move
 `Deposit` funds, or because the value of the signing bond continued to quickly
 decline, signers' bonded funds will be forfeit.
 
-Forced `Deposit` liquidation favors the `Deposit` owner, first, who's losing
-access to their BTC collateral and the benefit of a guaranteed withdrawal.
+Forced `Deposit` liquidation favors the `Deposit` owner, first, as they are
+losing access to their BTC collateral and the benefit of a guaranteed
+withdrawal.
 
 The owner is given a time window to return all withdrawn TBTC. If they do so,
 the owner receives *all* signing bond collateral.
@@ -132,7 +133,7 @@ If the owner doesn't exercise this option, an auction begins.
 . The best TBTC bid larger than a minimum bid of the outstanding TBTC within the
 auction's time window wins. If no such bid is made, signers forfeit
 progressively more of their backing work token, and the signing bond plus the
-additional funds siezed are put back up for auction.
+additional funds seized are put back up for auction.
 . All TBTC, including funds unwithdrawn by the `Deposit` owner, custodial fees
 earned by signers, as well as the proceeds of the auction, are burned. This burn
 lowers the TBTC supply to exclude the now-unprotected BTC collateral.
