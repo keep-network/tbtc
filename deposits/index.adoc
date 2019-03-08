@@ -148,3 +148,5 @@ equation:
 The depositor mints their allowed TBTC by sending a transaction to the TBTC
 system, which in turn credits their account with the full amount of TBTC they
 are due.
+
+Custodial fees are described in more detail in link:../custodial-fees/index.adoc[their own section].
