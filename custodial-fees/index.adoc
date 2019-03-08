@@ -42,3 +42,13 @@ the network matures, these costs can be lowered through the introduction of
 == Minimum custodial deposit
 
 == Deposit ownership and maintenance
+
+Over time, the _custodial deposit_ is earned by signers, who will be paid for
+their efforts when the `Deposit` is redeemed. Half of the unwithdrawn _minimum
+custodial deposit_ must be maintained at all times for a `Deposit` to be
+considered maintained.
+
+`Deposit` s that fall below this threshold will be put up for auction,
+potentially forfeiting part of a _deposit owner's_ TBTC.
+
+// TODO further explain the benefits of deposit maintenance
