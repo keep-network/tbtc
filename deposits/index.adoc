@@ -69,7 +69,7 @@ the signing group once distributed key generation is complete; it is also used
 to penalize a given member if the distributed key generation fails due to an
 attributed misbehavior of that member.
 
-Bonding is described in more detail in the section on link:../bonding/index.adoc[Bonding].
+Bonding is described in more detail in the section on <<../bonding/index#,their own section>>.
 
 ==== Distributed key generation
 
@@ -149,4 +149,4 @@ The depositor mints their allowed TBTC by sending a transaction to the tBTC
 system, which in turn credits their account with the full amount of TBTC they
 are due.
 
-Custodial fees are described in more detail in link:../custodial-fees/index.adoc[their own section].
+Custodial fees are described in more detail in <<../custodial-fees/index#,their own section>>.
