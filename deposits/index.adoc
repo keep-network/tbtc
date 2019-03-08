@@ -100,7 +100,7 @@ anchor chain proving the deposit has occurred.
 // TODO “Once the transaction has been confirmed”: need to discuss how confirmed
 // TODO I guess?
 
-== Proof of deposit
+=== Proof of deposit
 
 The only link between the Bitcoin chain and the anchor chain is the TBTC system,
 which runs as a set of smart contracts on the anchor chain. As such, the Bitcoin
