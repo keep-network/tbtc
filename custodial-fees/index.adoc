@@ -16,8 +16,8 @@ Today's centralized cryptocurrency custodians charge 50 to 75 basis points
 that a centralized custodian protects a bitcoin deposit, that's as much as
 0.75% lost to the costs of custody.
 
-A decentralized model should allow a lower effective fee on custody by
-introducing more competition to the space. There's a caveat, however-- a
+A decentralized model should eventually allow a lower effective fee on custody
+by introducing more competition to the space. There's a caveat, however-- a
 decentralized approach to custodianship makes legal recourse more difficult,
 requiring additional bonded collateral to ensure recompense in case of failure.
 
@@ -30,7 +30,7 @@ a shared value currency.
 
 For a few conservative values,
 `n = 20, m = 15, OverCollateralizationFactor = 150%, LotSize = 1 BTC`, a single
-signer can hope to make .0015 TBTC a year per wallet. But for depositors, that
+signer can hope to make .0015 TBTC a year per deposit. But for depositors, that
 costs 3% a year. Lowering single-signer returns to 0.25% across the security
 value they provide means total signing revenue is 1.5% of the market cap of TBTC
 each year, with a return a year of their locked up capital, denominated in TBTC.
@@ -38,18 +38,22 @@ each year, with a return a year of their locked up capital, denominated in TBTC.
 While these returns are reasonable relative to their risk in the cryptocurrency
 space, we can save both sides money through a more efficient use of capital. As
 the network matures, these costs can be lowered through the introduction of
-"leveraged bonds"
-
-== Minimum custodial deposit
+leveraged bonds.
 
 == Deposit ownership and maintenance
 
+A _minimum custodial deposit_ is set aside from the initially available TBTC of
+each `Deposit`. This withheld balance ensures signers will be paid for their
+work as time goes on.
+
 Over time, the _custodial deposit_ is earned by signers, who will be paid for
-their efforts when the `Deposit` is redeemed. Half of the unwithdrawn _minimum
-custodial deposit_ must be maintained at all times for a `Deposit` to be
-considered maintained.
+their efforts when the `Deposit` is redeemed. A portion of the unwithdrawn
+_minimum custodial deposit_ must be maintained at all times for a `Deposit` to
+be in good standing.
 
-`Deposit` s that fall below this threshold will be put up for auction,
-potentially forfeiting part of a _deposit owner's_ TBTC.
+A _deposit owner_ can maintain their `Deposit` by returning TBTC, or by leaving
+a larger balance undrawn.
 
-// TODO further explain the benefits of deposit maintenance
+`Deposit` s that fall out of good standing will be put up for auction,
+potentially forfeiting a _deposit owner's_ remaining _custodial deposit_. More
+details can be found in <<Handling Failure>>.
