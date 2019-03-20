@@ -138,7 +138,7 @@ improving the resilience of the system to signing group failure.
 
 == TBTC Minting
 
-Once a deposit has been made and funded, the backing TBTC are minted. The
+Once a deposit has been made and funded, the corresponding TBTC are minted. The
 _custodial fee rate_ coupled with the _minimum custodial lockup period_
 determines how much TBTC is immediately available for withdrawal by the
 _depositor_, who is now the owner of a funded `Deposit`.
