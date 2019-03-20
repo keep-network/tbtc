@@ -1,5 +1,11 @@
+:toc: macro
 
-== Withdrawal Flow
+= Withdrawal Flow
+
+ifndef::tbtc[toc::[]]
+
+
+== Overview
 
 *TODO*: Link flow state names and transition names from elsewhere in
 documentation to here
@@ -17,32 +23,33 @@ The requestor notifies the `Deposit` of the bitcoin tx information (fee and
 recipient pkh) they are requesting, along with enough TBTC to cover the
 outstanding TBTC from the `Deposit` (counting any existing equity).
 
-=== States
+== States
 
-* *Flow enterable from*
-** Active
-*** via `requestWithdrawal`
-* *In this flow*
-** Awaiting Withdrawal Signature
-*** A withdrawal has been initiated by the Deposit owner
-*** The signers MUST sign a digest
-*** The signers may return the signature for verification
-*** *NOTE*: there is a disincentive to return a signature, as the caller must
+=== Awaiting Withdrawal Signature
+* A withdrawal has been initiated by the Deposit owner
+* The signers MUST sign a digest
+* The signers may return the signature for verification
+* *NOTE*: there is a disincentive to return a signature, as the caller must
 	pay for ecrecover gas and storage slot updates (to transition states).
-** Awaiting Withdrawal Proof
-*** The signers has returned a valid signature on the message
-*** The signers MUST provide a settlement proof
-*** In happy cases, we may skip the this state entirely.
-* *Can exit flow to*
-** Fraud Pre-liquidation
-*** via an ECDSA or BTC fraud proof
-*** via a state timeout
-* *Reachable end state*
-** Redeemed
-*** By providing a valid proof showing payment to the requestor
 
-=== Internal Transitions
-==== `provideWithdrawalSignature`
+=== Awaiting Withdrawal Proof
+* The signers has returned a valid signature on the message
+* The signers MUST provide a settlement proof
+* In happy cases, we may skip the this state entirely.
+
+=== Flow reachable from
+* Active
+** via `requestWithdrawal`* *Can exit flow to*
+
+=== Reachable exterior states
+* Fraud Pre-liquidation
+** via an ECDSA or BTC fraud proof
+** via a state timeout
+* Redeemed
+** By providing a valid proof showing payment to the requestor
+
+== Internal Transitions
+=== `provideWithdrawalSignature`
 * signers provide a valid ECDSA signature under their pubkey
 * *called by*
 ** Anyone
@@ -58,7 +65,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *to*
 ** Awaiting Withdrawal Proof
 
-==== `changeWithdrawalFee`
+=== `changeWithdrawalFee`
 * *TODO*: should signers be able to call this after a certain amount of time?
 * Requester provides a new fee, requesting a new signature from the signers
 * *called by*
@@ -77,7 +84,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *to*
 ** Awaiting Withdrawal Signature
 
-==== `provideWithdrawalProof`
+=== `provideWithdrawalProof`
 * signers provides a valid Bitcoin SPV Proof of payment to the requestor
 * *called by*
 ** Anyone
@@ -102,8 +109,8 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *to*
 ** Redeemed
 
-=== External Transitions
-==== `requestWithdrawal` (inbound)
+== External Transitions
+=== `requestWithdrawal` (inbound)
 * *TODO*: link this elsewhere
 * Deposit owner requests a withdrawal
 * *called by*
@@ -131,7 +138,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *to*
 ** Awaiting Withdrawal Signature
 
-==== `provideECDSAFraudProof` (outbound)
+=== `provideECDSAFraudProof` (outbound)
 * *TODO*: link this elsewhere
 * *called by*
 ** anyone
@@ -141,7 +148,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *to*
 ** Fraud Pre-liquidation
 
-==== `provideSPVFraudProof` (outbound)
+=== `provideSPVFraudProof` (outbound)
 * *TODO*: link this elsewhere
 * *called by*
 ** anyone
@@ -151,7 +158,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *to*
 ** Fraud Pre-liquidation
 
-==== `notifyRedemptionProofTimeout` (outbound)
+=== `notifyRedemptionProofTimeout` (outbound)
 * *TODO*: link this elsewhere
 * *called by*
 ** anyone
@@ -160,7 +167,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *to*
 ** Fraud Pre-liquidation
 
-==== `notifySignatureTimeout` (outbound)
+=== `notifySignatureTimeout` (outbound)
 * *TODO*: link this elsewhere
 * *called by*
 ** anyone
