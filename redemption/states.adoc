@@ -1,6 +1,9 @@
 
 == Withdrawal Flow
 
+*TODO*: Link flow state names and transition names from elsewhere in
+documentation to here
+
 This is the process to redeem a deposit. Once started, redemption cannot be
 cancelled, except by proving signer fraud. Cancellation is impossible because
 as soon as redemption is requested the keep is permitted to sign, and a
@@ -16,120 +19,121 @@ outstanding TBTC from the _Deposit_ (counting any existing equity).
 
 === States
 
-* Flow enterable from
+* *Flow enterable from*
 ** Active
 *** via requestWithdrawal
-* In this flow
+* *In this flow*
 ** Awaiting Withdrawal Signature
 *** A withdrawal has been initiated by the Deposit owner
 *** The Keep must sign a digest, and return the signature for verification
 ** Awaiting Withdrawal Proof
 *** The Keep has returned a valid signature on the message
 *** The Keep must provide a settlement proof
-* Can exit flow to
+* *Can exit flow to*
 ** Fraud Pre-liquidation
 *** via an ECDSA or BTC fraud proof
 *** via a state timeout
-* Reachable end state
+* *Reachable end state*
 ** Redeemed
 *** By providing a valid proof showing payment to the requestor
 
 === Internal Transitions
 ==== provideWithdrawalSignature
 * Keep provides a valid ECDSA signature under their pubkey
-* called by
+* *called by*
 ** 1 or more keep signers
-* args
+* *args*
 ** bytes _signature
-* reads
+* *reads*
 ** address keepAccount
 ** bytes32 requestedDigest
 ** uint256 withdrawalRequestTime
 *** track what time the most recent signature was requested, so that we have a
     timeout for signers providing the sig
-* from
+* *from*
 ** Awaiting Withdrawal Signature
-* to
+* *to*
 ** Awaiting Withdrawal Proof
 
 ==== changeWithdrawalFee
-* TODO: should keeps be able to call this after a certain amount of time?
+* *TODO*: should signers be able to call this after a certain amount of time?
 * Requester provides a new fee, requesting a new signature from the Keep
-* called by
+* *called by*
 ** deposit owner
 ** 1 or more keep signers?
-* args
+* *args*
 ** uint256 _newFee
-* reads
+* *reads*
 ** bytes requestorPKH
-* writes
+* *writes*
 ** uint256 withdrawalRequestTime
-* from
+* *from*
 ** Awaiting Withdrawal Proof
-* to
+* *to*
 ** Awaiting Withdrawal Signature
 
 ==== provideWithdrawalProof
 * Keep signers provides a valid Bitcoin SPV Proof of payment to the requestor
-* called by
+* *called by*
 ** 1 or more keep signers
-* args
+* *args*
 ** bytes _bitcoinTX
 ** bytes _merkleProof
 ** bytes _bitcoinHeaders
-* reads
+* *reads*
 ** bytes requestorPKH
 ** uint256 oracleDifficultyReq
 ** uint256 depositSize
 ** uint256 fee
-* writes
+* *writes*
 ** uint256 balances -- on TBTC ERC20 Contract
 *** 1 time for each signer
 *** 1 time for the deposit contract
-* from
+* *from*
 ** Awaiting Withdrawal Proof
 ** Awaiting Withdrawal Signature
-* to
+* *to*
 ** Redeemed
 
 === External Transitions
 ==== requestWithdrawal (inbound)
-* TODO: link this elsewhere
+* *TODO*: link this elsewhere
 * Deposit owner requests a withdrawal
-* called by
+* *called by*
 ** deposit owner
-* args
+* *args*
 ** uint256 _fee
+*** *TODO*: we should decide on a minimum fee >20=sat/vbyte
 ** bytes _requestorPKH
-* reads
+* *reads*
 ** address depositOwner
-* writes
+* *writes*
 ** bytes requestor PKH
 ** uint256 outstandingTBTC
 ** uint256 withdrawalRequestTime
-** uint256 balances -- on TBTC ERC20 Contract
+** mapping(address => uint256) balances -- on TBTC ERC20 Contract
 ** uint256 totalSupply -- on TBTC ERC20 Contract
-* from
+* *from*
 ** Active
-* to
+* *to*
 ** Awaiting Withdrawal Signature
 
 ==== provideECDSAFraudProof (outbound)
-* TODO: link this elsewhere
-* called by
+* *TODO*: link this elsewhere
+* *called by*
 ** anyone
-* from
+* *from*
 ** Awaiting Withdrawal Proof
 ** Awaiting Withdrawal Signature
-* to
+* *to*
 ** Fraud Pre-liquidation
 
 ==== provideSPVFraudProof (outbound)
-* TODO: link this elsewhere
-* called by
+* *TODO*: link this elsewhere
+* *called by*
 ** anyone
-* from
+* *from*
 ** Awaiting Withdrawal Proof
 ** Awaiting Withdrawal Signature
-* to
+* *to*
 ** Fraud Pre-liquidation
