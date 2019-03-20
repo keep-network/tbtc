@@ -24,8 +24,8 @@ requiring additional bonded collateral to ensure recompense in case of failure.
 Applying this pricing model to tBTC's bonding, it's clear that a signer would
 like to make a similar return on the total capital it's responsible for-- its
 portion of `Deposit` security. In the full threshold case, that's
-`1 / min(m, n)` in deposit security, or `1 / m` as `m` is strictly less than `n`
-and `m` signers are required to move funds. Those `m` signers would each require
+`1 / min(m, n)` in deposit security, or `1 / m` as `m` is less than `n`, with
+`m` signers are required to move funds. Those `m` signers would each require
 `1 / m * OverCollateralizationFactor` in  bonds, assuming for a moment a shared
 value currency.
 
