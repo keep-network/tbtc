@@ -26,10 +26,13 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** Awaiting Withdrawal Signature
 *** A withdrawal has been initiated by the Deposit owner
 *** The signers MUST sign a digest
-*** The signers may return the digest for verification
+*** The signers may return the signature for verification
+*** *NOTE*: there is a disincentive to return a signature, as the caller must
+	pay for ecrecover gas and storage slot updates (to transition states).
 ** Awaiting Withdrawal Proof
 *** The signers has returned a valid signature on the message
 *** The signers MUST provide a settlement proof
+*** In happy cases, we may skip the this state entirely.
 * *Can exit flow to*
 ** Fraud Pre-liquidation
 *** via an ECDSA or BTC fraud proof
