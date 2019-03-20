@@ -42,7 +42,8 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ==== `provideWithdrawalSignature`
 * signers provide a valid ECDSA signature under their pubkey
 * *called by*
-** 1 or more signers
+** Anyone
+** expected: 1 or more signers
 * *args*
 ** `bytes _signature`
 * *reads*
@@ -59,7 +60,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * Requester provides a new fee, requesting a new signature from the signers
 * *called by*
 ** deposit owner
-** 1 or more signers?
+** 1 or more signers? (anyone?)
 * *args*
 ** `uint256 _newFee`
 * *reads*
@@ -76,7 +77,8 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ==== `provideWithdrawalProof`
 * signers provides a valid Bitcoin SPV Proof of payment to the requestor
 * *called by*
-** 1 or more signers
+** Anyone
+** expected: 1 or more signers
 * *args*
 ** `bytes _bitcoinTX`
 ** `bytes _merkleProof`
@@ -113,8 +115,8 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `bytes requestorPKH`
 *** the bitcoin hash160 pubkeyhash to which to deliver BTC
 ** `uint256 outstandingTBTC`
-*** the `Deposit`'s TBTC has been returned
-*** may not be necessary?
+*** check that the `Deposit`'s TBTC has been returned
+*** this is a derived attribute from UTXO size and equity
 ** `uint256 withdrawalRequestTime`
 *** start timeouts for signers wrt signing and withdrawal
 ** `mapping(address => uint256) balances`
