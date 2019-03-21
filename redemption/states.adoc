@@ -39,7 +39,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 
 === Flow reachable from
 * Active
-** via `requestWithdrawal`* *Can exit flow to*
+** via `requestWithdrawal`*
 
 === Reachable exterior states
 * `FRAUD_PRE_LIQUIDATION`
@@ -65,11 +65,14 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *to*
 ** `AWAITING_WITHDRAWAL_PROOF`
 
-=== `changeWithdrawalFee`
-* *TODO*: should signers be able to call this after a certain amount of time?
-* Requester provides a new fee, requesting a new signature from the signers
+=== `increaseWithdrawalFee`
+* Explicitly allow a new signature with an increased fee. The fee may increased
+  in linear steps over time. The new fee must be explicitly authorized by the
+  contract, and the authorizing tx confirmed, before a new signature is
+  created.
 * *access control*
-** deposit owner
+** Anyone
+*** after a timer
 * *args*
 ** `uint256 _newFee`
 * *reads*
@@ -113,8 +116,6 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 == External Transitions
 === `requestWithdrawal` (inbound)
 // TODO: link this elsewhere
-* *TODO*: Should the withdrawal transaction commit to a recent ethereum
-  blockhash? This would prevent proof faking at the cost of some extra fees
 * Deposit owner requests a withdrawal
 * *access control*
 ** only deposit owner
