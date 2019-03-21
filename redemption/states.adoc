@@ -25,14 +25,14 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 
 == States
 
-=== Awaiting Withdrawal Signature
+=== `AWAITING_WITHDRAWAL_SIGNATURE`
 * A withdrawal has been initiated by the Deposit owner
 * The signers MUST sign a digest
 * The signers may return the signature for verification
 * *NOTE*: there is a disincentive to return a signature, as the caller must
 	pay for ecrecover gas and storage slot updates (to transition states).
 
-=== Awaiting Withdrawal Proof
+=== `AWAITING_WITHDRAWAL_PROOF`
 * The signers has returned a valid signature on the message
 * The signers MUST provide a settlement proof
 * In happy cases, we may skip the this state entirely.
@@ -42,16 +42,16 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** via `requestWithdrawal`* *Can exit flow to*
 
 === Reachable exterior states
-* Fraud Pre-liquidation
+* `FRAUD_PRE_LIQUIDATION`
 ** via an ECDSA or BTC fraud proof
 ** via a state timeout
-* Redeemed
+* `REDEEMED`
 ** By providing a valid proof showing payment to the requestor
 
 == Internal Transitions
 === `provideWithdrawalSignature`
 * signers provide a valid ECDSA signature under their pubkey
-* *called by*
+* *access control*
 ** Anyone
 ** expected: 1 or more signers
 * *args*
@@ -61,32 +61,33 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `bytes32 requestedDigest`
 ** `uint256 withdrawalRequestTime`
 * *from*
-** Awaiting Withdrawal Signature
+** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** Awaiting Withdrawal Proof
+** `AWAITING_WITHDRAWAL_PROOF`
 
 === `changeWithdrawalFee`
 * *TODO*: should signers be able to call this after a certain amount of time?
 * Requester provides a new fee, requesting a new signature from the signers
-* *called by*
+* *access control*
 ** deposit owner
-** 1 or more signers? (anyone?)
 * *args*
 ** `uint256 _newFee`
 * *reads*
+** `uint256 initialWithdrawalFee`
 ** `bytes requestorPKH`
+** `uint256 block.timestamp`
 * *writes*
 ** `uint256 withdrawalRequestTime`
 *** rewrite this time to give signers a time extension
 *** prevents requestor trolling
 * *from*
-** Awaiting Withdrawal Proof
+** `AWAITING_WITHDRAWAL_PROOF`
 * *to*
-** Awaiting Withdrawal Signature
+** `AWAITING_WITHDRAWAL_SIGNATURE`
 
 === `provideWithdrawalProof`
 * signers provides a valid Bitcoin SPV Proof of payment to the requestor
-* *called by*
+* *access control*
 ** Anyone
 ** expected: 1 or more signers
 * *args*
@@ -104,10 +105,10 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 *** 1 time for each signer
 *** 1 time for the deposit contract
 * *from*
-** Awaiting Withdrawal Proof
-** Awaiting Withdrawal Signature
+** `AWAITING_WITHDRAWAL_PROOF`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** Redeemed
+** `REDEEMED`
 
 == External Transitions
 === `requestWithdrawal` (inbound)
@@ -115,14 +116,16 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *TODO*: Should the withdrawal transaction commit to a recent ethereum
   blockhash? This would prevent proof faking at the cost of some extra fees
 * Deposit owner requests a withdrawal
-* *called by*
-** deposit owner
+* *access control*
+** only deposit owner
 * *args*
 ** `uint256 _fee`
 ** `bytes _requestorPKH`
 * *reads*
 ** `address depositOwner`
 * *writes*
+** `uint256 initialWithdrawalFee`
+*** the requested withdrawal fee
 ** `bytes requestorPKH`
 *** the bitcoin hash160 pubkeyhash to which to deliver BTC
 ** `uint256 outstandingTBTC`
@@ -135,44 +138,44 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `uint256 totalSupply`
 *** change total supply (burn) on TBTC ERC20 Contract
 * *from*
-** Active
+** `ACTIVE`
 * *to*
-** Awaiting Withdrawal Signature
+** `AWAITING_WITHDRAWAL_SIGNATURE`
 
 === `provideECDSAFraudProof` (outbound)
 // TODO: link this elsewhere
-* *called by*
+* *access control*
 ** anyone
 * *from*
-** Awaiting Withdrawal Proof
-** Awaiting Withdrawal Signature
+** `AWAITING_WITHDRAWAL_PROOF`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** Fraud Pre-liquidation
+** `FRAUD_PRE_LIQUIDATION`
 
 === `provideSPVFraudProof` (outbound)
 // TODO: link this elsewhere
-* *called by*
+* *access control*
 ** anyone
 * *from*
-** Awaiting Withdrawal Proof
-** Awaiting Withdrawal Signature
+** `AWAITING_WITHDRAWAL_PROOF`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** Fraud Pre-liquidation
+** `FRAUD_PRE_LIQUIDATION`
 
 === `notifyRedemptionProofTimeout` (outbound)
 // TODO: link this elsewhere
-* *called by*
+* *access control*
 ** anyone
 * *from*
-** Awaiting Withdrawal Proof
+** `AWAITING_WITHDRAWAL_PROOF`
 * *to*
-** Fraud Pre-liquidation
+** `FRAUD_PRE_LIQUIDATION`
 
 === `notifySignatureTimeout` (outbound)
 // TODO: link this elsewhere
-* *called by*
+* *access control*
 ** anyone
 * *from*
-** Awaiting Withdrawal Signature
+** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** Fraud Pre-liquidation
+** `FRAUD_PRE_LIQUIDATION`
