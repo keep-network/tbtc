@@ -7,8 +7,8 @@ ifndef::tbtc[toc::[]]
 
 == Overview
 
-*TODO*: Link flow state names and transition names from elsewhere in
-documentation to here
+// TODO: Link flow state names and transition names from elsewhere in
+// documentation to here
 
 This is the process to redeem a deposit. Once started, redemption cannot be
 cancelled, except by proving signer fraud. Cancellation is impossible because
@@ -20,7 +20,7 @@ address, and an Active Deposit with TBTC outstanding. This would result in a
 supply peg-break.
 
 The requestor notifies the `Deposit` of the bitcoin tx information (fee and
-recipient pkh) they are requesting, along with enough TBTC to cover the
+recipient pubkeyhash) they are requesting, along with enough TBTC to cover the
 outstanding TBTC from the `Deposit` (counting any existing equity).
 
 == States
@@ -111,13 +111,14 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 
 == External Transitions
 === `requestWithdrawal` (inbound)
-* *TODO*: link this elsewhere
+// TODO: link this elsewhere
+* *TODO*: Should the withdrawal transaction commit to a recent ethereum
+  blockhash? This would prevent proof faking at the cost of some extra fees
 * Deposit owner requests a withdrawal
 * *called by*
 ** deposit owner
 * *args*
 ** `uint256 _fee`
-*** *TODO*: we should decide on a minimum fee >20=sat/vbyte
 ** `bytes _requestorPKH`
 * *reads*
 ** `address depositOwner`
@@ -139,7 +140,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** Awaiting Withdrawal Signature
 
 === `provideECDSAFraudProof` (outbound)
-* *TODO*: link this elsewhere
+// TODO: link this elsewhere
 * *called by*
 ** anyone
 * *from*
@@ -149,7 +150,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** Fraud Pre-liquidation
 
 === `provideSPVFraudProof` (outbound)
-* *TODO*: link this elsewhere
+// TODO: link this elsewhere
 * *called by*
 ** anyone
 * *from*
@@ -159,7 +160,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** Fraud Pre-liquidation
 
 === `notifyRedemptionProofTimeout` (outbound)
-* *TODO*: link this elsewhere
+// TODO: link this elsewhere
 * *called by*
 ** anyone
 * *from*
@@ -168,7 +169,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** Fraud Pre-liquidation
 
 === `notifySignatureTimeout` (outbound)
-* *TODO*: link this elsewhere
+// TODO: link this elsewhere
 * *called by*
 ** anyone
 * *from*
