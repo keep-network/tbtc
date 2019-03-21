@@ -1,0 +1,62 @@
+% !TEX root = ../tbtc-diagrams.tex
+
+\tikz{
+    \node[state] (start) {Start};
+    \node[state,right=of start] (awaiting setup) {Awaiting Signer Setup};
+    \node[state,above=of awaiting setup] (awaiting deposit proof) {Awaiting BTC Deposit Proof};
+
+    \node[state,above right=of awaiting deposit proof] (active) {Active};
+
+    \node[state,left=of awaiting deposit proof] (failed setup) {Failed Setup};
+
+    \node[state,left=of active] (custodial margin called) {Custodial Margin Called};
+    \node[state,above=of active] (fraud pre-liquidation) {Fraud pre-liquidation};
+
+    \node[state,above=of custodial margin called] (awaiting owner option) {Awaiting owner option};
+    \node[state,above left=of awaiting owner option] (liquidation auction) {Liquidation auction in-progress};
+    \node[state,above=3cm of awaiting owner option] (liquidated) {Liquidated};
+
+    \node[state,below right=of active] (owner margin called) {Owner Margin Called};
+    \node[state,below=of owner margin called] (change owner auction) {Change Owner Auction};
+
+    \node[state,above right=of fraud pre-liquidation] (awaiting signature) {Awaiting Signature};
+    \node[state,right=of awaiting signature] (awaiting redemption proof) {Awaiting Redemption Proof};
+    \node[state,below=of awaiting redemption proof] (redeemed) {Redeemed};
+
+    \path [->] (start) edge [] (awaiting setup)
+
+               (awaiting setup) edge [] (awaiting deposit proof)
+               (awaiting setup) edge [] (failed setup)
+
+               (awaiting deposit proof) edge [] (failed setup)
+               (awaiting deposit proof) edge [] (active)
+
+               (active) edge [bend right=10] (custodial margin called)
+               (active) edge node [right] {Signer fraud} (fraud pre-liquidation)
+               (active) edge [bend right=45] (awaiting signature)
+               (active) edge (owner margin called)
+
+               (custodial margin called) edge [bend right=10] (active)
+               (custodial margin called) edge (fraud pre-liquidation)
+               (custodial margin called) edge (awaiting owner option)
+
+               (awaiting owner option) edge (liquidation auction)
+               (awaiting owner option) edge (liquidated)
+               (liquidation auction) edge (liquidated)
+
+               (owner margin called) edge [bend left] (active)
+               (owner margin called) edge (change owner auction)
+               (owner margin called) edge [bend right] (fraud pre-liquidation)
+
+               (change owner auction) edge [bend left] (active)
+               (change owner auction) edge [bend right=120] (fraud pre-liquidation)
+
+               (awaiting signature) edge (awaiting redemption proof)
+               (awaiting signature) edge (redeemed)
+               (awaiting signature) edge (fraud pre-liquidation)
+
+               (awaiting redemption proof) edge (awaiting signature)
+               (awaiting redemption proof) edge (redeemed)
+               (awaiting redemption proof) edge [bend right=75] (fraud pre-liquidation)
+               ;
+}
