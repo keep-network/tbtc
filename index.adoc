@@ -223,19 +223,20 @@ all of which are implemented by the Keep network.
 
 The architecture is broken down into
 
-* Deposits
+* Deposits and signer selection
+* Bonding and price feeds
+* Custodial fees
 * Signing
-* Price feeds
-* Wallet and collateral failure
+* Wallet failure
 * Redemption
 
 include::deposits/index.adoc[leveloffset=+2]
 
+include::bonding/index.adoc[leveloffset=+2]
+
 include::custodial-fees/index.adoc[leveloffset=+2]
 
 include::signing/index.adoc[leveloffset=+2]
-
-include::bonding/index.adoc[leveloffset=+2]
 
 include::failure/index.adoc[leveloffset=+2]
 
