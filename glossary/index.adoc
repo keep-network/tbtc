@@ -1,4 +1,8 @@
-== Glossary
+:toc: macro
+
+= Glossary
+
+ifndef::tbtc[toc::[]]
 
 Host chain:: The chain on which TBTC is managed
 
