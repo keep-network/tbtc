@@ -20,7 +20,7 @@ support this goal, the redemption flow has been designed such that any actor
 may perform its critical actions (with the exception of producing signatures).
 
 So long as the deposit is maintained in good standing, the deposit owner may
-request redemption. To do so, the owner must repay any outstanding TBTC (plus
+<<Redemption Requests,request redemption>>. To do so, the owner must repay any outstanding TBTC (plus
 accrued custodial fees) and provide their Bitcoin payment details. At this
 point, the redemption process may not be cancelled. Once redemption has been
 requested, the signers must produce a valid Bitcoin signature sending the
@@ -30,11 +30,60 @@ blockchain using that signature.
 
 // TODO: document future upgrade where signers sign singleACP?
 
-== Redemption Request
+== The Value of Deposit Ownership
 
 // TODO: fill in real numbers for all of these
 :minimal-custodial-period: 1 year
+:minimal-custodial-deposit: 1%
 :minimal-custodial-equity: 0.5%
+:max-tbtc-withdrawal-example: 1 TBTC
+:tbtc-withdrawn-example: 0.7 TBTC
+:custody-days-example: 180 days
+:daily-feerate-example: 0.0027%
+:accrued-fees-example: 0.00486 TBTC
+:equity-example: 0.29514 TBTC
+
+// TODO: this is weak prose
+Because ownership of a deposit is required to redeem the underlying BTC and
+deposits are scarce, it follows that deposits have some value. While the market
+will price the redemption right, it is easy draw firm bounds around deposit
+value. Intuitively, a deposit's value is the equity in the deposit, plus the
+value of the redemption right. Because a deposit's custody fee schedule is
+predictable, we can establish a simple framework for determining the equity of
+a given deposit, which serves as a lower bound on its value.
+
+// TODO: someone else clean these up and make them match tone style
+The equity of a deposit is given by the equation
+
+* `equity = maximum_TBTC_issuance - withdrawn_TBTC - accrued_fees`.
+
+The accrued_fees are calculated via simple interest:
+
+* `accrued_fees =  maximum_TBTC_issuance * daily_custodial_feerate * elapsed_custody_days`
+
+Ergo, for a deposit issuing a maximum of {max-tbtc-withdrawal-example} with a
+custodial fee rate of {daily-feerate-example} per day
+({minimal-custodial-deposit} annually) from which {tbtc-withdrawn-example} have
+been withdrawn, the equity after {custody-days-example} will be calculated as
+follows:
+
+* `equity = {max-tbtc-withdrawal-example} - {tbtc-withdrawn-example} - ({max-tbtc-withdrawal-example} * {daily-feerate-example} * {custody-days-example})`
+* `equity = {max-tbtc-withdrawal-example} - {tbtc-withdrawn-example} - {accrued-fees-example}`
+* `equity = {equity-example}`
+
+We calculate the equity value in TBTC here, because the purchaser of a deposit
+stands to gain TBTC. Should the price of TBTC fall relative to the price of BTC
+the real value of the equity drops too. However, the value of the redemption
+right should see a corresponding increase in value, as the redemption right for
+fully-withdrawn deposits becomes cheaper to exercise (as it becomes cheaper to
+purchase and burn TBTC in order to get the underlying BTC).
+
+// TODO: add calculation of redemption right value?
+
+
+== Redemption Requests
+
+// TODO: fill in real numbers for all of these
 :min-redemption-fee: 2345 satoshi
 :min-redemption-feerate: ~20 satoshi/vbyte
 
