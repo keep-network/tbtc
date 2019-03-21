@@ -39,7 +39,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 
 === Flow reachable from
 * Active
-** via `requestWithdrawal`*
+** via `requestWithdrawal`
 
 === Reachable exterior states
 * `FRAUD_PRE_LIQUIDATION`
