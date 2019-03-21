@@ -1,0 +1,13 @@
+== Glossary
+
+Host chain:: The chain on which TBTC is managed
+
+Keep:: Secure multiparty computation setups powering tBTC signing
+
+PKH:: Public key hash
+
+Random beacon:: A secure, verifiable source of randomness accessible on the
+host chain
+
+include::./cross-chain.adoc[leveloffset=+2]
+include::./bitcoin.adoc[leveloffset=+2]
