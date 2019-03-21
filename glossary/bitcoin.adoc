@@ -22,3 +22,15 @@ commitments in outputs. Used for SH commitments before segwit
 
 Hash256:: Bitcoin hash function `sha256(sha256(message))`. Used for txids,
 sighash, merkle trees, and PoW
+
+UTXO:: (unspent) transaction output
+
+Weight unit:: a measure of bitcoin transaction size. Main transaction info is 4
+weight units per byte. Witness info is 1 weight unit per byte
+
+Vbyte:: 4 weight units
+
+Outpoint:: A 36-byte string that uniquely identifies Bitcoin UTXOs. It consists
+of the creating transaction's `tx_id` as a 32-byte LE `uint256` (because Satoshi
+was bad), and a 4-byte LE `uint32` denoting the UTXO's position in the creating
+transaction's output vector
