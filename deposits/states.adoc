@@ -17,8 +17,9 @@ keep setup fails, the funding process is aborted.
 Once a keep is formed, the funder transfers BTC to the keep's pay to witness
 public key hash (p2wpkh) address. This BTC becomes the underlying collateral
 for the new _Deposit_. The funder proves deposit via a stateless SPV proof of
-inclusion. If the funder fails to make this transfer in a timely manner, the
-funding process is aborted and the funder's keep bond is forfeit.
+inclusion in the Bitcoin blockchain. If the funder fails to make this transfer
+in a timely manner, the funding process is aborted and the funder's keep bond
+is forfeit.
 
 Once BTC collateralization has been proven, the _Deposit_ becomes active. Then
 the funder may withdraw TBTC, up to the amount of BTC collateral (less the
