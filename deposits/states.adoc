@@ -88,11 +88,23 @@ an abort state.
 * *to*
 ** `AWAITING_BTC_FUNDING_PROOF`
 
+=== `notifyFundingTimeout`
+* Anyone may notify a Deposit that its funder has failed to submit a funding
+  proof. The funder's bond is forfeit due to non-completion at this point.
+* *access control*
+** anyone
+* *from*
+** `AWAITING_BTC_FUNDING_PROOF`
+* *to*
+** `FAILED_SETUP`
+
+
 
 == External Transitions
 
 === `provideBTCFundingProof`
-* Funder (or anyone else) provides a proof of BTC funding for the Deposit
+* Funder (or anyone else) provides a proof of BTC funding for the Deposit.
+  The funder's bond is returned once this proof is successfully verified.
 * *access control*
 ** Anyone
 ** expoected: Deposit owner
