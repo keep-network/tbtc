@@ -115,6 +115,9 @@ an abort state.
 ** `bytes _headers`
 * *writes*
 ** `uint256 utxoSize`
+*** size of UTXO in satoshis
+** `bytes utxoOutpoint`
+*** unique identifier for the UTXO
 * *from*
 ** `AWAITING_BTC_FUNDING_PROOF`
 * *to*
