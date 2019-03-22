@@ -5,6 +5,7 @@
 \usepackage{tikz}
 \usepackage[colorlinks=true]{hyperref}
 \usepackage{varwidth}
+\usepackage{rotating}
 
 \usetikzlibrary{positioning}
 \usetikzlibrary{arrows.meta}
@@ -12,11 +13,14 @@
 \usetikzlibrary{shapes.symbols}
 \usetikzlibrary{calc}
 \usetikzlibrary{chains}
+\usetikzlibrary{fit}
 
 \tikzset{
   every node/.style={above},
   start state/.style={draw,ellipse,text width=0},
   state/.style={draw,ellipse,align=flush center,text width=2.5cm},
+  box state/.style={draw,rectangle,align=flush center,text width=2.5cm,inner sep=7pt},
+  leaf state/.style={box state,rounded corners=12pt},
   decision/.style={draw,rectangle,align=flush center},
   thread/.style={draw,signal,signal to=east,fill=white},
   % Nested states and decisions use doubled borders to indicate
@@ -89,5 +93,16 @@ what is going on within these states or decisions.
 
   \caption{\label{fig:signing-group-creation}Signing group creation.}
 \end{figure}
+
+% Flush floats before a rotated page.
+\clearpage
+
+\begin{sidewaysfigure}
+  \global\pdfpageattr\expandafter{\the\pdfpageattr/Rotate 90}
+  \centering
+  \input{img-src/deposit-state-machine.tikz}
+
+  \caption{\label{fig:deposit-state-machine}Deposit state machine.}
+\end{sidewaysfigure}
 
 \end{document}
