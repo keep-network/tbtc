@@ -20,7 +20,7 @@ forfeits their bond, and risks their work token stake.
 
 == Acceptable collateral
 
-Two tokens present themselves as obvious choices for signing bond collateral-
+Two tokens present themselves as obvious choices for signing bond collateral--
 TBTC and the underlying work token. During the bootstrap phase of the network,
 neither is an appropriate candidate due to low liquidity.
 
@@ -59,7 +59,7 @@ of ETH crosses a security threshold, open `Deposit` s will enter
 This threshold will be determined by the contract owner.
 
 If the value of BTC drops precipitously, signers won't make the return on their
-bonded capital that they'd hoped- as <<Custodial Fees>> are denominated in TBTC.
+bonded capital that they'd hoped-- as <<Custodial Fees>> are denominated in TBTC.
 This doesn't pose a problem for tBTC reserves, but is expensive to signers,
 lessening their value proposition.
 
@@ -74,7 +74,7 @@ This threshold will also be determined by the contract owner.
 == A resilient price feed
 
 Unlike popular synthetic stablecoin schemes, the tBTC system design makes no
-effort to stabilize the value of TBTC relative to BTC- TBTC will be priced by
+effort to stabilize the value of TBTC relative to BTC-- TBTC will be priced by
 the market. Instead, the goal is to ensure that the TBTC supply is strictly
 less than its backing BTC reserves.
 
@@ -144,4 +144,4 @@ ceiling of the TBTC surplus. If any TBTC is left over after, it's given to the
 `Deposit` owner.
 
 What the unresponsive signers do with the BTC outside the tBTC system design is
-for them to decide- it might be split up, stolen by a signing majority, or lost.
+for them to decide-- it might be split up, stolen by a signing majority, or lost.
