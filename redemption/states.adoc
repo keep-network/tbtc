@@ -58,7 +58,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `bytes _signature`
 * *reads*
 ** `address signersThresholdKeyAccount`
-** `bytes32 requestedDigest`
+** `mapping(bytes32 => bool) wasRequested`
 ** `uint256 withdrawalRequestTime`
 * *from*
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
@@ -124,7 +124,10 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `bytes _requesterPKH`
 * *reads*
 ** `address depositOwner`
+** `bytes outpoint`
 * *writes*
+** `mapping(bytes32 => bool) wasRequested`
+*** record that the digest was requested
 ** `uint256 initialWithdrawalFee`
 *** the requested withdrawal fee
 ** `bytes requesterPKH`
