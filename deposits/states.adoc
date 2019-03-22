@@ -107,7 +107,7 @@ an abort state.
   The funder's bond is returned once this proof is successfully verified.
 * *access control*
 ** Anyone
-** expoected: Deposit owner
+** expected: Deposit owner
 * *args*
 ** `bytes _tx`
 ** `bytes _proof`
