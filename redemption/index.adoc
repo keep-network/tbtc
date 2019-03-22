@@ -20,13 +20,13 @@ support this goal, the redemption flow has been designed such that any actor
 may perform its critical actions (with the exception of producing signatures).
 
 So long as the deposit is maintained in good standing, the deposit owner may
-<<Redemption Requests,request redemption>>. To do so, the owner must repay any outstanding TBTC (plus
-accrued custodial fees) and provide their Bitcoin payment details. At this
-point, the redemption process may not be cancelled. Once redemption has been
-requested, the signers must produce a valid Bitcoin signature sending the
-underlying BTC to the requested address. After a signature has been published,
-any actor may build and submit a _redemption transaction_ to the Bitcoin
-blockchain using that signature.
+<<Redemption Requests,request redemption>>. To do so, the owner must repay any
+outstanding TBTC (plus accrued custodial fees) and provide their Bitcoin
+payment details. At this point, the redemption process may not be cancelled.
+Once redemption has been requested, the signers must produce a valid Bitcoin
+signature sending the underlying BTC to the requested address. After a
+signature has been published, any actor may build and submit a
+_redemption transaction_ to the Bitcoin blockchain using that signature.
 
 // TODO: document future upgrade where signers sign singleACP?
 
@@ -107,7 +107,9 @@ signature is required.
 Once notified of the redemption request, the signers must wait for confirmation
 on the host chain. If they do not wait for confirmation, the redemption request
 may be dropped from the chain via a reorg, in which case any signature they
-produced could be used to both redeem the BTC and "prove" signer "fraud."
+produced could be used to both redeem the BTC and submit a signer fraud proof.
+A fraud proof created this way would appear valid to the host chain smart
+contract because it no longer has a record of the redemption request. 
 
 
 == Redemption Transaction Format
