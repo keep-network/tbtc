@@ -1,0 +1,182 @@
+:toc: macro
+
+= Redemption Flow
+
+ifndef::tbtc[toc::[]]
+
+
+== Overview
+
+// TODO: Link flow state names and transition names from elsewhere in
+// documentation to here
+
+This is the process to redeem a deposit. Once started, redemption cannot be
+cancelled, except by proving signer fraud. Cancellation is impossible because
+as soon as redemption is requested the signers are permitted to sign, and a
+signature (even one neither chain knows about) can't be revoked.
+
+Ergo, cancellation of this process could result in BTC moved from the signers'
+address, and an Active Deposit with TBTC outstanding. This would result in a
+supply peg-break.
+
+The requester notifies the `Deposit` of the bitcoin tx information (fee and
+recipient pubkeyhash) they are requesting, along with enough TBTC to cover the
+outstanding TBTC from the `Deposit` (counting any existing equity).
+
+== States
+
+=== `AWAITING_WITHDRAWAL_SIGNATURE`
+* A withdrawal has been initiated by the Deposit owner
+* The signers MUST sign a digest
+* The signers may return the signature for verification
+* *NOTE*: there is a disincentive to return a signature, as the caller must
+	pay for ecrecover gas and storage slot updates (to transition states).
+
+=== `AWAITING_WITHDRAWAL_PROOF`
+* The signers has returned a valid signature on the message
+* The signers MUST provide a settlement proof
+* In happy cases, we may skip the this state entirely.
+
+=== Flow reachable from
+* `ACTIVE`
+** via `requestWithdrawal`
+
+=== Reachable exterior states
+* `FRAUD_PRE_LIQUIDATION`
+** via an ECDSA or BTC fraud proof
+** via a state timeout
+* `REDEEMED`
+** By providing a valid proof showing payment to the requester
+
+== Internal Transitions
+=== `provideWithdrawalSignature`
+* signers provide a valid ECDSA signature under their pubkey
+* *access control*
+** Anyone
+** expected: 1 or more signers
+* *args*
+** `bytes _signature`
+* *reads*
+** `address signersThresholdKeyAccount`
+** `bytes32 requestedDigest`
+** `uint256 withdrawalRequestTime`
+* *from*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *to*
+** `AWAITING_WITHDRAWAL_PROOF`
+
+=== `increaseWithdrawalFee`
+* Explicitly allow a new signature with an increased fee. The fee may increased
+  in linear steps over time. The new fee must be explicitly authorized by the
+  contract, and the authorizing tx confirmed, before a new signature is
+  created. To prevent bad behavior, signers must provide a signature at each
+  fee level well before the next increase is available.
+* *access control*
+** Anyone
+*** after a timer
+* *args*
+** `uint256 _newFee`
+* *reads*
+** `uint256 initialWithdrawalFee`
+** `bytes requesterPKH`
+** `uint256 block.timestamp`
+* *writes*
+** `uint256 withdrawalRequestTime`
+*** rewrite this time to give signers a time extension
+* *from*
+** `AWAITING_WITHDRAWAL_PROOF`
+* *to*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+
+=== `provideWithdrawalProof`
+* signers provides a valid Bitcoin SPV Proof of payment to the requester
+* *access control*
+** Anyone
+** expected: 1 or more signers
+* *args*
+** `bytes _bitcoinTX`
+** `bytes _merkleProof`
+** `bytes _bitcoinHeaders`
+* *reads*
+** `bytes requesterPKH`
+** `uint256 oracleDifficultyReq`
+** `uint256 depositSize`
+** `uint256 fee`
+* *writes*
+** `mapping(address => uint256) balances`
+*** on TBTC ERC20 Contract
+*** 1 time for each signer
+*** 1 time for the deposit contract
+* *from*
+** `AWAITING_WITHDRAWAL_PROOF`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *to*
+** `REDEEMED`
+
+== External Transitions
+=== `requestWithdrawal` (inbound)
+// TODO: link this elsewhere
+* Deposit owner requests a withdrawal
+* *access control*
+** only deposit owner
+* *args*
+** `uint256 _fee`
+** `bytes _requesterPKH`
+* *reads*
+** `address depositOwner`
+* *writes*
+** `uint256 initialWithdrawalFee`
+*** the requested withdrawal fee
+** `bytes requesterPKH`
+*** the bitcoin hash160 pubkeyhash to which to deliver BTC
+** `uint256 outstandingTBTC`
+*** check that the `Deposit`'s TBTC has been returned
+*** this is a derived attribute from UTXO size and equity
+** `uint256 withdrawalRequestTime`
+*** start timeouts for signers wrt signing and withdrawal
+** `mapping(address => uint256) balances`
+*** change requester balance on TBTC ERC20 Contract
+** `uint256 totalSupply`
+*** change total supply (burn) on TBTC ERC20 Contract
+* *from*
+** `ACTIVE`
+* *to*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+
+=== `provideECDSAFraudProof` (outbound)
+// TODO: link this elsewhere
+* *access control*
+** anyone
+* *from*
+** `AWAITING_WITHDRAWAL_PROOF`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *to*
+** `FRAUD_PRE_LIQUIDATION`
+
+=== `provideSPVFraudProof` (outbound)
+// TODO: link this elsewhere
+* *access control*
+** anyone
+* *from*
+** `AWAITING_WITHDRAWAL_PROOF`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *to*
+** `FRAUD_PRE_LIQUIDATION`
+
+=== `notifyRedemptionProofTimeout` (outbound)
+// TODO: link this elsewhere
+* *access control*
+** anyone
+* *from*
+** `AWAITING_WITHDRAWAL_PROOF`
+* *to*
+** `FRAUD_PRE_LIQUIDATION`
+
+=== `notifySignatureTimeout` (outbound)
+// TODO: link this elsewhere
+* *access control*
+** anyone
+* *from*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *to*
+** `FRAUD_PRE_LIQUIDATION`
