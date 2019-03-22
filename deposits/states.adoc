@@ -1,0 +1,107 @@
+:toc: macro
+
+= Funding Flow
+
+ifndef::tbtc[toc::[]]
+
+
+== Overview
+
+This is the process to set up a deposit, and fund it with BTC. Upon successful
+funding, the funder will own and new _Deposit_ and will be able to create new
+TBTC. To start the funding process, a funder places a small bond, and requests
+creation of a new keep to custody BTC. If a new keep is successfully formed,
+the Keep contracts notify the _Deposit_ of the signing group's public key. If
+keep setup fails, the funding process is aborted.
+
+Once a keep is formed, the funder transfers BTC to the keep's pay to witness
+public key hash (p2wpkh) address. This BTC becomes the underlying collateral
+for the new _Deposit_. The funder proves deposit via a stateless SPV proof of
+inclusion. If the funder fails to make this transfer in a timely manner, the
+funding process is aborted and the funder's keep bond is forfeit.
+
+Once BTC collateralization has been proven, the _Deposit_ becomes active. Then
+the funder may withdraw TBTC, up to the amount of BTC collateral (less the
+minimal custodial deposit). The funding process can only result in an active
+_Deposit_ or an abort state.
+
+== States
+
+=== `START`
+* Deposit does not exist yet
+
+=== `AWAITING_SIGNER_SETUP`
+* The funder has placed a bond, and requested a signing group
+* The Keep contracts must select a signing group or return failure
+
+=== `AWAITING_BTC_FUNDING_PROOF`
+* A signing group has been formed, and their public key hash returned
+* The funder MUST return a SPV proof of funding before a timeout
+
+
+=== Reachable exterior states
+* `FAILED_SETUP`
+** via a timeout in `AWAITING_SIGNER_SETUP`
+** via a timeout in `AWAITING_BTC_FUNDING_PROOF`
+* `ACTIVE`
+** via `provideBTCFundingProof`
+
+// TODO: should FRAUD_PRE_LIQUIDATION be reachable from
+//       AWAITING_BTC_FUNDING_PROOF?
+//       e.g. if a signature is seen before the user even proves funding
+
+== Internal Transitions
+=== `createNewDeposit`
+* Anyone may put up a bond requesting a new signer group be formed
+* *access control*
+** anyone
+* *writes*
+** `addres owner`
+* *from*
+** `START`
+* *to*
+** `AWAITING_SIGNER_SETUP`
+
+=== `notifySignerSetupFailure`
+* Keep contract (or anyone else after a timer) notifies the deposit ath signer
+  group setup has failed (or at least not proceeded in a timely manner)
+* *access control*
+** Keep contracts
+** anyone (after a timeout)
+* *from*
+** `AWAITING_SIGNER_SETUP`
+* *to*
+** `FAILED_SETUP`
+
+=== `notifySignerPubkey`
+* Keep contract notifies the Deposit of its signing group's public key
+* *access control*
+** Keep contracts
+* *args*
+** `bytes _keepPubkey`
+* *writes*
+** `bytes keepPubkey`
+* *from*
+** `AWAITING_SIGNER_SETUP`
+* *to*
+** `AWAITING_BTC_FUNDING_PROOF`
+
+
+== External Transitions
+
+=== `provideBTCFundingProof`
+* Funder (or anyone else) provides a proof of BTC funding for the Deposit
+* *access control*
+** Anyone
+** expoected: Deposit owner
+* *args*
+** `bytes _tx`
+** `bytes _proof`
+** `uint _index`
+** `bytes _headers`
+* *writes*
+** `uint256 utxoSize`
+* *from*
+** `AWAITING_BTC_FUNDING_PROOF`
+* *to*
+** `ACTIVE`
