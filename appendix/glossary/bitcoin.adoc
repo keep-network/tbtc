@@ -6,7 +6,7 @@ P2SH / P2WSH:: Pay to (witness) script hash
 
 Sighash:: Bitcoin signature hash algorithm
 
-BIP 143:: Adopted SegWit sighash proposal
+BIP 143:: Adopted https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki[SegWit sighash] proposal
 
 ALL:: Sighash mode committing to `ALL` outputs and `ALL` inputs
 
