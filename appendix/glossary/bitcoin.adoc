@@ -6,13 +6,15 @@ P2SH / P2WSH:: Pay to (witness) script hash
 
 Sighash:: Bitcoin signature hash algorithm
 
-BIP 143:: Adopted https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki[SegWit sighash] proposal
+BIP 143:: Adopted
+https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki[SegWit sighash]
+proposal
 
-ALL:: Sighash mode committing to `ALL` outputs and `ALL` inputs
+ALL:: Sighash mode committing to *all* outputs and *all* inputs
 
-SINGLE:: Sighash mode committing to `ONE` output and `ALL` inputs
+SINGLE:: Sighash mode committing to *one* output and *all* inputs
 
-ANYONECANPAY:: Sighash modifier. Changes `ALL` or `SINGLE` to commit to only
+ANYONECANPAY:: Sighash modifier. Changes *all* or *single* to commit to only
 `ONE` input
 
 SACP, singleACP:: `SINGLEANYONECANPAY`
