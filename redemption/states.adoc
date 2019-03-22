@@ -38,7 +38,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * In happy cases, we may skip the this state entirely.
 
 === Flow reachable from
-* Active
+* `ACTIVE`
 ** via `requestWithdrawal`
 
 === Reachable exterior states
