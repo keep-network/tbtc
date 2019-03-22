@@ -19,7 +19,7 @@ Ergo, cancellation of this process could result in BTC moved from the signers'
 address, and an Active Deposit with TBTC outstanding. This would result in a
 supply peg-break.
 
-The requestor notifies the `Deposit` of the bitcoin tx information (fee and
+The requester notifies the `Deposit` of the bitcoin tx information (fee and
 recipient pubkeyhash) they are requesting, along with enough TBTC to cover the
 outstanding TBTC from the `Deposit` (counting any existing equity).
 
@@ -46,7 +46,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** via an ECDSA or BTC fraud proof
 ** via a state timeout
 * `REDEEMED`
-** By providing a valid proof showing payment to the requestor
+** By providing a valid proof showing payment to the requester
 
 == Internal Transitions
 === `provideWithdrawalSignature`
@@ -69,7 +69,8 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * Explicitly allow a new signature with an increased fee. The fee may increased
   in linear steps over time. The new fee must be explicitly authorized by the
   contract, and the authorizing tx confirmed, before a new signature is
-  created.
+  created. To prevent bad behavior, signers must provide a signature at each
+  fee level well before the next increase is available.
 * *access control*
 ** Anyone
 *** after a timer
@@ -77,19 +78,18 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `uint256 _newFee`
 * *reads*
 ** `uint256 initialWithdrawalFee`
-** `bytes requestorPKH`
+** `bytes requesterPKH`
 ** `uint256 block.timestamp`
 * *writes*
 ** `uint256 withdrawalRequestTime`
 *** rewrite this time to give signers a time extension
-*** prevents requestor trolling
 * *from*
 ** `AWAITING_WITHDRAWAL_PROOF`
 * *to*
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 
 === `provideWithdrawalProof`
-* signers provides a valid Bitcoin SPV Proof of payment to the requestor
+* signers provides a valid Bitcoin SPV Proof of payment to the requester
 * *access control*
 ** Anyone
 ** expected: 1 or more signers
@@ -98,7 +98,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `bytes _merkleProof`
 ** `bytes _bitcoinHeaders`
 * *reads*
-** `bytes requestorPKH`
+** `bytes requesterPKH`
 ** `uint256 oracleDifficultyReq`
 ** `uint256 depositSize`
 ** `uint256 fee`
@@ -121,13 +121,13 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** only deposit owner
 * *args*
 ** `uint256 _fee`
-** `bytes _requestorPKH`
+** `bytes _requesterPKH`
 * *reads*
 ** `address depositOwner`
 * *writes*
 ** `uint256 initialWithdrawalFee`
 *** the requested withdrawal fee
-** `bytes requestorPKH`
+** `bytes requesterPKH`
 *** the bitcoin hash160 pubkeyhash to which to deliver BTC
 ** `uint256 outstandingTBTC`
 *** check that the `Deposit`'s TBTC has been returned
@@ -135,7 +135,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `uint256 withdrawalRequestTime`
 *** start timeouts for signers wrt signing and withdrawal
 ** `mapping(address => uint256) balances`
-*** change requestor balance on TBTC ERC20 Contract
+*** change requester balance on TBTC ERC20 Contract
 ** `uint256 totalSupply`
 *** change total supply (burn) on TBTC ERC20 Contract
 * *from*
