@@ -1,6 +1,6 @@
 :toc: macro
 
-= Withdrawal Flow
+= Redemption Flow
 
 ifndef::tbtc[toc::[]]
 
