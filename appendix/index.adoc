@@ -1,0 +1,9 @@
+:toc: macro
+
+= Appendix
+
+ifndef::tbtc[]
+toc::[]
+endif::tbtc[]
+
+include::./glossary/index.adoc[leveloffset=+1]

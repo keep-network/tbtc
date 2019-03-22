@@ -242,4 +242,4 @@ include::failure/index.adoc[leveloffset=+2]
 
 include::redemption/index.adoc[leveloffset=+2]
 
-include::glossary/index.adoc[leveloffset=+2]
+include::appendix/index.adoc[leveloffset=+2]
