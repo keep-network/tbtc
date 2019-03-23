@@ -40,11 +40,24 @@ an abort state.
 * A signing group has been formed, and their public key hash returned
 * The funder MUST return a SPV proof of funding before a timeout
 
+=== `FRAUD_AWAITING_BTC_FUNDING_PROOF`
+* Signing group fraud has been detected before the funding proof has been
+  provided
+* Signers bonds are seized when this state is entered.
+* If the funder can provide a funding proof in a reasonable amount of time,
+  then they will receive the singer bonds
+* If the timeout elapses, signer bonds will be partially slashed and then
+  returned.
+* NOTE: the timeout on this state should be relatively short. We want to make
+  it risky for a signer who _has not already funded_ when this state is entered
+  to fund in order after this state is entered in order to try to receive the
+  full bond amount
 
 === Reachable exterior states
 * `FAILED_SETUP`
 ** via a timeout in `AWAITING_SIGNER_SETUP`
 ** via a timeout in `AWAITING_BTC_FUNDING_PROOF`
+** via any state transitin from `FRAUD_AWAITING_BTC_FUNDING_PROOF`
 * `ACTIVE`
 ** via `provideBTCFundingProof`
 
@@ -90,7 +103,7 @@ an abort state.
 
 === `notifyFundingTimeout`
 * Anyone may notify a Deposit that its funder has failed to submit a funding
-  proof. The funder's bond is forfeit due to non-completion at this point.
+  proof. The funder's bond is forfeit due to non-completion at this point
 * *access control*
 ** anyone
 * *from*
@@ -98,13 +111,51 @@ an abort state.
 * *to*
 ** `FAILED_SETUP`
 
+=== `provideFundingECDSAFraudProof`
+* Provide a fraud proof before a funding SPV proof has been verified
+* The funder's bond is returned at this point
+* Signer bonds are seized here
+* We consider this to be a different transition than `provideECDSAFraudProof`
+  because it yields a different state. This also prevents edge cases with very
+  short-lived deposits
+* *access control*
+** anyone
+* *from*
+** `AWAITING_BTC_FUNDING_PROOF`
+* *to*
+** `FRAUD_AWAITING_BTC_FUNDING_PROOF`
 
+=== `notifyFraudFundingTimeout`
+* Anyone may notify a Deposit that its funder has failed to submit a funding
+  proof during the fraud period. The funder is not penalized for this
+* When this occurs, signer bonds are partially slashed and then returned
+* We consider this to be a different transition than `notifyFundingTimeout`
+  because it yields a different state and has different behavior
+* *access control*
+** anyone
+* *from*
+** `FRAUD_AWAITING_BTC_FUNDING_PROOF`
+* *to*
+** `FAILED_SETUP`
+
+=== `provideFraudBTCFundingProof`
+* Anyone may notify a Deposit that its funder has sent funds to the signers'
+  Bitcoin public key hash
+* If this occurs, signer bonds are distributed to the funder
+* We consider this to be a different transition than `provideBTCFundingProof`
+  because it yields a different state and has different behavior
+* *access control*
+** anyone
+* *from*
+** `FRAUD_AWAITING_BTC_FUNDING_PROOF`
+* *to*
+** `FAILED_SETUP`
 
 == External Transitions
 
 === `provideBTCFundingProof`
-* Funder (or anyone else) provides a proof of BTC funding for the Deposit.
-  The funder's bond is returned once this proof is successfully verified.
+* Funder (or anyone else) provides a proof of BTC funding for the Deposit
+  The funder's bond is returned once this proof is successfully verified
 * *access control*
 ** Anyone
 ** expected: Deposit owner
