@@ -1,0 +1,10 @@
+= Cross-chain communication
+
+Consensus relay:: Chain-tracking SPV on some other chain, e.g. BTCRelay.
+Consensus relays are long-running cross-chain mechanisms that track the
+consensus state of another chain. They're distinguished from other uses of the
+term "relay", eg the "threshold relay" random beacon mechanism.
+
+SPV:: Simplified payment verification
+
+Stateless SPV:: Non-chain-tracking SPV
