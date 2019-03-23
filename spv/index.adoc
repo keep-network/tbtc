@@ -101,7 +101,7 @@ to generate a false proof.
 
 === Relays
 
-The most conceptually straightforward SPV system is a Relay. In a Relay system
+The most conceptually straightforward SPV system is a relay. In a relay system
 each Proof of Work header is submitted to and verified by the host chain. The
 host chain smart contracts keep track of the best known header, and all past
 headers seen. An SPV proof in a relay system demonstrates that a transaction is
@@ -143,11 +143,11 @@ provide the relay with fake headers as it would to provide the Stateless SPV
 verifier with a complete Stateless proof. However, compared to relays,
 Stateless SPV proofs do not gain security over time without extending each
 proof to include new headers. It is important to this argument that the recency
-of the transaction is known, without this, an attacker could start begin to
-generate a proof well in advance of proving time, essentially getting a head
-start on the main chain. Relays get recency assurances at each block, as each
-new header must reference the header immediately preceding it, but a Stateless
-SPV proof must get its recency from some outside source.
+of the transaction is known, without this, an attacker could begin to generate
+a proof well in advance of proving time, essentially getting a head start on
+the main chain. Relays get recency assurances at each block, as each new header
+must reference the header immediately preceding it, but a Stateless SPV proof
+must get its recency from some outside source.
 
 === Light Relays
 
@@ -173,13 +173,14 @@ difficulty, and no other information about its state.
 Knowing the current difficulty gives Stateless SPV proofs stronger recency
 assurances. Any newly-generated Stateless SPV must include that difficulty in
 its header chain. And that difficulty is not known to any party in advance.
-Miners with an `n`-fraction (as usual, `n >= 2`) of the hashrate have a
-1-in-`n` chance of being allowed to set the difficulty, and thus have a
-1-in-`n` chance of being able to successfully predict it 2 weeks in advance
-(by generating fake proofs, and then setting the difficulty such that they are
-valid). Generalized, this is a 1-in-`n^t^` chance of successfully predicting
-difficulty `t` periods in advance. Therefore the use of the light relay
-provides stronger recency assumptions to Stateless SPV proofs when used as an
-additional validation step.
+Miners with an `n`-fraction (as usual, `n >= 2` due to the 51% assumption) of
+the hashrate have a `1/n` chance of being allowed to set the difficulty, and
+thus have a `1/n` chance of being able to successfully predict it 2 weeks in
+advance (by generating fake proofs, and then setting the difficulty such that
+they appear valid). Generalized, this is a `1/n^t^` chance of successfully
+predicting difficulty `t` periods in advance. Therefore the use of the light
+relay provides stronger security properties to Stateless SPV proofs when used
+as an additional validation step, as even entities with significant mining
+resources have a greatly reduced chance of creating fake proofs.
 
 // EOF
