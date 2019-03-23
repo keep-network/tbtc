@@ -1,0 +1,18 @@
+:toc: macro
+
+= Glossary
+
+ifndef::tbtc[toc::[]]
+
+Host chain:: The chain on which TBTC is minted
+
+Keep:: Secure multiparty computation setups powering tBTC signing
+
+PKH:: Public key hash
+
+Random beacon:: A secure, verifiable source of randomness accessible on the
+host chain.
+
+include::./tbtc.adoc[leveloffset=+1]
+include::./cross-chain.adoc[leveloffset=+1]
+include::./bitcoin.adoc[leveloffset=+1]
