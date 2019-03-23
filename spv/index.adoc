@@ -161,13 +161,13 @@ error in the Satoshi client, one interblock period is exlcuded from the
 difficulty calculation). The change is deterministic and within some tolerance
 may be set by the miner of the last block.
 
-A Light Relay does not store every block header. Instead it stores only a slice
+A light relay does not store every block header. Instead it stores only a slice
 of headers around the difficulty adjustment event and records the difficulty
 for the current 2016-block epoch. This slice is validated by its objective
 proof of work, as well as verifying that its first headers' difficulty matches
 the current epoch difficulty, that the change occurs at an expected index in
 the slice, and that the new difficulty conforms to Bitcoin's adjustment
-algorithm. In other words, our Light Relay tracks only Bitcoin's current
+algorithm. In other words, our light relay tracks only Bitcoin's current
 difficulty, and no other information about its state.
 
 Knowing the current difficulty gives Stateless SPV proofs stronger recency
