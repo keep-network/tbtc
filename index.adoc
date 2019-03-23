@@ -230,6 +230,8 @@ The architecture is broken down into
 * Wallet failure
 * Redemption
 
+include::spv/index.adoc[leveloffset=+2]
+
 include::deposits/index.adoc[leveloffset=+2]
 
 include::bonding/index.adoc[leveloffset=+2]
