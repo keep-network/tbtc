@@ -5,7 +5,6 @@
 ifndef::tbtc[]
 toc::[]
 
-:root-prefix: ../
 endif::tbtc[]
 
 // TODO: many refs
@@ -70,16 +69,18 @@ in specific UTXOs on the Bitcoin blockchain, so we validate only the
 transactions and headers related to those UTXOs, rather than all transactions.
 
 When the assumption fails, and significant work is put on top of invalid
-transactions, the security model may also fail. Our argument against this is
-rooted in the objective economics of Proof of Work. If a miner chooses to
-devote resources to producing work on top of an invalid transaction she must
-give up mining rewards while still bearing the electricity and hardware costs
-of mining. She gives up mining rewards because the invalid transaction may
-never be included in the main Bitcoin chain. It will be rejected by all fully
-validating nodes. Therefore producing a fake proof has a large inherent cost.
-We argue that the system is economically secure so long as the cost of
-producing a fake proof is high and the value that can be gained by producing a
-fake proof is orders of magnitude less than that cost.
+transactions, the security model may also fail.  We call these "fake" proofs
+and "fake" headers, because they are not semantically valid Bitcoin
+transactions or headers. We argue that fake proofs will be extremely rare. Our
+argument against them is rooted in the objective economics of Proof of Work. If
+a miner chooses to devote resources to producing work on top of an invalid
+transaction she must give up mining rewards while still bearing the electricity
+and hardware costs of mining. She gives up mining rewards because the invalid
+transaction may never be included in the main Bitcoin chain. It will be
+rejected by all fully validating nodes. Therefore producing a fake proof has a
+large inherent cost. We argue that the system is economically secure so long as
+the cost of producing a fake proof is high and the value that can be gained by
+producing a fake proof is orders of magnitude less than that cost.
 
 // TODO: does the n add anything? can someone else improve it?
 
@@ -178,9 +179,10 @@ the hashrate have a `1/n` chance of being allowed to set the difficulty, and
 thus have a `1/n` chance of being able to successfully predict it 2 weeks in
 advance (by generating fake proofs, and then setting the difficulty such that
 they appear valid). Generalized, this is a `1/n^t^` chance of successfully
-predicting difficulty `t` periods in advance. Therefore the use of the light
-relay provides stronger security properties to Stateless SPV proofs when used
-as an additional validation step, as even entities with significant mining
-resources have a greatly reduced chance of creating fake proofs.
+predicting difficulty `t` adjustment periods (`2t` weeks) in advance. Therefore
+the use of the light relay provides stronger security properties to Stateless
+SPV proofs when used as an additional validation step, as even entities with
+significant mining resources have a greatly reduced chance of creating fake
+proofs.
 
 // EOF
