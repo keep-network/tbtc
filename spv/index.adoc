@@ -113,15 +113,15 @@ over time.
 
 === Stateless SPV
 
-Where relays decline to check validity, Stateless SPV systems both decline to
-check validity and fail to follow the heaviest chain. In fact, a Stateless SPV
-system does not track anything at all. Instead Stateless SPV proof relies
+Where relays decline to check validity, stateless SPV systems both decline to
+check validity and fail to follow the heaviest chain. In fact, a stateless SPV
+system does not track anything at all. Instead stateless SPV proof relies
 entirely on the objective work present in a discrete slice of headers. A
-Stateless SPV proof consists of one or more transactions, merkle proofs of
+stateless SPV proof consists of one or more transactions, merkle proofs of
 inclusion for those transactions, and a set of consecutive headers on top of
 those transactions. A verifier can then inspect the headers, and give the proof
 an objective quality score based on the amount of work in those headers.
-Anyone interested in using the state and history information in the Stateless
+Anyone interested in using the state and history information in the stateless
 SPV proof's information can determine whether to accept or reject it based on
 the proof's quality.
 
@@ -129,7 +129,7 @@ the proof's quality.
 // TODO: cite a good source on BTCRelay
 
 Stateless SPVs are relatively recent work. Their compelling advantage is
-size and cost-efficieny. A Stateless SPV proof is less than 1KB, all of which
+size and cost-efficieny. A stateless SPV proof is less than 1KB, all of which
 can be discarded after validation. A relay, on the other hand, stores each
 header on-chain. This means a relay will consume linearly increasing state
 space over time. Maintenance costs are already unsustainably high, as evidenced
@@ -138,23 +138,23 @@ on-chain storage and the likely introduction of state rent in major host chain
 candidates, relying on a stateful relay seems short-sighted. A high-state
 system that is viable today may not be viable in the future.
 
-We argue that for recent transactions Stateless SPV's security is equivalent
+We argue that for recent transactions stateless SPV's security is equivalent
 to a relay's. An attacker would have to spend the same number of hashes to
-provide the relay with fake headers as it would to provide the Stateless SPV
-verifier with a complete Stateless proof. However, compared to relays,
-Stateless SPV proofs do not gain security over time without extending each
-proof to include new headers. It is important to this argument that the recency
-of the transaction is known, without this, an attacker could begin to generate
-a proof well in advance of proving time, essentially getting a head start on
-the main chain. Relays get recency assurances at each block, as each new header
-must reference the header immediately preceding it, but a Stateless SPV proof
-must get its recency from some outside source.
+provide the relay with fake headers as it would to provide the stateless SPV
+verifier with a stateless proof with sufficient work. However, compared to
+relays, stateless SPV proofs do not gain security over time without extending
+each proof to include new headers. It is important to this argument that the
+recency of the transaction is known, without this, an attacker could begin to
+generate a proof well in advance of proving time, essentially getting a head
+start on the main chain. Relays get recency assurances at each block, as each
+new header must reference the header immediately preceding it, but a stateless
+SPV proof must get its recency from some outside source.
 
 === Light Relays
 
 Light relays are a new variant of on-chain SPV developed for tBTC. They seek to
-take advantage of the compact and efficient Stateless SPV proofs while relaying
-enough information to provide each Stateless proof with some recency guarantee.
+take advantage of the compact and efficient stateless SPV proofs while relaying
+enough information to provide each stateless proof with some recency guarantee.
 We achieve this by taking advantage of the difficulty adjustment feature of
 Bitcoin's protocol. Bitcoin adjusts difficulty every 2016 blocks, based on
 timestamps of the first and last block in that period (due to an off-by-one
@@ -171,8 +171,8 @@ the slice, and that the new difficulty conforms to Bitcoin's adjustment
 algorithm. In other words, our light relay tracks only Bitcoin's current
 difficulty, and no other information about its state.
 
-Knowing the current difficulty gives Stateless SPV proofs stronger recency
-assurances. Any newly-generated Stateless SPV must include that difficulty in
+Knowing the current difficulty gives stateless SPV proofs stronger recency
+assurances. Any newly-generated stateless SPV must include that difficulty in
 its header chain. And that difficulty is not known to any party in advance.
 Miners with an `n`-fraction (as usual, `n >= 2` due to the 51% assumption) of
 the hashrate have a `1/n` chance of being allowed to set the difficulty, and
@@ -180,7 +180,7 @@ thus have a `1/n` chance of being able to successfully predict it 2 weeks in
 advance (by generating fake proofs, and then setting the difficulty such that
 they appear valid). Generalized, this is a `1/n^t^` chance of successfully
 predicting difficulty `t` adjustment periods (`2t` weeks) in advance. Therefore
-the use of the light relay provides stronger security properties to Stateless
+the use of the light relay provides stronger security properties to stateless
 SPV proofs when used as an additional validation step, as even entities with
 significant mining resources have a greatly reduced chance of creating fake
 proofs.
