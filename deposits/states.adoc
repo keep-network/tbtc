@@ -49,9 +49,9 @@ an abort state.
 * If the timeout elapses, signer bonds will be partially slashed and then
   returned.
 * NOTE: the timeout on this state should be relatively short. We want to make
-  it risky for a signer who _has not already funded_ when this state is entered
-  to fund in order after this state is entered in order to try to receive the
-  full bond amount
+  it risky for a depositor who _has not already funded_ when this state is
+  entered to fund in order after this state is entered in order to try to
+  receive the full signer bond amount
 
 === Reachable exterior states
 * `FAILED_SETUP`
