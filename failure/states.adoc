@@ -24,8 +24,6 @@ fraud-related state transitions in a single document.
 ** All fraud state transitions start the liquidation process
 
 === Flow reachable from
-* `AWAITING_SIGNER_SETUP`
-* `AWAITING_BTC_FUNDING_PROOF`
 * `ACTIVE`
 * `AWAITING_WITHDRAWAL_SIGNATURE`
 * `AWAITING_WITHDRAWAL_PROOF`

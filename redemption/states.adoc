@@ -42,7 +42,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** via `requestWithdrawal`
 
 === Reachable exterior states
-* `FRAUD_PRE_LIQUIDATION`
+* `AWAITING_OWNER_OPTION`
 ** via an ECDSA or BTC fraud proof
 ** via a state timeout
 * `REDEEMED`
@@ -154,7 +154,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `AWAITING_WITHDRAWAL_PROOF`
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** `FRAUD_PRE_LIQUIDATION`
+** `AWAITING_OWNER_OPTION`
 
 === `provideSPVFraudProof` (outbound)
 // TODO: link this elsewhere
@@ -164,7 +164,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `AWAITING_WITHDRAWAL_PROOF`
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** `FRAUD_PRE_LIQUIDATION`
+** `AWAITING_OWNER_OPTION`
 
 === `notifyRedemptionProofTimeout` (outbound)
 // TODO: link this elsewhere
@@ -173,7 +173,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *from*
 ** `AWAITING_WITHDRAWAL_PROOF`
 * *to*
-** `FRAUD_PRE_LIQUIDATION`
+** `AWAITING_OWNER_OPTION`
 
 === `notifySignatureTimeout` (outbound)
 // TODO: link this elsewhere
@@ -182,4 +182,4 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *from*
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** `FRAUD_PRE_LIQUIDATION`
+** `AWAITING_OWNER_OPTION`

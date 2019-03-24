@@ -61,10 +61,6 @@ an abort state.
 * `ACTIVE`
 ** via `provideBTCFundingProof`
 
-// TODO: should FRAUD_PRE_LIQUIDATION be reachable from
-//       AWAITING_BTC_FUNDING_PROOF?
-//       e.g. if a signature is seen before the user even proves funding
-
 == Internal Transitions
 === `createNewDeposit`
 * Anyone may put up a bond requesting a new signer group be formed
