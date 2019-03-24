@@ -56,10 +56,15 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** expected: 1 or more signers
 * *args*
 ** `bytes _signature`
+*** The redemption signature
+** `bytes _publicKey`
+*** The public key to verify the signature under (must match signer account)
 * *reads*
 ** `address signersThresholdKeyAccount`
 ** `mapping(bytes32 => bool) wasRequested`
 ** `uint256 withdrawalRequestTime`
+** `bytes32 lastRequestedDigest`
+*** Only accept signatures on the _most recent_ requested digest
 * *from*
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
@@ -83,6 +88,8 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *writes*
 ** `uint256 withdrawalRequestTime`
 *** rewrite this time to give signers a time extension
+** `bytes32 lastRequestedDigest`
+*** update the most recently requested signature
 * *from*
 ** `AWAITING_WITHDRAWAL_PROOF`
 * *to*
@@ -141,6 +148,8 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 *** change requester balance on TBTC ERC20 Contract
 ** `uint256 totalSupply`
 *** change total supply (burn) on TBTC ERC20 Contract
+** `bytes32 lastRequestedDigest`
+*** record the digest as the newest
 * *from*
 ** `ACTIVE`
 * *to*
