@@ -61,10 +61,6 @@ an abort state.
 * `ACTIVE`
 ** via `provideBTCFundingProof`
 
-// TODO: should FRAUD_PRE_LIQUIDATION be reachable from
-//       AWAITING_BTC_FUNDING_PROOF?
-//       e.g. if a signature is seen before the user even proves funding
-
 == Internal Transitions
 === `createNewDeposit`
 * Anyone may put up a bond requesting a new signer group be formed
@@ -95,7 +91,7 @@ an abort state.
 * *args*
 ** `bytes _keepPubkey`
 * *writes*
-** `bytes keepPubkey`
+** `address signersThresholdKeyAccount`
 * *from*
 ** `AWAITING_SIGNER_SETUP`
 * *to*
@@ -113,13 +109,25 @@ an abort state.
 
 === `provideFundingECDSAFraudProof`
 * Provide a fraud proof before a funding SPV proof has been verified
-* The funder's bond is returned at this point
+* The funder's bond is returned here
 * Signer bonds are seized here
 * We consider this to be a different transition than `provideECDSAFraudProof`
   because it yields a different state. This also prevents edge cases with very
   short-lived deposits
 * *access control*
 ** anyone
+* *args*
+** `bytes _signature`
+*** The purportedly fraudulent signature
+** `bytes _publicKey`
+*** The public key to verify the signature under (must match signer account)
+** `bytes _digest`
+*** The digest on which the signature was made
+** `bytes _preImage`
+*** The sha256 preimage of that digest (on Bitcoin txns, this will always be
+    the 32 byte intermediate sighash digest)
+** `address signersThresholdKeyAccount`
+*** to check that the signature is valid
 * *from*
 ** `AWAITING_BTC_FUNDING_PROOF`
 * *to*

@@ -1,0 +1,125 @@
+:toc: macro
+
+= Frauds & Aborts
+
+ifndef::tbtc[toc::[]]
+
+
+== Overview
+
+Abort processes handle custody failures. This includes punishing signers and
+starting the bond liquidation process. These transitions can be invoked from
+almost any Deposit state, as faults may occur during any other flow. Once fault
+has been proven, the owner of the deposit has the option to purchase signer
+bonds by returning all outstanding TBTC. If they do not exercise this option in
+a timely manner, the bonds are put up for auction to the public via the
+Liquidation flow.
+
+While there is no fraud or abort state per se, it seems helpful to put the
+fraud-related state transitions in a single document.
+
+== States
+=== Reachable exterior states
+* `AWAITING_OWNER_OPTION`
+** All fraud state transitions start the liquidation process
+
+=== Flow reachable from
+* `ACTIVE`
+* `AWAITING_WITHDRAWAL_SIGNATURE`
+* `AWAITING_WITHDRAWAL_PROOF`
+* `OWNER_MARGIN_CALLED`
+* `OWNER_AUCTION_IN_PROGRESS`
+* `SIGNER_MARGIN_CALLED`
+
+// TODO: distinguish between frauds and aborts?
+
+== External Transitions
+
+=== `provideECDSAFraudProof`
+* Anyone provides a valid signature under the signers' group key.
+  Proof is fraud if the signature is valid and was not explicitly requested.
+* *access control*
+** anyone
+* *args*
+** `bytes _signature`
+*** The purportedly fraudulent signature
+** `bytes _publicKey`
+*** The public key to verify the signature under (must match signer account)
+** `bytes _digest`
+*** The digest on which the signature was made
+** `bytes _preImage`
+*** The sha256 preimage of that digest (on Bitcoin txns, this will always be
+    the 32 byte intermediate sighash digest)
+* *reads*
+** `address signersThresholdKeyAccount`
+*** to check that the signature is valid
+** `mapping(bytes32 => bool) wasRequested`
+*** check whether the signature was requested
+* *from*
+** `AWAITING_SIGNER_SETUP`
+** `AWAITING_BTC_FUNDING_PROOF`
+** `ACTIVE`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+** `AWAITING_WITHDRAWAL_PROOF`
+** `OWNER_MARGIN_CALLED`
+** `OWNER_AUCTION_IN_PROGRESS`
+** `SIGNER_MARGIN_CALLED`
+* *to*
+** `AWAITING_OWNER_OPTION`
+
+=== `provideSPVFraudProof`
+* Anyone provides a SPV proof that the Deposit UTXO has been consumed.
+  If the proof is valid at recent difficulty, it is proof of signer fraud.
+* *access control*
+** anyone
+* *args*
+** `bytes _tx`
+*** the bitcoin tx
+** `bytes _proof`
+*** the bitcoin merkle inclusion proof
+** `uint _index`
+*** the index of the leaf in the merkle tree (1-indexed, sorry)
+** `bytes _headers`
+*** the header chain, earliest first, no padding
+* *reads*
+** `bytes utxoOutpoint`
+*** check if the tx spends the deposit outpoint
+** `uint256 currentDifficulty` -- from light relay
+*** check if the proof difficulty matches bitcoin main chain
+* *from*
+** `AWAITING_SIGNER_SETUP`
+** `AWAITING_BTC_FUNDING_PROOF`
+** `ACTIVE`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+** `AWAITING_WITHDRAWAL_PROOF`
+** `OWNER_MARGIN_CALLED`
+** `OWNER_AUCTION_IN_PROGRESS`
+** `SIGNER_MARGIN_CALLED`
+* *to*
+** `AWAITING_OWNER_OPTION`
+
+=== `notifyRedemptionProofTimeout`
+* Anyone may poke the contract to show that a redemption proof was not
+  provided within the permissible time frame. Treated as Abort
+* *access control*
+** anyone
+* *reads*
+** `uint256 withdrawalRequestTime`
+*** for checking if the timer has elapsed
+* *from*
+** `AWAITING_WITHDRAWAL_PROOF`
+* *to*
+** `AWAITING_OWNER_OPTION`
+
+=== `notifySignatureTimeout`
+* Anyone may poke the contract to show that a redemption signature was not
+  provided within the permissible time frame. Treated as Abort
+* *access control*
+** anyone
+* *reads*
+** `uint256 withdrawalRequestTime`
+*** for checking if the timer has elapsed
+* *from*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *to*
+** `AWAITING_OWNER_OPTION`
