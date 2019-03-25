@@ -109,17 +109,57 @@ The only link between the Bitcoin chain and the host chain is the tBTC system,
 which runs as a set of smart contracts on the host chain. As such, the Bitcoin
 transaction issued by the depositor has to be proven to the tBTC system before
 the tBTC system allows the depositor to behave as if they have successfully
-deposited their BTC into the custodial wallet. To prove this, the depositor
-constructs a transaction for the host chain that provides proof that the
-transaction was accepted on the Bitcoin chain and has had sufficient work built
-on top of the block that included the deposit transaction.
-
-When a deposit proof is accepted by the system, the deposit bond is refunded to
-the depositor. If a deposit proof is not received within a given timeout window,
-the signing group will disband and the system will seize the bond's value,
-making it available to the signing group members to reclaim.
+deposited their BTC into the custodial wallet. When a deposit proof is accepted
+by the system, the deposit bond is refunded to the depositor. If a deposit
+proof is not received within a given timeout window, the signing group will
+disband and the system will seize the bond's value, making it available to the
+signing group members to reclaim.
 
 // TODO What is "sufficient"? Defined as a system property? Dynamic?
+
+=== Light Relays
+
+// TODO: crosslink to appendix SPV section
+
+To prove deposit, the depositor constructs a transaction for the host chain
+that provides proof that the transaction was accepted on the Bitcoin chain
+and has had sufficient work built on top of the block that included the deposit
+transaction. These proofs are verified by an on-chain simple payment
+verification (SPV) system. A more complete discussion of cross-chain SPV
+systems and their security properties is included in the appendix.
+
+Light relays are a new variant of on-chain SPV developed for tBTC. They seek to
+take advantage of the compact and efficient stateless SPV proofs while relaying
+enough information to provide each stateless proof with some recency guarantee.
+We achieve this by taking advantage of the difficulty adjustment feature of
+Bitcoin's protocol. Bitcoin adjusts difficulty every 2016 blocks, based on
+timestamps of the first and last block in that period (due to an off-by-one
+error in the Satoshi client, one interblock period is exlcuded from the
+difficulty calculation). The change is deterministic and within some tolerance
+may be set by the miner of the last block.
+
+A light relay does not store every block header. Instead it stores only a slice
+of headers around the difficulty adjustment event and records the difficulty
+for the current 2016-block epoch. This slice is validated by its objective
+proof of work, as well as verifying that its first headers' difficulty matches
+the current epoch difficulty, that the change occurs at an expected index in
+the slice, and that the new difficulty conforms to Bitcoin's adjustment
+algorithm. In other words, our light relay tracks only Bitcoin's current
+difficulty, and no other information about its state.
+
+Knowing the current difficulty gives stateless SPV proofs stronger recency
+assurances. Any newly-generated stateless SPV must include that difficulty in
+its header chain. And that difficulty is not known to any party in advance.
+Miners with an `n`-fraction (as usual, `n >= 2` due to the 51% assumption) of
+the hashrate have a `1/n` chance of being allowed to set the difficulty, and
+thus have a `1/n` chance of being able to successfully predict it 2 weeks in
+advance (by generating fake proofs, and then setting the difficulty such that
+they appear valid). Generalized, this is a `1/n^t^` chance of successfully
+predicting difficulty `t` adjustment periods (`2t` weeks) in advance. Therefore
+the use of the light relay provides stronger security properties to stateless
+SPV proofs when used as an additional validation step, as even entities with
+significant mining resources have a greatly reduced chance of creating fake
+proofs.
 
 == Lots
 

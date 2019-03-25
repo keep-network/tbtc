@@ -223,15 +223,12 @@ all of which are implemented by the Keep network.
 
 The architecture is broken down into
 
-* Simplified Payment Verification (SPV)
 * Deposits and signer selection
 * Bonding and price feeds
 * Custodial fees
 * Signing
 * Wallet failure
 * Redemption
-
-include::spv/index.adoc[leveloffset=+2]
 
 include::deposits/index.adoc[leveloffset=+2]
 
