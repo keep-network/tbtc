@@ -5,7 +5,7 @@
 ]{
     \node[leaf state] (start) {Start};
     \node[box state,right=of start] (awaiting setup) {Awaiting Signer Setup};
-    \node[box state,above=of awaiting setup] (awaiting deposit proof) {Awaiting BTC Deposit Proof};
+    \node[box state,above=of awaiting setup] (awaiting deposit proof) {Awaiting BTC Funding Proof};
 
     \node[box state,above right=3cm of awaiting deposit proof] (active) {Active};
 
