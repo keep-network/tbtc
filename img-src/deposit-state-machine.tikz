@@ -5,25 +5,25 @@
 ]{
     \node[leaf state] (start) {Start};
     \node[box state,right=of start] (awaiting setup) {Awaiting Signer Setup};
-    \node[box state,above=of awaiting setup] (awaiting deposit proof) {Awaiting BTC Funding Proof};
+    \node[box state,above=of awaiting setup] (awaiting btc deposit proof) {Awaiting BTC Deposit Proof};
 
-    \node[box state,above right=3cm of awaiting deposit proof] (active) {Active};
+    \node[box state,above=of awaiting btc deposit proof] (active) {Active};
 
-    \node[leaf state,left=of awaiting deposit proof] (failed setup) {Failed Setup};
+    \node[box state,right=of awaiting btc deposit proof] (fraud awaiting btc deposit proof) {Fraud Awaiting BTC Deposit Proof};
+    \node[leaf state,right=of fraud awaiting btc deposit proof] (failed setup) {Failed Setup};
 
-    \node[box state,above=of awaiting deposit proof] (custodian margin called) {Custodian Margin Called};
-    \node[box state,above=2cm of active] (fraud pre-liquidation) {Fraud pre-liquidation};
+    \node[box state,left=of active] (custodian margin called) {Custodian Margin Called};
 
-    \node[box state,left=of fraud pre-liquidation] (awaiting owner option) {Awaiting owner option};
+    \node[box state,above left=of active] (awaiting owner option) {Awaiting owner option};
     \node[box state,above left=of awaiting owner option] (liquidation auction) {Liquidation auction in-progress};
-    \node[leaf state,above=3cm of awaiting owner option] (liquidated) {Liquidated};
+    \node[leaf state,left=of awaiting owner option] (liquidated) {Liquidated};
 
-    \node[box state,below right=of active] (owner margin called) {Owner Margin Called};
-    \node[box state,below=of owner margin called] (change owner auction) {Change Owner Auction};
+    \node[box state,above=of active] (owner margin called) {Owner Margin Called};
+    \node[box state,above=of owner margin called] (change owner auction) {Change Owner Auction};
 
-    \node[box state,above right=of fraud pre-liquidation] (awaiting signature) {Awaiting Signature};
-    \node[box state,right=of awaiting signature] (awaiting redemption proof) {Awaiting Redemption Proof};
-    \node[leaf state,below=of awaiting redemption proof] (redeemed) {Redeemed};
+    \node[box state,right=of owner margin called] (awaiting signature) {Awaiting Signature};
+    \node[leaf state,right=of awaiting signature] (redeemed) {Redeemed};
+    \node[box state,above=of redeemed] (awaiting redemption proof) {Awaiting Redemption Proof};
 
     \node[group,
           fit=(liquidation auction)
@@ -40,62 +40,55 @@
           (undercollateralized) {};
     \node[above right] at (undercollateralized.south west) {Undercollateralized};
     \node[group,
+          densely dashed,
+          fit=(owner margin called)
+              (change owner auction)]
+          (unmaintained) {};
+    \node[below] at (unmaintained.north) {Unmaintained};
+    \node[group,
           fit=(awaiting signature)
               (awaiting redemption proof)
               (redeemed)]
           (redemption) {};
     \node[above] at (redemption.south) {Redemption};
-    \node[group,
-          inner sep=22pt,
-          fit=(owner margin called)
-              (change owner auction)]
-          (unmaintained) {};
-    \node[above] at (unmaintained.south) {Unmaintained};
-
 
     \path [->] (start) edge [] (awaiting setup)
 
-               (awaiting setup) edge [] (awaiting deposit proof)
-               (awaiting setup) edge [] (failed setup)
+               (awaiting setup) edge [] (awaiting btc deposit proof)
+               (awaiting setup) edge [out=0,in=-90] (failed setup)
 
-               (awaiting deposit proof) edge [] (failed setup)
-               (awaiting deposit proof) edge [bend right] (active)
+               (awaiting btc deposit proof) edge (fraud awaiting btc deposit proof)
+               (awaiting btc deposit proof) edge (active)
+               (fraud awaiting btc deposit proof) edge (failed setup)
 
-               (active) edge [bend right=10] (custodian margin called)
-               (active) edge (fraud pre-liquidation)
-               (active) edge [bend right=45] (awaiting signature)
-               (active) edge [bend left=15] (owner margin called)
+               (active) edge [bend right=5] (custodian margin called)
+               (active) edge [out=135,in=-60] (awaiting owner option)
+               (active) edge [out=0,in=-90,min distance=1.5cm] (awaiting signature)
+               (active) edge [bend left=10] (owner margin called)
 
-               (custodian margin called) edge [bend right=10] (active)
-               (custodian margin called) edge [bend right=10] (fraud pre-liquidation)
-               (custodian margin called) edge (awaiting owner option)
+               (custodian margin called) edge [bend right=5] (active)
+               (custodian margin called) edge [] (awaiting owner option)
 
-               (awaiting owner option) edge [bend left] (liquidation auction)
+               (awaiting owner option) edge [bend right=25] (liquidation auction)
                (awaiting owner option) edge (liquidated)
 
-               (liquidation auction) edge [bend left=20] (liquidated)
+               (liquidation auction) edge (liquidated)
 
-               (owner margin called) edge [bend left=15] (active)
+               (owner margin called) edge [bend left=10] (active)
                (owner margin called) edge (change owner auction)
                % Curl this all the awy around the other nodes.
-               (owner margin called) edge [-.,bend right=60] ($(redemption.north east)+(6pt,6pt)$)
-                                                              ($(redemption.north east)+(6pt,6pt)$)
-                                     edge [bend right=70] (fraud pre-liquidation)
+               (owner margin called) edge [] (awaiting owner option)
 
-               (change owner auction) edge [bend left=35] (active)
+               (change owner auction) edge [bend left=65] (active)
                % Curl this all the awy around the other nodes.
-               (change owner auction) edge [-.,bend right=60] ($(redemption.north east)+(36pt,36pt)$)
-                                                              ($(redemption.north east)+(36pt,36pt)$)
-                                      edge [bend right=80] (fraud pre-liquidation)
+               (change owner auction) edge [bend right] (awaiting owner option)
 
                (awaiting signature) edge [bend right=10] (awaiting redemption proof)
                (awaiting signature) edge (redeemed)
-               (awaiting signature) edge [bend right=35] (fraud pre-liquidation)
+               (awaiting signature) edge [out=100,in=80,looseness=1,min distance=4.5cm] (awaiting owner option)
 
                (awaiting redemption proof) edge [bend right=10] (awaiting signature)
                (awaiting redemption proof) edge (redeemed)
-               (awaiting redemption proof) edge [bend right=60] (fraud pre-liquidation)
-
-               (fraud pre-liquidation) edge (awaiting owner option)
+               (awaiting redemption proof) edge [out=100,in=100] (awaiting owner option)
                ;
 }
