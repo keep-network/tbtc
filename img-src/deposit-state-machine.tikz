@@ -9,7 +9,7 @@
 
     \node[box state,above=of awaiting btc deposit proof] (active) {Active};
 
-    \node[leaf state,right=of awaiting btc deposit proof] (fraud awaiting btc deposit proof) {Fraud Awaiting BTC Deposit Proof};
+    \node[box state,right=of awaiting btc deposit proof] (fraud awaiting btc deposit proof) {Fraud Awaiting BTC Deposit Proof};
     \node[leaf state,right=of fraud awaiting btc deposit proof] (failed setup) {Failed Setup};
 
     \node[box state,left=of active] (custodian margin called) {Custodian Margin Called};
