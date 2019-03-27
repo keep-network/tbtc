@@ -10,6 +10,8 @@ endif::tbtc[]
 
 image::{root-prefix}img/generated/deposit-state-machine.png[]
 
+include::../deposits/states.adoc[leveloffset=+1]
+include::../failure/states.adoc[leveloffset=+1]
 include::../redemption/states.adoc[leveloffset=+1]
 
 include::./spv/index.adoc[leveloffset=+2]
