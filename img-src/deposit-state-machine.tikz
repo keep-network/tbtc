@@ -40,17 +40,17 @@
           (undercollateralized) {};
     \node[above right] at (undercollateralized.south west) {Undercollateralized};
     \node[group,
+          densely dashed,
+          fit=(owner margin called)
+              (change owner auction)]
+          (unmaintained) {};
+    \node[below] at (unmaintained.north) {Unmaintained};
+    \node[group,
           fit=(awaiting signature)
               (awaiting redemption proof)
               (redeemed)]
           (redemption) {};
     \node[above] at (redemption.south) {Redemption};
-    \node[group,
-          fit=(owner margin called)
-              (change owner auction)]
-          (unmaintained) {};
-    \node[below] at (unmaintained.north) {Unmaintained};
-
 
     \path [->] (start) edge [] (awaiting setup)
 
