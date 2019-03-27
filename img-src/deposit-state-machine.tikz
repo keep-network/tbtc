@@ -62,7 +62,7 @@
                (fraud awaiting btc deposit proof) edge (failed setup)
 
                (active) edge [bend right=5] (custodian margin called)
-               (active) edge (awaiting owner option)
+               (active) edge [out=135,in=-60] (awaiting owner option)
                (active) edge [out=0,in=-90,min distance=1.5cm] (awaiting signature)
                (active) edge [bend left=10] (owner margin called)
 
