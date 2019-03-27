@@ -67,7 +67,7 @@ an abort state.
 * *access control*
 ** anyone
 * *writes*
-** `addres owner`
+** `addres despositOwner`
 * *from*
 ** `START`
 * *to*
@@ -91,7 +91,10 @@ an abort state.
 * *args*
 ** `bytes _keepPubkey`
 * *writes*
-** `address signersThresholdKeyAccount`
+** `bytes32 signingGroupPubkeyX;`
+*** The X coordinate of the signing group's pubkey
+** `bytes32 signingGroupPubkeyY;`
+*** The Y coordinate of the signing group's pubkey
 * *from*
 ** `AWAITING_SIGNER_SETUP`
 * *to*
@@ -126,7 +129,12 @@ an abort state.
 ** `bytes _preImage`
 *** The sha256 preimage of that digest (on Bitcoin txns, this will always be
     the 32 byte intermediate sighash digest)
-** `address signersThresholdKeyAccount`
+* *reads*
+** `bytes32 signingGroupPubkeyX;`
+*** The X coordinate of the signing group's pubkey
+*** to check that the signature is valid
+** `bytes32 signingGroupPubkeyY;`
+*** The Y coordinate of the signing group's pubkey
 *** to check that the signature is valid
 * *from*
 ** `AWAITING_BTC_FUNDING_PROOF`
@@ -141,6 +149,8 @@ an abort state.
   because it yields a different state and has different behavior
 * *access control*
 ** anyone
+* *reads*
+** `uint256 signingGroupFormedAt`
 * *from*
 ** `FRAUD_AWAITING_BTC_FUNDING_PROOF`
 * *to*
