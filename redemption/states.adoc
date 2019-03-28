@@ -55,13 +55,15 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** Anyone
 ** expected: 1 or more signers
 * *args*
-** `bytes _signature`
+** `uint8 _v`
+** `bytes32 _r`
+** `bytes32 _s`
 *** The redemption signature
-** `bytes _publicKey`
-*** The public key to verify the signature under (must match signer account)
 * *reads*
-** `address signersThresholdKeyAccount`
-** `mapping(bytes32 => bool) wasRequested`
+** `bytes32 signingGroupPubkeyX;`
+*** The X coordinate of the signing group's pubkey
+** `bytes32 signingGroupPubkeyY;`
+*** The Y coordinate of the signing group's pubkey
 ** `uint256 withdrawalRequestTime`
 ** `bytes32 lastRequestedDigest`
 *** Only accept signatures on the _most recent_ requested digest
@@ -80,7 +82,9 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** Anyone
 *** after a timer
 * *args*
-** `uint256 _newFee`
+** `bytes8 _previousOutputValue`
+*** the previous output value
+** `bytes8 _newFee`
 * *reads*
 ** `uint256 initialWithdrawalFee`
 ** `bytes requesterPKH`
@@ -101,14 +105,15 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** Anyone
 ** expected: 1 or more signers
 * *args*
-** `bytes _bitcoinTX`
+** `bytes _bitcoinTx`
 ** `bytes _merkleProof`
 ** `bytes _bitcoinHeaders`
 * *reads*
 ** `bytes requesterPKH`
 ** `uint256 oracleDifficultyReq`
+*** from oracle contract
 ** `uint256 depositSize`
-** `uint256 fee`
+** `uint256 initialWithdrawalFee`
 * *writes*
 ** `mapping(address => uint256) balances`
 *** on TBTC ERC20 Contract
@@ -127,17 +132,23 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *access control*
 ** only deposit owner
 * *args*
-** `uint256 _fee`
+** `bytes8 _outputValueBytes`
 ** `bytes _requesterPKH`
 * *reads*
 ** `address depositOwner`
-** `bytes outpoint`
+*** for auth
+** `bytes utxoOutpoint`
+*** For calculating the sighash
+** `bytes20 signerPKH`
+*** For calculating the sighash
+** `bytes8 depositSizeBytes`
+*** For calculating the sighash
 * *writes*
-** `mapping(bytes32 => bool) wasRequested`
+** `mapping(bytes32 => uint256) wasRequested`
 *** record that the digest was requested
 ** `uint256 initialWithdrawalFee`
 *** the requested withdrawal fee
-** `bytes requesterPKH`
+** `bytes20 requesterPKH`
 *** the bitcoin hash160 pubkeyhash to which to deliver BTC
 ** `uint256 outstandingTBTC`
 *** check that the `Deposit`'s TBTC has been returned
