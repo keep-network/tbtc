@@ -137,7 +137,10 @@ remain
 jurisdictions
 * Inflation-resistant. TBTC may only be minted after proof is provided of a
 backing BTC deposit.
-* Leverage-resistant. The existence of TBTC shouldn't let a Bitcoin holder
+* Leverage-resistant. The existence of TBTC shouldn't allow cross-chain
+"printing" of additional synthetic Bitcoin. We can't stop someone from launching
+a synthetic, but artificially expanding the Bitcoin supply is not a goal of the
+project.
 * Without middlemen, in the same sense as Bitcoin. The only rent extraction
 should be from the minimal participation of signers required to secure the
 network, similar to miners on the Bitcoin network.
