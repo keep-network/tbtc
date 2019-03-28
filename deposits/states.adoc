@@ -67,7 +67,7 @@ an abort state.
 * *access control*
 ** anyone
 * *writes*
-** `addres despositOwner`
+** `address despositOwner`
 * *from*
 ** `START`
 * *to*
@@ -122,8 +122,6 @@ an abort state.
 * *args*
 ** `bytes _signature`
 *** The purportedly fraudulent signature
-** `bytes _publicKey`
-*** The public key to verify the signature under (must match signer account)
 ** `bytes _digest`
 *** The digest on which the signature was made
 ** `bytes _preImage`
