@@ -148,6 +148,9 @@ network, similar to miners on the Bitcoin network.
 Finally, tBTC must be *redeemable*. The ability to trade scrip for its backing
 deposit freely is what distinguishes a backed currency from fiat money.
 
+Notably, these properties don't require an artificial price peg as is common
+in stable coin projects -- they instead require a supply peg across chains.
+
 == Developing Intuition: A simple single-signer protocol
 
 To understand how we might develop a protocol and token that satisfies those
