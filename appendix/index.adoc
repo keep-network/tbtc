@@ -25,4 +25,6 @@ include::../redemption/states.adoc[leveloffset=+1]
 
 include::./spv/index.adoc[leveloffset=+2]
 
+include::./sighash/index.adoc[leveloffset=+2]
+
 include::./glossary/index.adoc[leveloffset=+1]
