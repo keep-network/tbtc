@@ -6,6 +6,15 @@ ifndef::tbtc[]
 toc::[]
 endif::tbtc[]
 
+== A note on naming
+
+The system, in its entirety, is called "tBTC". In this document and throughout
+the project, the fungible Bitcoin-backed token is called "TBTC" to distinguish
+it from the rest of the project, and strongly suggest an eventual ticker.
+
+Further discussion can be found on
+https://github.com/keep-network/tbtc/issues/17[Github].
+
 == Deposit and redemption state machine
 
 image::{root-prefix}img/generated/deposit-state-machine.png[]
