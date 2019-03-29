@@ -1,0 +1,243 @@
+:toc: macro
+
+= Standardized Sighash Construction
+
+ifndef::tbtc[]
+toc::[]
+
+endif::tbtc[]
+
+// TODO: many refs
+
+== Overview
+
+// TODO: ref bip143
+
+For signing, Bitcoin transforms transactions using a process known as the
+SignatureHash (sighash) algorithm. The original sighash algorithm had many
+drawbacks and sharp edges. In SegWit scripts, the algorithm was changed to
+follow BIP143 (legacy addresses still use the original algorithm).
+
+The goal of the sighash algorithm is to commit to selected aspects of the
+transaction in the signed digest. This prevents malleation, and indicates the
+signer's intent with respect to them. Specifically, BIP143 sighash commits to
+the following (not in this order):
+
+1. One or All inputs
+1. None, One, or All outputs
+1. The specific prevout this signature witnesses
+1. The pubkey script or redeem script code locking that prevout
+1. The value of the prevout this signature witnesses
+1. The sequence of the input spending that prevout
+1. The transaction version
+1. The transaction locktime
+
+These are committed to via the double-sha256 of an ordered bytestring. This
+digest is signed, and can be reproduced by anyone inspecting the transaction
+(provided they have access to historical chain data to validate the prevout
+value). Sighash calculation is thus a crucial part of the Bitcoin consensus
+process.
+
+Because a signing group may withhold signatures, the redemption flow forces
+them to provide a valid signature within a certain timeout. This implies that
+the redemption flow must be able to evaluate "validity" means in this context.
+Because the goal is redemption, a "valid" signature is one that witnesses a
+transaction that sends funds to the public key hash requested at the beginning
+of the redemption flow. In order to check that a given signature witnesses such
+a transaction, we need to enable our contracts to validate the sighash digest
+signed.
+
+By far the easiest way to do this is to create a canonical transaction. We can
+then implement a greatly-reduced set of BIP143's functionality while still
+being able to assess signature validity during redemption. This allows us to,
+instead of calculating the sighash of an input transaction, specify a sighash,
+and force construction of a transaction that matches it. This way the contract
+can request extremely precise redemption transactions with minimal overhead.
+
+== Canonical Redemption Sighash
+
+BIP143 follows this general format:
+```
+Double SHA256 of the serialization of:
+   1. nVersion of the transaction (4-byte little endian)
+   2. hashPrevouts (32-byte hash)
+   3. hashSequence (32-byte hash)
+   4. outpoint (32-byte hash + 4-byte little endian)
+   5. scriptCode of the input (serialized as scripts inside CTxOuts)
+   6. value of the output spent by this input (8-byte little endian)
+   7. nSequence of the input (4-byte little endian)
+   8. hashOutputs (32-byte hash)
+   9. nLocktime of the transaction (4-byte little endian)
+  10. sighash type of the signature (4-byte little endian)
+```
+
+// TODO: ref my blogpost on sighash types
+
+Because we don't need to use timelocks in our redemption transaction, we forbid
+their usage, allowing us to immediately standardize many elements. We also
+forbid use of any sighash flag, other than `SIGHASH_ALL`, so we can standardize
+that as well. Here we replace those elements with the standardized hex strings:
+
+```
+Double SHA256 of the serialization of:
+   1. 01000000
+   2. hashPrevouts (32-byte hash)
+   3. hashSequence (32-byte hash)
+   4. outpoint (32-byte hash + 4-byte little endian)
+   5. scriptCode of the input (serialized as scripts inside CTxOuts)
+   6. value of the output spent by this input (8-byte little endian)
+   7. 00000000
+   8. hashOutputs (32-byte hash)
+   9. 00000000
+  10. 01000000
+```
+
+Forbidding the transaction to have more than 1 input or output gives us one
+additional victory. Point 3, `hashSequence` is defined as "the double SHA256 of
+the serialization of nSequence of all inputs." By having 1 input and disabling
+its timelock feature we can standardize this as well:
+
+```
+Double SHA256 of the serialization of:
+   1. 01000000
+   2. hashPrevouts (32-byte hash)
+   3. 8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9
+   4. outpoint (32-byte hash + 4-byte little endian)
+   5. scriptCode of the input (serialized as scripts inside CTxOuts)
+   6. value of the output spent by this input (8-byte little endian)
+   7. 00000000
+   8. hashOutputs (32-byte hash)
+   9. 00000000
+  10. 01000000
+```
+
+Next, we fill in information that the contract has access to, starting with
+the details of its custodied UTXO. The Deposit contract has validated the SPV
+funding proof, and stored its value as well as its outpoint. BIP143 specifies
+`hashPrevouts` as "the double SHA256 of the serialization of all input
+outpoints" So we can populate steps 2, 4, and 6 using known information:
+
+```
+bytes8 depositSizeBytes
+bytes utxoOutpoint
+
+Double SHA256 of the serialization of:
+   1. 01000000
+   2. {hash256(utxoOutpoint)}
+   3. 8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9
+   4. {utxoOutpoint}
+   5. scriptCode of the input (serialized as scripts inside CTxOuts)
+   6. {depositSizeBytes}
+   7. 00000000
+   8. hashOutputs (32-byte hash)
+   9. 00000000
+  10. 01000000
+```
+
+The scriptCode is also available to the contract, as it is derived from the
+signers' threshold public key hash. According to BIP143, "For P2WPKH witness
+program, the `scriptCode` is `0x1976a914{20-byte-pubkey-hash}88ac`."
+
+```
+bytes8 depositSizeBytes
+bytes utxoOutpoint
+bytes20 signerPKH
+
+Double SHA256 of the serialization of:
+   1. 01000000
+   2. {hash256(utxoOutpoint)}
+   3. 8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9
+   4. {utxoOutpoint}
+   5.
+       1. 1976a914
+       2. {signerPKH}
+       3. 88ac
+   6. {depositSizeBytes}
+   7. 00000000
+   8. hashOutputs (32-byte hash)
+   9. 00000000
+  10. 01000000
+```
+
+This leaves us with only `hashOutputs` unknown to the contract at redemption
+time. Intuitively, this makes sense, as the contract knows where the money is,
+but not where it should be sent on redemption. As always, we reference BIP143
+which says "hashOutputs is the double SHA256 of the serialization of all output
+amount [sic] (8-byte little endian) with scriptPubKey." This can get quite
+long with multiple outputs, but as mentioned earlier, we can standardize on
+single-output transactions. This means that it's the double-sha256 of the
+8-byte LE value being redeemed (less a mining fee), and the pubkey script
+containing the redeemer's script hash. In our redemption flow, both of these
+things are set by the user at request time. This means the contract has access
+to them as function arguments when it requests that the signer group produces
+a signature. Therefore the contract can specify a precise digest for that
+signature.
+
+```
+bytes8 depositSizeBytes
+bytes utxoOutpoint
+bytes20 signerPKH
+
+Double SHA256 of the serialization of:
+   1. 01000000
+   2. {hash256(utxoOutpoint)}
+   3. 8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9
+   4. {utxoOutpoint}
+   5.
+       1. 1976a914
+       2. {signerPKH}
+       3. 88ac
+   6. {depositSizeBytes}
+   7. 00000000
+   8. hash256(
+       1. {_outputValueBytes}
+       2. {_requesterPKH}
+       3. )
+   9. 00000000
+  10. 01000000
+```
+
+It is easy to implement this as a pure function in Solidity:
+
+```
+/// @notice                 calculates the signature hash of a Bitcoin transaction with the provided details
+/// @dev                    documented in bip143. many values are hardcoded here
+/// @param _outpoint        the bitcoin output script
+/// @param _inputPKH        the input pubkeyhash (hash160(sender_pubkey))
+/// @param _inputValue      the value of the input in satoshi
+/// @param _outputValue     the value of the output in satoshi
+/// @param _outputPKH       the output pubkeyhash (hash160(recipient_pubkey))
+/// @return                 the double-sha256 (hash256) signature hash as defined by bip143
+function oneInputOneOutputSighash(
+    bytes _outpoint,  // 36 byte UTXO id
+    bytes20 _inputPKH,  // 20 byte hash160
+    bytes8 _inputValue,  // 8-byte LE
+    bytes8 _outputValue,  // 8-byte LE
+    bytes20 _outputPKH  // 20 byte hash160
+) public pure returns (bytes32) {
+    // Fixes elements to easily make a 1-in 1-out sighash digest
+    // Does not support timelocks
+    bytes memory _scriptCode = abi.encodePacked(
+        hex"1976a914",  // length, dup, hash160, pkh_length
+        _inputPKH,
+        hex"88ac");  // equal, checksig
+    bytes32 _hashOutputs = abi.encodePacked(
+        _outputValue,  // 8-byte LE
+        hex"160014",  // this assumes p2wpkh
+        _outputPKH).hash256();
+    bytes memory _sighashPreimage = abi.encodePacked(
+        hex"01000000",  // version
+        _outpoint.hash256(),  // hashPrevouts
+        // hashSequence(hash256(00000000))
+        hex"8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9",
+        _outpoint,  // outpoint
+        _scriptCode,  // p2wpkh script code
+        _inputValue,  // value of the input in 8-byte LE
+        hex"00000000",  // input nSequence
+        _hashOutputs,  // hash of the single output
+        hex"00000000",  // nLockTime
+        hex"01000000"  // SIGHASH_ALL
+    );
+    return _sighashPreimage.hash256();
+}
+```
