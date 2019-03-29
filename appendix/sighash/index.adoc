@@ -200,14 +200,14 @@ Double SHA256 of the serialization of:
 It is easy to implement this as a pure function in Solidity:
 
 ```
-/// @notice                 calculates the signature hash of a Bitcoin transaction with the provided details
-/// @dev                    documented in bip143. many values are hardcoded here
+/// @notice                 calculates the sighash of a redemption tx
+/// @dev                    documented in bip143. many values are hardcoded
 /// @param _outpoint        the bitcoin output script
 /// @param _inputPKH        the input pubkeyhash (hash160(sender_pubkey))
 /// @param _inputValue      the value of the input in satoshi
 /// @param _outputValue     the value of the output in satoshi
 /// @param _outputPKH       the output pubkeyhash (hash160(recipient_pubkey))
-/// @return                 the double-sha256 (hash256) signature hash as defined by bip143
+/// @return                 the double-sha256 (hash256) signature hash
 function oneInputOneOutputSighash(
     bytes _outpoint,  // 36 byte UTXO id
     bytes20 _inputPKH,  // 20 byte hash160
