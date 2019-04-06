@@ -9,18 +9,17 @@ toc::[]
 endif::tbtc[]
 
 // TODO backrefs to signing
-// TODO withdrawing party broadcasts BTC tx
 
 == Overview
 
 Deposits represents real Bitcoin unspent transaction outputs ("UTXOs") and are
 redeemable for the BTC held there. The tBTC redemption system aims to provide
-a deposit's owner access to those BTC via a publicly-verifiable process. To
-support this goal, the redemption flow has been designed such that any actor
-may perform its critical actions (with the exception of producing signatures).
+access to those BTC via a publicly-verifiable process. To support this goal,
+the redemption flow has been designed such that any actor may perform its
+critical actions (with the exception of producing signatures).
 
-So long as the deposit is maintained in good standing, the deposit owner may
-<<Redemption Requests,request redemption>>. To do so, the owner must repay any
+So long as the deposit is maintained in good standing, anyone may
+<<Redemption Requests,request redemption>>. To do so, the requester must repay
 outstanding TBTC (plus accrued custodial fees) and provide their Bitcoin
 payment details. At this point, the redemption process may not be cancelled.
 Once redemption has been requested, the signers must produce a valid Bitcoin
@@ -30,67 +29,17 @@ _redemption transaction_ to the Bitcoin blockchain using that signature.
 
 // TODO: document future upgrade where signers sign singleACP?
 
-== The Value of Deposit Ownership
-
-// TODO: fill in real numbers for all of these
-:minimal-custodial-period: 1 year
-:minimal-custodial-deposit: 1%
-:minimal-custodial-equity: 0.5%
-:max-tbtc-withdrawal-example: 1 TBTC
-:tbtc-withdrawn-example: 0.7 TBTC
-:custody-days-example: 180 days
-:daily-feerate-example: 0.0027%
-:accrued-fees-example: 0.00486 TBTC
-:equity-example: 0.29514 TBTC
-
-// TODO: this is weak prose
-Because ownership of a deposit is required to redeem the underlying BTC and
-deposits are scarce, it follows that deposits have some value. While the market
-will price the redemption right, it is easy draw firm bounds around deposit
-value. Intuitively, a deposit's value is the equity in the deposit, plus the
-value of the redemption right. Because a deposit's custody fee schedule is
-predictable, we can establish a simple framework for determining the equity of
-a given deposit, which serves as a lower bound on its value.
-
-// TODO: someone else clean these up and make them match tone style
-The equity of a deposit is given by the equation
-
-* `equity = maximum_TBTC_issuance - withdrawn_TBTC - accrued_fees`.
-
-The accrued_fees are calculated via simple interest:
-
-* `accrued_fees =  maximum_TBTC_issuance * daily_custodial_feerate * elapsed_custody_days`
-
-Ergo, for a deposit issuing a maximum of {max-tbtc-withdrawal-example} with a
-custodial fee rate of {daily-feerate-example} per day
-({minimal-custodial-deposit} annually) from which {tbtc-withdrawn-example} have
-been withdrawn, the equity after {custody-days-example} will be calculated as
-follows:
-
-* `equity = {max-tbtc-withdrawal-example} - {tbtc-withdrawn-example} - ({max-tbtc-withdrawal-example} * {daily-feerate-example} * {custody-days-example})`
-* `equity = {max-tbtc-withdrawal-example} - {tbtc-withdrawn-example} - {accrued-fees-example}`
-* `equity = {equity-example}`
-
-We calculate the equity value in TBTC here, because the purchaser of a deposit
-stands to gain TBTC. Should the price of TBTC fall relative to the price of BTC
-the real value of the equity drops too. However, the value of the redemption
-right should see a corresponding increase in value, as the redemption right for
-fully-withdrawn deposits becomes cheaper to exercise (as it becomes cheaper to
-purchase and burn TBTC in order to get the underlying BTC).
-
-// TODO: add calculation of redemption right value?
-
-
 == Redemption Requests
 
 // TODO: fill in real numbers for all of these
 :min-redemption-fee: 2345 satoshi
 :min-redemption-feerate: ~20 satoshi/vbyte
+:minimal-custodial-period: 6 months
 
-If the deposit is in good standing (has at least {minimal-custodial-equity}
-equity), and {minimal-custodial-period} has elapsed since the deposit was
-created, the owner may request redemption. To do so the owner makes a
-_redemption request_ transaction to the smart contract on the host chain. The
+If the deposit is in good standing (has not been accused of fraud, or entered
+signer liquidation), and {minimal-custodial-period} has elapsed since the
+deposit was created, anyone may request redemption. To do so that person makes
+a _redemption request_ transaction to the smart contract on the host chain. The
 _redemption request_ includes the following:
 
 1. A fee amount
@@ -98,11 +47,11 @@ _redemption request_ includes the following:
 2. A public key hash (PKH) for BTC delivery
   - the 20-byte hash160 of a public key belonging to the requester
   - for security and privacy, this should be a new keypair
-3. Sufficient TBTC to bring the deposit to 100% equity
+3. 1 TBTC plus fees (see <<Repayment Amount>>)
 
-Upon receipt of the _redemption request_, the smart contract burns the provided
-TBTC, records the receipt of the request, and notifies the signers that a
-signature is required.
+Upon receipt of the _redemption request_, the smart contract burns 1 TBTC,
+distributes signer fees and the beneficiary bond, and records the receipt of
+the request, and notifies the signers that a signature is required.
 
 Once notified of the redemption request, the signers must wait for confirmation
 on the host chain. If they do not wait for confirmation, the redemption request
@@ -112,21 +61,35 @@ A fraud proof created this way would appear valid to the host chain smart
 contract because it no longer has a record of the redemption request.
 
 
+== Repayment Amount
+
+// TODO
+:custodial-fee: 0.005 TBTC (50 basis points)
+:beneficiary-bond-payment: 0.0005 TBTC
+
+The repayment amount is 1 TBTC plus the custodial fee, plus the custodial fee
+of {custodial-fee} and a payment of {beneficiary-bond-payment} to the deposit
+beneficiary. This ensures that the signers are paid upon providing a signature
+and that the beneficiary is compensated for opening the deposit.
+
+
 == Redemption Transaction Format
 
-A withdrawal transaction has a perfectly canonical format which is embedded
+A redemption transaction has a perfectly canonical format which is embedded
 in the smart contracts running on the tBTC host chain. This prevents a number
 of complex attacks on the tBTC supply peg, as well as simplifying contract
 logic. The requester may specify only 2 aspects of the transaction: its fee and
 its destination. All other deposit-specific information (e.g. the outpoint and
 the UTXO size) is known to the deposit contract in advance.
 
+// TODO: Link
+
 The _redemption transaction_ has 1 input (the deposit UTXO) and 1 output (the
 redemption output). It does not have change outputs, or additional inputs, as
 none are needed. It simply transfers the underlying BTC to the sole custody of
-the deposit owner. Its timelock and sequence numbers are set to 0 and its
-version is set to 1. Full documentation of the format and the construction of
-its sighash can be found *TODO: document and link*.
+the requester. Its timelock and sequence numbers are set to 0 and its version
+is set to 1. Full documentation of the format and the construction of its
+sighash can be found in the appendix
 
 Because the format is simple and canonical, any observer may use publicly
 available information to build it. Once a signature has been published, it is
@@ -168,7 +131,8 @@ contract managing the deposit has all information necessary to calculate the
 _redemption transaction_ signature hash. This includes the signers' threshold
 public key. Using the public key, the signature hash, and the redemption
 request the smart contract can know both the cryptographic validity of the
-signature and that it was created by request of the deposit owner.
+signature and that a signature on that digest was requested as part of a
+redemption process.
 
 
 == Allowing for Bitcoin Fee Adjustment

@@ -33,14 +33,14 @@ more complex price feed implementation.
 === Measuring security
 
 Clearly, security concerns require signing bonds that are proportional to the
-size of a `Deposit`. To maintain a negative expected value from signers
+size of a _Deposit_. To maintain a negative expected value from signers
 colluding, the amount forfeited by a misbehaving signer must be strictly greater
 than the amount they have to gain.
 
-In the case of n-of-n wallets backing each `Deposit`, the minimum collateral
-from each signer is _ethValue(btcDeposit)/n_. In the general case of an m-of-n
+In the case of n-of-n wallets backing each _Deposit_, the minimum collateral
+from each signer is _ethValue(bt_Deposit_/n_. In the general case of an m-of-n
 wallet, the minimal set of signers required to collude is _m_, suggesting that
-each signer should bond _ethValue(btcDeposit)/n*(n - m + 1)_.
+each signer should bond _ethValue(bt_Deposit_/n*(n - m + 1)_.
 
 === Pricing currency fluctuations
 
@@ -51,23 +51,19 @@ If the value of ETH drops precipitously relative to BTC, a group of malicious
 signers will realize that the expected value of theft of the BTC collateral
 they protect outweights the cost of loss to their bonds. For this reason, the
 value bonded by each signer requires a multiple on the minimum. If the value
-of ETH crosses a security threshold, open `Deposit` s will enter
+of ETH crosses a security threshold, open _Deposit_ s will enter
 <<Undercollateralization>>.
 
 // TODO insert a little historical analysis for a decent starting number
-
-This threshold will be determined by the contract owner.
 
 If the value of BTC drops precipitously, signers won't make the return on their
 bonded capital that they'd hoped-- as <<Custodial Fees>> are denominated in TBTC.
 This doesn't pose a problem for tBTC reserves, but is expensive to signers,
 lessening their value proposition.
 
-At a certain threshold, a `Deposit` whose BTC collateral has devalued will move
+At a certain threshold, a _Deposit_ whose BTC collateral has devalued will move
 into a variant of the <<preliq, pre-liquidation>> phase that allows bond
 rebalancing without the fallback of signer bond forfeiture.
-
-This threshold will also be determined by the contract owner.
 
 // TODO insert a little historical analysis for a decent starting number
 
@@ -88,60 +84,58 @@ based on MakerDAO's https://developer.makerdao.com/feeds/[Medianizer].
 == Undercollateralization
 
 // TODO explain the undercollateralization curve
-// TODO initially parameters will be set by contract owners
 
-=== Pre-liquidation: the "danger zone"
+
+=== Pre-liquidation: a courtesy call
 [[preliq]]
 
-At the first threshold, a `Deposit` enters pre-liquidation.
+:preliquidation-period: 6 hours
+:second-threshold: 125%
 
-Pre-liquidations gives live signers an opportunity to rebalance bonds by opening
-a new deposit. A new <<Deposit Request,deposit request>> totalling the backing
-BTC collateral less custodial and BTC tx fees is issued, and the resulting
-payment request is used to construct a withdrawal. On
-<<Proof of deposit,proof of deposit>>, the undercollateralized `Deposit` is
-closed and the signing bond returned. They're paid out their earned custodial
-fees minus the tx fee.
+At the first threshold, a _Deposit_ enters pre-liquidation. Pre-liquidation
+indicates that the signers should be close the _Deposit__ or face forced
+liquidation. If the _Deposit_ is not closed within {preliquidation-period}, or
+if the _Deposit_ collateral falls below {second-threshold} collateralization,
+liquidation will follow. This gives each signer an incentive to close the
+position before it becomes severely undercollateralized, as all signers risk
+losing funds in the liquidation process.
 
-At any time during this process, changes from the price feed can move the
-`Deposit` out of pre-liquidation. If no new `Deposit` is funded within a time
-window, or the signing collateral continues to devalue, the `Deposit` moves into
-liquidation.
+In future versions of the system, more complex pre-liquidation mechanisms could
+be introduced. For the initial version it seems prudent to choose a simple
+mechanism with large penalties for ongoing undercollateralization.
 
-// TODO note this violates fixed lot size assumptions as described in
-// https://github.com/keep-network/tbtc/issues/3. We can either ask for more
-// BTC (ugh), deal with many non-standard deposit sizes, or introduce a
-// non-uniform reserve wallet architecture
-// https://github.com/keep-network/tbtc/issues/6
 
 === Liquidation
 
-At some point, either because signers didn't produce a valid signature to move
-`Deposit` funds, or because the value of the signing bond continued to quickly
-decline, signers' bonded funds will be forfeit.
+Forced liquidation should be rare, as rational signers will redeem _Deposits_
+before liquidation becomes necessary. However, the possibility of extreme
+punishment via liquidation is necessary to prevent dishonest behavior from
+signers. Liquidation may occur because because signers didn't produce a valid
+signature  in response a redemption request, because the value of the signing
+bond dropped below the collateralization threshold, or because the signers
+produced an unauthorized signature.
 
-Forced `Deposit` liquidation favors the `Deposit` owner, first, as they are
-losing access to their BTC collateral and the benefit of a guaranteed
-withdrawal.
+The primary goal of the liquidation process is to bring the TBTC supply in line
+with the BTC custodied by _Deposits_. The most valuable asset held by the
+system is the signers' bonds. Therefore, the liquidation process seizes the
+signers bonds and attempts to use the bonded value to purchase and burn TBTC.
 
-The owner is given a time window to return all withdrawn TBTC. If they do so,
-the owner receives *all* signing bond collateral.
+// TODO: cite
+First, the contract attempts to use on-chain liquidity sources, such as
+Uniswap. If the bond is sufficient to cover the outstanding TBTC value on these
+markets, it is immediately exchanged for TBTC.
 
-If the owner doesn't exercise this option, an auction begins. The purpose of
-the auction is to lower the TBTC supply, excluding the now-unprotected BTC
-collateral from the reserves.
-
-. Any unwithdrawn TBTC is exchanged pro rata for its portion of the bond, which
-is set aside for the `Deposit` owner.
-. The remaining signing bond is put up for auction for TBTC.
-. The best TBTC bid larger than a minimum bid of the outstanding TBTC within the
-auction's time window wins. If no such bid is made, signers forfeit
+Second, the contract starts an auction. It accepts TBTC bids for the bonded
+funds. The best TBTC bid larger than a minimum bid of the outstanding TBTC
+within the auction's time window wins. If no such bid is made, signers forfeit
 progressively more of their backing work token, and the signing bond plus the
 additional work token funds seized are put back up for auction.
-. All TBTC, including funds unwithdrawn by the `Deposit` owner, custodial fees
-earned by signers, as well as the proceeds of the auction, are burned, up to a
-ceiling of the TBTC surplus. If any TBTC is left over after, it's given to the
-`Deposit` owner.
+
+Once the auction has concluded, the received TBTC is burned. This includes
+custodial fees earned by signers, as well as the proceeds of the auction, up to
+a ceiling of the TBTC surplus. Any surplus is distributed to the deposit
+beneficiary.
 
 What the unresponsive signers do with the BTC outside the tBTC system design is
-for them to decide-- it might be split up, stolen by a signing majority, or lost.
+for them to decide-- it might be split up, stolen by a signing majority, or
+lost permanently.

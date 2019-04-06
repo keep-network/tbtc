@@ -163,7 +163,7 @@ proofs.
 
 == Lots
 
-:lot-size: 0.1
+:lot-size: 1.0
 
 Deposits will be managed in fixed-size _lots_. Each deposit therefore will
 have to be of the same amount: {lot-size} BTC. Thus, a depositor submitting
@@ -178,13 +178,20 @@ improving the resilience of the system to signing group failure.
 
 == TBTC Minting
 
-Once a deposit has been made and funded, the corresponding TBTC are minted. The
-_custodial fee rate_ coupled with the _minimum custodial lockup period_
-determines how much TBTC is immediately available for withdrawal by the
-_depositor_, who is now the owner of a funded `Deposit`.
+// TODO: why is TBTC withheld
 
-A _custodial fee rate_ of 1% a year with a _minimum custodial lockup period_
-of 1 year would immediately enable 99% of the `Deposit` to be withdrawn as TBTC.
+Once a deposit has been made and funded, the corresponding TBTC are minted. All
+minted TBTC are immediately issued to the funder, who is now the beneficiary of
+a funded _Deposit_. Some TBTC is withheld to ensure eventual payment of
+custodial fees. Beneficary status is transferable (in Ethereum this is
+implemented as an ERC721 compatible non-fungible token). Should the _Deposit_
+resolve normally, the witheld TBTC will be returned to the current beneficiary
+along with a small additional payment. In this way the beneficiary NFT
+functions as a zero-coupon bond issued by the signing group upon funding.
 
 Custodial fees are described in more detail in
 <<../custodial-fees/index#,their own section>>.
+
+== Deposit Beneficary
+
+// TODO
