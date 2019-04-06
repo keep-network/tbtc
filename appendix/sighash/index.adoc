@@ -171,7 +171,7 @@ containing the redeemer's script hash. In our redemption flow, both of these
 things are set by the user at request time. This means the contract has access
 to them as function arguments when it requests that the signer group produces
 a signature. Therefore the contract can specify a precise digest for that
-signature.
+signature:
 
 ```
 bytes8 depositSizeBytes
@@ -189,10 +189,11 @@ Double SHA256 of the serialization of:
        3. 88ac
    6. {depositSizeBytes}
    7. 00000000
-   8. hash256(
-       1. {_outputValueBytes}
-       2. {_requesterPKH}
-       3. )
+   8.
+       1. hash256(
+       2. {_outputValueBytes}
+       3. {_requesterPKH}
+       4. )
    9. 00000000
   10. 01000000
 ```

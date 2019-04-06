@@ -67,7 +67,8 @@ an abort state.
 * *access control*
 ** anyone
 * *writes*
-** `address despositOwner`
+** `mapping _depositOwner(address => address)`
+*** on the TBTC system contract. for 721 compatibility, use uint256 when calling
 * *from*
 ** `START`
 * *to*
