@@ -13,6 +13,6 @@ image::{root-prefix}img/generated/deposit-state-machine.png[]
 
 We model the
 
-include::funding.adoc[]
-include::failure.adoc[]
-include::./redemption.adoc[]
+include::funding.adoc[leveloffset=+1]
+include::failure.adoc[leveloffset=+1]
+include::./redemption.adoc[leveloffset=+1]
