@@ -120,21 +120,21 @@ with the BTC custodied by _Deposits_. The most valuable asset held by the
 system is the signers' bonds. Therefore, the liquidation process seizes the
 signers bonds and attempts to use the bonded value to purchase and burn TBTC.
 
-// TODO: cite
+// TODO: cite uniswap
 First, the contract attempts to use on-chain liquidity sources, such as
 Uniswap. If the bond is sufficient to cover the outstanding TBTC value on these
 markets, it is immediately exchanged for TBTC.
 
-Second, the contract starts an auction. It accepts TBTC bids for the bonded
-funds. The best TBTC bid larger than a minimum bid of the outstanding TBTC
-within the auction's time window wins. If no such bid is made, signers forfeit
-progressively more of their backing work token, and the signing bond plus the
-additional work token funds seized are put back up for auction.
+Second, the contract starts a falling-price auction. It offers 75% of the signer
+bond for sale for the outstanding TBTC amount. The amount of bond on sale
+increases over time until someone chooses to purchase it, or the auction
+reaches 100% of the bond. The auction will remain open until a buyer is found.
 
-Once the auction has concluded, the received TBTC is burned. This includes
-custodial fees earned by signers, as well as the proceeds of the auction, up to
-a ceiling of the TBTC surplus. Any surplus is distributed to the deposit
-beneficiary.
+TBTC received during this process is burned to maintain the supply peg. If any
+bond value is left after liquidation, a small fee is distributed to the account
+which trigger liquidation. After that, any remaining value is either
+distributed to the signers (in case of liquidation due to
+undercollateralization) or burned (in case of liquidation due to fraud).
 
 What the unresponsive signers do with the BTC outside the tBTC system design is
 for them to decide-- it might be split up, stolen by a signing majority, or
