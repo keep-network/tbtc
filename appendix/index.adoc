@@ -15,14 +15,10 @@ it from the rest of the project, and strongly suggest an eventual ticker.
 Further discussion can be found on
 https://github.com/keep-network/tbtc/issues/17[Github].
 
-== Deposit and redemption state machine
-
-image::{root-prefix}img/generated/deposit-state-machine.png[]
-
-include::../deposits/states.adoc[leveloffset=+1]
-include::../failure/states.adoc[leveloffset=+1]
-include::../redemption/states.adoc[leveloffset=+1]
+include::./states/index.adoc[leveloffset=+1]
 
 include::./spv/index.adoc[leveloffset=+2]
+
+include::./sighash/index.adoc[leveloffset=+2]
 
 include::./glossary/index.adoc[leveloffset=+1]
