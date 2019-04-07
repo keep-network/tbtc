@@ -1,0 +1,16 @@
+{
+  "name": "tbtc-deposit",
+  "version": "0.0.0",
+  "description": "deposit contract for TBTC",
+  "main": "index.js",
+  "scripts": {
+    "setup": "git submodule update --init --recursive && npm i",
+    "compile": "node compile.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "James Prestwich",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "solc": "^0.4.25"
+  }
+}
