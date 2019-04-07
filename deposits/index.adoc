@@ -182,12 +182,13 @@ improving the resilience of the system to signing group failure.
 
 Once a deposit has been made and funded, the corresponding TBTC are minted.
 Minted TBTC are immediately issued to the funder, who is now the beneficiary of
-a funded _Deposit_. Some TBTC is withheld to ensure eventual payment of
-custodial fees. Beneficary status is transferable (in Ethereum this is
-implemented as an ERC721 compatible non-fungible token). Should the _Deposit_
-resolve normally, the withheld TBTC will be returned to the current beneficiary
-along with a small additional payment. In this way the beneficiary NFT
-functions as a zero-coupon bond issued by the signing group upon funding.
+a funded _Deposit_. Some TBTC is withheld to prevent denial of service attacks
+on the system. Beneficary status is transferable (in Ethereum this is
+implemented as an ERC721 compatible non-fungible token). When the _Deposit_
+resolves, the withheld TBTC (or equivalent value) will be returned to the
+current beneficiary along with a small additional payment. In this way the
+beneficiary NFT functions as a zero-coupon bond issued by the signing group
+upon funding.
 
 Custodial fees are described in more detail in
 <<../custodial-fees/index#,their own section>>.
