@@ -62,7 +62,6 @@ fraud-related state transitions in a single document.
 * *to*
 ** `LIQUIDATED`
 
-
 === `notifyCourtesyTimeout`
 * Anyone may poke the contract to show that the courtesy period has elapsed
 * Starts signer liquidation for abort
@@ -74,6 +73,20 @@ fraud-related state transitions in a single document.
 ** `uint256 liquidationInitiated`
 *** the timestamp when liquidation was started
 * *from*
+** `COURTESY_CALL`
+* *to*
+** `LIQUIDATION_IN_PROGRESS`
+
+=== `notifyUndercollateralizedLiquidation`
+* Anyone may notify the contract that it is severely undercollateralized
+* Undercollateralization does not halt the redemption process. Only fraud does.
+* *access controls*
+** anyone
+* *reads*
+** ORACLE
+* *writes*
+* *from*
+** `ACTIVE`
 ** `COURTESY_CALL`
 * *to*
 ** `LIQUIDATION_IN_PROGRESS`
@@ -177,7 +190,7 @@ fraud-related state transitions in a single document.
 ** `LIQUIDATION_IN_PROGRESS`
 
 === `notifyCourtesyCall`
-* Anyone may notify the contract that it is undercollateralized
+* Anyone may notify the contract that it is undercollateralized and should be closed
 * *access controls*
 ** anyone
 * *reads*
@@ -187,16 +200,3 @@ fraud-related state transitions in a single document.
 ** `ACTIVE`
 * *to*
 ** `COURTESY_CALL`
-
-=== `notifyUndercollateralizedLiquidation`
-* Anyone may notify the contract that it is severely undercollateralized
-* *access controls*
-** anyone
-* *reads*
-** ORACLE
-* *writes*
-* *from*
-** `ACTIVE`
-** `COURTESY_CALL`
-* *to*
-** `LIQUIDATION_IN_PROGRESS`
