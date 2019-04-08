@@ -83,7 +83,8 @@ contract Deposit {
 
     // This log event is fired when liquidation
     event StartedLiquidation(
-        uint256 _timestamp);
+        uint256 _timestamp,
+        bool _wasFraud);
 
     // This event is fired when the Redemption SPV proof is validated
     event Redeemed(
@@ -345,36 +346,53 @@ contract Deposit {
     // REUSABLE STATE TRANSITIONS
     //
 
-    /// @notice         Get the difficulty required for the contract to accept an SPV proof
-    /// @dev            Calls the light relay and gets the current block difficulty
-    /// @param _fraud   True if fraud, false otherwise
-    /// @return         The proof difficulty requirement
-    function startSignerLiquidation(bool _fraud) internal {
+    /// @notice         Starts signer liquidation due to fraud
+    /// @dev            We first attempt to liquidate on chain, then by auction
+    function startSignerFraudLiquidation() internal {
         emit StartedLiquidation(
-            block.timestamp);
+            block.timestamp,
+            true);
 
         // Reclaim used state for gas savings
         fundingTeardown();
         redemptionTeardown();
         seizeSignerBonds();
-        attmeptToLiquidateOnChain();
 
         bool _liquidated = attmeptToLiquidateOnChain();
-        if (_liquidated && !_fraud) {
-            returnRemainingSignerBond();
-            currentState = DepositStates.LIQUIDATED;
-        }
-        if (_liquidated && _fraud) {
+
+        if (_liquidated) {
+            returnFunderBond();
             address(0).transfer(address(this).balance);  /* TODO: is this what we want? */
             currentState = DepositStates.LIQUIDATED;
         }
-        if (!_liquidated && !_fraud) {
+        if (!_liquidated) {
+            liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+            currentState = DepositStates.FRAUD_LIQUIDATION_IN_PROGRESS;
+        }
+    }
+
+    /// @notice         Starts signer liquidation due to abort or undercollateralization
+    /// @dev            We first attempt to liquidate on chain, then by auction
+    function startSignerAbortLiquidation() internal {
+        emit StartedLiquidation(
+            block.timestamp,
+            false);
+
+        // Reclaim used state for gas savings
+        fundingTeardown();
+        redemptionTeardown();
+        seizeSignerBonds();
+
+        bool _liquidated = attmeptToLiquidateOnChain();
+
+        if (_liquidated) {
+            returnFunderBond();
+            pushFundsToKeepGroup(address(this).balance);
+            currentState = DepositStates.LIQUIDATED;
+        }
+        if (!_liquidated) {
             liquidationInitiated = block.timestamp;  // Store the timestamp for auction
             currentState = DepositStates.LIQUIDATION_IN_PROGRESS;
-        }
-        if (!_liquidated && _fraud) {
-            liquidationInitiated = block.timestamp;  // Store the timestamp for auction
-            currentState = DepositStates.FRAUD_LIQUIDATION_IN_PROGRESS;  // Essentially storing a bool in the state
         }
     }
 
@@ -387,30 +405,40 @@ contract Deposit {
     /* TODO: When we exit the redemption flow, we should delete any set state vars */
     function redemptionTeardown() internal { /* TODO */ }
 
+    /// @notice     Transfers the funders bond to the signers if the funder never funds
+    /// @dev        Called only by notifyFundingTimeout
     function revokeFunderBond() internal {
-        pushFundsToKeepGroup(funderBondRefundAmount());
+        if (address(this).balance >= funderBondRefundAmount()) {
+            pushFundsToKeepGroup(funderBondRefundAmount());
+        } else {
+            pushFundsToKeepGroup(address(this).balance);
+        }
     }
 
+    /// @notice     Returns the funder's bond plus a payment at contract teardown
+    /// @dev        Returns the balance if insufficient. Always call this before distributing signer payments
     function returnFunderBond() internal {
-        depositBeneficiary().transfer(funderBondRefundAmount());
+        if (address(this).balance >= funderBondRefundAmount()) {
+            depositBeneficiary().transfer(funderBondRefundAmount());
+        } else {
+            depositBeneficiary().transfer(address(this).balance);
+        }
     }
 
+    /// @notice     slashes the signers partially for committing fraud before funding occurs
+    /// @dev        called only by notifyFraudFundingTimeout
     function partiallySlashForFraudInFunding() internal {
         uint256 _seized = seizeSignerBonds();
         uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
         pushFundsToKeepGroup(_seized - _slash);
-        depositBeneficiary().transfer(_slash);  // TODO: is this what we want?
+        depositBeneficiary().transfer(_slash);  /* TODO: is this what we want? I think so */
     }
 
-    // TODO: Docs
+    /// @notice     Seizes signer bonds and distributes them to the funder
+    /// @dev        This is only called as part of funding fraud flow
     function distributeSignerBondsToFunder() internal {
         uint256 _seized = seizeSignerBonds();
-        depositBeneficiary().transfer(_seized);
-    }
-
-    // TODO: Docs
-    function returnRemainingSignerBond() internal {
-        pushFundsToKeepGroup(address(this).balance);
+        depositBeneficiary().transfer(_seized);  // Transfer whole amount
     }
 
     //
@@ -586,7 +614,7 @@ contract Deposit {
         // If we're outside of the signature window, signers have aborted, initate punishment
         /* TODO: discussion: should we instead require an explicit call to notifySignatureTimeout? */
         if (block.timestamp > withdrawalRequestTime + TBTCConstants.getSignatureTimeout()) {
-            startSignerLiquidation(false); // Not fraud, just failure
+            startSignerAbortLiquidation(); // Not fraud, just failure
             return false;  // We return instead of reverting so that the above transition takes place
         }
 
@@ -621,7 +649,7 @@ contract Deposit {
 
         // If we should have gotten a redemption proof by now, something fishy is going on
         if (block.timestamp > withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout()) {
-            startSignerLiquidation(false);
+            startSignerAbortLiquidation();
             return false;  // We return instead of reverting so that the above transition takes place
         }
 
@@ -728,7 +756,7 @@ contract Deposit {
     function notifySignatureTimeout() public returns (bool) {
         require(currentState == DepositStates.AWAITING_WITHDRAWAL_SIGNATURE);
         require(block.timestamp > withdrawalRequestTime + TBTCConstants.getSignatureTimeout());
-        startSignerLiquidation(false);  // not fraud, just failure
+        startSignerAbortLiquidation();  // not fraud, just failure
         return true;
     }
 
@@ -738,7 +766,7 @@ contract Deposit {
     function notifyRedemptionProofTimeout() public returns (bool) {
         require(currentState == DepositStates.AWAITING_WITHDRAWAL_PROOF);
         require(block.timestamp > withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout());
-        startSignerLiquidation(false);  // not fraud, just failure
+        startSignerAbortLiquidation();  // not fraud, just failure
         return true;
     }
 
@@ -915,8 +943,6 @@ contract Deposit {
         depositSizeBytes = _valueBytes;
         utxoOutpoint = _outpoint;
 
-        // The funder has performed their duty
-        returnFunderBond();
         fundingTeardown();
 
         return true;
@@ -956,7 +982,7 @@ contract Deposit {
             require(wasRequested[_signedDigest] == 0, 'Digest is approved for signing');
         }
 
-        startSignerLiquidation(true);
+        startSignerFraudLiquidation();
         return true;
     }
 
@@ -1003,7 +1029,7 @@ contract Deposit {
             }
         }
 
-        startSignerLiquidation(true);
+        startSignerFraudLiquidation();
         return true;
     }
 
@@ -1014,7 +1040,7 @@ contract Deposit {
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud
     /// @dev        For interface, reading auctionValue will give a past value. the current is better
     /// @return     True if successful, revert otherwise
-    function purchaseBondAtAuction() public returns (bool) {
+    function purchaseSignerBondsAtAuction() public returns (bool) {
         bool _wasFraud = currentState == DepositStates.FRAUD_LIQUIDATION_IN_PROGRESS;
         require(inSignerLiquidation(), 'No active auction');
         currentState = DepositStates.LIQUIDATED;
@@ -1029,16 +1055,7 @@ contract Deposit {
         uint256 _valueToDistribute = auctionValue();
         msg.sender.transfer(_valueToDistribute);
 
-        // If there are funds left,
-        // Pay out the funder
-        if (address(this).balance > 0) {
-            if (address(this).balance >= funderBondRefundAmount()) {
-                returnFunderBond();
-            }
-            else if (address(this).balance > 0) {
-                depositBeneficiary().transfer(address(this).balance);
-            }
-        }
+        returnFunderBond();
 
         // then if there are funds left, and it wasn't fraud, pay out the signers
         if (address(this).balance > 0) {
@@ -1070,7 +1087,7 @@ contract Deposit {
     function notifyUndercollateralizedLiquidation() public returns (bool) {
         require(inRedeemableState(), 'Deposit not in active or courtesy call');
         require(isSeverelyUndercollateralized(), 'Deposit has sufficient collateral');
-        startSignerLiquidation(false);
+        startSignerAbortLiquidation();
         return true;
     }
 
@@ -1080,7 +1097,7 @@ contract Deposit {
     function notifyCourtesyTimeout() public returns (bool) {
         require(currentState == DepositStates.COURTESY_CALL, 'Not in a courtesy call period');
         require(block.timestamp >= courtesyCallInitiated + TBTCConstants.getCourtesyCallTimeout(), 'Courtesy period has not elapsed');
-        startSignerLiquidation(false);
+        startSignerAbortLiquidation();
         return true;
     }
 

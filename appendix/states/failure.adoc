@@ -43,7 +43,7 @@ fraud-related state transitions in a single document.
 
 == Internal Transitions
 
-=== `purchaseBondAtAuction`
+=== `purchaseSignerBondsAtAuction`
 
 * anyone may purchase the seized signer bonds at auction
 * *access control*

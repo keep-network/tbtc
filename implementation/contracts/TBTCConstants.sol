@@ -62,5 +62,4 @@ library TBTCConstants {
     function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
     function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
     function getAuctionBasePercentage() public pure returns (uint256) { return AUCTION_BASE_PERCENTAGE; }
-    function getDepositTerm() public pure returns (uint256) { return DEPOSIT_TERM_LENGTH; }
 }
