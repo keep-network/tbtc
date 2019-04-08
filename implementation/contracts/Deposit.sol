@@ -1012,7 +1012,7 @@ contract Deposit {
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud
     /// @dev        For interface, reading auctionValue will give a past value. the current is better
-    /// @returns    True if successful, revert otherwise
+    /// @return     True if successful, revert otherwise
     function purchaseBondAtAuction() public returns (bool) {
         bool _wasFraud = currentState == DepositStates.FRAUD_LIQUIDATION_IN_PROGRESS;
         require(inSignerLiquidation(), 'No active auction');
@@ -1043,7 +1043,7 @@ contract Deposit {
         if (address(this).balance > 0) {
             if (_wasFraud) {
                 /* TODO: is this what we want? */
-                addres(0).transfer(address(this).balance);
+                address(0).transfer(address(this).balance);
             } else {
                 pushFundsToKeepGroup(address(this).balance);
             }
