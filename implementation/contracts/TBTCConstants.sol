@@ -29,6 +29,12 @@ library TBTCConstants {
     uint256 public constant FRAUD_FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FUNDER_BOND_REFUNDABLE_PORTION = 10 ** 22; // wei
 
+    // Liquidation Flow
+    uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
+    uint256 public constant AUCTION_DURATION = 24 * 60 * 60; // seconds
+    uint256 public constant AUCTION_BASE_PERCENTAGE = 75; // percents
+
+
     // Getters for easy access
     function getTokenContractAddress() public pure returns (address) { return TOKEN_CONTRACT; }
     function getKeepContractAddress() public pure returns (address) { return KEEP_CONTRACT; }
@@ -38,7 +44,6 @@ library TBTCConstants {
     function getBeneficiaryRewardDivisor() public pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
     function getSignerFeeDivisor() public pure returns (uint256) { return SIGNER_FEE_DIVISOR; }
     function getLotSize() public pure returns (uint256) { return MINIMUM_LOT_SIZE; }
-
 
     function getFundingFraudPartialSlashDivisor() public pure returns (uint256) { return FUNDING_FRAUD_PARTIAL_SLASH_DIVISOR; }
 
@@ -51,4 +56,8 @@ library TBTCConstants {
     function getFundingTimeout() public pure returns (uint256) { return FUNDING_PROOF_TIMEOUT; }
     function getSigningGroupFormationTimeout() public pure returns (uint256) { return FORMATION_TIMEOUT; }
     function getFraudFundingTimeout() public pure returns (uint256) { return FRAUD_FUNDING_PROOF_TIMEOUT; }
+
+    function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
+    function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
+    function getAuctionBasePercentage() public pure returns (uint256) { return AUCTION_BASE_PERCENTAGE; }
 }

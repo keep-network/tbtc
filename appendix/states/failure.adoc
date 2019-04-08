@@ -7,16 +7,32 @@ ifndef::tbtc[toc::[]]
 
 == Overview
 
-Abort processes handle custody failures. This includes punishing signers and
-starting the bond liquidation process. These transitions can be invoked from
-almost any Deposit state, as faults may occur during any other flow. Once fault
-has been proven, the bonds are put up for auction to the public via the
-Liquidation flow.
+Fraud and abort  processes handle custody failures. This includes punishing
+signers and starting the bond liquidation process. These transitions can be
+invoked from almost any Deposit state, as faults may occur during any other
+flow. Once fault has been proven, the bonds are put up for auction to the
+public via the Liquidation flow.
 
 While there is no fraud or abort state per se, it seems helpful to put the
 fraud-related state transitions in a single document.
 
 == States
+
+=== `COURTESY_CALL`
+* The signers have been courtesy called
+* They SHOULD request redemption of the deposit
+
+=== `LIQUIDATION_IN_PROGRESS`
+* Liquidation due to undercollateralization or an abort has started
+* Automatic (on-chain) liquidation was unsuccessful
+
+=== `FRAUD_LIQUIDATION_IN_PROGRESS`
+* Liquidation due to fraud has started
+* Automatic (on-chain) liquidation was unsuccessful
+
+=== `LIQUIDATED`
+* End state
+* The bonds have been liquidated and the position has been closed out
 
 === Flow reachable from
 * `ACTIVE`
@@ -24,7 +40,22 @@ fraud-related state transitions in a single document.
 * `AWAITING_WITHDRAWAL_PROOF`
 * `SIGNER_MARGIN_CALLED`
 
-// TODO: distinguish between frauds and aborts?
+
+== Internal Transitions
+
+=== `purchaseBondAtAuction`
+
+* anyone may purchase the seized signer bonds at auction
+* *access control*
+** anyone
+* *reads*
+** `uint256 liquidationInitiated`
+* *from*
+** `FRAUD_LIQUIDATION_IN_PROGRESS`
+** `LIQUIDATION_IN_PROGRESS`
+* *to*
+** `LIQUIDATED`
+
 
 == External Transitions
 
@@ -60,7 +91,7 @@ fraud-related state transitions in a single document.
 ** `AWAITING_WITHDRAWAL_PROOF`
 ** `SIGNER_MARGIN_CALLED`
 * *to*
-** `LIQUIDATION_IN_PROGRESS`
+** `FRAUD_LIQUIDATION_IN_PROGRESS`
 
 === `provideSPVFraudProof`
 * Anyone provides a SPV proof that the Deposit UTXO has been consumed.
@@ -89,7 +120,7 @@ fraud-related state transitions in a single document.
 ** `AWAITING_WITHDRAWAL_PROOF`
 ** `SIGNER_MARGIN_CALLED`
 * *to*
-** `LIQUIDATION_IN_PROGRESS`
+** `FRAUD_LIQUIDATION_IN_PROGRESS`
 
 === `notifyRedemptionProofTimeout`
 * Anyone may poke the contract to show that a redemption proof was not
@@ -99,6 +130,9 @@ fraud-related state transitions in a single document.
 * *reads*
 ** `uint256 withdrawalRequestTime`
 *** for checking if the timer has elapsed
+* *writes*
+** `uint256 liquidationInitiated`
+*** the timestamp when liquidation was started
 * *from*
 ** `AWAITING_WITHDRAWAL_PROOF`
 * *to*
@@ -112,7 +146,24 @@ fraud-related state transitions in a single document.
 * *reads*
 ** `uint256 withdrawalRequestTime`
 *** for checking if the timer has elapsed
+* *writes*
+** `uint256 liquidationInitiated`
+*** the timestamp when liquidation was started
 * *from*
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *to*
+** `LIQUIDATION_IN_PROGRESS`
+
+=== `notifyCourtesyTimeout`
+* Anyone may poke the contract to show that the courtesy period has elapsed
+* *access control*
+** anyone
+* *reads*
+** `uint256 courtesyCallInitiated`
+* *writes*
+** `uint256 liquidationInitiated`
+*** the timestamp when liquidation was started
+* *from*
+** `COURTESY_CALL`
 * *to*
 ** `LIQUIDATION_IN_PROGRESS`

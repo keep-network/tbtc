@@ -31,7 +31,7 @@ contract Deposit {
         FAILED_SETUP,
 
         // ACTIVE
-        ACTIVE,
+        ACTIVE,  // includes courtesy call
 
         // REDEMPTION FLOW
         AWAITING_WITHDRAWAL_SIGNATURE,
@@ -39,6 +39,7 @@ contract Deposit {
         REDEEMED,
 
         // SIGNER LIQUIDATION FLOW
+        COURTESY_CALL,
         FRAUD_LIQUIDATION_IN_PROGRESS,
         LIQUIDATION_IN_PROGRESS,
         LIQUIDATED
@@ -94,6 +95,7 @@ contract Deposit {
 
     // SET ON FRAUD
     uint256 liquidationInitiated;  // Timestamp of when liquidation starts
+    uint256 courtesyCallInitiated; // When the courtesy call is issued
 
     // INITIALLY WRITTEN BY FUNDING FLOW
     uint256 signingGroupRequestedAt;  // timestamp of signing group request
@@ -179,6 +181,14 @@ contract Deposit {
         return (currentState == DepositStates.LIQUIDATED
              || currentState == DepositStates.REDEEMED
              || currentState == DepositStates.FAILED_SETUP);
+    }
+
+    /// @notice     Check if the contract is available for a redemption request
+    /// @dev        Redemption is available from active and courtesy call
+    /// @return     True if available, False otherwise
+    function inRedeemableState() public view returns (bool) {
+        return (currentState == DepositStates.ACTIVE
+                || currentState == DepositStates.COURTESY_CALL);
     }
 
     /// @notice     Get the integer representing the current state
@@ -490,7 +500,7 @@ contract Deposit {
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH
     ) public returns (bool) {
-        require(currentState == DepositStates.ACTIVE, 'Redemption only available from Active state');
+        require(inRedeemableState(), 'Redemption only available from Active or Courtesy state');
 
         currentState = DepositStates.AWAITING_WITHDRAWAL_SIGNATURE;
 
@@ -498,7 +508,7 @@ contract Deposit {
         // Requires user to approve first
         // TODO: implement such that it calls the system to burn TBTC
         IBurnableERC20 TBTCContract = IBurnableERC20(TBTCConstants.getTokenContractAddress());
-        require(TBTCContract.balanceOf(msg.sender) > outstandingTBTC(), 'Not enough TBTC to cover outstanding debt');
+        require(TBTCContract.balanceOf(msg.sender) >= outstandingTBTC(), 'Not enough TBTC to cover outstanding debt');
         TBTCContract.burnFrom(msg.sender, outstandingTBTC());
 
         // Convert the 8-byte LE ints to uint256
@@ -969,6 +979,57 @@ contract Deposit {
         }
 
         startSignerLiquidation(true);
+        return true;
+    }
+
+    ///
+    /// LIQUIDATION
+    ///
+
+    /// @notice     Calculates the amount of value at auction right now
+    /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
+    /// @return     the value to distribute in the auction at the current time
+    function calculateAuctionValue() public view returns (uint256) {
+        uint256 _elapsed = block.timestamp - liquidationInitiated;
+        uint256 _available = address(this).balance - funderBondRefundAmount();
+        if (_elapsed > TBTCConstants.getAuctionDuration()) {
+            return _available;
+        }
+
+        // This should make a smooth flow from 75 to% to 100%
+        uint256 _basePercentage = TBTCConstants.getAuctionBasePercentage();
+        uint256 _elapsedPercentage = (100 - _basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
+        uint256 _percentage = _basePercentage + _elapsedPercentage;
+
+        return _available.mul(_percentage).div(100);
+    }
+
+    function purchaseBondAtAuction() public returns (bool) {
+        require(inSignerLiquidation(), 'No active auction');
+        currentState = DepositStates.LIQUIDATED;
+
+        // Burn the outstanding TBTC
+        /* TODO: ASSUMPTION: we are priveleged on TBTC token burn*/
+        IBurnableERC20 TBTCContract = IBurnableERC20(TBTCConstants.getTokenContractAddress());
+        require(TBTCContract.balanceOf(msg.sender) >= depositSize(), 'Not enough TBTC to cover outstanding debt');
+        TBTCContract.burnFrom(msg.sender, outstandingTBTC());
+
+        // Distribute funds to signers, beneficiary, and auction buyer
+        uint256 _valueToDistribute = calculateAuctionValue();
+        pushFundsToKeepGroup(address(this).balance - funderBondRefundAmount() - _valueToDistribute);
+        returnFunderBond();
+        msg.sender.transfer(_valueToDistribute);
+
+        return true;
+    }
+
+    /// @notice     Notifies the contract that the courtesy period has elapsed
+    /// @dev        This is treated as an abort, rather than fraud
+    /// @return     True if succesful, otherwise revert
+    function notifyCourtesyTimeout() public returns (bool) {
+        require(currentState == DepositStates.COURTESY_CALL);
+        require(block.timestamp >= courtesyCallInitiated + TBTCConstants.getCourtesyCallTimeout());
+        startSignerLiquidation(false);
         return true;
     }
 }
