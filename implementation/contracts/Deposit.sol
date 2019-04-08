@@ -121,7 +121,7 @@ contract Deposit {
     /// @notice                         The system can spin up a new deposit
     /// @dev                            This should be called by an approved contract, not a developer
     /// @param      _approvedDigests    Allow the system to set a list of non-slashable messages
-    /// @return                         True if succesful, otherwise revert
+    /// @return                         True if successful, otherwise revert
     function createNewDeposit(
         bytes32[] _approvedDigests
     ) public returns (bool) {
@@ -227,8 +227,27 @@ contract Deposit {
     }
 
     //
+
     // DERIVED PROPERTIES
     //
+
+    /// @notice     Calculates the amount of value at auction right now
+    /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
+    /// @return     the value to distribute in the auction at the current time
+    function auctionValue() public view returns (uint256) {
+        uint256 _elapsed = block.timestamp - liquidationInitiated;
+        uint256 _available = address(this).balance;
+        if (_elapsed > TBTCConstants.getAuctionDuration()) {
+            return _available;
+        }
+
+        // This should make a smooth flow from 75 to% to 100%
+        uint256 _basePercentage = TBTCConstants.getAuctionBasePercentage();
+        uint256 _elapsedPercentage = (100 - _basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
+        uint256 _percentage = _basePercentage + _elapsedPercentage;
+
+        return _available.mul(_percentage).div(100);
+    }
 
     /// @notice         Determines the fees due to the signers for work performeds
     /// @dev            Signers are paid based on the TBTC issued
@@ -287,6 +306,11 @@ contract Deposit {
     //
     // EXTERNAL CALLS
     //
+
+    function isUndercollateralized() public view returns (bool) { /* TODO */ }
+
+    function isSeverelyUndercollateralized() public view returns (bool) { /* TODO */ }
+
 
     /* TODO: call keep and push ether/tbtc out to keep members */
     function pushFundsToKeepGroup(uint256 _ethValue) internal returns (bool) { /* TODO */ }
@@ -495,7 +519,7 @@ contract Deposit {
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
-    /// @return                     True if succesful, otherwise revert
+    /// @return                     True if successful, otherwise revert
     function requestRedemption(
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH
@@ -548,7 +572,7 @@ contract Deposit {
     /// @param  _v  Signature recovery value
     /// @param  _r  Signature R value
     /// @param  _s  Signature S value
-    /// @return     True if succesful, False if prevented by timeout, otherwise revert
+    /// @return     True if successful, False if prevented by timeout, otherwise revert
     function provideRedemptionSignature(
         uint8 _v,
         bytes32 _r,
@@ -586,7 +610,7 @@ contract Deposit {
     /// @dev                                This sends us back to AWAITING_WITHDRAWAL_SIGNATURE
     /// @param  _previousOutputValueBytes   The previous output's value
     /// @param  _newOutputValueBytes        The new output's value
-    /// @return                             True if succesful, False if prevented by timeout, otherwise revert
+    /// @return                             True if successful, False if prevented by timeout, otherwise revert
     function increaseRedemptionFee(
         bytes8 _previousOutputValueBytes,
         bytes8 _newOutputValueBytes
@@ -648,7 +672,7 @@ contract Deposit {
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if succesful, False if prevented by timeout, otherwise revert
+    /// @return                 True if successful, False if prevented by timeout, otherwise revert
     function provideRedemptionProof(
         bytes _bitcoinTx,
         bytes _merkleProof,
@@ -699,7 +723,7 @@ contract Deposit {
 
     /// @notice     Anyone may notify the contract that the signers have failed to produce a signature
     /// @dev        This is considered fraud, and is punished
-    /// @return     True if succesful, otherwise revert
+    /// @return     True if successful, otherwise revert
     function notifySignatureTimeout() public returns (bool) {
         require(currentState == DepositStates.AWAITING_WITHDRAWAL_SIGNATURE);
         require(block.timestamp > withdrawalRequestTime + TBTCConstants.getSignatureTimeout());
@@ -709,7 +733,7 @@ contract Deposit {
 
     /// @notice     Anyone may notify the contract that the signers have failed to produce a redemption proof
     /// @dev        This is considered fraud, and is punished
-    /// @return     True if succesful, otherwise revert
+    /// @return     True if successful, otherwise revert
     function notifyRedemptionProofTimeout() public returns (bool) {
         require(currentState == DepositStates.AWAITING_WITHDRAWAL_PROOF);
         require(block.timestamp > withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout());
@@ -724,7 +748,7 @@ contract Deposit {
     /* TODO: is this a safe assumption? */
     /// @notice     Anyone may notify the contract that signing group setup has timed out
     /// @dev        We assume that the keep system punishes the signers
-    /// @return     True if succesful, otherwise revert
+    /// @return     True if successful, otherwise revert
     function notifySignerSetupFailure() public returns (bool) {
         require(currentState == DepositStates.AWAITING_SIGNER_SETUP, 'Not awaiting setup');
         require(block.timestamp > signingGroupRequestedAt + TBTCConstants.getSigningGroupFormationTimeout(),
@@ -740,7 +764,7 @@ contract Deposit {
     /* TODO: Will the Keep contract call us? or do we need to call it? */
     /// @notice             The Keep contract notifies the Deposit of the signing group's key
     /// @dev                We store the pubkey as 2 bytestrings, X and Y.
-    /// @return             True if succesful, otherwise revert
+    /// @return             True if successful, otherwise revert
     function retrieveSignerPubkey() public returns (bool) {
         /* TODO INCOMPLETE*/
         bytes memory _keepResult = getKeepPubkeyResult();
@@ -760,7 +784,7 @@ contract Deposit {
 
     /// @notice     Anyone may notify the contract that the funder has failed to send BTC
     /// @dev        This is considered a funder fault, and we revoke their bond
-    /// @return     True if succesful, otherwise revert
+    /// @return     True if successful, otherwise revert
     function notifyFundingTimeout() public returns (bool) {
         require(currentState == DepositStates.AWAITING_BTC_FUNDING_PROOF, 'Funding timeout has not started');
         require(block.timestamp > fundingProofTimerStart + TBTCConstants.getFundingTimeout(),
@@ -780,7 +804,7 @@ contract Deposit {
     /// @param  _s              Signature S value
     /// @param _signedDigest    The digest signed by the signature vrs tuple
     /// @param _preimage        The sha256 preimage of the digest
-    /// @return                 True if succesful, False if prevented by timeout, otherwise revert
+    /// @return                 True if successful, False if prevented by timeout, otherwise revert
     function provideFundingECDSAFraudProof(
         uint8 _v,
         bytes32 _r,
@@ -817,7 +841,7 @@ contract Deposit {
 
     /// @notice     Anyone may notify the contract no funding proof was submitted during funding fraud
     /// @dev        This is not a funder fault. The signers have faulted, so the funder shouldn't fund
-    /// @return     True if succesful, otherwise revert
+    /// @return     True if successful, otherwise revert
     function notifyFraudFundingTimeout() public returns (bool) {
         require(currentState == DepositStates.FRAUD_AWAITING_BTC_FUNDING_PROOF,
                 'Not currently awaiting fraud-related funding proof');
@@ -837,7 +861,7 @@ contract Deposit {
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if succesful, False if prevented by timeout, otherwise revert
+    /// @return                 True if successful, False if prevented by timeout, otherwise revert
     function provideFraudBTCFundingProof(
         bytes _bitcoinTx,
         bytes _merkleProof,
@@ -864,7 +888,7 @@ contract Deposit {
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if succesful, False if prevented by timeout, otherwise revert
+    /// @return                 True if successful, False if prevented by timeout, otherwise revert
     function provideBTCFundingProof(
         bytes _bitcoinTx,
         bytes _merkleProof,
@@ -908,7 +932,7 @@ contract Deposit {
     /// @param  _s              Signature S value
     /// @param _signedDigest    The digest signed by the signature vrs tuple
     /// @param _preimage        The sha256 preimage of the digest
-    /// @return                 True if succesful, otherwise revert
+    /// @return                 True if successful, otherwise revert
     function provideECDSAFraudProof(
         uint8 _v,
         bytes32 _r,
@@ -942,7 +966,7 @@ contract Deposit {
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if succesful, False if prevented by timeout, otherwise revert
+    /// @return                 True if successful, False if prevented by timeout, otherwise revert
     function provideSPVFraudProof(
         bytes _bitcoinTx,
         bytes _merkleProof,
@@ -986,46 +1010,71 @@ contract Deposit {
     /// LIQUIDATION
     ///
 
-    /// @notice     Calculates the amount of value at auction right now
-    /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
-    /// @return     the value to distribute in the auction at the current time
-    function calculateAuctionValue() public view returns (uint256) {
-        uint256 _elapsed = block.timestamp - liquidationInitiated;
-        uint256 _available = address(this).balance - funderBondRefundAmount();
-        if (_elapsed > TBTCConstants.getAuctionDuration()) {
-            return _available;
-        }
-
-        // This should make a smooth flow from 75 to% to 100%
-        uint256 _basePercentage = TBTCConstants.getAuctionBasePercentage();
-        uint256 _elapsedPercentage = (100 - _basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
-        uint256 _percentage = _basePercentage + _elapsedPercentage;
-
-        return _available.mul(_percentage).div(100);
-    }
-
+    /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud
+    /// @dev        For interface, reading auctionValue will give a past value. the current is better
+    /// @returns    True if successful, revert otherwise
     function purchaseBondAtAuction() public returns (bool) {
+        bool _wasFraud = currentState == DepositStates.FRAUD_LIQUIDATION_IN_PROGRESS;
         require(inSignerLiquidation(), 'No active auction');
         currentState = DepositStates.LIQUIDATED;
 
         // Burn the outstanding TBTC
-        /* TODO: ASSUMPTION: we are priveleged on TBTC token burn*/
+        /* TODO: ASSUMPTION: we are priveleged on TBTC token burn */
         IBurnableERC20 TBTCContract = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(TBTCContract.balanceOf(msg.sender) >= depositSize(), 'Not enough TBTC to cover outstanding debt');
         TBTCContract.burnFrom(msg.sender, outstandingTBTC());
 
-        // Distribute funds to signers, beneficiary, and auction buyer
-        uint256 _valueToDistribute = calculateAuctionValue();
-        pushFundsToKeepGroup(address(this).balance - funderBondRefundAmount() - _valueToDistribute);
-        returnFunderBond();
+        // Distribute funds to auction buyer
+        uint256 _valueToDistribute = auctionValue();
         msg.sender.transfer(_valueToDistribute);
 
+        // If there are funds left,
+        // Pay out the funder
+        if (address(this).balance > 0) {
+            if (address(this).balance >= funderBondRefundAmount()) {
+                returnFunderBond();
+            }
+            else if (address(this).balance > 0) {
+                depositBeneficiary().transfer(address(this).balance);
+            }
+        }
+
+        // then if there are funds left, and it wasn't fraud, pay out the signers
+        if (address(this).balance > 0) {
+            if (_wasFraud) {
+                /* TODO: is this what we want? */
+                addres(0).transfer(address(this).balance);
+            } else {
+                pushFundsToKeepGroup(address(this).balance);
+            }
+        }
+
+        return true;
+    }
+
+    /// @notice     Notify the contract that the signers are undercollateralized
+    /// @dev        Calls out to the system for oracle info
+    /// @return     True if successful, otherwise revert
+    function notifyCourtesyCall() public returns (bool) {
+        require(currentState == DepositStates.ACTIVE);
+        require(isUndercollateralized());
+        currentState = DepositStates.COURTESY_CALL;
+        return true;
+    }
+
+    /// @notice     Notify the contract that the signers are undercollateralized
+    /// @dev        Calls out to the system for oracle info
+    /// @return     True if successful, otherwise revert
+    function notifyUndercollateralizedLiquidation() public returns (bool) {
+        require(inRedeemableState()); // in active or courtesy call
+        require(isSeverelyUndercollateralized());
+        startSignerLiquidation(false);
         return true;
     }
 
     /// @notice     Notifies the contract that the courtesy period has elapsed
     /// @dev        This is treated as an abort, rather than fraud
-    /// @return     True if succesful, otherwise revert
+    /// @return     True if successful, otherwise revert
     function notifyCourtesyTimeout() public returns (bool) {
         require(currentState == DepositStates.COURTESY_CALL);
         require(block.timestamp >= courtesyCallInitiated + TBTCConstants.getCourtesyCallTimeout());

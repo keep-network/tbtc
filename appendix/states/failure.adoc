@@ -50,11 +50,33 @@ fraud-related state transitions in a single document.
 ** anyone
 * *reads*
 ** `uint256 liquidationInitiated`
+*** for calculating auction value
+** `mapping (address => uint256) balances`
+*** on the TBTC token contract
+* *writes*
+** `mapping (address => uint256) balances`
+*** on the TBTC token contract, to burn tokens
 * *from*
 ** `FRAUD_LIQUIDATION_IN_PROGRESS`
 ** `LIQUIDATION_IN_PROGRESS`
 * *to*
 ** `LIQUIDATED`
+
+
+=== `notifyCourtesyTimeout`
+* Anyone may poke the contract to show that the courtesy period has elapsed
+* Starts signer liquidation for abort
+* *access control*
+** anyone
+* *reads*
+** `uint256 courtesyCallInitiated`
+* *writes*
+** `uint256 liquidationInitiated`
+*** the timestamp when liquidation was started
+* *from*
+** `COURTESY_CALL`
+* *to*
+** `LIQUIDATION_IN_PROGRESS`
 
 
 == External Transitions
@@ -154,16 +176,27 @@ fraud-related state transitions in a single document.
 * *to*
 ** `LIQUIDATION_IN_PROGRESS`
 
-=== `notifyCourtesyTimeout`
-* Anyone may poke the contract to show that the courtesy period has elapsed
-* *access control*
+=== `notifyCourtesyCall`
+* Anyone may notify the contract that it is undercollateralized
+* *access controls*
 ** anyone
 * *reads*
-** `uint256 courtesyCallInitiated`
+** ORACLE
 * *writes*
-** `uint256 liquidationInitiated`
-*** the timestamp when liquidation was started
 * *from*
+** `ACTIVE`
+* *to*
+** `COURTESY_CALL`
+
+=== `notifyUndercollateralizedLiquidation`
+* Anyone may notify the contract that it is severely undercollateralized
+* *access controls*
+** anyone
+* *reads*
+** ORACLE
+* *writes*
+* *from*
+** `ACTIVE`
 ** `COURTESY_CALL`
 * *to*
 ** `LIQUIDATION_IN_PROGRESS`
