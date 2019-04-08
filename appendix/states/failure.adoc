@@ -51,9 +51,13 @@ fraud-related state transitions in a single document.
 *** The sha256 preimage of that digest (on Bitcoin txns, this will always be
     the 32 byte intermediate sighash digest)
 * *reads*
-** `address signersThresholdKeyAccount`
+** `bytes32 signingGroupPubkeyX;`
+*** The X coordinate of the signing group's pubkey
 *** to check that the signature is valid
-** `mapping(bytes32 => bool) wasRequested`
+** `bytes32 signingGroupPubkeyY;`
+*** The Y coordinate of the signing group's pubkey
+*** to check that the signature is valid
+** `mapping(bytes32 => uint256) wasRequested`
 *** check whether the signature was requested
 * *from*
 ** `AWAITING_SIGNER_SETUP`

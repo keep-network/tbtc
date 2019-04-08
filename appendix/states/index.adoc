@@ -1,0 +1,18 @@
+:toc: macro
+
+= Appendix
+
+ifndef::tbtc[]
+toc::[]
+endif::tbtc[]
+
+
+== Deposit and redemption state machine
+
+image::{root-prefix}img/generated/deposit-state-machine.png[]
+
+We model each deposit as a simple state machine.
+
+include::funding.adoc[leveloffset=+1]
+include::redemption.adoc[leveloffset=+1]
+include::failure.adoc[leveloffset=+1]

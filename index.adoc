@@ -5,7 +5,7 @@
 // Blank root prefix since this is the root doc.
 :root-prefix:
 
-= TBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
+= tBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
 
 ifndef::release[]
 .DRAFT
@@ -127,15 +127,15 @@ combination.
 
 == Design Goals
 
-The goal of TBTC is the creation an ERC-20 token that maintains the most
+The goal of tBTC is the creation an ERC-20 token that maintains the most
 important property of Bitcoin- its status as "hard money".
 
-To maintain the "hard money" status of its backing BTC deposits, TBTC must
+To maintain the "hard money" status of its backing BTC deposits, tBTC must
 remain
 
 * Censorship and seizure resistant, across friendly and unfriendly
 jurisdictions
-* Inflation-resistant. TBTC may only be minted after proof is provided of a
+* Inflation-resistant. tBTC may only be minted after proof is provided of a
 backing BTC deposit.
 * Leverage-resistant. The existence of TBTC shouldn't allow cross-chain
 "printing" of additional synthetic Bitcoin. We can't stop someone from launching
@@ -145,7 +145,7 @@ project.
 should be from the minimal participation of signers required to secure the
 network, similar to miners on the Bitcoin network.
 
-Finally, TBTC must be *redeemable*. The ability to trade scrip for its backing
+Finally, tBTC must be *redeemable*. The ability to trade scrip for its backing
 deposit freely is what distinguishes a backed currency from fiat money.
 
 == Developing Intuition: A simple single-signer protocol

@@ -6,14 +6,19 @@ ifndef::tbtc[]
 toc::[]
 endif::tbtc[]
 
-== Deposit and redemption state machine
+== A note on naming
 
-image::{root-prefix}img/generated/deposit-state-machine.png[]
+The system, in its entirety, is called "tBTC". In this document and throughout
+the project, the fungible Bitcoin-backed token is called "TBTC" to distinguish
+it from the rest of the project, and strongly suggest an eventual ticker.
 
-include::../deposits/states.adoc[leveloffset=+1]
-include::../failure/states.adoc[leveloffset=+1]
-include::../redemption/states.adoc[leveloffset=+1]
+Further discussion can be found on
+https://github.com/keep-network/tbtc/issues/17[Github].
+
+include::./states/index.adoc[leveloffset=+1]
 
 include::./spv/index.adoc[leveloffset=+2]
+
+include::./sighash/index.adoc[leveloffset=+2]
 
 include::./glossary/index.adoc[leveloffset=+1]

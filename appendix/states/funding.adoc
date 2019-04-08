@@ -67,7 +67,8 @@ an abort state.
 * *access control*
 ** anyone
 * *writes*
-** `addres owner`
+** `mapping _depositOwner(address => address)`
+*** on the TBTC system contract. for 721 compatibility, use uint256 when calling
 * *from*
 ** `START`
 * *to*
@@ -91,7 +92,12 @@ an abort state.
 * *args*
 ** `bytes _keepPubkey`
 * *writes*
-** `address signersThresholdKeyAccount`
+** `bytes32 signingGroupPubkeyX;`
+*** The X coordinate of the signing group's pubkey
+** `bytes32 signingGroupPubkeyY;`
+*** The Y coordinate of the signing group's pubkey
+** `uint256 fundingProofTimerStart`
+*** Start the funding proof timer
 * *from*
 ** `AWAITING_SIGNER_SETUP`
 * *to*
@@ -102,6 +108,8 @@ an abort state.
   proof. The funder's bond is forfeit due to non-completion at this point
 * *access control*
 ** anyone
+* *reads*
+** `uint256 fundingProofTimerStart`
 * *from*
 ** `AWAITING_BTC_FUNDING_PROOF`
 * *to*
@@ -119,15 +127,23 @@ an abort state.
 * *args*
 ** `bytes _signature`
 *** The purportedly fraudulent signature
-** `bytes _publicKey`
-*** The public key to verify the signature under (must match signer account)
 ** `bytes _digest`
 *** The digest on which the signature was made
 ** `bytes _preImage`
 *** The sha256 preimage of that digest (on Bitcoin txns, this will always be
     the 32 byte intermediate sighash digest)
-** `address signersThresholdKeyAccount`
+* *reads*
+** `bytes32 signingGroupPubkeyX;`
+*** The X coordinate of the signing group's pubkey
 *** to check that the signature is valid
+** `bytes32 signingGroupPubkeyY;`
+*** The Y coordinate of the signing group's pubkey
+*** to check that the signature is valid
+** `uint256 fundingProofTimerStart`
+*** don't allow this state transition if the funder has timed out
+* *writes*
+** `uint256 fundingProofTimerStart`
+*** update the funding proof timer for the new fraud time period
 * *from*
 ** `AWAITING_BTC_FUNDING_PROOF`
 * *to*
@@ -141,6 +157,9 @@ an abort state.
   because it yields a different state and has different behavior
 * *access control*
 ** anyone
+* *reads*
+** `uint256 fundingProofTimerStart`
+*** for determining timeout of proof period
 * *from*
 ** `FRAUD_AWAITING_BTC_FUNDING_PROOF`
 * *to*
@@ -173,7 +192,7 @@ an abort state.
 ** `uint _index`
 ** `bytes _headers`
 * *writes*
-** `uint256 utxoSize`
+** `bytes8 depositSizeBytes`
 *** size of UTXO in satoshis
 ** `bytes utxoOutpoint`
 *** unique identifier for the UTXO
