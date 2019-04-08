@@ -99,11 +99,12 @@ contract Deposit {
 
     // INITIALLY WRITTEN BY FUNDING FLOW
     uint256 signingGroupRequestedAt;  // timestamp of signing group request
+    uint256 fundingProofTimerStart;  // start of the funding proof period. reused for funding fraud proof period
     bytes32 signingGroupPubkeyX;  // The X coordinate of the signing group's pubkey
     bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
-    uint256 fundingProofTimerStart;  // start of the funding proof period. reused for funding fraud proof period
     bytes8 depositSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
     bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
+    uint256 fundedAt; // timestamp when funding proof was received
 
     // INITIALLY WRITTEN BY REDEMPTION FLOW
     bytes20 requesterPKH;  // The 20-byte requeser PKH
@@ -1058,6 +1059,7 @@ contract Deposit {
     function notifyCourtesyCall() public returns (bool) {
         require(currentState == DepositStates.ACTIVE);
         require(isUndercollateralized());
+        courtesyCallInitiated = block.timestamp;
         currentState = DepositStates.COURTESY_CALL;
         return true;
     }
@@ -1066,8 +1068,8 @@ contract Deposit {
     /// @dev        Calls out to the system for oracle info
     /// @return     True if successful, otherwise revert
     function notifyUndercollateralizedLiquidation() public returns (bool) {
-        require(inRedeemableState()); // in active or courtesy call
-        require(isSeverelyUndercollateralized());
+        require(inRedeemableState(), 'Deposit not in active or courtesy call');
+        require(isSeverelyUndercollateralized(), 'Deposit has sufficient collateral');
         startSignerLiquidation(false);
         return true;
     }
@@ -1076,9 +1078,20 @@ contract Deposit {
     /// @dev        This is treated as an abort, rather than fraud
     /// @return     True if successful, otherwise revert
     function notifyCourtesyTimeout() public returns (bool) {
-        require(currentState == DepositStates.COURTESY_CALL);
-        require(block.timestamp >= courtesyCallInitiated + TBTCConstants.getCourtesyCallTimeout());
+        require(currentState == DepositStates.COURTESY_CALL, 'Not in a courtesy call period');
+        require(block.timestamp >= courtesyCallInitiated + TBTCConstants.getCourtesyCallTimeout(), 'Courtesy period has not elapsed');
         startSignerLiquidation(false);
+        return true;
+    }
+
+    /// @notice     Notifies the contract that its term limit has been reached
+    /// @dev        This initiates a courtesy call
+    /// @return     True if successful, otherwise revert
+    function notifyDepositExpiryCourtesyCall() public returns (bool) {
+        require(currentState == DepositStates.ACTIVE, 'Deposit is not active');
+        require(block.timestamp >= fundedAt + TBTCConstants.getDepositTerm(), 'Deposit term not elapsed');
+        currentState = DepositStates.COURTESY_CALL;
+        courtesyCallInitiated = block.timestamp;
         return true;
     }
 }

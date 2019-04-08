@@ -196,6 +196,25 @@ fraud-related state transitions in a single document.
 * *reads*
 ** ORACLE
 * *writes*
+** `uint256 courtesyCallInitiated`
+*** timestamp when the call was initiated
+* *from*
+** `ACTIVE`
+* *to*
+** `COURTESY_CALL`
+
+=== `notifyDepositExpiryCourtesyCall`
+* Anyone may notify the contract that it has reached its end-of-term
+* This triggers the courtesy call phase
+* *access controls*
+** anyone
+* *reads*
+** `block.timestamp`
+** `uint256 DEPOSIT_TERM_LENGTH`
+*** tbtc constants
+* *writes*
+** `uint256 courtesyCallInitiated`
+*** timestamp when the call was initiated
 * *from*
 ** `ACTIVE`
 * *to*
