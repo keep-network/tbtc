@@ -239,7 +239,7 @@ contract Deposit {
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
     /// @return     the value to distribute in the auction at the current time
     function auctionValue() public view returns (uint256) {
-        uint256 _elapsed = block.timestamp - liquidationInitiated;
+        uint256 _elapsed = block.timestamp.sub(liquidationInitiated);
         uint256 _available = address(this).balance;
         if (_elapsed > TBTCConstants.getAuctionDuration()) {
             return _available;
@@ -247,7 +247,7 @@ contract Deposit {
 
         // This should make a smooth flow from 75 to% to 100%
         uint256 _basePercentage = TBTCConstants.getAuctionBasePercentage();
-        uint256 _elapsedPercentage = (100 - _basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
+        uint256 _elapsedPercentage = 100.sub(_basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
         uint256 _percentage = _basePercentage + _elapsedPercentage;
 
         return _available.mul(_percentage).div(100);
@@ -255,7 +255,7 @@ contract Deposit {
 
     /// @notice         Determines the fees due to the signers for work performeds
     /// @dev            Signers are paid based on the TBTC issued
-    /// @return         Accumulated fees in smallest TBTC unit (satoshi)
+    /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee() public view returns (uint256) {
         return lotSize().div(TBTCConstants.getSignerFeeDivisor());
     }
@@ -269,7 +269,7 @@ contract Deposit {
 
     /// @notice         Determines the amount of TBTC paid to redeem the deposit
     /// @dev            This is the amount of TBTC needed to repay to redeem the Deposit
-    /// @return         Outstanding debt in smallest TBTC unit
+    /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount() public view returns (uint256) {
         if (requesterPKH == bytes20(0)) {
             return lotSize().add(signerFee()).add(beneficiaryReward());
@@ -348,7 +348,7 @@ contract Deposit {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes _preimage
-    ) internal returns (bool) {
+    ) internal returns (bool _isFraud) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         return _keep.submitSignatureFraud(keepID, _v, _r, _s, _signedDigest, _preimage);
     }
@@ -377,7 +377,7 @@ contract Deposit {
         _keep.seizeSignerBonds(keepID);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, 'No funds received, unexpected');
-        return _postCallBalance - _preCallBalance;
+        return _postCallBalance.sub(_preCallBalance);
     }
 
     /// @notice         determines whether a digest has been approved for our keep group
@@ -392,7 +392,7 @@ contract Deposit {
     /// @notice         approves a digest for signing by our keep group
     /// @dev            calls out to the keep contract
     /// @param  _digest the digest to approve
-    /// @return         true if approved, otherwise revert TODO: check this
+    /// @return         true if approved, otherwise revert
     function approveDigest(bytes32 _digest) internal returns (bool) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         return _keep.approveDigest(keepID, _digest);
@@ -400,7 +400,7 @@ contract Deposit {
 
     /// @notice         get the signer pubkey for our keep
     /// @dev            calls out to the keep contract, should get 64 bytes back
-    /// @return         the 64 byte pubkey // TODO: check this
+    /// @return         the 64 byte pubkey
     function getKeepPubkeyResult() public view returns (bytes) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         bytes memory _pubkey = _keep.getKeepPubkey(keepID);
@@ -431,7 +431,9 @@ contract Deposit {
     // REUSABLE STATE TRANSITIONS
     //
 
-    /* TODO: is this what we want? */
+    /// @notice     Distributes the beneficiary reward to the beneficiary
+    /// @dev        We distribute the whole TBTC balance as a convenience,
+    ///             whenever this is called we are shutting down.
     function distributeBeneficiaryReward() internal {
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(_tbtc.transfer(depositBeneficiary(), _tbtc.balanceOf(address(this))));
@@ -461,7 +463,7 @@ contract Deposit {
         if (_liquidated) {
             distributeBeneficiaryReward();
             currentState = DepositStates.LIQUIDATED;
-            address(0).transfer(address(this).balance);  /* TODO: is this what we want? */
+            address(0).transfer(address(this).balance);  // burn it down
         }
         if (!_liquidated) {
             currentState = DepositStates.FRAUD_LIQUIDATION_IN_PROGRESS;
@@ -528,7 +530,7 @@ contract Deposit {
     function partiallySlashForFraudInFunding() internal {
         uint256 _seized = seizeSignerBonds();
         uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
-        pushFundsToKeepGroup(_seized - _slash);
+        pushFundsToKeepGroup(_seized.sub(_slash));
         depositBeneficiary().transfer(_slash);  /* TODO: is this what we want? I think so */
     }
 
@@ -578,12 +580,7 @@ contract Deposit {
                 _index),
             'Tx merkle proof is not valid for provided header and tx');
 
-        /*
-        TODO: Does the currentBlockDifficulty return the total diff?
-              Should it return a single-header diff so we can check all headers
-              have that diff?
-         */
-        require(_bitcoinHeaders.validateHeaderChain() > currentBlockDifficulty(),
+        require(_bitcoinHeaders.validateHeaderChain() > currentBlockDifficulty().mul(6),
                 'Insufficient accumulated difficulty in header chain');
 
         return _txid;
@@ -656,10 +653,10 @@ contract Deposit {
 
         // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
         // Requires user to approve first
-        // TODO: implement such that it calls the system to burn TBTC
+        /* TODO: implement such that it calls the system to burn TBTC? */
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(_tbtc.balanceOf(msg.sender) >= redemptionTBTCAmount(), 'Not enough TBTC to cover outstanding debt');
-        _tbtc.burnFrom(msg.sender, redemptionTBTCAmount() - beneficiaryReward());
+        _tbtc.burnFrom(msg.sender, redemptionTBTCAmount().sub(beneficiaryReward()));
         _tbtc.transferFrom(msg.sender, address(this), beneficiaryReward());
 
         // Convert the 8-byte LE ints to uint256
@@ -710,12 +707,9 @@ contract Deposit {
         // A signature has been provided, now we wait for fee bump or redemption
         currentState = DepositStates.AWAITING_WITHDRAWAL_PROOF;
 
-        // If we're outside of the signature window, signers have aborted, initate punishment
-        /* TODO: discussion: should we instead require an explicit call to notifySignatureTimeout? */
-        if (block.timestamp > withdrawalRequestTime + TBTCConstants.getSignatureTimeout()) {
-            startSignerAbortLiquidation(); // Not fraud, just failure
-            return false;  // We return instead of reverting so that the above transition takes place
-        }
+        // If we're outside of the signature window, we COULD punish signers here
+        // Instead, we consider this a no-harm-no-foul situation.
+        // The signers have not stolen funds. Most likely they've just inconvenienced someone
 
         // The signature must be valid on the pubkey
         require(signerPubkey().checkSig(
@@ -780,7 +774,7 @@ contract Deposit {
             _sighash,
             utxoSize(),
             requesterPKH,
-            utxoSize() - _newOutputValue,
+            utxoSize().sub(_newOutputValue),
             utxoOutpoint);
 
         currentState = DepositStates.AWAITING_WITHDRAWAL_SIGNATURE;
@@ -827,7 +821,7 @@ contract Deposit {
             'Tx merkle proof is not valid for provided header');
 
         uint256 _currentDiff = currentBlockDifficulty();
-        require(_bitcoinHeaders.validateHeaderChain() > _currentDiff * 6, // TODO
+        require(_bitcoinHeaders.validateHeaderChain() > _currentDiff * 6,  // TODO: improve this?
                 'Insufficient accumulated difficulty in header chain');
 
         require(keccak256(_locktime) == keccak256(hex'00000000'), 'Wrong locktime set');
@@ -838,7 +832,7 @@ contract Deposit {
         require(keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(requesterPKH)),
                 'Tx sends value to wrong pubkeyhash');
         /* TODO: refactor redemption flow to improve this */
-        require((utxoSize() - uint256(_outs.extractValue())) <= initialRedemptionFee * 5, 'Fee unexpectedly very high');
+        require((utxoSize().sub(uint256(_outs.extractValue()))) <= initialRedemptionFee * 5, 'Fee unexpectedly very high');
 
         emit Redeemed(
             _txid,
@@ -877,9 +871,8 @@ contract Deposit {
     // FUNDING FLOW
     //
 
-    /* TODO: is this a safe assumption? */
     /// @notice     Anyone may notify the contract that signing group setup has timed out
-    /// @dev        We assume that the keep system punishes the signers
+    /// @dev        We rely on the keep system punishes the signers in this case
     /// @return     True if successful, otherwise revert
     function notifySignerSetupFailure() public returns (bool) {
         require(currentState == DepositStates.AWAITING_SIGNER_SETUP, 'Not awaiting setup');
@@ -893,12 +886,10 @@ contract Deposit {
         return true;
     }
 
-    /* TODO: Will the Keep contract call us? or do we need to call it? */
-    /// @notice             The Keep contract notifies the Deposit of the signing group's key
+    /// @notice             we poll the Keep contract to retrieve our pubkey
     /// @dev                We store the pubkey as 2 bytestrings, X and Y.
     /// @return             True if successful, otherwise revert
     function retrieveSignerPubkey() public returns (bool) {
-        /* TODO INCOMPLETE*/
         bytes memory _keepResult = getKeepPubkeyResult();
 
         signingGroupPubkeyX = _keepResult.slice(0, 32).toBytes32();
@@ -948,10 +939,8 @@ contract Deposit {
                 'Signer fraud during funding flow only available while awaiting funding');
         currentState = DepositStates.FRAUD_AWAITING_BTC_FUNDING_PROOF;
 
-        /* TODO: outsource this to the Keep contract? */
-        bool _valid = signerPubkey().checkSig(_signedDigest, _v, _r, _s);
-        _valid = _valid && _preimage.isSha256Preimage(_signedDigest);
-        require(_valid, 'Signature is not valid');  // Invalid signatures error
+        bool _isFraud = submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
+        require(_isFraud, 'Signature is not valid');  // Invalid signatures error
 
         /* NB: This is reuse of the variable */
         fundingProofTimerStart = block.timestamp;
@@ -964,7 +953,7 @@ contract Deposit {
         }
 
         seizeSignerBonds();
-        address(0).transfer(address(this).balance);
+        address(0).transfer(address(this).balance);  // Burn it all down (fire emoji)
         fundingTeardown();
 
         return true;
@@ -1085,7 +1074,6 @@ contract Deposit {
         return true;
     }
 
-    /* TODO: Can we cut this and rely entirely on ECDSA fraud? */
     /// @notice                 Anyone may notify the deposit of fraud via an SPV proof
     /// @dev                    We strong prefer ECDSA fraud proofs
     /// @param  _bitcoinTx      The bitcoin tx that purportedly contains the funding output
@@ -1119,7 +1107,7 @@ contract Deposit {
         require(_inputConsumed, 'No input spending custodied UTXO found');
 
         uint256 _permittedFeeBumps = 5;  /* TODO: can we refactor withdrawal flow to improve this? */
-        uint256 _requiredOutputSize = utxoSize() - (initialRedemptionFee * (1 + _permittedFeeBumps));
+        uint256 _requiredOutputSize = utxoSize().sub((initialRedemptionFee * (1 + _permittedFeeBumps)));
         for (i = 0; i < _bitcoinTx.extractNumOutputs(); i++) {
             _output = _bitcoinTx.extractOutputAtIndex(i);
             if (_output.extractValue() >= _requiredOutputSize
@@ -1145,8 +1133,7 @@ contract Deposit {
         currentState = DepositStates.LIQUIDATED;
 
         // Burn the outstanding TBTC
-        /* TODO: ASSUMPTION: we are priveleged on TBTC token burn */
-        /* TODO: implement such that we call the system */
+        /* TODO: implement such that we call the system? */
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(_tbtc.balanceOf(msg.sender) >= lotSize(), 'Not enough TBTC to cover outstanding debt');
         _tbtc.burnFrom(msg.sender, lotSize());  // burn minimal amount to cover size
