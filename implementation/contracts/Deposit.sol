@@ -260,7 +260,9 @@ contract Deposit {
         return depositSize().div(TBTCConstants.getSignerFeeDivisor());
     }
 
-    // TODO: Docs
+    /// @notice     calculates the beneficiary reward based on the deposit size
+    /// @dev        the amount of extra ether to pay the beneficiary at closing time
+    /// @return     the amount of ether in wei to pay the beneficiary
     function beneficiaryReward() public view returns (uint256) {
         return depositSize().div(TBTCConstants.getBeneficiaryRewardDivisor());
     }
@@ -363,18 +365,33 @@ contract Deposit {
         return _postCallBalance - _preCallBalance;
     }
 
+    /// @notice         determines whether a digest has been approved for our keep group
+    /// @dev            calls out to the keep contract, storing a 256bit int costs the same as a bool
+    /// @param  _digest the digest to check approval time for
+    /// @return         the time it was approved. 0 if unapproved
     function wasApproved(bytes32 _digest) internal view returns (uint256) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         return _keep.wasApproved(keepID, _digest);
     }
 
+    /// @notice         approves a digest for signing by our keep group
+    /// @dev            calls out to the keep contract
+    /// @param  _digest the digest to approve
+    /// @return         true if approved, otherwise revert TODO: check this
     function approveDigest(bytes32 _digest) internal returns (bool) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         return _keep.approveDigest(keepID, _digest);
     }
 
-    /* TODO: calls out to the keep contract to get the result*/
-    function getKeepPubkeyResult() public view returns (bytes) { /* TODO */ }
+    /// @notice         get the signer pubkey for our keep
+    /// @dev            calls out to the keep contract, should get 64 bytes back
+    /// @return         the 64 byte pubkey // TODO: check this
+    function getKeepPubkeyResult() public view returns (bytes) {
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        bytes memory _pubkey = _keep.getKeepPubkey(keepID);
+        require(_pubkey.length == 64);
+        return _pubkey
+    }
 
     /* TODO: should we return the current diff here so that stateless proofs can be checked? */
     /// @notice         Gets the current block difficulty
@@ -559,7 +576,6 @@ contract Deposit {
     function findAndParseFundingOutput(
         bytes _bitcoinTx
     ) internal view returns (bytes8, uint8) {
-        /* TODO */
         bytes8 _valueBytes;
         bytes memory _output;
 
@@ -1102,6 +1118,7 @@ contract Deposit {
 
         // Burn the outstanding TBTC
         /* TODO: ASSUMPTION: we are priveleged on TBTC token burn */
+        /* TODO: implement such that we call the system */
         IBurnableERC20 TBTCContract = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(TBTCContract.balanceOf(msg.sender) >= depositSize(), 'Not enough TBTC to cover outstanding debt');
         TBTCContract.burnFrom(msg.sender, outstandingTBTC());

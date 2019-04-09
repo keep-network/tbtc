@@ -35,8 +35,13 @@ interface IKeep {
     function distributeERC20ToKeepGroup(uint256 _keepID, address _asset, uint256 _value) external returns (bool);
 
     // request a new m-of-n group
+    // should return a 256 unique keep id
     function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (uint256 _keepID);
-    function getKeepPubkey(uint256 _keepIP) external view returns (bytes);
+
+    // get the result of a keep formation
+    // should return a 64 byte packed pubkey (x and y)
+    // error if not ready yet
+    function getKeepPubkey(uint256 _keepID) external view returns (bytes);
 
     // seize the signer's ETH bond
     // onlyKeepOwner
