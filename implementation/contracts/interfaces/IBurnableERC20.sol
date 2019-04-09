@@ -19,7 +19,9 @@ interface IBurnableERC20 {
 
     function burnFrom(address from, uint256 value) external;
 
-    function burn(uint256 value) external;  
+    function burn(uint256 value) external;
+
+    function mint(address to, uint256 value) external returns (bool);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 

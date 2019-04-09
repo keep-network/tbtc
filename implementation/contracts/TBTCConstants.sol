@@ -14,6 +14,7 @@ library TBTCConstants {
     // System Parameters
     uint256 public constant MINIMUM_LOT_SIZE = 10 ** 8;  // satoshi
     uint256 public constant SIGNER_FEE_DIVISOR = 200; // 1/200 == 50bps == 0.5% == 0.005
+    uint256 public constant WITHHELD_PERCENTAGE = 5; // per cent
     uint256 public constant BENEFICIARY_FEE_DIVISOR = 1000;  // 1/1000 = 10 bps = 0.1% = 0.001
     uint256 public constant FUNDING_FRAUD_PARTIAL_SLASH_DIVISOR = 2;  // 1/2 = 5000bps = 50% = 0.5
     uint256 public constant DEPOSIT_TERM_LENGTH = 180 * 24 * 60 * 60; // 180 days in seconds
@@ -28,7 +29,7 @@ library TBTCConstants {
     uint256 public constant FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FORMATION_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FRAUD_FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
-    uint256 public constant FUNDER_BOND_REFUNDABLE_PORTION = 10 ** 22; // wei
+    uint256 public constant FUNDER_BOND_AMOUNT_WEI = 10 ** 22; // wei
 
     // Liquidation Flow
     uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
@@ -54,7 +55,7 @@ library TBTCConstants {
     function getRedepmtionProofTimeout() public pure returns (uint256) { return REDEMPTION_PROOF_TIMEOUT; }
     function getMinimumRedemptionFee() public pure returns (uint256) { return MINIMUM_REDEMPTION_FEE; }
 
-    function getFunderBondRefundAmount() public pure returns (uint256) { return FUNDER_BOND_REFUNDABLE_PORTION; }
+    function getFunderBondAmount() public pure returns (uint256) { return FUNDER_BOND_AMOUNT_WEI; }
     function getFundingTimeout() public pure returns (uint256) { return FUNDING_PROOF_TIMEOUT; }
     function getSigningGroupFormationTimeout() public pure returns (uint256) { return FORMATION_TIMEOUT; }
     function getFraudFundingTimeout() public pure returns (uint256) { return FRAUD_FUNDING_PROOF_TIMEOUT; }
