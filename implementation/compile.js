@@ -15,6 +15,7 @@ const SafeMathPath = path.resolve(__dirname, 'bitcoin-spv', 'contracts', 'SafeMa
 const SigCheckPath = path.resolve(__dirname, 'bitcoin-spv', 'contracts', 'SigCheck.sol')
 const IBurnableERC20Path = path.resolve(__dirname, 'contracts', 'interfaces', 'IBurnableERC20.sol')
 const IERC721Path = path.resolve(__dirname, 'contracts', 'interfaces', 'IERC721.sol')
+const IKeepPath = path.resolve(__dirname, 'contracts', 'interfaces', 'IKeep.sol')
 const TBTCConstantsPath = path.resolve(__dirname, 'contracts', 'TBTCConstants.sol')
 const DepositPath = path.resolve(__dirname, 'contracts', 'Deposit.sol')
 
@@ -26,6 +27,7 @@ let input = {
     'SigCheck.sol': fs.readFileSync(SigCheckPath, 'utf8'),
     'IBurnableERC20.sol': fs.readFileSync(IBurnableERC20Path, 'utf8'),
     'IERC721.sol': fs.readFileSync(IERC721Path, 'utf8'),
+    'IKeep.sol': fs.readFileSync(IKeepPath, 'utf8'),
     'TBTCConstants.sol': fs.readFileSync(TBTCConstantsPath, 'utf8'),
     'Deposit.sol': fs.readFileSync(DepositPath, 'utf8')
 }

@@ -8,6 +8,7 @@ import {CheckBitcoinSigs} from './SigCheck.sol';
 import {TBTCConstants} from './TBTCConstants.sol';
 import {IBurnableERC20} from './IBurnableERC20.sol';
 import {IERC721} from './IERC721.sol';
+import {IKeep} from './IKeep.sol';
 
 contract Deposit {
 
@@ -99,6 +100,7 @@ contract Deposit {
     uint256 courtesyCallInitiated; // When the courtesy call is issued
 
     // INITIALLY WRITTEN BY FUNDING FLOW
+    uint256 keepID;
     uint256 signingGroupRequestedAt;  // timestamp of signing group request
     uint256 fundingProofTimerStart;  // start of the funding proof period. reused for funding fraud proof period
     bytes32 signingGroupPubkeyX;  // The X coordinate of the signing group's pubkey
@@ -108,42 +110,42 @@ contract Deposit {
     uint256 fundedAt; // timestamp when funding proof was received
 
     // INITIALLY WRITTEN BY REDEMPTION FLOW
+    address requesterAddress;  // The requester's addr4ess, used as fallback for fraud in redemption
     bytes20 requesterPKH;  // The 20-byte requeser PKH
     uint256 initialRedemptionFee;  // the initial fee as requested
     uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
     bytes32 lastRequestedDigest;  // the digest most recently requested for signing
-    mapping(bytes32 => uint256) public wasRequested; // Signatures that have been requested and the timestamp
 
     // We separate the constructor from createNewDeposit to make proxy factories easier
     constructor () public {}
 
-    function () public payable { require(false); }  // don't do that
+    function () public payable {}
 
     // THIS IS THE INIT FUNCTION
-    /// @notice                         The system can spin up a new deposit
-    /// @dev                            This should be called by an approved contract, not a developer
-    /// @param      _approvedDigests    Allow the system to set a list of non-slashable messages
-    /// @return                         True if successful, otherwise revert
+    /// @notice         The system can spin up a new deposit
+    /// @dev            This should be called by an approved contract, not a developer
+    /// @param _m       m for m-of-n
+    /// @param _m       n for m-of-n
+    /// @return         True if successful, otherwise revert
     function createNewDeposit(
-        bytes32[] _approvedDigests
-    ) public returns (bool) {
+        uint256 _m,
+        uint256 _n
+    ) payable public returns (bool) {
         require(currentState == DepositStates.START, 'Deposit setup already requested');
         require(isApprovedDepositCreator(msg.sender), 'Calling account not allowed to create deposits');
         currentState = DepositStates.AWAITING_SIGNER_SETUP;
 
-        // This allows the system to set digests that the signers may sign
-        for (uint i = 0; i < _approvedDigests.length; i++) {
-            wasRequested[_approvedDigests[i]] = block.timestamp;
-        }
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+
         signingGroupRequestedAt = block.timestamp;
+        keepID = _keep.requestKeepGroup.value(msg.value)(_m, _n);  // kinda gross but
         return true;
     }
 
 
-
-    //
-    // CHECKING STATES
-    //
+    ///
+    /// CHECKING STATES
+    ///
 
     /// @notice     Check if the contract is currently in the funding flow
     /// @dev        This checks on the funding flow happy path, not the fraud path
@@ -267,7 +269,11 @@ contract Deposit {
     /// @dev            This is the amount of TBTC needed to repay to redeem the Deposit
     /// @return         Outstanding debt in smallest TBTC unit
     function outstandingTBTC() public view returns (uint256) {
-        return depositSize().add(signerFee()).add(beneficiaryReward());
+        if (requesterPKH == bytes20(0)) {
+            return depositSize().add(signerFee()).add(beneficiaryReward());
+        } else {
+            return 0;
+        }
     }
 
     /// @notice         Returns the packed public key (64 bytes) for the signing group
@@ -300,7 +306,9 @@ contract Deposit {
         return bytes8LEToUint(depositSizeBytes);
     }
 
-    // TODO: document
+    /// @notice     Looks up the size of the funder bond
+    /// @dev        This is stored as a constant
+    /// @return     The refundable portion of the funder bond
     function funderBondRefundAmount() public pure returns (uint256) {
         TBTCConstants.getFunderBondRefundAmount();
     }
@@ -309,16 +317,61 @@ contract Deposit {
     // EXTERNAL CALLS
     //
 
+    /// @notice                 Notifies the keep contract of fraud
+    /// @dev                    Calls out to the keep contract. this could get expensive if preimage is large
+    /// @param  _v              Signature recovery value
+    /// @param  _r              Signature R value
+    /// @param  _s              Signature S value
+    /// @param _signedDigest    The digest signed by the signature vrs tuple
+    /// @param _preimage        The sha256 preimage of the digest
+    /// @return                 True if fraud, otherwise revert
+    function submitSignatureFraud(
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s,
+        bytes32 _signedDigest,
+        bytes _preimage
+    ) internal returns (bool) {
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        return _keep.submitSignatureFraud(keepID, _v, _r, _s, _signedDigest, _preimage);
+    }
+
     function isUndercollateralized() public view returns (bool) { /* TODO */ }
 
     function isSeverelyUndercollateralized() public view returns (bool) { /* TODO */ }
 
 
-    /* TODO: call keep and push ether/tbtc out to keep members */
-    function pushFundsToKeepGroup(uint256 _ethValue) internal returns (bool) { /* TODO */ }
+    /// @notice             pushes ether held by the deposit to the signer group
+    /// @dev                useful for returning bonds to the group, or otherwise paying them
+    /// @param  _ethValue   the amount of ether to send
+    /// @return             true if successful, otherwise revert
+    function pushFundsToKeepGroup(uint256 _ethValue) internal returns (bool) {
+        require(address(this).balance >= _ethValue, 'Not enough funds to send');
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        return _keep.distributeEthToKeepGroup.value(_ethValue)(keepID);
+    }
 
-    /* TODO: call keep and return the value of the bond seized */
-    function seizeSignerBonds() internal returns (uint256) { /* TODO */ }
+    ///
+    /// @dev        we check our balance before and after
+    /// @return     the amount of ether seized
+    function seizeSignerBonds() internal returns (uint256) {
+        uint256 _preCallBalance = address(this).balance;
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        _keep.seizeSignerBonds(keepID);
+        uint256 _postCallBalance = address(this).balance;
+        require(_postCallBalance > _preCallBalance, 'No funds received, unexpected');
+        return _postCallBalance - _preCallBalance;
+    }
+
+    function wasApproved(bytes32 _digest) internal view returns (uint256) {
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        return _keep.wasApproved(keepID, _digest);
+    }
+
+    function approveDigest(bytes32 _digest) internal returns (bool) {
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        return _keep.approveDigest(keepID, _digest);
+    }
 
     /* TODO: calls out to the keep contract to get the result*/
     function getKeepPubkeyResult() public view returns (bytes) { /* TODO */ }
@@ -356,18 +409,26 @@ contract Deposit {
         // Reclaim used state for gas savings
         fundingTeardown();
         redemptionTeardown();
-        seizeSignerBonds();
+        uint256 _seized = seizeSignerBonds();
+
+        if (outstandingTBTC() == 0) {
+            // we came from the redemption flow
+            currentState = DepositStates.LIQUIDATED;
+            requesterAddress.transfer(_seized);
+            returnFunderBond();
+            return;
+        }
 
         bool _liquidated = attmeptToLiquidateOnChain();
 
         if (_liquidated) {
+            currentState = DepositStates.LIQUIDATED;
             returnFunderBond();
             address(0).transfer(address(this).balance);  /* TODO: is this what we want? */
-            currentState = DepositStates.LIQUIDATED;
         }
         if (!_liquidated) {
-            liquidationInitiated = block.timestamp;  // Store the timestamp for auction
             currentState = DepositStates.FRAUD_LIQUIDATION_IN_PROGRESS;
+            liquidationInitiated = block.timestamp;  // Store the timestamp for auction
         }
     }
 
@@ -587,11 +648,12 @@ contract Deposit {
             utxoOutpoint);
 
         // write all request details
+        requesterAddress = msg.sender;
         requesterPKH = _requesterPKH;
         initialRedemptionFee = _requestedFee;
         withdrawalRequestTime = block.timestamp;
         lastRequestedDigest = _sighash;
-        wasRequested[_sighash] = block.timestamp;
+        approveDigest(_sighash);
 
         return true;
     }
@@ -660,7 +722,7 @@ contract Deposit {
             depositSizeBytes,
             _previousOutputValueBytes,
             requesterPKH);
-        require(wasRequested[_previousSighash] == withdrawalRequestTime, 'Provided previous value does not yield previous sighash');
+        require(wasApproved(_previousSighash) == withdrawalRequestTime, 'Provided previous value does not yield previous sighash');
 
         // Check that we're incrementing the fee by exactly the requester's initial fee
         uint256 _previousOutputValue = abi.encodePacked(_previousOutputValueBytes).reverseEndianness().bytesToUint();
@@ -684,13 +746,14 @@ contract Deposit {
             depositSize() - _newOutputValue,
             utxoOutpoint);
 
+        currentState = DepositStates.AWAITING_WITHDRAWAL_SIGNATURE;
+
         // Ratchet the signature and redemption proof timeouts
         withdrawalRequestTime = block.timestamp;
-        wasRequested[_sighash] = block.timestamp;
         lastRequestedDigest = _sighash;
+        require(approveDigest(_sighash));
 
         // Go back to waiting for a signature
-        currentState = DepositStates.AWAITING_WITHDRAWAL_SIGNATURE;
 
         return true;
     }
@@ -972,15 +1035,7 @@ contract Deposit {
         require(!inSignerLiquidation(),
                 'Signer liquidation already in progress');
 
-        // Check that the signature is valid
-        /* TODO: Outsource this to the keep contract? */
-        bool _valid = signerPubkey().checkSig(_signedDigest, _v, _r, _s);
-        _valid = _valid && _preimage.isSha256Preimage(_signedDigest);
-        require(_valid, 'Signature is not valid');
-
-        if (inRedemption()) {
-            require(wasRequested[_signedDigest] == 0, 'Digest is approved for signing');
-        }
+        require(submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage));
 
         startSignerFraudLiquidation();
         return true;
