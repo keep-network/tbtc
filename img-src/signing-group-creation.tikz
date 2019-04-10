@@ -1,40 +1,41 @@
 % !TEX root = ../tbtc-diagrams.tex
 % Underline that goes through descender.
 
-\tikz[start chain=ethereum going below,
-      start chain=tbtc going below,
-      start chain=keep going below]{
-    \node [on chain=ethereum] (ethereum label) {\underline{Ethereum}};
-    \node [on chain=tbtc] (tbtc label) [right=3cm of ethereum label] {\underline{TBTC}};
-    \node [on chain=keep] (keep label) [right=4cm of tbtc label] {\underline{Keep}};
+\begin{sequencediagram}
+  \newthread{ethereum}{Ethereum}{}
+  \newinst[2]{tbtc-contract}{\shortstack{tBTC\\ Contract}}{}
+  \newinst[2]{tbtc-keep}{\shortstack{tBTC\\ Keep}}{}
+  \newinst[1]{tecdsa-keep}{\shortstack{tECDSA\\ Keep}}{}
+  \newinst[1]{beacon-keep}{\shortstack{Random Beacon\\ Keep}}{}
 
-    {\tikzset{node distance=0} \node[on chain=ethereum] (ethereum start) {$$\vdots$$};}
-    \node[decision,on chain=ethereum,join=by <-] (ethereum block 1) {\hspace*{1cm}};
-    \node[decision,on chain=ethereum,join=by <-] (ethereum block 2) {\hspace*{1cm}};
-    \node[decision,on chain=ethereum,join=by <-] (ethereum block 3) {\hspace*{1cm}};
-    \node[decision,on chain=ethereum,join=by <-] (ethereum block 4) {\hspace*{1cm}};
-    \node[decision,on chain=ethereum,join=by <-] (ethereum block 5) {\hspace*{1cm}};
-    \node[on chain=ethereum,join=by <-] (ethereum end) {$$\vdots$$};
+  \postlevel\postlevel
 
-    \node[nested state,on chain=tbtc] (signing group request) at ($(tbtc label)-(0,0.5cm)$) {create signing group};
-    {\tikzset{node distance=1cm}
-        \node[state,on chain=keep] (random seed request) at ($(keep label)-(0,0.5cm)$) {request random seed};
-        \node[state,on chain=keep] (random seed response)       {service random seed request};
-        \node[state,on chain=keep] (group member selection)    at ($(random seed response)-(2.4cm,0)$) {choose signing group members};
-        \node[state,on chain=keep,right=of group member selection] (group dkg)                  {group member DKG};
-        \node[state,on chain=keep] (wallet address generation) at ($(group dkg)-(2.5cm,0cm)$) {generate wallet address};
-    }
+  \begin{call}{ethereum}{\shortstack{request deposit\\ address}}{tbtc-contract}{return id}
+  \end{call}
 
-    \path [->] (ethereum block 1)          edge [dashed]                (signing group request)
-               (signing group request)     edge                         (random seed request)
-               (random seed request)       edge [out=195,in=3]          (ethereum block 2)
-               (ethereum block 2)          edge [out=355,in=165,dashed] (random seed response)
-               (random seed response)      edge [out=180,in=3]          (ethereum block 3)
-               (ethereum block 3)          edge [out=355,in=155,dashed] (group member selection)
-               (group member selection)    edge                         (group dkg)
-               (group dkg)                 edge                         (wallet address generation)
-               (wallet address generation) edge [out=180,in=0]
-                    node [sloped,text width=2cm,align=center,anchor=center] {public wallet address}
-                                                                        (ethereum block 4);
+  \prelevel\prelevel
+  \begin{messcall}{tbtc-contract}{\shortstack{request deposit\\ group}}{tbtc-keep}
+    \begin{call}{tbtc-keep}{request random seed}{beacon-keep}{return seed}
+    \end{call}
 
-}
+    \postlevel
+    \begin{call}{tbtc-keep}{signing group creation}{tbtc-keep}{}
+    \end{call}
+
+    \postlevel
+    \begin{call}{tbtc-keep}{\shortstack{generate\\ group keys}}{tecdsa-keep}{public key}
+      \postlevel
+    \end{call}
+
+    \postlevel\postlevel
+    \begin{callself}{tbtc-keep}{\shortstack{convert public\\ key to address}}{return address}
+    \end{callself}
+
+    \begin{messcall}{tbtc-keep}{set deposit address}{tbtc-contract}
+    \end{messcall} 
+  \end{messcall}
+
+  \begin{call}{ethereum}{\shortstack{get deposit address}}{tbtc-contract}{return address}
+  \end{call}
+
+\end{sequencediagram}
