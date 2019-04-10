@@ -18,6 +18,8 @@ const IERC721Path = path.resolve(__dirname, 'contracts', 'interfaces', 'IERC721.
 const ITBTCSystemPath = path.resolve(__dirname, 'contracts', 'interfaces', 'ITBTCSystem.sol')
 const IKeepPath = path.resolve(__dirname, 'contracts', 'interfaces', 'IKeep.sol')
 const TBTCConstantsPath = path.resolve(__dirname, 'contracts', 'TBTCConstants.sol')
+const DepositLogPath = path.resolve(__dirname, 'contracts', 'DepositLog.sol')
+const OutsourceDepositLoggingPath = path.resolve(__dirname, 'contracts', 'OutsourceDepositLogging.sol')
 const DepositPath = path.resolve(__dirname, 'contracts', 'Deposit.sol')
 
 let input = {
@@ -31,6 +33,8 @@ let input = {
     'ITBTCSystem.sol': fs.readFileSync(ITBTCSystemPath, 'utf8'),
     'IKeep.sol': fs.readFileSync(IKeepPath, 'utf8'),
     'TBTCConstants.sol': fs.readFileSync(TBTCConstantsPath, 'utf8'),
+    'DepositLog.sol': fs.readFileSync(DepositLogPath, 'utf8'),
+    'OutsourceDepositLogging.sol': fs.readFileSync(OutsourceDepositLoggingPath, 'utf8'),
     'Deposit.sol': fs.readFileSync(DepositPath, 'utf8')
 }
 

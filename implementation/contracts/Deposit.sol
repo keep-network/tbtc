@@ -10,8 +10,9 @@ import {IBurnableERC20} from './IBurnableERC20.sol';
 import {IERC721} from './IERC721.sol';
 import {IKeep} from './IKeep.sol';
 import {ITBTCSystem} from './ITBTCSystem.sol';
+import {OutsourceDepositLogging} from './OutsourceDepositLogging.sol';
 
-contract Deposit {
+contract Deposit is OutsourceDepositLogging {
 
     using BytesLib for bytes;
     using BTCUtils for bytes;
@@ -47,52 +48,6 @@ contract Deposit {
         LIQUIDATION_IN_PROGRESS,
         LIQUIDATED
     }
-
-    /*
-    TODO: Move events to logger contract
-    TODO: More events
-
-    Logging philosophy:
-      Every state transition should fire a unique log
-      That log should have ALL necessary info for off-chain actors
-      Everyone should be able to ENTIRELY rely on log messages
-    */
-
-    // This log event contains all info needed to rebuild the redemption tx
-    // We index on request and signers and digest
-    event RedemptionRequested(
-        address indexed _requester,
-        bytes20 indexed _signerPKH,
-        bytes32 indexed _digest,
-        uint256 _utxoSize,
-        bytes20 _requesterPKH,
-        uint256 _requestedFee,
-        bytes _outpoint);
-
-    // This log event contains all info needed to build a witnes
-    // We index the digest so that we can search events for the other log
-    event GotRedemptionSignature(
-        bytes32 indexed _digest,
-        bytes32 _x,
-        bytes32 _y,
-        bytes32 _r,
-        bytes32 _s);
-
-    // This log is fired when the signing group returns a public key
-    event RegisteredPubkey(
-        address _signingGroupAccount,
-        bytes32 _signingGroupPubkeyX,
-        bytes32 _signingGroupPubkeyY);
-
-    // This log event is fired when liquidation
-    event StartedLiquidation(
-        uint256 _timestamp,
-        bool _wasFraud);
-
-    // This event is fired when the Redemption SPV proof is validated
-    event Redeemed(
-        bytes32 indexed_txid,
-        uint256 _timestamp);
 
     // SET DURING CONSTRUCTION
     DepositStates currentState;
@@ -139,12 +94,14 @@ contract Deposit {
     ) payable public returns (bool) {
         require(currentState == DepositStates.START, 'Deposit setup already requested');
         require(isApprovedDepositCreator(msg.sender), 'Calling account not allowed to create deposits');
-        currentState = DepositStates.AWAITING_SIGNER_SETUP;
 
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
 
         signingGroupRequestedAt = block.timestamp;
         keepID = _keep.requestKeepGroup.value(msg.value)(_m, _n);  // kinda gross but
+
+        currentState = DepositStates.AWAITING_SIGNER_SETUP;
+        logCreated(keepID);
         return true;
     }
 
@@ -478,9 +435,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
     /// @notice         Starts signer liquidation due to fraud
     /// @dev            We first attempt to liquidate on chain, then by auction
     function startSignerFraudLiquidation() internal {
-        emit StartedLiquidation(
-            block.timestamp,
-            true);
+        logStartedLiquidation(true);
 
         // Reclaim used state for gas savings
         redemptionTeardown();
@@ -490,6 +445,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
             // we came from the redemption flow
             currentState = DepositStates.LIQUIDATED;
             requesterAddress.transfer(_seized);
+            logLiquidated();
             return;
         }
 
@@ -498,6 +454,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         if (_liquidated) {
             distributeBeneficiaryReward();
             currentState = DepositStates.LIQUIDATED;
+            logLiquidated();
             address(0).transfer(address(this).balance);  // burn it down
         }
         if (!_liquidated) {
@@ -509,9 +466,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
     /// @notice         Starts signer liquidation due to abort or undercollateralization
     /// @dev            We first attempt to liquidate on chain, then by auction
     function startSignerAbortLiquidation() internal {
-        emit StartedLiquidation(
-            block.timestamp,
-            false);
+        logStartedLiquidation(false);
 
         // Reclaim used state for gas savings
         redemptionTeardown();
@@ -523,6 +478,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
             distributeBeneficiaryReward();
             pushFundsToKeepGroup(address(this).balance);
             currentState = DepositStates.LIQUIDATED;
+            logLiquidated();
         }
         if (!_liquidated) {
             liquidationInitiated = block.timestamp;  // Store the timestamp for auction
@@ -701,6 +657,13 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         require(inRedeemableState(), 'Redemption only available from Active or Courtesy state');
 
         currentState = DepositStates.AWAITING_WITHDRAWAL_SIGNATURE;
+        logRedemptionRequested(
+            msg.sender,
+            _sighash,
+            utxoSize(),
+            _requesterPKH,
+            _requestedFee,
+            utxoOutpoint);
 
         // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
         // Requires user to approve first
@@ -722,15 +685,6 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
             utxoSizeBytes,
             _outputValueBytes,
             _requesterPKH);
-
-        emit RedemptionRequested(
-            msg.sender,
-            signerPKH(),
-            _sighash,
-            utxoSize(),
-            _requesterPKH,
-            _requestedFee,
-            utxoOutpoint);
 
         // write all request details
         requesterAddress = msg.sender;
@@ -757,6 +711,10 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         require(currentState == DepositStates.AWAITING_WITHDRAWAL_SIGNATURE, 'Not currently awaiting a signature');
         // A signature has been provided, now we wait for fee bump or redemption
         currentState = DepositStates.AWAITING_WITHDRAWAL_PROOF;
+        logGotRedemptionSignature(
+            lastRequestedDigest,
+            _r,
+            _s);
 
         // If we're outside of the signature window, we COULD punish signers here
         // Instead, we consider this a no-harm-no-foul situation.
@@ -769,12 +727,6 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
             _r,
             _s));
 
-        emit GotRedemptionSignature(
-            lastRequestedDigest,
-            signingGroupPubkeyX,
-            signingGroupPubkeyY,
-            _r,
-            _s);
 
         return true;
     }
@@ -819,23 +771,20 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
             _newOutputValueBytes,
             requesterPKH);
 
-        emit RedemptionRequested(
-            msg.sender,
-            signerPKH(),
-            _sighash,
-            utxoSize(),
-            requesterPKH,
-            utxoSize().sub(_newOutputValue),
-            utxoOutpoint);
-
-        currentState = DepositStates.AWAITING_WITHDRAWAL_SIGNATURE;
-
         // Ratchet the signature and redemption proof timeouts
         withdrawalRequestTime = block.timestamp;
         lastRequestedDigest = _sighash;
         require(approveDigest(_sighash));
 
         // Go back to waiting for a signature
+        currentState = DepositStates.AWAITING_WITHDRAWAL_SIGNATURE;
+        logRedemptionRequested(
+            msg.sender,
+            _sighash,
+            utxoSize(),
+            requesterPKH,
+            utxoSize().sub(_newOutputValue),
+            utxoOutpoint);
 
         return true;
     }
@@ -881,15 +830,13 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         /* TODO: refactor redemption flow to improve this */
         require((utxoSize().sub(uint256(_outs.extractValue()))) <= initialRedemptionFee * 5, 'Fee unexpectedly very high');
 
-        emit Redeemed(
-            _txid,
-            block.timestamp);
-
         // Transfer withheld amount to beneficiary
         distributeBeneficiaryReward();
 
         // We're done yey!
         currentState = DepositStates.REDEEMED;
+        logRedeemed(_txid);
+
         redemptionTeardown();
         return true;
     }
@@ -926,6 +873,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         require(block.timestamp > signingGroupRequestedAt + TBTCConstants.getSigningGroupFormationTimeout(),
                 'Signing group formation timeout not yet elapsed');
         currentState = DepositStates.FAILED_SETUP;
+        logSetupFailed();
 
         returnFunderBond();
         fundingTeardown();
@@ -943,11 +891,10 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         signingGroupPubkeyY = _keepResult.slice(32, 32).toBytes32();
         fundingProofTimerStart = block.timestamp;
 
-        emit RegisteredPubkey(
+        logRegisteredPubkey(
             signerAccount(),
             signingGroupPubkeyX,
-            signingGroupPubkeyY
-        );
+            signingGroupPubkeyY);
 
         return true;
     }
@@ -960,6 +907,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         require(block.timestamp > fundingProofTimerStart + TBTCConstants.getFundingTimeout(),
                 'Funding timeout has not elapsed.');
         currentState = DepositStates.FAILED_SETUP;
+        logSetupFailed();
 
         revokeFunderBond();
         fundingTeardown();
@@ -985,7 +933,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         require(currentState == DepositStates.AWAITING_BTC_FUNDING_PROOF,
                 'Signer fraud during funding flow only available while awaiting funding');
         currentState = DepositStates.FRAUD_AWAITING_BTC_FUNDING_PROOF;
-
+        logFraudDuringSetup();
         bool _isFraud = submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         require(_isFraud, 'Signature is not valid');  // Invalid signatures error
 
@@ -1014,6 +962,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         require(block.timestamp > fundingProofTimerStart + TBTCConstants.getFraudFundingTimeout(),
                 'Fraud funding proof timeout has not elapsed');
         currentState = DepositStates.FAILED_SETUP;
+        logSetupFailed();
 
         partiallySlashForFraudInFunding();
         fundingFraudTeardown();
@@ -1038,6 +987,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         bytes memory _outpoint;
         require(currentState == DepositStates.FRAUD_AWAITING_BTC_FUNDING_PROOF);
         currentState = DepositStates.FAILED_SETUP;
+        logSetupFailed();
 
         (_valueBytes, _outpoint) = validateAndParseFundingSPVProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
 
@@ -1073,6 +1023,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         // So if the funder manages to call this before anyone notifies of timeout
         // We let them have a freebie
         currentState = DepositStates.ACTIVE;
+        logFunded();
 
         (_valueBytes, _outpoint) = validateAndParseFundingSPVProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
 
@@ -1177,6 +1128,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         bool _wasFraud = currentState == DepositStates.FRAUD_LIQUIDATION_IN_PROGRESS;
         require(inSignerLiquidation(), 'No active auction');
         currentState = DepositStates.LIQUIDATED;
+        logLiquidated();
 
         // Burn the outstanding TBTC
         /* TODO: implement such that we call the system? */
@@ -1211,8 +1163,9 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
     function notifyCourtesyCall() public returns (bool) {
         require(currentState == DepositStates.ACTIVE);
         require(isUndercollateralized());
-        courtesyCallInitiated = block.timestamp;
         currentState = DepositStates.COURTESY_CALL;
+        logCourtesyCalled();
+        courtesyCallInitiated = block.timestamp;
         return true;
     }
 
@@ -1243,6 +1196,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         require(currentState == DepositStates.ACTIVE, 'Deposit is not active');
         require(block.timestamp >= fundedAt + TBTCConstants.getDepositTerm(), 'Deposit term not elapsed');
         currentState = DepositStates.COURTESY_CALL;
+        logCourtesyCalled();
         courtesyCallInitiated = block.timestamp;
         return true;
     }
