@@ -9,11 +9,13 @@ import {TBTCConstants} from './TBTCConstants.sol';
 import {IBurnableERC20} from './IBurnableERC20.sol';
 import {IERC721} from './IERC721.sol';
 import {IKeep} from './IKeep.sol';
+import {ITBTCSystem} from './ITBTCSystem.sol';
 
 contract Deposit {
 
     using BytesLib for bytes;
     using BTCUtils for bytes;
+    using BTCUtils for uint256;
     using SafeMath for uint256;
     using ValidateSPV for bytes;
     using ValidateSPV for bytes32;
@@ -47,7 +49,7 @@ contract Deposit {
     }
 
     /*
-    TODO: should logging be part of the system contract or this one?
+    TODO: Move events to logger contract
     TODO: More events
 
     Logging philosophy:
@@ -99,12 +101,16 @@ contract Deposit {
     uint256 liquidationInitiated;  // Timestamp of when liquidation starts
     uint256 courtesyCallInitiated; // When the courtesy call is issued
 
-    // INITIALLY WRITTEN BY FUNDING FLOW
+    // written when we request a keep
     uint256 keepID;
     uint256 signingGroupRequestedAt;  // timestamp of signing group request
+
+    // written when we get a keep result
     uint256 fundingProofTimerStart;  // start of the funding proof period. reused for funding fraud proof period
     bytes32 signingGroupPubkeyX;  // The X coordinate of the signing group's pubkey
     bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
+
+    // written when we get funded
     bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
     bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
     uint256 fundedAt; // timestamp when funding proof was received
@@ -247,7 +253,7 @@ contract Deposit {
 
         // This should make a smooth flow from 75 to% to 100%
         uint256 _basePercentage = TBTCConstants.getAuctionBasePercentage();
-        uint256 _elapsedPercentage = 100.sub(_basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
+        uint256 _elapsedPercentage = uint256(100).sub(_basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
         uint256 _percentage = _basePercentage + _elapsedPercentage;
 
         return _available.mul(_percentage).div(100);
@@ -256,14 +262,14 @@ contract Deposit {
     /// @notice         Determines the fees due to the signers for work performeds
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
-    function signerFee() public view returns (uint256) {
+    function signerFee() public pure returns (uint256) {
         return lotSize().div(TBTCConstants.getSignerFeeDivisor());
     }
 
     /// @notice     calculates the beneficiary reward based on the deposit size
     /// @dev        the amount of extra ether to pay the beneficiary at closing time
     /// @return     the amount of ether in wei to pay the beneficiary
-    function beneficiaryReward() public view returns (uint256) {
+    function beneficiaryReward() public pure returns (uint256) {
         return lotSize().div(TBTCConstants.getBeneficiaryRewardDivisor());
     }
 
@@ -271,7 +277,7 @@ contract Deposit {
     /// @dev            This is the amount of TBTC needed to repay to redeem the Deposit
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount() public view returns (uint256) {
-        if (requesterPKH == bytes20(0)) {
+        if (requesterAddress == address(0)) {
             return lotSize().add(signerFee()).add(beneficiaryReward());
         } else {
             return 0;
@@ -279,7 +285,7 @@ contract Deposit {
     }
 
     function auctionTBTCAmount() public view returns (uint256) {
-        if (requesterPKH == bytes20(0)) {
+        if (requesterAddress == address(0)) {
             return lotSize();
         } else {
             return 0;
@@ -312,7 +318,7 @@ contract Deposit {
     /// @notice         Returns the size of the standard lot
     /// @dev            This is the amount of TBTC issued, and the minimum amount of BTC in the utxo
     /// @return         lot size value in tsat
-    function lotSize() public view returns (uint256) {
+    function lotSize() public pure returns (uint256) {
         return TBTCConstants.getLotSize();
     }
 
@@ -408,11 +414,41 @@ contract Deposit {
         return _pubkey;
     }
 
-    /* TODO: should we return the current diff here so that stateless proofs can be checked? */
     /// @notice         Gets the current block difficulty
     /// @dev            Calls the light relay and gets the current block difficulty
-    /// @return         The proof difficulty requirement
-    function currentBlockDifficulty() public view returns (uint256) { /* TODO */ }
+    /// @return         The difficulty
+    function currentBlockDifficulty() public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(TBTCConstants.getSystemContractAddress());
+        return _sys.fetchRelayCurrentDifficulty();
+    }
+
+    /// @notice         Gets the previous block difficulty
+    /// @dev            Calls the light relay and gets the previous block difficulty
+    /// @return         The difficulty
+    function previousBlockDifficulty() public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(TBTCConstants.getSystemContractAddress());
+        return _sys.fetchRelayPreviousDifficulty();
+    }
+
+    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view returns (bool) {
+        uint256 _reqDiff;
+        uint256 _current = currentBlockDifficulty();
+        uint256 _previous = previousBlockDifficulty();
+        uint256 _firstHeaderDiff = _bitcoinHeaders.extractTarget().calculateDifficulty();
+
+        if (_firstHeaderDiff == _current) {
+            _reqDiff = _current;
+        } else if (_firstHeaderDiff == _previous) {
+            _reqDiff = _previous;
+        } else {
+            require(false, 'not at current or previous difficulty');
+        }
+
+        /* TODO: make this better than 6 */
+        require(_bitcoinHeaders.validateHeaderChain() > _reqDiff.mul(6),
+                'Insufficient accumulated difficulty in header chain');
+        return true;
+    }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
     /// @dev            We cast the address to a uint256 to match the 721 standard
@@ -425,7 +461,7 @@ contract Deposit {
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
-    function attmeptToLiquidateOnChain() internal returns (bool) { /* TODO */ }
+function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
 
     //
     // REUSABLE STATE TRANSITIONS
@@ -447,7 +483,6 @@ contract Deposit {
             true);
 
         // Reclaim used state for gas savings
-        fundingTeardown();
         redemptionTeardown();
         uint256 _seized = seizeSignerBonds();
 
@@ -458,7 +493,7 @@ contract Deposit {
             return;
         }
 
-        bool _liquidated = attmeptToLiquidateOnChain();
+        bool _liquidated = attemptToLiquidateOnchain();
 
         if (_liquidated) {
             distributeBeneficiaryReward();
@@ -479,11 +514,10 @@ contract Deposit {
             false);
 
         // Reclaim used state for gas savings
-        fundingTeardown();
         redemptionTeardown();
         seizeSignerBonds();
 
-        bool _liquidated = attmeptToLiquidateOnChain();
+        bool _liquidated = attemptToLiquidateOnchain();
 
         if (_liquidated) {
             distributeBeneficiaryReward();
@@ -496,14 +530,31 @@ contract Deposit {
         }
     }
 
-    /* TODO: When we exit the funding flow, we should delete any set state vars */
-    function fundingTeardown() internal { /* TODO */ }
+    /// @notice     Deletes state after funding
+    /// @dev        This is called when we go to ACTIVE or setup fails without fraud
+    function fundingTeardown() internal {
+        delete signingGroupRequestedAt;
+        delete fundingProofTimerStart;
+    }
 
-    /* TODO: When we exit the funding fraud flow, we should delete any set state vars */
-    function fundingFraudTeardown() internal { /* TODO */ }
+    /// @notice     Deletes state after the funding ECDSA fraud process
+    /// @dev        This is only called as we transition to setup failed
+    function fundingFraudTeardown() internal {
+        delete signingGroupRequestedAt;
+        delete fundingProofTimerStart;
+        delete signingGroupPubkeyX;
+        delete signingGroupPubkeyY;
+    }
 
-    /* TODO: When we exit the redemption flow, we should delete any set state vars */
-    function redemptionTeardown() internal { /* TODO */ }
+    /// @notice     Deletes state after termination of redemption process
+    /// @dev        We keep around the requester address so we can pay them out
+    function redemptionTeardown() internal {
+        // don't 0 requesterAddress because we use it to calculate auctionTBTCAmount
+        delete requesterPKH;
+        delete initialRedemptionFee;
+        delete withdrawalRequestTime;
+        delete lastRequestedDigest;
+    }
 
     /// @notice     Transfers the funders bond to the signers if the funder never funds
     /// @dev        Called only by notifyFundingTimeout
@@ -531,7 +582,7 @@ contract Deposit {
         uint256 _seized = seizeSignerBonds();
         uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
         pushFundsToKeepGroup(_seized.sub(_slash));
-        depositBeneficiary().transfer(_slash);  /* TODO: is this what we want? I think so */
+        depositBeneficiary().transfer(_slash);
     }
 
     /// @notice     Seizes signer bonds and distributes them to the funder
@@ -819,11 +870,7 @@ contract Deposit {
                 _merkleProof,
                 _index),
             'Tx merkle proof is not valid for provided header');
-
-        uint256 _currentDiff = currentBlockDifficulty();
-        require(_bitcoinHeaders.validateHeaderChain() > _currentDiff * 6,  // TODO: improve this?
-                'Insufficient accumulated difficulty in header chain');
-
+        require(evaluateProofDifficulty(_bitcoinHeaders));
         require(keccak256(_locktime) == keccak256(hex'00000000'), 'Wrong locktime set');
         require(keccak256(_nIns) == keccak256(hex'01'), 'Too many ins');
         require(keccak256(_nOuts) == keccak256(hex'01'), 'Too many outs');
@@ -954,7 +1001,6 @@ contract Deposit {
 
         seizeSignerBonds();
         address(0).transfer(address(this).balance);  // Burn it all down (fire emoji)
-        fundingTeardown();
 
         return true;
     }

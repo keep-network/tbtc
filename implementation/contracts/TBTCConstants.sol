@@ -12,7 +12,7 @@ library TBTCConstants {
     address public constant SYSTEM_CONTRACT = address(0);
 
     // System Parameters
-    uint256 public constant MINIMUM_LOT_SIZE = 10 ** 8;  // satoshi
+    uint256 public constant MINIMUM_LOT_SIZE = 10 ** 8;  // tsatoshi
     uint256 public constant SIGNER_FEE_DIVISOR = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint256 public constant WITHHELD_PERCENTAGE = 5; // percent
     uint256 public constant BENEFICIARY_FEE_DIVISOR = 1000;  // 1/1000 = 10 bps = 0.1% = 0.001
