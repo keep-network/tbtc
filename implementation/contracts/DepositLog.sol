@@ -155,7 +155,8 @@ contract DepositLog {
 
     /// @notice     Fires a RegisteredPubkey event
     /// @dev        We append the sender, which is the deposit contract that called
-    /// @return     True if successful, else revert
+    ///             returns false if not approved, to prevent accidentally halting Deposit
+    /// @return     True if successful, else false
     function logRegisteredPubkey(
         address _signingGroupAccount,
         bytes32 _signingGroupPubkeyX,
@@ -173,7 +174,8 @@ contract DepositLog {
 
     /// @notice     Fires a SetupFailed event
     /// @dev        We append the sender, which is the deposit contract that called
-    /// @return     True if successful, else revert
+    ///             returns false if not approved, to prevent accidentally halting Deposit
+    /// @return     True if successful, else false
     function logSetupFailed() public returns (bool) {
         if (!approvedToLog(msg.sender)) { return false; }
         emit SetupFailed(
@@ -184,7 +186,8 @@ contract DepositLog {
 
     /// @notice     Fires a FraudDuringSetup event
     /// @dev        We append the sender, which is the deposit contract that called
-    /// @return     True if successful, else revert
+    ///             returns false if not approved, to prevent accidentally halting Deposit
+    /// @return     True if successful, else false
     function logFraudDuringSetup() public returns (bool) {
         if (!approvedToLog(msg.sender)) { return false; }
         emit FraudDuringSetup(
@@ -195,7 +198,8 @@ contract DepositLog {
 
     /// @notice     Fires a Funded event
     /// @dev        We append the sender, which is the deposit contract that called
-    /// @return     True if successful, else revert
+    ///             returns false if not approved, to prevent accidentally halting Deposit
+    /// @return     True if successful, else false
     function logFunded() public returns (bool) {
         if (!approvedToLog(msg.sender)) { return false; }
         emit Funded(
@@ -206,7 +210,8 @@ contract DepositLog {
 
     /// @notice     Fires a CourtesyCalled event
     /// @dev        We append the sender, which is the deposit contract that called
-    /// @return     True if successful, else revert
+    ///             returns false if not approved, to prevent accidentally halting Deposit
+    /// @return     True if successful, else false
     function logCourtesyCalled() public returns (bool) {
         if (!approvedToLog(msg.sender)) { return false; }
         emit CourtesyCalled(
@@ -228,9 +233,10 @@ contract DepositLog {
         return true;
     }
 
-    /// @notice     Fires a event
+    /// @notice     Fires a Redeemed event
     /// @dev        We append the sender, which is the deposit contract that called
-    /// @return     True if successful, else revert
+    ///             returns false if not approved, to prevent accidentally halting Deposit
+    /// @return     True if successful, else false
     function logRedeemed(bytes32 _txid) public returns (bool) {
         if (!approvedToLog(msg.sender)) { return false; }
         emit Redeemed(
@@ -242,7 +248,8 @@ contract DepositLog {
 
     /// @notice     Fires a Liquidated event
     /// @dev        We append the sender, which is the deposit contract that called
-    /// @return     True if successful, else revert
+    ///             returns false if not approved, to prevent accidentally halting Deposit
+    /// @return     True if successful, else false
     function logLiquidated() public returns (bool) {
         if (!approvedToLog(msg.sender)) { return false; }
         emit Liquidated(
