@@ -6,7 +6,10 @@
 \usepackage[colorlinks=true]{hyperref}
 \usepackage{varwidth}
 \usepackage{rotating}
-\usepackage{pgf-umlsd}
+\usepackage{tikz-uml}
+\usepackage{xstring} % for tikz-uml
+\usepackage{pgfopts} % for tikz-uml
+\usepackage[english]{babel} % for tikz-uml
 
 \usetikzlibrary{positioning}
 \usetikzlibrary{arrows.meta}
@@ -84,14 +87,16 @@ what is going on within these states or decisions.
   \caption{\label{fig:deposit-initiation}Deposit initiation.}
 \end{figure}
 
+% Flush floats before a rotated page.
 \clearpage
 
-\begin{figure}
+\begin{sidewaysfigure}
+  \global\pdfpageattr\expandafter{\the\pdfpageattr/Rotate 90}
   \centering
   \input{img-src/signing-group-creation.tikz}
 
   \caption{\label{fig:signing-group-creation}Signing group creation.}
-\end{figure}
+\end{sidewaysfigure}
 
 % Flush floats before a rotated page.
 \clearpage

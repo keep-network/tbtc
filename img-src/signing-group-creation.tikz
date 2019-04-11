@@ -1,41 +1,42 @@
 % !TEX root = ../tbtc-diagrams.tex
 % Underline that goes through descender.
 
-\begin{sequencediagram}
-  \newthread{ethereum}{Ethereum}{}
-  \newinst[2]{tbtc-contract}{\shortstack{tBTC\\ Contract}}{}
-  \newinst[2]{tbtc-keep}{\shortstack{tBTC\\ Keep}}{}
-  \newinst[1]{tecdsa-keep}{\shortstack{tECDSA\\ Keep}}{}
-  \newinst[1]{beacon-keep}{\shortstack{Random Beacon\\ Keep}}{}
+\begin{tikzpicture}
+  \begin{umlseqdiag}
+      \umlbasicobject[stereo=actor]{User}
+      \umlbasicobject{Deposit Contract}
+      \umlbasicobject{tBTC Keep}
+      \umlbasicobject{tECDSA Keep}
+      \umlbasicobject{Random Beacon Keep}
+      \umlbasicobject{Ethereum Chain}
 
-  \postlevel\postlevel
+      \begin{umlcall}[op=request deposit address, dt=5]{User}{Deposit Contract}
+          \begin{umlcall}[op=request deposit group, dt=0]{Deposit Contract}{tBTC Keep}
+              \begin{umlcall}[type=return, op=id]{tBTC Keep}{Deposit Contract}
+              \end{umlcall}
+        
+              \begin{umlcall}[type=return, op=id, dt=0]{Deposit Contract}{User}
+              \end{umlcall}
+         
+              \begin{umlcall}[op=request random seed, return=seed, dt=0, padding=3]{tBTC Keep}{Random Beacon Keep}
+              \end{umlcall}
 
-  \begin{call}{ethereum}{\shortstack{request deposit\\ address}}{tbtc-contract}{return id}
-  \end{call}
+              \begin{umlcallself}[op=create signing group]{tBTC Keep}
+              \end{umlcallself}
 
-  \prelevel\prelevel
-  \begin{messcall}{tbtc-contract}{\shortstack{request deposit\\ group}}{tbtc-keep}
-    \begin{call}{tbtc-keep}{request random seed}{beacon-keep}{return seed}
-    \end{call}
+              \begin{umlcall}[op=generate group keys, return=public key, padding=3]{tBTC Keep}{tECDSA Keep}
+              \end{umlcall}
 
-    \postlevel
-    \begin{call}{tbtc-keep}{signing group creation}{tbtc-keep}{}
-    \end{call}
+              \begin{umlcall}[op=broadcast group public key, type=asynchron, dt=5]{tBTC Keep}{Ethereum Chain}
+              \end{umlcall}
+          \end{umlcall}
+      \end{umlcall}
 
-    \postlevel
-    \begin{call}{tbtc-keep}{\shortstack{generate\\ group keys}}{tecdsa-keep}{public key}
-      \postlevel
-    \end{call}
-
-    \postlevel\postlevel
-    \begin{callself}{tbtc-keep}{\shortstack{convert public\\ key to address}}{return address}
-    \end{callself}
-
-    \begin{messcall}{tbtc-keep}{set deposit address}{tbtc-contract}
-    \end{messcall} 
-  \end{messcall}
-
-  \begin{call}{ethereum}{\shortstack{get deposit address}}{tbtc-contract}{return address}
-  \end{call}
-
-\end{sequencediagram}
+      \begin{umlcall}[op=get deposit address, return=address, dt=5]{User}{Deposit Contract}
+          \begin{umlcall}[op=get deposit group address, return=address]{Deposit Contract}{tBTC Keep}
+              \begin{umlcallself}[op=convert public key to address]{tBTC Keep}
+              \end{umlcallself}
+          \end{umlcall}
+      \end{umlcall}
+  \end{umlseqdiag}
+\end{tikzpicture}
