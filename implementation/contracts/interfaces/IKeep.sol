@@ -32,6 +32,7 @@ interface IKeep {
 
     // Allow sending tokens to a keep group
     // Useful for sending signers their TBTC
+    // The Keep contract should call transferFrom on the token contrcact
     function distributeERC20ToKeepGroup(uint256 _keepID, address _asset, uint256 _value) external returns (bool);
 
     // request a new m-of-n group

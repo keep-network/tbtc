@@ -519,6 +519,19 @@ contract Deposit is OutsourceDepositLogging {
         require(_tbtc.transfer(depositBeneficiary(), _tbtc.balanceOf(address(this))));
     }
 
+    /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address
+    /// @dev        Approves the keep contract, then expects it to call transferFrom
+    function distriuteSignerFee() internal {
+        address _tbtcAddress = TBTCConstants.getTokenContractAddress();
+        IBurnableERC20 _tbtc = IBurnableERC20(_tbtcAddress);
+
+        address _keepAddress = TBTCConstants.getKeepContractAddress();
+        IKeep _keep = IKeep(_keepAddress);
+
+        _tbtc.approve(_keepAddress, signerFee());
+        _keep.distributeERC20ToKeepGroup(keepID, _tbtcAddress, signerFee());
+    }
+
     /// @notice         Starts signer liquidation due to fraud
     /// @dev            We first attempt to liquidate on chain, then by auction
     function startSignerFraudLiquidation() internal {
@@ -757,7 +770,8 @@ contract Deposit is OutsourceDepositLogging {
         /* TODO: implement such that it calls the system to burn TBTC? */
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(_tbtc.balanceOf(msg.sender) >= redemptionTBTCAmount(), 'Not enough TBTC to cover outstanding debt');
-        _tbtc.burnFrom(msg.sender, redemptionTBTCAmount().sub(beneficiaryReward()));
+        _tbtc.burnFrom(msg.sender, lotSize());
+        _tbtc.transferFrom(msg.sender, address(this), signerFee());
         _tbtc.transferFrom(msg.sender, address(this), beneficiaryReward());
 
         // Convert the 8-byte LE ints to uint256
@@ -917,6 +931,9 @@ contract Deposit is OutsourceDepositLogging {
         /* TODO: refactor redemption flow to improve this */
         require((utxoSize().sub(uint256(_outs.extractValue()))) <= initialRedemptionFee * 5, 'Fee unexpectedly very high');
 
+        // Transfer TBTC to signers
+        distriuteSignerFee();
+
         // Transfer withheld amount to beneficiary
         distributeBeneficiaryReward();
 
@@ -1021,8 +1038,9 @@ contract Deposit is OutsourceDepositLogging {
                 'Signer fraud during funding flow only available while awaiting funding');
         currentState = DepositStates.FRAUD_AWAITING_BTC_FUNDING_PROOF;
         logFraudDuringSetup();
+
         bool _isFraud = submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
-        require(_isFraud, 'Signature is not valid');  // Invalid signatures error
+        require(_isFraud, 'Signature is not valid');
 
         /* NB: This is reuse of the variable */
         fundingProofTimerStart = block.timestamp;
