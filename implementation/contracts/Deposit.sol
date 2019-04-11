@@ -241,6 +241,9 @@ contract Deposit is OutsourceDepositLogging {
         }
     }
 
+    /// @notice     Determines the amount of TBTC accepted in the auction
+    /// @dev        If requesterAddress is non-0, that means we came from redemption, and no auction should happen
+    /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     function auctionTBTCAmount() public view returns (uint256) {
         if (requesterAddress == address(0)) {
             return lotSize();
@@ -256,11 +259,32 @@ contract Deposit is OutsourceDepositLogging {
         return abi.encodePacked(signingGroupPubkeyX, signingGroupPubkeyY);
     }
 
+    /// @notice             Determines the prefix to the compressed public key
+    /// @dev                The prefix encodes the parity of the Y coordinate
+    /// @param  _pubkeyY    The Y coordinate of the public key
+    /// @return             The 1-byte prefix for the compressed key
+    function determineCompressionPrefix(bytes32 _pubkeyY) returns (bytes) {
+        if(uint256(_pubkeyY) & 1) {
+            return hex'03';  // Odd Y
+        } else {
+            return hex'02';  // Even Y
+        }
+    }
+
+    /// @notice
+    /// @dev                Converts the 64-byte key to a 33-byte key, bitcoin-style
+    /// @param  _pubkeyX    The X coordinate of the public key
+    /// @param  _pubkeyY    The Y coordinate of the public key
+    /// @return
+    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) returns (bytes) {
+        return abi.encodePacked(determineCompressionPrefix(_pubkeyY), _pubkeyX);
+    }
+
     /// @notice         Returns the Bitcoin pubkeyhash (hash160) for the signing group
     /// @dev            This is used in bitcoin output scripts for the signers
     /// @return         20-bytes public key hash
     function signerPKH() public view returns (bytes20) {
-        bytes memory _pubkey = abi.encodePacked(hex'04', signerPubkey());
+        bytes memory _pubkey = _compressPubkey(signingGroupPubkeyX, signingGroupPubkeyY);
         bytes memory _digest = _pubkey.hash160();
         return bytes20(_digest.toAddress(0));  // dirty solidity hack
     }
@@ -331,7 +355,7 @@ contract Deposit is OutsourceDepositLogging {
         return _keep.distributeEthToKeepGroup.value(_ethValue)(keepID);
     }
 
-    ///
+    /// @notice     Seize the signer bond from the keep contract
     /// @dev        we check our balance before and after
     /// @return     the amount of ether seized
     function seizeSignerBonds() internal returns (uint256) {
