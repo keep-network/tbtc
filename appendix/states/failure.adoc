@@ -10,25 +10,18 @@ ifndef::tbtc[toc::[]]
 Abort processes handle custody failures. This includes punishing signers and
 starting the bond liquidation process. These transitions can be invoked from
 almost any Deposit state, as faults may occur during any other flow. Once fault
-has been proven, the owner of the deposit has the option to purchase signer
-bonds by returning all outstanding TBTC. If they do not exercise this option in
-a timely manner, the bonds are put up for auction to the public via the
+has been proven, the bonds are put up for auction to the public via the
 Liquidation flow.
 
 While there is no fraud or abort state per se, it seems helpful to put the
 fraud-related state transitions in a single document.
 
 == States
-=== Reachable exterior states
-* `AWAITING_OWNER_OPTION`
-** All fraud state transitions start the liquidation process
 
 === Flow reachable from
 * `ACTIVE`
 * `AWAITING_WITHDRAWAL_SIGNATURE`
 * `AWAITING_WITHDRAWAL_PROOF`
-* `OWNER_MARGIN_CALLED`
-* `OWNER_AUCTION_IN_PROGRESS`
 * `SIGNER_MARGIN_CALLED`
 
 // TODO: distinguish between frauds and aborts?
@@ -65,11 +58,9 @@ fraud-related state transitions in a single document.
 ** `ACTIVE`
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 ** `AWAITING_WITHDRAWAL_PROOF`
-** `OWNER_MARGIN_CALLED`
-** `OWNER_AUCTION_IN_PROGRESS`
 ** `SIGNER_MARGIN_CALLED`
 * *to*
-** `AWAITING_OWNER_OPTION`
+** `LIQUIDATION_IN_PROGRESS`
 
 === `provideSPVFraudProof`
 * Anyone provides a SPV proof that the Deposit UTXO has been consumed.
@@ -96,11 +87,9 @@ fraud-related state transitions in a single document.
 ** `ACTIVE`
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 ** `AWAITING_WITHDRAWAL_PROOF`
-** `OWNER_MARGIN_CALLED`
-** `OWNER_AUCTION_IN_PROGRESS`
 ** `SIGNER_MARGIN_CALLED`
 * *to*
-** `AWAITING_OWNER_OPTION`
+** `LIQUIDATION_IN_PROGRESS`
 
 === `notifyRedemptionProofTimeout`
 * Anyone may poke the contract to show that a redemption proof was not
@@ -113,7 +102,7 @@ fraud-related state transitions in a single document.
 * *from*
 ** `AWAITING_WITHDRAWAL_PROOF`
 * *to*
-** `AWAITING_OWNER_OPTION`
+** `LIQUIDATION_IN_PROGRESS`
 
 === `notifySignatureTimeout`
 * Anyone may poke the contract to show that a redemption signature was not
@@ -126,4 +115,4 @@ fraud-related state transitions in a single document.
 * *from*
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** `AWAITING_OWNER_OPTION`
+** `LIQUIDATION_IN_PROGRESS`
