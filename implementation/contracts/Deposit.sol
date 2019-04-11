@@ -57,7 +57,7 @@ contract Deposit is OutsourceDepositLogging {
     uint256 courtesyCallInitiated; // When the courtesy call is issued
 
     // written when we request a keep
-    uint256 keepID;
+    uint256 keepID;  // The ID of our keep group
     uint256 signingGroupRequestedAt;  // timestamp of signing group request
 
     // written when we get a keep result
@@ -348,11 +348,17 @@ contract Deposit is OutsourceDepositLogging {
         return _sys.fetchOraclePrice();
     }
 
+    /// @notice     Fetches the Keep's bond amount in wei
+    /// @dev        Calls the keep contract to do so
+    /// @return     The amount of bonded ETH in wei
     function fetchBondAmount() public view returns (uint256) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         return _keep.checkBondAmount(keepID);
     }
 
+    /// @notice     Determines if the signing group is currently undercollateralized
+    /// @dev        Compares the collaterization to a constant percentage
+    /// @return     True if undercollateralized, else false
     function isUndercollateralized() public view returns (bool) {
         uint256 _thresholdPercent = TBTCConstants.getUndercollateralizedPercent();
 
@@ -374,6 +380,9 @@ contract Deposit is OutsourceDepositLogging {
         }
     }
 
+    /// @notice     Determines if the signing group is undercollateralized enough that liquidation is warranted
+    /// @dev        Comapres the collaterization to a constant percentage
+    /// @return     True if severely undercollateralized, else false
     function isSeverelyUndercollateralized() public view returns (bool) {
         uint256 _thresholdPercent = TBTCConstants.getSeverelyUndercollateralizedPercent();
 
