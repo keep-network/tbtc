@@ -9,3 +9,5 @@ img/generated
 *.html
 **.swp
 **.swo
+# Visual Studio Code
+*.code-workspace
