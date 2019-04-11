@@ -263,8 +263,8 @@ contract Deposit is OutsourceDepositLogging {
     /// @dev                The prefix encodes the parity of the Y coordinate
     /// @param  _pubkeyY    The Y coordinate of the public key
     /// @return             The 1-byte prefix for the compressed key
-    function determineCompressionPrefix(bytes32 _pubkeyY) returns (bytes) {
-        if(uint256(_pubkeyY) & 1) {
+    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes) {
+        if(uint256(_pubkeyY) & 1 == 1) {
             return hex'03';  // Odd Y
         } else {
             return hex'02';  // Even Y
@@ -275,8 +275,8 @@ contract Deposit is OutsourceDepositLogging {
     /// @dev                Converts the 64-byte key to a 33-byte key, bitcoin-style
     /// @param  _pubkeyX    The X coordinate of the public key
     /// @param  _pubkeyY    The Y coordinate of the public key
-    /// @return
-    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) returns (bytes) {
+    /// @return             The 33-byte compressed pubkey
+    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes) {
         return abi.encodePacked(determineCompressionPrefix(_pubkeyY), _pubkeyX);
     }
 
@@ -284,7 +284,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @dev            This is used in bitcoin output scripts for the signers
     /// @return         20-bytes public key hash
     function signerPKH() public view returns (bytes20) {
-        bytes memory _pubkey = _compressPubkey(signingGroupPubkeyX, signingGroupPubkeyY);
+        bytes memory _pubkey = compressPubkey(signingGroupPubkeyX, signingGroupPubkeyY);
         bytes memory _digest = _pubkey.hash160();
         return bytes20(_digest.toAddress(0));  // dirty solidity hack
     }
@@ -340,9 +340,59 @@ contract Deposit is OutsourceDepositLogging {
         return _keep.submitSignatureFraud(keepID, _v, _r, _s, _signedDigest, _preimage);
     }
 
-    function isUndercollateralized() public view returns (bool) { /* TODO */ }
+    /// @notice     Gets the current oracle price of Bitcoin in Ether
+    /// @dev        Polls the oracle via the system contract
+    /// @return     The current price of 1 sat in wei
+    function fetchOraclePrice() public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(TBTCConstants.getSystemContractAddress());
+        return _sys.fetchOraclePrice();
+    }
 
-    function isSeverelyUndercollateralized() public view returns (bool) { /* TODO */ }
+    function fetchBondAmount() public view returns (uint256) {
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        return _keep.checkBondAmount(keepID);
+    }
+
+    function isUndercollateralized() public view returns (bool) {
+        uint256 _thresholdPercent = TBTCConstants.getUndercollateralizedPercent();
+
+        // Determine value of the lot in wei
+        uint256 _oraclePrice = fetchOraclePrice();
+        uint256 _lotSize = TBTCConstants.getLotSize();
+        uint256 _lotValue = _lotSize * _oraclePrice;
+
+        // Amount of wei the signers have
+        uint256 _bondValue = fetchBondAmount();
+
+
+        // This should convert into a percentage
+        // Which we compare to our threshold percent
+        if (_bondValue.mul(100).div(_lotValue) < _thresholdPercent) {
+            return true;  // undercollateralized
+        } else {
+            return false;  // collaterization is sufficient
+        }
+    }
+
+    function isSeverelyUndercollateralized() public view returns (bool) {
+        uint256 _thresholdPercent = TBTCConstants.getSeverelyUndercollateralizedPercent();
+
+        // Determine value of the lot in wei
+        uint256 _oraclePrice = fetchOraclePrice();
+        uint256 _lotSize = TBTCConstants.getLotSize();
+        uint256 _lotValue = _lotSize * _oraclePrice;
+
+        // Amount of wei the signers have
+        uint256 _bondValue = fetchBondAmount();
+
+        // This should convert into a percentage
+        // Which we compare to our threshold percent
+        if (_bondValue.mul(100).div(_lotValue) < _thresholdPercent) {
+            return true;  // undercollateralized
+        } else {
+            return false;  // collaterization is sufficient
+        }
+    }
 
 
     /// @notice             pushes ether held by the deposit to the signer group
@@ -411,6 +461,10 @@ contract Deposit is OutsourceDepositLogging {
         return _sys.fetchRelayPreviousDifficulty();
     }
 
+    /// @notice                     Evaluates the header difficulties in a proof
+    /// @dev                        Uses the light oracle to source recent difficulty
+    /// @param  _bitcoinHeaders     The header chain to evaluate
+    /// @return                     True if acceptable, otherwise revert
     function evaluateProofDifficulty(bytes _bitcoinHeaders) public view returns (bool) {
         uint256 _reqDiff;
         uint256 _current = currentBlockDifficulty();
@@ -442,7 +496,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
-function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
+    function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
 
     //
     // REUSABLE STATE TRANSITIONS

@@ -43,6 +43,10 @@ interface IKeep {
     // error if not ready yet
     function getKeepPubkey(uint256 _keepID) external view returns (bytes);
 
+
+    // returns the amount of the keep's ETH bond in wei
+    function checkBondAmount(uint256 _keepID) external view returns (uint256);
+
     // seize the signer's ETH bond
     // onlyKeepOwner
     // msg.sender.transfer(bondAmount)
