@@ -56,6 +56,9 @@ contract DepositLog {
     // This event is called when we enter the COURTESY_CALL state
     event CourtesyCalled(address indexed _depositContractAddress, uint256 _timestamp);
 
+    // This event is fired when we go from COURTESY_CALL to ACTIVE
+    event ExitedCourtesyCall(address indexed _depositContractAddress, uint256 _timestamp);
+
     // This log event is fired when liquidation
     event StartedLiquidation(
         address indexed _depositContractAddress,
@@ -253,6 +256,18 @@ contract DepositLog {
     function logLiquidated() public returns (bool) {
         if (!approvedToLog(msg.sender)) { return false; }
         emit Liquidated(
+            msg.sender,
+            block.timestamp);
+        return true;
+    }
+
+    /// @notice     Fires a ExitedCourtesyCall event
+    /// @dev        We append the sender, which is the deposit contract that called
+    ///             returns false if not approved, to prevent accidentally halting Deposit
+    /// @return     True if successful, else false
+    function logExitedCourtesyCall() public returns (bool) {
+        if (!approvedToLog(msg.sender)) { return false; }
+        emit ExitedCourtesyCall(
             msg.sender,
             block.timestamp);
         return true;

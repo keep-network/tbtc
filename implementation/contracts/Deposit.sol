@@ -1274,6 +1274,18 @@ contract Deposit is OutsourceDepositLogging {
         return true;
     }
 
+    /// @notice     Goes from courtesy call to active
+    /// @dev        Only callable if collateral is sufficient and the deposit is not expiring
+    /// @return     True if successful, otherwise revert
+    function exitCourtesyCall() public returns (bool) {
+        require(currentState == DepositStates.COURTESY_CALL, 'Not currently in courtesy call');
+        require(block.timestamp < fundedAt + TBTCConstants.getDepositTerm(), 'Deposit is expiring');
+        require(!isUndercollateralized(), 'Deposit is still undercollateralized');
+        currentState = DepositStates.ACTIVE;
+        logExitedCourtesyCall();
+        return true;
+    }
+
     /// @notice     Notify the contract that the signers are undercollateralized
     /// @dev        Calls out to the system for oracle info
     /// @return     True if successful, otherwise revert
