@@ -178,8 +178,6 @@ improving the resilience of the system to signing group failure.
 
 == TBTC Minting
 
-// TODO: why is TBTC withheld
-
 Once a deposit has been made and funded, the corresponding TBTC are minted.
 Minted TBTC are immediately issued to the funder, who is now the beneficiary of
 a funded _Deposit_. Some TBTC is withheld to prevent denial of service attacks
