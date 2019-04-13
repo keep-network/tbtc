@@ -9,9 +9,9 @@ ifndef::tbtc[toc::[]]
 
 Fraud and abort  processes handle custody failures. This includes punishing
 signers and starting the bond liquidation process. These transitions can be
-invoked from almost any Deposit state, as faults may occur during any other
+invoked from almost any _Deposit_ state, as faults may occur during any other
 flow. Once fault has been proven, the bonds are put up for auction to the
-public via the Liquidation flow.
+public via the <<Liquidation>> flow.
 
 While there is no fraud or abort state per se, it seems helpful to put the
 fraud-related state transitions in a single document.
@@ -21,6 +21,7 @@ fraud-related state transitions in a single document.
 === `COURTESY_CALL`
 * The signers have been courtesy called
 * They SHOULD request redemption of the deposit
+* Anyone may request redemption
 
 === `LIQUIDATION_IN_PROGRESS`
 * Liquidation due to undercollateralization or an abort has started
