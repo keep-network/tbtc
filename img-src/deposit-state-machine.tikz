@@ -4,91 +4,44 @@
     group/.style={draw,rectangle,loosely dashed,inner sep=14pt,outer sep=0},
 ]{
     \node[leaf state] (start) {Start};
-    \node[box state,right=of start] (awaiting setup) {Awaiting Signer Setup};
-    \node[box state,above=of awaiting setup] (awaiting btc deposit proof) {Awaiting BTC Deposit Proof};
 
-    \node[box state,above=of awaiting btc deposit proof] (active) {Active};
+    \node[box state,below=of start] (await signers) {Await Signers};
 
-    \node[box state,right=of awaiting btc deposit proof] (fraud awaiting btc deposit proof) {Fraud Awaiting BTC Deposit Proof};
-    \node[leaf state,right=of fraud awaiting btc deposit proof] (failed setup) {Failed Setup};
+    \node[box state,below=of await signers] (await funding) {Await Funding};
+    \node[box state,right=of await funding] (fraud await funding) {Fraud Await Funding};
+    \node[leaf state,right=of fraud await funding] (failed funding) {Failed Funding};
 
-    \node[box state,left=of active] (custodian margin called) {Custodian Margin Called};
+    \node[box state,below=of await funding] (active) {Active};
 
-    \node[box state,above left=of active] (awaiting owner option) {Awaiting owner option};
-    \node[box state,above left=of awaiting owner option] (liquidation auction) {Liquidation auction in-progress};
-    \node[leaf state,left=of awaiting owner option] (liquidated) {Liquidated};
+    \node[box state,text width=3cm,below right=3cm of active] (liquidation fraud liquidation) {Liquidation/Fraud Liquidation};
+    \node[leaf state,below=of liquidation fraud liquidation] (liquidated) {Liquidated};
 
-    \node[box state,above=of active] (owner margin called) {Owner Margin Called};
-    \node[box state,above=of owner margin called] (change owner auction) {Change Owner Auction};
+    \node[box state,below=of active] (courtesy) {Courtesy};
 
-    \node[box state,right=of owner margin called] (awaiting signature) {Awaiting Signature};
-    \node[leaf state,right=of awaiting signature] (redeemed) {Redeemed};
-    \node[box state,above=of redeemed] (awaiting redemption proof) {Awaiting Redemption Proof};
+    \node[box state,below left=3cm of active] (await signatures) {Await Signatures};
+    \node[leaf state,below=of await signatures] (await redemption) {Await Redemption};
+    \node[box state,right=of await redemption] (redeemed) {Redeemed};
 
-    \node[group,
-          fit=(liquidation auction)
-              (liquidated)
-              (awaiting owner option)]
-          (liquidation) {};
-    \node[above right] at (liquidation.south west) {Liquidation};
-    \node[group,
-          dotted,
-          fit=(custodian margin called)
-              (liquidation auction)
-              (liquidated)
-              (awaiting owner option)]
-          (undercollateralized) {};
-    \node[above right] at (undercollateralized.south west) {Undercollateralized};
-    \node[group,
-          densely dashed,
-          fit=(owner margin called)
-              (change owner auction)]
-          (unmaintained) {};
-    \node[below] at (unmaintained.north) {Unmaintained};
-    \node[group,
-          fit=(awaiting signature)
-              (awaiting redemption proof)
-              (redeemed)]
-          (redemption) {};
-    \node[above] at (redemption.south) {Redemption};
+    \path [->] (start) edge (await signers)
 
-    \path [->] (start) edge [] (awaiting setup)
+               (await signers) edge (await funding)
+               (await funding) edge (fraud await funding)
+               (fraud await funding) edge (failed funding)
 
-               (awaiting setup) edge [] (awaiting btc deposit proof)
-               (awaiting setup) edge [out=0,in=-90] (failed setup)
+               (await funding) edge (active)
+               (active) edge [<->] (courtesy)
+               (active) edge [bend left] (liquidation fraud liquidation)
+               (active) edge [bend right] (await signatures)
 
-               (awaiting btc deposit proof) edge (fraud awaiting btc deposit proof)
-               (awaiting btc deposit proof) edge (active)
-               (fraud awaiting btc deposit proof) edge (failed setup)
+               (courtesy) edge (liquidation fraud liquidation)
+               (courtesy) edge (await signatures)
 
-               (active) edge [bend right=5] (custodian margin called)
-               (active) edge [out=135,in=-60] (awaiting owner option)
-               (active) edge [out=0,in=-90,min distance=1.5cm] (awaiting signature)
-               (active) edge [bend left=10] (owner margin called)
+               (await signatures) edge (liquidation fraud liquidation)
+               (await signatures) edge (redeemed)
+               (await signatures) edge (await redemption)
 
-               (custodian margin called) edge [bend right=5] (active)
-               (custodian margin called) edge [] (awaiting owner option)
+               (liquidation fraud liquidation) edge (liquidated)
 
-               (awaiting owner option) edge [bend right=25] (liquidation auction)
-               (awaiting owner option) edge (liquidated)
-
-               (liquidation auction) edge (liquidated)
-
-               (owner margin called) edge [bend left=10] (active)
-               (owner margin called) edge (change owner auction)
-               % Curl this all the awy around the other nodes.
-               (owner margin called) edge [] (awaiting owner option)
-
-               (change owner auction) edge [bend left=65] (active)
-               % Curl this all the awy around the other nodes.
-               (change owner auction) edge [bend right] (awaiting owner option)
-
-               (awaiting signature) edge [bend right=10] (awaiting redemption proof)
-               (awaiting signature) edge (redeemed)
-               (awaiting signature) edge [out=100,in=80,looseness=1,min distance=4.5cm] (awaiting owner option)
-
-               (awaiting redemption proof) edge [bend right=10] (awaiting signature)
-               (awaiting redemption proof) edge (redeemed)
-               (awaiting redemption proof) edge [out=100,in=100] (awaiting owner option)
+               (await redemption) edge (redeemed)
                ;
 }
