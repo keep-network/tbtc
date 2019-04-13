@@ -137,16 +137,20 @@ remain
 jurisdictions
 * Inflation-resistant. tBTC may only be minted after proof is provided of a
 backing BTC deposit.
-* Leverage-resistant. The existence of TBTC shouldn't allow cross-chain
+* Leverage-resistant. The existence of tBTC shouldn't allow cross-chain
 "printing" of additional synthetic Bitcoin. We can't stop someone from launching
 a synthetic, but artificially expanding the Bitcoin supply is not a goal of the
 project.
 * Without middlemen, in the same sense as Bitcoin. The only rent extraction
 should be from the minimal participation of signers required to secure the
 network, similar to miners on the Bitcoin network.
+* Redeemable. The ability to trade scrip for its backing deposit freely is what
+distinguishes a backed currency from fiat money. The supply of tBTC is always
+backed by an equal number of reserved BTC. This means for every token in
+circulation, 1 BTC has been removed from circulation.
 
-Finally, tBTC must be *redeemable*. The ability to trade scrip for its backing
-deposit freely is what distinguishes a backed currency from fiat money.
+Together, these properties ensure a strong supply peg across chains, and the
+closest to "hard money" status that a Bitcoin-pegged asset can achieve.
 
 Notably, these properties don't require an artificial price peg as is common
 in stable coin projects -- they instead require a supply peg across chains.
