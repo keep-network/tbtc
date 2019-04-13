@@ -7,7 +7,7 @@ pragma solidity 0.4.25;
 interface IKeep {
 
     // returns the timestamp when it was approved
-    function wasApproved(uint256 _keepID, bytes32 _digest) external view returns (uint256);
+    function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256);
 
     // onlyKeepOwner
     // record a digest as approved for signing

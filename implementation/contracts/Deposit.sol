@@ -430,9 +430,9 @@ contract Deposit is OutsourceDepositLogging {
     /// @dev            calls out to the keep contract, storing a 256bit int costs the same as a bool
     /// @param  _digest the digest to check approval time for
     /// @return         the time it was approved. 0 if unapproved
-    function wasApproved(bytes32 _digest) internal view returns (uint256) {
+    function wasDigestApprovedForSigning(bytes32 _digest) internal view returns (uint256) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
-        return _keep.wasApproved(keepID, _digest);
+        return _keep.wasDigestApprovedForSigning(keepID, _digest);
     }
 
     /// @notice         approves a digest for signing by our keep group
@@ -857,7 +857,7 @@ contract Deposit is OutsourceDepositLogging {
             utxoSizeBytes,
             _previousOutputValueBytes,
             requesterPKH);
-        require(wasApproved(_previousSighash) == withdrawalRequestTime, 'Provided previous value does not yield previous sighash');
+        require(wasDigestApprovedForSigning(_previousSighash) == withdrawalRequestTime, 'Provided previous value does not yield previous sighash');
 
         // Check that we're incrementing the fee by exactly the requester's initial fee
         uint256 _previousOutputValue = abi.encodePacked(_previousOutputValueBytes).reverseEndianness().bytesToUint();
