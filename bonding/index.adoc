@@ -107,6 +107,8 @@ mechanism with large penalties for ongoing undercollateralization.
 
 === Liquidation
 
+:auction-start-percent: 80%
+
 Forced liquidation should be rare, as rational signers will redeem _Deposits_
 before liquidation becomes necessary. However, the possibility of extreme
 punishment via liquidation is necessary to prevent dishonest behavior from
@@ -125,10 +127,11 @@ First, the contract attempts to use on-chain liquidity sources, such as
 Uniswap. If the bond is sufficient to cover the outstanding TBTC value on these
 markets, it is immediately exchanged for TBTC.
 
-Second, the contract starts a falling-price auction. It offers 75% of the signer
-bond for sale for the outstanding TBTC amount. The amount of bond on sale
-increases over time until someone chooses to purchase it, or the auction
-reaches 100% of the bond. The auction will remain open until a buyer is found.
+Second, the contract starts a falling-price auction. It offers
+{auction-start-percent} of the signer bond for sale for the outstanding TBTC
+amount. The amount of bond on sale increases over time until someone chooses
+to purchase it, or the auction reaches 100% of the bond. The auction will
+remain open until a buyer is found.
 
 TBTC received during this process is burned to maintain the supply peg. If any
 bond value is left after liquidation, a small fee is distributed to the account
