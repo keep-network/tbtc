@@ -1,23 +1,49 @@
 tmp_dir=$1
 img_dir=$(pwd)/$2
 tikz_source=$(pwd)/$3
+tikz_include_base=$(dirname $tikz_source)
 target_basename=$4
 
 mkdir -p $tmp_dir
 cd $tmp_dir
+
+front_matter=$(
+    cat $tikz_source |
+    ruby -e "puts STDIN.take_while{|ln| ln.start_with?('%')}.join" |
+    grep "% *![a-z]* =" |
+    sed -e "s/% *!//"
+)
+metadata=$(
+    echo "$front_matter" |
+    ruby -e 'puts STDIN.inject({}) { |map, ln| (prop,val) = ln.strip.split(/ *= */); map[prop] = val; map }'
+)
+tex_includes=$(
+    echo "$metadata" |
+    ruby -e 'puts (eval(STDIN.read)["include"] || "").split(",").join("\n")'
+)
+tex_package_includes=$(
+    echo "$metadata" |
+    ruby -e 'puts (eval(STDIN.read)["texpackages"] || "").split(",").join("\n")' |
+    sed -e 's/^\(.*\)$/\\usepackage{\1}/'
+)
+tikz_library_includes=$(
+    echo "$metadata" |
+    ruby -e 'puts (eval(STDIN.read)["tikzlibraries"] || "").split(",").join("\n")' |
+    sed -e 's/^\(.*\)$/\\usetikzlibrary{\1}/'
+)
+
 echo "\documentclass{standalone}" > $target_basename.tex
 echo "\usepackage{tikz}" >> $target_basename.tex
 echo "\usepackage{hyperref}" >> $target_basename.tex
 echo "\usepackage[utf8]{inputenc}" >> $target_basename.tex
-echo "\usetikzlibrary{positioning}" >> $target_basename.tex
-echo "\usetikzlibrary{arrows.meta}" >> $target_basename.tex
-echo "\usetikzlibrary{shapes.geometric}" >> $target_basename.tex
-echo "\usetikzlibrary{shapes.symbols}" >> $target_basename.tex
-echo "\usetikzlibrary{calc}" >> $target_basename.tex
-echo "\usetikzlibrary{chains}" >> $target_basename.tex
-echo "\usetikzlibrary{fit}" >> $target_basename.tex
-echo "\tikzset{every node/.style={above},start state/.style={draw,ellipse,text width=0},state/.style={draw,ellipse,align=flush center,text width=2.5cm},box state/.style={draw,rectangle,align=flush center,text width=2.5cm,inner sep=7pt},leaf state/.style={box state,rounded corners=12pt},decision/.style={draw,rectangle,align=flush center},thread/.style={draw,signal,signal to=east,fill=white},nested state/.style={draw,ellipse,double,align=flush center,text width=2.5cm},nested decision/.style={draw,rectangle,double,align=flush center},chain state/.style={draw,ellipse,dashed,align=flush center,text width=2.5cm},chain decision/.style={draw,rectangle,dashed,align=flush center},chain transition/.style={draw,dashed},nested chain decision/.style={draw,rectangle,double,dashed,align=flush center},>=Stealth}" >> $target_basename.tex
+echo "$tex_package_includes" >> $target_basename.tex
+echo "$tikz_library_includes" >> $target_basename.tex
+echo "" >> $target_basename.tex
 echo "\begin{document}" >> $target_basename.tex
+echo "" >> $target_basename.tex
+for filename in $tex_includes; do
+    cat $tikz_include_base/$filename >> $target_basename.tex
+done
 echo "" >> $target_basename.tex
 cat $tikz_source >> $target_basename.tex
 echo "\end{document}" >> $target_basename.tex
