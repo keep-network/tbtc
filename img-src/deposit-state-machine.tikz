@@ -21,8 +21,8 @@
     \node[box state,below=of active] (courtesy) {Courtesy};
 
     \node[box state,below left=3cm of active] (await signatures) {Await Signatures};
-    \node[box state,below=of await signatures] (await redemption) {Await Redemption};
-    \node[leaf state,right=of await redemption] (redeemed) {Redeemed};
+    \node[box state,below=1.5cm of courtesy] (await redemption) {Await Redemption};
+    \node[leaf state,below=of await signatures] (redeemed) {Redeemed};
 
     \path [->] (start) edge (await signers)
 
@@ -45,5 +45,6 @@
                (liquidation fraud liquidation) edge (liquidated)
 
                (await redemption) edge (redeemed)
+               (await redemption) edge (liquidation fraud liquidation)
                ;
 }
