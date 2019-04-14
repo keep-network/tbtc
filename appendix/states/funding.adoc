@@ -67,7 +67,7 @@ an abort state.
 * *access control*
 ** anyone
 * *writes*
-** `mapping _depositOwner(address => address)`
+** `mapping _depositBeneficiaries(address => address)`
 *** on the TBTC system contract. for 721 compatibility, use uint256 when calling
 * *from*
 ** `START`
@@ -185,7 +185,7 @@ an abort state.
   The funder's bond is returned once this proof is successfully verified
 * *access control*
 ** Anyone
-** expected: Deposit owner
+** expected: funder
 * *args*
 ** `bytes _tx`
 ** `bytes _proof`

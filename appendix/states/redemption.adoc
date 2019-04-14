@@ -17,16 +17,17 @@ signature (even one neither chain knows about) can't be revoked.
 
 Ergo, cancellation of this process could result in BTC moved from the signers'
 address, and an Active Deposit with TBTC outstanding. This would result in a
-supply peg-break.
+broken supply peg.
 
 The requester notifies the `Deposit` of the bitcoin tx information (fee and
 recipient pubkeyhash) they are requesting, along with enough TBTC to cover the
-outstanding TBTC from the `Deposit` (counting any existing equity).
+outstanding TBTC from the `Deposit`, plus enough to cover signer fees and the
+funder bond payment.
 
 == States
 
 === `AWAITING_WITHDRAWAL_SIGNATURE`
-* A withdrawal has been initiated by the Deposit owner
+* A redemption has been initiated
 * The signers MUST sign a digest
 * The signers may return the signature for verification
 * *NOTE*: there is a disincentive to return a signature, as the caller must
@@ -42,7 +43,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** via `requestWithdrawal`
 
 === Reachable exterior states
-* `AWAITING_OWNER_OPTION`
+* `LIQUIDATION_IN_PROGRESS`
 ** via an ECDSA or BTC fraud proof
 ** via a state timeout
 * `REDEEMED`
@@ -128,14 +129,14 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 == External Transitions
 === `requestWithdrawal` (inbound)
 // TODO: link this elsewhere
-* Deposit owner requests a withdrawal
+* Anyone requests a withdrawal
 * *access control*
-** only deposit owner
+** Anyone
 * *args*
 ** `bytes8 _outputValueBytes`
 ** `bytes _requesterPKH`
 * *reads*
-** `address depositOwner`
+** `mapping(address => address) depositBeneficiaries`
 *** for auth
 ** `bytes utxoOutpoint`
 *** For calculating the sighash
@@ -152,7 +153,8 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 *** the bitcoin hash160 pubkeyhash to which to deliver BTC
 ** `uint256 outstandingTBTC`
 *** check that the `Deposit`'s TBTC has been returned
-*** this is a derived attribute from UTXO size and equity
+*** this is a derived attribute from UTXO size, the signer fee, and the funder
+	bond value
 ** `uint256 withdrawalRequestTime`
 *** start timeouts for signers wrt signing and withdrawal
 ** `mapping(address => uint256) balances`
@@ -174,7 +176,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `AWAITING_WITHDRAWAL_PROOF`
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** `AWAITING_OWNER_OPTION`
+** `LIQUIDATION_IN_PROGRESS`
 
 === `provideSPVFraudProof` (outbound)
 // TODO: link this elsewhere
@@ -184,7 +186,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 ** `AWAITING_WITHDRAWAL_PROOF`
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** `AWAITING_OWNER_OPTION`
+** `LIQUIDATION_IN_PROGRESS`
 
 === `notifyRedemptionProofTimeout` (outbound)
 // TODO: link this elsewhere
@@ -193,7 +195,7 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *from*
 ** `AWAITING_WITHDRAWAL_PROOF`
 * *to*
-** `AWAITING_OWNER_OPTION`
+** `LIQUIDATION_IN_PROGRESS`
 
 === `notifySignatureTimeout` (outbound)
 // TODO: link this elsewhere
@@ -202,4 +204,4 @@ outstanding TBTC from the `Deposit` (counting any existing equity).
 * *from*
 ** `AWAITING_WITHDRAWAL_SIGNATURE`
 * *to*
-** `AWAITING_OWNER_OPTION`
+** `LIQUIDATION_IN_PROGRESS`

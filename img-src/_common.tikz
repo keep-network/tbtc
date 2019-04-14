@@ -1,0 +1,25 @@
+\tikzset{
+  start state/.style={draw,ellipse,text width=0},
+  state/.style={draw,ellipse,align=flush center,text width=2.5cm},
+  box state/.style={draw,rectangle,align=flush center,text width=2.5cm,inner sep=7pt},
+  leaf state/.style={box state,rounded corners=12pt},
+  decision/.style={draw,rectangle,align=flush center},
+  thread/.style={draw,signal,signal to=east,fill=white},
+  % Nested states and decisions use doubled borders to indicate
+  % that you have to reference a different diagram.
+  nested state/.style={draw,ellipse,double,align=flush center,text width=2.5cm},
+  nested decision/.style={draw,rectangle,double,align=flush center},
+  % Chain states and decisions use dashed borders to indicate
+  % that you have to interact with the chain.
+  chain state/.style={draw,ellipse,dashed,align=flush center,text width=2.5cm},
+  chain decision/.style={draw,rectangle,dashed,align=flush center},
+  chain transition/.style={draw,dashed},
+  % Nested chain decisions combine nested and chain styles to
+  % indicate a reference to a different diagram for a state that
+  % Nested chain decisions combine nested and chain styles to
+  % indicate a reference to a different diagram for a state that
+  % depends on chain interaction.
+  nested chain decision/.style={draw,rectangle,double,dashed,align=flush center},
+  % Set default arrow style to stealth.
+  >=Stealth
+}

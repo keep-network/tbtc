@@ -40,21 +40,3 @@ While these returns are reasonable relative to their risk in the cryptocurrency
 space, we can save both sides money through a more efficient use of capital. As
 the network matures, these costs can be lowered through the introduction of
 leveraged bonds.
-
-== Deposit ownership and maintenance
-
-A _minimum custodial deposit_ is set aside from the initially available TBTC of
-each `Deposit`. This withheld balance ensures signers will be paid for their
-work as time goes on.
-
-Over time, the _custodial deposit_ is earned by signers, who will be paid for
-their efforts when the `Deposit` is redeemed. A portion of the unwithdrawn
-_minimum custodial deposit_ must be maintained at all times for a `Deposit` to
-be in good standing.
-
-A _deposit owner_ can maintain their `Deposit` by returning TBTC, or by leaving
-a larger balance undrawn.
-
-`Deposit` s that fall out of good standing will be put up for auction,
-potentially forfeiting a _deposit owner's_ remaining _custodial deposit_. More
-details can be found in <<Handling Failure>>.

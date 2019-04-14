@@ -5,6 +5,7 @@
 *.fls
 *.out
 *.fdb_latexmk
+build.tex
 img/generated
 *.html
 **.swp
