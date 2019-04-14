@@ -3,14 +3,14 @@
 
 \begin{tikzpicture}
   \begin{umlseqdiag}
-      \umlbasicobject[stereo=actor]{User}
-      \umlbasicobject{Deposit Contract}
-      \umlbasicobject{tBTC Keep}
-      \umlbasicobject{tECDSA Keep}
-      \umlbasicobject{Random Beacon Keep}
-      \umlbasicobject{Ethereum Chain}
+      \umlbasicobject[fill=white]{User}
+      \umlbasicobject[fill=white]{Deposit Contract}
+      \umlbasicobject[fill=white]{tBTC Keep}
+      \umlbasicobject[fill=white]{tECDSA Keep}
+      \umlbasicobject[fill=white]{Random Beacon Keep}
+      \umlbasicobject[fill=white]{Ethereum Chain}
 
-      \begin{umlcall}[op=request deposit address, dt=5]{User}{Deposit Contract}
+      \begin{umlcall}[op=request deposit address, dt=10]{User}{Deposit Contract}
           \begin{umlcall}[op=request deposit group, dt=0]{Deposit Contract}{tBTC Keep}
               \begin{umlcall}[type=return, op=id]{tBTC Keep}{Deposit Contract}
               \end{umlcall}
@@ -32,7 +32,7 @@
           \end{umlcall}
       \end{umlcall}
 
-      \begin{umlcall}[op=get deposit address, return=address, dt=5]{User}{Deposit Contract}
+      \begin{umlcall}[op=get deposit address, return=address, dt=10]{User}{Deposit Contract}
           \begin{umlcall}[op=get deposit group address, return=address]{Deposit Contract}{tBTC Keep}
               \begin{umlcallself}[op=convert public key to address]{tBTC Keep}
               \end{umlcallself}
