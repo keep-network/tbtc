@@ -21,8 +21,8 @@
     \node[box state,below=of active] (courtesy) {Courtesy};
 
     \node[box state,below left=3cm of active] (await signatures) {Await Signatures};
-    \node[leaf state,below=of await signatures] (await redemption) {Await Redemption};
-    \node[box state,right=of await redemption] (redeemed) {Redeemed};
+    \node[box state,below=of await signatures] (await redemption) {Await Redemption};
+    \node[leaf state,right=of await redemption] (redeemed) {Redeemed};
 
     \path [->] (start) edge (await signers)
 
