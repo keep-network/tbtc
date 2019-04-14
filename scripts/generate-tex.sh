@@ -40,34 +40,36 @@ tikz_library_includes=$(
     sed -e 's/^\(.*\)$/\\usetikzlibrary{\1}/'
 )
 
-echo "\documentclass{article}" > $target_basename.tex
-echo "\usepackage[utf8]{inputenc}" >> $target_basename.tex
+echo "\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{varwidth}
 
-echo "\usepackage[margin=1in]{geometry}" >> $target_basename.tex
-echo "\usepackage{tikz}" >> $target_basename.tex
-echo "\usepackage[colorlinks=true]{hyperref}" >> $target_basename.tex
-echo "\usepackage{varwidth}" >> $target_basename.tex
+$tex_package_includes
+$tikz_library_includes
 
-echo "$tex_package_includes" >> $target_basename.tex
-echo "$tikz_library_includes" >> $target_basename.tex
+\begin{document}
+$(
+    for filename in $tex_includes; do
+        cat $tikz_include_base/$filename
+    done
+)
 
-echo "" >> $target_basename.tex
-echo "\begin{document}" >> $target_basename.tex
-echo "" >> $target_basename.tex
-for filename in $tex_includes; do
-    cat $tikz_include_base/$filename >> $target_basename.tex
-done
-echo "" >> $target_basename.tex
+$(
+    for tikz_source in $@; do
+        tikz_source_base=$(basename $tikz_source)
+        tikz_name=$(echo $tikz_source_base | sed -e "s/-\([a-z]\)/\u&/g")
 
-for tikz_source in $@; do
-    tikz_source_base=$(basename $tikz_source)
-    tikz_name=$(echo $tikz_source_base | sed -e "s/-\([a-z]\)/\U\1/g")
-    echo "\begin{figure}" >> $target_basename.tex
-    echo "  \centering" >> $target_basename.tex
-    echo "  \input{$tikz_source}" >> $target_basename.tex
+        echo "\begin{figure}
+    \centering
+    \input{$tikz_source}
 
-    echo "  \caption{\label{fig:$tikz_source_base}$tikz_name.}" >> $target_basename.tex
-    echo "\end{figure}" >> $target_basename.tex
-done
+    \caption{\label{fig:$tikz_source_base}$tikz_name.}
+\end{figure}
+"
+    done
+)
 
-echo "\end{document}" >> $target_basename.tex
+\end{document}" >> $target_basename.tex
