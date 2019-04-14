@@ -40,7 +40,7 @@
 
                (await signatures) edge (liquidation fraud liquidation)
                (await signatures) edge (redeemed)
-               (await signatures) edge (await redemption)
+               (await signatures) edge [<->] (await redemption)
 
                (liquidation fraud liquidation) edge (liquidated)
 
