@@ -1,4 +1,6 @@
-% !TEX root = ../tbtc-diagrams.tex
+% !TEX root = ../build.tex
+% !tikzlibraries = arrows.meta,calc,positioning,chains,shapes.geometric
+% !include = _common.tikz
 % Underline that goes through descender.
 
 \newcommand{\evenunderline}[1]{%

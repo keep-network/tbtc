@@ -92,18 +92,13 @@ The distributed key generation protocol should result in three properties:
    signed version of a given transaction to be performed on behalf of the
    signing group.
 
-=== Deposit
+=== Proof of deposit
 
 Once the tBTC system has a wallet address available for a given deposit request,
 the _depositor_ can issue a Bitcoin transaction sending BTC from a wallet they
 control to the wallet address for the signing group. Once the transaction has
-been confirmed, the depositor has to issue a transaction to the tBTC system's
-host chain proving the deposit has occurred.
-
-// TODO “Once the transaction has been confirmed”: need to discuss how confirmed
-// TODO I guess?
-
-=== Proof of deposit
+been sufficiently confirmed by the Bitcoin chain, the depositor has to issue a
+transaction to the host chain proving that the _Deposit_ has been funded.
 
 The only link between the Bitcoin chain and the host chain is the tBTC system,
 which runs as a set of smart contracts on the host chain. As such, the Bitcoin
@@ -176,21 +171,25 @@ improving the resilience of the system to signing group failure.
 
 // TODO Set a proper initial lot size.
 
-== TBTC Minting
+
+== Deposit Economics
+
+:signer-fee-withheld: 0.005 TBTC
 
 Once a deposit has been made and funded, the corresponding TBTC are minted.
 Minted TBTC are immediately issued to the funder, who is now the beneficiary of
-a funded _Deposit_. Some TBTC is withheld to prevent denial of service attacks
-on the system. Beneficary status is transferable (in Ethereum this is
-implemented as an ERC721 compatible non-fungible token). When the _Deposit_
-resolves, the withheld TBTC (or equivalent value) will be returned to the
-current beneficiary along with a small additional payment. In this way the
-beneficiary NFT functions as a zero-coupon bond issued by the signing group
-upon funding.
+a funded _Deposit_. To prevent denial of service attacks {signer-fee-withheld}
+is withheld on mintng. This will be returned to the beneficiary when the
+_Deposit_ is closed. This ensures that DoS attacks based on repeatedly creating
+signing groups have high economic cost.
 
-Custodial fees are described in more detail in
+Beneficary status is transferable (in Ethereum this is implemented as an
+ERC721-compatible non-fungible token). When the _Deposit_ resolves, the
+withheld TBTC (or equivalent value) will be returned to the current beneficiary
+along with a small additional payment. In this way the beneficiary NFT
+functions as a zero-coupon bond issued by the signing group upon funding. If
+the signing group performs its obligations, the beneficiary will eventually
+receive the bond payout.
+
+Signer fees are described in more detail in
 <<../custodial-fees/index#,their own section>>.
-
-== Deposit Beneficary
-
-// TODO

@@ -2,7 +2,7 @@ version: 2
 jobs:
   generate_pngs:
     docker:
-      - image: keepnetwork/texlive:3
+      - image: keepnetwork/texlive:10
     steps:
       - checkout
       - run:
@@ -17,14 +17,14 @@ jobs:
             - img/generated/*.png
   generate_docs_tex:
     docker:
-      - image: keepnetwork/texlive:3
+      - image: keepnetwork/texlive:10
     steps:
       - checkout
       - run:
           name: Generate TeX Document Files
           command: |
             mkdir -p /tmp/docs
-            make pdfs
+            make build.pdf
             cp *.pdf /tmp/docs
       - persist_to_workspace:
           root: /tmp/docs
