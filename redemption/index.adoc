@@ -47,11 +47,12 @@ _redemption request_ includes the following:
 2. A public key hash (PKH) for BTC delivery
   - the 20-byte hash160 of a public key belonging to the requester
   - for security and privacy, this should be a new keypair
-3. 1 TBTC plus fees (see <<Repayment Amount>>)
+3. _Deposit_ size plus fees (see <<Repayment Amount>>)
 
-Upon receipt of the _redemption request_, the smart contract burns 1 TBTC,
-distributes signer fees and the beneficiary bond, and records the receipt of
-the request, and notifies the signers that a signature is required.
+Upon receipt of the _redemption request_, the smart contract burns TBTC equal
+to the _Deposit_ size, distributes signer fees and the beneficiary bond, and
+records the receipt of the request, and notifies the signers that a signature
+is required.
 
 Once notified of the redemption request, the signers must wait for confirmation
 on the host chain. If they do not wait for confirmation, the redemption request
@@ -67,10 +68,10 @@ contract because it no longer has a record of the redemption request.
 :custodial-fee: 0.005 TBTC (50 basis points)
 :beneficiary-bond-payment: 0.0005 TBTC
 
-The repayment amount is 1 TBTC plus the custodial fee of {custodial-fee} and a
-payment of {beneficiary-bond-payment} to the deposit beneficiary. This ensures
-that the signers are paid upon providing a signature and that the beneficiary
-is compensated for opening the deposit.
+The repayment amount is the _Deposit_ size plus the custodial fee of
+{custodial-fee} and a payment of {beneficiary-bond-payment} to the deposit
+beneficiary. This ensures that the signers are paid upon providing a signature
+and that the beneficiary is compensated for opening the deposit.
 
 
 == Redemption Transaction Format
