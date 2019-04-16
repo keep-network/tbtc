@@ -485,7 +485,7 @@ contract Deposit is OutsourceDepositLogging {
         } else if (_firstHeaderDiff == _previous) {
             _reqDiff = _previous;
         } else {
-            require(false, 'not at current or previous difficulty');
+            revert('not at current or previous difficulty');
         }
 
         /* TODO: make this better than 6 */
@@ -712,7 +712,7 @@ contract Deposit is OutsourceDepositLogging {
             }
         }
         // If we don't return from inside the loop, we failed.
-        require(false, 'Did not find output with correct PKH');
+        revert('Did not find output with correct PKH');
     }
 
     /// @notice                 Validates the funding tx and parses information from it
@@ -1214,7 +1214,7 @@ contract Deposit is OutsourceDepositLogging {
             _output = _bitcoinTx.extractOutputAtIndex(i);
             if (_output.extractValue() >= _requiredOutputSize
                 && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(requesterPKH))) {
-                require(false, 'Found an output paying the redeemer as requested');
+                revert('Found an output paying the redeemer as requested');
             }
         }
 
