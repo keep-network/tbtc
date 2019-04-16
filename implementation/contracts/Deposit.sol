@@ -447,7 +447,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @notice         get the signer pubkey for our keep
     /// @dev            calls out to the keep contract, should get 64 bytes back
     /// @return         the 64 byte pubkey
-    function getKeepPubkeyResult() public view returns (bytes) {
+    function getKeepPubkeyResult() internal view returns (bytes) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         bytes memory _pubkey = _keep.getKeepPubkey(keepID);
         require(_pubkey.length == 64);
