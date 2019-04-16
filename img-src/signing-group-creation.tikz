@@ -1,5 +1,6 @@
 % !TEX root = ../build.tex
-% !tikzlibraries = arrows.meta,calc,positioning,chains,shapes.geometric
+% !texpackages = rotating,tikz-uml,xstring,pgfopts
+% !tikzlibraries = arrows.meta
 % !include = _common.tikz
 % Underline that goes through descender.
 

@@ -47,6 +47,7 @@ echo "\usepackage[margin=1in]{geometry}" >> $target_basename.tex
 echo "\usepackage{tikz}" >> $target_basename.tex
 echo "\usepackage[colorlinks=true]{hyperref}" >> $target_basename.tex
 echo "\usepackage{varwidth}" >> $target_basename.tex
+echo "\usepackage[english]{babel}" >> $target_basename.tex
 
 echo "$tex_package_includes" >> $target_basename.tex
 echo "$tikz_library_includes" >> $target_basename.tex
