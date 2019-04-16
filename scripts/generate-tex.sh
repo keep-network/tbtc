@@ -63,12 +63,21 @@ echo "" >> $target_basename.tex
 for tikz_source in $@; do
     tikz_source_base=$(basename $tikz_source)
     tikz_name=$(echo $tikz_source_base | sed -e "s/-\([a-z]\)/\U\1/g")
-    echo "\begin{figure}" >> $target_basename.tex
+    tikz_figure=$(
+        cat $tikz_source |
+            ruby -e "puts STDIN.take_while{|ln| ln.start_with?('%')}.join" |
+            grep "^%\s!figuretype\s*=" |
+            sed -e "s/.*= //"
+        )
+
+    echo "$tikz_figure" | sed -e 's/^\(.*\)$/\\begin{\1}/' >> $target_basename.tex
     echo "  \centering" >> $target_basename.tex
     echo "  \input{$tikz_source}" >> $target_basename.tex
-
     echo "  \caption{\label{fig:$tikz_source_base}$tikz_name.}" >> $target_basename.tex
-    echo "\end{figure}" >> $target_basename.tex
+    echo "$tikz_figure" | sed -e 's/^\(.*\)$/\\end{\1}/' >> $target_basename.tex
+    echo "" >> $target_basename.tex
+    echo "\clearpage" >> $target_basename.tex
+    echo "" >> $target_basename.tex
 done
 
 echo "\end{document}" >> $target_basename.tex

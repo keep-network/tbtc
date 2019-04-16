@@ -1,5 +1,6 @@
 % !TEX root = ../build.tex
 % !tikzlibraries = arrows.meta,positioning,shapes.geometric,fit
+% !figuretype = figure
 % !include = _common.tikz
 
 \tikz[
