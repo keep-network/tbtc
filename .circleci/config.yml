@@ -2,7 +2,7 @@ version: 2
 jobs:
   generate_pngs:
     docker:
-      - image: keepnetwork/texlive:10
+      - image: keepnetwork/texlive:15
     steps:
       - checkout
       - run:
@@ -17,7 +17,7 @@ jobs:
             - img/generated/*.png
   generate_docs_tex:
     docker:
-      - image: keepnetwork/texlive:10
+      - image: keepnetwork/texlive:15
     steps:
       - checkout
       - run:
