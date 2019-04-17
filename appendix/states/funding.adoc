@@ -153,6 +153,7 @@ an abort state.
 * Anyone may notify a Deposit that its funder has failed to submit a funding
   proof during the fraud period. The funder is not penalized for this
 * When this occurs, signer bonds are partially slashed and then returned
+* The partial slash is distributed to the current beneficiary
 * We consider this to be a different transition than `notifyFundingTimeout`
   because it yields a different state and has different behavior
 * *access control*
