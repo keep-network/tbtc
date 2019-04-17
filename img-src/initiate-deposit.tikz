@@ -1,6 +1,7 @@
 % !TEX root = ../build.tex
 % !tikzlibraries = arrows.meta,calc,positioning,chains,shapes.geometric
 % !include = _common.tikz
+% !figuretype = figure
 % Underline that goes through descender.
 
 \newcommand{\evenunderline}[1]{%
