@@ -10,3 +10,8 @@ img/generated
 *.html
 **.swp
 **.swo
+implementation/build/
+blocks/
+__pycache__/
+node_modules/
+.mypy_cache

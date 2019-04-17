@@ -1,0 +1,5 @@
+build/
+blocks/
+__pycache__/
+node_modules/
+.mypy_cache
