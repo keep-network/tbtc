@@ -46,6 +46,7 @@ echo "\documentclass{article}
 \usepackage{tikz}
 \usepackage[colorlinks=true]{hyperref}
 \usepackage{varwidth}
+\usepackage[english]{babel}
 
 $tex_package_includes
 $tikz_library_includes
@@ -61,13 +62,21 @@ $(
     for tikz_source in $@; do
         tikz_source_base=$(basename $tikz_source)
         tikz_name=$(echo $tikz_source_base | sed -e "s/-\([a-z]\)/\u&/g")
+        tikz_figure=$(
+             cat $tikz_source |
+                 ruby -e "puts STDIN.take_while{|ln| ln.start_with?('%')}.join" |
+                 grep "^%\s!figuretype\s*=" |
+                 sed -e "s/.*= //"
+             )
 
-        echo "\begin{figure}
-    \centering
-    \input{$tikz_source}
+        echo "$tikz_figure" | sed -e 's/^\(.*\)$/\\begin{\1}/'
+        echo "  \centering
+  \input{$tikz_source}
+  \caption{\label{fig:$tikz_source_base}$tikz_name.}"
+        echo "$tikz_figure" | sed -e 's/^\(.*\)$/\\end{\1}/'
 
-    \caption{\label{fig:$tikz_source_base}$tikz_name.}
-\end{figure}
+        echo "
+\clearpage
 "
     done
 )
