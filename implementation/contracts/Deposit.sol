@@ -356,36 +356,11 @@ contract Deposit is OutsourceDepositLogging {
         return _keep.checkBondAmount(keepID);
     }
 
-    /// @notice     Determines if the signing group is currently undercollateralized
-    /// @dev        Compares the collaterization to a constant percentage
-    /// @return     True if undercollateralized, else false
-    function isUndercollateralized() public view returns (bool) {
-        uint256 _thresholdPercent = TBTCConstants.getUndercollateralizedPercent();
-
-        // Determine value of the lot in wei
-        uint256 _oraclePrice = fetchOraclePrice();
-        uint256 _lotSize = TBTCConstants.getLotSize();
-        uint256 _lotValue = _lotSize * _oraclePrice;
-
-        // Amount of wei the signers have
-        uint256 _bondValue = fetchBondAmount();
-
-
-        // This should convert into a percentage
-        // Which we compare to our threshold percent
-        if (_bondValue.mul(100).div(_lotValue) < _thresholdPercent) {
-            return true;  // undercollateralized
-        } else {
-            return false;  // collaterization is sufficient
-        }
-    }
-
-    /// @notice     Determines if the signing group is undercollateralized enough that liquidation is warranted
-    /// @dev        Comapres the collaterization to a constant percentage
-    /// @return     True if severely undercollateralized, else false
-    function isSeverelyUndercollateralized() public view returns (bool) {
-        uint256 _thresholdPercent = TBTCConstants.getSeverelyUndercollateralizedPercent();
-
+    /// @notice     Determines the collateralization ratio of the signing group
+    /// @dev        Compares the bond value and lot value
+    /// @return     collateralization ratio as uint 
+    function getCollateralizationPercentage() public view returns (uint256) {
+        
         // Determine value of the lot in wei
         uint256 _oraclePrice = fetchOraclePrice();
         uint256 _lotSize = TBTCConstants.getLotSize();
@@ -396,13 +371,8 @@ contract Deposit is OutsourceDepositLogging {
 
         // This should convert into a percentage
         // Which we compare to our threshold percent
-        if (_bondValue.mul(100).div(_lotValue) < _thresholdPercent) {
-            return true;  // undercollateralized
-        } else {
-            return false;  // collaterization is sufficient
-        }
+        return (_bondValue.mul(100).div(_lotValue));
     }
-
 
     /// @notice             pushes ether held by the deposit to the signer group
     /// @dev                useful for returning bonds to the group, or otherwise paying them
@@ -1267,7 +1237,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @return     True if successful, otherwise revert
     function notifyCourtesyCall() public returns (bool) {
         require(currentState == DepositStates.ACTIVE);
-        require(isUndercollateralized());
+        require(getCollateralizationPercentage() < TBTCConstants.getUndercollateralizedPercent());
         currentState = DepositStates.COURTESY_CALL;
         logCourtesyCalled();
         courtesyCallInitiated = block.timestamp;
@@ -1279,7 +1249,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @return     True if successful, otherwise revert
     function notifyUndercollateralizedLiquidation() public returns (bool) {
         require(inRedeemableState(), 'Deposit not in active or courtesy call');
-        require(isSeverelyUndercollateralized(), 'Deposit has sufficient collateral');
+        require(getCollateralizationPercentage() < TBTCConstants.getSeverelyUndercollateralizedPercent(), 'Deposit has sufficient collateral');
         startSignerAbortLiquidation();
         return true;
     }
