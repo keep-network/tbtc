@@ -359,7 +359,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @notice     Determines the collateralization ratio of the signing group
     /// @dev        Compares the bond value and lot value
     /// @return     collateralization ratio as uint 
-    function getCollateralizationRatio() public view returns (uint256) {
+    function getCollateralizationPercentage() public view returns (uint256) {
         
         // Determine value of the lot in wei
         uint256 _oraclePrice = fetchOraclePrice();
@@ -1237,7 +1237,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @return     True if successful, otherwise revert
     function notifyCourtesyCall() public returns (bool) {
         require(currentState == DepositStates.ACTIVE);
-        require(getCollateralizationRatio() < TBTCConstants.getUndercollateralizedPercent());
+        require(getCollateralizationPercentage() < TBTCConstants.getUndercollateralizedPercent());
         currentState = DepositStates.COURTESY_CALL;
         logCourtesyCalled();
         courtesyCallInitiated = block.timestamp;
@@ -1249,7 +1249,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @return     True if successful, otherwise revert
     function notifyUndercollateralizedLiquidation() public returns (bool) {
         require(inRedeemableState(), 'Deposit not in active or courtesy call');
-        require(getCollateralizationRatio() < TBTCConstants.getSeverelyUndercollateralizedPercent(), 'Deposit has sufficient collateral');
+        require(getCollateralizationPercentage() < TBTCConstants.getSeverelyUndercollateralizedPercent(), 'Deposit has sufficient collateral');
         startSignerAbortLiquidation();
         return true;
     }
