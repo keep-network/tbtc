@@ -104,7 +104,7 @@ contract OutsourceDepositLogging {
     /// @notice             Fires a StartedLiquidation event
     /// @dev                We append the sender, which is the deposit contract that called
     /// @param _wasFraud    True if liquidating for fraud
-    function logStartedLiquidation(bool _wasFraud) internal {aw
+    function logStartedLiquidation(bool _wasFraud) internal {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logStartedLiquidation(_wasFraud);
     }

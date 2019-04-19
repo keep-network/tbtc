@@ -57,7 +57,7 @@ contract Deposit is OutsourceDepositLogging {
     uint256 courtesyCallInitiated; // When the courtesy call is issued
 
     // written when we request a keep
-    uint256 keepID;
+    uint256 keepID;  // The ID of our keep group
     uint256 signingGroupRequestedAt;  // timestamp of signing group request
 
     // written when we get a keep result
@@ -241,6 +241,9 @@ contract Deposit is OutsourceDepositLogging {
         }
     }
 
+    /// @notice     Determines the amount of TBTC accepted in the auction
+    /// @dev        If requesterAddress is non-0, that means we came from redemption, and no auction should happen
+    /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     function auctionTBTCAmount() public view returns (uint256) {
         if (requesterAddress == address(0)) {
             return lotSize();
@@ -256,11 +259,32 @@ contract Deposit is OutsourceDepositLogging {
         return abi.encodePacked(signingGroupPubkeyX, signingGroupPubkeyY);
     }
 
+    /// @notice             Determines the prefix to the compressed public key
+    /// @dev                The prefix encodes the parity of the Y coordinate
+    /// @param  _pubkeyY    The Y coordinate of the public key
+    /// @return             The 1-byte prefix for the compressed key
+    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes) {
+        if(uint256(_pubkeyY) & 1 == 1) {
+            return hex'03';  // Odd Y
+        } else {
+            return hex'02';  // Even Y
+        }
+    }
+
+    /// @notice
+    /// @dev                Converts the 64-byte key to a 33-byte key, bitcoin-style
+    /// @param  _pubkeyX    The X coordinate of the public key
+    /// @param  _pubkeyY    The Y coordinate of the public key
+    /// @return             The 33-byte compressed pubkey
+    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes) {
+        return abi.encodePacked(determineCompressionPrefix(_pubkeyY), _pubkeyX);
+    }
+
     /// @notice         Returns the Bitcoin pubkeyhash (hash160) for the signing group
     /// @dev            This is used in bitcoin output scripts for the signers
     /// @return         20-bytes public key hash
     function signerPKH() public view returns (bytes20) {
-        bytes memory _pubkey = abi.encodePacked(hex'04', signerPubkey());
+        bytes memory _pubkey = compressPubkey(signingGroupPubkeyX, signingGroupPubkeyY);
         bytes memory _digest = _pubkey.hash160();
         return bytes20(_digest.toAddress(0));  // dirty solidity hack
     }
@@ -316,10 +340,39 @@ contract Deposit is OutsourceDepositLogging {
         return _keep.submitSignatureFraud(keepID, _v, _r, _s, _signedDigest, _preimage);
     }
 
-    function isUndercollateralized() public view returns (bool) { /* TODO */ }
+    /// @notice     Gets the current oracle price of Bitcoin in Ether
+    /// @dev        Polls the oracle via the system contract
+    /// @return     The current price of 1 sat in wei
+    function fetchOraclePrice() public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(TBTCConstants.getSystemContractAddress());
+        return _sys.fetchOraclePrice();
+    }
 
-    function isSeverelyUndercollateralized() public view returns (bool) { /* TODO */ }
+    /// @notice     Fetches the Keep's bond amount in wei
+    /// @dev        Calls the keep contract to do so
+    /// @return     The amount of bonded ETH in wei
+    function fetchBondAmount() public view returns (uint256) {
+        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        return _keep.checkBondAmount(keepID);
+    }
 
+    /// @notice     Determines the collateralization ratio of the signing group
+    /// @dev        Compares the bond value and lot value
+    /// @return     collateralization ratio as uint 
+    function getCollateralizationPercentage() public view returns (uint256) {
+        
+        // Determine value of the lot in wei
+        uint256 _oraclePrice = fetchOraclePrice();
+        uint256 _lotSize = TBTCConstants.getLotSize();
+        uint256 _lotValue = _lotSize * _oraclePrice;
+
+        // Amount of wei the signers have
+        uint256 _bondValue = fetchBondAmount();
+
+        // This should convert into a percentage
+        // Which we compare to our threshold percent
+        return (_bondValue.mul(100).div(_lotValue));
+    }
 
     /// @notice             pushes ether held by the deposit to the signer group
     /// @dev                useful for returning bonds to the group, or otherwise paying them
@@ -331,7 +384,7 @@ contract Deposit is OutsourceDepositLogging {
         return _keep.distributeEthToKeepGroup.value(_ethValue)(keepID);
     }
 
-    ///
+    /// @notice     Seize the signer bond from the keep contract
     /// @dev        we check our balance before and after
     /// @return     the amount of ether seized
     function seizeSignerBonds() internal returns (uint256) {
@@ -387,6 +440,10 @@ contract Deposit is OutsourceDepositLogging {
         return _sys.fetchRelayPreviousDifficulty();
     }
 
+    /// @notice                     Evaluates the header difficulties in a proof
+    /// @dev                        Uses the light oracle to source recent difficulty
+    /// @param  _bitcoinHeaders     The header chain to evaluate
+    /// @return                     True if acceptable, otherwise revert
     function evaluateProofDifficulty(bytes _bitcoinHeaders) public view returns (bool) {
         uint256 _reqDiff;
         uint256 _current = currentBlockDifficulty();
@@ -418,7 +475,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
-function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
+    function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
 
     //
     // REUSABLE STATE TRANSITIONS
@@ -430,6 +487,19 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
     function distributeBeneficiaryReward() internal {
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(_tbtc.transfer(depositBeneficiary(), _tbtc.balanceOf(address(this))));
+    }
+
+    /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address
+    /// @dev        Approves the keep contract, then expects it to call transferFrom
+    function distriuteSignerFee() internal {
+        address _tbtcAddress = TBTCConstants.getTokenContractAddress();
+        IBurnableERC20 _tbtc = IBurnableERC20(_tbtcAddress);
+
+        address _keepAddress = TBTCConstants.getKeepContractAddress();
+        IKeep _keep = IKeep(_keepAddress);
+
+        _tbtc.approve(_keepAddress, signerFee());
+        _keep.distributeERC20ToKeepGroup(keepID, _tbtcAddress, signerFee());
     }
 
     /// @notice         Starts signer liquidation due to fraud
@@ -670,7 +740,8 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         /* TODO: implement such that it calls the system to burn TBTC? */
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(_tbtc.balanceOf(msg.sender) >= redemptionTBTCAmount(), 'Not enough TBTC to cover outstanding debt');
-        _tbtc.burnFrom(msg.sender, redemptionTBTCAmount().sub(beneficiaryReward()));
+        _tbtc.burnFrom(msg.sender, lotSize());
+        _tbtc.transferFrom(msg.sender, address(this), signerFee());
         _tbtc.transferFrom(msg.sender, address(this), beneficiaryReward());
 
         // Convert the 8-byte LE ints to uint256
@@ -830,6 +901,9 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
         /* TODO: refactor redemption flow to improve this */
         require((utxoSize().sub(uint256(_outs.extractValue()))) <= initialRedemptionFee * 5, 'Fee unexpectedly very high');
 
+        // Transfer TBTC to signers
+        distriuteSignerFee();
+
         // Transfer withheld amount to beneficiary
         distributeBeneficiaryReward();
 
@@ -934,8 +1008,9 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
                 'Signer fraud during funding flow only available while awaiting funding');
         currentState = DepositStates.FRAUD_AWAITING_BTC_FUNDING_PROOF;
         logFraudDuringSetup();
+
         bool _isFraud = submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
-        require(_isFraud, 'Signature is not valid');  // Invalid signatures error
+        require(_isFraud, 'Signature is not valid');
 
         /* NB: This is reuse of the variable */
         fundingProofTimerStart = block.timestamp;
@@ -1162,7 +1237,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
     /// @return     True if successful, otherwise revert
     function notifyCourtesyCall() public returns (bool) {
         require(currentState == DepositStates.ACTIVE);
-        require(isUndercollateralized());
+        require(getCollateralizationPercentage() < TBTCConstants.getUndercollateralizedPercent());
         currentState = DepositStates.COURTESY_CALL;
         logCourtesyCalled();
         courtesyCallInitiated = block.timestamp;
@@ -1174,7 +1249,7 @@ function attemptToLiquidateOnchain() internal returns (bool) { /* TODO */ }
     /// @return     True if successful, otherwise revert
     function notifyUndercollateralizedLiquidation() public returns (bool) {
         require(inRedeemableState(), 'Deposit not in active or courtesy call');
-        require(isSeverelyUndercollateralized(), 'Deposit has sufficient collateral');
+        require(getCollateralizationPercentage() < TBTCConstants.getSeverelyUndercollateralizedPercent(), 'Deposit has sufficient collateral');
         startSignerAbortLiquidation();
         return true;
     }

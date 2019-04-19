@@ -32,6 +32,7 @@ interface IKeep {
 
     // Allow sending tokens to a keep group
     // Useful for sending signers their TBTC
+    // The Keep contract should call transferFrom on the token contrcact
     function distributeERC20ToKeepGroup(uint256 _keepID, address _asset, uint256 _value) external returns (bool);
 
     // request a new m-of-n group
@@ -42,6 +43,10 @@ interface IKeep {
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
     function getKeepPubkey(uint256 _keepID) external view returns (bytes);
+
+
+    // returns the amount of the keep's ETH bond in wei
+    function checkBondAmount(uint256 _keepID) external view returns (uint256);
 
     // seize the signer's ETH bond
     // onlyKeepOwner
