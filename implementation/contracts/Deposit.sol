@@ -356,9 +356,9 @@ contract Deposit is OutsourceDepositLogging {
         return _keep.checkBondAmount(keepID);
     }
 
-    /// @notice     Determines the collateralization ratio of the signing group
+    /// @notice     Determines the collateralization percentage of the signing group
     /// @dev        Compares the bond value and lot value
-    /// @return     collateralization ratio as uint
+    /// @return     collateralization percentage as uint
     function getCollateralizationPercentage() public view returns (uint256) {
 
         // Determine value of the lot in wei
