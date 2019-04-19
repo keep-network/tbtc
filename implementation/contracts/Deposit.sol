@@ -271,7 +271,7 @@ contract Deposit is OutsourceDepositLogging {
         }
     }
 
-    /// @notice
+    /// @notice             Compresses a public key
     /// @dev                Converts the 64-byte key to a 33-byte key, bitcoin-style
     /// @param  _pubkeyX    The X coordinate of the public key
     /// @param  _pubkeyY    The Y coordinate of the public key
@@ -358,9 +358,9 @@ contract Deposit is OutsourceDepositLogging {
 
     /// @notice     Determines the collateralization ratio of the signing group
     /// @dev        Compares the bond value and lot value
-    /// @return     collateralization ratio as uint 
+    /// @return     collateralization ratio as uint
     function getCollateralizationPercentage() public view returns (uint256) {
-        
+
         // Determine value of the lot in wei
         uint256 _oraclePrice = fetchOraclePrice();
         uint256 _lotSize = TBTCConstants.getLotSize();
@@ -369,8 +369,7 @@ contract Deposit is OutsourceDepositLogging {
         // Amount of wei the signers have
         uint256 _bondValue = fetchBondAmount();
 
-        // This should convert into a percentage
-        // Which we compare to our threshold percent
+        // This converts into a percentage
         return (_bondValue.mul(100).div(_lotValue));
     }
 
