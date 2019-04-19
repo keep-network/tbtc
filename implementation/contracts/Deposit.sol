@@ -1249,7 +1249,7 @@ contract Deposit is OutsourceDepositLogging {
     function exitCourtesyCall() public returns (bool) {
         require(currentState == DepositStates.COURTESY_CALL, 'Not currently in courtesy call');
         require(block.timestamp < fundedAt + TBTCConstants.getDepositTerm(), 'Deposit is expiring');
-        require(!isUndercollateralized(), 'Deposit is still undercollateralized');
+        require(!(getCollateralizationPercentage() < TBTCConstants.getSeverelyUndercollateralizedPercent()), 'Deposit is still undercollateralized');
         currentState = DepositStates.ACTIVE;
         logExitedCourtesyCall();
         return true;
