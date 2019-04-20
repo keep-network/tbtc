@@ -231,7 +231,7 @@ fraud-related state transitions in a single document.
 ** `block.timestamp`
 ** `uint256 fundedAt`
 *** to check if the deposit is expiring
-** `uint256 isUndercollateralized()`
+** `bool getCollateralizationPercentage() < TBTCConstants.getUndercollateralizedPercent()`
 *** Check the oracle to see if collateral is sufficient
 * *from*
 ** `COURTESY_CALL`

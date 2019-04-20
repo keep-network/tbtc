@@ -356,9 +356,9 @@ contract Deposit is OutsourceDepositLogging {
         return _keep.checkBondAmount(keepID);
     }
 
-    /// @notice     Determines the collateralization ratio of the signing group
+    /// @notice     Determines the collateralization percentage of the signing group
     /// @dev        Compares the bond value and lot value
-    /// @return     collateralization ratio as uint
+    /// @return     collateralization percentage as uint
     function getCollateralizationPercentage() public view returns (uint256) {
 
         // Determine value of the lot in wei
@@ -1249,7 +1249,7 @@ contract Deposit is OutsourceDepositLogging {
     function exitCourtesyCall() public returns (bool) {
         require(currentState == DepositStates.COURTESY_CALL, 'Not currently in courtesy call');
         require(block.timestamp < fundedAt + TBTCConstants.getDepositTerm(), 'Deposit is expiring');
-        require(!isUndercollateralized(), 'Deposit is still undercollateralized');
+        require(!(getCollateralizationPercentage() < TBTCConstants.getSeverelyUndercollateralizedPercent()), 'Deposit is still undercollateralized');
         currentState = DepositStates.ACTIVE;
         logExitedCourtesyCall();
         return true;
