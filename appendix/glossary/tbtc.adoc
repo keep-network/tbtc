@@ -4,13 +4,9 @@ Deposit:: A deposit is the core component in the system architecture. Each
 deposit represents a set of bonded signers that generate a Bitcoin public key
 and accept a single Bitcoin UTXO, from which TBTC can be drawn.
 
-Deposit equity:: Any undrawn TBTC from a deposit that hasn't been earned by
-signers in custodial fees. In a sense, this is the *value* of the deposit to the
-deposit owner, less the value of the exclusive right to withdraw.
-
-Deposit owner:: A deposit has a single owning Ethereum account. This account is
-authorized to request a redemption, and charged with maintaining the deposit in
-the meantime.
+Deposit beneficiary:: A deposit has a single beneficiary Ethereum account --
+originally set to the depositor. The beneficiary owns the right to some fees
+on deposit redemption.
 
 Deposit request:: A request for signers to be selected and generate a new
 Bitcoin ECDSA keypair. A successful request yields a new Bitcoin address ready
@@ -25,7 +21,7 @@ ensures signers will be punished for fraud or poor uptime.
 
 Reserved TBTC:: The amount of TBTC that can't be drawn from a new deposit.
 Reserving TBTC on deposit funding sets aside funds to pay signers' custodial
-fees, and ensures the deposit has a healthy runway before it needs maintenance.
+fees through the deposit term.
 
 Deposit maintenance equity:: The minimum equity an owner must maintain on a
 deposit before a "margin call" -- a requirement to return TBTC to the deposit
