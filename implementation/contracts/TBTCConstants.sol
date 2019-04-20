@@ -39,30 +39,30 @@ library TBTCConstants {
 
 
     // Getters for easy access
-    function getTokenContractAddress() public pure returns (address) { return TOKEN_CONTRACT; }
-    function getKeepContractAddress() public pure returns (address) { return KEEP_CONTRACT; }
-    function getDifficultyOracleContractAddress() public pure returns (address) { return DIFFICULTY_RELAY_CONTRACT; }
-    function getSystemContractAddress() public pure returns (address) { return SYSTEM_CONTRACT; }
+    function getTokenContractAddress() public view returns (address) { return TOKEN_CONTRACT; }
+    function getKeepContractAddress() public view returns (address) { return KEEP_CONTRACT; }
+    function getDifficultyOracleContractAddress() public view returns (address) { return DIFFICULTY_RELAY_CONTRACT; }
+    function getSystemContractAddress() public view returns (address) { return SYSTEM_CONTRACT; }
 
-    function getLotSize() public pure returns (uint256) { return MINIMUM_LOT_SIZE; }
-    function getSignerFeeDivisor() public pure returns (uint256) { return SIGNER_FEE_DIVISOR; }
-    function getBeneficiaryRewardDivisor() public pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
-    function getFundingFraudPartialSlashDivisor() public pure returns (uint256) { return FUNDING_FRAUD_PARTIAL_SLASH_DIVISOR; }
-    function getDepositTerm() public pure returns (uint256) { return DEPOSIT_TERM_LENGTH; }
-    function getUndercollateralizedPercent() public pure returns (uint256) { return UNDERCOLLATERALIZED_THRESHOLD_PERCENT; }
-    function getSeverelyUndercollateralizedPercent() public pure returns (uint256) { return SEVERELY_UNDERCOLLATERALIZED_THRESHOLD_PERCENT; }
+    function getLotSize() public view returns (uint256) { return MINIMUM_LOT_SIZE; }
+    function getSignerFeeDivisor() public view returns (uint256) { return SIGNER_FEE_DIVISOR; }
+    function getBeneficiaryRewardDivisor() public view returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
+    function getFundingFraudPartialSlashDivisor() public view returns (uint256) { return FUNDING_FRAUD_PARTIAL_SLASH_DIVISOR; }
+    function getDepositTerm() public view returns (uint256) { return DEPOSIT_TERM_LENGTH; }
+    function getUndercollateralizedPercent() public view returns (uint256) { return UNDERCOLLATERALIZED_THRESHOLD_PERCENT; }
+    function getSeverelyUndercollateralizedPercent() public view returns (uint256) { return SEVERELY_UNDERCOLLATERALIZED_THRESHOLD_PERCENT; }
 
-    function getSignatureTimeout() public pure returns (uint256) { return REDEMPTION_SIGNATURE_TIMEOUT; }
-    function getIncreaseFeeTimer() public pure returns (uint256) { return INCREASE_FEE_TIMER; }
-    function getRedepmtionProofTimeout() public pure returns (uint256) { return REDEMPTION_PROOF_TIMEOUT; }
-    function getMinimumRedemptionFee() public pure returns (uint256) { return MINIMUM_REDEMPTION_FEE; }
+    function getSignatureTimeout() public view returns (uint256) { return REDEMPTION_SIGNATURE_TIMEOUT; }
+    function getIncreaseFeeTimer() public view returns (uint256) { return INCREASE_FEE_TIMER; }
+    function getRedepmtionProofTimeout() public view returns (uint256) { return REDEMPTION_PROOF_TIMEOUT; }
+    function getMinimumRedemptionFee() public view returns (uint256) { return MINIMUM_REDEMPTION_FEE; }
 
-    function getFundingTimeout() public pure returns (uint256) { return FUNDING_PROOF_TIMEOUT; }
-    function getSigningGroupFormationTimeout() public pure returns (uint256) { return FORMATION_TIMEOUT; }
-    function getFraudFundingTimeout() public pure returns (uint256) { return FRAUD_FUNDING_PROOF_TIMEOUT; }
-    function getFunderBondAmount() public pure returns (uint256) { return FUNDER_BOND_AMOUNT_WEI; }
+    function getFundingTimeout() public view returns (uint256) { return FUNDING_PROOF_TIMEOUT; }
+    function getSigningGroupFormationTimeout() public view returns (uint256) { return FORMATION_TIMEOUT; }
+    function getFraudFundingTimeout() public view returns (uint256) { return FRAUD_FUNDING_PROOF_TIMEOUT; }
+    function getFunderBondAmount() public view returns (uint256) { return FUNDER_BOND_AMOUNT_WEI; }
 
-    function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
-    function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
-    function getAuctionBasePercentage() public pure returns (uint256) { return AUCTION_BASE_PERCENTAGE; }
+    function getCourtesyCallTimeout() public view returns (uint256) { return COURTESY_CALL_DURATION; }
+    function getAuctionDuration() public view returns (uint256) { return AUCTION_DURATION; }
+    function getAuctionBasePercentage() public view returns (uint256) { return AUCTION_BASE_PERCENTAGE; }
 }
