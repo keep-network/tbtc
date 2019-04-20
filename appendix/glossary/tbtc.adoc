@@ -22,11 +22,3 @@ ensures signers will be punished for fraud or poor uptime.
 Reserved TBTC:: The amount of TBTC that can't be drawn from a new deposit.
 Reserving TBTC on deposit funding sets aside funds to pay signers' custodial
 fees through the deposit term.
-
-Deposit maintenance equity:: The minimum equity an owner must maintain on a
-deposit before a "margin call" -- a requirement to return TBTC to the deposit
-or suffer a deposit auction, forfeiting remaining deposit equity. Analogous
-to a margin requirement on a margin account in traditional finance.
-
-Deposit maintenance:: Adding TBTC to a deposit to meet ongoing requirements.
-Analogous to margin maintenance in traditional finance.
