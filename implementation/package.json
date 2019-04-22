@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "setup": "git submodule update --init --recursive && npm i",
-    "compile": "node compile.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "truffle test"
   },
   "author": "James Prestwich",
   "license": "UNLICENSED",
