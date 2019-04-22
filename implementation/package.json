@@ -13,6 +13,7 @@
     "solc": "^0.4.25"
   },
   "devDependencies": {
-    "eth-gas-reporter": "^0.1.12"
+    "eth-gas-reporter": "^0.1.12",
+    "ganache-cli": "^6.4.3"
   }
 }
