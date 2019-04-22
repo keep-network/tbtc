@@ -122,4 +122,11 @@ contract OutsourceDepositLogging {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logLiquidated();
     }
+
+    /// @notice     Fires a ExitedCourtesyCall event
+    /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
+    function logExitedCourtesyCall() internal {
+        DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
+        _logger.logExitedCourtesyCall();
+    }
 }

@@ -220,3 +220,20 @@ fraud-related state transitions in a single document.
 ** `ACTIVE`
 * *to*
 ** `COURTESY_CALL`
+
+=== exitCourtesyCall
+* During a courtesy call period, if the deposit is not expired
+* Anyone may notify the contract that it is no longer undercollateralized
+* This returns the contract to `ACTIVE` state
+* *access controls*
+** anyone
+* *reads*
+** `block.timestamp`
+** `uint256 fundedAt`
+*** to check if the deposit is expiring
+** `bool getCollateralizationPercentage() < TBTCConstants.getUndercollateralizedPercent()`
+*** Check the oracle to see if collateral is sufficient
+* *from*
+** `COURTESY_CALL`
+* *to*
+** `ACTIVE`

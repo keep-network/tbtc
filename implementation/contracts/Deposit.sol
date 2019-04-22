@@ -271,7 +271,7 @@ contract Deposit is OutsourceDepositLogging {
         }
     }
 
-    /// @notice
+    /// @notice             Compresses a public key
     /// @dev                Converts the 64-byte key to a 33-byte key, bitcoin-style
     /// @param  _pubkeyX    The X coordinate of the public key
     /// @param  _pubkeyY    The Y coordinate of the public key
@@ -356,11 +356,11 @@ contract Deposit is OutsourceDepositLogging {
         return _keep.checkBondAmount(keepID);
     }
 
-    /// @notice     Determines the collateralization ratio of the signing group
+    /// @notice     Determines the collateralization percentage of the signing group
     /// @dev        Compares the bond value and lot value
-    /// @return     collateralization ratio as uint 
+    /// @return     collateralization percentage as uint
     function getCollateralizationPercentage() public view returns (uint256) {
-        
+
         // Determine value of the lot in wei
         uint256 _oraclePrice = fetchOraclePrice();
         uint256 _lotSize = TBTCConstants.getLotSize();
@@ -369,8 +369,7 @@ contract Deposit is OutsourceDepositLogging {
         // Amount of wei the signers have
         uint256 _bondValue = fetchBondAmount();
 
-        // This should convert into a percentage
-        // Which we compare to our threshold percent
+        // This converts into a percentage
         return (_bondValue.mul(100).div(_lotValue));
     }
 
@@ -417,7 +416,7 @@ contract Deposit is OutsourceDepositLogging {
     /// @notice         get the signer pubkey for our keep
     /// @dev            calls out to the keep contract, should get 64 bytes back
     /// @return         the 64 byte pubkey
-    function getKeepPubkeyResult() public view returns (bytes) {
+    function getKeepPubkeyResult() internal view returns (bytes) {
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         bytes memory _pubkey = _keep.getKeepPubkey(keepID);
         require(_pubkey.length == 64);
@@ -455,7 +454,7 @@ contract Deposit is OutsourceDepositLogging {
         } else if (_firstHeaderDiff == _previous) {
             _reqDiff = _previous;
         } else {
-            require(false, 'not at current or previous difficulty');
+            revert('not at current or previous difficulty');
         }
 
         /* TODO: make this better than 6 */
@@ -682,7 +681,7 @@ contract Deposit is OutsourceDepositLogging {
             }
         }
         // If we don't return from inside the loop, we failed.
-        require(false, 'Did not find output with correct PKH');
+        revert('Did not find output with correct PKH');
     }
 
     /// @notice                 Validates the funding tx and parses information from it
@@ -1184,7 +1183,7 @@ contract Deposit is OutsourceDepositLogging {
             _output = _bitcoinTx.extractOutputAtIndex(i);
             if (_output.extractValue() >= _requiredOutputSize
                 && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(requesterPKH))) {
-                require(false, 'Found an output paying the redeemer as requested');
+                revert('Found an output paying the redeemer as requested');
             }
         }
 
@@ -1241,6 +1240,18 @@ contract Deposit is OutsourceDepositLogging {
         currentState = DepositStates.COURTESY_CALL;
         logCourtesyCalled();
         courtesyCallInitiated = block.timestamp;
+        return true;
+    }
+
+    /// @notice     Goes from courtesy call to active
+    /// @dev        Only callable if collateral is sufficient and the deposit is not expiring
+    /// @return     True if successful, otherwise revert
+    function exitCourtesyCall() public returns (bool) {
+        require(currentState == DepositStates.COURTESY_CALL, 'Not currently in courtesy call');
+        require(block.timestamp < fundedAt + TBTCConstants.getDepositTerm(), 'Deposit is expiring');
+        require(!(getCollateralizationPercentage() < TBTCConstants.getSeverelyUndercollateralizedPercent()), 'Deposit is still undercollateralized');
+        currentState = DepositStates.ACTIVE;
+        logExitedCourtesyCall();
         return true;
     }
 
