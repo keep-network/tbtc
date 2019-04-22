@@ -12,5 +12,8 @@
   "license": "UNLICENSED",
   "dependencies": {
     "solc": "^0.4.25"
+  },
+  "devDependencies": {
+    "eth-gas-reporter": "^0.1.12"
   }
 }

@@ -1,15 +1,15 @@
 pragma solidity 0.4.25;
 
-import {SafeMath} from "./SafeMath.sol";
-import {BytesLib} from "./BytesLib.sol";
-import {BTCUtils} from "./BTCUtils.sol";
-import {ValidateSPV} from "./ValidateSPV.sol";
-import {CheckBitcoinSigs} from './SigCheck.sol';
+import {SafeMath} from "./bitcoin-spv/SafeMath.sol";
+import {BytesLib} from "./bitcoin-spv/BytesLib.sol";
+import {BTCUtils} from "./bitcoin-spv/BTCUtils.sol";
+import {ValidateSPV} from "./bitcoin-spv/ValidateSPV.sol";
+import {CheckBitcoinSigs} from './bitcoin-spv/SigCheck.sol';
 import {TBTCConstants} from './TBTCConstants.sol';
-import {IBurnableERC20} from './IBurnableERC20.sol';
-import {IERC721} from './IERC721.sol';
-import {IKeep} from './IKeep.sol';
-import {ITBTCSystem} from './ITBTCSystem.sol';
+import {IBurnableERC20} from './interfaces/IBurnableERC20.sol';
+import {IERC721} from './interfaces/IERC721.sol';
+import {IKeep} from './interfaces/IKeep.sol';
+import {ITBTCSystem} from './interfaces/ITBTCSystem.sol';
 import {OutsourceDepositLogging} from './OutsourceDepositLogging.sol';
 
 contract Deposit is OutsourceDepositLogging {
