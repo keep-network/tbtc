@@ -128,9 +128,10 @@ overpayment and underpayment. The primary impact of overpayment and
 underpayment is on the _Deposit's_ collateralization ratio. The system requires
 a minimum collateralization ratio from signers, while the signers desire a
 predictable payment for their services. If the depositor sends too much or too
-little BTC, the signer incentives are at odds with the system's interests. To
-preserve  treat overpayment and underpayment as faulty depositor behavior, and
-pass on the associated costs to the depositor.
+little BTC, the signer incentives are at odds with the system's interests. As
+the main goal of the system is to align signer incentives, we treat overpayment
+and underpayment as faulty depositor behavior, and pass on the associated costs
+to the depositor.
 
 Allowing underpayment on _Deposit_ would result in over-bonded signers. To
 prevent this, the system will not accept funding proofs of less than the lot
@@ -142,8 +143,8 @@ Overpayment, in contrast, would result in under-bonded signers. Because theft
 of the BTC may be worth more than the signers' bonds, the signers may have an
 incentive to collude to steal the BTC. When overfunding occurs, the system
 accepts the funding proof, but mints TBTC according to the regular lot size,
-and allows redemption of the _Deposit_ by anyone will to burn a regular amount
-of TBTC.
+and allows redemption of the _Deposit_ by anyone willing to burn a normal lot's
+amount of TBTC.
 
 In an efficient market, this _Deposit_ will be immediately redeemed,
 as the redeemer expects to take the overfunded amount as arbitrage. The signers
@@ -151,8 +152,9 @@ now have a choice: behave honestly, and receive the signer fee immediately, or
 collude to steal the deposit. Should they behave honestly, the redeemer's
 arbitrage succeeds, and the signers are paid. Should they collude, the
 redeemer may prove ECDSA fraud, and take their bonds. Either way, the TBTC
-supply peg is preserved. In either case, the depositor essentially forfeits
-the overfunded value to other participants.
+supply peg is preserved. However, unless the depositor is able to redeem
+immediately, she essentially forfeits the overfunded value to other
+participants.
 
 ==== Multiple UTXOs
 
@@ -167,8 +169,8 @@ first UTXO greater than the deposit lot size. All other BTC sent to the signing
 group is forfeit. Therefore it is imperative that depositors send only a single
 UTXO of an appropriate size.
 
-A particularly damaging example would be a naive human depositor. If they
-mistakenly send half the lot size in one transaction and half in another, both
+As a particularly damaging example, consider a naive human depositor. If she
+mistakenly sends half the lot size in one transaction and half in another, both
 UTXOs would be forfeit. This represents a serious pitfall for depositors that
 must be carefully addressed by the user interface.
 
