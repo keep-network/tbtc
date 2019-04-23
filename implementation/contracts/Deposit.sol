@@ -208,7 +208,7 @@ contract Deposit is OutsourceDepositLogging {
             return _available;
         }
 
-        // This should make a smooth flow from 75 to% to 100%
+        // This should make a smooth flow from base% to 100%
         uint256 _basePercentage = TBTCConstants.getAuctionBasePercentage();
         uint256 _elapsedPercentage = uint256(100).sub(_basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
         uint256 _percentage = _basePercentage + _elapsedPercentage;
