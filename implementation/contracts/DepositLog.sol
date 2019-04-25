@@ -39,7 +39,6 @@ contract DepositLog {
     // This log is fired when the signing group returns a public key
     event RegisteredPubkey(
         address indexed _depositContractAddress,
-        address _signingGroupAccount,
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY,
         uint256 _timestamp);
@@ -161,14 +160,12 @@ contract DepositLog {
     ///             returns false if not approved, to prevent accidentally halting Deposit
     /// @return     True if successful, else false
     function logRegisteredPubkey(
-        address _signingGroupAccount,
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
     ) public returns (bool) {
         if (!approvedToLog(msg.sender)) { return false; }
         emit RegisteredPubkey(
             msg.sender,
-            _signingGroupAccount,
             _signingGroupPubkeyX,
             _signingGroupPubkeyY,
             block.timestamp);
