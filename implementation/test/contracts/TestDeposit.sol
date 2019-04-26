@@ -5,37 +5,6 @@ import {Deposit} from '../../contracts/deposit/Deposit.sol';
 
 contract TestDeposit is Deposit {
 
-    struct Deposit {
-
-        // SET DURING CONSTRUCTION
-        uint8 currentState;
-
-        // SET ON FRAUD
-        uint256 liquidationInitiated;  // Timestamp of when liquidation starts
-        uint256 courtesyCallInitiated; // When the courtesy call is issued
-
-        // written when we request a keep
-        uint256 keepID;  // The ID of our keep group
-        uint256 signingGroupRequestedAt;  // timestamp of signing group request
-
-        // written when we get a keep result
-        uint256 fundingProofTimerStart;  // start of the funding proof period. reused for funding fraud proof period
-        bytes32 signingGroupPubkeyX;  // The X coordinate of the signing group's pubkey
-        bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
-
-        // INITIALLY WRITTEN BY REDEMPTION FLOW
-        address requesterAddress;  // The requester's addr4ess, used as fallback for fraud in redemption
-        bytes20 requesterPKH;  // The 20-byte requeser PKH
-        uint256 initialRedemptionFee;  // the initial fee as requested
-        uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
-        bytes32 lastRequestedDigest;  // the digest most recently requested for signing
-
-        // written when we get funded
-        bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
-        uint256 fundedAt; // timestamp when funding proof was received
-        bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
-    }
-
     function setState(uint8 _state) public {
         self.currentState = _state;
     }

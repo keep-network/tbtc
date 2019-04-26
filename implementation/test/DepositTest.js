@@ -47,4 +47,5 @@ contract('Deposit', accounts => {
       instance = await deployTestDepositContract()
     })
   })
+
 })

@@ -8,7 +8,6 @@ library TBTCConstants {
     // Exterior Contracts
     address public constant TOKEN_CONTRACT = address(0);
     address public constant KEEP_CONTRACT = address(0);
-    address public constant DIFFICULTY_RELAY_CONTRACT = address(0);
     address public constant SYSTEM_CONTRACT = address(0);
 
     // System Parameters
@@ -41,7 +40,6 @@ library TBTCConstants {
     // Getters for easy access
     function getTokenContractAddress() public pure returns (address) { return TOKEN_CONTRACT; }
     function getKeepContractAddress() public pure returns (address) { return KEEP_CONTRACT; }
-    function getDifficultyOracleContractAddress() public pure returns (address) { return DIFFICULTY_RELAY_CONTRACT; }
     function getSystemContractAddress() public pure returns (address) { return SYSTEM_CONTRACT; }
 
     function getLotSize() public pure returns (uint256) { return MINIMUM_LOT_SIZE; }
