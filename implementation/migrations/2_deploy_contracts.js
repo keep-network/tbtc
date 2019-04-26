@@ -14,37 +14,41 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const Deposit = artifacts.require('Deposit')
 
-module.exports = (deployer) => {
+const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
+             OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
+             DepositFunding, DepositRedemption, DepositLiquidation, Deposit]
+
+module.exports = (deployer, network) => {
   deployer.then(async () => {
     await deployer.deploy(BytesLib)
 
-    await deployer.link(BytesLib, [BTCUtils, ValidateSPV, Deposit, CheckBitcoinSigs, DepositUtils, DepositLiquidation, DepositFunding, DepositRedemption])
+    await deployer.link(BytesLib, all)
     await deployer.deploy(BTCUtils)
 
-    await deployer.link(BTCUtils, [ValidateSPV, Deposit, CheckBitcoinSigs, DepositUtils, DepositLiquidation, DepositFunding, DepositRedemption])
+    await deployer.link(BTCUtils, all)
     await deployer.deploy(ValidateSPV)
     await deployer.deploy(CheckBitcoinSigs)
     await deployer.deploy(TBTCConstants)
+    await deployer.link(TBTCConstants, all)
 
-    await deployer.link(TBTCConstants, [OutsourceDepositLogging, Deposit, DepositUtils, DepositLiquidation, DepositFunding, DepositRedemption])
-    await deployer.link(CheckBitcoinSigs, [Deposit, DepositUtils, DepositLiquidation, DepositFunding, DepositRedemption])
-    await deployer.link(ValidateSPV, [Deposit, DepositUtils, DepositLiquidation, DepositFunding, DepositRedemption])
+    await deployer.link(CheckBitcoinSigs, all)
+    await deployer.link(ValidateSPV, all)
     await deployer.deploy(DepositStates)
     await deployer.deploy(OutsourceDepositLogging)
 
-    await deployer.link(OutsourceDepositLogging, [Deposit, DepositRedemption, DepositFunding, DepositLiquidation])
-    await deployer.link(DepositStates, [DepositUtils, DepositRedemption, DepositFunding, DepositLiquidation])
+    await deployer.link(OutsourceDepositLogging, all)
+    await deployer.link(DepositStates, all)
     await deployer.deploy(DepositUtils)
 
-    await deployer.link(DepositUtils, [Deposit, DepositRedemption, DepositFunding, DepositLiquidation])
+    await deployer.link(DepositUtils, all)
     await deployer.deploy(DepositLiquidation)
 
-    await deployer.link(DepositLiquidation, [Deposit, DepositRedemption, DepositFunding])
+    await deployer.link(DepositLiquidation, all)
     await deployer.deploy(DepositRedemption)
     await deployer.deploy(DepositFunding)
 
-    await deployer.link(DepositFunding, [Deposit])
-    await deployer.link(DepositRedemption, [Deposit])
+    await deployer.link(DepositFunding, all)
+    await deployer.link(DepositRedemption, all)
     await deployer.deploy(Deposit)
   })
 }

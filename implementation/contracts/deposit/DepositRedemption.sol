@@ -239,7 +239,7 @@ library DepositRedemption {
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
         bytes _bitcoinTx
-    ) public returns (bytes32, uint256) {
+    ) public view returns (bytes32, uint256) {
         bytes memory _nIns;
         bytes memory _ins;
         bytes memory _nOuts;
