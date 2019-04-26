@@ -26,9 +26,15 @@ contract Deposit {
     /// @param _m       n for m-of-n
     /// @return         True if successful, otherwise revert
     function createNewDeposit(
+        address _TBTCSystem,
+        address _TBTCToken,
+        address _KeepSystem,
         uint256 _m,
         uint256 _n
     ) payable public returns (bool) {
+        self.TBTCSystem = _TBTCSystem;
+        self.TBTCToken = _TBTCToken;
+        self.KeepSystem = _KeepSystem;
         self.createNewDeposit(_m, _n);
         return true;
     }

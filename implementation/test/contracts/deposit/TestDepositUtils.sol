@@ -13,11 +13,11 @@ contract TestDepositUtils is TestDeposit {
         uint256 _index,
         bytes _bitcoinHeaders
     ) public view returns (bytes32) {
-        return DepositUtils.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        return self.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
     }
 
-    function isTBTCSystemContract(address _caller) public pure returns (bool) {
-        return DepositUtils.isTBTCSystemContract(_caller);
+    function isTBTCSystemContract(address _caller) public view returns (bool) {
+        return self.isTBTCSystemContract(_caller);
     }
 
     function auctionValue() public view returns (uint256) {
@@ -61,7 +61,7 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function fetchOraclePrice() public view returns (uint256) {
-        return DepositUtils.fetchOraclePrice();
+        return self.fetchOraclePrice();
     }
 
     function fetchBondAmount() public view returns (uint256) {
@@ -77,19 +77,19 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function currentBlockDifficulty() public view returns (uint256) {
-        return DepositUtils.currentBlockDifficulty();
+        return self.currentBlockDifficulty();
     }
 
     function previousBlockDifficulty() public view returns (uint256) {
-        return DepositUtils.previousBlockDifficulty();
+        return self.previousBlockDifficulty();
     }
 
     function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
-        return DepositUtils.evaluateProofDifficulty(_bitcoinHeaders);
+        return self.evaluateProofDifficulty(_bitcoinHeaders);
     }
 
     function depositBeneficiary() public view returns (address) {
-        return DepositUtils.depositBeneficiary();
+        return self.depositBeneficiary();
     }
 
     function redemptionTeardown() public {
@@ -101,7 +101,7 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function distributeBeneficiaryReward() public {
-        return DepositUtils.distributeBeneficiaryReward();
+        return self.distributeBeneficiaryReward();
     }
 
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {

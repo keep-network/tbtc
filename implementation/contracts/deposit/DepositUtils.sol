@@ -22,6 +22,9 @@ library DepositUtils {
     struct Deposit {
 
         // SET DURING CONSTRUCTION
+        address TBTCSystem;
+        address TBTCToken;
+        address KeepSystem;
         uint8 currentState;
 
         // SET ON FRAUD
@@ -52,12 +55,14 @@ library DepositUtils {
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin tx
     /// @dev                    Stateless SPV Proof verification documented elsewhere
+    /// @param _d               deposit storage pointer
     /// @param  _bitcoinTx      The bitcoin tx that is purportedly included in the header chain
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 The 32 byte transaction id (little-endian, not block-explorer)
     function checkProof(
+        Deposit storage _d,
         bytes _bitcoinTx,
         bytes _merkleProof,
         uint256 _index,
@@ -78,7 +83,7 @@ library DepositUtils {
                 _index),
             'Tx merkle proof is not valid for provided header and tx');
 
-        evaluateProofDifficulty(_bitcoinHeaders);
+        evaluateProofDifficulty(_d, _bitcoinHeaders);
 
         return _txid;
     }
@@ -87,8 +92,8 @@ library DepositUtils {
     /// @dev            Stored as a constant in the config library
     /// @param _caller  The address of the caller to compare to the tbtc system constant
     /// @return         True if the caller is approved, else False
-    function isTBTCSystemContract(address _caller) public pure returns (bool) {
-        return _caller == TBTCConstants.getSystemContractAddress();
+    function isTBTCSystemContract(Deposit storage _d, address _caller) public view returns (bool) {
+        return _caller == _d.TBTCSystem;
     }
 
     /// @notice     Calculates the amount of value at auction right now
@@ -193,8 +198,8 @@ library DepositUtils {
     /// @notice     Gets the current oracle price of Bitcoin in Ether
     /// @dev        Polls the oracle via the system contract
     /// @return     The current price of 1 sat in wei
-    function fetchOraclePrice() public view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(TBTCConstants.getSystemContractAddress());
+    function fetchOraclePrice(Deposit storage _d) public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
         return _sys.fetchOraclePrice();
     }
 
@@ -202,7 +207,7 @@ library DepositUtils {
     /// @dev        Calls the keep contract to do so
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
-        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        IKeep _keep = IKeep(_d.KeepSystem);
         return _keep.checkBondAmount(_d.keepID);
     }
 
@@ -218,23 +223,23 @@ library DepositUtils {
     /// @param  _digest the digest to check approval time for
     /// @return         the time it was approved. 0 if unapproved
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
-        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        IKeep _keep = IKeep(_d.KeepSystem);
         return _keep.wasDigestApprovedForSigning(_d.keepID, _digest);
     }
 
     /// @notice         Gets the current block difficulty
     /// @dev            Calls the light relay and gets the current block difficulty
     /// @return         The difficulty
-    function currentBlockDifficulty() public view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(TBTCConstants.getSystemContractAddress());
+    function currentBlockDifficulty(Deposit storage _d) public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
         return _sys.fetchRelayCurrentDifficulty();
     }
 
     /// @notice         Gets the previous block difficulty
     /// @dev            Calls the light relay and gets the previous block difficulty
     /// @return         The difficulty
-    function previousBlockDifficulty() public view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(TBTCConstants.getSystemContractAddress());
+    function previousBlockDifficulty(Deposit storage _d) public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
         return _sys.fetchRelayPreviousDifficulty();
     }
 
@@ -242,10 +247,10 @@ library DepositUtils {
     /// @dev                        Uses the light oracle to source recent difficulty
     /// @param  _bitcoinHeaders     The header chain to evaluate
     /// @return                     True if acceptable, otherwise revert
-    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
+    function evaluateProofDifficulty(Deposit storage _d, bytes _bitcoinHeaders) public view {
         uint256 _reqDiff;
-        uint256 _current = currentBlockDifficulty();
-        uint256 _previous = previousBlockDifficulty();
+        uint256 _current = currentBlockDifficulty(_d);
+        uint256 _previous = previousBlockDifficulty(_d);
         uint256 _firstHeaderDiff = _bitcoinHeaders.extractTarget().calculateDifficulty();
 
         if (_firstHeaderDiff == _current) {
@@ -264,8 +269,8 @@ library DepositUtils {
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
-    function depositBeneficiary() public view returns (address) {
-        IERC721 _systemContract = IERC721(TBTCConstants.getSystemContractAddress());
+    function depositBeneficiary(Deposit storage _d) public view returns (address) {
+        IERC721 _systemContract = IERC721(_d.TBTCSystem);
         return _systemContract.ownerOf(uint256(address(this)));
     }
 
@@ -285,7 +290,7 @@ library DepositUtils {
     /// @return     the amount of ether seized
     function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
-        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        IKeep _keep = IKeep(_d.KeepSystem);
         _keep.seizeSignerBonds(_d.keepID);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, 'No funds received, unexpected');
@@ -295,9 +300,9 @@ library DepositUtils {
     /// @notice     Distributes the beneficiary reward to the beneficiary
     /// @dev        We distribute the whole TBTC balance as a convenience,
     ///             whenever this is called we are shutting down.
-    function distributeBeneficiaryReward() public {
-        IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
-        require(_tbtc.transfer(depositBeneficiary(), _tbtc.balanceOf(address(this))));
+    function distributeBeneficiaryReward(Deposit storage _d) public {
+        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))));
     }
 
     /// @notice             pushes ether held by the deposit to the signer group
@@ -306,7 +311,7 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, 'Not enough funds to send');
-        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        IKeep _keep = IKeep(_d.KeepSystem);
         return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepID);
     }
 }

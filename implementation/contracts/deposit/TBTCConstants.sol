@@ -5,11 +5,6 @@ library TBTCConstants {
     // This is intended to make it easy to update system params
     // During testing swap this out with another constats contract
 
-    // Exterior Contracts
-    address public constant TOKEN_CONTRACT = address(0);
-    address public constant KEEP_CONTRACT = address(0);
-    address public constant SYSTEM_CONTRACT = address(0);
-
     // System Parameters
     uint256 public constant MINIMUM_LOT_SIZE = 10 ** 8;  // tsatoshi
     uint256 public constant SIGNER_FEE_DIVISOR = 200; // 1/200 == 50bps == 0.5% == 0.005
@@ -38,10 +33,6 @@ library TBTCConstants {
 
 
     // Getters for easy access
-    function getTokenContractAddress() public pure returns (address) { return TOKEN_CONTRACT; }
-    function getKeepContractAddress() public pure returns (address) { return KEEP_CONTRACT; }
-    function getSystemContractAddress() public pure returns (address) { return SYSTEM_CONTRACT; }
-
     function getLotSize() public pure returns (uint256) { return MINIMUM_LOT_SIZE; }
     function getSignerFeeDivisor() public pure returns (uint256) { return SIGNER_FEE_DIVISOR; }
     function getBeneficiaryRewardDivisor() public pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
