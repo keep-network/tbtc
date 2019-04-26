@@ -199,8 +199,8 @@ library DepositLiquidation {
 
         // Burn the outstanding TBTC
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
-        require(_tbtc.balanceOf(msg.sender) >= DepositUtils.lotSize(), 'Not enough TBTC to cover outstanding debt');
-        _tbtc.burnFrom(msg.sender, DepositUtils.lotSize());  // burn minimal amount to cover size
+        require(_tbtc.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), 'Not enough TBTC to cover outstanding debt');
+        _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
 
         // Distribute funds to auction buyer
         uint256 _valueToDistribute = _d.auctionValue();

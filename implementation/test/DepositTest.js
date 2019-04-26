@@ -14,7 +14,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
 
-TO_DEPLOY = [
+STANDARD_DEPLOY = [
   {name: 'BytesLib', contract: BytesLib},
   {name: 'BTCUtils', contract: BTCUtils},
   {name: 'ValidateSPV', contract: ValidateSPV},
@@ -30,22 +30,23 @@ TO_DEPLOY = [
   {name: 'TestDeposit', contract: TestDeposit}]
 
 
-async function deployTestDepositContract () {
+async function deploySystem(deploy_list) {
   deployed = {}
-  for (let i in TO_DEPLOY) {
-    await TO_DEPLOY[i].contract.link(deployed)
-    contract = await TO_DEPLOY[i].contract.new()
-    deployed[TO_DEPLOY[i].name] = contract.address
+  linkable = {}
+  for (let i in deploy_list) {
+    await deploy_list[i].contract.link(linkable)
+    contract = await deploy_list[i].contract.new()
+    linkable[deploy_list[i].name] = contract.address
+    deployed[deploy_list[i].name] = contract
   }
-  return contract // TestDeposit is last
+  return deployed // TestDeposit is last
 }
 
 contract('Deposit', accounts => {
 
   describe('deployment', async () => {
     it('deploys', async () => {
-      instance = await deployTestDepositContract()
+      deployed = await deploySystem(STANDARD_DEPLOY)
     })
   })
-
 })

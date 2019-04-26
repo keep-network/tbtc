@@ -1,7 +1,6 @@
 pragma solidity 0.4.25;
 
-import {DepositUtils} from '../../contracts/deposit/DepositUtils.sol';
-import {Deposit} from '../../contracts/deposit/Deposit.sol';
+import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
 contract TestDeposit is Deposit {
 
@@ -54,5 +53,4 @@ contract TestDeposit is Deposit {
         self.fundedAt = _fundedAt;
         self.utxoOutpoint = _utxoOutpoint;
     }
-
 }
