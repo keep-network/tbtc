@@ -8,6 +8,8 @@ contract KeepStub {
     bool success = true;
     uint256 bondAmount = 10000;
 
+    function () payable {}
+
     function setIsFraud(bool _success) public {
         success = _success;
     }
@@ -23,7 +25,7 @@ contract KeepStub {
 
     function approveDigest(uint256 _keepID, bytes32 _digest) external returns (bool _success) {
         _keepID;
-        approved[_digest] = block.timestamp;
+        approved[_digest] = 100;
         _success = success;
     }
 
@@ -73,6 +75,7 @@ contract KeepStub {
 
     function seizeSignerBonds(uint256 _keepID) external returns (bool) {
         _keepID; success = success;
+        msg.sender.transfer(address(this).balance);
         return true;
     }
 }

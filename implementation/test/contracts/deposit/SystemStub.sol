@@ -32,7 +32,7 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
     }
 
     function fetchRelayPreviousDifficulty() external view returns (uint256) {
-        return current;
+        return past;
     }
 
     // 721

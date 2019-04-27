@@ -54,6 +54,15 @@ contract TestDeposit is Deposit {
         self.lastRequestedDigest = _lastRequestedDigest;
     }
 
+    function getRequestInfo() public view returns (address, bytes29, uint256, uint256, bytes32) {
+        return (
+            self.requesterAddress,
+            self.requesterPKH,
+            self.initialRedemptionFee,
+            self.withdrawalRequestTime,
+            self.lastRequestedDigest);
+    }
+
     function setUTXOInfo(
         bytes8 _utxoSizeBytes,
         uint256 _fundedAt,
