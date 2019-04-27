@@ -87,8 +87,10 @@ library DepositUtils {
             revert('not at current or previous difficulty');
         }
 
+        uint256 _observedDiff = _bitcoinHeaders.validateHeaderChain();
+        require(_observedDiff > 3, 'ValidateSPV returned an error code');
         /* TODO: make this better than 6 */
-        require(_bitcoinHeaders.validateHeaderChain() > _reqDiff.mul(6),
+        require(_observedDiff >= _reqDiff.mul(6),
                 'Insufficient accumulated difficulty in header chain');
     }
 
