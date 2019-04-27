@@ -60,7 +60,6 @@ library DepositFunding {
         uint256 _n
     ) public returns (bool) {
         require(_d.inStart(), 'Deposit setup already requested');
-        require(_d.isTBTCSystemContract(msg.sender), 'Calling account not allowed to create deposits');
 
         IKeep _keep = IKeep(_d.KeepSystem);
 

@@ -53,6 +53,45 @@ library DepositUtils {
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
     }
 
+    /// @notice         Gets the current block difficulty
+    /// @dev            Calls the light relay and gets the current block difficulty
+    /// @return         The difficulty
+    function currentBlockDifficulty(Deposit storage _d) public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
+        return _sys.fetchRelayCurrentDifficulty();
+    }
+
+    /// @notice         Gets the previous block difficulty
+    /// @dev            Calls the light relay and gets the previous block difficulty
+    /// @return         The difficulty
+    function previousBlockDifficulty(Deposit storage _d) public view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
+        return _sys.fetchRelayPreviousDifficulty();
+    }
+
+    /// @notice                     Evaluates the header difficulties in a proof
+    /// @dev                        Uses the light oracle to source recent difficulty
+    /// @param  _bitcoinHeaders     The header chain to evaluate
+    /// @return                     True if acceptable, otherwise revert
+    function evaluateProofDifficulty(Deposit storage _d, bytes _bitcoinHeaders) public view {
+        uint256 _reqDiff;
+        uint256 _current = currentBlockDifficulty(_d);
+        uint256 _previous = previousBlockDifficulty(_d);
+        uint256 _firstHeaderDiff = _bitcoinHeaders.extractTarget().calculateDifficulty();
+
+        if (_firstHeaderDiff == _current) {
+            _reqDiff = _current;
+        } else if (_firstHeaderDiff == _previous) {
+            _reqDiff = _previous;
+        } else {
+            revert('not at current or previous difficulty');
+        }
+
+        /* TODO: make this better than 6 */
+        require(_bitcoinHeaders.validateHeaderChain() > _reqDiff.mul(6),
+                'Insufficient accumulated difficulty in header chain');
+    }
+
     /// @notice                 Syntactically check an SPV proof for a bitcoin tx
     /// @dev                    Stateless SPV Proof verification documented elsewhere
     /// @param _d               deposit storage pointer
@@ -86,14 +125,6 @@ library DepositUtils {
         evaluateProofDifficulty(_d, _bitcoinHeaders);
 
         return _txid;
-    }
-
-    /// @notice         Check if the caller is the tBTC system contract
-    /// @dev            Stored as a constant in the config library
-    /// @param _caller  The address of the caller to compare to the tbtc system constant
-    /// @return         True if the caller is approved, else False
-    function isTBTCSystemContract(Deposit storage _d, address _caller) public view returns (bool) {
-        return _caller == _d.TBTCSystem;
     }
 
     /// @notice     Calculates the amount of value at auction right now
@@ -227,45 +258,6 @@ library DepositUtils {
         return _keep.wasDigestApprovedForSigning(_d.keepID, _digest);
     }
 
-    /// @notice         Gets the current block difficulty
-    /// @dev            Calls the light relay and gets the current block difficulty
-    /// @return         The difficulty
-    function currentBlockDifficulty(Deposit storage _d) public view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
-        return _sys.fetchRelayCurrentDifficulty();
-    }
-
-    /// @notice         Gets the previous block difficulty
-    /// @dev            Calls the light relay and gets the previous block difficulty
-    /// @return         The difficulty
-    function previousBlockDifficulty(Deposit storage _d) public view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
-        return _sys.fetchRelayPreviousDifficulty();
-    }
-
-    /// @notice                     Evaluates the header difficulties in a proof
-    /// @dev                        Uses the light oracle to source recent difficulty
-    /// @param  _bitcoinHeaders     The header chain to evaluate
-    /// @return                     True if acceptable, otherwise revert
-    function evaluateProofDifficulty(Deposit storage _d, bytes _bitcoinHeaders) public view {
-        uint256 _reqDiff;
-        uint256 _current = currentBlockDifficulty(_d);
-        uint256 _previous = previousBlockDifficulty(_d);
-        uint256 _firstHeaderDiff = _bitcoinHeaders.extractTarget().calculateDifficulty();
-
-        if (_firstHeaderDiff == _current) {
-            _reqDiff = _current;
-        } else if (_firstHeaderDiff == _previous) {
-            _reqDiff = _previous;
-        } else {
-            revert('not at current or previous difficulty');
-        }
-
-        /* TODO: make this better than 6 */
-        require(_bitcoinHeaders.validateHeaderChain() > _reqDiff.mul(6),
-                'Insufficient accumulated difficulty in header chain');
-    }
-
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
@@ -273,7 +265,6 @@ library DepositUtils {
         IERC721 _systemContract = IERC721(_d.TBTCSystem);
         return _systemContract.ownerOf(uint256(address(this)));
     }
-
 
     /// @notice     Deletes state after termination of redemption process
     /// @dev        We keep around the requester address so we can pay them out
