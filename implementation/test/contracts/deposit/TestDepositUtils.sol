@@ -7,6 +7,18 @@ contract TestDepositUtils is TestDeposit {
 
     // Passthroughs to test view and pure functions
 
+    function currentBlockDifficulty() public view returns (uint256) {
+        return self.currentBlockDifficulty();
+    }
+
+    function previousBlockDifficulty() public view returns (uint256) {
+        return self.previousBlockDifficulty();
+    }
+
+    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
+        return self.evaluateProofDifficulty(_bitcoinHeaders);
+    }
+
     function checkProof(
         bytes _bitcoinTx,
         bytes _merkleProof,
@@ -14,10 +26,6 @@ contract TestDepositUtils is TestDeposit {
         bytes _bitcoinHeaders
     ) public view returns (bytes32) {
         return self.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
-    }
-
-    function isTBTCSystemContract(address _caller) public view returns (bool) {
-        return self.isTBTCSystemContract(_caller);
     }
 
     function auctionValue() public view returns (uint256) {
@@ -76,18 +84,6 @@ contract TestDepositUtils is TestDeposit {
         return self.wasDigestApprovedForSigning(_digest);
     }
 
-    function currentBlockDifficulty() public view returns (uint256) {
-        return self.currentBlockDifficulty();
-    }
-
-    function previousBlockDifficulty() public view returns (uint256) {
-        return self.previousBlockDifficulty();
-    }
-
-    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
-        return self.evaluateProofDifficulty(_bitcoinHeaders);
-    }
-
     function depositBeneficiary() public view returns (address) {
         return self.depositBeneficiary();
     }
@@ -107,6 +103,4 @@ contract TestDepositUtils is TestDeposit {
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
     }
-
-
 }

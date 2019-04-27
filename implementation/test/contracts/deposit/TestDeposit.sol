@@ -4,6 +4,16 @@ import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
 contract TestDeposit is Deposit {
 
+    function setExteroriorAddresses(
+        address _sys,
+        address _k,
+        address _token
+    ) public {
+        self.TBTCSystem = _sys;
+        self.KeepSystem = _k;
+        self.TBTCToken = _token;
+    }
+
     function setState(uint8 _state) public {
         self.currentState = _state;
     }
