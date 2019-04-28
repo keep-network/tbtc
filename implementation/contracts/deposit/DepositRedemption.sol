@@ -51,6 +51,18 @@ library DepositRedemption {
         return _keep.approveDigest(_d.keepID, _digest);
     }
 
+    function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
+        // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
+        // Requires user to approve first
+        /* TODO: implement such that it calls the system to burn TBTC? */
+        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        uint256 _bal = _tbtc.balanceOf(msg.sender);
+        uint256 _red = _d.redemptionTBTCAmount();
+        require(_bal >= _red, 'Not enough TBTC to cover outstanding debt');
+        _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
+        _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
+    }
+
     /// @notice                     Anyone can request redemption
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
@@ -63,28 +75,12 @@ library DepositRedemption {
     ) public {
         require(_d.inRedeemableState(), 'Redemption only available from Active or Courtesy state');
 
-        _d.setAwaitingWithdrawalSignature();
-        _d.logRedemptionRequested(
-            msg.sender,
-            _sighash,
-            _d.utxoSize(),
-            _requesterPKH,
-            _requestedFee,
-            _d.utxoOutpoint);
-
-        // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
-        // Requires user to approve first
-        /* TODO: implement such that it calls the system to burn TBTC? */
-        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
-        require(_tbtc.balanceOf(msg.sender) >= _d.redemptionTBTCAmount(), 'Not enough TBTC to cover outstanding debt');
-        _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
-        _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee());
-        _tbtc.transferFrom(msg.sender, address(this), DepositUtils.beneficiaryReward());
+        redemptionTBTCBurn(_d);
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
         uint256 _requestedFee = _d.utxoSize().sub(_outputValue);
-        require(_requestedFee >= TBTCConstants.getMinimumRedemptionFee());
+        require(_requestedFee >= TBTCConstants.getMinimumRedemptionFee(), 'Fee is too low');
 
         // Calculate the sighash
         bytes32 _sighash = CheckBitcoinSigs.oneInputOneOutputSighash(
@@ -100,7 +96,16 @@ library DepositRedemption {
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash));
+        require(approveDigest(_d, _sighash), 'Keep returned false');
+
+        _d.setAwaitingWithdrawalSignature();
+        _d.logRedemptionRequested(
+            msg.sender,
+            _sighash,
+            _d.utxoSize(),
+            _requesterPKH,
+            _requestedFee,
+            _d.utxoOutpoint);
     }
 
     /// @notice     Anyone may provide a withdrawal signature if it was requested
