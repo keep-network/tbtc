@@ -21,14 +21,13 @@ const TestDepositUtils = artifacts.require('TestDepositUtils')
 const BN = require('bn.js')
 const utils = require('./utils')
 
-STANDARD_DEPLOY = [
+TEST_DEPOSIT_UTILS_DEPLOY = [
   {name: 'BytesLib', contract: BytesLib},
   {name: 'BTCUtils', contract: BTCUtils},
   {name: 'ValidateSPV', contract: ValidateSPV},
   {name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs},
   {name: 'TBTCConstants', contract: TestTBTCConstants},  // note the name
   {name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging},
-  {name: 'DepositLog', contract: DepositLog},
   {name: 'DepositStates', contract: DepositStates},
   {name: 'DepositUtils', contract: DepositUtils},
   {name: 'DepositFunding', contract: DepositFunding},
@@ -40,13 +39,13 @@ STANDARD_DEPLOY = [
   {name: 'SystemStub', contract: SystemStub}]
 
 
-contract.only('DepositUtils', accounts => {
+contract('DepositUtils', accounts => {
 
   let deployed
   let testUtilsInstance
 
   before(async () => {
-      deployed = await utils.deploySystem(STANDARD_DEPLOY)
+      deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
       testUtilsInstance = deployed.TestDepositUtils
 
       await testUtilsInstance.createNewDeposit(

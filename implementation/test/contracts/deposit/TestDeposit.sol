@@ -6,24 +6,38 @@ contract TestDeposit is Deposit {
 
     function setExteroriorAddresses(
         address _sys,
-        address _k,
-        address _token
+        address _token,
+        address _k
     ) public {
         self.TBTCSystem = _sys;
         self.KeepSystem = _k;
         self.TBTCToken = _token;
     }
 
+    function reset() public {
+        setState(0);
+        setLiquidationAndCourtesyInitated(0, 0);
+        setKeepInfo(0, 0, 0, bytes32(0), bytes32(0));
+        setRequestInfo(address(0), bytes20(0), 0, 0, bytes32(0));
+        setUTXOInfo(bytes8(0), 0, '');
+    }
+
     function setState(uint8 _state) public {
         self.currentState = _state;
     }
 
-    function setLiquidationOrCourtesyInitated(
+    function getState() public view returns (uint8) { return self.currentState; }
+
+    function setLiquidationAndCourtesyInitated(
         uint256 _liquidation,
         uint256 _courtesy
     ) public {
         self.liquidationInitiated = _liquidation;
         self.courtesyCallInitiated = _courtesy;
+    }
+
+    function getLiqudationAndCoutesyInitiated() public view returns (uint256, uint256) {
+        return (self.liquidationInitiated, self.courtesyCallInitiated);
     }
 
     function setKeepInfo(
@@ -40,6 +54,10 @@ contract TestDeposit is Deposit {
         self.signingGroupPubkeyY = _signingGroupPubkeyY;
     }
 
+    function getKeepInfo() public view returns (uint256, uint256, uint256, bytes32, bytes32) {
+        return (self.keepID, self.signingGroupRequestedAt, self.fundingProofTimerStart, self.signingGroupPubkeyX, self.signingGroupPubkeyY);
+    }
+
     function setRequestInfo(
         address _requesterAddress,
         bytes20 _requesterPKH,
@@ -54,7 +72,7 @@ contract TestDeposit is Deposit {
         self.lastRequestedDigest = _lastRequestedDigest;
     }
 
-    function getRequestInfo() public view returns (address, bytes29, uint256, uint256, bytes32) {
+    function getRequestInfo() public view returns (address, bytes20, uint256, uint256, bytes32) {
         return (
             self.requesterAddress,
             self.requesterPKH,
@@ -71,5 +89,9 @@ contract TestDeposit is Deposit {
         self.utxoSizeBytes = _utxoSizeBytes;
         self.fundedAt = _fundedAt;
         self.utxoOutpoint = _utxoOutpoint;
+    }
+
+    function getUTXOInfo() public view returns (bytes8, uint256, bytes) {
+        return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
 }
