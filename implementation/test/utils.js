@@ -50,6 +50,8 @@ async function deploySystem(deploy_list) {
 }
 
 module.exports = {
+  address0: '0x' + '00'.repeat(20),
+  bytes32zero: '0x' + '00'.repeat(32),
   hash160: hash160,
   states: states,
   LOW_DIFF_HEADER: lowDiffHeader,
