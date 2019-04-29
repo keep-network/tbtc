@@ -94,4 +94,9 @@ contract TestDeposit is Deposit {
     function getUTXOInfo() public view returns (bytes8, uint256, bytes) {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
+
+    // passthrough for direct testing
+    function redemptionTransactionChecks(bytes _bitcoinTx) public view returns (bytes32, uint256) {
+        return self.redemptionTransactionChecks(_bitcoinTx);
+    }
 }

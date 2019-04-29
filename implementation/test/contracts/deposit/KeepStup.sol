@@ -23,6 +23,10 @@ contract KeepStub {
         keepID = _id;
     }
 
+    function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
+        approved[_digest] = _timestamp;
+    }
+
     function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256) {
         _keepID;
         return approved[_digest];
