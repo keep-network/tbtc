@@ -32,6 +32,7 @@ library DepositFunding {
     /// @notice     Deletes state after the funding ECDSA fraud process
     /// @dev        This is only called as we transition to setup failed
     function fundingFraudTeardown(DepositUtils.Deposit storage _d) public {
+        _d.keepID = 0;
         _d.signingGroupRequestedAt = 0;
         _d.fundingProofTimerStart = 0;
         _d.signingGroupPubkeyX = bytes32(0);
@@ -77,7 +78,7 @@ library DepositFunding {
     function revokeFunderBond(DepositUtils.Deposit storage _d) public {
         if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
             _d.pushFundsToKeepGroup(TBTCConstants.getFunderBondAmount());
-        } else {
+        } else if (address(this).balance > 0) {
             _d.pushFundsToKeepGroup(address(this).balance);
         }
     }
@@ -125,6 +126,7 @@ library DepositFunding {
         for (uint8 i = 0; i <  _bitcoinTx.extractNumOutputs(); i++) {
             _output = _bitcoinTx.extractOutputAtIndex(i);
             if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.signerPKH()))) {
+                _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
                 return (_valueBytes, i);
             }
         }
@@ -179,16 +181,20 @@ library DepositFunding {
     /// @param  _d          deposit storage pointer
     /// @return             True if successful, otherwise revert
     function retrieveSignerPubkey(DepositUtils.Deposit storage _d) public {
+        require(_d.inAwaitingSignerSetup(), 'Not currently awaiting signer setup');
         bytes memory _keepResult = getKeepPubkeyResult(_d);
 
         _d.signingGroupPubkeyX = _keepResult.slice(0, 32).toBytes32();
         _d.signingGroupPubkeyY = _keepResult.slice(32, 32).toBytes32();
+        require(_d.signingGroupPubkeyY != bytes32(0) && _d.signingGroupPubkeyX != bytes32(0), 'Keep returned bad pubkey');
         _d.fundingProofTimerStart = block.timestamp;
 
+        _d.setAwaitingBTCFundingProof();
         _d.logRegisteredPubkey(
             _d.signingGroupPubkeyX,
             _d.signingGroupPubkeyY);
     }
+
     /// @notice     Anyone may notify the contract that the funder has failed to send BTC
     /// @dev        This is considered a funder fault, and we revoke their bond
     /// @param  _d  deposit storage pointer
@@ -222,12 +228,11 @@ library DepositFunding {
     ) public {
         require(_d.inAwaitingBTCFundingProof(),
                 'Signer fraud during funding flow only available while awaiting funding');
-        _d.logFraudDuringSetup();
 
         bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
-        require(_isFraud, 'Signature is not valid');
-
+        require(_isFraud, 'Signature is not fraudulent');
         _d.seizeSignerBonds();
+        _d.logFraudDuringSetup();
 
         // If the funding timeout has elapsed, punish the funder too!
         if (block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFundingTimeout()) {
@@ -256,7 +261,6 @@ library DepositFunding {
         fundingFraudTeardown(_d);
     }
 
-
     /// @notice                 Anyone may notify the deposit of a funding proof during funding fraud
     /// @dev                    We reward the funder the entire bond if this occurs
     /// @param  _d              deposit storage pointer
@@ -275,14 +279,15 @@ library DepositFunding {
         bytes8 _valueBytes;
         bytes memory _outpoint;
         require(_d.inFraudAwaitingBTCFundingProof(), 'Not awaiting a funding proof during setup fraud');
-        _d.logSetupFailed();
 
         (_valueBytes, _outpoint) = validateAndParseFundingSPVProof(_d, _bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+
+        _d.setFailedSetup();
+        _d.logSetupFailed();
 
         // If the proof is accepted, update to failed, and distribute signer bonds
         distributeSignerBondsToFunder(_d);
         fundingFraudTeardown(_d);
-        _d.setFailedSetup();
 
         return true;
     }
@@ -319,9 +324,12 @@ library DepositFunding {
         // Write down the UTXO info and set to active. Congratulations :)
         _d.utxoSizeBytes = _valueBytes;
         _d.utxoOutpoint = _outpoint;
+
         fundingTeardown(_d);
         _d.setActive();
         _d.logFunded();
+
+        returnFunderBond(_d);
 
         // Mint 95% of the deposit size
         IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);

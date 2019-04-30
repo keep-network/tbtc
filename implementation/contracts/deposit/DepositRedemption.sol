@@ -156,12 +156,6 @@ library DepositRedemption {
         require(_d.inAwaitingWithdrawalProof(), 'Fee increase only available after signature provided');
         require(block.timestamp >= _d.withdrawalRequestTime + TBTCConstants.getIncreaseFeeTimer(), 'Fee increase not yet permitted');
 
-        // If we should have gotten a redemption proof by now, something fishy is going on
-        if (block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout()) {
-            _d.startSignerAbortLiquidation();
-            return false;  // We return instead of reverting so that the above transition takes place
-        }
-
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
 
         // Calculate the next sighash
