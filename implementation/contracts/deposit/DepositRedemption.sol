@@ -76,7 +76,7 @@ library DepositRedemption {
         /* TODO: implement such that it calls the system to burn TBTC? */
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
         require(_tbtc.balanceOf(msg.sender) >= _d.redemptionTBTCAmount(), 'Not enough TBTC to cover outstanding debt');
-        _tbtc.burnFrom(msg.sender, DepositUtils.lotSize());
+        _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
         _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee());
         _tbtc.transferFrom(msg.sender, address(this), DepositUtils.beneficiaryReward());
 
@@ -219,7 +219,7 @@ library DepositRedemption {
                 _merkleProof,
                 _index),
             'Tx merkle proof is not valid for provided header');
-        require(DepositUtils.evaluateProofDifficulty(_bitcoinHeaders));
+        DepositUtils.evaluateProofDifficulty(_bitcoinHeaders);
 
         /* TODO: refactor redemption flow to improve this */
         require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, 'Fee unexpectedly very high');

@@ -78,8 +78,7 @@ library DepositUtils {
                 _index),
             'Tx merkle proof is not valid for provided header and tx');
 
-        require(_bitcoinHeaders.validateHeaderChain() > currentBlockDifficulty().mul(6),
-                'Insufficient accumulated difficulty in header chain');
+        evaluateProofDifficulty(_bitcoinHeaders);
 
         return _txid;
     }
@@ -115,14 +114,14 @@ library DepositUtils {
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee() public pure returns (uint256) {
-        return lotSize().div(TBTCConstants.getSignerFeeDivisor());
+        return TBTCConstants.getLotSize().div(TBTCConstants.getSignerFeeDivisor());
     }
 
     /// @notice     calculates the beneficiary reward based on the deposit size
     /// @dev        the amount of extra ether to pay the beneficiary at closing time
     /// @return     the amount of ether in wei to pay the beneficiary
     function beneficiaryReward() public pure returns (uint256) {
-        return lotSize().div(TBTCConstants.getBeneficiaryRewardDivisor());
+        return TBTCConstants.getLotSize().div(TBTCConstants.getBeneficiaryRewardDivisor());
     }
 
     /// @notice         Determines the amount of TBTC paid to redeem the deposit
@@ -130,7 +129,7 @@ library DepositUtils {
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.requesterAddress == address(0)) {
-            return lotSize().add(signerFee()).add(beneficiaryReward());
+            return TBTCConstants.getLotSize().add(signerFee()).add(beneficiaryReward());
         } else {
             return 0;
         }
@@ -141,7 +140,7 @@ library DepositUtils {
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.requesterAddress == address(0)) {
-            return lotSize();
+            return TBTCConstants.getLotSize();
         } else {
             return 0;
         }
@@ -184,27 +183,12 @@ library DepositUtils {
         return bytes20(_digest.toAddress(0));  // dirty solidity hack
     }
 
-    /// @notice         Returns the size of the standard lot
-    /// @dev            This is the amount of TBTC issued, and the minimum amount of BTC in the utxo
-    /// @return         lot size value in tsat
-    function lotSize() public pure returns (uint256) {
-        return TBTCConstants.getLotSize();
-    }
-
     /// @notice         Returns the size of the deposit UTXO in satoshi
     /// @dev            We store the deposit as bytes8 to make signature checking easier
     /// @return         UTXO value in satoshi
     function utxoSize(Deposit storage _d) public view returns (uint256) {
         return bytes8LEToUint(_d.utxoSizeBytes);
     }
-
-    /// @notice     Looks up the size of the funder bond
-    /// @dev        This is stored as a constant
-    /// @return     The refundable portion of the funder bond
-    function funderBondAmount() public pure returns (uint256) {
-        TBTCConstants.getFunderBondAmount();
-    }
-
 
     /// @notice     Gets the current oracle price of Bitcoin in Ether
     /// @dev        Polls the oracle via the system contract
@@ -258,7 +242,7 @@ library DepositUtils {
     /// @dev                        Uses the light oracle to source recent difficulty
     /// @param  _bitcoinHeaders     The header chain to evaluate
     /// @return                     True if acceptable, otherwise revert
-    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view returns (bool) {
+    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
         uint256 _reqDiff;
         uint256 _current = currentBlockDifficulty();
         uint256 _previous = previousBlockDifficulty();
@@ -275,7 +259,6 @@ library DepositUtils {
         /* TODO: make this better than 6 */
         require(_bitcoinHeaders.validateHeaderChain() > _reqDiff.mul(6),
                 'Insufficient accumulated difficulty in header chain');
-        return true;
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
@@ -300,7 +283,7 @@ library DepositUtils {
     /// @notice     Seize the signer bond from the keep contract
     /// @dev        we check our balance before and after
     /// @return     the amount of ether seized
-    function seizeSignerBonds(DepositUtils.Deposit storage _d) public returns (uint256) {
+    function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         _keep.seizeSignerBonds(_d.keepID);
@@ -321,7 +304,7 @@ library DepositUtils {
     /// @dev                useful for returning bonds to the group, or otherwise paying them
     /// @param  _ethValue   the amount of ether to send
     /// @return             true if successful, otherwise revert
-    function pushFundsToKeepGroup(DepositUtils.Deposit storage _d, uint256 _ethValue) public returns (bool) {
+    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, 'Not enough funds to send');
         IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
         return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepID);

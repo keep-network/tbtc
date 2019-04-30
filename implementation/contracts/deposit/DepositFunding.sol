@@ -75,8 +75,8 @@ library DepositFunding {
     /// @notice     Transfers the funders bond to the signers if the funder never funds
     /// @dev        Called only by notifyFundingTimeout
     function revokeFunderBond(DepositUtils.Deposit storage _d) public {
-        if (address(this).balance >= DepositUtils.funderBondAmount()) {
-            _d.pushFundsToKeepGroup(DepositUtils.funderBondAmount());
+        if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
+            _d.pushFundsToKeepGroup(TBTCConstants.getFunderBondAmount());
         } else {
             _d.pushFundsToKeepGroup(address(this).balance);
         }
@@ -85,8 +85,8 @@ library DepositFunding {
     /// @notice     Returns the funder's bond plus a payment at contract teardown
     /// @dev        Returns the balance if insufficient. Always call this before distributing signer payments
     function returnFunderBond() public {
-        if (address(this).balance >= DepositUtils.funderBondAmount()) {
-            DepositUtils.depositBeneficiary().transfer(DepositUtils.funderBondAmount());
+        if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
+            DepositUtils.depositBeneficiary().transfer(TBTCConstants.getFunderBondAmount());
         } else {
             DepositUtils.depositBeneficiary().transfer(address(this).balance);
         }
@@ -326,7 +326,7 @@ library DepositFunding {
 
         // Mint 95% of the deposit size
         IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
-        uint256 _value = DepositUtils.lotSize();
+        uint256 _value = TBTCConstants.getLotSize();
         _tbtc.mint(DepositUtils.depositBeneficiary(), _value.mul(95).div(100));
 
         return true;
