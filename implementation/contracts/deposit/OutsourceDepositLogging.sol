@@ -1,15 +1,15 @@
 pragma solidity 0.4.25;
 
-import {DepositLog} from './DepositLog.sol';
+import {DepositLog} from '../DepositLog.sol';
 import {TBTCConstants} from './TBTCConstants.sol';
 
-contract OutsourceDepositLogging {
+library OutsourceDepositLogging {
 
 
     /// @notice             Fires a Created event
     /// @dev                We append the sender, which is the deposit contract that called
     /// @param  _keepID     The ID of the associated keep request
-    function logCreated(uint256 _keepID) internal {
+    function logCreated(uint256 _keepID) external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logCreated(_keepID);
     }
@@ -30,7 +30,7 @@ contract OutsourceDepositLogging {
         bytes20 _requesterPKH,
         uint256 _requestedFee,
         bytes _outpoint
-    ) internal {
+    ) external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logRedemptionRequested(
             _requester,
@@ -51,7 +51,7 @@ contract OutsourceDepositLogging {
         bytes32 _digest,
         bytes32 _r,
         bytes32 _s
-    ) internal {
+    ) external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logGotRedemptionSignature(
             _digest,
@@ -62,41 +62,39 @@ contract OutsourceDepositLogging {
     /// @notice     Fires a RegisteredPubkey event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
     function logRegisteredPubkey(
-        address _signingGroupAccount,
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
-    ) internal {
+    ) external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logRegisteredPubkey(
-            _signingGroupAccount,
             _signingGroupPubkeyX,
             _signingGroupPubkeyY);
     }
 
     /// @notice     Fires a SetupFailed event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
-    function logSetupFailed() internal {
+    function logSetupFailed() external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logSetupFailed();
     }
 
     /// @notice     Fires a FraudDuringSetup event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
-    function logFraudDuringSetup() internal {
+    function logFraudDuringSetup() external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logFraudDuringSetup();
     }
 
     /// @notice     Fires a Funded event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
-    function logFunded() internal {
+    function logFunded() external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logFunded();
     }
 
     /// @notice     Fires a CourtesyCalled event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
-    function logCourtesyCalled() internal {
+    function logCourtesyCalled() external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logCourtesyCalled();
     }
@@ -104,28 +102,28 @@ contract OutsourceDepositLogging {
     /// @notice             Fires a StartedLiquidation event
     /// @dev                We append the sender, which is the deposit contract that called
     /// @param _wasFraud    True if liquidating for fraud
-    function logStartedLiquidation(bool _wasFraud) internal {
+    function logStartedLiquidation(bool _wasFraud) external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logStartedLiquidation(_wasFraud);
     }
 
     /// @notice     Fires a Redeemed event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
-    function logRedeemed(bytes32 _txid) internal {
+    function logRedeemed(bytes32 _txid) external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logRedeemed(_txid);
     }
 
     /// @notice     Fires a Liquidated event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
-    function logLiquidated() internal {
+    function logLiquidated() external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logLiquidated();
     }
 
     /// @notice     Fires a ExitedCourtesyCall event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
-    function logExitedCourtesyCall() internal {
+    function logExitedCourtesyCall() external {
         DepositLog _logger = DepositLog(TBTCConstants.getSystemContractAddress());
         _logger.logExitedCourtesyCall();
     }
