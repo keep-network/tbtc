@@ -8,24 +8,15 @@ contract KeepStub {
     bool success = true;
     uint256 bondAmount = 10000;
     uint256 keepID = 7;
+    bytes pubkey = hex"00";
 
     function () payable public {}
 
-    function setSuccess(bool _success) public {
-        success = _success;
-    }
-
-    function setBondAmount(uint256 _bondAmount) public {
-        bondAmount = _bondAmount;
-    }
-
-    function setKeepID(uint256 _id) public {
-        keepID = _id;
-    }
-
-    function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
-        approved[_digest] = _timestamp;
-    }
+    function setPubkey(bytes _pubkey) public {pubkey = _pubkey;}
+    function setSuccess(bool _success) public {success = _success;}
+    function setBondAmount(uint256 _bondAmount) public {bondAmount = _bondAmount;}
+    function setKeepID(uint256 _id) public {keepID = _id;}
+    function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {approved[_digest] = _timestamp;}
 
     function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256) {
         _keepID;
@@ -68,6 +59,9 @@ contract KeepStub {
     function getKeepPubkey(uint256 _keepID) external view returns (bytes) {
         _keepID; success;
         // this is the pubkey coresponding to 32 '11' bytes
+        if (keccak256(pubkey) != keccak256(hex"00")) {
+            return pubkey;
+        }
         return hex"4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1";
     }
 
@@ -78,8 +72,10 @@ contract KeepStub {
     }
 
     function seizeSignerBonds(uint256 _keepID) external returns (bool) {
-        _keepID; success = success;
-        msg.sender.transfer(address(this).balance);
+        _keepID;
+        if (address(this).balance > 0) {
+            msg.sender.transfer(address(this).balance);
+        }
         return true;
     }
 }

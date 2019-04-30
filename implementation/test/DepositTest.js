@@ -38,6 +38,14 @@ TEST_DEPOSIT_DEPLOY = [
   {name: 'TBTCStub', contract: TBTCStub},
   {name: 'SystemStub', contract: SystemStub}]
 
+// spare signature:
+// signing with privkey '11' * 32
+// let preimage = '0x' + '33'.repeat(32)
+// let digest = '0xdeb0e38ced1e41de6f92e70e80c418d2d356afaaa99e26f5939dbc7d3ef4772a'
+// let pubkey = '0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1'
+// let v = 28
+// let r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
+// let s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
 contract('Deposit', accounts => {
 
@@ -184,7 +192,7 @@ contract('Deposit', accounts => {
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_SIGNATURE)
     })
 
-    it('updates the state and fires a log', async () => {
+    it('updates the state and logs GotRedemptionSignature', async () => {
       let blockNumber = await web3.eth.getBlock("latest").number
 
       await testInstance.setKeepInfo(0, 0, 0, pubkeyX, pubkeyY)
@@ -318,6 +326,7 @@ contract('Deposit', accounts => {
 
   describe('provideRedemptionProof', async () => {
     // real tx from mainnet bitcoin
+    let currentDiff = 6353030562983
     let txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
     let txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
     let tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
@@ -329,7 +338,7 @@ contract('Deposit', accounts => {
     let requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
-      await deployed.SystemStub.setCurrentDiff(new BN('6353030562983', 10))
+      await deployed.SystemStub.setCurrentDiff(currentDiff)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
@@ -534,30 +543,329 @@ contract('Deposit', accounts => {
   })
 
   describe('retrieveSignerPubkey', async () => {
-    it.skip('is TODO', async () => {})
+
+    let pubkeyX = '0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa'
+    let pubkeyY = '0x385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1'
+
+    beforeEach(async () => {
+      await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP)
+    })
+
+    it('updates the pubkey X and Y, changes state, and logs RegisteredPubkey', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+      await testInstance.retrieveSignerPubkey()
+
+      res = await testInstance.getKeepInfo.call()
+      assert.equal(res[3], pubkeyX)
+      assert.equal(res[4], pubkeyY)
+
+      eventList = await deployed.SystemStub.getPastEvents('RegisteredPubkey', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList[0].returnValues._signingGroupPubkeyX, pubkeyX, 'Logged X is wrong')
+      assert.equal(eventList[0].returnValues._signingGroupPubkeyY, pubkeyY, 'Logged Y is wrong')
+
+    })
+
+    it('reverts if not awaiting signer setup', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.retrieveSignerPubkey()
+      } catch (e) {
+        assert.include(e.message, 'Not currently awaiting signer setup')
+      }
+    })
+
+    it('reverts if either half of the pubkey is 0', async () => {
+      try {
+        await deployed.KeepStub.setPubkey('0x' + '00'.repeat(64))
+        await testInstance.retrieveSignerPubkey()
+      } catch (e) {
+        await deployed.KeepStub.setPubkey('0x' + '00')
+        assert.include(e.message, 'Keep returned bad pubkey')
+      }
+    })
+
   })
 
   describe('notifyFundingTimeout', async () => {
-    it.skip('is TODO', async () => {})
+    let timer
+
+    before(async () => {
+      timer = await deployed.TBTCConstants.getFundingTimeout.call()
+    })
+
+    beforeEach(async () => {
+      let block = await web3.eth.getBlock("latest")
+      let blockTimestamp = block.timestamp
+      requestedTime = blockTimestamp - timer.toNumber() - 1
+      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testInstance.setKeepInfo(0, 0, requestedTime, utils.bytes32zero, utils.bytes32zero)
+    })
+
+    it('updates the state to failed setup, deletes funding info, and logs SetupFailed', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+
+      await testInstance.notifyFundingTimeout()
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.FAILED_SETUP))
+
+      eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not awaiting a funding proof', async () => {
+      try {
+          await testInstance.setState(utils.states.START)
+          await testInstance.notifyFundingTimeout()
+      } catch (e) {
+        assert.include(e.message, 'Funding timeout has not started')
+      }
+    })
+
+    it('reverts if the timeout has not elapsed', async () => {
+      try {
+        await testInstance.setKeepInfo(0, 0, requestedTime * 5, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.notifyFundingTimeout()
+      } catch (e) {
+        assert.include(e.message, 'Funding timeout has not elapsed')
+      }
+    })
+
+    it.skip('TODO: distributes the funder bond to the keep group')
   })
 
   describe('provideFundingECDSAFraudProof', async () => {
-    it.skip('is TODO', async () => {})
+    let timer
+    let requestedTime
+
+    before(async () => {
+      timer = await deployed.TBTCConstants.getFundingTimeout.call()
+    })
+
+    beforeEach(async () => {
+      let block = await web3.eth.getBlock("latest")
+      let blockTimestamp = block.timestamp
+      requestedTime = blockTimestamp - timer.toNumber() - 1  // has elapsed
+      await deployed.KeepStub.setSuccess(true)
+      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testInstance.setKeepInfo(0, 0, requestedTime, utils.bytes32zero, utils.bytes32zero)
+      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    it('updates to awaiting fraud funding proof and logs FraudDuringSetup if the timer has not elapsed', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+      await testInstance.setKeepInfo(0, 0, requestedTime * 5, utils.bytes32zero, utils.bytes32zero)  // timer has not elapsed
+      await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF))
+
+      res = await testInstance.getKeepInfo.call()
+      assert(res[2].gtn(requestedTime), 'fundingProofTimerStart did not increase')
+
+      eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('updates to failed, logs FraudDuringSetup, and burns value if the timer has elapsed', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+      await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.FAILED_SETUP))
+
+      eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not awaiting funding proof', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+      } catch (e) {
+        assert.include(e.message, 'Signer fraud during funding flow only available while awaiting funding')
+      }
+    })
+
+    it('reverts if the signature is not fraud', async () => {
+      try {
+        await deployed.KeepStub.setSuccess(false)
+        await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+      } catch (e) {
+        await deployed.KeepStub.setSuccess(true)
+        assert.include(e.message, 'Signature is not fraudulent')
+      }
+    })
+
+    it.skip('TODO: and returns the funder bond if the timer has not elapsed', async () => {})
+
   })
 
   describe('notifyFraudFundingTimeout', async () => {
-    it.skip('is TODO', async () => {})
+    let timer
+    let requestedTime
+
+    before(async () => {
+      timer = await deployed.TBTCConstants.getFraudFundingTimeout.call()
+    })
+
+    beforeEach(async () => {
+      let block = await web3.eth.getBlock("latest")
+      let blockTimestamp = block.timestamp
+      requestedTime = blockTimestamp - timer.toNumber() - 1  // timer has elapsed
+      await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
+      await testInstance.setKeepInfo(0, 0, requestedTime, utils.bytes32zero, utils.bytes32zero)
+      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    it('updates state to setup failed, logs SetupFailed, and deletes state', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+
+      await testInstance.notifyFraudFundingTimeout()
+
+      res = await testInstance.getKeepInfo.call()
+      assert(res[0].eqn(0), 'Keep id not deleted')
+      assert(res[1].eqn(0), 'signingGroupRequestedAt not deleted')
+      assert(res[2].eqn(0), 'fundingProofTimerStart not deleted')
+      assert.equal(res[3], utils.bytes32zero) // pubkey X
+      assert.equal(res[4], utils.bytes32zero) // pubkey Y
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.FAILED_SETUP))
+
+      eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not awaiting fraud funding proof', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.notifyFraudFundingTimeout()
+      } catch (e) {
+        assert.include(e.message, 'Not currently awaiting fraud-related funding proof')
+      }
+    })
+
+    it('reverts if the timer has not elapsed', async () => {
+      try {
+        await testInstance.setKeepInfo(0, 0, requestedTime * 5, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.notifyFraudFundingTimeout()
+      } catch (e) {
+        assert.include(e.message, 'Fraud funding proof timeout has not elapsed')
+      }
+    })
+
+    it.skip('TODO: assert that it partially slashes signers', async () => {})
   })
 
   describe('provideFraudBTCFundingProof', async () => {
-    it.skip('is TODO', async () => {})
+    // real tx from mainnet bitcoin, interpreted as funding tx
+    let currentDiff = 6353030562983
+    let txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
+    let txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
+    let tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
+    let proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
+    let index = 130
+    let headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
+    let outputValue = 490029088
+    let signerPubkeyX = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6e'
+    let signerPubkeyY = '0xe8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
+
+    beforeEach(async () => {
+      await testInstance.setKeepInfo(0, 0, 0, signerPubkeyX, signerPubkeyY)
+      await deployed.SystemStub.setCurrentDiff(currentDiff)
+      await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
+      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    it('updates to setup failed, logs SetupFailed, ', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+
+      await testInstance.provideFraudBTCFundingProof(tx, proof, index, headerChain)
+
+      res = await testInstance.getKeepInfo.call()
+      assert(res[0].eqn(0), 'Keep id not deleted')
+      assert(res[1].eqn(0), 'signingGroupRequestedAt not deleted')
+      assert(res[2].eqn(0), 'fundingProofTimerStart not deleted')
+      assert.equal(res[3], utils.bytes32zero) // pubkey X
+      assert.equal(res[4], utils.bytes32zero) // pubkey Y
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.FAILED_SETUP))
+
+      eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not awaiting a funding proof during setup fraud', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.provideFraudBTCFundingProof(tx, proof, index, headerChain)
+      } catch (e) {
+        assert.include(e.message, 'Not awaiting a funding proof during setup fraud')
+      }
+    })
+
+    it.skip('TODO: assert distribute signer bonds to funder', async () => {})
+
   })
 
   describe('provideBTCFundingProof', async () => {
-    it.skip('is TODO', async () => {})
+    // real tx from mainnet bitcoin, interpreted as funding tx
+    let currentDiff = 6353030562983
+    let txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
+    let txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
+    let tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
+    let proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
+    let index = 130
+    let headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
+    let outputValue = 490029088
+    let outputValueBytes = '0x2040351d00000000'
+    let signerPubkeyX = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6e'
+    let signerPubkeyY = '0xe8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
+
+    beforeEach(async () => {
+      await testInstance.setKeepInfo(0, 0, 0, signerPubkeyX, signerPubkeyY)
+      await deployed.SystemStub.setCurrentDiff(currentDiff)
+      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    it('updates to active, stores UTXO info, deletes funding info, logs Funded', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+
+      await testInstance.provideBTCFundingProof(tx, proof, index, headerChain)
+
+      res = await testInstance.getUTXOInfo.call()
+      assert.equal(res[0], outputValueBytes)
+      assert.equal(res[2], '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c00000000')
+
+      res = await testInstance.getKeepInfo.call()
+      assert(res[1].eqn(0), 'signingGroupRequestedAt not deleted')
+      assert(res[2].eqn(0), 'fundingProofTimerStart not deleted')
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.ACTIVE))
+
+      eventList = await deployed.SystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not awaiting funding proof', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.provideBTCFundingProof(tx, proof, index, headerChain)
+      } catch (e) {
+        assert.include(e.message, 'Not awaiting funding')
+      }
+    })
+
+    it.skip('TODO: returns funder bonds and mints tokens', async () => {})
+    it.skip('TODO: full test for validateAndParseFundingSPVProof', async () => {})
+
   })
 
-  describe('provideECDSAFraudProof', async () => {
+  describe.only('provideECDSAFraudProof', async () => {
     it.skip('is TODO', async () => {})
   })
 
