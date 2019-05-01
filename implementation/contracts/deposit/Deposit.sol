@@ -19,6 +19,13 @@ contract Deposit {
 
     function () public payable {}
 
+    /// @notice     Get the integer representing the current state
+    /// @dev        We implement this because contracts don't handle foreign enums well
+    /// @return     The 0-indexed state from the DepositStates enum
+    function getCurrentState() public view returns (uint256) {
+        return uint256(self.currentState);
+    }
+
     // THIS IS THE INIT FUNCTION
     /// @notice         The system can spin up a new deposit
     /// @dev            This should be called by an approved contract, not a developer
@@ -37,13 +44,6 @@ contract Deposit {
         self.KeepSystem = _KeepSystem;
         self.createNewDeposit(_m, _n);
         return true;
-    }
-
-    /// @notice     Get the integer representing the current state
-    /// @dev        We implement this because contracts don't handle foreign enums well
-    /// @return     The 0-indexed state from the DepositStates enum
-    function getCurrentState() public view returns (uint256) {
-        return uint256(self.currentState);
     }
 
     /// @notice                     Anyone can request redemption
@@ -118,10 +118,6 @@ contract Deposit {
         self.notifyRedemptionProofTimeout();
         return true;
     }
-
-
-
-
 
     //
     // FUNDING FLOW

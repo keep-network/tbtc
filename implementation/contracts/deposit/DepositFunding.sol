@@ -87,7 +87,7 @@ library DepositFunding {
     function returnFunderBond(DepositUtils.Deposit storage _d) public {
         if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
             _d.depositBeneficiary().transfer(TBTCConstants.getFunderBondAmount());
-        } else {
+        } else if (address(this).balance > 0) {
             _d.depositBeneficiary().transfer(address(this).balance);
         }
     }
@@ -197,7 +197,6 @@ library DepositFunding {
         require(block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFundingTimeout(),
                 'Funding timeout has not elapsed.');
         _d.setFailedSetup();
-
         _d.logSetupFailed();
 
         revokeFunderBond(_d);

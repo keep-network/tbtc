@@ -7,13 +7,24 @@ contract KeepStub {
     mapping (bytes32 => uint256) approved;
     bool success = true;
     uint256 bondAmount = 10000;
+    uint256 keepID = 7;
 
-    function setIsFraud(bool _success) public {
+    function () payable public {}
+
+    function setSuccess(bool _success) public {
         success = _success;
     }
 
     function setBondAmount(uint256 _bondAmount) public {
         bondAmount = _bondAmount;
+    }
+
+    function setKeepID(uint256 _id) public {
+        keepID = _id;
+    }
+
+    function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
+        approved[_digest] = _timestamp;
     }
 
     function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256) {
@@ -23,7 +34,7 @@ contract KeepStub {
 
     function approveDigest(uint256 _keepID, bytes32 _digest) external returns (bool _success) {
         _keepID;
-        approved[_digest] = block.timestamp;
+        approved[_digest] = 100;
         _success = success;
     }
 
@@ -39,24 +50,20 @@ contract KeepStub {
         _isFraud = success;
     }
 
-
     function distributeEthToKeepGroup(uint256 _keepID) external payable returns (bool) {
         _keepID;
         return success;
     }
-
 
     function distributeERC20ToKeepGroup(uint256 _keepID, address _asset, uint256 _value) external returns (bool) {
         _keepID; _asset; _value; success = success;
         return success;
     }
 
-
     function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (uint256 _keepID) {
         _m; _n;
-        return 7;
+        return keepID;
     }
-
 
     function getKeepPubkey(uint256 _keepID) external view returns (bytes) {
         _keepID; success;
@@ -70,9 +77,9 @@ contract KeepStub {
         return bondAmount;
     }
 
-
     function seizeSignerBonds(uint256 _keepID) external returns (bool) {
         _keepID; success = success;
+        msg.sender.transfer(address(this).balance);
         return true;
     }
 }
