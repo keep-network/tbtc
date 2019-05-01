@@ -339,8 +339,8 @@ contract('Deposit', accounts => {
 
     beforeEach(async () => {
       await deployed.SystemStub.setCurrentDiff(currentDiff)
-      await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
+      await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
     })
 
@@ -865,35 +865,414 @@ contract('Deposit', accounts => {
 
   })
 
-  describe.only('provideECDSAFraudProof', async () => {
-    it.skip('is TODO', async () => {})
+  describe('provideECDSAFraudProof', async () => {
+
+    beforeEach(async () => {
+      await testInstance.setState(utils.states.ACTIVE)
+      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    it('executes', async () => {
+      await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+    })
+
+    it('reverts if in the funding flow', async () => {
+      try {
+        await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+        await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+      } catch (e) {
+        assert.include(e.message, 'Use provideFundingECDSAFraudProof instead')
+      }
+    })
+
+    it('reverts if already in signer liquidation', async () => {
+      try {
+        await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
+        await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+      } catch (e) {
+        assert.include(e.message, 'Signer liquidation already in progress')
+      }
+    })
+
+    it('reverts if the contract has halted', async () => {
+      try {
+        await testInstance.setState(utils.states.REDEEMED)
+        await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+      } catch (e) {
+        assert.include(e.message, 'Contract has halted')
+      }
+    })
+
+    it('reverts if signature is not fraud according to Keep', async () => {
+      try {
+        await deployed.KeepStub.setSuccess(false)
+        await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
+      } catch (e) {
+        await deployed.KeepStub.setSuccess(true)
+        assert.include(e.message, 'Signature is not fraud')
+      }
+    })
+
+    it.skip('TODO: full test for startSignerFraudLiquidation', async () => {})
   })
 
   describe('provideSPVFraudProof', async () => {
-    it.skip('is TODO', async () => {})
+    // real tx from mainnet bitcoin
+    let currentDiff = 6353030562983
+    let txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
+    let txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
+    let tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
+    let proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
+    let index = 130
+    let headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
+    let outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
+    let prevoutValueBytes = '0xf078351d00000000'
+    let requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+
+    beforeEach(async () => {
+      await testInstance.setState(utils.states.ACTIVE)
+      await deployed.SystemStub.setCurrentDiff(currentDiff)
+      await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
+      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    it('executes', async () => {
+      await testInstance.provideSPVFraudProof(tx, proof, index, headerChain)
+    })
+
+    it('reverts if in the funding flow', async () => {
+      try {
+        await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+        await testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00')
+      } catch (e) {
+        assert.include(e.message, 'SPV Fraud proofs not valid before Active state')
+      }
+    })
+
+    it('reverts if already in signer liquidation', async () => {
+      try {
+        await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
+        await testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00')
+      } catch (e) {
+        assert.include(e.message, 'Signer liquidation already in progress')
+      }
+    })
+
+    it('reverts if the contract has halted', async () => {
+      try {
+        await testInstance.setState(utils.states.REDEEMED)
+        await testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00')
+      } catch (e) {
+        assert.include(e.message, 'Contract has halted')
+      }
+    })
+
+    it('reverts if it can\'t verify the Deposit UTXO was consumed', async () => {
+      try {
+        await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '00'.repeat(36))
+        await testInstance.provideSPVFraudProof(tx, proof, index, headerChain)
+      } catch (e) {
+        assert.include(e.message, 'No input spending custodied UTXO found')
+      }
+    })
+
+    it('reverts if it finds an output paying the redeemer', async () => {
+      try {
+        await testInstance.setRequestInfo(utils.address0, requesterPKH, 100, 0, utils.bytes32zero)
+        await testInstance.provideSPVFraudProof(tx, proof, index, headerChain)
+      } catch (e) {
+        assert.include(e.message, 'Found an output paying the redeemer as requested')
+      }
+    })
+
+    it.skip('TODO: full test for startSignerFraudLiquidation', async () => {})
   })
 
   describe('purchaseSignerBondsAtAuction', async () => {
-    it.skip('is TODO', async () => {})
+    beforeEach(async () => {
+      await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
+    })
+
+    it('sets state to liquidated, logs Liquidated, ', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+      await testInstance.purchaseSignerBondsAtAuction()
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.LIQUIDATED))
+
+      eventList = await deployed.SystemStub.getPastEvents('Liquidated', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not in a liquidation auction', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.purchaseSignerBondsAtAuction()
+      } catch (e) {
+        assert.include(e.message, 'No active auction')
+      }
+    })
+
+    it('reverts if TBTC balance is insufficient', async () => {
+      try {
+        await deployed.TBTCStub.setReturnUint(0)
+        await testInstance.purchaseSignerBondsAtAuction()
+      } catch (e) {
+        await deployed.TBTCStub.setReturnUint(new BN('1000000000000000000', 10))
+        assert.include(e.message, 'Not enough TBTC to cover outstanding debt')
+      }
+    })
+
+    it.skip('TODO; burns msg.sender\'s tokens', async () => {})
+    it.skip('TODO; distributes beneficiary reward', async () => {})
+    it.skip('TODO: distributes value to the caller', async () => {})
+    it.skip('TODO: returns keep funds if not fraud', async () => {})
+    it.skip('TODO: burns if fraud', async () => {})
   })
 
   describe('notifyCourtesyCall', async () => {
-    it.skip('is TODO', async () => {})
+
+    beforeEach(async () => {
+      await testInstance.setState(utils.states.ACTIVE)
+      await deployed.KeepStub.setBondAmount(0)
+    })
+
+    afterEach(async () => {
+      await deployed.KeepStub.setBondAmount(1000)
+      await deployed.SystemStub.setOraclePrice(new BN('1000000000000', 10))
+    })
+
+    it('sets courtesy call state, sets the timestamp, and logs CourtesyCalled', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+
+      await testInstance.notifyCourtesyCall()
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.COURTESY_CALL))
+
+      res = await testInstance.getLiqudationAndCoutesyInitiated.call()
+      assert(!res[1].eq(new BN(0)))
+
+      eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not in active state', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.notifyCourtesyCall()
+      } catch (e) {
+        assert.include(e.message, 'Can only courtesy call from active state')
+      }
+    })
+
+    it('reverts if sufficiently collateralized', async () => {
+      try {
+        await deployed.KeepStub.setBondAmount(1000)
+        await deployed.SystemStub.setOraclePrice(new BN(1))
+        await testInstance.notifyCourtesyCall()
+      } catch (e) {
+        assert.include(e.message, 'Signers have sufficient collateral')
+      }
+    })
   })
 
   describe('exitCourtesyCall', async () => {
-    it.skip('is TODO', async () => {})
+    let courtesyTimer
+    let depositExpiryTimer
+
+    before(async () => {
+      courtesyTimer = await deployed.TBTCConstants.getCourtesyCallTimeout.call()
+      depositExpiryTimer = await deployed.TBTCConstants.getDepositTerm.call()
+    })
+
+    beforeEach(async () => {
+      let block = await web3.eth.getBlock("latest")
+      let blockTimestamp = block.timestamp
+      notifiedTime = blockTimestamp // not expired
+      fundedTime = blockTimestamp   // not expired
+      await deployed.KeepStub.setBondAmount(new BN('1000000000000000000000000', 10))
+      await deployed.SystemStub.setOraclePrice(new BN('1', 10))
+      await testInstance.setState(utils.states.COURTESY_CALL)
+      await testInstance.setUTXOInfo('0x' + '00'.repeat(8), fundedTime, '0x' + '00'.repeat(36))
+      await testInstance.setLiquidationAndCourtesyInitated(0, notifiedTime)
+    })
+
+    afterEach(async () => {
+      await deployed.KeepStub.setBondAmount(1000)
+      await deployed.SystemStub.setOraclePrice(new BN('1000000000000', 10))
+    })
+
+    it('transitions to active, and logs ExitedCourtesyCall', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+
+      await testInstance.exitCourtesyCall()
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.ACTIVE))
+
+      eventList = await deployed.SystemStub.getPastEvents('ExitedCourtesyCall', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not in courtesy call state', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.exitCourtesyCall()
+      } catch (e) {
+        assert.include(e.message, 'Not currently in courtesy call')
+      }
+    })
+
+    it('reverts if the deposit term is expiring anyway', async () => {
+      try {
+        await testInstance.setUTXOInfo('0x' + '00'.repeat(8), 0, '0x' + '00'.repeat(36))
+        await testInstance.exitCourtesyCall()
+      } catch (e) {
+        assert.include(e.message, 'Deposit is expiring')
+      }
+    })
+
+    it('reverts if the deposit is still undercollateralized', async () => {
+      try {
+        await deployed.SystemStub.setOraclePrice(new BN('1000000000000', 10))
+        await deployed.KeepStub.setBondAmount(0)
+        await testInstance.exitCourtesyCall()
+      } catch (e) {
+        assert.include(e.message, 'Deposit is still undercollateralized')
+      }
+    })
   })
 
   describe('notifyUndercollateralizedLiquidation', async () => {
-    it.skip('is TODO', async () => {})
+
+    beforeEach(async () => {
+      await testInstance.setState(utils.states.ACTIVE)
+      await deployed.KeepStub.setBondAmount(0)
+      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    afterEach(async () => {
+      await deployed.KeepStub.setBondAmount(1000)
+      await deployed.SystemStub.setOraclePrice(new BN('1000000000000', 10))
+    })
+
+    it('executes', async () => {
+      await testInstance.notifyUndercollateralizedLiquidation()
+    })
+
+    it('reverts if not in active or courtesy call', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.notifyUndercollateralizedLiquidation()
+      } catch (e) {
+        assert.include(e.message, 'Deposit not in active or courtesy call')
+      }
+    })
+
+    it('reverts if the deposit is not severely undercollateralized', async () => {
+      try {
+        await deployed.KeepStub.setBondAmount(10000000)
+        await deployed.SystemStub.setOraclePrice(new BN(1))
+        await testInstance.notifyUndercollateralizedLiquidation()
+      } catch (e) {
+        assert.include(e.message, 'Deposit has sufficient collateral')
+      }
+    })
+
+    it.skip('TODO: assert starts signer abort liquidation', async () => {})
   })
 
   describe('notifyCourtesyTimeout', async () => {
-    it.skip('is TODO', async () => {})
+    let timer
+    let courtesyTime
+
+    before(async () => {
+      timer = await deployed.TBTCConstants.getCourtesyCallTimeout.call()
+    })
+
+    beforeEach(async () => {
+      let block = await web3.eth.getBlock("latest")
+      let blockTimestamp = block.timestamp
+      courtesyTime = blockTimestamp - timer.toNumber()  // has not expired
+      await testInstance.setState(utils.states.COURTESY_CALL)
+      await testInstance.setLiquidationAndCourtesyInitated(0, courtesyTime)
+      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    it('executes', async () => {
+      await testInstance.notifyCourtesyTimeout()
+    })
+
+    it('reverts if not in a courtesy call period', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.notifyCourtesyTimeout()
+      } catch (e) {
+        assert.include(e.message, 'Not in a courtesy call period')
+      }
+    })
+
+    it('reverts if the period has not elapsed', async () => {
+      try {
+        await testInstance.setLiquidationAndCourtesyInitated(0, courtesyTime * 5)
+        await testInstance.notifyCourtesyTimeout()
+      } catch (e) {
+        assert.include(e.message, 'Courtesy period has not elapsed')
+      }
+    })
+
+    it.skip('TODO: assert starts signer abort liquidation', async () => {})
+
   })
 
   describe('notifyDepositExpiryCourtesyCall', async () => {
-    it.skip('is TODO', async () => {})
+    let timer
+    let fundedTime
+
+    before(async () => {
+      timer = await deployed.TBTCConstants.getCourtesyCallTimeout.call()
+    })
+
+    beforeEach(async () => {
+      let block = await web3.eth.getBlock("latest")
+      let blockTimestamp = block.timestamp
+      fundedTime = blockTimestamp - timer.toNumber() - 1 // has expired
+      await testInstance.setState(utils.states.ACTIVE)
+      await testInstance.setUTXOInfo('0x' + '00'.repeat(8), 0, '0x' + '00'.repeat(36))
+    })
+
+    it('sets courtesy call state, stores the time, and logs CourtesyCalled', async () => {
+      let blockNumber = await web3.eth.getBlock("latest").number
+
+      await testInstance.notifyDepositExpiryCourtesyCall()
+
+      res = await testInstance.getState.call()
+      assert(res.eq(utils.states.COURTESY_CALL))
+
+      res = await testInstance.getLiqudationAndCoutesyInitiated.call()
+      assert(!res[1].eq(new BN(0)))
+
+      eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('reverts if not in active', async () => {
+      try {
+        await testInstance.setState(utils.states.START)
+        await testInstance.notifyDepositExpiryCourtesyCall()
+      } catch (e) {
+        assert.include(e.message, 'Deposit is not active')
+      }
+    })
+
+    it('reverts if deposit not yet expiring', async () => {
+      try {
+        await testInstance.setUTXOInfo('0x' + '00'.repeat(8), fundedTime * 5, '0x' + '00'.repeat(36))
+        await testInstance.notifyDepositExpiryCourtesyCall()
+      } catch (e) {
+        assert.include(e.message, 'Deposit term not elapsed')
+      }
+    })
   })
 })

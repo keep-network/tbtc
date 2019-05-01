@@ -258,7 +258,7 @@ contract('DepositUtils', accounts => {
   describe('depositBeneficiary()', async () => {
     it('calls out to the system', async () => {
       res = await testUtilsInstance.depositBeneficiary.call()
-      assert.equal(res, '0x' + '00'.repeat(19) + '07')
+      assert.equal(res, '0x' + '00'.repeat(19) + '00')
     })
   })
 
