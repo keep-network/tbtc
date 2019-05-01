@@ -2,9 +2,6 @@ pragma solidity 0.4.25;
 
 import {IKeep} from '../../../contracts/interfaces/IKeep.sol';
 
-pragma solidity 0.4.25;
-
-
 contract KeepStub {
 
     mapping (bytes32 => uint256) approved;

@@ -27,14 +27,15 @@ library DepositRedemption {
     using DepositUtils for DepositUtils.Deposit;
     using DepositStates for DepositUtils.Deposit;
     using DepositLiquidation for DepositUtils.Deposit;
+    using OutsourceDepositLogging for DepositUtils.Deposit;
 
     /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address
     /// @dev        Approves the keep contract, then expects it to call transferFrom
     function distributeSignerFee(DepositUtils.Deposit storage _d) public {
-        address _tbtcAddress = TBTCConstants.getTokenContractAddress();
+        address _tbtcAddress = _d.TBTCToken;
         IBurnableERC20 _tbtc = IBurnableERC20(_tbtcAddress);
 
-        address _keepAddress = TBTCConstants.getKeepContractAddress();
+        address _keepAddress = _d.KeepSystem;
         IKeep _keep = IKeep(_keepAddress);
 
         _tbtc.approve(_keepAddress, DepositUtils.signerFee());
@@ -46,7 +47,7 @@ library DepositRedemption {
     /// @param  _digest the digest to approve
     /// @return         true if approved, otherwise revert
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
-        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        IKeep _keep = IKeep(_d.KeepSystem);
         return _keep.approveDigest(_d.keepID, _digest);
     }
 
@@ -63,7 +64,7 @@ library DepositRedemption {
         require(_d.inRedeemableState(), 'Redemption only available from Active or Courtesy state');
 
         _d.setAwaitingWithdrawalSignature();
-        OutsourceDepositLogging.logRedemptionRequested(
+        _d.logRedemptionRequested(
             msg.sender,
             _sighash,
             _d.utxoSize(),
@@ -74,7 +75,7 @@ library DepositRedemption {
         // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
         // Requires user to approve first
         /* TODO: implement such that it calls the system to burn TBTC? */
-        IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
+        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
         require(_tbtc.balanceOf(msg.sender) >= _d.redemptionTBTCAmount(), 'Not enough TBTC to cover outstanding debt');
         _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
         _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee());
@@ -117,7 +118,7 @@ library DepositRedemption {
         require(_d.inAwaitingWithdrawalSignature(), 'Not currently awaiting a signature');
         // A signature has been provided, now we wait for fee bump or redemption
         _d.setAwaitingWithdrawalProof();
-        OutsourceDepositLogging.logGotRedemptionSignature(
+        _d.logGotRedemptionSignature(
             _d.lastRequestedDigest,
             _r,
             _s);
@@ -154,19 +155,7 @@ library DepositRedemption {
             return false;  // We return instead of reverting so that the above transition takes place
         }
 
-        // Calculate the previous one so we can check that it really is the previous one
-        bytes32 _previousSighash = CheckBitcoinSigs.oneInputOneOutputSighash(
-            _d.utxoOutpoint,
-            _d.signerPKH(),
-            _d.utxoSizeBytes,
-            _previousOutputValueBytes,
-            _d.requesterPKH);
-        require(_d.wasDigestApprovedForSigning(_previousSighash) == _d.withdrawalRequestTime, 'Provided previous value does not yield previous sighash');
-
-        // Check that we're incrementing the fee by exactly the requester's initial fee
-        uint256 _previousOutputValue = DepositUtils.bytes8LEToUint(_previousOutputValueBytes);
-        uint256 _newOutputValue = DepositUtils.bytes8LEToUint(_newOutputValueBytes);
-        require(_previousOutputValue.sub(_newOutputValue) == _d.initialRedemptionFee, 'Not an allowed fee step');
+        uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
 
         // Calculate the next sighash
         bytes32 _sighash = CheckBitcoinSigs.oneInputOneOutputSighash(
@@ -183,13 +172,34 @@ library DepositRedemption {
 
         // Go back to waiting for a signature
         _d.setAwaitingWithdrawalSignature();
-        OutsourceDepositLogging.logRedemptionRequested(
+        _d.logRedemptionRequested(
             msg.sender,
             _sighash,
             _d.utxoSize(),
             _d.requesterPKH,
             _d.utxoSize().sub(_newOutputValue),
             _d.utxoOutpoint);
+    }
+
+    function checkRelationshipToPrevious(
+        DepositUtils.Deposit storage _d,
+        bytes8 _previousOutputValueBytes,
+        bytes8 _newOutputValueBytes
+    ) public view returns (uint256 _newOutputValue){
+
+        // Check that we're incrementing the fee by exactly the requester's initial fee
+        uint256 _previousOutputValue = DepositUtils.bytes8LEToUint(_previousOutputValueBytes);
+        _newOutputValue = DepositUtils.bytes8LEToUint(_newOutputValueBytes);
+        require(_previousOutputValue.sub(_newOutputValue) == _d.initialRedemptionFee, 'Not an allowed fee step');
+
+        // Calculate the previous one so we can check that it really is the previous one
+        bytes32 _previousSighash = CheckBitcoinSigs.oneInputOneOutputSighash(
+            _d.utxoOutpoint,
+            _d.signerPKH(),
+            _d.utxoSizeBytes,
+            _previousOutputValueBytes,
+            _d.requesterPKH);
+        require(_d.wasDigestApprovedForSigning(_previousSighash) == _d.withdrawalRequestTime, 'Provided previous value does not yield previous sighash');
     }
 
     /// @notice                 Anyone may provide a withdrawal proof to prove redemption
@@ -219,7 +229,7 @@ library DepositRedemption {
                 _merkleProof,
                 _index),
             'Tx merkle proof is not valid for provided header');
-        DepositUtils.evaluateProofDifficulty(_bitcoinHeaders);
+        _d.evaluateProofDifficulty(_bitcoinHeaders);
 
         /* TODO: refactor redemption flow to improve this */
         require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, 'Fee unexpectedly very high');
@@ -228,12 +238,12 @@ library DepositRedemption {
         distributeSignerFee(_d);
 
         // Transfer withheld amount to beneficiary
-        DepositUtils.distributeBeneficiaryReward();
+        _d.distributeBeneficiaryReward();
 
         // We're done yey!
         _d.setRedeemed();
         _d.redemptionTeardown();
-        OutsourceDepositLogging.logRedeemed(_txid);
+        _d.logRedeemed(_txid);
     }
 
     function redemptionTransactionChecks(

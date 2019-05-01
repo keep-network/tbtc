@@ -16,6 +16,7 @@ library DepositLiquidation {
 
     using DepositUtils for DepositUtils.Deposit;
     using DepositStates for DepositUtils.Deposit;
+    using OutsourceDepositLogging for DepositUtils.Deposit;
 
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
@@ -39,7 +40,7 @@ library DepositLiquidation {
         bytes32 _signedDigest,
         bytes _preimage
     ) public returns (bool _isFraud) {
-        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        IKeep _keep = IKeep(_d.KeepSystem);
         return _keep.submitSignatureFraud(_d.keepID, _v, _r, _s, _signedDigest, _preimage);
     }
 
@@ -50,7 +51,7 @@ library DepositLiquidation {
     function getCollateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
 
         // Determine value of the lot in wei
-        uint256 _oraclePrice = DepositUtils.fetchOraclePrice();
+        uint256 _oraclePrice = _d.fetchOraclePrice();
         uint256 _lotSize = TBTCConstants.getLotSize();
         uint256 _lotValue = _lotSize * _oraclePrice;
 
@@ -65,7 +66,7 @@ library DepositLiquidation {
     /// @dev            We first attempt to liquidate on chain, then by auction
     /// @param  _d      deposit storage pointer
     function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) public {
-        OutsourceDepositLogging.logStartedLiquidation(true);
+        _d.logStartedLiquidation(true);
 
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
@@ -75,16 +76,16 @@ library DepositLiquidation {
             // we came from the redemption flow
             _d.setLiquidated();
             _d.requesterAddress.transfer(_seized);
-            OutsourceDepositLogging.logLiquidated();
+            _d.logLiquidated();
             return;
         }
 
         bool _liquidated = attemptToLiquidateOnchain();
 
         if (_liquidated) {
-            DepositUtils.distributeBeneficiaryReward();
+            _d.distributeBeneficiaryReward();
             _d.setLiquidated();
-            OutsourceDepositLogging.logLiquidated();
+            _d.logLiquidated();
             address(0).transfer(address(this).balance);  // burn it down
         }
         if (!_liquidated) {
@@ -97,7 +98,7 @@ library DepositLiquidation {
     /// @dev            We first attempt to liquidate on chain, then by auction
     /// @param  _d      deposit storage pointer
     function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
-        OutsourceDepositLogging.logStartedLiquidation(false);
+        _d.logStartedLiquidation(false);
 
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
@@ -106,10 +107,10 @@ library DepositLiquidation {
         bool _liquidated = attemptToLiquidateOnchain();
 
         if (_liquidated) {
-            DepositUtils.distributeBeneficiaryReward();
+            _d.distributeBeneficiaryReward();
             _d.pushFundsToKeepGroup(address(this).balance);
             _d.setLiquidated();
-            OutsourceDepositLogging.logLiquidated();
+            _d.logLiquidated();
         }
         if (!_liquidated) {
             _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
@@ -165,7 +166,7 @@ library DepositLiquidation {
         require(!_d.inSignerLiquidation(),
                 'Signer liquidation already in progress');
 
-        DepositUtils.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        _d.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         for (i = 0; i < _bitcoinTx.extractNumInputs(); i++) {
             _input = _bitcoinTx.extractInputAtIndex(i);
             if (keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint)) {
@@ -195,10 +196,10 @@ library DepositLiquidation {
         require(_d.inSignerLiquidation(), 'No active auction');
 
         _d.setLiquidated();
-        OutsourceDepositLogging.logLiquidated();
+        _d.logLiquidated();
 
         // Burn the outstanding TBTC
-        IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
+        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
         require(_tbtc.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), 'Not enough TBTC to cover outstanding debt');
         _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
 
@@ -207,7 +208,7 @@ library DepositLiquidation {
         msg.sender.transfer(_valueToDistribute);
 
         // Send any TBTC left to the beneficiary
-        DepositUtils.distributeBeneficiaryReward();
+        _d.distributeBeneficiaryReward();
 
         // then if there are funds left, and it wasn't fraud, pay out the signers
         if (address(this).balance > 0) {
@@ -229,7 +230,7 @@ library DepositLiquidation {
         require(getCollateralizationPercentage(_d) < TBTCConstants.getUndercollateralizedPercent());
         _d.courtesyCallInitiated = block.timestamp;
         _d.setCourtesyCall();
-        OutsourceDepositLogging.logCourtesyCalled();
+        _d.logCourtesyCalled();
     }
 
     /// @notice     Goes from courtesy call to active
@@ -240,7 +241,7 @@ library DepositLiquidation {
         require(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm(), 'Deposit is expiring');
         require(!(getCollateralizationPercentage(_d) < TBTCConstants.getSeverelyUndercollateralizedPercent()), 'Deposit is still undercollateralized');
         _d.setActive();
-        OutsourceDepositLogging.logExitedCourtesyCall();
+        _d.logExitedCourtesyCall();
     }
 
     /// @notice     Notify the contract that the signers are undercollateralized
@@ -268,7 +269,7 @@ library DepositLiquidation {
         require(_d.inActive(), 'Deposit is not active');
         require(block.timestamp >= _d.fundedAt + TBTCConstants.getDepositTerm(), 'Deposit term not elapsed');
         _d.setCourtesyCall();
-        OutsourceDepositLogging.logCourtesyCalled();
+        _d.logCourtesyCalled();
         _d.courtesyCallInitiated = block.timestamp;
     }
 }

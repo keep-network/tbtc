@@ -11,8 +11,12 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
+const KeepStub = artifacts.require('KeepStub')
+const TBTCStub = artifacts.require('TBTCStub')
+const SystemStub = artifacts.require('SystemStub')
+
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
-const TestDeposit = artifacts.require('TestDeposit')
+const TestDepositUtils = artifacts.require('TestDepositUtils')
 
 const utils = require('./utils')
 
@@ -29,14 +33,32 @@ STANDARD_DEPLOY = [
   {name: 'DepositFunding', contract: DepositFunding},
   {name: 'DepositRedemption', contract: DepositRedemption},
   {name: 'DepositLiquidation', contract: DepositLiquidation},
-  {name: 'TestDeposit', contract: TestDeposit}]
+  {name: 'TestDepositUtils', contract: TestDepositUtils},
+  {name: 'KeepStub', contract: KeepStub},
+  {name: 'TBTCStub', contract: TBTCStub},
+  {name: 'SystemStub', contract: SystemStub}]
 
 
-contract('Deposit', accounts => {
+contract.only('DepositUtils', accounts => {
 
-  describe('deployment', async () => {
-    it('deploys', async () => {
+  let deployed
+  let testUtilsInstance
+
+  before(async () => {
       deployed = await utils.deploySystem(STANDARD_DEPLOY)
+      testUtilsInstance = deployed.TestDepositUtils
+
+      await testUtilsInstance.createNewDeposit(
+        deployed.SystemStub.address,
+        deployed.TBTCStub.address,
+        deployed.KeepStub.address,
+        1,  //m
+        1)  //n
+  })
+
+  describe('evaluateProofDifficulty', async () => {
+    it('exists', async () => {
+      
     })
   })
 })

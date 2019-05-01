@@ -20,6 +20,7 @@ library DepositFunding {
     using DepositUtils for DepositUtils.Deposit;
     using DepositStates for DepositUtils.Deposit;
     using DepositLiquidation for DepositUtils.Deposit;
+    using OutsourceDepositLogging for DepositUtils.Deposit;
 
     /// @notice     Deletes state after funding
     /// @dev        This is called when we go to ACTIVE or setup fails without fraud
@@ -41,7 +42,7 @@ library DepositFunding {
     /// @dev            calls out to the keep contract, should get 64 bytes back
     /// @return         the 64 byte pubkey
     function getKeepPubkeyResult(DepositUtils.Deposit storage _d) public view returns (bytes) {
-        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        IKeep _keep = IKeep(_d.KeepSystem);
         bytes memory _pubkey = _keep.getKeepPubkey(_d.keepID);
         require(_pubkey.length == 64);
         return _pubkey;
@@ -59,15 +60,14 @@ library DepositFunding {
         uint256 _n
     ) public returns (bool) {
         require(_d.inStart(), 'Deposit setup already requested');
-        require(DepositUtils.isTBTCSystemContract(msg.sender), 'Calling account not allowed to create deposits');
 
-        IKeep _keep = IKeep(TBTCConstants.getKeepContractAddress());
+        IKeep _keep = IKeep(_d.KeepSystem);
 
         _d.keepID = _keep.requestKeepGroup.value(msg.value)(_m, _n);  // kinda gross but
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
-        OutsourceDepositLogging.logCreated(_d.keepID);
+        _d.logCreated(_d.keepID);
 
         return true;
     }
@@ -84,11 +84,11 @@ library DepositFunding {
 
     /// @notice     Returns the funder's bond plus a payment at contract teardown
     /// @dev        Returns the balance if insufficient. Always call this before distributing signer payments
-    function returnFunderBond() public {
+    function returnFunderBond(DepositUtils.Deposit storage _d) public {
         if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
-            DepositUtils.depositBeneficiary().transfer(TBTCConstants.getFunderBondAmount());
+            _d.depositBeneficiary().transfer(TBTCConstants.getFunderBondAmount());
         } else {
-            DepositUtils.depositBeneficiary().transfer(address(this).balance);
+            _d.depositBeneficiary().transfer(address(this).balance);
         }
     }
 
@@ -98,14 +98,14 @@ library DepositFunding {
         uint256 _seized = _d.seizeSignerBonds();
         uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
         _d.pushFundsToKeepGroup(_seized.sub(_slash));
-        DepositUtils.depositBeneficiary().transfer(_slash);
+        _d.depositBeneficiary().transfer(_slash);
     }
 
     /// @notice     Seizes signer bonds and distributes them to the funder
     /// @dev        This is only called as part of funding fraud flow
     function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) public {
         uint256 _seized = _d.seizeSignerBonds();
-        DepositUtils.depositBeneficiary().transfer(_seized);  // Transfer whole amount
+        _d.depositBeneficiary().transfer(_seized);  // Transfer whole amount
     }
 
     /// @notice                 Parses a bitcoin tx to find an output paying the signing group PKH
@@ -148,7 +148,7 @@ library DepositFunding {
         bytes _bitcoinHeaders
     ) public view returns (bytes8 _valueBytes, bytes _outpoint) {
         uint8 _outputIndex;
-        bytes32 _txid = DepositUtils.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        bytes32 _txid = _d.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         (_valueBytes, _outputIndex) = findAndParseFundingOutput(_d, _bitcoinTx);
 
         // Don't validate deposits under the lot size
@@ -168,9 +168,9 @@ library DepositFunding {
         require(block.timestamp > _d.signingGroupRequestedAt + TBTCConstants.getSigningGroupFormationTimeout(),
                 'Signing group formation timeout not yet elapsed');
         _d.setFailedSetup();
-        OutsourceDepositLogging.logSetupFailed();
+        _d.logSetupFailed();
 
-        returnFunderBond();
+        returnFunderBond(_d);
         fundingTeardown(_d);
     }
 
@@ -185,7 +185,7 @@ library DepositFunding {
         _d.signingGroupPubkeyY = _keepResult.slice(32, 32).toBytes32();
         _d.fundingProofTimerStart = block.timestamp;
 
-        OutsourceDepositLogging.logRegisteredPubkey(
+        _d.logRegisteredPubkey(
             _d.signingGroupPubkeyX,
             _d.signingGroupPubkeyY);
     }
@@ -198,7 +198,7 @@ library DepositFunding {
                 'Funding timeout has not elapsed.');
         _d.setFailedSetup();
 
-        OutsourceDepositLogging.logSetupFailed();
+        _d.logSetupFailed();
 
         revokeFunderBond(_d);
         fundingTeardown(_d);
@@ -223,7 +223,7 @@ library DepositFunding {
     ) public {
         require(_d.inAwaitingBTCFundingProof(),
                 'Signer fraud during funding flow only available while awaiting funding');
-        OutsourceDepositLogging.logFraudDuringSetup();
+        _d.logFraudDuringSetup();
 
         bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         require(_isFraud, 'Signature is not valid');
@@ -238,7 +238,7 @@ library DepositFunding {
             /* NB: This is reuse of the variable */
             _d.fundingProofTimerStart = block.timestamp;
             _d.setFraudAwaitingBTCFundingProof();
-            returnFunderBond();
+            returnFunderBond(_d);
         }
     }
 
@@ -251,7 +251,7 @@ library DepositFunding {
         require(block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFraudFundingTimeout(),
                 'Fraud funding proof timeout has not elapsed');
         _d.setFailedSetup();
-        OutsourceDepositLogging.logSetupFailed();
+        _d.logSetupFailed();
 
         partiallySlashForFraudInFunding(_d);
         fundingFraudTeardown(_d);
@@ -276,7 +276,7 @@ library DepositFunding {
         bytes8 _valueBytes;
         bytes memory _outpoint;
         require(_d.inFraudAwaitingBTCFundingProof(), 'Not awaiting a funding proof during setup fraud');
-        OutsourceDepositLogging.logSetupFailed();
+        _d.logSetupFailed();
 
         (_valueBytes, _outpoint) = validateAndParseFundingSPVProof(_d, _bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
 
@@ -322,12 +322,12 @@ library DepositFunding {
         _d.utxoOutpoint = _outpoint;
         fundingTeardown(_d);
         _d.setActive();
-        OutsourceDepositLogging.logFunded();
+        _d.logFunded();
 
         // Mint 95% of the deposit size
-        IBurnableERC20 _tbtc = IBurnableERC20(TBTCConstants.getTokenContractAddress());
+        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
         uint256 _value = TBTCConstants.getLotSize();
-        _tbtc.mint(DepositUtils.depositBeneficiary(), _value.mul(95).div(100));
+        _tbtc.mint(_d.depositBeneficiary(), _value.mul(95).div(100));
 
         return true;
     }

@@ -7,17 +7,25 @@ contract TestDepositUtils is TestDeposit {
 
     // Passthroughs to test view and pure functions
 
+    function currentBlockDifficulty() public view returns (uint256) {
+        return self.currentBlockDifficulty();
+    }
+
+    function previousBlockDifficulty() public view returns (uint256) {
+        return self.previousBlockDifficulty();
+    }
+
+    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
+        return self.evaluateProofDifficulty(_bitcoinHeaders);
+    }
+
     function checkProof(
         bytes _bitcoinTx,
         bytes _merkleProof,
         uint256 _index,
         bytes _bitcoinHeaders
     ) public view returns (bytes32) {
-        return DepositUtils.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
-    }
-
-    function isTBTCSystemContract(address _caller) public pure returns (bool) {
-        return DepositUtils.isTBTCSystemContract(_caller);
+        return self.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
     }
 
     function auctionValue() public view returns (uint256) {
@@ -61,7 +69,7 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function fetchOraclePrice() public view returns (uint256) {
-        return DepositUtils.fetchOraclePrice();
+        return self.fetchOraclePrice();
     }
 
     function fetchBondAmount() public view returns (uint256) {
@@ -76,20 +84,8 @@ contract TestDepositUtils is TestDeposit {
         return self.wasDigestApprovedForSigning(_digest);
     }
 
-    function currentBlockDifficulty() public view returns (uint256) {
-        return DepositUtils.currentBlockDifficulty();
-    }
-
-    function previousBlockDifficulty() public view returns (uint256) {
-        return DepositUtils.previousBlockDifficulty();
-    }
-
-    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
-        return DepositUtils.evaluateProofDifficulty(_bitcoinHeaders);
-    }
-
     function depositBeneficiary() public view returns (address) {
-        return DepositUtils.depositBeneficiary();
+        return self.depositBeneficiary();
     }
 
     function redemptionTeardown() public {
@@ -101,12 +97,10 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function distributeBeneficiaryReward() public {
-        return DepositUtils.distributeBeneficiaryReward();
+        return self.distributeBeneficiaryReward();
     }
 
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
     }
-
-
 }
