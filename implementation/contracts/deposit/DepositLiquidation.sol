@@ -21,7 +21,9 @@ library DepositLiquidation {
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
-    function attemptToLiquidateOnchain() public returns (bool) { /* TODO */ }
+    function attemptToLiquidateOnchain() public pure returns (bool) { 
+        return false;
+     }
 
     /// @notice                 Notifies the keep contract of fraud
     /// @dev                    Calls out to the keep contract. this could get expensive if preimage is large
@@ -107,7 +109,6 @@ library DepositLiquidation {
     /// @param  _d      deposit storage pointer
     function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
         _d.logStartedLiquidation(false);
-
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
         _d.seizeSignerBonds();
