@@ -1,5 +1,6 @@
 :toc: macro
 :toclevels: 4
+:title-page:
 :tbtc:
 
 // Blank root prefix since this is the root doc.
