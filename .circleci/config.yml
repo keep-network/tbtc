@@ -13,7 +13,7 @@ jobs:
             name: Running testrpc
             command: ganache-cli
             background: true
-        - run: cd contracts/solidity && npm install && npm run test
+        - run: cd implementation/contracts && npm install && npm run test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
