@@ -1,0 +1,40 @@
+:toc: macro
+
+= RFC 1: Keep Network Interface
+
+:icons: font
+:numbered:
+toc::[]
+
+
+== Proposal
+
+This document specifies how tBTC application integrates with Keep Network.
+
+=== Terminology
+
+a keep:: A keep is a smart contract.
+
+sMPC cluster:: A keep can have off-chain clients executing work for a keep. All 
+               the off-chain clients serving keeps form together sMPC cluster. 
+               sMPC cluster observes state of keeps and reacts appropriately. 
+               A keep does not directly talk to the cluster.
+
+Keep Network:: Keep Network consists of all keeps and sMPC cluster.
+
+KEEP:: KEEP is ERC20 token staked by Keep Network operators.
+
+Keep Core:: Keep Core consist of a set of on-chain contracts and off-chain  
+            client providing the functionality of Random Beacon
+            and KEEP token along with all stake management interfaces.
+
+tBTC:: tBTC is the first application written on a top of Keep Network. It 
+       provides a decentralized, redeemable, BTC-based ERC-20 token along with 
+       all mechanisms needed to satisfy all crypto-economy model requirements. 
+
+tECDSA:: Threshold Elliptic Curve Digital Signature Algorithm. 
+
+Bond:: Bond is a security instrument preventing network operators to collude 
+       to censor withdrawals or abscond with funds.
+
+
