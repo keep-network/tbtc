@@ -114,7 +114,7 @@ contract BondedTECDSAKeepRegistry is ECDSAKeepRegistry {
     function openNewKeep(
         uint256 threshold, 
         uint256 groupSize,
-        uint256 bond, 
+        Bond bond, 
         address owner
     ) returns (address) {
         address keep = new ECDSAKeep(
@@ -164,7 +164,7 @@ contract KeepRegistry {
     function openBondedECDSAKeep(
         uint256 threshold, 
         uint256 groupSize, 
-        uint256 bond
+        Bond bond
     ) returns (address) {
         keep = BondedTECDSAKeepRegistry(_bondedTECDSAKeepRegistry).openNewKeep(
             threshold,
