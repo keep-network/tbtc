@@ -71,6 +71,8 @@ keeps. sMPC cluster clients working with ECDSA keeps observe ECDSA keep registry
 for all new ECDSA keeps created. Registry is responsible for group selection 
 using the random beacon.
 
+===== Pseudocode
+
 ```
 contract ECDSAKeepRegistry {
     address[] internal _keeps;
@@ -109,6 +111,8 @@ factory creates and destroys keeps and is responsible for maintaining the list
 of all active keeps. Bonded ECDSA keep has extra bonding logic over a vanilla 
 ECDSA keep. Registry is responsible for group selection using the random beacon.
 
+===== Pseudocode
+
 ```
 contract BondedTECDSAKeepRegistry is ECDSAKeepRegistry {
     function openNewKeep(
@@ -142,6 +146,8 @@ registry specifies what are the sanctioned types of keep factories and is an
 upgrade mechanism for the entire system. tBTC interacts with Keep registry to 
 open a keep. The registry returns a brand new instance of the requested type of 
 a keep. All sanctioned keep factories need to be registered in Keep registry.
+
+===== Pseudocode
 
 ```
 contract tBTC {
