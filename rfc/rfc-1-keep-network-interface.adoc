@@ -38,3 +38,22 @@ Bond:: Bond is a security instrument preventing network operators to collude
        to censor withdrawals or abscond with funds.
 
 
+=== Goal
+The goal of this proposal is to specify the interface between the tBTC 
+application and keeps on a top of which the application is built. This proposal specifies mechanism of creating and registering keeps.
+
+==== sMPC cluster requirements
+
+Each off-chain client of sMPC cluster should be a separate process. Keep Core 
+client should be a separate client than Keep tECDSA client:
+```
+./keep-core
+./keep-tecdsa 
+```
+
+Each staker is required to run Keep Core client. Running Keep tECDSA client is optional.
+
+==== Bonding requirement
+
+tBTC application requires a bond to be provided by signers. Stakers who want to participate in signing need to opt-in and provide the required bond. A bond can 
+be provided in ETH or tBTC.
