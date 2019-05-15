@@ -14,7 +14,7 @@ jobs:
             command: ganache-cli
             background: true
         - run: cd contracts/solidity && npm install && npm run test
-  generate_pngs:git status
+  generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
     steps:
