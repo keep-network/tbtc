@@ -40,7 +40,8 @@ Bond:: Bond is a security instrument preventing network operators to collude
 
 === Goal
 The goal of this proposal is to specify the interface between the tBTC 
-application and keeps on a top of which the application is built. This proposal specifies mechanism of creating and registering keeps.
+application and keeps on a top of which the application is built. This proposal 
+specifies mechanism of creating and registering keeps.
 
 ==== sMPC cluster requirements
 
@@ -51,9 +52,130 @@ client should be a separate client than Keep tECDSA client:
 ./keep-tecdsa 
 ```
 
-Each staker is required to run Keep Core client. Running Keep tECDSA client is optional.
+Each staker is required to run Keep Core client. Running Keep tECDSA client is 
+optional.
 
 ==== Bonding requirement
 
-tBTC application requires a bond to be provided by signers. Stakers who want to participate in signing need to opt-in and provide the required bond. A bond can 
+tBTC application requires a bond to be provided by signers. Stakers who want to 
+participate in signing need to opt-in and provide the required bond. A bond can 
 be provided in ETH or tBTC.
+
+=== Implementation
+
+==== ECDSA keep registry
+
+ECDSA keep registry is an on-chain factory of ECDSA keeps. The factory creates 
+and destroys keeps and is responsible for maintaining the list of all active 
+keeps. sMPC cluster clients working with ECDSA keeps observe ECDSA keep registry 
+for all new ECDSA keeps created. Registry is responsible for group selection 
+using the random beacon.
+
+```
+contract ECDSAKeepRegistry {
+    address[] internal _keeps;
+
+    function openNewKeep(
+        uint256 threshold, 
+        uint256 groupSize, 
+        address owner
+    ) returns (address) {
+        address keep = new ECDSAKeep(
+            selectGroup(threshold, groupSize), 
+            owner
+        );
+
+        _keeps.push(keep);
+        return keep;
+    }
+
+    // (...)
+}
+
+contract ECDSAKeep {
+    // (...)
+
+    function sign() { 
+        require(msg.sender == _owner, "Only keep owner can ask to sign");
+        // (...)
+    }
+}
+```
+
+==== Bonded ECDSA keep registry
+
+Bonded ECDSA keep registry is an on-chain factory of Bonded ECDSA keeps. The 
+factory creates and destroys keeps and is responsible for maintaining the list 
+of all active keeps. Bonded ECDSA keep has extra bonding logic over a vanilla 
+ECDSA keep. Registry is responsible for group selection using the random beacon.
+
+```
+contract BondedTECDSAKeepRegistry is ECDSAKeepRegistry {
+    function openNewKeep(
+        uint256 threshold, 
+        uint256 groupSize,
+        uint256 bond, 
+        address owner
+    ) returns (address) {
+        address keep = new ECDSAKeep(
+            selectGroup(threshold, groupSize, bond), 
+            owner
+        );
+        
+        _keeps.push(keep);
+        return keep;
+    }
+
+    // (...)
+}
+
+contract BondedECDSAKeep is ECDSAKeep {
+    // (...)
+}
+```
+
+
+==== Keep registry
+
+Keep registry is an interface for tBTC to interact with Keep Network. Keep 
+registry specifies what are the sanctioned types of keep factories and is an 
+upgrade mechanism for the entire system. tBTC interacts with Keep registry to 
+open a keep. The registry returns a brand new instance of the requested type of 
+a keep. All sanctioned keep factories need to be registered in Keep registry.
+
+```
+contract tBTC {
+    address internal _keepRegistry;
+
+    function openDeposit() {
+        address keep = KeepRegistry(_keepRegistry).openBondedECDSAKeep(
+            threshold, 
+            groupSize, 
+            bond
+        );
+
+        // (...)
+    }
+}
+
+contract KeepRegistry {
+    address internal _bondedTECDSAKeepRegistry;    
+
+    function openBondedECDSAKeep(
+        uint256 threshold, 
+        uint256 groupSize, 
+        uint256 bond
+    ) returns (address) {
+        keep = BondedTECDSAKeepRegistry(_bondedTECDSAKeepRegistry).openNewKeep(
+            threshold,
+            groupSize,
+            bond
+            msg.sender,
+        );
+
+        return address(keep);
+    }
+
+    // (...)
+}
+```
