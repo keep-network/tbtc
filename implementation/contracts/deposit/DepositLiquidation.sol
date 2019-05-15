@@ -21,7 +21,9 @@ library DepositLiquidation {
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
-    function attemptToLiquidateOnchain() public returns (bool) { /* TODO */ }
+    function attemptToLiquidateOnchain() public pure returns (bool) { 
+        return false;
+     }
 
     /// @notice                 Notifies the keep contract of fraud
     /// @dev                    Calls out to the keep contract. this could get expensive if preimage is large
@@ -52,6 +54,14 @@ library DepositLiquidation {
 
         // Determine value of the lot in wei
         uint256 _oraclePrice = _d.fetchOraclePrice();
+        if (_oraclePrice == 0 || _oraclePrice > 10 ** 18) {
+            /*
+              This is if a sat is worth 0 wei, or is worth 1 ether
+              TODO: what should this behavior be?
+            */
+            revert('Oracle returned a bad price');
+        }
+
         uint256 _lotSize = TBTCConstants.getLotSize();
         uint256 _lotValue = _lotSize * _oraclePrice;
 
@@ -99,7 +109,6 @@ library DepositLiquidation {
     /// @param  _d      deposit storage pointer
     function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
         _d.logStartedLiquidation(false);
-
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
         _d.seizeSignerBonds();
@@ -138,7 +147,8 @@ library DepositLiquidation {
                 'Use provideFundingECDSAFraudProof instead');
         require(!_d.inSignerLiquidation(),
                 'Signer liquidation already in progress');
-        require(submitSignatureFraud(_d, _v, _r, _s, _signedDigest, _preimage));
+        require(!_d.inEndState(), 'Contract has halted');
+        require(submitSignatureFraud(_d, _v, _r, _s, _signedDigest, _preimage), 'Signature is not fraud');
         startSignerFraudLiquidation(_d);
     }
 
@@ -165,6 +175,7 @@ library DepositLiquidation {
                 'SPV Fraud proofs not valid before Active state.');
         require(!_d.inSignerLiquidation(),
                 'Signer liquidation already in progress');
+        require(!_d.inEndState(), 'Contract has halted');
 
         _d.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         for (i = 0; i < _bitcoinTx.extractNumInputs(); i++) {
@@ -226,8 +237,8 @@ library DepositLiquidation {
     /// @dev        Calls out to the system for oracle info
     /// @param  _d  deposit storage pointer
     function notifyCourtesyCall(DepositUtils.Deposit storage _d) public  {
-        require(_d.inActive());
-        require(getCollateralizationPercentage(_d) < TBTCConstants.getUndercollateralizedPercent());
+        require(_d.inActive(), 'Can only courtesy call from active state');
+        require(getCollateralizationPercentage(_d) < TBTCConstants.getUndercollateralizedPercent(), 'Signers have sufficient collateral');
         _d.courtesyCallInitiated = block.timestamp;
         _d.setCourtesyCall();
         _d.logCourtesyCalled();
@@ -238,8 +249,8 @@ library DepositLiquidation {
     /// @param  _d  deposit storage pointer
     function exitCourtesyCall(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), 'Not currently in courtesy call');
-        require(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm(), 'Deposit is expiring');
-        require(!(getCollateralizationPercentage(_d) < TBTCConstants.getSeverelyUndercollateralizedPercent()), 'Deposit is still undercollateralized');
+        require(block.timestamp <= _d.fundedAt + TBTCConstants.getDepositTerm(), 'Deposit is expiring');
+        require(getCollateralizationPercentage(_d) >= TBTCConstants.getUndercollateralizedPercent(), 'Deposit is still undercollateralized');
         _d.setActive();
         _d.logExitedCourtesyCall();
     }

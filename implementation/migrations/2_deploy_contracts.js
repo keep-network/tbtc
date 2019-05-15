@@ -18,7 +18,7 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
              OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
              DepositFunding, DepositRedemption, DepositLiquidation, Deposit]
 
-module.exports = (deployer, network) => {
+module.exports = (deployer) => {
   deployer.then(async () => {
     await deployer.deploy(BytesLib)
 

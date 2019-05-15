@@ -24,7 +24,7 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
 
     // 721
     function balanceOf(address owner) public view returns (uint256 balance) {owner; balance = 0;}
-    function ownerOf(uint256 tokenId) public view returns (address owner) {tokenId; owner = address(7);}
+    function ownerOf(uint256 tokenId) public view returns (address owner) {tokenId; owner = address(0);}
     function approve(address to, uint256 tokenId) public {to; tokenId;}
     function getApproved(uint256 tokenId) public view returns (address operator) {tokenId; operator = address(8);}
     function setApprovalForAll(address operator, bool _approved) public {operator; _approved;}

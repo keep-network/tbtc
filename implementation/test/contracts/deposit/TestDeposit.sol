@@ -99,4 +99,8 @@ contract TestDeposit is Deposit {
     function redemptionTransactionChecks(bytes _bitcoinTx) public view returns (bytes32, uint256) {
         return self.redemptionTransactionChecks(_bitcoinTx);
     }
+
+    function getWithdrawalRequestTime() public view returns(uint256){
+        return self.withdrawalRequestTime;
+    }
 }
