@@ -1,6 +1,10 @@
 version: 2
+executors:
+  docker-node:
+    docker:
+      - image: circleci/node:11
 jobs:
-test_solidity:
+  test_solidity:
     executor: docker-node
     steps:
         - checkout
@@ -10,7 +14,7 @@ test_solidity:
             command: ganache-cli
             background: true
         - run: cd contracts/solidity && npm install && npm run test
-  generate_pngs:
+  generate_pngs:git status
     docker:
       - image: keepnetwork/texlive:15
     steps:
