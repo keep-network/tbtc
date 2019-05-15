@@ -121,7 +121,7 @@ contract BondedTECDSAKeepRegistry is ECDSAKeepRegistry {
             selectGroup(threshold, groupSize, bond), 
             owner
         );
-        
+
         _keeps.push(keep);
         return keep;
     }
@@ -179,3 +179,9 @@ contract KeepRegistry {
     // (...)
 }
 ```
+
+[bibliography]
+== Related Links
+
+- Discussions on writing this document:
+https://github.com/keep-network/tbtc/issues/109
