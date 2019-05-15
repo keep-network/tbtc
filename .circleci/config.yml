@@ -1,5 +1,15 @@
 version: 2
 jobs:
+test_solidity:
+    executor: docker-node
+    steps:
+        - checkout
+        - run: sudo npm install -g ganache-cli@6.4.2
+        - run:
+            name: Running testrpc
+            command: ganache-cli
+            background: true
+        - run: cd contracts/solidity && npm install && npm run test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -63,6 +73,9 @@ jobs:
 
 workflows:
   version: 2
+  solidity:
+    jobs:
+      - test_solidity
   docs:
     jobs:
       - generate_pngs
