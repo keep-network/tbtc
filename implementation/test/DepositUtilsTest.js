@@ -293,7 +293,20 @@ contract('DepositUtils', accounts => {
   })
 
   describe('distributeBeneficiaryReward()', async () => {
-    it.skip('is TODO')
+    it('checks that beneficiary is rewarded', async () => {
+
+      let beneficiary = accounts[5];
+      let returned = await deployed.TBTCStub.balanceOf.call(accounts[0]);
+      let initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
+      await deployed.SystemStub.setOwner(beneficiary);
+
+      await testUtilsInstance.distributeBeneficiaryReward()
+  
+      let finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
+      let tokenCheck = new BN(initialTokenBalance).add( new BN(returned));
+  
+      assert.equal(finalTokenBalance.toString(), tokenCheck.toString(), "tokens not returned to beneficiary correctly")
+    })
   })
 
   describe('pushFundsToKeepGroup()', async () => {
