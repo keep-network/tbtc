@@ -9,10 +9,12 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
     uint256 current = 1;
     uint256 past = 1;
     uint256 oraclePrice = 10 ** 12;
+    address _owner = address(0);
 
     function setOraclePrice(uint256 _oraclePrice) external {oraclePrice = _oraclePrice;}
     function setCurrentDiff(uint256 _current) external {current = _current;}
     function setPreviousDiff(uint256 _past) external {past = _past;}
+    function setOwner(address owner) external {_owner = owner;}
 
     // override parent
     function approvedToLog(address _caller) public view returns (bool) {_caller; return true;}
@@ -24,7 +26,7 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
 
     // 721
     function balanceOf(address owner) public view returns (uint256 balance) {owner; balance = 0;}
-    function ownerOf(uint256 tokenId) public view returns (address owner) {tokenId; owner = address(0);}
+    function ownerOf(uint256 tokenId) public view returns (address owner) {tokenId; owner = _owner;}
     function approve(address to, uint256 tokenId) public {to; tokenId;}
     function getApproved(uint256 tokenId) public view returns (address operator) {tokenId; operator = address(8);}
     function setApprovalForAll(address operator, bool _approved) public {operator; _approved;}
