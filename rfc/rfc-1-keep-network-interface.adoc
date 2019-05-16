@@ -165,7 +165,9 @@ contract Application {
         // (...)
     }
 }
+```
 
+```
 contract KeepRegistry {
     address internal _bondedTECDSAKeepFactory;    
 
