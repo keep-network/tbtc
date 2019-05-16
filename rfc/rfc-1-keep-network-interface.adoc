@@ -9,7 +9,7 @@ toc::[]
 
 == Proposal
 
-This document specifies how tBTC application integrates with Keep Network.
+This document specifies how applications integrate with Keep Network.
 
 === Terminology
 
@@ -25,23 +25,24 @@ Keep Network:: Keep Network consists of all keeps and sMPC cluster.
 KEEP:: KEEP is ERC20 token staked by Keep Network operators.
 
 Keep Core:: Keep Core consist of a set of on-chain contracts and off-chain  
-            client providing the functionality of Random Beacon
+            client providing the functionality of random beacon
             and KEEP token along with all stake management interfaces.
 
-tBTC:: tBTC is the first application written on a top of Keep Network. It 
-       provides a decentralized, redeemable, BTC-based ERC-20 token along with 
-       all mechanisms needed to satisfy all crypto-economy model requirements. 
+Application:: Application is an external smart contract or a set of smart  
+              contracts utilizing functionalities offered by Keep Network.
 
 tECDSA:: Threshold Elliptic Curve Digital Signature Algorithm. 
 
 Bond:: Bond is a security instrument preventing network operators to collude 
-       to censor withdrawals or abscond with funds.
+       and act against agreed rules, for example to censor withdrawals or 
+       abscond with funds.
 
 
 === Goal
-The goal of this proposal is to specify the interface between the tBTC 
-application and keeps on a top of which the application is built. This proposal 
-specifies mechanism of creating and registering keeps.
+The goal of this proposal is to specify the interface between  application and 
+keeps on a top of which the application is built. This proposal specifies 
+mechanism of creating and registering keeps. This proposal introduces two types
+of keeps: tECDSA keep and Bonded tECDSA keep.
 
 ==== sMPC cluster requirements
 
@@ -57,9 +58,9 @@ optional.
 
 ==== Bonding requirement
 
-tBTC application requires a bond to be provided by signers. Stakers who want to 
+Some applications requires a bond to be provided by signers. Stakers who want to 
 participate in signing need to opt-in and provide the required bond. A bond can 
-be provided in ETH or tBTC.
+be provided in ETH or ERC-20 token specific to the application.
 
 === Implementation
 
@@ -141,16 +142,16 @@ contract BondedECDSAKeep is ECDSAKeep {
 
 ==== Keep registry
 
-Keep registry is an interface for tBTC to interact with Keep Network. Keep 
+Keep registry is an interface for application to interact with Keep Network. Keep 
 registry specifies what are the sanctioned types of keep factories and is an 
-upgrade mechanism for the entire system. tBTC interacts with Keep registry to 
+upgrade mechanism for the entire system. Application interacts with Keep registry to 
 open a keep. The registry returns a brand new instance of the requested type of 
 a keep. All sanctioned keep factories need to be registered in Keep registry.
 
 ===== Pseudocode
 
 ```
-contract tBTC {
+contract Application {
     address internal _keepRegistry;
 
     function openDeposit() {
