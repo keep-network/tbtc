@@ -20,7 +20,8 @@ sMPC cluster:: A keep can have off-chain clients executing work for a keep. All
                sMPC cluster observes state of keeps and reacts appropriately. 
                A keep does not directly talk to the cluster.
 
-Keep Network:: Keep Network consists of all keeps and sMPC cluster.
+Keep Network:: Keep Network consists of all keeps, stakers, random beacon and 
+               sMPC cluster.
 
 KEEP:: KEEP is ERC20 token staked by Keep Network operators.
 
