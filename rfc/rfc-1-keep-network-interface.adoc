@@ -64,9 +64,9 @@ be provided in ETH or ERC-20 token specific to the application.
 
 === Implementation
 
-==== ECDSA keep registry
+==== ECDSA keep factory
 
-ECDSA keep registry is an on-chain factory of ECDSA keeps. The factory creates 
+ECDSA keep factory is an on-chain factory of ECDSA keeps. The factory creates 
 and destroys keeps and is responsible for maintaining the list of all active 
 keeps. sMPC cluster clients working with ECDSA keeps observe ECDSA keep registry 
 for all new ECDSA keeps created. Registry is responsible for group selection 
@@ -75,7 +75,7 @@ using the random beacon.
 ===== Pseudocode
 
 ```
-contract ECDSAKeepRegistry {
+contract ECDSAKeepFactory {
     address[] internal _keeps;
 
     function openNewKeep(
@@ -105,9 +105,9 @@ contract ECDSAKeep {
 }
 ```
 
-==== Bonded ECDSA keep registry
+==== Bonded ECDSA keep factory
 
-Bonded ECDSA keep registry is an on-chain factory of Bonded ECDSA keeps. The 
+Bonded ECDSA keep factory is an on-chain factory of Bonded ECDSA keeps. The 
 factory creates and destroys keeps and is responsible for maintaining the list 
 of all active keeps. Bonded ECDSA keep has extra bonding logic over a vanilla 
 ECDSA keep. Registry is responsible for group selection using the random beacon.
@@ -115,7 +115,7 @@ ECDSA keep. Registry is responsible for group selection using the random beacon.
 ===== Pseudocode
 
 ```
-contract BondedTECDSAKeepRegistry is ECDSAKeepRegistry {
+contract BondedTECDSAKeepFactory is ECDSAKeepFactory {
     function openNewKeep(
         uint256 threshold, 
         uint256 groupSize,
@@ -166,14 +166,14 @@ contract Application {
 }
 
 contract KeepRegistry {
-    address internal _bondedTECDSAKeepRegistry;    
+    address internal _bondedTECDSAKeepFactory;    
 
     function openBondedECDSAKeep(
         uint256 threshold, 
         uint256 groupSize, 
         Bond bond
     ) returns (address) {
-        keep = BondedTECDSAKeepRegistry(_bondedTECDSAKeepRegistry).openNewKeep(
+        keep = BondedTECDSAKeepFactory(_bondedTECDSAKeepFactory).openNewKeep(
             threshold,
             groupSize,
             bond
