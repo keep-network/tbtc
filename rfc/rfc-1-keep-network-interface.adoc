@@ -23,7 +23,8 @@ sMPC cluster:: A keep can have off-chain clients executing work for a keep. All
 Keep Network:: Keep Network consists of all keeps, stakers, random beacon and 
                sMPC cluster.
 
-KEEP:: KEEP is ERC20 token staked by Keep Network operators.
+KEEP:: KEEP is ERC20 token used as a stake which minimum amount is a permit 
+       for operator to join KeepNetwork.
 
 Keep Core:: Keep Core consist of a set of on-chain contracts and off-chain  
             client providing the functionality of random beacon
@@ -54,7 +55,7 @@ client should be a separate client than Keep tECDSA client:
 ./keep-tecdsa 
 ```
 
-Each staker is required to run Keep Core client. Running Keep tECDSA client is 
+Each operator is required to run Keep Core client. Running Keep tECDSA client is 
 optional.
 
 ==== Bonding requirement
