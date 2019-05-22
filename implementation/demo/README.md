@@ -28,12 +28,17 @@ ganache-cli
 
 1. Update `config.toml` with `ECDSAKeepFactory` contract address.
 
-1. Build keep client:
+1. Run code generation:
+   ```sh
+   go generate ./...
+   ```
+
+2. Build keep client:
    ```sh
    cd ../ && go build -a -o keep-tecdsa .
    ```
 
-1. Run keep client:
+3. Run keep client:
    ```sh
    ./keep-tecdsa start
    ```
