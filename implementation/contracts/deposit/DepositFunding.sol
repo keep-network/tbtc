@@ -43,7 +43,7 @@ library DepositFunding {
     /// @dev            calls out to the keep contract, should get 64 bytes back
     /// @return         the 64 byte pubkey
     function getKeepPubkeyResult(DepositUtils.Deposit storage _d) public view returns (bytes) {
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         bytes memory _pubkey = _keep.getKeepPubkey(_d.keepID);
         require(_pubkey.length == 64);
         return _pubkey;
@@ -62,7 +62,7 @@ library DepositFunding {
     ) public returns (bool) {
         require(_d.inStart(), 'Deposit setup already requested');
 
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
 
         _d.keepID = _keep.requestKeepGroup.value(msg.value)(_m, _n);  // kinda gross but
         _d.signingGroupRequestedAt = block.timestamp;

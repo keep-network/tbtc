@@ -35,10 +35,9 @@ library DepositRedemption {
         address _tbtcAddress = _d.TBTCToken;
         IBurnableERC20 _tbtc = IBurnableERC20(_tbtcAddress);
 
-        address _keepAddress = _d.KeepSystem;
-        IKeep _keep = IKeep(_keepAddress);
+        IKeep _keep = IKeep(_d.KeepBridge);
 
-        _tbtc.approve(_keepAddress, DepositUtils.signerFee());
+        _tbtc.approve(_d.KeepBridge, DepositUtils.signerFee());
         _keep.distributeERC20ToKeepGroup(_d.keepID, _tbtcAddress, DepositUtils.signerFee());
     }
 
@@ -47,7 +46,7 @@ library DepositRedemption {
     /// @param  _digest the digest to approve
     /// @return         true if approved, otherwise revert
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         return _keep.approveDigest(_d.keepID, _digest);
     }
 

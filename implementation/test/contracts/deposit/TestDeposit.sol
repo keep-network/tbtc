@@ -10,7 +10,7 @@ contract TestDeposit is Deposit {
         address _k
     ) public {
         self.TBTCSystem = _sys;
-        self.KeepSystem = _k;
+        self.KeepBridge = _k;
         self.TBTCToken = _token;
     }
 

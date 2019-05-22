@@ -42,7 +42,7 @@ library DepositLiquidation {
         bytes32 _signedDigest,
         bytes _preimage
     ) public returns (bool _isFraud) {
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         return _keep.submitSignatureFraud(_d.keepID, _v, _r, _s, _signedDigest, _preimage);
     }
 
