@@ -14,9 +14,11 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const Deposit = artifacts.require('Deposit')
 
+const KeepBridge = artifacts.require('KeepBridge')
+
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
-             OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
-             DepositFunding, DepositRedemption, DepositLiquidation, Deposit]
+  OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
+  DepositFunding, DepositRedemption, DepositLiquidation, Deposit, KeepBridge]
 
 module.exports = (deployer) => {
   deployer.then(async () => {
@@ -49,6 +51,9 @@ module.exports = (deployer) => {
 
     await deployer.link(DepositFunding, all)
     await deployer.link(DepositRedemption, all)
+
     await deployer.deploy(Deposit)
+
+    await deployer.deploy(KeepBridge)
   })
 }
