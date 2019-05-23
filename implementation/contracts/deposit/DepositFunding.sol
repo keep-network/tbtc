@@ -69,7 +69,7 @@ library DepositFunding {
 
         _d.setAwaitingSignerSetup();
         // TODO: turned off temporairly - it fails
-        // _d.logCreated(_d.keepID);
+        _d.logCreated(_d.keepID);
 
         return true;
     }
