@@ -8,7 +8,7 @@ possible via today's Bitcoin network, while bringing superior money to other
 chains.
 
 This is the primary repo of the project, containing the
-[project documentation](index.adoc) and majority of the [on-chain code](src/).
+[project documentation](index.adoc) and majority of the [on-chain code](implementation/).
 
 ## Building
 
