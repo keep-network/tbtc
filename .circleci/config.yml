@@ -35,7 +35,7 @@ jobs:
             name: Running testrpc
             command: ganache-cli
             background: true
-        - run: cd implementation/contracts && npm install && npm run setup && npm run test    
+        - run: cd implementation/contracts && npm install && npm run setup && npm run test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -44,13 +44,13 @@ jobs:
       - run:
           name: Generate TeX-based PNGs
           command: |
-            mkdir -p /tmp/docs/img
-            make pngs
-            cp -r img/generated /tmp/docs/img/generated
+            mkdir -p /tmp/docs/docs/img
+            cd docs && make pngs && cd ..
+            cp -r docs/img/generated /tmp/docs/docs/img/generated
       - persist_to_workspace:
           root: /tmp/docs
           paths:
-            - img/generated/*.png
+            - docs/img/generated/*.png
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:15
@@ -60,8 +60,8 @@ jobs:
           name: Generate TeX Document Files
           command: |
             mkdir -p /tmp/docs
-            make build.pdf
-            cp *.pdf /tmp/docs
+            cd docs && make build.pdf && cd ..
+            cp docs/*.pdf /tmp/docs
       - persist_to_workspace:
           root: /tmp/docs
           paths:
@@ -78,6 +78,7 @@ jobs:
           command: |
             set -ex
             shopt -s extglob globstar nullglob
+            cd docs
             asciidoctor -a revdate=`date +%Y-%m-%d` --failure-level=ERROR *.adoc **/*.adoc
             for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
             set -x
