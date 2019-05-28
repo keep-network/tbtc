@@ -6,26 +6,26 @@ import {DepositLog} from '../../contracts/DepositLog.sol';
 
 contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
 
-    uint256 currentDifficulty = 1;
-    uint256 previousDifficulty = 1;
-    uint256 oraclePrice = 10 ** 12;
-    address depositOwner = address(0);
+    uint256 _currentDifficulty = 1;
+    uint256 _previousDifficulty = 1;
+    uint256 _oraclePrice = 10 ** 12;
+    address _depositOwner = address(0);
 
     // DepositLog
     // Override parent function until authorization is available
-    function approvedToLog(address _caller) public view returns (bool) {_caller; return true;}
+    function approvedToLog(address caller) public view returns (bool) {caller; return true;}
 
     // TBTCSystem
-    function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
-    function fetchRelayCurrentDifficulty() external view returns (uint256) {return currentDifficulty;}
-    function fetchRelayPreviousDifficulty() external view returns (uint256) {return previousDifficulty;}
+    function fetchOraclePrice() external view returns (uint256) {return _oraclePrice;}
+    function fetchRelayCurrentDifficulty() external view returns (uint256) {return _currentDifficulty;}
+    function fetchRelayPreviousDifficulty() external view returns (uint256) {return _previousDifficulty;}
 
     // ERC721
     function balanceOf(address owner) public view returns (uint256 balance) {owner; balance = 0;}
-    function ownerOf(uint256 tokenId) public view returns (address owner) {tokenId; owner = depositOwner;}
+    function ownerOf(uint256 tokenId) public view returns (address owner) {tokenId; owner = _depositOwner;}
     function approve(address to, uint256 tokenId) public {to; tokenId;}
     function getApproved(uint256 tokenId) public view returns (address operator) {tokenId; operator = address(8);}
-    function setApprovalForAll(address operator, bool _approved) public {operator; _approved;}
+    function setApprovalForAll(address operator, bool approved) public {operator; approved;}
     function isApprovedForAll(address owner, address operator) public view returns (bool) {owner; operator;}
     function transferFrom(address from, address to, uint256 tokenId) public {from; to; tokenId;}
     function safeTransferFrom(address from, address to, uint256 tokenId) public {from; to; tokenId;}
