@@ -1,8 +1,8 @@
-SHELL = /bin/bash 
+SHELL = /bin/bash
 
 generated_img_dir=img/generated
 
-tikz_files := $(filter-out img-src/_%,$(wildcard img-src/*.tikz))
+tikz_files := $(filter-out docs/img-src/_%,$(wildcard docs/img-src/*.tikz))
 
 tikz_pngs := $(foreach file, $(tikz_files), $(generated_img_dir)/$(notdir $(basename $(file))).png)
 
@@ -11,11 +11,11 @@ tikz_pngs := $(foreach file, $(tikz_files), $(generated_img_dir)/$(notdir $(base
 clean:
 	shopt -s nullglob; \
 	rm -f build.tex *.aux *.log *.gz *.pdf *.ps *.dvi *.out *.fls *.fdb_latexmk \
-		img-src/*.aux img-src/*.log img-src/*.gz img-src/*.pdf img-src/*.ps \
-		img-src/*.dvi img-src/*.out img-src/*.fls img-src/*.fdb_latexmk; \
+		docs/img-src/*.aux docs/img-src/*.log docs/img-src/*.gz docs/img-src/*.pdf docs/img-src/*.ps \
+		docs/img-src/*.dvi docs/img-src/*.out docs/img-src/*.fls docs/img-src/*.fdb_latexmk; \
 	rm -rf img/generated
 
-$(tikz_pngs): img/generated/%.png: img-src/%.tikz
+$(tikz_pngs): img/generated/%.png: docs/img-src/%.tikz
 	bash scripts/generate-pngs.sh /tmp/png-generate img/generated $< $(basename $(*F))
 
 pngs: $(tikz_pngs)
