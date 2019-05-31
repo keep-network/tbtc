@@ -1,27 +1,47 @@
-import expectThrow from './helpers/expectThrow';
-
 const PriceOracleV1 = artifacts.require('PriceOracleV1')
 
+import expectThrow from './helpers/expectThrow';
+const BN = require('bn.js')
+
 contract('PriceOracleV1', function () {
-    describe("#constructor", async () => {
+
+    // 1 wei = 1 satoshi
+    const DEFAULT_PRICE = new BN(1);
+
+    describe("#constructor", () => {
         it('deploys', async () => {
             let instance = await PriceOracleV1.deployed()
         })
     })
 
-    describe("Methods", async () => {
-        let instance;
+    describe("Methods", () => {
 
-        beforeEach(async () => {
-            instance = await PriceOracleV1.deployed()
-        })
+        describe("#getPrice", () => {
+            it('returns a default price', async () => {
+                let instance = await PriceOracleV1.deployed(
+                    DEFAULT_PRICE
+                )
 
-        describe("#getPrice", async () => {
-            it('passes', () => {})
+                let res = await instance.getPrice.call()
+                assert(res.eq(DEFAULT_PRICE))
+            })
         })
     
-        describe("#updatePrice", async () => {
-            it('passes', () => {})            
+        describe("#updatePrice", () => {
+            it('sets new price', async () => {
+                const NEW_PRICE = new BN(2)
+
+                let instance = await PriceOracleV1.deployed(
+                    DEFAULT_PRICE
+                )
+
+                await instance.updatePrice(2)
+
+                let res = await instance.getPrice.call()
+                assert(res.eq(NEW_PRICE))
+            })
+
+            
         })
     })
 })
