@@ -4,10 +4,10 @@ import {IBurnableERC20} from '../interfaces/IBurnableERC20.sol';
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 
 /**
- * @title ERC20 interface
- * @dev see https://eips.ethereum.org/EIPS/eip-20
+ * @title ERC20 implementation
+ * @dev This is the TBTC token contract.
  */
-contract IBurnableERC20Stub is IBurnableERC20 {
+contract TBTCToken is IBurnableERC20 {
 
     using SafeMath for uint256;
 
@@ -68,7 +68,7 @@ contract IBurnableERC20Stub is IBurnableERC20 {
         _balances[account] = _balances[account].add(amount);
         emit Transfer(address(0), account, amount);
     }
-
+ 
     function _burn(address account, uint256 value) internal {
         require(account != address(0), "ERC20: burn from the zero address");
 
