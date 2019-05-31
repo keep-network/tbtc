@@ -78,5 +78,5 @@ interface KeepRegistryContract {
     function createECDSAKeep(
         uint256 _groupSize,
         uint256 _honestThreshold
-    ) public payable returns (address keep);
+    ) external payable returns (address keep);
 }
