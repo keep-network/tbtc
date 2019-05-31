@@ -1,7 +1,8 @@
 var Deposit = artifacts.require("./Deposit.sol");
 var KeepMediator = artifacts.require("./KeepBridge.sol");
 
-const keepRegistry = "0x41649ff7E9E4512fbe8b42A51d73f33377D012c5"; // KeepRegistry contract address
+const keepRegistry = "0xc84Ba13B9a6f3506557dF7A78A9a63d87e1f1FcC"; // KeepRegistry contract address
+const TBTCSystem = "0x3790354Be419094B6af6c80b1dB6521c82B75192"; //TBTC System contract address
 
 module.exports = async function () {
     let deposit = await Deposit.deployed();
@@ -20,7 +21,7 @@ module.exports = async function () {
     async function createNewDeposit() {
         console.log('Call createNewDeposit');
         let result = await deposit.createNewDeposit(
-            "0x0000000000000000000000000000000000000000", // address _TBTCSystem,
+            TBTCSystem, // address _TBTCSystem,
             "0x0000000000000000000000000000000000000000", // address _TBTCToken,
             keepBridge.address, // address _KeepBridge,
             5, // uint256 _m,

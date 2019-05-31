@@ -68,8 +68,7 @@ library DepositFunding {
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
-        // TODO: turned off temporairly - it fails
-        // _d.logCreated(_d.keepID);
+        _d.logCreated(_d.keepID);
 
         return true;
     }
