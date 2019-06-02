@@ -1,12 +1,16 @@
 pragma solidity 0.4.25;
 
 import "../interfaces/IPriceOracle.sol";
+// import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 
 /**
  * The price oracle implements a simple price feed, managed
  * by a trusted operator.
  */
 contract PriceOracleV1 is IPriceOracle {
+    using SafeMath for uint128;
+
     // Price of BTC expressed in ETH, denominated in weis to satoshis.
     // A bitcoin has 8 decimal places, the smallest unit a satoshi,
     // meaning 100 000 000 satoshis = 1 bitcoin
@@ -23,6 +27,8 @@ contract PriceOracleV1 is IPriceOracle {
     // 38 decimal places should be enough... :)
     uint128 private price;
 
+    event PriceUpdated(uint128 price);
+
     constructor(uint128 _defaultPrice) public {
         price = _defaultPrice;
     }
@@ -31,7 +37,16 @@ contract PriceOracleV1 is IPriceOracle {
         return price;
     }
 
-    function updatePrice(uint128 _price) public {
-        price = _price;
+    function updatePrice(uint128 _newPrice) external {
+        // abs(1 - (p1 / p0)) > 0.01
+        // p0 * 0.01 = minimum delta
+        // 1% = 0.01 = 1/100
+        uint256 minDelta = price.div(100);
+        uint256 delta = _newPrice > price 
+                        ? _newPrice.sub(price)
+                        : price.sub(_newPrice);
+        require(delta > minDelta, "Price change is negligible (>1%)");
+        price = _newPrice;
+        emit PriceUpdated(price);
     }
 }
