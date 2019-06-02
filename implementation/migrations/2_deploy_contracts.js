@@ -54,6 +54,6 @@ module.exports = (deployer) => {
     await deployer.link(DepositRedemption, all)
     await deployer.deploy(Deposit)
 
-    await deployer.deploy(PriceOracle)
+    await deployer.deploy(PriceOracle, '3232000000000')
   })
 }

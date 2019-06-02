@@ -18,7 +18,7 @@ contract('PriceOracleV1', function () {
 
         describe("#getPrice", () => {
             it('returns a default price', async () => {
-                let instance = await PriceOracleV1.deployed(
+                let instance = await PriceOracleV1.new(
                     DEFAULT_PRICE
                 )
 
@@ -31,7 +31,7 @@ contract('PriceOracleV1', function () {
             it('sets new price', async () => {
                 const NEW_PRICE = new BN(2)
 
-                let instance = await PriceOracleV1.deployed(
+                let instance = await PriceOracleV1.new(
                     DEFAULT_PRICE
                 )
 
