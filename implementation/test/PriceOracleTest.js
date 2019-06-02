@@ -41,7 +41,16 @@ contract('PriceOracleV1', function () {
                 assert(res.eq(NEW_PRICE))
             })
 
-            
+            it('fails when price delta < 1%', async () => {
+                const price1 = new BN('1000000')
+                const price2 = new BN('1000001')
+
+                let instance = await PriceOracleV1.new(
+                    price1
+                )
+
+                await expectThrow(instance.updatePrice(price2))
+            })
         })
     })
 })
