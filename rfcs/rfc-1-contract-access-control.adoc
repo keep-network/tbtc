@@ -1,0 +1,97 @@
+:toc: macro
+
+= RFC 1: Access Control architecture for contracts
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+The price oracle requires an access control / permissions architecture. A simple bespoke design would be to write a `trustedOperator` member, in turn with some condition on `updatePrice` like `require(msg.sender == trustedOperator, "unauthorised");`. However, access control is also needed elsewhere in the project - for example, link:https://github.com/keep-network/keep-core/blob/master/docs/rfc/rfc-9-upgradeable-contract-components.adoc[upgradeability of smart contract components]. It would be wise to adopt a standard architectural design for access control:
+
+ - Solidity is a well-known liability for developing secure code.
+ - Using design patterns reduces complexity and increases understanding/collaboration.
+ - Smart contracts are notoriously difficult to architect and compose (even link:https://blog.zeppelin.solutions/technical-description-of-makerdao-governance-critical-vulnerability-facce6bf5d5e[MakerDAO fails]) - enforcing a design that requires **explicit authorisation by default** helps mitigate the effects of Solidity being ultimately, message-passing implemented in C. ;)
+ - Naming roles separate from actors in the system, allows us to reason and discuss more clearly (again, good design).
+
+=== Current Functionality
+
+There is nothing in tbtc master. In keep-core's link:https://github.com/keep-network/keep-core/blob/master/contracts/solidity/contracts/KeepGroupImplV1.sol[KeepGroupImplV1] and keep-ecdsa's ECDSAKeep, we have some loose notions of roles and access control
+
+```sol
+/**
+     * @dev Checks if submitter is eligible to submit.
+     * @param submitterMemberIndex The claimed index of the submitter.
+     */
+    modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
+        uint256[] memory selected = selectedTickets();
+        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+        require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
+        uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
+        require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
+        _;
+    }
+```
+
+```sol
+function runGroupSelection(uint256 newEntry, uint256 requestId, uint256 seed) public {
+        require(msg.sender == _randomBeacon);
+```
+
+```sol
+/// @notice Calculates a signature over provided digest by the keep.
+/// @dev TODO: Access control.
+/// @param _digest Digest to be signed.
+function sign(bytes memory _digest) public {
+    require(msg.sender == owner, "Only keep owner can ask to sign");
+    emit SignatureRequested(_digest);
+}
+```
+
+Conceptually, there is little wrong with both of these implementations. `onlyEligibleSubmitter` is only used in one method, so it would be more confusing to separate the role of "submitter" from the condition of "eligibility". Likewise, `runGroupSelection` is performing a very simple check - but it still would be good to separate auth from business logic.
+
+However, if you were asked to name all of the roles/controls in the Keep system, could you? Now the lack of a standard arch becomes 1) a tech debt, 2) a communication overhead and 3) a security liability.
+
+== Proposal
+
+
+
+=== Goal
+
+
+
+=== Implementation
+
+How will we achieve it? Examples of how the implementation will be used could be
+useful. Flow diagrams can also be useful here. If an RFC is meant to define
+requirements rather than implementation, this section can be left for a future
+RFC.
+
+=== Limitations
+
+What are the limitations of this approach?
+
+=== Proof of Concept
+
+If you have PoC code, refer to the relevant branch and give a brief summary.
+
+== Future Work (optional)
+
+If applicable, what future evolutions could you see this approach leading to?
+Particularly if these possibilities influenced your thinking about the main
+proposal, this is important.
+
+== Open Questions (optional)
+
+If any open questions are left that you haven't yet investigated, what are they?
+
+[bibliography]
+== Related Links
+
+- Flowdock Links
+- Other links
+- If you have publications, you can include them in bibliography style. If you
+  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
+  you can reference it in the content body using regular cross-reference syntax
+  (e.g. `+<<AAKE>>+`).
