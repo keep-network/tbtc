@@ -55,36 +55,48 @@ However, if you were asked to name all of the roles/controls in the Keep system,
 
 == Proposal
 
+Implement access control through the battle-tested MakerDAO Dappsys libraries.
 
+=== Goals
 
-=== Goal
-
-
+Define roles and access control explicitly, and enforce strong security by default.
 
 === Implementation
 
-How will we achieve it? Examples of how the implementation will be used could be
-useful. Flow diagrams can also be useful here. If an RFC is meant to define
-requirements rather than implementation, this section can be left for a future
-RFC.
+OpenZeppelin contracts have historically been of average quality. I did some brief exploration into MakerDAO's Dappsys libraries, which are top-notch and simple to use.
+
+The Dappsys (DS) contracts include link:https://dapp.tools/dappsys/ds-auth.html[DSAuth], link:https://dapp.tools/dappsys/ds-guard.html[DSGuard] and link:https://dapp.tools/dappsys/ds-roles.html[DSRoles].
+
+ - there is a single function modifier called `auth` which performs ACL
+ - `auth` calls into the `DSAuthority`, which performs auth based on the return value of `function canCall(address src, address dst, bytes4 sig) public view returns (bool);`
+ - intuitively, the creator/owner of the contract is by default entitled to call any functions
+ - likewise, the contract itself can call any functions on itself
+ - we can call `setAuthority` on any contract to effectively inject the authorisation system into it. This is great for depedency inversion and works well without breaking all existing test cases.
+ - there are two implementations of a DSAuthority, which differ on their granularity of control.
+ - the simpler version is `DSGuard`, which provides address-level access control on contract functions
+ - the more powerful version is `DSRoles`, which provides 3 different levels of control to contract functions - root user (all access), public capability (any user all access), role capability
 
 === Limitations
 
-What are the limitations of this approach?
+ - DSRoles need to be manually set. They cannot be dynamically computed (ie. submitter "eligibility" would be a separate function). **However**, compared with OpenZep's contracts - the DS contracts are *nano*-sized and ready for simple extension.
 
 === Proof of Concept
 
-If you have PoC code, refer to the relevant branch and give a brief summary.
+link:https://github.com/keep-network/tbtc/compare/minimal-price-oracle...dappsys-integration-truffle[dappsys-integration-truffle] features some preliminary investigation, only for the PriceOracle.
+
+ - `TBTC` will own the DSAuthority
+ - on setup, it injects the DSAuthority into all child system components (oracle, etc)
+ - there is a simple example with DSGuard
+ - there is a simple example with DSRoles
 
 == Future Work (optional)
-
-If applicable, what future evolutions could you see this approach leading to?
-Particularly if these possibilities influenced your thinking about the main
-proposal, this is important.
+ 
+ - link:https://dapp.tools/dappsys/ds-proxy.html[DSProxy] is another simple "proxy". It could be a useful primitive for upgradeable contracts, deserving further investigation.
+ - link:https://dapp.tools/dappsys/ds-stop.html[DSAuth] is a very simple emergency failure switch.
 
 == Open Questions (optional)
 
-If any open questions are left that you haven't yet investigated, what are they?
+ - what are our complete list of roles in tbtc?
 
 [bibliography]
 == Related Links
