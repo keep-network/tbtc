@@ -21,22 +21,22 @@ There is nothing in tbtc master. In keep-core's link:https://github.com/keep-net
 
 ```sol
 /**
-     * @dev Checks if submitter is eligible to submit.
-     * @param submitterMemberIndex The claimed index of the submitter.
-     */
-    modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
-        uint256[] memory selected = selectedTickets();
-        require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
-        require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
-        uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
-        require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
-        _;
-    }
+  * @dev Checks if submitter is eligible to submit.
+  * @param submitterMemberIndex The claimed index of the submitter.
+  */
+modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
+    uint256[] memory selected = selectedTickets();
+    require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+    require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
+    uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
+    require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
+    _;
+}
 ```
 
 ```sol
 function runGroupSelection(uint256 newEntry, uint256 requestId, uint256 seed) public {
-        require(msg.sender == _randomBeacon);
+  require(msg.sender == _randomBeacon);
 ```
 
 ```sol
