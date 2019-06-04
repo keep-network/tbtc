@@ -308,8 +308,7 @@ contract('DepositUtils', accounts => {
   
       let finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
       let tokenCheck = new BN(initialTokenBalance).add( new BN(returned));
-      expect(finalTokenBalance, "tokens not returned to beneficiary correctly").to.eq.BN(tokenCheck)
-      //assert.equal(finalTokenBalance.toString(), tokenCheck.toString(), "tokens not returned to beneficiary correctly")
+      expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
     })
   })
 

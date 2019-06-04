@@ -76,7 +76,7 @@ contract('Deposit', accounts => {
 
   describe('createNewDeposit', async () => {
     it('runs and updates state and fires a created event', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.createNewDeposit(
         deployed.SystemStub.address,
         deployed.TBTCStub.address,
@@ -134,7 +134,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.setKeepInfo(0, 0, 0, keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
@@ -202,7 +202,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates the state and logs GotRedemptionSignature', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.setKeepInfo(0, 0, 0, pubkeyX, pubkeyY)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 0, 0, digest)
@@ -263,7 +263,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
       await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime)
@@ -274,7 +274,7 @@ contract('Deposit', accounts => {
     })
 
     it('approves a new digest for signing, updates the state, and logs RedemptionRequested', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes)
 
       let res = await testInstance.getRequestInfo.call()
@@ -296,7 +296,7 @@ contract('Deposit', accounts => {
 
     it('reverts if the increase fee timer has not elapsed', async () => {
       try {
-        let block = await web3.eth.getBlock("latest")
+        let block = await web3.eth.getBlock('latest')
         await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, block.timestamp, prevSighash)
         await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes)
       } catch (e) {
@@ -353,7 +353,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates the state, deletes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.provideRedemptionProof(tx, proof, index, headerChain)
 
       let res = await testInstance.getState.call()
@@ -440,7 +440,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
       await deployed.KeepStub.burnContractBalance()
@@ -468,7 +468,7 @@ contract('Deposit', accounts => {
     it('reverts if no funds recieved as signer bond', async () => {
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero)
       let bond = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(0, bond, "no bond should be sent")
+      assert.equal(0, bond, 'no bond should be sent')
       try {
         await expectThrow(testInstance.notifySignatureTimeout()) 
       } catch (e) {
@@ -481,10 +481,10 @@ contract('Deposit', accounts => {
       await testInstance.notifySignatureTimeout()
 
       let bond = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(bond, 0, "Bond not seized as expected")
+      assert.equal(bond, 0, 'Bond not seized as expected')
 
       let res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      expect(res[0], "liquidation timestamp not recorded").not.to.eq.BN(0)
+      expect(res[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
       })
   })
 
@@ -496,7 +496,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
       await deployed.KeepStub.burnContractBalance()
@@ -523,7 +523,7 @@ contract('Deposit', accounts => {
     it('reverts if no funds recieved as signer bond', async () => {
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
       let bond = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(0, bond, "no bond should be sent")
+      assert.equal(0, bond, 'no bond should be sent')
       await expectThrow(testInstance.notifyRedemptionProofTimeout())
     })
 
@@ -532,10 +532,10 @@ contract('Deposit', accounts => {
       await testInstance.notifyRedemptionProofTimeout()
 
       let bond = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(bond, 0, "Bond not seized as expected")
+      assert.equal(bond, 0, 'Bond not seized as expected')
 
       let res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      expect(res[0], "liquidation timestamp not recorded").not.to.eq.BN(0)
+      expect(res[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
     })
   })
 
@@ -547,7 +547,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
       await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP)
@@ -555,7 +555,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates state to setup failed, deletes state, and logs SetupFailed', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.notifySignerSetupFailure()
 
       let res = await testInstance.getKeepInfo.call()
@@ -613,7 +613,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates the pubkey X and Y, changes state, and logs RegisteredPubkey', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.retrieveSignerPubkey()
 
       let res = await testInstance.getKeepInfo.call()
@@ -653,7 +653,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
@@ -661,7 +661,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates the state to failed setup, deletes funding info, and logs SetupFailed', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.notifyFundingTimeout()
 
@@ -697,7 +697,7 @@ contract('Deposit', accounts => {
         await testInstance.send(bond, {from: beneficiary}) 
         await testInstance.notifyFundingTimeout()
         let keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
-        assert.equal(keepBalance, new BN(bond), "funder bond not distributed properly")
+        assert.equal(keepBalance, new BN(bond), 'funder bond not distributed properly')
     })
   })
 
@@ -709,7 +709,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1  // has elapsed
       await deployed.KeepStub.setSuccess(true)
@@ -719,7 +719,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates to awaiting fraud funding proof and logs FraudDuringSetup if the timer has not elapsed', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)  // timer has not elapsed
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
@@ -734,7 +734,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates to failed, logs FraudDuringSetup, and burns value if the timer has elapsed', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       let res = await testInstance.getState.call()
@@ -766,7 +766,7 @@ contract('Deposit', accounts => {
     it('returns the funder bond if the timer has not elapsed', async () => {
       let beneficiary = accounts[4]
       let bond = 10000000000
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.send(bond, {from: beneficiary}) 
       let initialBalance = await web3.eth.getBalance(beneficiary)
       let signerBalance = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -781,7 +781,7 @@ contract('Deposit', accounts => {
       let balanceCheck = new BN(initialBalance).add(new BN(bond).add(new BN(signerBalance)))
 
       assert.equal(eventList.length, 1)
-      assert.equal(finalBalance, balanceCheck, "funder and signer bond should be included in final result")
+      assert.equal(finalBalance, balanceCheck, 'funder and signer bond should be included in final result')
     })
 
   })
@@ -794,7 +794,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1  // timer has elapsed
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
@@ -803,7 +803,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates state to setup failed, logs SetupFailed, and deletes state', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.notifyFraudFundingTimeout()
 
@@ -853,7 +853,7 @@ contract('Deposit', accounts => {
       let balanceAfter =  await web3.eth.getBalance(beneficiary)
       let balanceCheck = new BN(initialBalance).add(slash)
 
-      assert.equal(balanceCheck, balanceAfter, "partial slash not correctly awarded to funder")
+      assert.equal(balanceCheck, balanceAfter, 'partial slash not correctly awarded to funder')
     })
   })
 
@@ -878,7 +878,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates to setup failed, logs SetupFailed, ', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.provideFraudBTCFundingProof(tx, proof, index, headerChain)
 
@@ -917,7 +917,7 @@ contract('Deposit', accounts => {
       let balanceAfter = await web3.eth.getBalance(beneficiary)
       let balanceCheck = new BN(initialBalance).add(new BN(signerBond))
 
-      assert.equal(balanceCheck, balanceAfter, "partial slash not correctly awarded to funder")   
+      assert.equal(balanceCheck, balanceAfter, 'partial slash not correctly awarded to funder')   
     })
   })
 
@@ -943,7 +943,7 @@ contract('Deposit', accounts => {
     })
 
     it('updates to active, stores UTXO info, deletes funding info, logs Funded', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.provideBTCFundingProof(tx, proof, index, headerChain)
 
@@ -983,13 +983,13 @@ contract('Deposit', accounts => {
 
       let balanceAfter = await web3.eth.getBalance(beneficiary)
       let balanceCheck = new BN(initialBalance).add(new BN(signerBond))
-      assert.equal(balanceCheck, balanceAfter, "funder bond not currectly returned")  
+      assert.equal(balanceCheck, balanceAfter, 'funder bond not currectly returned')  
       let endingTokenBalancce = await deployed.TBTCStub.getBalance(beneficiary)
       
       let lotSize =  await deployed.TBTCConstants.getLotSize.call()
       let toMint = (lotSize * 95) / 100
       let tokenCheck = initialTokenBalance.add(new BN(toMint))
-      expect(tokenCheck,"incorrect amount minted").to.eq.BN(endingTokenBalancce)
+      expect(tokenCheck,'incorrect amount minted').to.eq.BN(endingTokenBalancce)
     })
     it.skip('TODO: full test for validateAndParseFundingSPVProof', async () => {})
   })
@@ -1123,7 +1123,7 @@ contract('Deposit', accounts => {
     })
 
     it('sets state to liquidated, logs Liquidated, ', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.purchaseSignerBondsAtAuction()
 
       let res = await testInstance.getState.call()
@@ -1164,7 +1164,7 @@ contract('Deposit', accounts => {
 
       let finalTokenBalance = await deployed.TBTCStub.getBalance(caller)
       let tokenCheck = new BN(finalTokenBalance).add( new BN(lotSize) )
-      expect(tokenCheck,"tokens not burned correctly").to.eq.BN(initialTokenBalance)
+      expect(tokenCheck,'tokens not burned correctly').to.eq.BN(initialTokenBalance)
     })
     
     it('distributes beneficiary reward', async () => {
@@ -1179,7 +1179,7 @@ contract('Deposit', accounts => {
       let finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
       let tokenCheck = new BN(initialTokenBalance).add( new BN(returned))
 
-      expect(finalTokenBalance,"tokens not returned to beneficiary correctly").to.eq.BN(tokenCheck)
+      expect(finalTokenBalance,'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
     })
 
     it('distributes value to the caller', async () => {
@@ -1187,7 +1187,7 @@ contract('Deposit', accounts => {
       let value = 1000000000000
       let caller = accounts[4]
       let beneficiary = accounts[5]
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let notifiedTime = block.timestamp
       let initialBalance = await web3.eth.getBalance(caller)
 
@@ -1204,7 +1204,7 @@ contract('Deposit', accounts => {
     it('returns keep funds if not fraud', async () => {
 
       let value = 1000000000000
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let notifiedTime = block.timestamp
       let caller = accounts[4]
       let beneficiary = accounts[5]
@@ -1223,7 +1223,7 @@ contract('Deposit', accounts => {
     it('burns if fraud', async () => {
 
       let value = 1000000000000
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let notifiedTime = block.timestamp
       let caller = accounts[4]
       let beneficiary = accounts[5]
@@ -1254,7 +1254,7 @@ contract('Deposit', accounts => {
     })
 
     it('sets courtesy call state, sets the timestamp, and logs CourtesyCalled', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.notifyCourtesyCall()
 
@@ -1298,7 +1298,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       let notifiedTime = blockTimestamp // not expired
       let fundedTime = blockTimestamp   // not expired
@@ -1315,7 +1315,7 @@ contract('Deposit', accounts => {
     })
 
     it('transitions to active, and logs ExitedCourtesyCall', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.exitCourtesyCall()
 
@@ -1396,10 +1396,10 @@ contract('Deposit', accounts => {
       await testInstance.notifyUndercollateralizedLiquidation()
 
       let bond = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(bond, 0, "Bond not seized as expected")
+      assert.equal(bond, 0, 'Bond not seized as expected')
 
       let res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      expect(res[0], "liquidation timestamp not recorded").not.to.eq.BN(0)
+      expect(res[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
     })
   })
 
@@ -1412,7 +1412,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       courtesyTime = blockTimestamp - timer.toNumber()  // has not expired
       await testInstance.setState(utils.states.COURTESY_CALL)
@@ -1447,10 +1447,10 @@ contract('Deposit', accounts => {
       await testInstance.notifyCourtesyTimeout()
 
       let bond = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(bond, 0, "Bond not seized as expected")
+      assert.equal(bond, 0, 'Bond not seized as expected')
 
       let res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      expect(res[0], "liquidation timestamp not recorded").not.to.eq.BN(0)
+      expect(res[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
     })
   })
 
@@ -1463,7 +1463,7 @@ contract('Deposit', accounts => {
     })
 
     beforeEach(async () => {
-      let block = await web3.eth.getBlock("latest")
+      let block = await web3.eth.getBlock('latest')
       let blockTimestamp = block.timestamp
       fundedTime = blockTimestamp - timer.toNumber() - 1 // has expired
       await testInstance.setState(utils.states.ACTIVE)
@@ -1471,7 +1471,7 @@ contract('Deposit', accounts => {
     })
 
     it('sets courtesy call state, stores the time, and logs CourtesyCalled', async () => {
-      let blockNumber = await web3.eth.getBlock("latest").number
+      let blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.notifyDepositExpiryCourtesyCall()
 
