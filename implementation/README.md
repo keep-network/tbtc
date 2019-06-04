@@ -16,5 +16,9 @@ npm run compile
 Linting is currently only enabled for JS test code.
 
 ```
-npm run lint:js
+# Show issues
+npm run js:lint
+
+# Automatically fix issues
+npm run js:lint:fix
 ```

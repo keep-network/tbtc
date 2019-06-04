@@ -6,7 +6,8 @@
   "scripts": {
     "setup": "git submodule update --init --recursive && npm i",
     "test": "truffle test",
-    "lint:js": "eslint ./test/*Test.js"
+    "js:lint": "eslint ./test/*Test.js",
+    "js:lint:fix": "eslint --fix ./test/*Test.js"
   },
   "author": "James Prestwich",
   "license": "UNLICENSED",
