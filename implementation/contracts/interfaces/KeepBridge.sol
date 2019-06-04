@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
-import {IKeep} from '../interfaces/IKeep.sol';
+import {IKeep} from './IKeep.sol';
 
 contract KeepBridge is IKeep {
     address keepRegistry;
