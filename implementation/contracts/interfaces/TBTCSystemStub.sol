@@ -10,10 +10,19 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
     uint256 oraclePrice = 10 ** 12;
     address depositOwner = address(0);
 
-    // TBTCSystem
+    // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
-    function fetchRelayCurrentDifficulty() external view returns (uint256) {return currentDifficulty;}
-    function fetchRelayPreviousDifficulty() external view returns (uint256) {return previousDifficulty;}
+
+    // Difficulty Oracle
+    // TODO: This is a workaround. It will be replaced by tbtc-difficulty-oracle.
+    function fetchRelayCurrentDifficulty() external view returns (uint256) {
+        return currentDifficulty;
+    }
+
+    function fetchRelayPreviousDifficulty() external view returns (uint256) {
+        return previousDifficulty;
+    }
+
 
     // ERC721
     function balanceOf(address _owner) public view returns (uint256 balance) {_owner; balance = 0;}
