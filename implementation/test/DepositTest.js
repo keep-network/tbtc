@@ -1152,7 +1152,7 @@ contract('Deposit', accounts => {
       }
     })
 
-    it('burns msg.sender\'s tokens', async () => {
+    it(`burns msg.sender's tokens`, async () => {
 
       let caller = accounts[4]
       let beneficiary = accounts[5]

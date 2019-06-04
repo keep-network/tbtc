@@ -302,7 +302,7 @@ contract('DepositUtils', accounts => {
       let beneficiary = accounts[5];
       let returned = await deployed.TBTCStub.balanceOf.call(accounts[0]);
       let initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
-      await deployed.SystemStub.setOwner(beneficiary);
+      await deployed.SystemStub.setDepositOwner(0, beneficiary);
 
       await testUtilsInstance.distributeBeneficiaryReward()
   
