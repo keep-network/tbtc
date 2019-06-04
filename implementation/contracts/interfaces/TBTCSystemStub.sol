@@ -23,6 +23,12 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
         return previousDifficulty;
     }
 
+    function submitCurrentDifficulty(uint256 _currentDifficulty) public {
+        if (currentDifficulty != _currentDifficulty) {
+            previousDifficulty = currentDifficulty;
+            currentDifficulty = _currentDifficulty;
+        }
+    }
 
     // ERC721
     function balanceOf(address _owner) public view returns (uint256 balance) {_owner; balance = 0;}
