@@ -11,7 +11,7 @@ contract TBTCStub is IBurnableERC20 {
     function setReturnUint(uint _res) public {returnUint = _res;}
     function transfer(address to, uint256 value) external returns (bool) {
         to; value;
-         if(balances[to] + value > balances[to]){
+        if(balances[to] + value > balances[to]){
             balances[to] += value;
         }
      return returnBool;}
@@ -34,5 +34,4 @@ contract TBTCStub is IBurnableERC20 {
         }
     }
     function mint(address to, uint256 value) external returns (bool) {balances[to] += value; return returnBool;}
-
 }

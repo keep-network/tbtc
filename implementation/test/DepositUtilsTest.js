@@ -20,6 +20,10 @@ const TestDepositUtils = artifacts.require('TestDepositUtils')
 
 const BN = require('bn.js')
 const utils = require('./utils')
+const chai = require('chai')
+const expect = chai.expect
+const bnChai = require('bn-chai')
+chai.use(bnChai(BN));
 
 const TEST_DEPOSIT_UTILS_DEPLOY = [
   {name: 'BytesLib', contract: BytesLib},
@@ -304,8 +308,8 @@ contract('DepositUtils', accounts => {
   
       let finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
       let tokenCheck = new BN(initialTokenBalance).add( new BN(returned));
-  
-      assert.equal(finalTokenBalance.toString(), tokenCheck.toString(), "tokens not returned to beneficiary correctly")
+      expect(finalTokenBalance, "tokens not returned to beneficiary correctly").to.eq.BN(tokenCheck)
+      //assert.equal(finalTokenBalance.toString(), tokenCheck.toString(), "tokens not returned to beneficiary correctly")
     })
   })
 

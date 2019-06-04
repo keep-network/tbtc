@@ -23,6 +23,10 @@ const TestDepositUtils = artifacts.require('TestDepositUtils')
 
 const BN = require('bn.js')
 const utils = require('./utils')
+const chai = require('chai')
+const expect = chai.expect
+const bnChai = require('bn-chai')
+chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
   {name: 'BytesLib', contract: BytesLib},
@@ -53,13 +57,12 @@ const TEST_DEPOSIT_DEPLOY = [
 
 contract('Deposit', accounts => {
 
-  let deployed, keep, testInstance, requestedTime, testUtilsInstance
+  let deployed, keep, testInstance, withdrawalRequestTime, fundingProofTimerStart
 
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     testInstance = deployed.TestDeposit
-    testUtilsInstance = deployed.TestDepositUtils
     testInstance.setExteroriorAddresses(deployed.SystemStub.address, deployed.TBTCStub.address, deployed.KeepStub.address)
   })
 
@@ -83,10 +86,11 @@ contract('Deposit', accounts => {
 
       // state updates
       let res = await testInstance.getState.call()
-      assert(res.eq(utils.states.AWAITING_SIGNER_SETUP), 'state not as expected')
+      expect(res, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
+
       res = await testInstance.getKeepInfo.call()
-      assert(res[0].eq(new BN(7)), 'keepID not as expected')
-      assert(!res[1].eq(new BN(0)), 'signing group timestamp not as expected')  // signingGroupRequestedAt
+      expect(res[0],'keepID not as expected').to.eq.BN(7)
+      expect(res[1],'signing group timestamp not as expected').not.to.eq.BN(0)
 
       // fired an event
       let eventList = await deployed.SystemStub.getPastEvents('Created', { fromBlock: blockNumber, toBlock: 'latest' })
@@ -206,7 +210,7 @@ contract('Deposit', accounts => {
       let res = await testInstance.provideRedemptionSignature(v, r, s)
 
       let state = await testInstance.getState.call()
-      assert(state.eq(utils.states.AWAITING_WITHDRAWAL_PROOF))
+      expect(state).to.eq.BN(utils.states.AWAITING_WITHDRAWAL_PROOF)
 
       // fired an event
       let eventList = await deployed.SystemStub.getPastEvents('GotRedemptionSignature', { fromBlock: blockNumber, toBlock: 'latest' })
@@ -261,12 +265,12 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       let block = await web3.eth.getBlock("latest")
       let blockTimestamp = block.timestamp
-      requestedTime = blockTimestamp - feeIncreaseTimer.toNumber()
-      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, requestedTime)
+      withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
+      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setKeepInfo(0, 0, 0, keepPubkeyX, keepPubkeyY)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, requestedTime, prevSighash)
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, prevSighash)
     })
 
     it('approves a new digest for signing, updates the state, and logs RedemptionRequested', async () => {
@@ -310,7 +314,7 @@ contract('Deposit', accounts => {
 
     it('reverts if the previous sighash was not the latest approved', async () => {
       try {
-        await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, requestedTime, keepPubkeyX)
+        await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
         await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes)
       } catch (e) {
         assert.include(e.message, 'Provided previous value does not yield previous sighash')
@@ -398,8 +402,8 @@ contract('Deposit', accounts => {
 
     it('returns the little-endian txid and output value', async () => {
       let res = await testInstance.redemptionTransactionChecks.call(tx)
-      assert.equal(res[0], txid_le)
-      assert(res[1].eq(new BN(outputValue)), 'blah')
+      assert.equal(res[0], txid_le)      
+      expect(res[1]).to.eq.BN(outputValue)
     })
 
     it('reverts if tx parsing fails', async () => {
@@ -429,18 +433,19 @@ contract('Deposit', accounts => {
   })
 
   describe('notifySignatureTimeout', async () => {
-    let timer;
+    let timer
     
     before(async () => {
-      timer = await deployed.TBTCConstants.getSignatureTimeout.call();
+      timer = await deployed.TBTCConstants.getSignatureTimeout.call()
     })
 
     beforeEach(async () => {
       let block = await web3.eth.getBlock("latest")
       let blockTimestamp = block.timestamp
-      requestedTime = blockTimestamp - timer.toNumber() -1
+      withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
+      await deployed.KeepStub.burnContractBalance()
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_SIGNATURE)
-      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, requestedTime, utils.bytes32zero)
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
     })
 
     it('reverts if not awaiting redemption signature', async () => {
@@ -452,28 +457,34 @@ contract('Deposit', accounts => {
     })
 
     it('reverts if the signature timeout has not elapsed', async () => {
-        await testInstance.setRequestInfo(utils.address0, utils.address0, 0, requestedTime * 5, utils.bytes32zero)
-        await expectThrow(testInstance.notifySignatureTimeout())
+        await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime + timer + 1, utils.bytes32zero)
+        try {
+          await testInstance.notifySignatureTimeout()
+        } catch (e) {
+          assert.include(e.message, 'Signature timer has not elapsed')
+        }
     })
 
     it('reverts if no funds recieved as signer bond', async () => {
-      await utils.increaseTime(timer.toNumber());
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero)
       let bond = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(0, bond, "no bond should be sent");
-      await expectThrow(testInstance.notifySignatureTimeout());   
+      assert.equal(0, bond, "no bond should be sent")
+      try {
+        await expectThrow(testInstance.notifySignatureTimeout()) 
+      } catch (e) {
+        assert.include(e.message, 'No funds should be received as signer bond')
+      }
     })
 
     it('starts abort liquidation', async () => {
       await deployed.KeepStub.send(1000000, {from: accounts[0]})
-      await testInstance.notifySignatureTimeout();
+      await testInstance.notifySignatureTimeout()
 
-      let bond = await web3.eth.getBalance(deployed.KeepStub.address);
+      let bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(bond, 0, "Bond not seized as expected")
 
       let res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      let eq = res > new BN(0)
-      assert.equal(eq, true, "liquidation timestamp not recorded")
-
+      expect(res[0], "liquidation timestamp not recorded").not.to.eq.BN(0)
       })
   })
 
@@ -487,9 +498,10 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       let block = await web3.eth.getBlock("latest")
       let blockTimestamp = block.timestamp
-      requestedTime = blockTimestamp - timer.toNumber() -1
+      withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
+      await deployed.KeepStub.burnContractBalance()
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
-      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, requestedTime, utils.bytes32zero)
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
     })
 
     it('reverts if not awaiting redemption proof', async () => {
@@ -502,30 +514,28 @@ contract('Deposit', accounts => {
 
     it('reverts if the proof timeout has not elapsed', async () => {
       try {
-        await testInstance.setRequestInfo(utils.address0, utils.address0, 0, requestedTime * 5, utils.bytes32zero)
+        await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero)
         await testInstance.notifyRedemptionProofTimeout()
       } catch (e) {
         assert.include(e.message, 'Proof timer has not elapsed')
       }
     })
     it('reverts if no funds recieved as signer bond', async () => {
-      await utils.increaseTime(timer.toNumber());
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
       let bond = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(0, bond, "no bond should be sent");
-      await expectThrow(testInstance.notifyRedemptionProofTimeout());   
+      assert.equal(0, bond, "no bond should be sent")
+      await expectThrow(testInstance.notifyRedemptionProofTimeout())
     })
 
     it('starts abort liquidation', async () => {
       await deployed.KeepStub.send(1000000, {from: accounts[0]}) 
       await testInstance.notifyRedemptionProofTimeout()
 
-      let bond = await web3.eth.getBalance(deployed.KeepStub.address);
+      let bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(bond, 0, "Bond not seized as expected")
 
       let res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      let eq = res > new BN(0)
-      assert.equal(eq, true, "liquidation timestamp not recorded")
-
+      expect(res[0], "liquidation timestamp not recorded").not.to.eq.BN(0)
     })
   })
 
@@ -539,9 +549,9 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       let block = await web3.eth.getBlock("latest")
       let blockTimestamp = block.timestamp
-      requestedTime = blockTimestamp - timer.toNumber() - 1
+      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
       await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP)
-      await testInstance.setKeepInfo(0, requestedTime, 0, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(0, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
     })
 
     it('updates state to setup failed, deletes state, and logs SetupFailed', async () => {
@@ -549,8 +559,8 @@ contract('Deposit', accounts => {
       await testInstance.notifySignerSetupFailure()
 
       let res = await testInstance.getKeepInfo.call()
-      assert(res[1].eqn(0), 'signingGroupRequestedAt should be 0')
-      assert(res[2].eqn(0), 'fundingProofTimerStart should be 0')
+      expect(res[1], 'signingGroupRequestedAt should be 0').to.eq.BN(0)
+      expect(res[2], 'fundingProofTimerStart should be 0').to.eq.BN(0)
 
       let eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1, 'Event list is the wrong length')
@@ -567,7 +577,7 @@ contract('Deposit', accounts => {
 
     it('reverts if the timer has not yet elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(0, requestedTime * 5, 0, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.setKeepInfo(0, fundingProofTimerStart * 5, 0, utils.bytes32zero, utils.bytes32zero)
         await testInstance.notifySignerSetupFailure()
       } catch (e) {
         assert.include(e.message, 'Signing group formation timeout not yet elapsed')
@@ -575,26 +585,21 @@ contract('Deposit', accounts => {
     })
 
     it('returns funder bond', async () => {
-      let beneficiary = accounts[4];
-      let bond = 1000000000000;  
-      await deployed.TestDepositUtils.createNewDeposit(
-        deployed.SystemStub.address,
-        deployed.TBTCStub.address,
-        deployed.KeepStub.address,
-        1, 
-        1)  
-      await deployed.SystemStub.setOwner(beneficiary);
+      let beneficiary = accounts[4]
+      let bond = 1000000000000
+    
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
       await testInstance.send(bond, {from: beneficiary}) 
 
-      let initialBalance = await web3.eth.getBalance(beneficiary);
+      let initialBalance = await web3.eth.getBalance(beneficiary)
 
-      await testInstance.setKeepInfo(0, requestedTime, 0, utils.bytes32zero, utils.bytes32zero)   
+      await testInstance.setKeepInfo(0, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)   
       await deployed.KeepStub.setBondAmount(bond)     
       await testInstance.notifySignerSetupFailure()
 
-      let balance = await web3.eth.getBalance(beneficiary);
+      let balance = await web3.eth.getBalance(beneficiary)
       let balanceCheck = new BN(initialBalance).add(new BN(bond))
-      assert.equal(balance, balanceCheck, "bond not returned to funder");
+      expect(balance, 'bond not returned to funder').to.eq.BN(balanceCheck)
     })
   })
 
@@ -618,7 +623,6 @@ contract('Deposit', accounts => {
       let eventList = await deployed.SystemStub.getPastEvents('RegisteredPubkey', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._signingGroupPubkeyX, pubkeyX, 'Logged X is wrong')
       assert.equal(eventList[0].returnValues._signingGroupPubkeyY, pubkeyY, 'Logged Y is wrong')
-
     })
 
     it('reverts if not awaiting signer setup', async () => {
@@ -639,7 +643,6 @@ contract('Deposit', accounts => {
         assert.include(e.message, 'Keep returned bad pubkey')
       }
     })
-
   })
 
   describe('notifyFundingTimeout', async () => {
@@ -652,9 +655,9 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       let block = await web3.eth.getBlock("latest")
       let blockTimestamp = block.timestamp
-      requestedTime = blockTimestamp - timer.toNumber() - 1
+      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(0, 0, requestedTime, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
     })
 
     it('updates the state to failed setup, deletes funding info, and logs SetupFailed', async () => {
@@ -663,7 +666,7 @@ contract('Deposit', accounts => {
       await testInstance.notifyFundingTimeout()
 
       let res = await testInstance.getState.call()
-      assert(res.eq(utils.states.FAILED_SETUP))
+      expect(res).to.eq.BN(utils.states.FAILED_SETUP)
 
       let eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -680,7 +683,7 @@ contract('Deposit', accounts => {
 
     it('reverts if the timeout has not elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(0, 0, requestedTime * 5, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
         await testInstance.notifyFundingTimeout()
       } catch (e) {
         assert.include(e.message, 'Funding timeout has not elapsed')
@@ -688,12 +691,12 @@ contract('Deposit', accounts => {
     })
 
     it('distributes the funder bond to the keep group', async () => {
-        let beneficiary = accounts[4];
+        let beneficiary = accounts[4]
         let bond = 1000000
-        await testInstance.setKeepInfo(0, 0, requestedTime, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.setKeepInfo(0, 0, withdrawalRequestTime, utils.bytes32zero, utils.bytes32zero)
         await testInstance.send(bond, {from: beneficiary}) 
         await testInstance.notifyFundingTimeout()
-        let keepBalance = await web3.eth.getBalance(deployed.KeepStub.address);
+        let keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
         assert.equal(keepBalance, new BN(bond), "funder bond not distributed properly")
     })
   })
@@ -708,23 +711,23 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       let block = await web3.eth.getBlock("latest")
       let blockTimestamp = block.timestamp
-      requestedTime = blockTimestamp - timer.toNumber() - 1  // has elapsed
+      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1  // has elapsed
       await deployed.KeepStub.setSuccess(true)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(0, 0, requestedTime, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
       await deployed.KeepStub.send(1000000, {from: accounts[0]})
     })
 
     it('updates to awaiting fraud funding proof and logs FraudDuringSetup if the timer has not elapsed', async () => {
       let blockNumber = await web3.eth.getBlock("latest").number
-      await testInstance.setKeepInfo(0, 0, requestedTime * 5, utils.bytes32zero, utils.bytes32zero)  // timer has not elapsed
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)  // timer has not elapsed
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       let res = await testInstance.getState.call()
-      assert(res.eq(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF))
+      expect(res).to.eq.BN(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
 
       res = await testInstance.getKeepInfo.call()
-      assert(res[2].gtn(requestedTime), 'fundingProofTimerStart did not increase')
+      assert(res[2].gtn(fundingProofTimerStart), 'fundingProofTimerStart did not increase')
 
       let eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -735,7 +738,7 @@ contract('Deposit', accounts => {
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       let res = await testInstance.getState.call()
-      assert(res.eq(utils.states.FAILED_SETUP))
+      expect(res).to.eq.BN(utils.states.FAILED_SETUP)
 
       let eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -761,24 +764,24 @@ contract('Deposit', accounts => {
     })
 
     it('returns the funder bond if the timer has not elapsed', async () => {
-      let beneficiary = accounts[4];
+      let beneficiary = accounts[4]
       let bond = 10000000000
-      let blockNumber = await web3.eth.getBlock("latest").number;
+      let blockNumber = await web3.eth.getBlock("latest").number
       await testInstance.send(bond, {from: beneficiary}) 
-      let initialBalance = await web3.eth.getBalance(beneficiary);
-      let signerBalance = await web3.eth.getBalance(deployed.KeepStub.address);
+      let initialBalance = await web3.eth.getBalance(beneficiary)
+      let signerBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await deployed.KeepStub.setBondAmount(bond)     
-      await deployed.SystemStub.setOwner(beneficiary);
-      await testInstance.setKeepInfo(0, 0, requestedTime * 6, utils.bytes32zero, utils.bytes32zero)
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 6, utils.bytes32zero, utils.bytes32zero)
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
-      let finalBalance = await web3.eth.getBalance(beneficiary);
+      let finalBalance = await web3.eth.getBalance(beneficiary)
       let eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       let balanceCheck = new BN(initialBalance).add(new BN(bond).add(new BN(signerBalance)))
 
       assert.equal(eventList.length, 1)
-      assert.equal(finalBalance, balanceCheck, "funder and signer bond should be included in final result");
+      assert.equal(finalBalance, balanceCheck, "funder and signer bond should be included in final result")
     })
 
   })
@@ -793,9 +796,9 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       let block = await web3.eth.getBlock("latest")
       let blockTimestamp = block.timestamp
-      requestedTime = blockTimestamp - timer.toNumber() - 1  // timer has elapsed
+      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1  // timer has elapsed
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(0, 0, requestedTime, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
       await deployed.KeepStub.send(1000000, {from: accounts[0]})
     })
 
@@ -812,7 +815,7 @@ contract('Deposit', accounts => {
       assert.equal(res[4], utils.bytes32zero) // pubkey Y
 
       res = await testInstance.getState.call()
-      assert(res.eq(utils.states.FAILED_SETUP))
+      expect(res).to.eq.BN(utils.states.FAILED_SETUP)
 
       let eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -829,7 +832,7 @@ contract('Deposit', accounts => {
 
     it('reverts if the timer has not elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(0, 0, requestedTime * 5, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
         await testInstance.notifyFraudFundingTimeout()
       } catch (e) {
         assert.include(e.message, 'Fraud funding proof timeout has not elapsed')
@@ -837,20 +840,20 @@ contract('Deposit', accounts => {
     })
 
     it('asserts that it partially slashes signers', async () => {
-      let beneficiary = accounts[4];
-      await deployed.SystemStub.setOwner(beneficiary);
-      let initialBalance =  await web3.eth.getBalance(beneficiary);
-      let toSeize = await web3.eth.getBalance(deployed.KeepStub.address);
+      let beneficiary = accounts[4]
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      let initialBalance =  await web3.eth.getBalance(beneficiary)
+      let toSeize = await web3.eth.getBalance(deployed.KeepStub.address)
 
-      await testInstance.setKeepInfo(0, 0, requestedTime, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
       await testInstance.notifyFraudFundingTimeout()
 
       let divisor = await deployed.TBTCConstants.getFundingFraudPartialSlashDivisor.call()
       let slash = new BN(toSeize).div(new BN(divisor))
-      let balanceAfter =  await web3.eth.getBalance(beneficiary);
+      let balanceAfter =  await web3.eth.getBalance(beneficiary)
       let balanceCheck = new BN(initialBalance).add(slash)
 
-      assert.equal(balanceCheck, balanceAfter, "partial slash not correctly awarded to funder");
+      assert.equal(balanceCheck, balanceAfter, "partial slash not correctly awarded to funder")
     })
   })
 
@@ -887,7 +890,7 @@ contract('Deposit', accounts => {
       assert.equal(res[4], utils.bytes32zero) // pubkey Y
 
       res = await testInstance.getState.call()
-      assert(res.eq(utils.states.FAILED_SETUP))
+      expect(res).to.eq.BN(utils.states.FAILED_SETUP)
 
       let eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -903,21 +906,19 @@ contract('Deposit', accounts => {
     })
 
     it('assert distribute signer bonds to funder', async () => {
-      let beneficiary = accounts[4];
-      await deployed.SystemStub.setOwner(beneficiary);
+      let beneficiary = accounts[4]
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
 
-      let initialBalance = await web3.eth.getBalance(beneficiary);
-      let signerBond = await web3.eth.getBalance(deployed.KeepStub.address);
+      let initialBalance = await web3.eth.getBalance(beneficiary)
+      let signerBond = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await testInstance.provideFraudBTCFundingProof(tx, proof, index, headerChain) 
 
-      let balanceAfter = await web3.eth.getBalance(beneficiary);
+      let balanceAfter = await web3.eth.getBalance(beneficiary)
       let balanceCheck = new BN(initialBalance).add(new BN(signerBond))
 
-      assert.equal(balanceCheck, balanceAfter, "partial slash not correctly awarded to funder");      
-
+      assert.equal(balanceCheck, balanceAfter, "partial slash not correctly awarded to funder")   
     })
-
   })
 
   describe('provideBTCFundingProof', async () => {
@@ -955,7 +956,7 @@ contract('Deposit', accounts => {
       assert(res[2].eqn(0), 'fundingProofTimerStart not deleted')
 
       res = await testInstance.getState.call()
-      assert(res.eq(utils.states.ACTIVE))
+      expect(res).to.eq.BN(utils.states.ACTIVE)
 
       let eventList = await deployed.SystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -971,30 +972,26 @@ contract('Deposit', accounts => {
     })
 
     it('returns funder bonds and mints tokens', async () => {
-      
-      let beneficiary = accounts[4];
+      let beneficiary = accounts[4]
       let signerBond = 10000000000
-      let initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
+      let initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
       await testInstance.send(signerBond, {from: beneficiary}) 
-      await deployed.SystemStub.setOwner(beneficiary);
-      let initialBalance = await web3.eth.getBalance(beneficiary);
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      let initialBalance = await web3.eth.getBalance(beneficiary)
 
       await testInstance.provideBTCFundingProof(tx, proof, index, headerChain)
 
-      let balanceAfter = await web3.eth.getBalance(beneficiary);
+      let balanceAfter = await web3.eth.getBalance(beneficiary)
       let balanceCheck = new BN(initialBalance).add(new BN(signerBond))
-      assert.equal(balanceCheck, balanceAfter, "funder bond not currectly returned");   
-      let endingTokenBalancce = await deployed.TBTCStub.getBalance(beneficiary);
+      assert.equal(balanceCheck, balanceAfter, "funder bond not currectly returned")  
+      let endingTokenBalancce = await deployed.TBTCStub.getBalance(beneficiary)
       
-      let lotSize =  await deployed.TBTCConstants.getLotSize.call();
+      let lotSize =  await deployed.TBTCConstants.getLotSize.call()
       let toMint = (lotSize * 95) / 100
       let tokenCheck = initialTokenBalance.add(new BN(toMint))
- 
-      assert.equal(tokenCheck.toNumber(), endingTokenBalancce.toNumber(), "incorrect amount minted");   
-      
+      expect(tokenCheck,"incorrect amount minted").to.eq.BN(endingTokenBalancce)
     })
     it.skip('TODO: full test for validateAndParseFundingSPVProof', async () => {})
-
   })
 
   describe('provideECDSAFraudProof', async () => {
@@ -1130,7 +1127,7 @@ contract('Deposit', accounts => {
       await testInstance.purchaseSignerBondsAtAuction()
 
       let res = await testInstance.getState.call()
-      assert(res.eq(utils.states.LIQUIDATED))
+      expect(res).to.eq.BN(utils.states.LIQUIDATED)
 
       let eventList = await deployed.SystemStub.getPastEvents('Liquidated', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -1157,90 +1154,90 @@ contract('Deposit', accounts => {
 
     it('burns msg.sender\'s tokens', async () => {
 
-      let caller = accounts[4];
-      let beneficiary = accounts[5];
-      let lotSize =  await deployed.TBTCConstants.getLotSize.call();
-      let initialTokenBalance = await deployed.TBTCStub.getBalance(caller);
+      let caller = accounts[4]
+      let beneficiary = accounts[5]
+      let lotSize =  await deployed.TBTCConstants.getLotSize.call()
+      let initialTokenBalance = await deployed.TBTCStub.getBalance(caller)
 
-      await deployed.SystemStub.setOwner(beneficiary);
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({from: caller})
 
-      let finalTokenBalance = await deployed.TBTCStub.getBalance(caller);
-      let tokenCheck = new BN(finalTokenBalance).add( new BN(lotSize) );
-      assert.equal(tokenCheck.toString(), initialTokenBalance.toString(), "tokens not burned correctly")
-
+      let finalTokenBalance = await deployed.TBTCStub.getBalance(caller)
+      let tokenCheck = new BN(finalTokenBalance).add( new BN(lotSize) )
+      expect(tokenCheck,"tokens not burned correctly").to.eq.BN(initialTokenBalance)
     })
     
     it('distributes beneficiary reward', async () => {
-      let caller = accounts[4];
-      let beneficiary = accounts[5];
-      let initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
-      let returned = await deployed.TBTCStub.balanceOf.call(caller);
+      let caller = accounts[4]
+      let beneficiary = accounts[5]
+      let initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
+      let returned = await deployed.TBTCStub.balanceOf.call(caller)
 
-      await deployed.SystemStub.setOwner(beneficiary);
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({from: caller})
 
-      let finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
-      let tokenCheck = new BN(initialTokenBalance).add( new BN(returned));
+      let finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
+      let tokenCheck = new BN(initialTokenBalance).add( new BN(returned))
 
-      assert.equal(finalTokenBalance.toString(), tokenCheck.toString(), "tokens not returned to beneficiary correctly")
-
+      expect(finalTokenBalance,"tokens not returned to beneficiary correctly").to.eq.BN(tokenCheck)
     })
+
     it('distributes value to the caller', async () => {
 
       let value = 1000000000000
-      let caller = accounts[4];
-      let beneficiary = accounts[5];
+      let caller = accounts[4]
+      let beneficiary = accounts[5]
       let block = await web3.eth.getBlock("latest")
       let notifiedTime = block.timestamp
-      let initialBalance = await web3.eth.getBalance(caller);
+      let initialBalance = await web3.eth.getBalance(caller)
 
       await testInstance.send(value, {from: accounts[0]}) 
-      await testInstance.setLiquidationAndCourtesyInitated(notifiedTime,0)
-      await deployed.SystemStub.setOwner(beneficiary);
+      await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({from: caller})
 
-      let finalBalance = await web3.eth.getBalance(caller);
+      let finalBalance = await web3.eth.getBalance(caller)
       
-      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'caller balance should increase')
-
+      expect(new BN(finalBalance),'caller balance should increase').to.be.gte.BN(initialBalance)
     })
+
     it('returns keep funds if not fraud', async () => {
 
       let value = 1000000000000
       let block = await web3.eth.getBlock("latest")
       let notifiedTime = block.timestamp
-      let caller = accounts[4];
-      let beneficiary = accounts[5];
-      let initialBalance = await web3.eth.getBalance(deployed.KeepStub.address);
+      let caller = accounts[4]
+      let beneficiary = accounts[5]
+      let initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await testInstance.send(value, {from: accounts[0]}) 
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await deployed.SystemStub.setOwner(beneficiary);
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({from: caller})
 
-      let finalBalance = await web3.eth.getBalance(deployed.KeepStub.address);
+      let finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
     
       assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'caller balance should increase')
     })
+
     it('burns if fraud', async () => {
 
       let value = 1000000000000
       let block = await web3.eth.getBlock("latest")
       let notifiedTime = block.timestamp
-      let caller = accounts[4];
-      let beneficiary = accounts[5];
-      let initialBalance = await web3.eth.getBalance(deployed.KeepStub.address);
+      let caller = accounts[4]
+      let beneficiary = accounts[5]
+      let initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await testInstance.send(value, {from: accounts[0]}) 
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await deployed.SystemStub.setOwner(beneficiary);
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({from: caller})
 
-      let finalBalance = await web3.eth.getBalance(deployed.KeepStub.address);
+      let finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
   
-      assert(new BN(finalBalance).eq(new BN(initialBalance)), 'caller balance should increase')
+      expect(new BN(finalBalance)).to.eq.BN(initialBalance)
     })
   })
 
@@ -1262,10 +1259,10 @@ contract('Deposit', accounts => {
       await testInstance.notifyCourtesyCall()
 
       let res = await testInstance.getState.call()
-      assert(res.eq(utils.states.COURTESY_CALL))
+      expect(res).to.eq.BN(utils.states.COURTESY_CALL)
 
       res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      assert(!res[1].eq(new BN(0)))
+      expect(res[1]).not.to.eq.BN(0)
 
       let eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -1323,7 +1320,7 @@ contract('Deposit', accounts => {
       await testInstance.exitCourtesyCall()
 
       let res = await testInstance.getState.call()
-      assert(res.eq(utils.states.ACTIVE))
+      expect(res).to.eq.BN(utils.states.ACTIVE)
 
       let eventList = await deployed.SystemStub.getPastEvents('ExitedCourtesyCall', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -1398,13 +1395,11 @@ contract('Deposit', accounts => {
       await deployed.KeepStub.send(1000000, {from: accounts[0]})
       await testInstance.notifyUndercollateralizedLiquidation()
 
-      let bond = await web3.eth.getBalance(deployed.KeepStub.address);
+      let bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(bond, 0, "Bond not seized as expected")
 
       let res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      let eq = res > new BN(0)
-      assert.equal(eq, true, "liquidation timestamp not recorded")
-      
+      expect(res[0], "liquidation timestamp not recorded").not.to.eq.BN(0)
     })
   })
 
@@ -1451,15 +1446,12 @@ contract('Deposit', accounts => {
       await deployed.KeepStub.send(1000000, {from: accounts[0]})
       await testInstance.notifyCourtesyTimeout()
 
-      let bond = await web3.eth.getBalance(deployed.KeepStub.address);
+      let bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(bond, 0, "Bond not seized as expected")
 
       let res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      let eq = res > new BN(0)
-      assert.equal(eq, true, "liquidation timestamp not recorded")
-
+      expect(res[0], "liquidation timestamp not recorded").not.to.eq.BN(0)
     })
-
   })
 
   describe('notifyDepositExpiryCourtesyCall', async () => {
@@ -1484,10 +1476,10 @@ contract('Deposit', accounts => {
       await testInstance.notifyDepositExpiryCourtesyCall()
 
       let res = await testInstance.getState.call()
-      assert(res.eq(utils.states.COURTESY_CALL))
+      expect(res).to.eq.BN(utils.states.COURTESY_CALL)
 
       res = await testInstance.getLiqudationAndCoutesyInitiated.call()
-      assert(!res[1].eq(new BN(0)))
+      expect(res[1]).not.to.eq.BN(0)
 
       let eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)

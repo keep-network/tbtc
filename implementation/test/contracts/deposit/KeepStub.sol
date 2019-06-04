@@ -78,4 +78,8 @@ contract KeepStub {
         }
         return true;
     }
+
+    function burnContractBalance() public {
+        address(0).transfer(address(this).balance);
+    }
 }

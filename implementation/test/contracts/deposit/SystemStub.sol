@@ -15,6 +15,7 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
     function setCurrentDiff(uint256 _current) external {current = _current;}
     function setPreviousDiff(uint256 _past) external {past = _past;}
     function setOwner(address owner) external {_owner = owner;}
+    function setDepositOwner(uint256 _keepId, address _newOwner) external {_keepId; _owner = _newOwner;}
 
     // override parent
     function approvedToLog(address _caller) public view returns (bool) {_caller; return true;}
