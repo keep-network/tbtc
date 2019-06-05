@@ -1,10 +1,10 @@
-const headerChains = require('./headerchains.json')
-const tx = require('./tx.json')
-const createHash = require('create-hash')
-const BN = require('bn.js')
+const headerChains = require('./headerchains.json');
+const tx = require('./tx.json');
+const createHash = require('create-hash');
+const BN = require('bn.js');
 
 // genesis header -- diff 1
-const lowDiffHeader = '0x0100000000000000000000000000000000000000000000000000000000000000000000003BA3EDFD7A7B12B27AC72C3E67768F617FC81BC3888A51323A9FB8AA4B1E5E4A29AB5F49FFFF001D1DAC2B7C'
+const lowDiffHeader = '0x0100000000000000000000000000000000000000000000000000000000000000000000003BA3EDFD7A7B12B27AC72C3E67768F617FC81BC3888A51323A9FB8AA4B1E5E4A29AB5F49FFFF001D1DAC2B7C';
 
 const states = {
   START: new BN(0),
@@ -19,37 +19,41 @@ const states = {
   COURTESY_CALL: new BN(9),
   FRAUD_LIQUIDATION_IN_PROGRESS: new BN(10),
   LIQUIDATION_IN_PROGRESS: new BN(11),
-  LIQUIDATED: new BN(12)
-}
+  LIQUIDATED: new BN(12),
+};
 
-function hash160 (hexString) {
-    let buffer = Buffer.from(hexString, 'hex')
-        var t = createHash('sha256').update(buffer).digest()
-            var u = createHash('rmd160').update(t).digest()
-                return '0x' + u.toString('hex')
+function hash160(hexString) {
+  const buffer = Buffer.from(hexString, 'hex');
+  const t = createHash('sha256').update(buffer).digest();
+  const u = createHash('rmd160').update(t).digest();
+  return '0x' + u.toString('hex');
 }
 
 function chainToProofBytes(chain) {
-  let byteString = '0x'
+  let byteString = '0x';
   for (let header = 6; header < chain.length; header++) {
-    byteString += chain[header].hex
+    byteString += chain[header].hex;
   }
-  return byteString
+  return byteString;
 }
 
+// eslint-disable-next-line camelcase
 async function deploySystem(deploy_list) {
-  let deployed = {}  // name: contract object
-  let linkable = {}  // name: linkable address
-  for (let i in deploy_list) {
-    await deploy_list[i].contract.link(linkable)
-    let contract = await deploy_list[i].contract.new()
-    linkable[deploy_list[i].name] = contract.address
-    deployed[deploy_list[i].name] = contract
+  const deployed = {}; // name: contract object
+  const linkable = {}; // name: linkable address
+
+  // eslint-disable-next-line camelcase
+  for (const i of deploy_list) {
+    await deploy_list[i].contract.link(linkable);
+    const contract = await deploy_list[i].contract.new();
+    linkable[deploy_list[i].name] = contract.address;
+    deployed[deploy_list[i].name] = contract;
   }
-  return deployed
+  return deployed;
 }
+
 function increaseTime(duration) {
-  const id = Date.now()
+  const id = Date.now();
 
   return new Promise((resolve, reject) => {
     web3.currentProvider.send({
@@ -57,18 +61,18 @@ function increaseTime(duration) {
       method: 'evm_increaseTime',
       params: [duration],
       id: id,
-    }, err1 => {
-      if (err1) return reject(err1)
+    }, (err1) => {
+      if (err1) return reject(err1);
 
       web3.currentProvider.send({
         jsonrpc: '2.0',
         method: 'evm_mine',
         id: id+1,
       }, (err2, res) => {
-        return err2 ? reject(err2) : resolve(res)
-      })
-    })
-  })
+        return err2 ? reject(err2) : resolve(res);
+      });
+    });
+  });
 }
 
 module.exports = {
@@ -81,5 +85,5 @@ module.exports = {
   HEADER_CHAINS: headerChains,
   increaseTime: increaseTime,
   TX: tx,
-  HEADER_PROOFS: headerChains.map(chainToProofBytes)
-}
+  HEADER_PROOFS: headerChains.map(chainToProofBytes),
+};
