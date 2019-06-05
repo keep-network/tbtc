@@ -7,7 +7,7 @@
     "setup": "git submodule update --init --recursive && npm i",
     "test": "truffle test",
     "js:lint": "eslint ./test/*Test.js",
-    "js:lint:fix": "eslint --fix ./test/*Test.js"
+    "js:lint:fix": "eslint --fix ./test/**/*.js ./migrations"
   },
   "author": "James Prestwich",
   "license": "UNLICENSED",
