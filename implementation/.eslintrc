@@ -1,6 +1,5 @@
 {
   "extends": "google",
-  "rules": {},
   "parserOptions": {
     "ecmaVersion": 2017,
     "sourceType": "module"
@@ -8,5 +7,29 @@
   "env": {
     "es6": true,
     "mocha": true
+  },
+  "rules": {
+    "indent": ["error", 2],
+    "max-len": [
+      "error",
+      {
+        "code": 90,
+        "ignoreStrings": true,
+        "ignoreComments": true,
+        "ignoreTemplateLiterals": true
+      }
+    ],
+    "new-cap": [
+      "error",
+      {
+        "capIsNewExceptions": [
+          "BN"
+        ]
+      }
+    ],
+    "object-curly-spacing": [
+      "error",
+      "always"
+    ]
   }
 }
