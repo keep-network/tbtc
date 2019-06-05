@@ -36,7 +36,7 @@ contract TestDeposit is Deposit {
         self.courtesyCallInitiated = _courtesy;
     }
 
-    function getLiqudationAndCoutesyInitiated() public view returns (uint256, uint256) {
+    function getLiquidationAndCoutesyInitiated() public view returns (uint256, uint256) {
         return (self.liquidationInitiated, self.courtesyCallInitiated);
     }
 
