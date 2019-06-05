@@ -22,3 +22,5 @@ npm run js:lint
 # Automatically fix issues
 npm run js:lint:fix
 ```
+
+Eslint errors can be disabled using a comment on the previous line. For example, to disable linter errors for the 'no-unused-vars' rule: `// eslint-disable-next-line no-unused-vars`.
