@@ -10,8 +10,9 @@
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}"
   },
   "config": {
-    "eslintPaths": "*.js"
+    "eslintPaths": "test/ migrations/"
   },
+  "precommit": "npm run lint",
   "author": "James Prestwich",
   "license": "UNLICENSED",
   "dependencies": {
@@ -28,7 +29,7 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "eslint": "^5.16.0",
-    "eslint-config-google": "^0.13.0",
+    "eslint-config-keep": "https://github.com/keep-network/eslint-config-keep.git",
     "eth-gas-reporter": "^0.1.12",
     "ganache-cli": "^6.4.3"
   }
