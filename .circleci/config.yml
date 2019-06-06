@@ -8,7 +8,7 @@ jobs:
     executor: docker-node
     steps:
         - checkout
-        - run: cd implementation/ && npm run js:lint
+        - run: cd implementation/ && npm install && npm run js:lint
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
