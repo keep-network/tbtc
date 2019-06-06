@@ -10,7 +10,7 @@
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}"
   },
   "config": {
-    "eslintPaths": "./test/**/*.js ./migrations"
+    "eslintPaths": "*.js"
   },
   "author": "James Prestwich",
   "license": "UNLICENSED",

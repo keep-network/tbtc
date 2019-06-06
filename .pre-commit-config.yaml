@@ -1,0 +1,18 @@
+repos:
+ - repo: https://github.com/keep-network/pre-commit-golang.git
+   rev: c23a1852d8249022a3a7e82c42d13f081876ade4
+   hooks:
+    - id: go-imports
+    - id: go-vet
+    - id: go-lint
+ - repo: https://github.com/keep-network/pre-commit-hooks.git
+   rev: v1.3.0
+   hooks:
+    - id: check-added-large-files
+ - repo: local
+   hooks:
+    - id: lint-js
+      name: Lint JS
+      language: script
+      files: \.js$
+      entry: /usr/bin/env bash -c "cd implementation && npm run js:lint"
