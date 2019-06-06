@@ -207,7 +207,19 @@ contract Deposit {
         self.provideBTCFundingProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         return true;
     }
-
+    function provideBTCFundingProofV2(
+        bytes _version,
+        bytes _vin,
+        bytes _vout,
+        bytes _locktime,
+        bytes _merkleProof,
+        uint256 _index,
+        uint8 _outputIndex,
+        bytes _bitcoinHeaders
+    ) public returns (bool) {
+        self.provideBTCFundingProofV2(_version, _vin, _vout, _locktime, _merkleProof, _index, _outputIndex, _bitcoinHeaders);
+        return true;
+    }    
     //
     // FRAUD
     //
