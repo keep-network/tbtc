@@ -343,6 +343,17 @@ library DepositFunding {
         return true;
     }
 
+    /// @notice             Anyone may notify the deposit of a funding proof to activate the deposit
+    /// @dev                This is the happy-path of the funding flow. It means that we have suecceeded
+    /// @param _version     4-byte version number
+    /// @param _vin         length-prepended inputs
+    /// @param _vout        length-prepended outputs
+    /// @param _locktime    4-byte locktime
+    /// @param _index       transaction index
+    /// @param _outputIndex index of funding output in _vout
+    /// @param _merkleProof the merkle proof of inclusion
+    /// @param _bitcoinHeaders header chain for work proof
+    /// @return             true if successful
     function provideBTCFundingProofV2(
         DepositUtils.Deposit storage _d,
         bytes _version,
@@ -388,6 +399,10 @@ library DepositFunding {
         return true;
     }
 
+    /// @dev                find funding ourput using provided index
+    /// @param _vout        length-prepended outputs
+    /// @param _index       index of funding output
+    /// @return             funding value
     function findAndParseFundingOutput2(
         DepositUtils.Deposit storage _d,
         bytes _vout,
