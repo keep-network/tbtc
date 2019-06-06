@@ -12,7 +12,8 @@ repos:
  - repo: local
    hooks:
     - id: lint-js
-      name: Lint JS
-      language: script
-      files: \.js$
+      name: 'lint js'
       entry: /usr/bin/env bash -c "cd implementation && npm run js:lint"
+      files: '\.js$'
+      language: script
+      description: "Checks JS code according to the package's linter configuration"
