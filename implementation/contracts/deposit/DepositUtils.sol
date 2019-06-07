@@ -1,9 +1,9 @@
 pragma solidity 0.4.25;
 
-import {ValidateSPV} from "../bitcoin-spv/ValidateSPV.sol";
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
-import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
+import {ValidateSPV} from "bitcoin-spv/ValidateSPV.sol";
+import {SafeMath} from "bitcoin-spv/SafeMath.sol";
+import {BTCUtils} from "bitcoin-spv/BTCUtils.sol";
+import {BytesLib} from "bitcoin-spv/BytesLib.sol";
 import {TBTCConstants} from './TBTCConstants.sol';
 import {ITBTCSystem} from '../interfaces/ITBTCSystem.sol';
 import {IERC721} from '../interfaces/IERC721.sol';

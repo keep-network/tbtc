@@ -1,8 +1,8 @@
 pragma solidity 0.4.25;
 
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
-import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
+import {SafeMath} from "bitcoin-spv/SafeMath.sol";
+import {BytesLib} from "bitcoin-spv/BytesLib.sol";
+import {BTCUtils} from "bitcoin-spv/BTCUtils.sol";
 import {IBurnableERC20} from '../interfaces/IBurnableERC20.sol';
 import {IKeep} from '../interfaces/IKeep.sol';
 import {DepositUtils} from './DepositUtils.sol';
