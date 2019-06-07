@@ -13,7 +13,11 @@ img/generated
 implementation/build/
 blocks/
 __pycache__/
-node_modules/
 .mypy_cache
+
+# Dependencies
+node_modules/
+installed_contracts/
+
 # Visual Studio Code
 *.code-workspace
