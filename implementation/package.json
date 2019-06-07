@@ -1,10 +1,11 @@
 {
   "name": "tbtc-deposit",
   "version": "0.0.0",
-  "description": "deposit contract for TBTC",
+  "description": "deposit contract for tBTC",
   "main": "index.js",
   "scripts": {
-    "setup": "git submodule update --init --recursive && npm i",
+    "setup": "npm install && truffle install",
+    "compile": "truffle compile",
     "test": "truffle test"
   },
   "author": "James Prestwich",
