@@ -1,0 +1,8 @@
+{
+    "package_name": "tbtc-deposit",
+    "version": "0.0.0",
+    "description": "deposit contract for tBTC",
+    "dependencies": {
+        "bitcoin-spv": "0.1.0"
+    }
+}
