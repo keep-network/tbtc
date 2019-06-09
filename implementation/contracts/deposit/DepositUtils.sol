@@ -4,11 +4,11 @@ import {ValidateSPV} from "../bitcoin-spv/ValidateSPV.sol";
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
 import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
-import {TBTCConstants} from './TBTCConstants.sol';
-import {ITBTCSystem} from '../interfaces/ITBTCSystem.sol';
-import {IERC721} from '../interfaces/IERC721.sol';
-import {IKeep} from '../interfaces/IKeep.sol';
-import {IBurnableERC20} from '../interfaces/IBurnableERC20.sol';
+import {TBTCConstants} from "./TBTCConstants.sol";
+import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
+import {IERC721} from "../interfaces/IERC721.sol";
+import {IKeep} from "../interfaces/IKeep.sol";
+import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
 
 library DepositUtils {
 
@@ -84,14 +84,16 @@ library DepositUtils {
         } else if (_firstHeaderDiff == _previous) {
             _reqDiff = _previous;
         } else {
-            revert('not at current or previous difficulty');
+            revert("not at current or previous difficulty");
         }
 
         uint256 _observedDiff = _bitcoinHeaders.validateHeaderChain();
-        require(_observedDiff > 3, 'ValidateSPV returned an error code');
+        require(_observedDiff > 3, "ValidateSPV returned an error code");
         /* TODO: make this better than 6 */
-        require(_observedDiff >= _reqDiff.mul(6),
-                'Insufficient accumulated difficulty in header chain');
+        require(
+            _observedDiff >= _reqDiff.mul(6),
+            "Insufficient accumulated difficulty in header chain"
+        );
     }
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin tx
@@ -116,13 +118,13 @@ library DepositUtils {
         bytes memory _locktime;
         bytes32 _txid;
         (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
-        require(_txid != bytes32(0), 'Failed tx parsing');
+        require(_txid != bytes32(0), "Failed tx parsing");
         require(
             _txid.prove(
                 _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
                 _merkleProof,
                 _index),
-            'Tx merkle proof is not valid for provided header and tx');
+            "Tx merkle proof is not valid for provided header and tx");
 
         evaluateProofDifficulty(_d, _bitcoinHeaders);
 
@@ -190,9 +192,9 @@ library DepositUtils {
     /// @return             The 1-byte prefix for the compressed key
     function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes) {
         if(uint256(_pubkeyY) & 1 == 1) {
-            return hex'03';  // Odd Y
+            return hex"03";  // Odd Y
         } else {
-            return hex'02';  // Even Y
+            return hex"02";  // Even Y
         }
     }
 
@@ -286,7 +288,7 @@ library DepositUtils {
         IKeep _keep = IKeep(_d.KeepBridge);
         _keep.seizeSignerBonds(_d.keepID);
         uint256 _postCallBalance = address(this).balance;
-        require(_postCallBalance > _preCallBalance, 'No funds received, unexpected');
+        require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
         return _postCallBalance.sub(_preCallBalance);
     }
 
@@ -295,6 +297,7 @@ library DepositUtils {
     ///             whenever this is called we are shutting down.
     function distributeBeneficiaryReward(Deposit storage _d) public {
         IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        /* solium-disable-next-line */
         require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))));
     }
 
@@ -303,7 +306,7 @@ library DepositUtils {
     /// @param  _ethValue   the amount of ether to send
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
-        require(address(this).balance >= _ethValue, 'Not enough funds to send');
+        require(address(this).balance >= _ethValue, "Not enough funds to send");
         IKeep _keep = IKeep(_d.KeepBridge);
         return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepID);
     }

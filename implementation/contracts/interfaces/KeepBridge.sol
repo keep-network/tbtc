@@ -1,14 +1,9 @@
 pragma solidity 0.4.25;
 
-import {IKeep} from './IKeep.sol';
+import {IKeep} from "./IKeep.sol";
 
 contract KeepBridge is IKeep {
     address keepRegistry;
-
-    //TODO: add: onlyOwner
-    function initialize(address _keepRegistry) public {
-        keepRegistry = _keepRegistry;
-    }
 
     function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256){
         //TODO: Implement
@@ -46,8 +41,8 @@ contract KeepBridge is IKeep {
     function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (uint256 _keepID){
         //TODO: Implement
 
-       address keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
-       // TODO: keepID type should be changed from uint256 to addrress
+        address keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
+        // TODO: keepID type should be changed from uint256 to addrress
         _keepID = uint256(keepAddress);
 
         return _keepID;
@@ -71,6 +66,11 @@ contract KeepBridge is IKeep {
     function seizeSignerBonds(uint256 _keepID) external returns (bool){
         //TODO: Implement
         return false;
+    }
+
+    //TODO: add: onlyOwner
+    function initialize(address _keepRegistry) public {
+        keepRegistry = _keepRegistry;
     }
 }
 

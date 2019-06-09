@@ -1,0 +1,9 @@
+{
+    "extends": "keep",
+    "plugins": [
+        "security"
+    ],
+    "rules": {
+        "security/no-block-members": "off"
+    }
+}

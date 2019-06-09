@@ -3,13 +3,13 @@ pragma solidity 0.4.25;
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
 import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
-import {IBurnableERC20} from '../interfaces/IBurnableERC20.sol';
-import {IKeep} from '../interfaces/IKeep.sol';
-import {DepositUtils} from './DepositUtils.sol';
-import {DepositLiquidation} from './DepositLiquidation.sol';
-import {DepositStates} from './DepositStates.sol';
-import {OutsourceDepositLogging} from './OutsourceDepositLogging.sol';
-import {TBTCConstants} from './TBTCConstants.sol';
+import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {IKeep} from "../interfaces/IKeep.sol";
+import {DepositUtils} from "./DepositUtils.sol";
+import {DepositLiquidation} from "./DepositLiquidation.sol";
+import {DepositStates} from "./DepositStates.sol";
+import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
+import {TBTCConstants} from "./TBTCConstants.sol";
 
 library DepositFunding {
 
@@ -45,6 +45,7 @@ library DepositFunding {
     function getKeepPubkeyResult(DepositUtils.Deposit storage _d) public view returns (bytes) {
         IKeep _keep = IKeep(_d.KeepBridge);
         bytes memory _pubkey = _keep.getKeepPubkey(_d.keepID);
+        /* solium-disable-next-line */
         require(_pubkey.length == 64);
         return _pubkey;
     }
@@ -60,10 +61,11 @@ library DepositFunding {
         uint256 _m,
         uint256 _n
     ) public returns (bool) {
-        require(_d.inStart(), 'Deposit setup already requested');
+        require(_d.inStart(), "Deposit setup already requested");
 
         IKeep _keep = IKeep(_d.KeepBridge);
 
+        /* solium-disable-next-line value-in-payable */
         _d.keepID = _keep.requestKeepGroup.value(msg.value)(_m, _n);  // kinda gross but
         _d.signingGroupRequestedAt = block.timestamp;
 
@@ -123,7 +125,7 @@ library DepositFunding {
 
         // Find the output paying the signer PKH
         // This will fail if there are more than 256 outputs
-        for (uint8 i = 0; i <  _bitcoinTx.extractNumOutputs(); i++) {
+        for (uint8 i = 0; i < _bitcoinTx.extractNumOutputs(); i++) {
             _output = _bitcoinTx.extractOutputAtIndex(i);
             if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.signerPKH()))) {
                 _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
@@ -131,7 +133,7 @@ library DepositFunding {
             }
         }
         // If we don't return from inside the loop, we failed.
-        revert('Did not find output with correct PKH');
+        revert("Did not find output with correct PKH");
     }
 
     /// @notice                 Validates the funding tx and parses information from it
@@ -154,21 +156,23 @@ library DepositFunding {
         (_valueBytes, _outputIndex) = findAndParseFundingOutput(_d, _bitcoinTx);
 
         // Don't validate deposits under the lot size
-        require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), 'Deposit too small');
+        require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
 
         // The outpoint is the LE TXID plus the index of the output as a 4-byte LE int
         // _outputIndex is a uint8, so we know it is only 1 byte
         // Therefore, pad with 3 more bytes
-        _outpoint = abi.encodePacked(_txid, _outputIndex, hex'000000');
+        _outpoint = abi.encodePacked(_txid, _outputIndex, hex"000000");
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out
     /// @dev        We rely on the keep system punishes the signers in this case
     /// @param  _d  deposit storage pointer
     function notifySignerSetupFailure(DepositUtils.Deposit storage _d) public {
-        require(_d.inAwaitingSignerSetup(), 'Not awaiting setup');
-        require(block.timestamp > _d.signingGroupRequestedAt + TBTCConstants.getSigningGroupFormationTimeout(),
-                'Signing group formation timeout not yet elapsed');
+        require(_d.inAwaitingSignerSetup(), "Not awaiting setup");
+        require(
+            block.timestamp > _d.signingGroupRequestedAt + TBTCConstants.getSigningGroupFormationTimeout(),
+            "Signing group formation timeout not yet elapsed"
+        );
         _d.setFailedSetup();
         _d.logSetupFailed();
 
@@ -181,12 +185,12 @@ library DepositFunding {
     /// @param  _d          deposit storage pointer
     /// @return             True if successful, otherwise revert
     function retrieveSignerPubkey(DepositUtils.Deposit storage _d) public {
-        require(_d.inAwaitingSignerSetup(), 'Not currently awaiting signer setup');
+        require(_d.inAwaitingSignerSetup(), "Not currently awaiting signer setup");
         bytes memory _keepResult = getKeepPubkeyResult(_d);
 
         _d.signingGroupPubkeyX = _keepResult.slice(0, 32).toBytes32();
         _d.signingGroupPubkeyY = _keepResult.slice(32, 32).toBytes32();
-        require(_d.signingGroupPubkeyY != bytes32(0) && _d.signingGroupPubkeyX != bytes32(0), 'Keep returned bad pubkey');
+        require(_d.signingGroupPubkeyY != bytes32(0) && _d.signingGroupPubkeyX != bytes32(0), "Keep returned bad pubkey");
         _d.fundingProofTimerStart = block.timestamp;
 
         _d.setAwaitingBTCFundingProof();
@@ -199,9 +203,11 @@ library DepositFunding {
     /// @dev        This is considered a funder fault, and we revoke their bond
     /// @param  _d  deposit storage pointer
     function notifyFundingTimeout(DepositUtils.Deposit storage _d) public {
-        require(_d.inAwaitingBTCFundingProof(), 'Funding timeout has not started');
-        require(block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFundingTimeout(),
-                'Funding timeout has not elapsed.');
+        require(_d.inAwaitingBTCFundingProof(), "Funding timeout has not started");
+        require(
+            block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFundingTimeout(),
+            "Funding timeout has not elapsed."
+        );
         _d.setFailedSetup();
         _d.logSetupFailed();
 
@@ -226,11 +232,13 @@ library DepositFunding {
         bytes32 _signedDigest,
         bytes _preimage
     ) public {
-        require(_d.inAwaitingBTCFundingProof(),
-                'Signer fraud during funding flow only available while awaiting funding');
+        require(
+            _d.inAwaitingBTCFundingProof(),
+            "Signer fraud during funding flow only available while awaiting funding"
+        );
 
         bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
-        require(_isFraud, 'Signature is not fraudulent');
+        require(_isFraud, "Signature is not fraudulent");
         _d.seizeSignerBonds();
         _d.logFraudDuringSetup();
 
@@ -250,10 +258,14 @@ library DepositFunding {
     /// @dev        This is not a funder fault. The signers have faulted, so the funder shouldn't fund
     /// @param  _d  deposit storage pointer
     function notifyFraudFundingTimeout(DepositUtils.Deposit storage _d) public {
-        require(_d.inFraudAwaitingBTCFundingProof(),
-                'Not currently awaiting fraud-related funding proof');
-        require(block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFraudFundingTimeout(),
-                'Fraud funding proof timeout has not elapsed');
+        require(
+            _d.inFraudAwaitingBTCFundingProof(),
+            "Not currently awaiting fraud-related funding proof"
+        );
+        require(
+            block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFraudFundingTimeout(),
+            "Fraud funding proof timeout has not elapsed"
+        );
         _d.setFailedSetup();
         _d.logSetupFailed();
 
@@ -278,7 +290,7 @@ library DepositFunding {
     ) public returns (bool) {
         bytes8 _valueBytes;
         bytes memory _outpoint;
-        require(_d.inFraudAwaitingBTCFundingProof(), 'Not awaiting a funding proof during setup fraud');
+        require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
 
         (_valueBytes, _outpoint) = validateAndParseFundingSPVProof(_d, _bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
 
@@ -310,7 +322,7 @@ library DepositFunding {
         bytes8 _valueBytes;
         bytes memory _outpoint;
 
-        require(_d.inAwaitingBTCFundingProof(), 'Not awaiting funding');
+        require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
         // Design decision:
         // We COULD revoke the funder bond here if the funding proof timeout has elapsed

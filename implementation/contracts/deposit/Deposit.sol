@@ -1,9 +1,9 @@
 pragma solidity 0.4.25;
 
-import {DepositLiquidation} from './DepositLiquidation.sol';
-import {DepositUtils} from './DepositUtils.sol';
-import {DepositFunding} from './DepositFunding.sol';
-import {DepositRedemption} from './DepositRedemption.sol';
+import {DepositLiquidation} from "./DepositLiquidation.sol";
+import {DepositUtils} from "./DepositUtils.sol";
+import {DepositFunding} from "./DepositFunding.sol";
+import {DepositRedemption} from "./DepositRedemption.sol";
 
 contract Deposit {
 
@@ -15,6 +15,7 @@ contract Deposit {
     DepositUtils.Deposit self;
 
     // We separate the constructor from createNewDeposit to make proxy factories easier
+    /* solium-disable-next-line no-empty-blocks */
     constructor () public {}
 
     function () public payable {}
@@ -38,7 +39,7 @@ contract Deposit {
         address _KeepBridge,
         uint256 _m,
         uint256 _n
-    ) payable public returns (bool) {
+    ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.KeepBridge = _KeepBridge;
