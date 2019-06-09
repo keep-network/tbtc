@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "setup": "git submodule update --init --recursive && npm i",
-    "test": "truffle test"
+    "test": "truffle test",
+    "sol:lint": "solium -d contracts/",
+    "sol:lint:fix": "solium -d contracts/ --fix"
   },
   "author": "James Prestwich",
   "license": "UNLICENSED",
@@ -15,13 +17,15 @@
     "solc": "^0.4.25"
   },
   "devDependencies": {
-    "eth-gas-reporter": "^0.1.12",
-    "ganache-cli": "^6.4.3",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-stage-2": "^6.18.0",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
+    "eth-gas-reporter": "^0.1.12",
+    "ethlint": "^1.2.4",
+    "ganache-cli": "^6.4.3",
+    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git",
     "truffle": "^5.0.17"
   }
 }

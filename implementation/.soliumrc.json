@@ -1,0 +1,6 @@
+{
+    "extends": "keep",
+    "plugins": [
+        "security"
+    ]
+}
