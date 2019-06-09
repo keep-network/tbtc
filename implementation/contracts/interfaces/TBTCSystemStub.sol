@@ -2,7 +2,8 @@ pragma solidity 0.4.25;
 
 import {ITBTCSystem} from "./ITBTCSystem.sol";
 import {IERC721} from "./IERC721.sol";
-import {UniswapFactoryInterface} from "../uniswap/UniswapFactoryInterface.sol";
+import {IUniswapFactory} from "../uniswap/IUniswapFactory.sol";
+import {TBTCToken} from "../tokens/TBTC.sol";
 
 contract TBTCSystemStub is ITBTCSystem, IERC721 {
 
@@ -11,9 +12,12 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
     uint256 oraclePrice = 10 ** 12;
     address depositOwner = address(0);
     UniswapFactoryInterface uniswapFactory;
+    TBTCToken tbtc;
 
-    function setup(address _uniswapFactory) public {
-        uniswapFactory = UniswapFactoryInterface(_uniswapFactory);
+    function setup(address _uniswapFactory, address _tbtc) external {
+        uniswapFactory = IUniswapFactory(_uniswapFactory);
+        tbtc = TBTCToken(_tbtc);
+        uniswapFactory.createExchange(tbtc);
     }
 
     function getUniswapExchangeFactory() external view returns (address) {
