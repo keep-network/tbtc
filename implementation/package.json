@@ -25,7 +25,7 @@
     "eth-gas-reporter": "^0.1.12",
     "ethlint": "^1.2.4",
     "ganache-cli": "^6.4.3",
-    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git",
+    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.1",
     "truffle": "^5.0.17"
   }
 }
