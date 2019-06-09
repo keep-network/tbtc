@@ -29,7 +29,7 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "eslint": "^5.16.0",
-    "eslint-config-keep": "https://github.com/keep-network/eslint-config-keep.git",
+    "eslint-config-keep": "https://github.com/keep-network/eslint-config-keep.git#0.1.0",
     "eth-gas-reporter": "^0.1.12",
     "ganache-cli": "^6.4.3"
   }
