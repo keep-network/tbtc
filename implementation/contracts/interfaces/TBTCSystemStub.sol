@@ -1,7 +1,7 @@
 pragma solidity 0.4.25;
 
-import {ITBTCSystem} from './ITBTCSystem.sol';
-import {IERC721} from './IERC721.sol';
+import {ITBTCSystem} from "./ITBTCSystem.sol";
+import {IERC721} from "./IERC721.sol";
 
 contract TBTCSystemStub is ITBTCSystem, IERC721 {
 
