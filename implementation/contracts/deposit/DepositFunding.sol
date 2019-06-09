@@ -43,7 +43,7 @@ library DepositFunding {
     /// @dev            calls out to the keep contract, should get 64 bytes back
     /// @return         the 64 byte pubkey
     function getKeepPubkeyResult(DepositUtils.Deposit storage _d) public view returns (bytes) {
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         bytes memory _pubkey = _keep.getKeepPubkey(_d.keepID);
         /* solium-disable-next-line */
         require(_pubkey.length == 64);
@@ -63,7 +63,7 @@ library DepositFunding {
     ) public returns (bool) {
         require(_d.inStart(), "Deposit setup already requested");
 
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
 
         /* solium-disable-next-line value-in-payable */
         _d.keepID = _keep.requestKeepGroup.value(msg.value)(_m, _n);  // kinda gross but

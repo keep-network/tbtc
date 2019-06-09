@@ -24,7 +24,7 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
-        address KeepSystem;
+        address KeepBridge;
         uint8 currentState;
 
         // SET ON FRAUD
@@ -242,7 +242,7 @@ library DepositUtils {
     /// @dev        Calls the keep contract to do so
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         return _keep.checkBondAmount(_d.keepID);
     }
 
@@ -258,7 +258,7 @@ library DepositUtils {
     /// @param  _digest the digest to check approval time for
     /// @return         the time it was approved. 0 if unapproved
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         return _keep.wasDigestApprovedForSigning(_d.keepID, _digest);
     }
 
@@ -285,7 +285,7 @@ library DepositUtils {
     /// @return     the amount of ether seized
     function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         _keep.seizeSignerBonds(_d.keepID);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
@@ -307,7 +307,7 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepID);
     }
 }
