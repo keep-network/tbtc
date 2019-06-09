@@ -1,6 +1,8 @@
 pragma solidity 0.4.25;
 
-contract UniswapExchangeInterface {
+/* solium-disable */
+
+contract IUniswapExchange {
     // Address of ERC20 token sold on this exchange
     function tokenAddress() external view returns (address token);
     // Address of Uniswap Factory

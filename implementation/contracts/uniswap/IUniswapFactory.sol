@@ -1,6 +1,8 @@
 pragma solidity 0.4.25;
 
-contract UniswapFactoryInterface {
+/* solium-disable */
+
+contract IUniswapFactory {
     // Public Variables
     address public exchangeTemplate;
     uint256 public tokenCount;
