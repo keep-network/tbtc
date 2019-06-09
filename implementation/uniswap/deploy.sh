@@ -20,6 +20,5 @@ FACTORY_ADDR=$(seth send --create $(cat ./contracts-vyper/bytecode/factory.txt) 
 seth send $FACTORY_ADDR "initializeFactory(address)" $EXCHANGE_ADDR
 
 
-rm deployments.txt
-echo "Exchange $EXCHANGE_ADDR" >> deployments.txt
-echo "Factory $FACTORY_ADDR" >> deployments.txt
+echo "$EXCHANGE_ADDR" > deployments/Exchange
+echo "$FACTORY_ADDR" > deployments/Factory
