@@ -1,5 +1,14 @@
-version: 2
+version: 2.1
+executors:
+  docker-node:
+    docker:
+      - image: circleci/node:11
 jobs:
+  eslint:
+    executor: docker-node
+    steps:
+        - checkout
+        - run: cd implementation/ && npm install && npm run js:lint
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -63,6 +72,9 @@ jobs:
 
 workflows:
   version: 2
+  lint:
+    jobs:
+      - eslint
   docs:
     jobs:
       - generate_pngs

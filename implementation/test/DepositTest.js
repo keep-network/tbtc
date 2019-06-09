@@ -1,7 +1,7 @@
 import expectThrow from './helpers/expectThrow';
 
-const BytesLib = artifacts.require('BytesLib');
-const BTCUtils = artifacts.require('BTCUtils');
+const BytesLib = artifacts.require('BytesLib')
+const BTCUtils = artifacts.require('BTCUtils')
 const ValidateSPV = artifacts.require('ValidateSPV');
 const CheckBitcoinSigs = artifacts.require('CheckBitcoinSigs');
 
