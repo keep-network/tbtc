@@ -22,6 +22,8 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystemStub,
   KeepBridge]
 
+const uniswap = require('../uniswap')
+
 module.exports = (deployer) => {
   deployer.then(async () => {
     await deployer.deploy(BytesLib)
@@ -56,8 +58,12 @@ module.exports = (deployer) => {
 
     await deployer.deploy(Deposit)
 
-    await deployer.deploy(TBTCSystemStub)
-
+    let tbtcSystem = await deployer.deploy(TBTCSystemStub)
+    await tbtcSystem.setup(
+      uniswap.deployments.Factory
+    );
+    
+ 
     await deployer.deploy(KeepBridge)
   })
 }
