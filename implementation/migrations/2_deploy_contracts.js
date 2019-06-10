@@ -23,9 +23,24 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   KeepBridge]
 
 const uniswap = require('../uniswap')
+const path = require('path')
+const child_process = require('child_process')
 
 module.exports = (deployer) => {
   deployer.then(async () => {
+    try {
+      const uniswapDir = path.join(__dirname, '../uniswap')
+
+      await child_process.execFileSync(
+        path.join(uniswapDir, 'deploy.sh'),
+        { 
+          cwd: uniswapDir
+        }
+      );
+    } catch(err) {
+      throw new Error(`uniswap deployment failed: ${err}`)
+    }
+
     await deployer.deploy(BytesLib)
 
     await deployer.link(BytesLib, all)
@@ -62,7 +77,6 @@ module.exports = (deployer) => {
     await tbtcSystem.setup(
       uniswap.deployments.Factory
     );
-    
  
     await deployer.deploy(KeepBridge)
   })
