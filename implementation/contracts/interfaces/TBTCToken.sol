@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
-import {IBurnableERC20} from '../interfaces/IBurnableERC20.sol';
+import {IBurnableERC20} from './IBurnableERC20.sol';
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 
 /**
