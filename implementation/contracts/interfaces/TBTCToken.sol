@@ -41,6 +41,13 @@ contract TBTCToken is IBurnableERC20 {
         return _totalSupply;
     }
 
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
+    function balanceOf(address _who) external view returns (uint256){
+        return _balances[_who];
+    }
+
      /**
      * @dev Moves `_value` tokens from the caller's account to `_to`.
      *
@@ -51,6 +58,17 @@ contract TBTCToken is IBurnableERC20 {
     function transfer(address _to, uint256 _value) external returns (bool){
         _transfer(msg.sender, _to, _value);
         return true;
+    }
+
+    /**
+     * @dev Returns the remaining number of tokens that `_spender` will be
+     * allowed to spend on behalf of `_owner` through `transferFrom`. This is
+     * zero by default.
+     *
+     * This value changes when `approve` or `transferFrom` are called.
+     */
+    function allowance(address _owner, address _spender) external view returns (uint256){
+        return _allowed[_owner][_spender];
     }
 
     /**
@@ -71,6 +89,7 @@ contract TBTCToken is IBurnableERC20 {
         _approve(msg.sender, _spender, _value);
         return true;
     }
+    
      /**
      * @dev Moves `_value` tokens from `_from` to `_to` using the
      * allowance mechanism. `_value` is then deducted from the caller's
@@ -87,27 +106,9 @@ contract TBTCToken is IBurnableERC20 {
     }
 
     /**
-     * @dev Returns the amount of tokens owned by `account`.
-     */
-    function balanceOf(address _who) external view returns (uint256){
-        return _balances[_who];
-    }
-
-    /**
-     * @dev Returns the remaining number of tokens that `_spender` will be
-     * allowed to spend on behalf of `_owner` through `transferFrom`. This is
-     * zero by default.
-     *
-     * This value changes when `approve` or `transferFrom` are called.
-     */
-    function allowance(address _owner, address _spender) external view returns (uint256){
-        return _allowed[_owner][_spender];
-    }
-
-    /**
      * @dev Destoys `_value` tokens from `_from`.`_value` is then deducted
      * from the caller's allowance.
-     
+
      * See `_burnFrom`.
      */
     function burnFrom(address _from, uint256 _value) external{
