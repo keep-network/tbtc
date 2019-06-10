@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
-import {IBurnableERC20} from './IBurnableERC20.sol';
+import {IBurnableERC20} from "./IBurnableERC20.sol";
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 
 /**
@@ -89,8 +89,8 @@ contract TBTCToken is IBurnableERC20 {
         _approve(msg.sender, _spender, _value);
         return true;
     }
-    
-     /**
+
+    /**
      * @dev Moves `_value` tokens from `_from` to `_to` using the
      * allowance mechanism. `_value` is then deducted from the caller's
      * allowance.
@@ -146,7 +146,7 @@ contract TBTCToken is IBurnableERC20 {
         _balances[_account] = _balances[_account].add(_amount);
         emit Transfer(address(0), _account, _amount);
     }
-    
+
     /**
      * @dev Destoys `_amount` tokens from `_account`, reducing the
      * total supply.

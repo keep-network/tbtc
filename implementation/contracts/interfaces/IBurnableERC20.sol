@@ -6,6 +6,10 @@ pragma solidity 0.4.25;
  */
 interface IBurnableERC20 {
 
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
     function totalSupply() external view returns (uint256);
 
     function balanceOf(address _who) external view returns (uint256);
@@ -23,8 +27,4 @@ interface IBurnableERC20 {
     function burn(uint256 _value) external;
 
     function mint(address _to, uint256 _value) external returns (bool);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
