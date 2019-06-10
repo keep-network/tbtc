@@ -28,21 +28,30 @@ const uniswap = require('../uniswap')
 const path = require('path')
 const child_process = require('child_process')
 
+async function deployUniswap() {
+  if(uniswap.getDeployments().Factory != "") {
+    console.log(`Uniswap already deployed - skipping`)
+    return;
+  }
+
+  const uniswapDir = path.join(__dirname, '../uniswap')
+
+  await child_process.execFileSync(
+    path.join(uniswapDir, 'deploy.sh'),
+    { 
+      cwd: uniswapDir
+    }
+  );
+}
+
 module.exports = (deployer) => {
   deployer.then(async () => {
     try {
-      const uniswapDir = path.join(__dirname, '../uniswap')
-
-      await child_process.execFileSync(
-        path.join(uniswapDir, 'deploy.sh'),
-        { 
-          cwd: uniswapDir
-        }
-      );
+      await deployUniswap()
     } catch(err) {
       throw new Error(`uniswap deployment failed: ${err}`)
     }
-
+    
     await deployer.deploy(BytesLib)
 
     await deployer.link(BytesLib, all)
@@ -79,7 +88,7 @@ module.exports = (deployer) => {
     let tbtc = await deployer.deploy(TBTC)
 
     await tbtcSystem.setup(
-      uniswap.deployments.Factory,
+      uniswap.getDeployments().Factory,
       tbtc.address
     );
  
