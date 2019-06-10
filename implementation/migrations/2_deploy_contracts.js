@@ -14,7 +14,6 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const Deposit = artifacts.require('Deposit')
 const KeepBridge = artifacts.require('KeepBridge')
-const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCToken = artifacts.require('TBTCToken')
 
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
@@ -56,7 +55,6 @@ module.exports = (deployer) => {
     await deployer.deploy(Deposit)
 
     await deployer.deploy(KeepBridge)
-    await deployer.deploy(TBTCSystemStub)
     await deployer.deploy(TBTCToken)
   })
 }
