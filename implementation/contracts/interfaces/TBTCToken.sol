@@ -20,6 +20,7 @@ contract TBTCToken is IBurnableERC20 {
     //holds user allowances
     mapping (address => mapping (address => uint256)) private _allowed;
 
+    //the current total supply of the token
     uint256 private _totalSupply;
 
     function totalSupply() external view returns (uint256) {
