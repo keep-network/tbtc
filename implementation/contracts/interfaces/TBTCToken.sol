@@ -14,7 +14,10 @@ contract TBTCToken is IBurnableERC20 {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+    //holds user blaances
     mapping (address => uint256) private _balances;
+
+    //holds user allowances
     mapping (address => mapping (address => uint256)) private _allowed;
 
     uint256 private _totalSupply;
