@@ -11,8 +11,8 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
     address depositOwner = address(0);
-    IUniswapFactory uniswapFactory;
-    TBTC tbtc;
+    IUniswapFactory public uniswapFactory;
+    TBTC public tbtc;
 
     function setup(
         address _uniswapFactory,

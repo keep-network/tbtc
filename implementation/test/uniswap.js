@@ -12,18 +12,22 @@ contract('Uniswap deployment', () => {
     it('deployed uniswap', async () => {
         let tbtcSystem = await TBTCSystemStub.deployed();
         let tbtc = await tbtcSystem.tbtc()
-        let tbtcExchange = await (await tbtcSystem.uniswapFactory()).getExchange(tbtc)
+        expect(tbtc).to.not.be.empty;
 
-        console.log(tbtcSystem)
-        console.log(tbtc)
-        console.log(tbtcExchange)
+        let uniswapFactoryAddr = await tbtcSystem.uniswapFactory()
+        expect(uniswapFactoryAddr).to.not.be.empty;
+
+        let uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr);
+        let tbtcExchangeAddr = await uniswapFactory.getExchange(tbtc)
+        expect(tbtcExchangeAddr).to.not.be.empty;
     })
 
     describe('UniswapExchange TBTC', () => {
         it('has no liquidity by default', async () => {
             // getTokenToEthInputPrice
         })
-        it('trades with tbtc', async () => {
+
+        it('successfully trades with tbtc', async () => {
 
         })
     })
