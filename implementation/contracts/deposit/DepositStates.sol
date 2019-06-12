@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
-import {DepositUtils} from './DepositUtils.sol';
+import {DepositUtils} from "./DepositUtils.sol";
 
 library DepositStates {
 
@@ -36,8 +36,10 @@ library DepositStates {
     /// @param _d   deposit storage pointer
     /// @return     True if contract is currently in the funding flow else False
     function inFunding(DepositUtils.Deposit storage _d) public view returns (bool) {
-        return (_d.currentState == uint8(States.AWAITING_SIGNER_SETUP)
-             || _d.currentState == uint8(States.AWAITING_BTC_FUNDING_PROOF));
+        return (
+            _d.currentState == uint8(States.AWAITING_SIGNER_SETUP)
+         || _d.currentState == uint8(States.AWAITING_BTC_FUNDING_PROOF)
+        );
     }
 
     /// @notice     Check if the contract is currently in the funding faud flow
@@ -53,8 +55,10 @@ library DepositStates {
     /// @param _d   deposit storage pointer
     /// @return     True if contract is currently in the liquidaton flow else False
     function inSignerLiquidation(DepositUtils.Deposit storage _d) public view returns (bool) {
-        return (_d.currentState == uint8(States.LIQUIDATION_IN_PROGRESS)
-             || _d.currentState == uint8(States.FRAUD_LIQUIDATION_IN_PROGRESS));
+        return (
+            _d.currentState == uint8(States.LIQUIDATION_IN_PROGRESS)
+         || _d.currentState == uint8(States.FRAUD_LIQUIDATION_IN_PROGRESS)
+        );
     }
 
     /// @notice     Check if the contract is currently in the redepmtion flow
@@ -62,8 +66,10 @@ library DepositStates {
     /// @param _d   deposit storage pointer
     /// @return     True if contract is currently in the redemption flow else False
     function inRedemption(DepositUtils.Deposit storage _d) public view returns (bool) {
-        return (_d.currentState == uint8(States.AWAITING_WITHDRAWAL_SIGNATURE)
-             || _d.currentState == uint8(States.AWAITING_WITHDRAWAL_PROOF));
+        return (
+            _d.currentState == uint8(States.AWAITING_WITHDRAWAL_SIGNATURE)
+         || _d.currentState == uint8(States.AWAITING_WITHDRAWAL_PROOF)
+        );
     }
 
     /// @notice     Check if the contract has halted
@@ -71,9 +77,11 @@ library DepositStates {
     /// @param _d   deposit storage pointer
     /// @return     True if contract has halted permanently
     function inEndState(DepositUtils.Deposit storage _d) public view returns (bool) {
-        return (_d.currentState == uint8(States.LIQUIDATED)
-             || _d.currentState == uint8(States.REDEEMED)
-             || _d.currentState == uint8(States.FAILED_SETUP));
+        return (
+            _d.currentState == uint8(States.LIQUIDATED)
+         || _d.currentState == uint8(States.REDEEMED)
+         || _d.currentState == uint8(States.FAILED_SETUP)
+        );
     }
 
     /// @notice     Check if the contract is available for a redemption request
@@ -81,8 +89,10 @@ library DepositStates {
     /// @param _d   deposit storage pointer
     /// @return     True if available, False otherwise
     function inRedeemableState(DepositUtils.Deposit storage _d) public view returns (bool) {
-        return (_d.currentState == uint8(States.ACTIVE)
-                || _d.currentState == uint8(States.COURTESY_CALL));
+        return (
+            _d.currentState == uint8(States.ACTIVE)
+         || _d.currentState == uint8(States.COURTESY_CALL)
+        );
     }
 
     /// @notice     Check if the contract is currently in the start state (awaiting setup)
