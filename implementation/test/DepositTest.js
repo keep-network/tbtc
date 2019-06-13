@@ -483,7 +483,7 @@ contract('Deposit', accounts => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
-      const liquidationTime = await testInstance.getLiquidationAndCoutesyInitiated.call()
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
       })
   })
@@ -534,7 +534,7 @@ contract('Deposit', accounts => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
-      const liquidationTime = await testInstance.getLiquidationAndCoutesyInitiated.call()
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
     })
   })
@@ -1261,7 +1261,7 @@ contract('Deposit', accounts => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.COURTESY_CALL)
 
-      const liquidationTime = await testInstance.getLiquidationAndCoutesyInitiated.call()
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[1]).not.to.eq.BN(0)
 
       const eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
@@ -1391,7 +1391,7 @@ contract('Deposit', accounts => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
-      const liquidationTime = await testInstance.getLiquidationAndCoutesyInitiated.call()
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
     })
   })
@@ -1441,7 +1441,7 @@ contract('Deposit', accounts => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
-      const liquidationTime = await testInstance.getLiquidationAndCoutesyInitiated.call()
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
     })
   })
@@ -1470,7 +1470,7 @@ contract('Deposit', accounts => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.COURTESY_CALL)
 
-      const liquidationTime = await testInstance.getLiquidationAndCoutesyInitiated.call()
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[1]).not.to.eq.BN(0)
 
       const eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })

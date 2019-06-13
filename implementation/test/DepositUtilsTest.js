@@ -228,12 +228,12 @@ contract('DepositUtils', accounts => {
 
   describe('fetchBondAmount()', async () => {
     it('calls out to the keep system', async () => {
-      const bondAmoun = await testUtilsInstance.fetchBondAmount.call()
-      assert(bondAmoun.eq(new BN(10000)))
+      const bondAmount = await testUtilsInstance.fetchBondAmount.call()
+      assert(bondAmount.eq(new BN(10000)))
 
       await deployed.KeepStub.setBondAmount(44)
-      const newBondAmoun = await testUtilsInstance.fetchBondAmount.call()
-      assert(newBondAmoun.eq(new BN(44)))
+      const newBondAmount = await testUtilsInstance.fetchBondAmount.call()
+      assert(newBondAmount.eq(new BN(44)))
     })
   })
 
