@@ -20,6 +20,10 @@ const TestDepositUtils = artifacts.require('TestDepositUtils')
 
 const BN = require('bn.js')
 const utils = require('./utils')
+const chai = require('chai')
+const expect = chai.expect
+const bnChai = require('bn-chai')
+chai.use(bnChai(BN));
 
 const TEST_DEPOSIT_UTILS_DEPLOY = [
   {name: 'BytesLib', contract: BytesLib},
@@ -58,23 +62,23 @@ contract('DepositUtils', accounts => {
 
   describe('currentBlockDifficulty()', async () => {
     it('calls out to the system', async () => {
-      let res = await testUtilsInstance.currentBlockDifficulty.call()
-      assert(res.eq(new BN(1)))
+      const blockDifficulty = await testUtilsInstance.currentBlockDifficulty.call()
+      assert(blockDifficulty.eq(new BN(1)))
 
       await deployed.SystemStub.setCurrentDiff(33)
-      res = await testUtilsInstance.currentBlockDifficulty.call()
-      assert(res.eq(new BN(33)))
+      const newBlockDifficulty = await testUtilsInstance.currentBlockDifficulty.call()
+      assert(newBlockDifficulty.eq(new BN(33)))
     })
   })
 
   describe('previousBlockDifficulty()', async () => {
     it('calls out to the system', async () => {
-      let res = await testUtilsInstance.previousBlockDifficulty.call()
-      assert(res.eq(new BN(1)))
+      const blockDifficulty = await testUtilsInstance.previousBlockDifficulty.call()
+      assert(blockDifficulty.eq(new BN(1)))
 
       await deployed.SystemStub.setPreviousDiff(44)
-      res = await testUtilsInstance.previousBlockDifficulty.call()
-      assert(res.eq(new BN(44)))
+      const newBlockDifficulty = await testUtilsInstance.previousBlockDifficulty.call()
+      assert(newBlockDifficulty.eq(new BN(44)))
     })
   })
 
@@ -83,7 +87,7 @@ contract('DepositUtils', accounts => {
       await deployed.SystemStub.setCurrentDiff(1)
       await deployed.SystemStub.setPreviousDiff(1)
       try {
-        let res = await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
+        await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'not at current or previous difficulty')
@@ -92,19 +96,19 @@ contract('DepositUtils', accounts => {
 
     it('evaluates a header proof with previous', async () => {
       await deployed.SystemStub.setPreviousDiff(5646403851534)
-      let res = await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
+      await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
 
     })
 
     it('evaluates a header proof with current', async () => {
       await deployed.SystemStub.setPreviousDiff(1)
       await deployed.SystemStub.setCurrentDiff(5646403851534)
-      let res = await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
+      await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
     it('reverts on low difficulty', async () => {
       try {
-        let res = await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0].slice(0, 160 * 4 + 2))
+        await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0].slice(0, 160 * 4 + 2))
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Insufficient accumulated difficulty in header chain')
@@ -114,7 +118,7 @@ contract('DepositUtils', accounts => {
     it('reverts on a ValidateSPV error code (3 or lower)', async () => {
       try {
         await deployed.SystemStub.setPreviousDiff(1)
-        let res = await testUtilsInstance.evaluateProofDifficulty(utils.LOW_DIFF_HEADER)
+        await testUtilsInstance.evaluateProofDifficulty(utils.LOW_DIFF_HEADER)
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'ValidateSPV returned an error code')
@@ -125,7 +129,7 @@ contract('DepositUtils', accounts => {
   describe('checkProof()', async () => {
     it('returns the correct _txid' , async () => {
       await deployed.SystemStub.setCurrentDiff(6379265451411)
-      let res = await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
+      const res = await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
       assert.equal(res, utils.TX.tx_id_le)
     })
 
@@ -156,80 +160,80 @@ contract('DepositUtils', accounts => {
 
   describe('signerFee()', async () => {
     it('returns a derived constant', async () => {
-      let res = await testUtilsInstance.signerFee.call()
-      assert(res.eq(new BN(500000)))
+      const signerFee = await testUtilsInstance.signerFee.call()
+      assert(signerFee.eq(new BN(500000)))
     })
   })
 
   describe('beneficiaryReward()', async () => {
     it('returns a derived constant', async () => {
-      let res = await testUtilsInstance.beneficiaryReward.call()
-      assert(res.eq(new BN(10 ** 5)))
+      const beneficiaryReward = await testUtilsInstance.beneficiaryReward.call()
+      assert(beneficiaryReward.eq(new BN(10 ** 5)))
     })
   })
 
   describe('determineCompressionPrefix()', async () => {
     it('selects 2 for even', async () => {
-      let res = await testUtilsInstance.determineCompressionPrefix.call('0x' + '00'.repeat(32))
+      const res = await testUtilsInstance.determineCompressionPrefix.call('0x' + '00'.repeat(32))
       assert.equal(res, '0x02')
     })
     it('selects 3 for odd', async () => {
-      let res = await testUtilsInstance.determineCompressionPrefix.call('0x' + '00'.repeat(31) + '01')
+      const res = await testUtilsInstance.determineCompressionPrefix.call('0x' + '00'.repeat(31) + '01')
       assert.equal(res, '0x03')
     })
   })
 
   describe('compressPubkey()', async () => {
     it('returns a 33 byte array with a prefix', async () => {
-      let res = await testUtilsInstance.compressPubkey.call('0x' + '00'.repeat(32), '0x' + '00'.repeat(32))
-      assert.equal(res, '0x02' + '00'.repeat(32))
+      const compressed = await testUtilsInstance.compressPubkey.call('0x' + '00'.repeat(32), '0x' + '00'.repeat(32))
+      assert.equal(compressed, '0x02' + '00'.repeat(32))
     })
   })
 
   describe('signerPubkey()', async () => {
     it('returns the concatenated signer X and Y coordinates', async () => {
-      let res = await testUtilsInstance.signerPubkey.call()
-      assert.equal(res, '0x' + '00'.repeat(64))
+      const signerPubkey = await testUtilsInstance.signerPubkey.call()
+      assert.equal(signerPubkey, '0x' + '00'.repeat(64))
     })
   })
 
   describe('signerPKH()', async () => {
     it('returns the concatenated signer X and Y coordinates', async () => {
-      let res = await testUtilsInstance.signerPKH.call()
-      assert.equal(res, utils.hash160('02' + '00'.repeat(32)))
+      const signerPKH = await testUtilsInstance.signerPKH.call()
+      assert.equal(signerPKH, utils.hash160('02' + '00'.repeat(32)))
     })
   })
 
   describe('utxoSize()', async () => {
     it('returns the state\'s utxoSizeBytes as an integer', async () => {
-      let res = await testUtilsInstance.utxoSize.call()
-      assert(res.eq(new BN(0)))
+      const utxoSize = await testUtilsInstance.utxoSize.call()
+      assert(utxoSize.eq(new BN(0)))
 
       await testUtilsInstance.setUTXOInfo('0x11223344', 1, '0x')
-      res = await testUtilsInstance.utxoSize.call()
-      assert(res.eq(new BN('44332211', 16)))
+      const newUtxoSize = await testUtilsInstance.utxoSize.call()
+      assert(newUtxoSize.eq(new BN('44332211', 16)))
     })
   })
 
   describe('fetchOraclePrice()', async () => {
     it('calls out to the system', async () => {
-      let res = await testUtilsInstance.fetchOraclePrice.call()
-      assert(res.eq(new BN('1000000000000', 10)))
+      const oraclePrice = await testUtilsInstance.fetchOraclePrice.call()
+      assert(oraclePrice.eq(new BN('1000000000000', 10)))
 
       await deployed.SystemStub.setOraclePrice(44)
-      res = await testUtilsInstance.fetchOraclePrice.call()
-      assert(res.eq(new BN(44)))
+      const newOraclePrice = await testUtilsInstance.fetchOraclePrice.call()
+      assert(newOraclePrice.eq(new BN(44)))
     })
   })
 
   describe('fetchBondAmount()', async () => {
     it('calls out to the keep system', async () => {
-      let res = await testUtilsInstance.fetchBondAmount.call()
-      assert(res.eq(new BN(10000)))
+      const bondAmount = await testUtilsInstance.fetchBondAmount.call()
+      assert(bondAmount.eq(new BN(10000)))
 
       await deployed.KeepStub.setBondAmount(44)
-      res = await testUtilsInstance.fetchBondAmount.call()
-      assert(res.eq(new BN(44)))
+      const newBondAmount = await testUtilsInstance.fetchBondAmount.call()
+      assert(newBondAmount.eq(new BN(44)))
     })
   })
 
@@ -246,18 +250,18 @@ contract('DepositUtils', accounts => {
 
   describe('wasDigestApprovedForSigning()', async () => {
     it('calls out to the keep system', async () => {
-      let res = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
-      assert.equal(res, false)
+      const approved = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
+      assert.equal(approved, false)
 
       await deployed.KeepStub.approveDigest(7, '0x' + '00'.repeat(32))
-      res = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
-      assert(res.eq(new BN(100)))
+      const newApproved = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
+      assert(newApproved.eq(new BN(100)))
     })
   })
 
   describe('depositBeneficiary()', async () => {
     it('calls out to the system', async () => {
-      let res = await testUtilsInstance.depositBeneficiary.call()
+      const res = await testUtilsInstance.depositBeneficiary.call()
       assert.equal(res, '0x' + '00'.repeat(19) + '00')
     })
   })
@@ -265,21 +269,21 @@ contract('DepositUtils', accounts => {
   describe('redemptionTeardown()', async () => {
     it('deletes state', async () => {
       await testUtilsInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 5, 6, '0x' + '33'.repeat(32))
-      let res = await testUtilsInstance.getRequestInfo.call()
-      assert.equal(res[4], '0x' + '33'.repeat(32))
+      const requestInfo = await testUtilsInstance.getRequestInfo.call()
+      assert.equal(requestInfo[4], '0x' + '33'.repeat(32))
       await testUtilsInstance.redemptionTeardown()
-      res = await testUtilsInstance.getRequestInfo.call()
-      assert.equal(res[4], '0x' + '00'.repeat(32))
+      const newRequestInfo = await testUtilsInstance.getRequestInfo.call()
+      assert.equal(newRequestInfo[4], '0x' + '00'.repeat(32))
     })
   })
 
   describe('seizeSignerBonds()', async () => {
     it('calls out to the keep system and returns the seized amount', async () => {
-      let value = 5000
+      const value = 5000
       await deployed.KeepStub.send(value, {from: accounts[0]})
-      let res = await testUtilsInstance.seizeSignerBonds.call()
+      const seized = await testUtilsInstance.seizeSignerBonds.call()
       await testUtilsInstance.seizeSignerBonds()
-      assert(res.eq(new BN(value)))
+      assert(seized.eq(new BN(value)))
     })
 
     it('errors if no funds were seized', async () => {
@@ -293,15 +297,28 @@ contract('DepositUtils', accounts => {
   })
 
   describe('distributeBeneficiaryReward()', async () => {
-    it.skip('is TODO')
+    it('checks that beneficiary is rewarded', async () => {
+
+      const beneficiary = accounts[5];
+      //reward should == 10**18. This is a stub value. parameter address is irrelevant
+      const reward = await deployed.TBTCStub.balanceOf.call(accounts[0]);
+      const initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
+      await deployed.SystemStub.setDepositOwner(0, beneficiary);
+
+      await testUtilsInstance.distributeBeneficiaryReward()
+  
+      const finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
+      const tokenCheck = new BN(initialTokenBalance).add( new BN(reward));
+      expect(finalTokenBalance, 'tokens not rewarded to beneficiary correctly').to.eq.BN(tokenCheck)
+    })
   })
 
   describe('pushFundsToKeepGroup()', async () => {
     it('calls out to the keep contract', async () => {
-      let value = 10000
+      const value = 10000
       await testUtilsInstance.send(value, {from: accounts[0]})
       await testUtilsInstance.pushFundsToKeepGroup(value)
-      let keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(keepBalance, value) // web3 balances are integers I guess
     })
 

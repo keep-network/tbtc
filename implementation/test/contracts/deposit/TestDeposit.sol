@@ -36,7 +36,7 @@ contract TestDeposit is Deposit {
         self.courtesyCallInitiated = _courtesy;
     }
 
-    function getLiqudationAndCoutesyInitiated() public view returns (uint256, uint256) {
+    function getLiquidationAndCourtesyInitiated() public view returns (uint256, uint256) {
         return (self.liquidationInitiated, self.courtesyCallInitiated);
     }
 
@@ -102,5 +102,9 @@ contract TestDeposit is Deposit {
 
     function getWithdrawalRequestTime() public view returns(uint256){
         return self.withdrawalRequestTime;
+    }
+
+    function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
+        return self.pushFundsToKeepGroup(_ethValue);
     }
 }
