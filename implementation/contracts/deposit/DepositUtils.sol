@@ -171,7 +171,7 @@ library DepositUtils {
 
         // Find the output paying the signer PKH
         // This will fail if there are more than 256 outputs
-        _output = extractOutputAtIndex(_vout, _index);
+        _output = _extractOutputAtIndex(_vout, _index);
             if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d)))) {
                 _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
                 return _valueBytes;
@@ -184,16 +184,16 @@ library DepositUtils {
     /// @param _b        The tx to evaluate
     /// @param _index    The 0-indexed location of the output to extract
     /// @return          The specified output
-    function extractOutputAtIndex(bytes _b, uint8 _index) public pure returns (bytes) {
+    function _extractOutputAtIndex(bytes _b, uint8 _index) internal pure returns (bytes) {
 
         // Determine length of first ouput
         uint _offset = 1;
-        uint _len = determineOutputLength(_b.slice(8 + _offset, 2));
+        uint _len = _determineOutputLength(_b.slice(8 + _offset, 2));
     
         // This loop moves forward, and then gets the len of the next one
         for (uint i = 0; i < _index; i++) {
             _offset = _offset + _len;
-            _len = determineOutputLength(_b.slice(8, 2));
+            _len = _determineOutputLength(_b.slice(8, 2));
         }
         
         // We now have the length and offset of the one we want
@@ -204,7 +204,7 @@ library DepositUtils {
     /// @dev             5 types: WPKH, WSH, PKH, SH, and OP_RETURN
     /// @param _b        2 bytes from the start of the output script
     /// @return          The length indicated by the prefix, error if invalid length
-    function determineOutputLength(bytes _b) public pure returns (uint256) {
+    function _determineOutputLength(bytes _b) internal pure returns (uint256) {
         // P2WSH
         if (keccak256(_b) == keccak256(hex"2200")) { return 43; }
 
@@ -216,7 +216,7 @@ library DepositUtils {
 
         // legacy P2SH
         if (keccak256(_b) == keccak256(hex'17a9')) { return 32; }
-        
+
         // OP_RETURN
         if (keccak256(_b.slice(1, 1)) == keccak256(hex"6a")) {
             uint _pushLen = (_b.slice(0, 1)).bytesToUint();
