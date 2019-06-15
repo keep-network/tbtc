@@ -118,18 +118,116 @@ library DepositUtils {
         bytes memory _locktime;
         bytes32 _txid;
         (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
-        require(_txid != bytes32(0), "Failed tx parsing");
+        require(_txid != bytes32(0), 'Failed tx parsing');
         require(
             _txid.prove(
                 _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
                 _merkleProof,
                 _index),
-            "Tx merkle proof is not valid for provided header and tx");
+            'Tx merkle proof is not valid for provided header and tx');
 
         evaluateProofDifficulty(_d, _bitcoinHeaders);
 
         return _txid;
     }
+
+    /// @notice                 Syntactically check an SPV proof for a bitcoin tx
+    /// @dev                    Stateless SPV Proof verification documented elsewhere
+    /// @param _d               deposit storage pointer
+    /// @param  _merkleRoot     The Root of the merkle path
+    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
+    function checkFundingProof(
+        Deposit storage _d,
+        bytes32 _txId,
+        bytes32 _merkleRoot,
+        bytes _merkleProof,
+        uint256 _index
+    ) public view {
+        require(
+            _txId.prove(
+                _merkleRoot,
+                _merkleProof,
+                _index),
+            "Tx merkle proof is not valid for provided header and tx");
+    }
+
+    /// @dev                find funding ourput using provided index
+    /// @param _vout        length-prepended outputs
+    /// @param _index       index of funding output
+    /// @return             funding value
+    function findAndParseFundingOutput(
+        DepositUtils.Deposit storage _d,
+        bytes _vout,
+        uint8 _index
+    ) public view returns (bytes8) {
+        bytes8 _valueBytes;
+        bytes memory _output;
+        uint8 _numOutputs;
+
+        uint256 _n = (_vout.slice(0, 1)).bytesToUint();
+        require(_n < 0xfd, "VarInts not supported");
+        _numOutputs = uint8(_n);
+
+        // Find the output paying the signer PKH
+        // This will fail if there are more than 256 outputs
+        _output = extractOutputAtIndex(_vout, _index);
+            if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d)))) {
+                _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
+                return _valueBytes;
+            }
+        // If we don't return from inside the loop, we failed.
+        revert('Did not find output with correct PKH');
+    }
+
+    /// @notice          Extracts the output at a given index in the TxIns vector
+    /// @param _b        The tx to evaluate
+    /// @param _index    The 0-indexed location of the output to extract
+    /// @return          The specified output
+    function extractOutputAtIndex(bytes _b, uint8 _index) public pure returns (bytes) {
+
+        // Determine length of first ouput
+        uint _offset = 1;
+        uint _len = determineOutputLength(_b.slice(8 + _offset, 2));
+    
+        // This loop moves forward, and then gets the len of the next one
+        for (uint i = 0; i < _index; i++) {
+            _offset = _offset + _len;
+            _len = determineOutputLength(_b.slice(8, 2));
+        }
+        
+        // We now have the length and offset of the one we want
+        return _b.slice(_offset, _len);
+    }
+
+    /// @notice          Determines the length of an output
+    /// @dev             5 types: WPKH, WSH, PKH, SH, and OP_RETURN
+    /// @param _b        2 bytes from the start of the output script
+    /// @return          The length indicated by the prefix, error if invalid length
+    function determineOutputLength(bytes _b) public pure returns (uint256) {
+        // P2WSH
+        if (keccak256(_b) == keccak256(hex"2200")) { return 43; }
+
+        // P2WPKH
+        if (keccak256(_b) == keccak256(hex"1600")) { return 31; }
+
+        // Legacy P2PKH
+        if (keccak256(_b) == keccak256(hex'1976')) { return 34; }
+
+        // legacy P2SH
+        if (keccak256(_b) == keccak256(hex'17a9')) { return 32; }
+        
+        // OP_RETURN
+        if (keccak256(_b.slice(1, 1)) == keccak256(hex"6a")) {
+            uint _pushLen = (_b.slice(0, 1)).bytesToUint();
+            require(_pushLen < 76, "Multi-byte pushes not supported");
+            // 8 byte value + 1 byte len + len bytes data
+            return 9 + _pushLen;
+        }
+        // Error if we fall through the if statements
+        require(false, "Unable to determine output length");
+    }
+
 
     /// @notice     Calculates the amount of value at auction right now
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
