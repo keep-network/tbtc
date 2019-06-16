@@ -883,7 +883,7 @@ contract('Deposit', accounts => {
     it('updates to setup failed, logs SetupFailed, ', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await testInstance.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _merkleProof, _index, _fundingOutputIndex, _bitcoinHeaders)
+      await testInstance.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _fundingOutputIndex, _bitcoinHeaders)
 
       const keepState = await testInstance.getKeepInfo.call()
       assert(keepState[0].eqn(0), 'Keep id not deconsted')
@@ -902,7 +902,7 @@ contract('Deposit', accounts => {
     it('reverts if not awaiting a funding proof during setup fraud', async () => {
       try {
         await testInstance.setState(utils.states.START)
-        await testInstance.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _merkleProof, _index, _fundingOutputIndex, _bitcoinHeaders)
+        await testInstance.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _fundingOutputIndex, _bitcoinHeaders)
       } catch (e) {
         assert.include(e.message, 'Not awaiting a funding proof during setup fraud')
       }
@@ -915,7 +915,7 @@ contract('Deposit', accounts => {
       const initialBalance = await web3.eth.getBalance(beneficiary)
       const signerBond = await web3.eth.getBalance(deployed.KeepStub.address)
 
-      await testInstance.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _merkleProof, _index, _fundingOutputIndex, _bitcoinHeaders)
+      await testInstance.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _fundingOutputIndex, _bitcoinHeaders)
 
       const balanceAfter = await web3.eth.getBalance(beneficiary)
       const balanceCheck = new BN(initialBalance).add(new BN(signerBond))
@@ -954,7 +954,7 @@ contract('Deposit', accounts => {
     it('updates to active, stores UTXO info, deconstes funding info, logs Funded', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await testInstance.provideBTCFundingProof(_version, _vin, _vout, _locktime, _merkleProof, _index, _fundingOutputIndex, _bitcoinHeaders)
+      await testInstance.provideBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _fundingOutputIndex, _bitcoinHeaders)
 
       const UTXOInfo = await testInstance.getUTXOInfo.call()
       assert.equal(UTXOInfo[0], _outValueBytes)
@@ -974,7 +974,7 @@ contract('Deposit', accounts => {
     it('reverts if not awaiting funding proof', async () => {
       try {
         await testInstance.setState(utils.states.START)
-        await testInstance.provideBTCFundingProof(_version, _vin, _vout, _locktime, _merkleProof, _index, _fundingOutputIndex, _bitcoinHeaders)
+        await testInstance.provideBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _fundingOutputIndex, _bitcoinHeaders)
       } catch (e) {
         assert.include(e.message, 'Not awaiting funding')
       }
@@ -990,7 +990,7 @@ contract('Deposit', accounts => {
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
-      await testInstance.provideBTCFundingProof(_version, _vin, _vout, _locktime, _merkleProof, _index, _fundingOutputIndex, _bitcoinHeaders)
+      await testInstance.provideBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _fundingOutputIndex, _bitcoinHeaders)
 
       const balanceAfter = await web3.eth.getBalance(beneficiary)
       const balanceCheck = new BN(initialBalance).add(new BN(signerBond))

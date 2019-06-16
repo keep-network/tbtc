@@ -221,14 +221,15 @@ library DepositFunding {
     }
 
     /// @notice             Anyone may notify the deposit of a funding proof to activate the deposit
-    /// @dev                This is the happy-path of the funding flow. It means that we have suecceeded
+    /// @dev                This is the happy-path of the funding flow. It means that we have succeeded
+    /// @param  _d          deposit storage pointer
     /// @param _version     4-byte version number
     /// @param _vin         length-prepended inputs
     /// @param _vout        length-prepended outputs
     /// @param _locktime    4-byte locktime
     /// @param _index       transaction index
-    /// @param _outputIndex index of funding output in _vout
     /// @param _merkleProof the merkle proof of inclusion
+    /// @param _outputIndex index of funding output in _vout
     /// @param _bitcoinHeaders header chain for work proof
     /// @return             true if successful
     function provideBTCFundingProof(
@@ -237,8 +238,8 @@ library DepositFunding {
         bytes _vin,
         bytes _vout,
         bytes _locktime,
-        bytes _merkleProof,
         uint256 _index,
+        bytes _merkleProof,
         uint8 _outputIndex,
         bytes _bitcoinHeaders
     ) public returns (bool) {
@@ -271,14 +272,15 @@ library DepositFunding {
     }
 
     /// @notice             Anyone may notify the deposit of a funding proof to activate the deposit
-    /// @dev                This is the happy-path of the funding flow. It means that we have suecceeded
+    /// @dev                This is the happy-path of the funding flow. It means that we have succeeded
+    /// @param  _d          deposit storage pointer
     /// @param _version     4-byte version number
     /// @param _vin         length-prepended inputs
     /// @param _vout        length-prepended outputs
     /// @param _locktime    4-byte locktime
     /// @param _index       transaction index
-    /// @param _outputIndex index of funding output in _vout
     /// @param _merkleProof the merkle proof of inclusion
+    /// @param _outputIndex index of funding output in _vout
     /// @param _bitcoinHeaders header chain for work proof
     /// @return             true if successful
     function provideFraudBTCFundingProof(
@@ -287,8 +289,8 @@ library DepositFunding {
         bytes _vin,
         bytes _vout,
         bytes _locktime,
-        bytes _merkleProof,
         uint256 _index,
+        bytes _merkleProof,
         uint8 _outputIndex,
         bytes _bitcoinHeaders
     ) public returns (bool) {

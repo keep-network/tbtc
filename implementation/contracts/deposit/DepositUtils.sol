@@ -98,7 +98,7 @@ library DepositUtils {
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin tx
     /// @dev                    Stateless SPV Proof verification documented elsewhere
-    /// @param _d               deposit storage pointer
+    /// @param  _d              deposit storage pointer
     /// @param  _bitcoinTx      The bitcoin tx that is purportedly included in the header chain
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
@@ -133,7 +133,8 @@ library DepositUtils {
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin tx
     /// @dev                    Stateless SPV Proof verification documented elsewhere
-    /// @param _d               deposit storage pointer
+    /// @param  _d              deposit storage pointer
+    /// @param  _merkleRoot     The ID of the Bitcoin transaction to check
     /// @param  _merkleRoot     The Root of the merkle path
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
@@ -153,9 +154,10 @@ library DepositUtils {
     }
 
     /// @dev                find funding ourput using provided index
+    /// @param  _d              deposit storage pointer
     /// @param _vout        length-prepended outputs
     /// @param _index       index of funding output
-    /// @return             funding value
+    /// @return             funding value (bytes8)
     function findAndParseFundingOutput(
         DepositUtils.Deposit storage _d,
         bytes _vout,

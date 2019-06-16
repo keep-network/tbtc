@@ -175,37 +175,52 @@ contract Deposit {
         return true;
     }
 
-    /// @notice                 Anyone may notify the deposit of a funding proof during funding fraud
-    /// @dev                    We reward the funder the entire bond if this occurs
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
+    /// @notice                 Anyone may notify the deposit of a funding proof to activate the deposit
+    /// @dev                    This is the happy-path of the funding flow. It means that we have succeeded
+    /// @param _version         4-byte version number
+    /// @param _vin             length-prepended inputs
+    /// @param _vout            length-prepended outputs
+    /// @param _locktime        4-byte locktime
+    /// @param _index           transaction index
+    /// @param _merkleProof     the merkle proof of inclusion
+    /// @param _outputIndex     index of funding output in _vout
+    /// @param _bitcoinHeaders  header chain for work proof
     /// @return                 True if successful, False if prevented by timeout, otherwise revert
    function provideFraudBTCFundingProof(
         bytes _version,
         bytes _vin,
         bytes _vout,
         bytes _locktime,
-        bytes _merkleProof,
         uint256 _index,
+        bytes _merkleProof,
         uint8 _outputIndex,
         bytes _bitcoinHeaders
     ) public returns (bool) {
-        self.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _merkleProof, _index, _outputIndex, _bitcoinHeaders);
+        self.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _outputIndex, _bitcoinHeaders);
         return true;
     }    
-
+    /// @notice             Anyone may notify the deposit of a funding proof to activate the deposit
+    /// @dev                This is the happy-path of the funding flow. It means that we have succeeded
+    /// @param _version     4-byte version number
+    /// @param _vin         length-prepended inputs
+    /// @param _vout        length-prepended outputs
+    /// @param _locktime    4-byte locktime
+    /// @param _index       transaction index
+    /// @param _merkleProof the merkle proof of inclusion
+    /// @param _outputIndex index of funding output in _vout
+    /// @param _bitcoinHeaders header chain for work proof
+    /// @return             true if successful
     function provideBTCFundingProof(
         bytes _version,
         bytes _vin,
         bytes _vout,
         bytes _locktime,
-        bytes _merkleProof,
         uint256 _index,
+        bytes _merkleProof,
         uint8 _outputIndex,
         bytes _bitcoinHeaders
     ) public returns (bool) {
-        self.provideBTCFundingProof(_version, _vin, _vout, _locktime, _merkleProof, _index, _outputIndex, _bitcoinHeaders);
+        self.provideBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _outputIndex, _bitcoinHeaders);
         return true;
     }    
 
