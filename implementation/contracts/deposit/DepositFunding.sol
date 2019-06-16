@@ -246,16 +246,16 @@ library DepositFunding {
         bytes8 _valueBytes;
         bytes32 txId = abi.encodePacked(_version, _vin, _vout, _locktime).hash256();
 
-        require(_d.inAwaitingBTCFundingProof(), 'Not awaiting funding');
+        require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
         _valueBytes = _d.findAndParseFundingOutput(_vout, _outputIndex);
-       
+
         _d.checkFundingProof(txId, _bitcoinHeaders.extractMerkleRootLE().toBytes32(), _merkleProof, _index);
         _d.evaluateProofDifficulty(_bitcoinHeaders);
 
         // Write down the UTXO info and set to active. Congratulations :)
         _d.utxoSizeBytes = _valueBytes;
-        _d.utxoOutpoint = abi.encodePacked(txId, _outputIndex, hex'000000');
+        _d.utxoOutpoint = abi.encodePacked(txId, _outputIndex, hex"000000");
 
         fundingTeardown(_d);
         _d.setActive();
@@ -297,10 +297,10 @@ library DepositFunding {
         bytes8 _valueBytes;
         bytes32 txId = abi.encodePacked(_version, _vin, _vout, _locktime).hash256();
 
-        require(_d.inFraudAwaitingBTCFundingProof(), 'Not awaiting a funding proof during setup fraud');
+        require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
 
         _valueBytes = _d.findAndParseFundingOutput(_vout, _outputIndex);
-       
+
         _d.checkFundingProof(txId, _bitcoinHeaders.extractMerkleRootLE().toBytes32(), _merkleProof, _index);
         _d.evaluateProofDifficulty(_bitcoinHeaders);
 

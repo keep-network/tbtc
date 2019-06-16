@@ -186,7 +186,7 @@ contract Deposit {
     /// @param _outputIndex     index of funding output in _vout
     /// @param _bitcoinHeaders  header chain for work proof
     /// @return                 True if successful, False if prevented by timeout, otherwise revert
-   function provideFraudBTCFundingProof(
+    function provideFraudBTCFundingProof(
         bytes _version,
         bytes _vin,
         bytes _vout,
@@ -198,7 +198,7 @@ contract Deposit {
     ) public returns (bool) {
         self.provideFraudBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _outputIndex, _bitcoinHeaders);
         return true;
-    }    
+    }
     /// @notice             Anyone may notify the deposit of a funding proof to activate the deposit
     /// @dev                This is the happy-path of the funding flow. It means that we have succeeded
     /// @param _version     4-byte version number
@@ -222,7 +222,7 @@ contract Deposit {
     ) public returns (bool) {
         self.provideBTCFundingProof(_version, _vin, _vout, _locktime, _index, _merkleProof, _outputIndex, _bitcoinHeaders);
         return true;
-    }    
+    }
 
     //
     // FRAUD
