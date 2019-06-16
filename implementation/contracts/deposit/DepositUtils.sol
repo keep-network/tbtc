@@ -190,46 +190,17 @@ library DepositUtils {
 
         // Determine length of first ouput
         uint _offset = 1;
-        uint _len = _determineOutputLength(_b.slice(8 + _offset, 2));
+        uint _len = (_b.slice(8 + _offset, 2)).determineOutputLength();
     
         // This loop moves forward, and then gets the len of the next one
         for (uint i = 0; i < _index; i++) {
             _offset = _offset + _len;
-            _len = _determineOutputLength(_b.slice(8, 2));
+            _len = (_b.slice(8, 2)).determineOutputLength();
         }
         
         // We now have the length and offset of the one we want
         return _b.slice(_offset, _len);
     }
-
-    /// @notice          Determines the length of an output
-    /// @dev             5 types: WPKH, WSH, PKH, SH, and OP_RETURN
-    /// @param _b        2 bytes from the start of the output script
-    /// @return          The length indicated by the prefix, error if invalid length
-    function _determineOutputLength(bytes _b) internal pure returns (uint256) {
-        // P2WSH
-        if (keccak256(_b) == keccak256(hex"2200")) { return 43; }
-
-        // P2WPKH
-        if (keccak256(_b) == keccak256(hex"1600")) { return 31; }
-
-        // Legacy P2PKH
-        if (keccak256(_b) == keccak256(hex'1976')) { return 34; }
-
-        // legacy P2SH
-        if (keccak256(_b) == keccak256(hex'17a9')) { return 32; }
-
-        // OP_RETURN
-        if (keccak256(_b.slice(1, 1)) == keccak256(hex"6a")) {
-            uint _pushLen = (_b.slice(0, 1)).bytesToUint();
-            require(_pushLen < 76, "Multi-byte pushes not supported");
-            // 8 byte value + 1 byte len + len bytes data
-            return 9 + _pushLen;
-        }
-        // Error if we fall through the if statements
-        require(false, "Unable to determine output length");
-    }
-
 
     /// @notice     Calculates the amount of value at auction right now
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
