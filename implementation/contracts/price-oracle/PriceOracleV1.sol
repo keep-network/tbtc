@@ -16,24 +16,23 @@ contract PriceOracleV1 is IPriceOracle {
     // meaning 100 000 000 satoshis = 1 bitcoin
     // An ether by contract, has 18 decimal places, the smallest unit a wei,
     // meaning 1,000,000,000,000,000,000 wei = 1 ether
-    // 
+    //
     // eg. 1 BTC : 32.32 ETH (Jun 2019), which represents:
     //     100 000 000 satoshis : 32 320 000 000 000 000 000 wei
     //     or simplified:
     //     1 : 32 320 000 000 00
     //     price = 3232000000000
-    // 
+    //
     // uint128 can store an int of max size 2^128 (3.403 e38)
     // 38 decimal places should be enough... :)
-    uint128 private price;
+    uint128 internal price;
 
     // The time at which the last price update is considered to be stale.
-    uint256 private zzz;
+    uint256 public zzz;
+    uint256 constant PRICE_EXPIRY = 6 hours;
 
     // Trusted user that updates the oracle.
-    address private operator;
-
-    event PriceUpdated(uint128 price, uint256 zzz);
+    address public operator;
 
     constructor(
         address _operator,
@@ -62,7 +61,7 @@ contract PriceOracleV1 is IPriceOracle {
         require(delta > minDelta, "Price change is negligible (>1%)");
 
         price = _newPrice;
-        zzz = block.timestamp + 6 hours;
+        zzz = block.timestamp + PRICE_EXPIRY;
 
         emit PriceUpdated(price, zzz);
     }
