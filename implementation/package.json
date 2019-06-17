@@ -6,9 +6,15 @@
   "scripts": {
     "setup": "git submodule update --init --recursive && npm i",
     "test": "truffle test",
+    "js:lint": "eslint ${npm_package_config_eslintPaths}",
+    "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
     "sol:lint": "solium -d contracts/",
     "sol:lint:fix": "solium -d contracts/ --fix"
   },
+  "config": {
+    "eslintPaths": "test/ migrations/"
+  },
+  "precommit": "npm run lint",
   "author": "James Prestwich",
   "license": "UNLICENSED",
   "dependencies": {
@@ -24,6 +30,8 @@
     "babel-preset-stage-2": "^6.18.0",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
+    "eslint": "^5.16.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.1.2",
     "eth-gas-reporter": "^0.1.12",
     "ethlint": "^1.2.4",
     "ganache-cli": "^6.4.3",
