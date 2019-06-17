@@ -8,7 +8,7 @@ jobs:
     executor: docker-node
     steps:
         - checkout
-        - run: 
+        - run:
             name: Lint JS
             command: |
               cd implementation/
@@ -48,13 +48,13 @@ jobs:
           name: Generate TeX-based PNGs
           working_directory: ~/project/docs
           command: |
-            mkdir -p /tmp/docs/docs/img
+            mkdir -p /tmp/docs/img
             make pngs
-            cp -r img/generated /tmp/docs/docs/img/generated
+            cp -r img/generated /tmp/docs/img/generated
       - persist_to_workspace:
           root: /tmp/docs
           paths:
-            - docs/img/generated/*.png
+            - ./img/generated/*.png
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:15
@@ -77,7 +77,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: ./
+          at: ./docs
       - run:
           name: Generate Asciidoctor PDF/HTML Files
           working_directory: ~/project/docs
@@ -85,7 +85,7 @@ jobs:
             set -ex
             shopt -s extglob globstar nullglob
             asciidoctor -a revdate=`date +%Y-%m-%d` --failure-level=ERROR *.adoc **/*.adoc
-            for a in $(find . -type f -regextype sed -regex '.*\.\(html\|png\)'); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
             set -x
             asciidoctor-pdf -a revdate=`date +%Y-%m-%d` *.adoc **/*.adoc
             for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
