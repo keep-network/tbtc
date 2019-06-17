@@ -3,7 +3,8 @@ const PriceOracleV1 = artifacts.require('PriceOracleV1')
 import expectThrow from './helpers/expectThrow';
 const BN = require('bn.js')
 
-contract('PriceOracleV1', function () {
+contract('PriceOracleV1', function (accounts) {
+    const DEFAULT_OPERATOR = accounts[0];
 
     // 1 wei = 1 satoshi
     const DEFAULT_PRICE = new BN(1);
@@ -11,6 +12,7 @@ contract('PriceOracleV1', function () {
     describe("#constructor", () => {
         it('deploys', async () => {
             let instance = await PriceOracleV1.deployed()
+            assert(instance.address.length == 42)
         })
     })
 
@@ -19,6 +21,7 @@ contract('PriceOracleV1', function () {
         describe("#getPrice", () => {
             it('returns a default price', async () => {
                 let instance = await PriceOracleV1.new(
+                    DEFAULT_OPERATOR,
                     DEFAULT_PRICE
                 )
 
@@ -32,6 +35,7 @@ contract('PriceOracleV1', function () {
                 const NEW_PRICE = new BN(2)
 
                 let instance = await PriceOracleV1.new(
+                    DEFAULT_OPERATOR,
                     DEFAULT_PRICE
                 )
 
@@ -46,6 +50,7 @@ contract('PriceOracleV1', function () {
                 const price2 = new BN('1000001')
 
                 let instance = await PriceOracleV1.new(
+                    DEFAULT_OPERATOR,
                     price1
                 )
 

@@ -24,7 +24,7 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystemStub,
   KeepBridge, PriceOracle]
 
-module.exports = (deployer) => {
+module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
     await deployer.deploy(BytesLib)
 
@@ -58,7 +58,7 @@ module.exports = (deployer) => {
 
     await deployer.deploy(Deposit)
 
-    await deployer.deploy(PriceOracle, '3232000000000')
+    await deployer.deploy(PriceOracle, accounts[0], '3232000000000')
     await deployer.deploy(TBTCSystemStub)
 
     await deployer.deploy(KeepBridge)

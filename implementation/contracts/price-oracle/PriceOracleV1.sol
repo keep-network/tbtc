@@ -33,7 +33,7 @@ contract PriceOracleV1 is IPriceOracle {
     // Trusted user that updates the oracle.
     address private operator;
 
-    event PriceUpdated(uint128 price, uint128 zzz);
+    event PriceUpdated(uint128 price, uint256 zzz);
 
     constructor(
         address _operator,
