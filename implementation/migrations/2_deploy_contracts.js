@@ -16,10 +16,13 @@ const Deposit = artifacts.require('Deposit')
 
 const PriceOracle = artifacts.require("PriceOracleV1")
 
+const TBTCSystemStub = artifacts.require('TBTCSystemStub')
+const KeepBridge = artifacts.require('KeepBridge')
+
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
-             OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
-             DepositFunding, DepositRedemption, DepositLiquidation, Deposit,
-             PriceOracle,]
+  OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
+  DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystemStub,
+  KeepBridge, PriceOracle]
 
 module.exports = (deployer) => {
   deployer.then(async () => {
@@ -52,8 +55,12 @@ module.exports = (deployer) => {
 
     await deployer.link(DepositFunding, all)
     await deployer.link(DepositRedemption, all)
+
     await deployer.deploy(Deposit)
 
     await deployer.deploy(PriceOracle, '3232000000000')
+    await deployer.deploy(TBTCSystemStub)
+
+    await deployer.deploy(KeepBridge)
   })
 }
