@@ -26,7 +26,6 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
-    return
     await deployer.deploy(BytesLib)
 
     await deployer.link(BytesLib, all)
