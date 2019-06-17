@@ -1,8 +1,6 @@
 pragma solidity 0.4.25;
 
-import {IBurnableERC20} from '../../../contracts/interfaces/IBurnableERC20.sol';
-
-contract TBTCStub is IBurnableERC20 {
+contract TBTCStub {
 
     bool returnBool = true;
     uint256 returnUint = 10 ** 18;

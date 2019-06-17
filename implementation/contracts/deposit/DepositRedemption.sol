@@ -10,7 +10,7 @@ import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
-import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {TBTCToken} from "../interfaces/TBTCToken.sol";
 import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 
@@ -33,7 +33,7 @@ library DepositRedemption {
     /// @dev        Approves the keep contract, then expects it to call transferFrom
     function distributeSignerFee(DepositUtils.Deposit storage _d) public {
         address _tbtcAddress = _d.TBTCToken;
-        IBurnableERC20 _tbtc = IBurnableERC20(_tbtcAddress);
+        TBTCToken _tbtc = TBTCToken(_tbtcAddress);
 
         IKeep _keep = IKeep(_d.KeepBridge);
 
@@ -54,7 +54,7 @@ library DepositRedemption {
         // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
         // Requires user to approve first
         /* TODO: implement such that it calls the system to burn TBTC? */
-        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         uint256 _bal = _tbtc.balanceOf(msg.sender);
         uint256 _red = _d.redemptionTBTCAmount();
         require(_bal >= _red, "Not enough TBTC to cover outstanding debt");
