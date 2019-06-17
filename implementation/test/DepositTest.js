@@ -6,7 +6,6 @@ const ValidateSPV = artifacts.require('ValidateSPV');
 const CheckBitcoinSigs = artifacts.require('CheckBitcoinSigs');
 
 const OutsourceDepositLogging = artifacts.require('OutsourceDepositLogging');
-// const DepositLog = artifacts.require('DepositLog');
 const DepositStates = artifacts.require('DepositStates');
 const DepositUtils = artifacts.require('DepositUtils');
 const DepositFunding = artifacts.require('DepositFunding');
@@ -48,16 +47,15 @@ const TEST_DEPOSIT_DEPLOY = [
 
 // spare signature:
 // signing with privkey '11' * 32
-// let preimage = '0x' + '33'.repeat(32)
-// let digest = '0xdeb0e38ced1e41de6f92e70e80c418d2d356afaaa99e26f5939dbc7d3ef4772a'
-// let pubkey = '0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1'
-// let v = 28
-// let r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
-// let s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
+// const preimage = '0x' + '33'.repeat(32)
+// const digest = '0xdeb0e38ced1e41de6f92e70e80c418d2d356afaaa99e26f5939dbc7d3ef4772a'
+// const pubkey = '0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1'
+// const v = 28
+// const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
+// const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
 contract('Deposit', (accounts) => {
   let deployed;
-  // let keep;
   let testInstance;
   let withdrawalRequestTime;
   let fundingProofTimerStart;
@@ -66,11 +64,7 @@ contract('Deposit', (accounts) => {
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY);
     testInstance = deployed.TestDeposit;
-    testInstance.setExteroriorAddresses(
-      deployed.SystemStub.address,
-      deployed.TBTCStub.address,
-      deployed.KeepStub.address
-    );
+    testInstance.setExteroriorAddresses(deployed.SystemStub.address, deployed.TBTCStub.address, deployed.KeepStub.address);
   });
 
   beforeEach(async () => {
@@ -92,12 +86,12 @@ contract('Deposit', (accounts) => {
         1);
 
       // state updates
-      let res = await testInstance.getState.call();
-      expect(res, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP);
+      const depositState = await testInstance.getState.call();
+      expect(depositState, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP);
 
-      res = await testInstance.getKeepInfo.call();
-      expect(res[0], 'keepID not as expected').to.eq.BN(7);
-      expect(res[1], 'signing group timestamp not as expected').not.to.eq.BN(0);
+      const keepInfo = await testInstance.getKeepInfo.call();
+      expect(keepInfo[0], 'keepID not as expected').to.eq.BN(7);
+      expect(keepInfo[1], 'signing group timestamp not as expected').not.to.eq.BN(0);
 
       // fired an event
       const eventList = await deployed.SystemStub.getPastEvents('Created', { fromBlock: blockNumber, toBlock: 'latest' });
@@ -147,10 +141,10 @@ contract('Deposit', (accounts) => {
       // the fee is ~12,297,829,380 BTC
       await testInstance.requestRedemption('0x1111111100000000', requesterPKH);
 
-      const res = await testInstance.getRequestInfo();
-      assert.equal(res[1], requesterPKH);
-      assert(!res[3].eqn(0)); // withdrawalRequestTime is set
-      assert.equal(res[4], sighash);
+      const requestInfo = await testInstance.getRequestInfo();
+      assert.equal(requestInfo[1], requesterPKH);
+      assert(!requestInfo[3].eqn(0)); // withdrawalRequestTime is set
+      assert.equal(requestInfo[4], sighash);
 
       // fired an event
       const eventList = await deployed.SystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' });
@@ -186,11 +180,8 @@ contract('Deposit', (accounts) => {
 
     it('calls Keep to approve the digest', async () => {
       // test relies on a side effect
-      const res = await deployed.KeepStub.wasDigestApprovedForSigning.call(
-        0,
-        sighash
-      );
-      assert(!res.eqn(0), 'digest was not approved');
+      const approved = await deployed.KeepStub.wasDigestApprovedForSigning.call(0, sighash);
+      assert(!approved.eqn(0), 'digest was not approved');
     });
   });
 
@@ -266,7 +257,6 @@ contract('Deposit', (accounts) => {
     let feeIncreaseTimer;
 
     before(async () => {
-      // eslint-disable-next-line max-len
       feeIncreaseTimer = await deployed.TBTCConstants.getIncreaseFeeTimer.call();
     });
 
@@ -274,34 +264,22 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest');
       const blockTimestamp = block.timestamp;
       withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber();
-      await deployed.KeepStub.setDigestApprovedAtTime(
-        prevSighash,
-        withdrawalRequestTime
-      );
+      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime);
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF);
       await testInstance.setKeepInfo(0, 0, 0, keepPubkeyX, keepPubkeyY);
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint);
-      await testInstance.setRequestInfo(
-        utils.address0,
-        requesterPKH,
-        initialFee,
-        withdrawalRequestTime,
-        prevSighash
-      );
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, prevSighash);
     });
 
     it('approves a new digest for signing, updates the state, and logs RedemptionRequested', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number;
       await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes);
 
-      const res = await testInstance.getRequestInfo.call();
-      assert.equal(res[4], nextSighash);
+      const requestInfo = await testInstance.getRequestInfo.call();
+      assert.equal(requestInfo[4], nextSighash);
 
       // fired an event
-      const eventList = await deployed.SystemStub.getPastEvents(
-        'RedemptionRequested',
-        { fromBlock: blockNumber, toBlock: 'latest' }
-      );
+      const eventList = await deployed.SystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList[0].returnValues._digest, nextSighash);
     });
 
@@ -317,13 +295,7 @@ contract('Deposit', (accounts) => {
     it('reverts if the increase fee timer has not elapsed', async () => {
       try {
         const block = await web3.eth.getBlock('latest');
-        await testInstance.setRequestInfo(
-          utils.address0,
-          requesterPKH,
-          initialFee,
-          block.timestamp,
-          prevSighash
-        );
+        await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, block.timestamp, prevSighash);
         await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes);
       } catch (e) {
         assert.include(e.message, 'Fee increase not yet permitted');
@@ -340,13 +312,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the previous sighash was not the latest approved', async () => {
       try {
-        await testInstance.setRequestInfo(
-          utils.address0,
-          requesterPKH,
-          initialFee,
-          withdrawalRequestTime,
-          keepPubkeyX
-        );
+        await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX);
         await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes);
       } catch (e) {
         assert.include(e.message, 'Provided previous value does not yield previous sighash');
@@ -368,8 +334,7 @@ contract('Deposit', (accounts) => {
     // real tx from mainnet bitcoin
     const currentDiff = 6353030562983;
     // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f';
-    // eslint-disable-next-line camelcase
-    const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
+    // const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800';
     const proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548';
     const index = 130;
@@ -385,17 +350,17 @@ contract('Deposit', (accounts) => {
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32);
     });
 
-    it('updates the state, deletes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
+    it('updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number;
       await testInstance.provideRedemptionProof(tx, proof, index, headerChain);
 
-      let res = await testInstance.getState.call();
-      assert(res.eq(utils.states.REDEEMED));
+      const depositState = await testInstance.getState.call();
+      assert(depositState.eq(utils.states.REDEEMED));
 
-      res = await testInstance.getRequestInfo.call();
-      assert.equal(res[0], '0x' + '11'.repeat(20)); // address is intentionally not cleared
-      assert.equal(res[1], utils.address0);
-      assert.equal(res[4], utils.bytes32zero);
+      const requestInfo = await testInstance.getRequestInfo.call();
+      assert.equal(requestInfo[0], '0x' + '11'.repeat(20)); // address is intentionally not cleared
+      assert.equal(requestInfo[1], utils.address0);
+      assert.equal(requestInfo[4], utils.bytes32zero);
 
       const eventList = await deployed.SystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList[0].returnValues._txid, txid_le);
@@ -420,9 +385,7 @@ contract('Deposit', (accounts) => {
   });
 
   describe('redemptionTransactionChecks', async () => {
-    // eslint-disable-next-line camelcase
-    const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
-    // eslint-disable-next-line camelcase
+    // const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800';
     const badtx = '0x05' + tx.slice(4);
     const outputValue = 490029088;
@@ -436,9 +399,9 @@ contract('Deposit', (accounts) => {
     });
 
     it('returns the little-endian txid and output value', async () => {
-      const res = await testInstance.redemptionTransactionChecks.call(tx);
-      assert.equal(res[0], txid_le);
-      expect(res[1]).to.eq.BN(outputValue);
+      const redemptionChecks = await testInstance.redemptionTransactionChecks.call(tx);
+      assert.equal(redemptionChecks[0], txid_le);
+      expect(redemptionChecks[1]).to.eq.BN(outputValue);
     });
 
     it('reverts if tx parsing fails', async () => {
@@ -480,13 +443,7 @@ contract('Deposit', (accounts) => {
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1;
       await deployed.KeepStub.burnContractBalance();
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_SIGNATURE);
-      await testInstance.setRequestInfo(
-        utils.address0,
-        utils.address0,
-        0,
-        withdrawalRequestTime,
-        utils.bytes32zero
-      );
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero);
     });
 
     it('reverts if not awaiting redemption signature', async () => {
@@ -498,13 +455,7 @@ contract('Deposit', (accounts) => {
     });
 
     it('reverts if the signature timeout has not elapsed', async () => {
-      await testInstance.setRequestInfo(
-        utils.address0,
-        utils.address0,
-        0,
-        withdrawalRequestTime + timer + 1,
-        utils.bytes32zero
-      );
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime + timer + 1, utils.bytes32zero);
       try {
         await testInstance.notifySignatureTimeout();
       } catch (e) {
@@ -513,13 +464,7 @@ contract('Deposit', (accounts) => {
     });
 
     it('reverts if no funds recieved as signer bond', async () => {
-      await testInstance.setRequestInfo(
-        utils.address0,
-        utils.address0,
-        0,
-        withdrawalRequestTime * 5,
-        utils.bytes32zero
-      );
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero);
       const bond = await web3.eth.getBalance(deployed.KeepStub.address);
       assert.equal(0, bond, 'no bond should be sent');
       try {
@@ -536,8 +481,8 @@ contract('Deposit', (accounts) => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address);
       assert.equal(bond, 0, 'Bond not seized as expected');
 
-      const res = await testInstance.getLiqudationAndCoutesyInitiated.call();
-      expect(res[0], 'liquidation timestamp not recorded').not.to.eq.BN(0);
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call();
+      expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0);
     });
   });
 
@@ -554,13 +499,7 @@ contract('Deposit', (accounts) => {
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1;
       await deployed.KeepStub.burnContractBalance();
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF);
-      await testInstance.setRequestInfo(
-        utils.address0,
-        utils.address0,
-        0,
-        withdrawalRequestTime,
-        utils.bytes32zero
-      );
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero);
     });
 
     it('reverts if not awaiting redemption proof', async () => {
@@ -573,26 +512,14 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the proof timeout has not elapsed', async () => {
       try {
-        await testInstance.setRequestInfo(
-          utils.address0,
-          utils.address0,
-          0,
-          withdrawalRequestTime * 5,
-          utils.bytes32zero
-        );
+        await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero);
         await testInstance.notifyRedemptionProofTimeout();
       } catch (e) {
         assert.include(e.message, 'Proof timer has not elapsed');
       }
     });
     it('reverts if no funds recieved as signer bond', async () => {
-      await testInstance.setRequestInfo(
-        utils.address0,
-        utils.address0,
-        0,
-        withdrawalRequestTime,
-        utils.bytes32zero
-      );
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero);
       const bond = await web3.eth.getBalance(deployed.KeepStub.address);
       assert.equal(0, bond, 'no bond should be sent');
       await expectThrow(testInstance.notifyRedemptionProofTimeout());
@@ -605,8 +532,8 @@ contract('Deposit', (accounts) => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address);
       assert.equal(bond, 0, 'Bond not seized as expected');
 
-      const res = await testInstance.getLiqudationAndCoutesyInitiated.call();
-      expect(res[0], 'liquidation timestamp not recorded').not.to.eq.BN(0);
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call();
+      expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0);
     });
   });
 
@@ -622,22 +549,16 @@ contract('Deposit', (accounts) => {
       const blockTimestamp = block.timestamp;
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1;
       await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP);
-      await testInstance.setKeepInfo(
-        0,
-        fundingProofTimerStart,
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero
-      );
+      await testInstance.setKeepInfo(0, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero);
     });
 
-    it('updates state to setup failed, deletes state, and logs SetupFailed', async () => {
+    it('updates state to setup failed, deconstes state, and logs SetupFailed', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number;
       await testInstance.notifySignerSetupFailure();
 
-      const res = await testInstance.getKeepInfo.call();
-      expect(res[1], 'signingGroupRequestedAt should be 0').to.eq.BN(0);
-      expect(res[2], 'fundingProofTimerStart should be 0').to.eq.BN(0);
+      const keepInfo = await testInstance.getKeepInfo.call();
+      expect(keepInfo[1], 'signingGroupRequestedAt should be 0').to.eq.BN(0);
+      expect(keepInfo[2], 'fundingProofTimerStart should be 0').to.eq.BN(0);
 
       const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1, 'Event list is the wrong length');
@@ -654,13 +575,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the timer has not yet elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(
-          0,
-          fundingProofTimerStart * 5,
-          0,
-          utils.bytes32zero,
-          utils.bytes32zero
-        );
+        await testInstance.setKeepInfo(0, fundingProofTimerStart * 5, 0, utils.bytes32zero, utils.bytes32zero);
         await testInstance.notifySignerSetupFailure();
       } catch (e) {
         assert.include(e.message, 'Signing group formation timeout not yet elapsed');
@@ -676,13 +591,7 @@ contract('Deposit', (accounts) => {
 
       const initialBalance = await web3.eth.getBalance(beneficiary);
 
-      await testInstance.setKeepInfo(
-        0,
-        fundingProofTimerStart,
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero
-      );
+      await testInstance.setKeepInfo(0, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero);
       await deployed.KeepStub.setBondAmount(bond);
       await testInstance.notifySignerSetupFailure();
 
@@ -704,9 +613,9 @@ contract('Deposit', (accounts) => {
       const blockNumber = await web3.eth.getBlock('latest').number;
       await testInstance.retrieveSignerPubkey();
 
-      const res = await testInstance.getKeepInfo.call();
-      assert.equal(res[3], pubkeyX);
-      assert.equal(res[4], pubkeyY);
+      const keepInfo = await testInstance.getKeepInfo.call();
+      assert.equal(keepInfo[3], pubkeyX);
+      assert.equal(keepInfo[4], pubkeyY);
 
       const eventList = await deployed.SystemStub.getPastEvents('RegisteredPubkey', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList[0].returnValues._signingGroupPubkeyX, pubkeyX, 'Logged X is wrong');
@@ -745,27 +654,18 @@ contract('Deposit', (accounts) => {
       const blockTimestamp = block.timestamp;
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1;
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF);
-      await testInstance.setKeepInfo(
-        0,
-        0,
-        fundingProofTimerStart,
-        utils.bytes32zero,
-        utils.bytes32zero
-      );
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero);
     });
 
-    it('updates the state to failed setup, deletes funding info, and logs SetupFailed', async () => {
+    it('updates the state to failed setup, deconstes funding info, and logs SetupFailed', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number;
 
       await testInstance.notifyFundingTimeout();
 
-      const res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.FAILED_SETUP);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.FAILED_SETUP);
 
-      const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', {
-        fromBlock: blockNumber,
-        toBlock: 'latest',
-      });
+      const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
     });
 
@@ -780,13 +680,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the timeout has not elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(
-          0,
-          0,
-          fundingProofTimerStart * 5,
-          utils.bytes32zero,
-          utils.bytes32zero
-        );
+        await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero);
         await testInstance.notifyFundingTimeout();
       } catch (e) {
         assert.include(e.message, 'Funding timeout has not elapsed');
@@ -796,13 +690,7 @@ contract('Deposit', (accounts) => {
     it('distributes the funder bond to the keep group', async () => {
       const beneficiary = accounts[4];
       const bond = 1000000;
-      await testInstance.setKeepInfo(
-        0,
-        0,
-        withdrawalRequestTime,
-        utils.bytes32zero,
-        utils.bytes32zero
-      );
+      await testInstance.setKeepInfo(0, 0, withdrawalRequestTime, utils.bytes32zero, utils.bytes32zero);
       await testInstance.send(bond, { from: beneficiary });
       await testInstance.notifyFundingTimeout();
       const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address);
@@ -823,38 +711,20 @@ contract('Deposit', (accounts) => {
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1; // has elapsed
       await deployed.KeepStub.setSuccess(true);
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF);
-      await testInstance.setKeepInfo(
-        0,
-        0,
-        fundingProofTimerStart,
-        utils.bytes32zero,
-        utils.bytes32zero
-      );
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero);
       await deployed.KeepStub.send(1000000, { from: accounts[0] });
     });
 
     it('updates to awaiting fraud funding proof and logs FraudDuringSetup if the timer has not elapsed', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number;
-      await testInstance.setKeepInfo(
-        0,
-        0,
-        fundingProofTimerStart * 5,
-        utils.bytes32zero,
-        utils.bytes32zero
-      ); // timer has not elapsed
-      await testInstance.provideFundingECDSAFraudProof(
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero,
-        utils.bytes32zero,
-        '0x00'
-      );
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero); // timer has not elapsed
+      await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00');
 
-      let res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF);
 
-      res = await testInstance.getKeepInfo.call();
-      assert(res[2].gtn(fundingProofTimerStart), 'fundingProofTimerStart did not increase');
+      const keepState = await testInstance.getKeepInfo.call();
+      assert(keepState[2].gtn(fundingProofTimerStart), 'fundingProofTimerStart did not increase');
 
       const eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
@@ -864,8 +734,8 @@ contract('Deposit', (accounts) => {
       const blockNumber = await web3.eth.getBlock('latest').number;
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00');
 
-      const res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.FAILED_SETUP);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.FAILED_SETUP);
 
       const eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
@@ -874,13 +744,7 @@ contract('Deposit', (accounts) => {
     it('reverts if not awaiting funding proof', async () => {
       try {
         await testInstance.setState(utils.states.START);
-        await testInstance.provideFundingECDSAFraudProof(
-          0,
-          utils.bytes32zero,
-          utils.bytes32zero,
-          utils.bytes32zero,
-          '0x00'
-        );
+        await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00');
       } catch (e) {
         assert.include(e.message, 'Signer fraud during funding flow only available while awaiting funding');
       }
@@ -889,13 +753,7 @@ contract('Deposit', (accounts) => {
     it('reverts if the signature is not fraud', async () => {
       try {
         await deployed.KeepStub.setSuccess(false);
-        await testInstance.provideFundingECDSAFraudProof(
-          0,
-          utils.bytes32zero,
-          utils.bytes32zero,
-          utils.bytes32zero,
-          '0x00'
-        );
+        await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00');
       } catch (e) {
         await deployed.KeepStub.setSuccess(true);
         assert.include(e.message, 'Signature is not fraudulent');
@@ -912,32 +770,15 @@ contract('Deposit', (accounts) => {
 
       await deployed.KeepStub.setBondAmount(bond);
       await deployed.SystemStub.setDepositOwner(0, beneficiary);
-      await testInstance.setKeepInfo(
-        0,
-        0,
-        fundingProofTimerStart * 6,
-        utils.bytes32zero,
-        utils.bytes32zero
-      );
-      await testInstance.provideFundingECDSAFraudProof(
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero,
-        utils.bytes32zero,
-        '0x00'
-      );
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 6, utils.bytes32zero, utils.bytes32zero);
+      await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00');
 
       const finalBalance = await web3.eth.getBalance(beneficiary);
-      const eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', {
-        fromBlock: blockNumber,
-        toBlock: 'latest',
-      });
-      const balanceCheck = new BN(initialBalance).add(
-        new BN(bond).add(new BN(signerBalance))
-      );
+      const eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' });
+      const balanceCheck = new BN(initialBalance).add(new BN(bond).add(new BN(signerBalance)));
 
       assert.equal(eventList.length, 1);
-      assert.equal(finalBalance, balanceCheck, 'funder and signer bond should be included in final result');
+      expect(finalBalance, 'funder and signer bond should be included in final result').to.eq.BN(balanceCheck);
     });
   });
 
@@ -953,30 +794,24 @@ contract('Deposit', (accounts) => {
       const blockTimestamp = block.timestamp;
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1; // timer has elapsed
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF);
-      await testInstance.setKeepInfo(
-        0,
-        0,
-        fundingProofTimerStart,
-        utils.bytes32zero,
-        utils.bytes32zero
-      );
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero);
       await deployed.KeepStub.send(1000000, { from: accounts[0] });
     });
 
-    it('updates state to setup failed, logs SetupFailed, and deletes state', async () => {
+    it('updates state to setup failed, logs SetupFailed, and deconstes state', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number;
 
       await testInstance.notifyFraudFundingTimeout();
 
-      let res = await testInstance.getKeepInfo.call();
-      assert(res[0].eqn(0), 'Keep id not deleted');
-      assert(res[1].eqn(0), 'signingGroupRequestedAt not deleted');
-      assert(res[2].eqn(0), 'fundingProofTimerStart not deleted');
-      assert.equal(res[3], utils.bytes32zero); // pubkey X
-      assert.equal(res[4], utils.bytes32zero); // pubkey Y
+      const keepState = await testInstance.getKeepInfo.call();
+      assert(keepState[0].eqn(0), 'Keep id not deconsted');
+      assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted');
+      assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted');
+      assert.equal(keepState[3], utils.bytes32zero); // pubkey X
+      assert.equal(keepState[4], utils.bytes32zero); // pubkey Y
 
-      res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.FAILED_SETUP);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.FAILED_SETUP);
 
       const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
@@ -993,13 +828,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the timer has not elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(
-          0,
-          0,
-          fundingProofTimerStart * 5,
-          utils.bytes32zero,
-          utils.bytes32zero
-        );
+        await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero);
         await testInstance.notifyFraudFundingTimeout();
       } catch (e) {
         assert.include(e.message, 'Fraud funding proof timeout has not elapsed');
@@ -1012,16 +841,9 @@ contract('Deposit', (accounts) => {
       const initialBalance = await web3.eth.getBalance(beneficiary);
       const toSeize = await web3.eth.getBalance(deployed.KeepStub.address);
 
-      await testInstance.setKeepInfo(
-        0,
-        0,
-        fundingProofTimerStart,
-        utils.bytes32zero,
-        utils.bytes32zero
-      );
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero);
       await testInstance.notifyFraudFundingTimeout();
 
-      // eslint-disable-next-line
       const divisor = await deployed.TBTCConstants.getFundingFraudPartialSlashDivisor.call();
       const slash = new BN(toSeize).div(new BN(divisor));
       const balanceAfter = await web3.eth.getBalance(beneficiary);
@@ -1056,15 +878,15 @@ contract('Deposit', (accounts) => {
 
       await testInstance.provideFraudBTCFundingProof(tx, proof, index, headerChain);
 
-      let res = await testInstance.getKeepInfo.call();
-      assert(res[0].eqn(0), 'Keep id not deleted');
-      assert(res[1].eqn(0), 'signingGroupRequestedAt not deleted');
-      assert(res[2].eqn(0), 'fundingProofTimerStart not deleted');
-      assert.equal(res[3], utils.bytes32zero); // pubkey X
-      assert.equal(res[4], utils.bytes32zero); // pubkey Y
+      const keepState = await testInstance.getKeepInfo.call();
+      assert(keepState[0].eqn(0), 'Keep id not deconsted');
+      assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted');
+      assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted');
+      assert.equal(keepState[3], utils.bytes32zero); // pubkey X
+      assert.equal(keepState[4], utils.bytes32zero); // pubkey Y
 
-      res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.FAILED_SETUP);
+      const depostState = await testInstance.getState.call();
+      expect(depostState).to.eq.BN(utils.states.FAILED_SETUP);
 
       const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
@@ -1099,7 +921,6 @@ contract('Deposit', (accounts) => {
     // real tx from mainnet bitcoin, interpreted as funding tx
     const currentDiff = 6353030562983;
     // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f';
-    // eslint-disable-next-line camelcase
     // const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800';
     const proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548';
@@ -1117,21 +938,21 @@ contract('Deposit', (accounts) => {
       await deployed.KeepStub.send(1000000, { from: accounts[0] });
     });
 
-    it('updates to active, stores UTXO info, deletes funding info, logs Funded', async () => {
+    it('updates to active, stores UTXO info, deconstes funding info, logs Funded', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number;
 
       await testInstance.provideBTCFundingProof(tx, proof, index, headerChain);
 
-      let res = await testInstance.getUTXOInfo.call();
-      assert.equal(res[0], outputValueBytes);
-      assert.equal(res[2], '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c00000000');
+      const UTXOInfo = await testInstance.getUTXOInfo.call();
+      assert.equal(UTXOInfo[0], outputValueBytes);
+      assert.equal(UTXOInfo[2], '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c00000000');
 
-      res = await testInstance.getKeepInfo.call();
-      assert(res[1].eqn(0), 'signingGroupRequestedAt not deleted');
-      assert(res[2].eqn(0), 'fundingProofTimerStart not deleted');
+      const keepState = await testInstance.getKeepInfo.call();
+      assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted');
+      assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted');
 
-      res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.ACTIVE);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.ACTIVE);
 
       const eventList = await deployed.SystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
@@ -1162,7 +983,7 @@ contract('Deposit', (accounts) => {
       const endingTokenBalancce = await deployed.TBTCStub.getBalance(beneficiary);
 
       const lotSize = await deployed.TBTCConstants.getLotSize.call();
-      const toMint = (lotSize * 95) / 100;
+      const toMint = lotSize.mul(new BN(95)).div(new BN(100));
       const tokenCheck = initialTokenBalance.add(new BN(toMint));
       expect(tokenCheck, 'incorrect amount minted').to.eq.BN(endingTokenBalancce);
     });
@@ -1223,7 +1044,6 @@ contract('Deposit', (accounts) => {
     // real tx from mainnet bitcoin
     const currentDiff = 6353030562983;
     // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f';
-    // eslint-disable-next-line camelcase
     // const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800';
     const proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548';
@@ -1282,13 +1102,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if it finds an output paying the redeemer', async () => {
       try {
-        await testInstance.setRequestInfo(
-          utils.address0,
-          requesterPKH,
-          100,
-          0,
-          utils.bytes32zero
-        );
+        await testInstance.setRequestInfo(utils.address0, requesterPKH, 100, 0, utils.bytes32zero);
         await testInstance.provideSPVFraudProof(tx, proof, index, headerChain);
       } catch (e) {
         assert.include(e.message, 'Found an output paying the redeemer as requested');
@@ -1307,8 +1121,8 @@ contract('Deposit', (accounts) => {
       const blockNumber = await web3.eth.getBlock('latest').number;
       await testInstance.purchaseSignerBondsAtAuction();
 
-      const res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.LIQUIDATED);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.LIQUIDATED);
 
       const eventList = await deployed.SystemStub.getPastEvents('Liquidated', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
@@ -1434,11 +1248,11 @@ contract('Deposit', (accounts) => {
 
       await testInstance.notifyCourtesyCall();
 
-      let res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.COURTESY_CALL);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.COURTESY_CALL);
 
-      res = await testInstance.getLiqudationAndCoutesyInitiated.call();
-      expect(res[1]).not.to.eq.BN(0);
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call();
+      expect(liquidationTime[1]).not.to.eq.BN(0);
 
       const eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
@@ -1465,16 +1279,6 @@ contract('Deposit', (accounts) => {
   });
 
   describe('exitCourtesyCall', async () => {
-    // eslint-disable-next-line no-unused-vars
-    let courtesyTimer;
-    // eslint-disable-next-line no-unused-vars
-    let depositExpiryTimer;
-
-    before(async () => {
-      courtesyTimer = await deployed.TBTCConstants.getCourtesyCallTimeout.call();
-      depositExpiryTimer = await deployed.TBTCConstants.getDepositTerm.call();
-    });
-
     beforeEach(async () => {
       const block = await web3.eth.getBlock('latest');
       const blockTimestamp = block.timestamp;
@@ -1497,8 +1301,8 @@ contract('Deposit', (accounts) => {
 
       await testInstance.exitCourtesyCall();
 
-      const res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.ACTIVE);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.ACTIVE);
 
       const eventList = await deployed.SystemStub.getPastEvents('ExitedCourtesyCall', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);
@@ -1575,15 +1379,14 @@ contract('Deposit', (accounts) => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address);
       assert.equal(bond, 0, 'Bond not seized as expected');
 
-      const res = await testInstance.getLiqudationAndCoutesyInitiated.call();
-      expect(res[0], 'liquidation timestamp not recorded').not.to.eq.BN(0);
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call();
+      expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0);
     });
   });
 
   describe('notifyCourtesyTimeout', async () => {
-    let timer;
     let courtesyTime;
-
+    let timer;
     before(async () => {
       timer = await deployed.TBTCConstants.getCourtesyCallTimeout.call();
     });
@@ -1626,8 +1429,8 @@ contract('Deposit', (accounts) => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address);
       assert.equal(bond, 0, 'Bond not seized as expected');
 
-      const res = await testInstance.getLiqudationAndCoutesyInitiated.call();
-      expect(res[0], 'liquidation timestamp not recorded').not.to.eq.BN(0);
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call();
+      expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0);
     });
   });
 
@@ -1652,11 +1455,11 @@ contract('Deposit', (accounts) => {
 
       await testInstance.notifyDepositExpiryCourtesyCall();
 
-      let res = await testInstance.getState.call();
-      expect(res).to.eq.BN(utils.states.COURTESY_CALL);
+      const depositState = await testInstance.getState.call();
+      expect(depositState).to.eq.BN(utils.states.COURTESY_CALL);
 
-      res = await testInstance.getLiqudationAndCoutesyInitiated.call();
-      expect(res[1]).not.to.eq.BN(0);
+      const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call();
+      expect(liquidationTime[1]).not.to.eq.BN(0);
 
       const eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' });
       assert.equal(eventList.length, 1);

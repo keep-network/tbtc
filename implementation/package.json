@@ -7,7 +7,9 @@
     "setup": "git submodule update --init --recursive && npm i",
     "test": "truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
-    "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}"
+    "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
+    "sol:lint": "solium -d contracts/",
+    "sol:lint:fix": "solium -d contracts/ --fix"
   },
   "config": {
     "eslintPaths": "test/ migrations/"
@@ -29,8 +31,11 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "eslint": "^5.16.0",
-    "eslint-config-keep": "https://github.com/keep-network/eslint-config-keep.git#0.1.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.1.1",
     "eth-gas-reporter": "^0.1.12",
-    "ganache-cli": "^6.4.3"
+    "ethlint": "^1.2.4",
+    "ganache-cli": "^6.4.3",
+    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.1",
+    "truffle": "^5.0.17"
   }
 }

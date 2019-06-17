@@ -14,6 +14,28 @@ jobs:
               cd implementation/
               npm install
               npm run js:lint
+  lint_solidity:
+    executor: docker-node
+    steps:
+        - checkout
+        - run:
+            name: Lint solidity
+            command: |
+              set -ex
+              cd implementation
+              npm install
+              npm run setup
+              npm run sol:lint
+  test_solidity:
+    executor: docker-node
+    steps:
+        - checkout
+        - run: sudo npm install -g ganache-cli@6.4.2
+        - run:
+            name: Running testrpc
+            command: ganache-cli
+            background: true
+        - run: cd implementation/contracts && npm install && npm run setup && npm run test    
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -80,6 +102,10 @@ workflows:
   lint:
     jobs:
       - eslint
+  solidity:
+    jobs:
+      - lint_solidity
+      - test_solidity
   docs:
     jobs:
       - generate_pngs

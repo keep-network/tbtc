@@ -10,7 +10,7 @@ contract TestDeposit is Deposit {
         address _k
     ) public {
         self.TBTCSystem = _sys;
-        self.KeepSystem = _k;
+        self.KeepBridge = _k;
         self.TBTCToken = _token;
     }
 
@@ -36,7 +36,7 @@ contract TestDeposit is Deposit {
         self.courtesyCallInitiated = _courtesy;
     }
 
-    function getLiqudationAndCoutesyInitiated() public view returns (uint256, uint256) {
+    function getLiquidationAndCourtesyInitiated() public view returns (uint256, uint256) {
         return (self.liquidationInitiated, self.courtesyCallInitiated);
     }
 
