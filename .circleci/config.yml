@@ -4,7 +4,7 @@ executors:
     docker:
       - image: circleci/node:11
 jobs:
-  eslint:
+  lint_js:
     executor: docker-node
     steps:
         - checkout
@@ -101,10 +101,10 @@ workflows:
   version: 2
   lint:
     jobs:
-      - eslint
+      - lint_js
+      - lint_solidity
   solidity:
     jobs:
-      - lint_solidity
       - test_solidity
   docs:
     jobs:
