@@ -19,10 +19,10 @@ jobs:
     steps:
         - checkout
         - run:
-            name: Lint solidity
+            name: Lint Solidity
+            working_directory: ~/project/implementation
             command: |
               set -ex
-              cd implementation
               npm install
               npm run setup
               npm run sol:lint
@@ -35,7 +35,10 @@ jobs:
             name: Running testrpc
             command: ganache-cli
             background: true
-        - run: cd implementation/contracts && npm install && npm run setup && npm run test
+        - run:
+            name: Run NPM tests
+            working_directory: ~/project/implementation/contracts
+            command: npm install && npm run setup && npm run test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -43,10 +46,11 @@ jobs:
       - checkout
       - run:
           name: Generate TeX-based PNGs
+          working_directory: ~/project/docs
           command: |
             mkdir -p /tmp/docs/docs/img
-            cd docs && make pngs && cd ..
-            cp -r docs/img/generated /tmp/docs/docs/img/generated
+            make pngs
+            cp -r img/generated /tmp/docs/docs/img/generated
       - persist_to_workspace:
           root: /tmp/docs
           paths:
@@ -58,10 +62,11 @@ jobs:
       - checkout
       - run:
           name: Generate TeX Document Files
+          working_directory: ~/project/docs
           command: |
             mkdir -p /tmp/docs
-            cd docs && make build.pdf && cd ..
-            cp docs/*.pdf /tmp/docs
+            make build.pdf
+            cp *.pdf /tmp/docs
       - persist_to_workspace:
           root: /tmp/docs
           paths:
@@ -75,10 +80,10 @@ jobs:
           at: ./
       - run:
           name: Generate Asciidoctor PDF/HTML Files
+          working_directory: ~/project/docs
           command: |
             set -ex
             shopt -s extglob globstar nullglob
-            cd docs
             asciidoctor -a revdate=`date +%Y-%m-%d` --failure-level=ERROR *.adoc **/*.adoc
             for a in $(find . -type f -regextype sed -regex '.*\.\(html\|png\)'); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
             set -x
