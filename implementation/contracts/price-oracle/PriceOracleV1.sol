@@ -55,9 +55,11 @@ contract PriceOracleV1 is IPriceOracle {
         // p0 * 0.01 = minimum delta
         // 1% = 0.01 = 1/100
         uint256 minDelta = price.div(100);
+        /* solium-disable */
         uint256 delta = _newPrice > price
                         ? _newPrice.sub(price)
                         : price.sub(_newPrice);
+        /* solium-enable */
         require(delta > minDelta, "Price change is negligible (>1%)");
 
         price = _newPrice;
