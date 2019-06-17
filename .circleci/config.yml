@@ -8,7 +8,7 @@ jobs:
     executor: docker-node
     steps:
         - checkout
-        - run: 
+        - run:
             name: Lint JS
             command: |
               cd implementation/
@@ -19,10 +19,10 @@ jobs:
     steps:
         - checkout
         - run:
-            name: Lint solidity
+            name: Lint Solidity
+            working_directory: ~/project/implementation
             command: |
               set -ex
-              cd implementation
               npm install
               npm run setup
               npm run sol:lint
@@ -35,7 +35,10 @@ jobs:
             name: Running testrpc
             command: ganache-cli
             background: true
-        - run: cd implementation/contracts && npm install && npm run setup && npm run test    
+        - run:
+            name: Run NPM tests
+            working_directory: ~/project/implementation/contracts
+            command: npm install && npm run setup && npm run test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -43,6 +46,7 @@ jobs:
       - checkout
       - run:
           name: Generate TeX-based PNGs
+          working_directory: ~/project/docs
           command: |
             mkdir -p /tmp/docs/img
             make pngs
@@ -50,7 +54,7 @@ jobs:
       - persist_to_workspace:
           root: /tmp/docs
           paths:
-            - img/generated/*.png
+            - ./img/generated/*.png
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:15
@@ -58,6 +62,7 @@ jobs:
       - checkout
       - run:
           name: Generate TeX Document Files
+          working_directory: ~/project/docs
           command: |
             mkdir -p /tmp/docs
             make build.pdf
@@ -72,9 +77,10 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: ./
+          at: ./docs
       - run:
           name: Generate Asciidoctor PDF/HTML Files
+          working_directory: ~/project/docs
           command: |
             set -ex
             shopt -s extglob globstar nullglob
