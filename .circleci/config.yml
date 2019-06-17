@@ -4,6 +4,16 @@ executors:
     docker:
       - image: circleci/node:11
 jobs:
+  lint_js:
+    executor: docker-node
+    steps:
+        - checkout
+        - run: 
+            name: Lint JS
+            command: |
+              cd implementation/
+              npm install
+              npm run js:lint
   lint_solidity:
     executor: docker-node
     steps:
@@ -89,9 +99,12 @@ jobs:
 
 workflows:
   version: 2
+  lint:
+    jobs:
+      - lint_js
+      - lint_solidity
   solidity:
     jobs:
-      - lint_solidity
       - test_solidity
   docs:
     jobs:

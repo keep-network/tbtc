@@ -1,4 +1,4 @@
-import expectThrow from './helpers/expectThrow';
+import expectThrow from './helpers/expectThrow'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
@@ -6,7 +6,6 @@ const ValidateSPV = artifacts.require('ValidateSPV')
 const CheckBitcoinSigs = artifacts.require('CheckBitcoinSigs')
 
 const OutsourceDepositLogging = artifacts.require('OutsourceDepositLogging')
-const DepositLog = artifacts.require('DepositLog')
 const DepositStates = artifacts.require('DepositStates')
 const DepositUtils = artifacts.require('DepositUtils')
 const DepositFunding = artifacts.require('DepositFunding')
@@ -29,22 +28,22 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
-  {name: 'BytesLib', contract: BytesLib},
-  {name: 'BTCUtils', contract: BTCUtils},
-  {name: 'ValidateSPV', contract: ValidateSPV},
-  {name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs},
-  {name: 'TBTCConstants', contract: TestTBTCConstants},  // note the name
-  {name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging},
-  {name: 'DepositStates', contract: DepositStates},
-  {name: 'DepositUtils', contract: DepositUtils},
-  {name: 'DepositFunding', contract: DepositFunding},
-  {name: 'DepositRedemption', contract: DepositRedemption},
-  {name: 'DepositLiquidation', contract: DepositLiquidation},
-  {name: 'TestDeposit', contract: TestDeposit},
-  {name: 'TestDepositUtils', contract: TestDepositUtils},
-  {name: 'KeepStub', contract: KeepStub},
-  {name: 'TBTCStub', contract: TBTCStub},
-  {name: 'SystemStub', contract: SystemStub}]
+  { name: 'BytesLib', contract: BytesLib },
+  { name: 'BTCUtils', contract: BTCUtils },
+  { name: 'ValidateSPV', contract: ValidateSPV },
+  { name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs },
+  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
+  { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
+  { name: 'DepositStates', contract: DepositStates },
+  { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositFunding', contract: DepositFunding },
+  { name: 'DepositRedemption', contract: DepositRedemption },
+  { name: 'DepositLiquidation', contract: DepositLiquidation },
+  { name: 'TestDeposit', contract: TestDeposit },
+  { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'KeepStub', contract: KeepStub },
+  { name: 'TBTCStub', contract: TBTCStub },
+  { name: 'SystemStub', contract: SystemStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -55,9 +54,11 @@ const TEST_DEPOSIT_DEPLOY = [
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-contract('Deposit', accounts => {
-
-  let deployed, keep, testInstance, withdrawalRequestTime, fundingProofTimerStart
+contract('Deposit', (accounts) => {
+  let deployed
+  let testInstance
+  let withdrawalRequestTime
+  let fundingProofTimerStart
 
 
   before(async () => {
@@ -81,7 +82,7 @@ contract('Deposit', accounts => {
         deployed.SystemStub.address,
         deployed.TBTCStub.address,
         deployed.KeepStub.address,
-        1,  //m
+        1, // m
         1)
 
       // state updates
@@ -104,7 +105,7 @@ contract('Deposit', accounts => {
           deployed.SystemStub.address,
           deployed.TBTCStub.address,
           deployed.KeepStub.address,
-          1,  //m
+          1, // m
           1)
         assert(false, 'Test call did not error as expected')
       } catch (e) {
@@ -126,7 +127,7 @@ contract('Deposit', accounts => {
     const valueBytes = '0x1111111111111111'
     const keepPubkeyX = '0x' + '33'.repeat(32)
     const keepPubkeyY = '0x' + '44'.repeat(32)
-    const requesterPKH =  '0x' + '33'.repeat(20)
+    const requesterPKH = '0x' + '33'.repeat(20)
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
@@ -182,11 +183,9 @@ contract('Deposit', accounts => {
       const approved = await deployed.KeepStub.wasDigestApprovedForSigning.call(0, sighash)
       assert(!approved.eqn(0), 'digest was not approved')
     })
-
   })
 
   describe('provideRedemptionSignature', async () => {
-
     // signing the sha 256 of '11' * 32
     // signing with privkey '11' * 32
     // using RFC 6979 nonce (libsecp256k1)
@@ -234,7 +233,6 @@ contract('Deposit', accounts => {
         assert.include(e.message, 'Invalid signature')
       }
     })
-
   })
 
   describe('increaseRedemptionFee', async () => {
@@ -335,7 +333,8 @@ contract('Deposit', accounts => {
   describe('provideRedemptionProof', async () => {
     // real tx from mainnet bitcoin
     const currentDiff = 6353030562983
-    const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
+    // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f';
+    // eslint-disable-next-line camelcase
     const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
     const proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
@@ -360,7 +359,7 @@ contract('Deposit', accounts => {
       assert(depositState.eq(utils.states.REDEEMED))
 
       const requestInfo = await testInstance.getRequestInfo.call()
-      assert.equal(requestInfo[0], '0x' + '11'.repeat(20))  // address is intentionally not cleared
+      assert.equal(requestInfo[0], '0x' + '11'.repeat(20)) // address is intentionally not cleared
       assert.equal(requestInfo[1], utils.address0)
       assert.equal(requestInfo[4], utils.bytes32zero)
 
@@ -387,6 +386,7 @@ contract('Deposit', accounts => {
   })
 
   describe('redemptionTransactionChecks', async () => {
+    // eslint-disable-next-line camelcase
     const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
     const badtx = '0x05' + tx.slice(4)
@@ -402,7 +402,7 @@ contract('Deposit', accounts => {
 
     it('returns the little-endian txid and output value', async () => {
       const redemptionChecks = await testInstance.redemptionTransactionChecks.call(tx)
-      assert.equal(redemptionChecks[0], txid_le)      
+      assert.equal(redemptionChecks[0], txid_le)
       expect(redemptionChecks[1]).to.eq.BN(outputValue)
     })
 
@@ -434,7 +434,7 @@ contract('Deposit', accounts => {
 
   describe('notifySignatureTimeout', async () => {
     let timer
-    
+
     before(async () => {
       timer = await deployed.TBTCConstants.getSignatureTimeout.call()
     })
@@ -457,12 +457,12 @@ contract('Deposit', accounts => {
     })
 
     it('reverts if the signature timeout has not elapsed', async () => {
-        await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime + timer + 1, utils.bytes32zero)
-        try {
-          await testInstance.notifySignatureTimeout()
-        } catch (e) {
-          assert.include(e.message, 'Signature timer has not elapsed')
-        }
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime + timer + 1, utils.bytes32zero)
+      try {
+        await testInstance.notifySignatureTimeout()
+      } catch (e) {
+        assert.include(e.message, 'Signature timer has not elapsed')
+      }
     })
 
     it('reverts if no funds recieved as signer bond', async () => {
@@ -470,14 +470,14 @@ contract('Deposit', accounts => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
       try {
-        await expectThrow(testInstance.notifySignatureTimeout()) 
+        await expectThrow(testInstance.notifySignatureTimeout())
       } catch (e) {
         assert.include(e.message, 'No funds should be received as signer bond')
       }
     })
 
     it('starts abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifySignatureTimeout()
 
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -485,7 +485,7 @@ contract('Deposit', accounts => {
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
-      })
+    })
   })
 
   describe('notifyRedemptionProofTimeout', async () => {
@@ -528,7 +528,7 @@ contract('Deposit', accounts => {
     })
 
     it('starts abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, {from: accounts[0]}) 
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifyRedemptionProofTimeout()
 
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -587,14 +587,14 @@ contract('Deposit', accounts => {
     it('returns funder bond', async () => {
       const beneficiary = accounts[4]
       const bond = 1000000000000
-    
+
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
-      await testInstance.send(bond, {from: beneficiary}) 
+      await testInstance.send(bond, { from: beneficiary })
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
-      await testInstance.setKeepInfo(0, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)   
-      await deployed.KeepStub.setBondAmount(bond)     
+      await testInstance.setKeepInfo(0, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
+      await deployed.KeepStub.setBondAmount(bond)
       await testInstance.notifySignerSetupFailure()
 
       const balance = await web3.eth.getBalance(beneficiary)
@@ -604,7 +604,6 @@ contract('Deposit', accounts => {
   })
 
   describe('retrieveSignerPubkey', async () => {
-
     const pubkeyX = '0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa'
     const pubkeyY = '0x385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1'
 
@@ -674,8 +673,8 @@ contract('Deposit', accounts => {
 
     it('reverts if not awaiting a funding proof', async () => {
       try {
-          await testInstance.setState(utils.states.START)
-          await testInstance.notifyFundingTimeout()
+        await testInstance.setState(utils.states.START)
+        await testInstance.notifyFundingTimeout()
       } catch (e) {
         assert.include(e.message, 'Funding timeout has not started')
       }
@@ -691,13 +690,13 @@ contract('Deposit', accounts => {
     })
 
     it('distributes the funder bond to the keep group', async () => {
-        const beneficiary = accounts[4]
-        const bond = 1000000
-        await testInstance.setKeepInfo(0, 0, withdrawalRequestTime, utils.bytes32zero, utils.bytes32zero)
-        await testInstance.send(bond, {from: beneficiary}) 
-        await testInstance.notifyFundingTimeout()
-        const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
-        assert.equal(keepBalance, new BN(bond), 'funder bond not distributed properly')
+      const beneficiary = accounts[4]
+      const bond = 1000000
+      await testInstance.setKeepInfo(0, 0, withdrawalRequestTime, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.send(bond, { from: beneficiary })
+      await testInstance.notifyFundingTimeout()
+      const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      assert.equal(keepBalance, new BN(bond), 'funder bond not distributed properly')
     })
   })
 
@@ -711,16 +710,16 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
-      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1  // has elapsed
+      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1 // has elapsed
       await deployed.KeepStub.setSuccess(true)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates to awaiting fraud funding proof and logs FraudDuringSetup if the timer has not elapsed', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)  // timer has not elapsed
+      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero) // timer has not elapsed
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       const depositState = await testInstance.getState.call()
@@ -767,11 +766,11 @@ contract('Deposit', accounts => {
       const beneficiary = accounts[4]
       const bond = 10000000000
       const blockNumber = await web3.eth.getBlock('latest').number
-      await testInstance.send(bond, {from: beneficiary}) 
+      await testInstance.send(bond, { from: beneficiary })
       const initialBalance = await web3.eth.getBalance(beneficiary)
       const signerBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
-      await deployed.KeepStub.setBondAmount(bond)     
+      await deployed.KeepStub.setBondAmount(bond)
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
       await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 6, utils.bytes32zero, utils.bytes32zero)
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
@@ -783,7 +782,6 @@ contract('Deposit', accounts => {
       assert.equal(eventList.length, 1)
       expect(finalBalance, 'funder and signer bond should be included in final result').to.eq.BN(balanceCheck)
     })
-
   })
 
   describe('notifyFraudFundingTimeout', async () => {
@@ -796,10 +794,10 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
-      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1  // timer has elapsed
+      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1 // timer has elapsed
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
       await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates state to setup failed, logs SetupFailed, and deconstes state', async () => {
@@ -842,7 +840,7 @@ contract('Deposit', accounts => {
     it('asserts that it partially slashes signers', async () => {
       const beneficiary = accounts[4]
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
-      const initialBalance =  await web3.eth.getBalance(beneficiary)
+      const initialBalance = await web3.eth.getBalance(beneficiary)
       const toSeize = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
@@ -850,7 +848,7 @@ contract('Deposit', accounts => {
 
       const divisor = await deployed.TBTCConstants.getFundingFraudPartialSlashDivisor.call()
       const slash = new BN(toSeize).div(new BN(divisor))
-      const balanceAfter =  await web3.eth.getBalance(beneficiary)
+      const balanceAfter = await web3.eth.getBalance(beneficiary)
       const balanceCheck = new BN(initialBalance).add(slash)
 
       assert.equal(balanceCheck, balanceAfter, 'partial slash not correctly awarded to funder')
@@ -860,13 +858,13 @@ contract('Deposit', accounts => {
   describe('provideFraudBTCFundingProof', async () => {
     // real tx from mainnet bitcoin, interpreted as funding tx
     const currentDiff = 6353030562983
-    const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
-    const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
+    // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f';
+    // const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
     const proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
     const index = 130
     const headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
-    const outputValue = 490029088
+    // const outputValue = 490029088;
     const signerPubkeyX = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6e'
     const signerPubkeyY = '0xe8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
 
@@ -874,7 +872,7 @@ contract('Deposit', accounts => {
       await testInstance.setKeepInfo(0, 0, 0, signerPubkeyX, signerPubkeyY)
       await deployed.SystemStub.setCurrentDiff(currentDiff)
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates to setup failed, logs SetupFailed, ', async () => {
@@ -912,25 +910,25 @@ contract('Deposit', accounts => {
       const initialBalance = await web3.eth.getBalance(beneficiary)
       const signerBond = await web3.eth.getBalance(deployed.KeepStub.address)
 
-      await testInstance.provideFraudBTCFundingProof(tx, proof, index, headerChain) 
+      await testInstance.provideFraudBTCFundingProof(tx, proof, index, headerChain)
 
       const balanceAfter = await web3.eth.getBalance(beneficiary)
       const balanceCheck = new BN(initialBalance).add(new BN(signerBond))
 
-      assert.equal(balanceCheck, balanceAfter, 'partial slash not correctly awarded to funder')   
+      assert.equal(balanceCheck, balanceAfter, 'partial slash not correctly awarded to funder')
     })
   })
 
   describe('provideBTCFundingProof', async () => {
     // real tx from mainnet bitcoin, interpreted as funding tx
     const currentDiff = 6353030562983
-    const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
-    const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
+    // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f';
+    // const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
     const proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
     const index = 130
     const headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
-    const outputValue = 490029088
+    // const outputValue = 490029088;
     const outputValueBytes = '0x2040351d00000000'
     const signerPubkeyX = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6e'
     const signerPubkeyY = '0xe8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
@@ -939,7 +937,7 @@ contract('Deposit', accounts => {
       await testInstance.setKeepInfo(0, 0, 0, signerPubkeyX, signerPubkeyY)
       await deployed.SystemStub.setCurrentDiff(currentDiff)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates to active, stores UTXO info, deconstes funding info, logs Funded', async () => {
@@ -975,7 +973,7 @@ contract('Deposit', accounts => {
       const beneficiary = accounts[4]
       const signerBond = 10000000000
       const initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
-      await testInstance.send(signerBond, {from: beneficiary}) 
+      await testInstance.send(signerBond, { from: beneficiary })
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
@@ -983,11 +981,11 @@ contract('Deposit', accounts => {
 
       const balanceAfter = await web3.eth.getBalance(beneficiary)
       const balanceCheck = new BN(initialBalance).add(new BN(signerBond))
-      assert.equal(balanceCheck, balanceAfter, 'funder bond not currectly returned')  
+      assert.equal(balanceCheck, balanceAfter, 'funder bond not currectly returned')
       const endingTokenBalancce = await deployed.TBTCStub.getBalance(beneficiary)
-      
-      const lotSize =  await deployed.TBTCConstants.getLotSize.call()
-      const toMint = lotSize.mul(new BN(95)).div(new BN(100));
+
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      const toMint = lotSize.mul(new BN(95)).div(new BN(100))
       const tokenCheck = initialTokenBalance.add(new BN(toMint))
       expect(tokenCheck, 'incorrect amount minted').to.eq.BN(endingTokenBalancce)
     })
@@ -995,10 +993,9 @@ contract('Deposit', accounts => {
   })
 
   describe('provideECDSAFraudProof', async () => {
-
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('executes', async () => {
@@ -1048,8 +1045,8 @@ contract('Deposit', accounts => {
   describe('provideSPVFraudProof', async () => {
     // real tx from mainnet bitcoin
     const currentDiff = 6353030562983
-    const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
-    const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
+    // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f';
+    // const txid_le = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c';
     const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
     const proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
     const index = 130
@@ -1062,7 +1059,7 @@ contract('Deposit', accounts => {
       await testInstance.setState(utils.states.ACTIVE)
       await deployed.SystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('executes', async () => {
@@ -1153,20 +1150,19 @@ contract('Deposit', accounts => {
     })
 
     it(`burns msg.sender's tokens`, async () => {
-
       const caller = accounts[4]
       const beneficiary = accounts[5]
-      const lotSize =  await deployed.TBTCConstants.getLotSize.call()
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
       const initialTokenBalance = await deployed.TBTCStub.getBalance(caller)
 
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
-      await testInstance.purchaseSignerBondsAtAuction({from: caller})
+      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalTokenBalance = await deployed.TBTCStub.getBalance(caller)
       const tokenCheck = new BN(finalTokenBalance).add( new BN(lotSize) )
-      expect(tokenCheck,'tokens not burned correctly').to.eq.BN(initialTokenBalance)
+      expect(tokenCheck, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
     })
-    
+
     it('distributes beneficiary reward', async () => {
       const caller = accounts[4]
       const beneficiary = accounts[5]
@@ -1174,16 +1170,15 @@ contract('Deposit', accounts => {
       const returned = await deployed.TBTCStub.balanceOf.call(caller)
 
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
-      await testInstance.purchaseSignerBondsAtAuction({from: caller})
+      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
       const tokenCheck = new BN(initialTokenBalance).add( new BN(returned))
 
-      expect(finalTokenBalance,'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
+      expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
     })
 
     it('distributes value to the caller', async () => {
-
       const value = 1000000000000
       const caller = accounts[4]
       const beneficiary = accounts[5]
@@ -1191,18 +1186,17 @@ contract('Deposit', accounts => {
       const notifiedTime = block.timestamp
       const initialBalance = await web3.eth.getBalance(caller)
 
-      await testInstance.send(value, {from: accounts[0]}) 
+      await testInstance.send(value, { from: accounts[0] })
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
-      await testInstance.purchaseSignerBondsAtAuction({from: caller})
+      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(caller)
-      
-      expect(new BN(finalBalance),'caller balance should increase').to.be.gte.BN(initialBalance)
+
+      expect(new BN(finalBalance), 'caller balance should increase').to.be.gte.BN(initialBalance)
     })
 
     it('returns keep funds if not fraud', async () => {
-
       const value = 1000000000000
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
@@ -1210,18 +1204,17 @@ contract('Deposit', accounts => {
       const beneficiary = accounts[5]
       const initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
-      await testInstance.send(value, {from: accounts[0]}) 
+      await testInstance.send(value, { from: accounts[0] })
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
-      await testInstance.purchaseSignerBondsAtAuction({from: caller})
+      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
-    
+
       assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'caller balance should increase')
     })
 
     it('burns if fraud', async () => {
-
       const value = 1000000000000
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
@@ -1229,20 +1222,19 @@ contract('Deposit', accounts => {
       const beneficiary = accounts[5]
       const initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
-      await testInstance.send(value, {from: accounts[0]}) 
+      await testInstance.send(value, { from: accounts[0] })
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
-      await testInstance.purchaseSignerBondsAtAuction({from: caller})
+      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
-  
+
       expect(new BN(finalBalance)).to.eq.BN(initialBalance)
     })
   })
 
   describe('notifyCourtesyCall', async () => {
-
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await deployed.KeepStub.setBondAmount(0)
@@ -1289,12 +1281,11 @@ contract('Deposit', accounts => {
   })
 
   describe('exitCourtesyCall', async () => {
-
     beforeEach(async () => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       const notifiedTime = blockTimestamp // not expired
-      const fundedTime = blockTimestamp   // not expired
+      const fundedTime = blockTimestamp // not expired
       await deployed.KeepStub.setBondAmount(new BN('1000000000000000000000000', 10))
       await deployed.SystemStub.setOraclePrice(new BN('1', 10))
       await testInstance.setState(utils.states.COURTESY_CALL)
@@ -1349,11 +1340,10 @@ contract('Deposit', accounts => {
   })
 
   describe('notifyUndercollateralizedLiquidation', async () => {
-
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await deployed.KeepStub.setBondAmount(0)
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     afterEach(async () => {
@@ -1385,7 +1375,7 @@ contract('Deposit', accounts => {
     })
 
     it('assert starts signer abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifyUndercollateralizedLiquidation()
 
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -1406,10 +1396,10 @@ contract('Deposit', accounts => {
     beforeEach(async () => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
-      courtesyTime = blockTimestamp - timer.toNumber()  // has not expired
+      courtesyTime = blockTimestamp - timer.toNumber() // has not expired
       await testInstance.setState(utils.states.COURTESY_CALL)
       await testInstance.setLiquidationAndCourtesyInitated(0, courtesyTime)
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('executes', async () => {
@@ -1435,7 +1425,7 @@ contract('Deposit', accounts => {
     })
 
     it('assert starts signer abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, {from: accounts[0]})
+      await deployed.KeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifyCourtesyTimeout()
 
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
