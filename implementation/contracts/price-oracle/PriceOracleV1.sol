@@ -27,26 +27,43 @@ contract PriceOracleV1 is IPriceOracle {
     // 38 decimal places should be enough... :)
     uint128 private price;
 
-    event PriceUpdated(uint128 price);
+    // The time at which the last price update is considered to be stale.
+    uint256 private zzz;
 
-    constructor(uint128 _defaultPrice) public {
+    // Trusted user that updates the oracle.
+    address private operator;
+
+    event PriceUpdated(uint128 price, uint128 zzz);
+
+    constructor(
+        address _operator,
+        uint128 _defaultPrice
+    ) public {
+        operator = _operator;
         price = _defaultPrice;
+        zzz = block.timestamp + 1 hours;
     }
 
     function getPrice() external view returns (uint128) {
+        require(block.timestamp < zzz, "stale price");
         return price;
     }
 
     function updatePrice(uint128 _newPrice) external {
+        require(msg.sender == operator, "unauthorised");
+
         // abs(1 - (p1 / p0)) > 0.01
         // p0 * 0.01 = minimum delta
         // 1% = 0.01 = 1/100
         uint256 minDelta = price.div(100);
-        uint256 delta = _newPrice > price 
+        uint256 delta = _newPrice > price
                         ? _newPrice.sub(price)
                         : price.sub(_newPrice);
         require(delta > minDelta, "Price change is negligible (>1%)");
+
         price = _newPrice;
-        emit PriceUpdated(price);
+        zzz = block.timestamp + 6 hours;
+
+        emit PriceUpdated(price, zzz);
     }
 }
