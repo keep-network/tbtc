@@ -14,7 +14,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const Deposit = artifacts.require('Deposit')
 
-const PriceOracle = artifacts.require("PriceOracleV1")
+const PriceOracle = artifacts.require('PriceOracleV1')
 
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const KeepBridge = artifacts.require('KeepBridge')
@@ -26,6 +26,7 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
+    return
     await deployer.deploy(BytesLib)
 
     await deployer.link(BytesLib, all)

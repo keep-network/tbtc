@@ -10,7 +10,7 @@ export default function increaseTime(duration) {
       method: 'evm_increaseTime',
       params: [duration],
       id: id,
-    }, err1 => {
+    }, (err1) => {
       if (err1) return reject(err1)
 
       web3.currentProvider.send({
@@ -29,20 +29,32 @@ export default function increaseTime(duration) {
  * it's hard to increase time precisely to a target point so design your test to tolerate
  * small fluctuations from time to time.
  *
- * @param target time in seconds
+ * @param {Number} target time in seconds
  */
-export const increaseTimeTo = async target => {
-  let now = await latestTime();
-  if (target < now) throw Error(`Cannot increase current time(${now}) to a moment in the past(${target})`);
-  let diff = target - now;
-  return increaseTime(diff);
+export const increaseTimeTo = async (target) => {
+  const now = await latestTime()
+  if (target < now) throw Error(`Cannot increase current time(${now}) to a moment in the past(${target})`)
+  const diff = target - now
+  return increaseTime(diff)
 }
 
 export const duration = {
-  seconds: function(val) { return val},
-  minutes: function(val) { return val * this.seconds(60) },
-  hours:   function(val) { return val * this.minutes(60) },
-  days:    function(val) { return val * this.hours(24) },
-  weeks:   function(val) { return val * this.days(7) },
-  years:   function(val) { return val * this.days(365)}
-};
+  seconds: function(val) {
+    return val
+  },
+  minutes: function(val) {
+    return val * this.seconds(60)
+  },
+  hours: function(val) {
+    return val * this.minutes(60)
+  },
+  days: function(val) {
+    return val * this.hours(24)
+  },
+  weeks: function(val) {
+    return val * this.days(7)
+  },
+  years: function(val) {
+    return val * this.days(365)
+  },
+}
