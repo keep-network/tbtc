@@ -291,6 +291,13 @@ library DepositFunding {
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
+        // Design decision:
+        // We COULD revoke the funder bond here if the funding proof timeout has elapsed
+        // HOWEVER, that would only create a situation where the funder loses eerything
+        // It would be a large punishment for a small crime (being slightly late)
+        // So if the funder manages to call this before anyone notifies of timeout
+        // We let them have a freebie
+
         bytes8 _valueBytes;
         bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _locktime).hash256();
 
