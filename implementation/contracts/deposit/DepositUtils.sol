@@ -165,10 +165,10 @@ library DepositUtils {
     ) public view returns (bytes8) {
         bytes8 _valueBytes;
         bytes memory _output;
-     
+
         uint256 _n = (_txOutputVector.slice(0, 1)).bytesToUint();
         require(_n < 0xfd, "VarInts not supported");
-        
+
         // Find the output paying the signer PKH
         // This will fail if there are more than 256 outputs
         _output = _extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);

@@ -239,7 +239,8 @@ contract Deposit {
             _merkleProof,
             _txIndexInBlock,
             _bitcoinHeaders
-        );        return true;
+        );
+        return true;
     }
 
     //

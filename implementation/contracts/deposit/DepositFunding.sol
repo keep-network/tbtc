@@ -243,7 +243,7 @@ library DepositFunding {
         uint256 _txIndexInBlock,
         bytes _bitcoinHeaders
     ) public returns (bool) {
-        
+
         require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
 
         bytes8 _valueBytes;
