@@ -98,11 +98,11 @@ library DepositUtils {
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin tx
     /// @dev                    Stateless SPV Proof verification documented elsewhere
-    /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that is purportedly included in the header chain
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
+    /// @param _d              deposit storage pointer
+    /// @param _bitcoinTx      The bitcoin tx that is purportedly included in the header chain
+    /// @param _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param _index          The index of the tx in the Bitcoin block (1-indexed)
+    /// @param _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 The 32 byte transaction id (little-endian, not block-explorer)
     function checkProof(
         Deposit storage _d,
@@ -131,49 +131,47 @@ library DepositUtils {
         return _txid;
     }
 
-    /// @notice                 Syntactically check an SPV proof for a bitcoin tx
-    /// @dev                    Stateless SPV Proof verification documented elsewhere
-    /// @param  _d              deposit storage pointer
-    /// @param  _merkleRoot     The ID of the Bitcoin transaction to check
-    /// @param  _merkleRoot     The Root of the merkle path
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
+    /// @notice                Syntactically check an SPV proof for a bitcoin tx
+    /// @dev                   Stateless SPV Proof verification documented elsewhere
+    /// @param _d              Deposit storage pointer
+    /// @param _txId           The ID of the Bitcoin transaction to check
+    /// @param _merkleRoot     The Root of the merkle path
+    /// @param _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param _txIndexInBlock 1-indexed transaction index in the block
     function checkFundingProof(
         Deposit storage _d,
         bytes32 _txId,
         bytes32 _merkleRoot,
         bytes _merkleProof,
-        uint256 _index
+        uint256 _txIndexInBlock
     ) public view {
         require(
             _txId.prove(
                 _merkleRoot,
                 _merkleProof,
-                _index),
+                _txIndexInBlock),
             "Tx merkle proof is not valid for provided header and tx");
     }
 
-    /// @dev                find funding ourput using provided index
-    /// @param  _d              deposit storage pointer
-    /// @param _vout        length-prepended outputs
-    /// @param _index       index of funding output
-    /// @return             funding value (bytes8)
+    /// @dev                        find funding ourput using provided index
+    /// @param _d                  deposit storage pointer
+    /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector
+    /// @return                     funding value (bytes8)
     function findAndParseFundingOutput(
         DepositUtils.Deposit storage _d,
-        bytes _vout,
-        uint8 _index
+        bytes _txOutputVector,
+        uint8 _fundingOutputIndex
     ) public view returns (bytes8) {
         bytes8 _valueBytes;
         bytes memory _output;
-        uint8 _numOutputs;
-
-        uint256 _n = (_vout.slice(0, 1)).bytesToUint();
+     
+        uint256 _n = (_txOutputVector.slice(0, 1)).bytesToUint();
         require(_n < 0xfd, "VarInts not supported");
-        _numOutputs = uint8(_n);
-
+        
         // Find the output paying the signer PKH
         // This will fail if there are more than 256 outputs
-        _output = _extractOutputAtIndex(_vout, _index);
+        _output = _extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
         if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d)))) {
             _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
             return _valueBytes;
@@ -182,24 +180,24 @@ library DepositUtils {
         revert("Did not find output with correct PKH");
     }
 
-    /// @notice          Extracts the output at a given index in the TxIns vector
-    /// @param _b        The tx to evaluate
-    /// @param _index    The 0-indexed location of the output to extract
-    /// @return          The specified output
-    function _extractOutputAtIndex(bytes _b, uint8 _index) internal pure returns (bytes) {
+    /// @notice                     Extracts the output at a given index in _txOutputVector
+    /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector
+    /// @return                     The specified output
+    function _extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) internal pure returns (bytes) {
 
         // Determine length of first ouput
         uint _offset = 1;
-        uint _len = (_b.slice(8 + _offset, 2)).determineOutputLength();
+        uint _len = (_txOutputVector.slice(8 + _offset, 2)).determineOutputLength();
 
         // This loop moves forward, and then gets the len of the next one
-        for (uint i = 0; i < _index; i++) {
+        for (uint i = 0; i < _fundingOutputIndex; i++) {
             _offset = _offset + _len;
-            _len = (_b.slice(8, 2)).determineOutputLength();
+            _len = (_txOutputVector.slice(8, 2)).determineOutputLength();
         }
 
         // We now have the length and offset of the one we want
-        return _b.slice(_offset, _len);
+        return _txOutputVector.slice(_offset, _len);
     }
 
     /// @notice     Calculates the amount of value at auction right now
