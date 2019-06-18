@@ -220,24 +220,25 @@ library DepositFunding {
         fundingFraudTeardown(_d);
     }
 
-    /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit
-    /// @dev                        This is the happy-path of the funding flow. It means that we have succeeded
+    /// @notice                     Anyone may notify the deposit of a funding proof during funding fraud
+    //                              We reward the funder the entire bond if this occurs
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
     /// @param  _d                  Deposit storage pointer
-    /// @param _txVersion           4-byte LE version number
-    /// @param _txInputVector       All inputs prepended by the number of inputs encoded as a VarInt, max 0xFC inputs
-    /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
-    /// @param _locktime            Final 4 bytes of the BTC transaction. Needed to calculate txId
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
-    /// @param _merkleProof         The merkle proof of transaction inclusin in a block
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
     /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
-    /// @return                     True if successful
+    /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
         DepositUtils.Deposit storage _d,
         bytes _txVersion,
         bytes _txInputVector,
         bytes _txOutputVector,
-        bytes _locktime,
+        bytes _txLocktime,
         uint8 _fundingOutputIndex,
         bytes _merkleProof,
         uint256 _txIndexInBlock,
@@ -247,7 +248,7 @@ library DepositFunding {
         require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
 
         bytes8 _valueBytes;
-        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _locktime).hash256();
+        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
         _valueBytes = _d.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
         require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
@@ -266,23 +267,24 @@ library DepositFunding {
     }
 
     /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit
-    /// @dev                        This is the happy-path of the funding flow. It means that we have succeeded
+    ///                             This is the happy-path of the funding flow. It means that we have succeeded                           
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding 
     /// @param  _d                  Deposit storage pointer
-    /// @param _txVersion           4-byte LE version number
-    /// @param _txInputVector       All inputs prepended by the number of inputs encoded as a VarInt, max 0xFC inputs
-    /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
-    /// @param _locktime            Final 4 bytes of the BTC transaction. Needed to calculate txId
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
-    /// @param _merkleProof         The merkle proof of transaction inclusin in a block
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
     /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
-    /// @return                     True if successful
+    /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
         DepositUtils.Deposit storage _d,
         bytes _txVersion,
         bytes _txInputVector,
         bytes _txOutputVector,
-        bytes _locktime,
+        bytes _txLocktime,
         uint8 _fundingOutputIndex,
         bytes _merkleProof,
         uint256 _txIndexInBlock,
@@ -299,9 +301,11 @@ library DepositFunding {
         // We let them have a freebie
 
         bytes8 _valueBytes;
-        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _locktime).hash256();
+        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
         _valueBytes = _d.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
+        require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
+
 
         _d.checkFundingProof(txId, _bitcoinHeaders.extractMerkleRootLE().toBytes32(), _merkleProof, _txIndexInBlock);
         _d.evaluateProofDifficulty(_bitcoinHeaders);
@@ -326,5 +330,4 @@ library DepositFunding {
 
         return true;
     }
-
 }

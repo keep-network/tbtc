@@ -98,11 +98,11 @@ library DepositUtils {
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin tx
     /// @dev                    Stateless SPV Proof verification documented elsewhere
-    /// @param _d              deposit storage pointer
-    /// @param _bitcoinTx      The bitcoin tx that is purportedly included in the header chain
-    /// @param _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param _bitcoinHeaders An array of tightly-packed bitcoin headers
+    /// @param _d               Deposit storage pointer
+    /// @param _bitcoinTx       The bitcoin tx that is purportedly included in the header chain
+    /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param _index           The index of the tx in the Bitcoin block (1-indexed)
+    /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
     /// @return                 The 32 byte transaction id (little-endian, not block-explorer)
     function checkProof(
         Deposit storage _d,
@@ -167,7 +167,7 @@ library DepositUtils {
         bytes memory _output;
 
         uint256 _n = (_txOutputVector.slice(0, 1)).bytesToUint();
-        require(_n < 0xfd, "VarInts not supported");
+        require(_n < 0xfd, "VarInts not supported, Number of outputs cannot exceed 252");
 
         // Find the output paying the signer PKH
         // This will fail if there are more than 256 outputs
@@ -182,22 +182,26 @@ library DepositUtils {
 
     /// @notice                     Extracts the output at a given index in _txOutputVector
     /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
-    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @return                     The specified output
     function _extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) internal pure returns (bytes) {
 
-        // Determine length of first ouput
+        // Determine length of first output
+        // offset starts at 1 to skip output number varint
+        // skip the 8 byte output value to get to length 
+        // next two bytes used to calculate length
         uint _offset = 1;
-        uint _len = (_txOutputVector.slice(8 + _offset, 2)).determineOutputLength();
+        uint _start = _offset + 8;
+        uint _length = (_txOutputVector.slice(_start, 2)).determineOutputLength();
 
         // This loop moves forward, and then gets the len of the next one
         for (uint i = 0; i < _fundingOutputIndex; i++) {
-            _offset = _offset + _len;
-            _len = (_txOutputVector.slice(8, 2)).determineOutputLength();
+            _offset = _offset + _length;
+            _length = (_txOutputVector.slice(8, 2)).determineOutputLength();
         }
 
         // We now have the length and offset of the one we want
-        return _txOutputVector.slice(_offset, _len);
+        return _txOutputVector.slice(_offset, _length);
     }
 
     /// @notice     Calculates the amount of value at auction right now

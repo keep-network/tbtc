@@ -175,22 +175,23 @@ contract Deposit {
         return true;
     }
 
-    /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit
-    /// @dev                        This is the happy-path of the funding flow. It means that we have succeeded
-    /// @param _txVersion           4-byte LE version number
-    /// @param _txInputVector       All inputs prepended by the number of inputs encoded as a VarInt, max 0xFC inputs
-    /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
-    /// @param _locktime            Final 4 bytes of the BTC transaction. Needed to calculate txId
+    /// @notice                     Anyone may notify the deposit of a funding proof during funding fraud
+    //                              We reward the funder the entire bond if this occurs
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding              
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
-    /// @param _merkleProof         The merkle proof of transaction inclusin in a block
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
     /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
-    /// @return                     True if successful
+    /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
         bytes _txVersion,
         bytes _txInputVector,
         bytes _txOutputVector,
-        bytes _locktime,
+        bytes _txLocktime,
         uint8 _fundingOutputIndex,
         bytes _merkleProof,
         uint256 _txIndexInBlock,
@@ -200,7 +201,7 @@ contract Deposit {
             _txVersion,
             _txInputVector,
             _txOutputVector,
-            _locktime,
+            _txLocktime,
             _fundingOutputIndex,
             _merkleProof,
             _txIndexInBlock,
@@ -210,21 +211,22 @@ contract Deposit {
     }
 
     /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit
-    /// @dev                        This is the happy-path of the funding flow. It means that we have succeeded
-    /// @param _txVersion           4-byte LE version number
-    /// @param _txInputVector       All inputs prepended by the number of inputs encoded as a VarInt, max 0xFC inputs
-    /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
-    /// @param _locktime            Final 4 bytes of the BTC transaction. Needed to calculate txId
+    ///                             This is the happy-path of the funding flow. It means that we have succeeded                           
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding 
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
-    /// @param _merkleProof         The merkle proof of transaction inclusin in a block
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
     /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
-    /// @return                     True if successful
+    /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
         bytes _txVersion,
         bytes _txInputVector,
         bytes _txOutputVector,
-        bytes _locktime,
+        bytes _txLocktime,
         uint8 _fundingOutputIndex,
         bytes _merkleProof,
         uint256 _txIndexInBlock,
@@ -234,7 +236,7 @@ contract Deposit {
             _txVersion,
             _txInputVector,
             _txOutputVector,
-            _locktime,
+            _txLocktime,
             _fundingOutputIndex,
             _merkleProof,
             _txIndexInBlock,
