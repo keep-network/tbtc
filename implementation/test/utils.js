@@ -19,14 +19,14 @@ const states = {
   COURTESY_CALL: new BN(9),
   FRAUD_LIQUIDATION_IN_PROGRESS: new BN(10),
   LIQUIDATION_IN_PROGRESS: new BN(11),
-  LIQUIDATED: new BN(12)
+  LIQUIDATED: new BN(12),
 }
 
-function hash160 (hexString) {
-    let buffer = Buffer.from(hexString, 'hex')
-        var t = createHash('sha256').update(buffer).digest()
-            var u = createHash('rmd160').update(t).digest()
-                return '0x' + u.toString('hex')
+function hash160(hexString) {
+  const buffer = Buffer.from(hexString, 'hex')
+  const t = createHash('sha256').update(buffer).digest()
+  const u = createHash('rmd160').update(t).digest()
+  return '0x' + u.toString('hex')
 }
 
 function chainToProofBytes(chain) {
@@ -37,17 +37,21 @@ function chainToProofBytes(chain) {
   return byteString
 }
 
+// eslint-disable-next-line camelcase
 async function deploySystem(deploy_list) {
-  let deployed = {}  // name: contract object
-  let linkable = {}  // name: linkable address
-  for (let i in deploy_list) {
+  const deployed = {} // name: contract object
+  const linkable = {} // name: linkable address
+
+  // eslint-disable-next-line camelcase,guard-for-in
+  for (const i in deploy_list) {
     await deploy_list[i].contract.link(linkable)
-    let contract = await deploy_list[i].contract.new()
+    const contract = await deploy_list[i].contract.new()
     linkable[deploy_list[i].name] = contract.address
     deployed[deploy_list[i].name] = contract
   }
   return deployed
 }
+
 function increaseTime(duration) {
   const id = Date.now()
 
@@ -57,7 +61,7 @@ function increaseTime(duration) {
       method: 'evm_increaseTime',
       params: [duration],
       id: id,
-    }, err1 => {
+    }, (err1) => {
       if (err1) return reject(err1)
 
       web3.currentProvider.send({
@@ -81,5 +85,5 @@ module.exports = {
   HEADER_CHAINS: headerChains,
   increaseTime: increaseTime,
   TX: tx,
-  HEADER_PROOFS: headerChains.map(chainToProofBytes)
+  HEADER_PROOFS: headerChains.map(chainToProofBytes),
 }
