@@ -1,5 +1,9 @@
+:toc: macro
+
 [#price-oracle]
 = Price Oracle
+
+ifndef::tbtc[toc::[]]
 
 The price oracle is an integral part of the system, ensuring sufficient collateral underpins the value
 of the minted TBTC tokens. We model the oracle after the USD https://developer.makerdao.com/feeds/[price feeds from MakerDAO], operated initially
