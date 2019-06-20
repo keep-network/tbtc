@@ -874,7 +874,6 @@ contract('Deposit', (accounts) => {
   })
 
   describe('provideFraudBTCFundingProof', async () => {
-    
     beforeEach(async () => {
       await testInstance.setKeepInfo(0, 0, 0, _signerPubkeyX, _signerPubkeyY)
       await deployed.SystemStub.setCurrentDiff(currentDifficulty)
@@ -927,7 +926,6 @@ contract('Deposit', (accounts) => {
   })
 
   describe('provideBTCFundingProof', async () => {
-
     beforeEach(async () => {
       await testInstance.setKeepInfo(0, 0, 0, _signerPubkeyX, _signerPubkeyY)
       await deployed.SystemStub.setCurrentDiff(currentDifficulty)
