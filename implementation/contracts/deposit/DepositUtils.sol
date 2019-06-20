@@ -101,14 +101,14 @@ library DepositUtils {
     /// @param _d               Deposit storage pointer
     /// @param _bitcoinTx       The bitcoin tx that is purportedly included in the header chain
     /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param _index           The index of the tx in the Bitcoin block (1-indexed)
+    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (1-indexed)
     /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
     /// @return                 The 32 byte transaction id (little-endian, not block-explorer)
     function checkProof(
         Deposit storage _d,
         bytes _bitcoinTx,
         bytes _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
         bytes _bitcoinHeaders
     ) public view returns (bytes32) {
         bytes memory _nIns;
@@ -123,7 +123,7 @@ library DepositUtils {
             _txid.prove(
                 _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
                 _merkleProof,
-                _index),
+                _txIndexInBlock),
             "Tx merkle proof is not valid for provided header and tx");
 
         evaluateProofDifficulty(_d, _bitcoinHeaders);
@@ -135,7 +135,7 @@ library DepositUtils {
     /// @dev                   Stateless SPV Proof verification documented elsewhere
     /// @param _d              Deposit storage pointer
     /// @param _txId           The ID of the Bitcoin transaction to check
-    /// @param _merkleRoot     The Root of the merkle path
+    /// @param _merkleRoot     The root of the merkle path
     /// @param _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param _txIndexInBlock 1-indexed transaction index in the block
     function checkFundingProof(
@@ -153,9 +153,9 @@ library DepositUtils {
             "Tx merkle proof is not valid for provided header and tx");
     }
 
-    /// @dev                        find funding ourput using provided index
-    /// @param _d                  deposit storage pointer
-    /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
+    /// @dev                        Find funding output using the provided index
+    /// @param _d                   Deposit storage pointer
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector
     /// @return                     funding value (bytes8)
     function findAndParseFundingOutput(
@@ -171,7 +171,7 @@ library DepositUtils {
 
         // Find the output paying the signer PKH
         // This will fail if there are more than 256 outputs
-        _output = _extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
+        _output = extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
         if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d)))) {
             _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
             return _valueBytes;
@@ -181,11 +181,12 @@ library DepositUtils {
     }
 
     /// @notice                     Extracts the output at a given index in _txOutputVector
-    /// @param _txOutputVector      All outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @return                     The specified output
-    function _extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) internal pure returns (bytes) {
-
+    function extractOutputAtIndex(
+        bytes _txOutputVector, 
+        uint8 _fundingOutputIndex) public view returns (bytes) {
         // Determine length of first output
         // offset starts at 1 to skip output number varint
         // skip the 8 byte output value to get to length 
@@ -197,7 +198,7 @@ library DepositUtils {
         // This loop moves forward, and then gets the len of the next one
         for (uint i = 0; i < _fundingOutputIndex; i++) {
             _offset = _offset + _length;
-            _length = (_txOutputVector.slice(8, 2)).determineOutputLength();
+            _length = (_txOutputVector.slice(8 + _offset, 2)).determineOutputLength();
         }
 
         // We now have the length and offset of the one we want

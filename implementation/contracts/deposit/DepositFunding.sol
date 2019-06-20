@@ -127,6 +127,46 @@ library DepositFunding {
         fundingTeardown(_d);
     }
 
+
+    /// @notice                     Validates the funding tx and parses information from it
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
+    /// @param  _d                  Deposit storage pointer
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
+    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
+    /// @return                     True if no errors are thrown
+    function validateAndParseFundingSPVProof(
+        DepositUtils.Deposit storage _d,
+        bytes _txVersion,
+        bytes _txInputVector,
+        bytes _txOutputVector,
+        bytes _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes _bitcoinHeaders) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
+
+        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+
+        _valueBytes = _d.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
+        require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
+
+
+        _d.checkFundingProof(txId, _bitcoinHeaders.extractMerkleRootLE().toBytes32(), _merkleProof, _txIndexInBlock);
+        _d.evaluateProofDifficulty(_bitcoinHeaders);
+
+        // The utxoOutpoint is the LE TXID plus the index of the output as a 4-byte LE int
+        // _fundingOutputIndex is a uint8, so we know it is only 1 byte
+        // Therefore, pad with 3 more bytes
+        _utxoOutpoint = abi.encodePacked(txId, _fundingOutputIndex, hex"000000");
+
+    }
+
     /// @notice             we poll the Keep contract to retrieve our pubkey
     /// @dev                We store the pubkey as 2 bytestrings, X and Y.
     /// @param  _d          deposit storage pointer
@@ -248,14 +288,20 @@ library DepositFunding {
         require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
 
         bytes8 _valueBytes;
-        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
-
-        _valueBytes = _d.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
-        require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
-
-        _d.checkFundingProof(txId, _bitcoinHeaders.extractMerkleRootLE().toBytes32(), _merkleProof, _txIndexInBlock);
-        _d.evaluateProofDifficulty(_bitcoinHeaders);
-
+        bytes memory _utxoOutpoint;
+        
+        (_valueBytes, _utxoOutpoint) = validateAndParseFundingSPVProof(
+            _d,
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
+        
         _d.setFailedSetup();
         _d.logSetupFailed();
 
@@ -301,21 +347,23 @@ library DepositFunding {
         // We let them have a freebie
 
         bytes8 _valueBytes;
-        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
-
-        _valueBytes = _d.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
-        require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
-
-
-        _d.checkFundingProof(txId, _bitcoinHeaders.extractMerkleRootLE().toBytes32(), _merkleProof, _txIndexInBlock);
-        _d.evaluateProofDifficulty(_bitcoinHeaders);
+        bytes memory _utxoOutpoint;
+       
+        (_valueBytes, _utxoOutpoint) = validateAndParseFundingSPVProof(
+            _d,
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
 
         // Write down the UTXO info and set to active. Congratulations :)
-        // The utxoOutpoint is the LE TXID plus the index of the output as a 4-byte LE int
-        // _fundingOutputIndex is a uint8, so we know it is only 1 byte
-        // Therefore, pad with 3 more bytes
         _d.utxoSizeBytes = _valueBytes;
-        _d.utxoOutpoint = abi.encodePacked(txId, _fundingOutputIndex, hex"000000");
+        _d.utxoOutpoint = _utxoOutpoint;
 
         fundingTeardown(_d);
         _d.setActive();
