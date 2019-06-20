@@ -1,0 +1,59 @@
+[#price-oracle]
+= Price Oracle
+
+The price oracle is an integral part of the system, ensuring sufficient collateral underpins the value
+of the minted TBTC tokens. We model the oracle after the USD https://developer.makerdao.com/feeds/[price feeds from MakerDAO], operated initially
+by a single trusted actor and later governed by the ecosystem stakeholders. 
+
+The minimal price feed design is specified completely by the interface below:
+
+[source,solidity]
+----
+interface PriceFeed {
+    function getPrice() external view returns (uint128);
+    function updatePrice(uint128 price) public;
+}
+----
+
+It is principally used for calculating the value of Bitcoin lot deposits, priced in Ether, however can be
+adapted for other collateral types.
+
+== Mechanisms of price feed updates
+
+Price has a built-in expiration of 6 hours. In the unlikely event that the feed is not updated,
+DoS attacks, etc., calls to `getPrice` will revert transactions.
+
+The price feed also only accepts updates that differ by at least 1% to the previously submitted price.
+This mitigates spurious recomputations by maintainers for price changes of negligible magnitudes.
+
+== Price encoding
+
+Price encoding is important, as unlike USD, cryptocurrency has a significantly higher divisibility. A 
+bitcoin has 8 decimal places, the smallest unit a satoshi, meaning 100 000 000 satoshis = 1 bitcoin. 
+An ether by contract, has 18 decimal places, the smallest unit a wei, meaning that 
+1,000,000,000,000,000,000 wei = 1 ether.
+
+For us to express the price of bitcoin relative to ether, we use a ratio of the number of wei to a satoshi.
+Hence, a call to getPrice when 1 BTC : 32.32 ETH (Jun 2019), the value 3232000000000 wei is returned.
+
+We note the design assumption here is if 1 wei is worth more than 1 sat, then 
+1 Ether is worth 10,000,000,000x as much as 1 Bitcoin. Switching to a 2 integer ratio of x satoshi to y wei would solve this,
+but we see it as a fruitful opportunity to be solved by decentralized governance, if it ever is necessary.
+
+
+== Future design and governance
+
+The price feed underlies the entire
+cryptoeconomic proposition of tBTC and its malfunctioning is a
+systematic risk.
+
+MakerDAO has quite an effective risk team, evidenced by their
+preparation for black swans and the like. A couple concerns we should
+analyse:
+
+* *Access control*: how do we design for the potential that we will have
+to change the owner, in the case of hacking etc.
+* *Aggregating price signals*: we at some point move to a Medianizer
+model from MakerDAO in future (else it’s not really decentralized BTC).
+There’s talk of using on-chain markets as signals too (ie. a Uniswap
+exchange). Do we want the design to allow this to be "`governed in`"?
