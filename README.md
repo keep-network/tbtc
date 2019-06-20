@@ -37,14 +37,14 @@ asciidoctor-pdf index.adoc
 
 #### macOS
 
-Install [Tex Live](https://www.tug.org/texlive/) manually, and other dependencies using CLI:
+Install [TeX Live](https://www.tug.org/texlive/) manually, and other dependencies using CLI:
 
 ```sh
 gem install asciidoctor-pdf --pre
 brew install poppler
 ```
 
-Install the Tikz package to your local LaTeX environment:
+Install the TikZ package to your local LaTeX environment:
 
 ```sh
 sudo cp docs/latex/tikz-uml.sty /usr/local/texlive/texmf-local/
