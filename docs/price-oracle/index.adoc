@@ -6,8 +6,7 @@
 ifndef::tbtc[toc::[]]
 
 The price oracle is an integral part of the system, ensuring sufficient collateral underpins the value
-of the minted TBTC tokens. We model the oracle after the USD https://developer.makerdao.com/feeds/[price feeds from MakerDAO], operated initially
-by a single trusted actor and later governed by the ecosystem stakeholders. 
+of the minted TBTC tokens. We model the oracle after the USD https://developer.makerdao.com/feeds/[price feeds from MakerDAO], operated initially by a single trusted actor and later governed by the ecosystem stakeholders. 
 
 The minimal price feed design is specified completely by the interface below:
 
@@ -32,32 +31,26 @@ This mitigates spurious recomputations by maintainers for price changes of negli
 
 == Price encoding
 
-Price encoding is important, as unlike USD, cryptocurrency has a significantly higher divisibility. A 
+Unlike USD, cryptocurrency has a significantly higher divisibility, which entails some complexity in encoding. A 
 bitcoin has 8 decimal places, the smallest unit a satoshi, meaning 100 000 000 satoshis = 1 bitcoin. 
 An ether by contract, has 18 decimal places, the smallest unit a wei, meaning that 
-1,000,000,000,000,000,000 wei = 1 ether.
+1 000 000 000 000 000 000 wei = 1 ether. 
 
-For us to express the price of bitcoin relative to ether, we use a ratio of the number of wei to a satoshi.
-Hence, a call to getPrice when 1 BTC : 32.32 ETH (Jun 2019), the value 3232000000000 wei is returned.
+For us to express the price of bitcoin relative to ether, we must use a ratio of the number of wei to a satoshi. 
+A simple design is to use 1 wei : `x` satoshi. Hence, for a call to `getPrice` when 1 BTC : 32.32 ETH (Jun 2019), 
+the value 3 232 000 000 000 wei is returned. 
 
-We note the design assumption here is if 1 wei is worth more than 1 sat, then 
-1 Ether is worth 10,000,000,000x as much as 1 Bitcoin. Switching to a 2 integer ratio of x satoshi to y wei would solve this,
-but we see it as a fruitful opportunity to be solved by decentralized governance, if it ever is necessary.
-
+However, if 1 wei is worth more than 1 sat, then the price can no longer be accurately encoded. This scenario of a flippening, 
+when 1 Ether becomes worth 10,000,000,000x as much as 1 Bitcoin, we find unlikely in the very short-term. 
+Rather than prematurely optimize, incorporating a 2 integer ratio of `x` satoshi to `y` wei, 
+and changing the call semantics, we leave this as a future exercise for governance in the decentralized tBTC ecosystem.
 
 == Future design and governance
 
-The price feed underlies the entire
-cryptoeconomic proposition of tBTC and its malfunctioning is a
-systematic risk.
+The price feed underlies the entire cryptoeconomic proposition of tBTC and its malfunctioning is a
+systematic risk. As the system grows with more stakeholders, we envision the network governing itself,
+eventually including the price oracle.
 
-MakerDAO has quite an effective risk team, evidenced by their
-preparation for black swans and the like. A couple concerns we should
-analyse:
-
-* *Access control*: how do we design for the potential that we will have
-to change the owner, in the case of hacking etc.
-* *Aggregating price signals*: we at some point move to a Medianizer
-model from MakerDAO in future (else it’s not really decentralized BTC).
-There’s talk of using on-chain markets as signals too (ie. a Uniswap
-exchange). Do we want the design to allow this to be "`governed in`"?
+We look towards the medianizer model proposed by MakerDAO as a first evolution, wherein
+price signals are aggregated from multiple feeds and the median is taken. Other potentialities
+include signals from on-chain markets, such as Uniswap pools and decentralized exchanges.
