@@ -28,6 +28,10 @@ contract TestDepositUtils is TestDeposit {
         return self.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
     }
 
+    function extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes) {
+        return DepositUtils.extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
+    }
+
     function auctionValue() public view returns (uint256) {
         return self.auctionValue();
     }
