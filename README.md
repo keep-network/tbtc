@@ -21,3 +21,34 @@ The docs and Solidity are built [via CircleCI](.circleci/).
 The documentation includes a project overview and rationale, as well as the
 on-chain specification. Docs should always be updated before or in tandem with
 code.
+
+### Building
+
+Docs are written in [AsciiDoc](http://asciidoc.org/), diagrams in a LaTeX package called [Tikz](https://www.overleaf.com/learn/latex/TikZ_package). To build:
+
+```sh
+cd docs
+
+# Generate diagrams
+make pngs
+# Generate index.pdf
+asciidoctor-pdf index.adoc
+```
+
+#### macOS
+
+Install [Tex Live](https://www.tug.org/texlive/) manually, and other dependencies using CLI:
+
+```sh
+gem install asciidoctor-pdf --pre
+brew install poppler
+```
+
+Install the Tikz package to your local LaTeX environment:
+
+```sh
+sudo cp docs/latex/tikz-uml.sty /usr/local/texlive/texmf-local/
+
+# Update TeX package tree
+sudo texhash
+```
