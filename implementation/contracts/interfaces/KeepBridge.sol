@@ -52,8 +52,10 @@ contract KeepBridge is IKeep {
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
     function getKeepPubkey(uint256 _keepID) external view returns (bytes){
-        //TODO: Implement
-        return "";
+        // TODO: keepID type should be changed from uint256 to addrress
+        address _keepAddress = address(_keepID);
+        
+        return ECDSAKeepContract(_keepAddress).getPublicKey();
     }
 
 
@@ -79,4 +81,8 @@ interface KeepRegistryContract {
         uint256 _groupSize,
         uint256 _honestThreshold
     ) external payable returns (address keep);
+}
+
+interface ECDSAKeepContract {
+    function getPublicKey() public view returns (bytes memory);
 }
