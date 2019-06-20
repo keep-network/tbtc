@@ -104,7 +104,7 @@ library DepositUtils {
     /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (1-indexed)
     /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
     /// @return                 The 32 byte transaction id (little-endian, not block-explorer)
-    function checkProof(
+    function checkProofFromTx(
         Deposit storage _d,
         bytes _bitcoinTx,
         bytes _merkleProof,
@@ -119,39 +119,33 @@ library DepositUtils {
         bytes32 _txid;
         (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
         require(_txid != bytes32(0), "Failed tx parsing");
-        require(
-            _txid.prove(
-                _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
-                _merkleProof,
-                _txIndexInBlock),
-            "Tx merkle proof is not valid for provided header and tx");
-
-        evaluateProofDifficulty(_d, _bitcoinHeaders);
-
+        checkProofFromTxId(_d, _txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
         return _txid;
     }
 
-    /// @notice                Syntactically check an SPV proof for a bitcoin tx
-    /// @dev                   Stateless SPV Proof verification documented elsewhere
-    /// @param _d              Deposit storage pointer
-    /// @param _txId           The ID of the Bitcoin transaction to check
-    /// @param _merkleRoot     The root of the merkle path
-    /// @param _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param _txIndexInBlock 1-indexed transaction index in the block
-    function checkFundingProof(
+    /// @notice                 Syntactically check an SPV proof for a bitcoin tx
+    /// @dev                    Stateless SPV Proof verification documented elsewhere
+    /// @param _d               Deposit storage pointer
+    /// @param _txId            The bitcoin txid of the tx that is purportedly included in the header chain
+    /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (1-indexed)
+    /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
+    function checkProofFromTxId(
         Deposit storage _d,
         bytes32 _txId,
-        bytes32 _merkleRoot,
         bytes _merkleProof,
-        uint256 _txIndexInBlock
-    ) public view {
+        uint256 _txIndexInBlock,
+        bytes _bitcoinHeaders) public view{
         require(
             _txId.prove(
-                _merkleRoot,
+                _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
                 _merkleProof,
-                _txIndexInBlock),
+                _txIndexInBlock
+            ),
             "Tx merkle proof is not valid for provided header and tx");
-    }
+
+        evaluateProofDifficulty(_d, _bitcoinHeaders);
+}
 
     /// @dev                        Find funding output using the provided index
     /// @param _d                   Deposit storage pointer

@@ -185,7 +185,7 @@ library DepositLiquidation {
         );
         require(!_d.inEndState(), "Contract has halted");
 
-        _d.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        _d.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         for (i = 0; i < _bitcoinTx.extractNumInputs(); i++) {
             _input = _bitcoinTx.extractInputAtIndex(i);
             if (keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint)) {

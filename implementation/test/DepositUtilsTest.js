@@ -123,17 +123,17 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('checkProof()', async () => {
+  describe('checkProofFromTx()', async () => {
     it('returns the correct _txid', async () => {
       await deployed.SystemStub.setCurrentDiff(6379265451411)
-      const res = await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
+      const res = await testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
       assert.equal(res, utils.TX.tx_id_le)
     })
 
     it('fails with a broken proof', async () => {
       try {
         await deployed.SystemStub.setCurrentDiff(6379265451411)
-        await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
+        await testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Tx merkle proof is not valid for provided header and tx')
@@ -143,7 +143,7 @@ contract('DepositUtils', (accounts) => {
     it('fails with a broken tx', async () => {
       try {
         await deployed.SystemStub.setCurrentDiff(6379265451411)
-        await testUtilsInstance.checkProof.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
+        await testUtilsInstance.checkProofFromTx.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Failed tx parsing')

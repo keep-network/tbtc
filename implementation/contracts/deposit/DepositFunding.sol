@@ -127,7 +127,6 @@ library DepositFunding {
         fundingTeardown(_d);
     }
 
-
     /// @notice                     Validates the funding tx and parses information from it
     /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
     /// @param  _d                  Deposit storage pointer
@@ -139,7 +138,7 @@ library DepositFunding {
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block
     /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
-    /// @return                     True if no errors are thrown
+    /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint
     function validateAndParseFundingSPVProof(
         DepositUtils.Deposit storage _d,
         bytes _txVersion,
@@ -157,8 +156,8 @@ library DepositFunding {
         require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
 
 
-        _d.checkFundingProof(txId, _bitcoinHeaders.extractMerkleRootLE().toBytes32(), _merkleProof, _txIndexInBlock);
-        _d.evaluateProofDifficulty(_bitcoinHeaders);
+        _d.checkProofFromTxId(txId, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
+
 
         // The utxoOutpoint is the LE TXID plus the index of the output as a 4-byte LE int
         // _fundingOutputIndex is a uint8, so we know it is only 1 byte
