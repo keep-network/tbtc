@@ -6,6 +6,14 @@ pragma solidity 0.4.25;
 
 interface ITBTCSystem {
 
+    // Sets up the TBTC system
+    // - uniswap factory initialisation
+    // - TBTC uniswap exchange creation
+    function setup(
+        address _uniswapFactory,
+        address _tbtc
+    ) external;
+
     // expected behavior:
     // return the price of 1 sat in wei
     // these are the native units of the deposit contract
@@ -15,5 +23,5 @@ interface ITBTCSystem {
     function fetchRelayCurrentDifficulty() external view returns (uint256);
     function fetchRelayPreviousDifficulty() external view returns (uint256);
 
-    function getUniswapExchangeFactory() external view returns (address);
+    function getTBTCUniswapExchange() external view returns (address);
 }

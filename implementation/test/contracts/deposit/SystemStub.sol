@@ -3,12 +3,30 @@ pragma solidity 0.4.25;
 import {ITBTCSystem} from '../../../contracts/interfaces/ITBTCSystem.sol';
 import {IERC721} from '../../../contracts/interfaces/IERC721.sol';
 import {DepositLog} from '../../../contracts/DepositLog.sol';
+import {IUniswapFactory} from "../../../contracts/uniswap/IUniswapFactory.sol";
+import {TBTC} from "../../../contracts/tokens/TBTC.sol";
 
 contract SystemStub is ITBTCSystem, IERC721, DepositLog {
 
     uint256 current = 1;
     uint256 past = 1;
     uint256 oraclePrice = 10 ** 12;
+
+    IUniswapFactory uniswapFactory;
+    TBTC tbtc;
+
+    function setup(
+        address _uniswapFactory,
+        address _tbtc
+    ) external {
+        uniswapFactory = IUniswapFactory(_uniswapFactory);
+        tbtc = TBTC(_tbtc);
+        uniswapFactory.createExchange(_tbtc);
+    }
+
+    function getTBTCUniswapExchange() external view returns (address) {
+        return uniswapFactory.getExchange(address(tbtc));
+    }
 
     function setOraclePrice(uint256 _oraclePrice) external {oraclePrice = _oraclePrice;}
     function setCurrentDiff(uint256 _current) external {current = _current;}

@@ -28,37 +28,44 @@ const uniswap = require('../uniswap')
 const path = require('path')
 const child_process = require('child_process')
 
-const UniswapFactory = artifacts.require('UniswapDeployment')
+const UniswapDeployment = artifacts.require('UniswapDeployment')
 
-async function deployUniswap(deployer) {
+async function deployUniswap(deployer, network, accounts) {
   const uniswapDir = path.join(__dirname, '../uniswap')
 
-  await child_process.execFileSync(
-    path.join(uniswapDir, 'deploy.sh'),
-    { 
-      cwd: uniswapDir
-    }
-  );
+  async function deployFromBytecode(abi, bytecode) {
+    const Contract = new web3.eth.Contract(abi)
+    let instance = await Contract
+      .deploy({
+        data: `0x`+bytecode
+      })
+      .send({ 
+        from: accounts[0],
+        gas: 4712388
+      })
+    return instance
+  }
+  
+  const exchange = await deployFromBytecode(uniswap.abis.exchange, uniswap.bytecode.exchange)
+  const factory  = await deployFromBytecode(uniswap.abis.factory,  uniswap.bytecode.factory)
 
-  let {
-    Exchange,
-    Factory
-  } = uniswap.getDeployments()
+  // Required for Uniswap to clone and create factories
+  await factory.methods.initializeFactory(exchange.options.address).send({ from: accounts[0] })
   
   // Save the deployed addresses to the UniswapDeployment contract
-  await deployer.deploy(UniswapDeployment, Factory, Exchange)
+  await deployer.deploy(UniswapDeployment, factory.options.address, exchange.options.address)
 
-  return Factory;
+  return factory.options.address;
 }
 
-module.exports = (deployer) => {
+module.exports = (deployer, network, accounts) => {
   if(process.env.NODE_ENV == 'test') return Promise.resolve();
   
   deployer.then(async () => {
     let uniswapFactoryAddress;
 
     try {
-      uniswapFactoryAddress = await deployUniswap(deployer)
+      uniswapFactoryAddress = await deployUniswap(deployer, network, accounts)
     } catch(err) {
       throw new Error(`uniswap deployment failed: ${err}`)
     }
@@ -97,11 +104,6 @@ module.exports = (deployer) => {
 
     let tbtcSystem = await deployer.deploy(TBTCSystemStub)
     let tbtc = await deployer.deploy(TBTC)
-
-    await tbtcSystem.setup(
-      uniswapFactoryAddress,
-      tbtc.address
-    );
  
     await deployer.deploy(KeepBridge)
   })

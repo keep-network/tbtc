@@ -5,6 +5,7 @@ import {IERC721} from "./IERC721.sol";
 import {IUniswapFactory} from "../uniswap/IUniswapFactory.sol";
 import {TBTC} from "../tokens/TBTC.sol";
 
+
 contract TBTCSystemStub is ITBTCSystem, IERC721 {
 
     uint256 currentDifficulty = 1;
@@ -23,8 +24,8 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
         uniswapFactory.createExchange(_tbtc);
     }
 
-    function getUniswapExchangeFactory() external view returns (address) {
-        return uniswapFactory;
+    function getTBTCUniswapExchange() external view returns (address) {
+        return uniswapFactory.getExchange(address(tbtc));
     }
 
     // Price Oracle
