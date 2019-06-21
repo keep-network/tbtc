@@ -8,7 +8,7 @@
 |Status
 |Summary
 |Discussion
-|Deferred.
+|Deferred
 a|
  - Proposed implementation doesn't map well to staker authorization
  - https://github.com/keep-network/tbtc/pull/151#issuecomment-501311578:[Common patterns] and clear overview for ACL is desired
