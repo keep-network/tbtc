@@ -8,6 +8,7 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {IUniswapExchange} from "../uniswap/IUniswapExchange.sol";
 
 library DepositLiquidation {
 
@@ -21,7 +22,24 @@ library DepositLiquidation {
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
-    function attemptToLiquidateOnchain() public pure returns (bool) {
+    function attemptToLiquidateOnchain(
+        DepositUtils.Deposit storage _d
+    ) public returns (bool) {
+        // IUniswapExchange exchange = IUniswapExchange(_d.TBTCSystem.getTBTCUniswapExchange());
+        
+        // // seizeSignerBonds
+        // // _d.fetchBondAmount()
+
+        // // Signer bond is already seized.
+        // uint signerBond = address(this).balance;
+        // exchange.getEthToTokenInputPrice(signerBond)
+        
+        // uint tbtcToLiquidate = _d.auctionTBTCAmount();
+
+        // requestKeepGroup
+
+        // how much eth do we have?
+
         return false;
     }
 
@@ -90,7 +108,7 @@ library DepositLiquidation {
             return;
         }
 
-        bool _liquidated = attemptToLiquidateOnchain();
+        bool _liquidated = attemptToLiquidateOnchain(_d);
 
         if (_liquidated) {
             _d.distributeBeneficiaryReward();
@@ -113,7 +131,7 @@ library DepositLiquidation {
         _d.redemptionTeardown();
         _d.seizeSignerBonds();
 
-        bool _liquidated = attemptToLiquidateOnchain();
+        bool _liquidated = attemptToLiquidateOnchain(_d);
 
         if (_liquidated) {
             _d.distributeBeneficiaryReward();
