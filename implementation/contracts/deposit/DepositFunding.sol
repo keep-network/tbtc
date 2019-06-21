@@ -288,7 +288,7 @@ library DepositFunding {
 
         bytes8 _valueBytes;
         bytes memory _utxoOutpoint;
-        
+
         (_valueBytes, _utxoOutpoint) = validateAndParseFundingSPVProof(
             _d,
             _txVersion,
@@ -300,7 +300,7 @@ library DepositFunding {
             _txIndexInBlock,
             _bitcoinHeaders
         );
-        
+
         _d.setFailedSetup();
         _d.logSetupFailed();
 
@@ -312,8 +312,8 @@ library DepositFunding {
     }
 
     /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit
-    ///                             This is the happy-path of the funding flow. It means that we have succeeded                           
-    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding 
+    ///                             This is the happy-path of the funding flow. It means that we have succeeded
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
     /// @param  _d                  Deposit storage pointer
     /// @param _txVersion           Transaction version number (4-byte LE)
     /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
@@ -347,7 +347,7 @@ library DepositFunding {
 
         bytes8 _valueBytes;
         bytes memory _utxoOutpoint;
-       
+
         (_valueBytes, _utxoOutpoint) = validateAndParseFundingSPVProof(
             _d,
             _txVersion,

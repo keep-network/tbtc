@@ -145,7 +145,7 @@ library DepositUtils {
             "Tx merkle proof is not valid for provided header and tx");
 
         evaluateProofDifficulty(_d, _bitcoinHeaders);
-}
+    }
 
     /// @dev                        Find funding output using the provided index
     /// @param _d                   Deposit storage pointer
@@ -179,11 +179,11 @@ library DepositUtils {
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @return                     The specified output
     function extractOutputAtIndex(
-        bytes _txOutputVector, 
+        bytes _txOutputVector,
         uint8 _fundingOutputIndex) public view returns (bytes) {
         // Determine length of first output
         // offset starts at 1 to skip output number varint
-        // skip the 8 byte output value to get to length 
+        // skip the 8 byte output value to get to length
         // next two bytes used to calculate length
         uint _offset = 1;
         uint _start = _offset + 8;
