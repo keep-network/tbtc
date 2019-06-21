@@ -7,7 +7,8 @@
     "setup": "git submodule update --init --recursive && npm i",
     "test": "truffle test",
     "sol:lint": "solium -d contracts/",
-    "sol:lint:fix": "solium -d contracts/ --fix"
+    "sol:lint:fix": "solium -d contracts/ --fix",
+    "remix": "remixd -s . --remix-ide https://remix.ethereum.org"
   },
   "author": "James Prestwich",
   "license": "UNLICENSED",
@@ -15,6 +16,7 @@
     "bn.js": "^4.11.8",
     "create-hash": "^1.2.0",
     "openzeppelin-solidity": "2.0.0",
+    "remixd": "^0.1.8-alpha.6",
     "solc": "^0.4.25",
     "web3": "^1.0.0-beta.55"
   },
