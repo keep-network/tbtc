@@ -103,4 +103,8 @@ contract TestDeposit is Deposit {
     function getWithdrawalRequestTime() public view returns(uint256){
         return self.withdrawalRequestTime;
     }
+
+    function attemptToLiquidateOnchain() public returns (bool) {
+        return self.attemptToLiquidateOnchain();
+    }
 }
