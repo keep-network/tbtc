@@ -314,4 +314,80 @@ contract('DepositUtils', accounts => {
       }
     })
   })
+
+
+  describe('attemptToLiquidateOnchain', async () => {
+    it.only('works', async () => {
+      const deposit = deployed.TestDepositUtils;
+
+      // getLotSize
+      let lotSize = 1;
+
+      // Send some ETH to the Keep
+      // TODO(liamz): move this into test of startSignerFraudLiquidation etc.
+      //              for now it's a good placeholder for assumptions
+      // const keepBondAmount = await deployed.KeepStub.checkBondAmount()
+      const bondAmount = await deposit.fetchBondAmount()
+      assert(bondAmount.gt(0))
+      // expect(await web3.eth.getBalance(deployed.KeepStub.address)).to.eq.BN(0)
+      await deployed.KeepStub.send(bondAmount, {from: accounts[0]})
+
+      // Pretend the deposit has now seized the signer bonds
+      await deposit.setState(utils.states.ACTIVE)
+      
+      // Liquidate
+      // TODO(liamz): make a mock uniswap exchange contract + set the price
+      const tbtcBought = 123;
+      const ethLiquidated = 123;
+      const tbtcSeller = accounts[1]
+      // 1000000000000000000
+      await deposit.attemptToLiquidateOnchain()
+      
+      // Assert balances of 
+      // beneficiary     who initially deposited btc for tbtc
+      // tbtcSeller      who performs liquidation
+      // signers         who are the keep group
+      // deposit         the deposit contract
+      expect(
+        await deployed.TBTCStub.balanceOf(deposit.address)
+      ).to.eq(tbtcBought)
+
+      expect(
+        await web3.eth.getBalance(deposit.address)
+      ).to.eq.BN('0')
+
+
+      expect(
+        await deployed.TBTCStub.balanceOf(tbtcSeller)
+      ).to.eq.BN('0')
+
+      expect(
+        web3.eth.getBalance(tbtcSeller)
+      ).to.eq.BN(ethLiquidated)
+
+
+
+
+
+      
+
+      /**
+       * deposit:
+       *  0 ETH
+       *  X TBTC
+       * 
+       * keep/signers
+       *  -X ETH
+       *  0 TBTC
+       * 
+       * tbtcSeller:
+       *   X ETH
+       *  -X TBTC
+       * 
+       * beneficiary:
+       *   0 ETH
+       *   0 TBTC
+       */
+    })
+  })
 })
