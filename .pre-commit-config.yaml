@@ -1,0 +1,18 @@
+ - repo: https://github.com/keep-network/pre-commit-hooks.git
+   rev: v1.3.0
+   hooks:
+    - id: check-added-large-files
+ - repo: local
+   hooks:
+    - id: lint-js
+      name: 'lint js'
+      entry: /usr/bin/env bash -c "cd implementation && npm run js:lint"
+      files: '\.js$'
+      language: script
+      description: "Checks JS code according to the package's linter configuration"
+    - id: lint-sol
+      name: 'lint solidity'
+      entry: /usr/bin/env bash -c "cd implementation && npm run sol:lint"
+      files: '\.sol$'
+      language: script
+      description: "Checks Solidity code according to the package's linter configuration"

@@ -1,18 +1,18 @@
 pragma solidity 0.4.25;
 
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
-import {DepositUtils} from './DepositUtils.sol';
+import {DepositUtils} from "./DepositUtils.sol";
 import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
 import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
 import {ValidateSPV} from "../bitcoin-spv/ValidateSPV.sol";
-import {IKeep} from '../interfaces/IKeep.sol';
-import {DepositStates} from './DepositStates.sol';
-import {OutsourceDepositLogging} from './OutsourceDepositLogging.sol';
-import {CheckBitcoinSigs} from '../bitcoin-spv/SigCheck.sol';
-import {TBTCConstants} from './TBTCConstants.sol';
-import {IBurnableERC20} from '../interfaces/IBurnableERC20.sol';
-import {CheckBitcoinSigs} from '../bitcoin-spv/SigCheck.sol';
-import {DepositLiquidation} from './DepositLiquidation.sol';
+import {IKeep} from "../interfaces/IKeep.sol";
+import {DepositStates} from "./DepositStates.sol";
+import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
+import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
+import {TBTCConstants} from "./TBTCConstants.sol";
+import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
+import {DepositLiquidation} from "./DepositLiquidation.sol";
 
 
 library DepositRedemption {
@@ -35,10 +35,9 @@ library DepositRedemption {
         address _tbtcAddress = _d.TBTCToken;
         IBurnableERC20 _tbtc = IBurnableERC20(_tbtcAddress);
 
-        address _keepAddress = _d.KeepSystem;
-        IKeep _keep = IKeep(_keepAddress);
+        IKeep _keep = IKeep(_d.KeepBridge);
 
-        _tbtc.approve(_keepAddress, DepositUtils.signerFee());
+        _tbtc.approve(_d.KeepBridge, DepositUtils.signerFee());
         _keep.distributeERC20ToKeepGroup(_d.keepID, _tbtcAddress, DepositUtils.signerFee());
     }
 
@@ -47,7 +46,7 @@ library DepositRedemption {
     /// @param  _digest the digest to approve
     /// @return         true if approved, otherwise revert
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
-        IKeep _keep = IKeep(_d.KeepSystem);
+        IKeep _keep = IKeep(_d.KeepBridge);
         return _keep.approveDigest(_d.keepID, _digest);
     }
 
@@ -58,7 +57,7 @@ library DepositRedemption {
         IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
         uint256 _bal = _tbtc.balanceOf(msg.sender);
         uint256 _red = _d.redemptionTBTCAmount();
-        require(_bal >= _red, 'Not enough TBTC to cover outstanding debt');
+        require(_bal >= _red, "Not enough TBTC to cover outstanding debt");
         _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
         _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
     }
@@ -73,14 +72,14 @@ library DepositRedemption {
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH
     ) public {
-        require(_d.inRedeemableState(), 'Redemption only available from Active or Courtesy state');
+        require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
 
         redemptionTBTCBurn(_d);
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
         uint256 _requestedFee = _d.utxoSize().sub(_outputValue);
-        require(_requestedFee >= TBTCConstants.getMinimumRedemptionFee(), 'Fee is too low');
+        require(_requestedFee >= TBTCConstants.getMinimumRedemptionFee(), "Fee is too low");
 
         // Calculate the sighash
         bytes32 _sighash = CheckBitcoinSigs.oneInputOneOutputSighash(
@@ -96,7 +95,7 @@ library DepositRedemption {
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash), 'Keep returned false');
+        require(approveDigest(_d, _sighash), "Keep returned false");
 
         _d.setAwaitingWithdrawalSignature();
         _d.logRedemptionRequested(
@@ -120,18 +119,20 @@ library DepositRedemption {
         bytes32 _r,
         bytes32 _s
     ) public {
-        require(_d.inAwaitingWithdrawalSignature(), 'Not currently awaiting a signature');
+        require(_d.inAwaitingWithdrawalSignature(), "Not currently awaiting a signature");
 
         // If we're outside of the signature window, we COULD punish signers here
         // Instead, we consider this a no-harm-no-foul situation.
         // The signers have not stolen funds. Most likely they've just inconvenienced someone
 
         // The signature must be valid on the pubkey
-        require(_d.signerPubkey().checkSig(
-            _d.lastRequestedDigest,
-            _v,
-            _r,
-            _s), 'Invalid signature');
+        require(
+            _d.signerPubkey().checkSig(
+                _d.lastRequestedDigest,
+                _v, _r, _s
+            ),
+            "Invalid signature"
+        );
 
         // A signature has been provided, now we wait for fee bump or redemption
         _d.setAwaitingWithdrawalProof();
@@ -153,8 +154,8 @@ library DepositRedemption {
         bytes8 _previousOutputValueBytes,
         bytes8 _newOutputValueBytes
     ) public returns (bool) {
-        require(_d.inAwaitingWithdrawalProof(), 'Fee increase only available after signature provided');
-        require(block.timestamp >= _d.withdrawalRequestTime + TBTCConstants.getIncreaseFeeTimer(), 'Fee increase not yet permitted');
+        require(_d.inAwaitingWithdrawalProof(), "Fee increase only available after signature provided");
+        require(block.timestamp >= _d.withdrawalRequestTime + TBTCConstants.getIncreaseFeeTimer(), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
 
@@ -169,7 +170,7 @@ library DepositRedemption {
         // Ratchet the signature and redemption proof timeouts
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash), 'Keep returned false');
+        require(approveDigest(_d, _sighash), "Keep returned false");
 
         // Go back to waiting for a signature
         _d.setAwaitingWithdrawalSignature();
@@ -191,7 +192,7 @@ library DepositRedemption {
         // Check that we're incrementing the fee by exactly the requester's initial fee
         uint256 _previousOutputValue = DepositUtils.bytes8LEToUint(_previousOutputValueBytes);
         _newOutputValue = DepositUtils.bytes8LEToUint(_newOutputValueBytes);
-        require(_previousOutputValue.sub(_newOutputValue) == _d.initialRedemptionFee, 'Not an allowed fee step');
+        require(_previousOutputValue.sub(_newOutputValue) == _d.initialRedemptionFee, "Not an allowed fee step");
 
         // Calculate the previous one so we can check that it really is the previous one
         bytes32 _previousSighash = CheckBitcoinSigs.oneInputOneOutputSighash(
@@ -200,7 +201,10 @@ library DepositRedemption {
             _d.utxoSizeBytes,
             _previousOutputValueBytes,
             _d.requesterPKH);
-        require(_d.wasDigestApprovedForSigning(_previousSighash) == _d.withdrawalRequestTime, 'Provided previous value does not yield previous sighash');
+        require(
+            _d.wasDigestApprovedForSigning(_previousSighash) == _d.withdrawalRequestTime,
+            "Provided previous value does not yield previous sighash"
+        );
     }
 
     /// @notice                 Anyone may provide a withdrawal proof to prove redemption
@@ -220,7 +224,7 @@ library DepositRedemption {
         bytes32 _txid;
         uint256 _fundingOutputValue;
 
-        require(_d.inRedemption(), 'Redemption proof only allowed from redemption flow');
+        require(_d.inRedemption(), "Redemption proof only allowed from redemption flow");
         (_txid, _fundingOutputValue) = redemptionTransactionChecks(_d, _bitcoinTx);
         // We don't use checkproof here because we need access to the parse info
         require(
@@ -228,11 +232,11 @@ library DepositRedemption {
                 _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
                 _merkleProof,
                 _index),
-            'Tx merkle proof is not valid for provided header');
+            "Tx merkle proof is not valid for provided header");
 
         _d.evaluateProofDifficulty(_bitcoinHeaders);
 
-        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, 'Fee unexpectedly very high');
+        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, "Fee unexpectedly very high");
 
         // Transfer TBTC to signers
         distributeSignerFee(_d);
@@ -257,11 +261,15 @@ library DepositRedemption {
         bytes memory _locktime;
         bytes32 _txid;
         (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
-        require(_txid != bytes32(0), 'Failed tx parsing');
-        require(keccak256(_ins.extractOutpoint()) == keccak256(_d.utxoOutpoint),
-                'Tx spends the wrong UTXO');
-        require(keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
-                'Tx sends value to wrong pubkeyhash');
+        require(_txid != bytes32(0), "Failed tx parsing");
+        require(
+            keccak256(_ins.extractOutpoint()) == keccak256(_d.utxoOutpoint),
+            "Tx spends the wrong UTXO"
+        );
+        require(
+            keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
+            "Tx sends value to wrong pubkeyhash"
+        );
         return ( _txid, uint256(_outs.extractValue()));
     }
 
@@ -271,8 +279,8 @@ library DepositRedemption {
     /// @dev        This is considered fraud, and is punished
     /// @param  _d  deposit storage pointer
     function notifySignatureTimeout(DepositUtils.Deposit storage _d) public {
-        require(_d.inAwaitingWithdrawalSignature(), 'Not currently awaiting a signature');
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getSignatureTimeout(), 'Signature timer has not elapsed');
+        require(_d.inAwaitingWithdrawalSignature(), "Not currently awaiting a signature");
+        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getSignatureTimeout(), "Signature timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 
@@ -280,8 +288,8 @@ library DepositRedemption {
     /// @dev        This is considered fraud, and is punished
     /// @param  _d  deposit storage pointer
     function notifyRedemptionProofTimeout(DepositUtils.Deposit storage _d) public {
-        require(_d.inAwaitingWithdrawalProof(), 'Not currently awaiting a redemption proof');
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout(), 'Proof timer has not elapsed');
+        require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
+        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout(), "Proof timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 }

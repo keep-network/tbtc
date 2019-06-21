@@ -1,7 +1,7 @@
 pragma solidity 0.4.25;
 
-import {DepositLog} from '../DepositLog.sol';
-import {DepositUtils} from './DepositUtils.sol';
+import {DepositLog} from "../DepositLog.sol";
+import {DepositUtils} from "./DepositUtils.sol";
 
 library OutsourceDepositLogging {
 
@@ -48,7 +48,8 @@ library OutsourceDepositLogging {
     /// @param  _r      signature r value
     /// @param  _s      signature s value
     /// @return         True if successful, else revert
-    function logGotRedemptionSignature(DepositUtils.Deposit storage _d,
+    function logGotRedemptionSignature(
+        DepositUtils.Deposit storage _d,
         bytes32 _digest,
         bytes32 _r,
         bytes32 _s
@@ -57,12 +58,14 @@ library OutsourceDepositLogging {
         _logger.logGotRedemptionSignature(
             _digest,
             _r,
-            _s);
+            _s
+        );
     }
 
     /// @notice     Fires a RegisteredPubkey event
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the smae addres
-    function logRegisteredPubkey(DepositUtils.Deposit storage _d,
+    function logRegisteredPubkey(
+        DepositUtils.Deposit storage _d,
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
     ) external {

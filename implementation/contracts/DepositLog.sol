@@ -14,7 +14,8 @@ contract DepositLog {
     event Created(
         address indexed _depositContractAddress,
         uint256 indexed _keepID,
-        uint256 _timestamp);
+        uint256 _timestamp
+    );
 
     // This log event contains all info needed to rebuild the redemption tx
     // We index on request and signers and digest
@@ -25,7 +26,8 @@ contract DepositLog {
         uint256 _utxoSize,
         bytes20 _requesterPKH,
         uint256 _requestedFee,
-        bytes _outpoint);
+        bytes _outpoint
+    );
 
     // This log event contains all info needed to build a witnes
     // We index the digest so that we can search events for the other log
@@ -34,14 +36,16 @@ contract DepositLog {
         bytes32 indexed _digest,
         bytes32 _r,
         bytes32 _s,
-        uint256 _timestamp);
+        uint256 _timestamp
+    );
 
     // This log is fired when the signing group returns a public key
     event RegisteredPubkey(
         address indexed _depositContractAddress,
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY,
-        uint256 _timestamp);
+        uint256 _timestamp
+    );
 
     // This event is fired when we enter the SETUP_FAILED state for any reason
     event SetupFailed(address indexed _depositContractAddress, uint256 _timestamp);
@@ -62,18 +66,21 @@ contract DepositLog {
     event StartedLiquidation(
         address indexed _depositContractAddress,
         bool _wasFraud,
-        uint256 _timestamp);
+        uint256 _timestamp
+    );
 
     // This event is fired when the Redemption SPV proof is validated
     event Redeemed(
         address indexed _depositContractAddress,
         bytes32 indexed _txid,
-        uint256 _timestamp);
+        uint256 _timestamp
+    );
 
     // This event is fired when Liquidation is completed
     event Liquidated(
         address indexed _depositContractAddress,
-        uint256 _timestamp);
+        uint256 _timestamp
+    );
 
     ///
     /// AUTH
@@ -84,6 +91,7 @@ contract DepositLog {
     ///                     We don't require this, so deposits are not bricked if the system borks
     /// @param  _caller     The address of the calling contract
     /// @return             True if approved, otherwise false
+    /* solium-disable-next-line no-empty-blocks */
     function approvedToLog(address _caller) public view returns (bool) {
         /* TODO: auth via system */
     }
@@ -97,7 +105,7 @@ contract DepositLog {
     /// @param  _keepID     The ID of the associated keep request
     /// @return             True if successful, else revert
     function logCreated(uint256 _keepID) public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit Created(
             msg.sender,
             _keepID,
@@ -122,7 +130,7 @@ contract DepositLog {
         uint256 _requestedFee,
         bytes _outpoint
     ) public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit RedemptionRequested(
             msg.sender,
             _requester,
@@ -145,7 +153,7 @@ contract DepositLog {
         bytes32 _r,
         bytes32 _s
     ) public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit GotRedemptionSignature(
             msg.sender,
             _digest,
@@ -163,7 +171,7 @@ contract DepositLog {
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
     ) public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit RegisteredPubkey(
             msg.sender,
             _signingGroupPubkeyX,
@@ -177,7 +185,7 @@ contract DepositLog {
     ///             returns false if not approved, to prevent accidentally halting Deposit
     /// @return     True if successful, else false
     function logSetupFailed() public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit SetupFailed(
             msg.sender,
             block.timestamp);
@@ -189,7 +197,7 @@ contract DepositLog {
     ///             returns false if not approved, to prevent accidentally halting Deposit
     /// @return     True if successful, else false
     function logFraudDuringSetup() public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit FraudDuringSetup(
             msg.sender,
             block.timestamp);
@@ -201,7 +209,7 @@ contract DepositLog {
     ///             returns false if not approved, to prevent accidentally halting Deposit
     /// @return     True if successful, else false
     function logFunded() public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit Funded(
             msg.sender,
             block.timestamp);
@@ -213,7 +221,7 @@ contract DepositLog {
     ///             returns false if not approved, to prevent accidentally halting Deposit
     /// @return     True if successful, else false
     function logCourtesyCalled() public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit CourtesyCalled(
             msg.sender,
             block.timestamp);
@@ -225,7 +233,7 @@ contract DepositLog {
     /// @param _wasFraud    True if liquidating for fraud
     /// @return             True if successful, else revert
     function logStartedLiquidation(bool _wasFraud) public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit StartedLiquidation(
             msg.sender,
             _wasFraud,
@@ -238,7 +246,7 @@ contract DepositLog {
     ///             returns false if not approved, to prevent accidentally halting Deposit
     /// @return     True if successful, else false
     function logRedeemed(bytes32 _txid) public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit Redeemed(
             msg.sender,
             _txid,
@@ -251,7 +259,7 @@ contract DepositLog {
     ///             returns false if not approved, to prevent accidentally halting Deposit
     /// @return     True if successful, else false
     function logLiquidated() public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit Liquidated(
             msg.sender,
             block.timestamp);
@@ -263,7 +271,7 @@ contract DepositLog {
     ///             returns false if not approved, to prevent accidentally halting Deposit
     /// @return     True if successful, else false
     function logExitedCourtesyCall() public returns (bool) {
-        if (!approvedToLog(msg.sender)) { return false; }
+        if (!approvedToLog(msg.sender)) return false;
         emit ExitedCourtesyCall(
             msg.sender,
             block.timestamp);
