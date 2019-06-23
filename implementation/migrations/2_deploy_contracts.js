@@ -29,6 +29,7 @@ const path = require('path')
 const child_process = require('child_process')
 
 const UniswapDeployment = artifacts.require('UniswapDeployment')
+const UniswapFactory = artifacts.require('UniswapFactory')
 
 async function deployUniswap(deployer, network, accounts) {
   const uniswapDir = path.join(__dirname, '../uniswap')

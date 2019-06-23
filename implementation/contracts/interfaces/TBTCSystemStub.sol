@@ -21,7 +21,6 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
     ) external {
         uniswapFactory = IUniswapFactory(_uniswapFactory);
         tbtc = TBTC(_tbtc);
-        uniswapFactory.createExchange(_tbtc);
     }
 
     function getTBTCUniswapExchange() external view returns (address) {
