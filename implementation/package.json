@@ -8,7 +8,8 @@
     "test": "truffle test",
     "sol:lint": "solium -d contracts/",
     "sol:lint:fix": "solium -d contracts/ --fix",
-    "remix": "remixd -s . --remix-ide https://remix.ethereum.org"
+    "remix": "remixd -s . --remix-ide https://remix.ethereum.org",
+    "clean": "rm -r build/contracts/*"
   },
   "author": "James Prestwich",
   "license": "UNLICENSED",
