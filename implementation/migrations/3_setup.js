@@ -13,7 +13,7 @@ module.exports = async (deployer) => {
 
     await uniswapFactory.createExchange(tbtc.address)
 
-    await tbtcSystem.setup(
+    await tbtcSystem.setExteroriorAddresses(
         uniswapFactory.address,
         tbtc.address
     );

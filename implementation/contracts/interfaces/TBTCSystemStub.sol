@@ -15,7 +15,7 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
     IUniswapFactory public uniswapFactory;
     TBTC public tbtc;
 
-    function setup(
+    function setExteroriorAddresses(
         address _uniswapFactory,
         address _tbtc
     ) external {

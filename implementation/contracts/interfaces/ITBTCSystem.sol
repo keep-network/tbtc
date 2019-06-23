@@ -9,7 +9,7 @@ interface ITBTCSystem {
     // Sets up the TBTC system
     // - uniswap factory initialisation
     // - TBTC uniswap exchange creation
-    function setup(
+    function setExteroriorAddresses(
         address _uniswapFactory,
         address _tbtc
     ) external;
