@@ -13,6 +13,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
 const TBTCStub = artifacts.require('TBTCStub')
+const TBTC = artifacts.require('TBTC')
 const SystemStub = artifacts.require('SystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -320,6 +321,20 @@ contract('DepositUtils', accounts => {
     it.only('works', async () => {
       const deposit = deployed.TestDepositUtils;
 
+      const tbtcBought = 123;
+      const ethLiquidated = 123;
+      const tbtcSeller = accounts[1]
+
+      const tbtc = await TBTC.new()
+      await tbtc.mint(tbtcSeller, web3.utils.toWei('1.0'))
+      
+      await testUtilsInstance.setExteroriorAddresses(
+        deployed.SystemStub.address,
+        tbtc.address,
+        deployed.KeepStub.address,
+      )
+
+
       // getLotSize
       let lotSize = 1;
 
@@ -337,9 +352,6 @@ contract('DepositUtils', accounts => {
       
       // Liquidate
       // TODO(liamz): make a mock uniswap exchange contract + set the price
-      const tbtcBought = 123;
-      const ethLiquidated = 123;
-      const tbtcSeller = accounts[1]
       // 1000000000000000000
       await deposit.attemptToLiquidateOnchain()
       
@@ -349,16 +361,16 @@ contract('DepositUtils', accounts => {
       // signers         who are the keep group
       // deposit         the deposit contract
       expect(
-        await deployed.TBTCStub.balanceOf(deposit.address)
+        await tbtc.balanceOf(deposit.address)
       ).to.eq(tbtcBought)
 
       expect(
         await web3.eth.getBalance(deposit.address)
-      ).to.eq.BN('0')
+      ).to.eq.BN('0') 
 
 
       expect(
-        await deployed.TBTCStub.balanceOf(tbtcSeller)
+        await tbtc.balanceOf(tbtcSeller)
       ).to.eq.BN('0')
 
       expect(
