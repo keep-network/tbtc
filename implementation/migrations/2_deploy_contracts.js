@@ -61,6 +61,6 @@ module.exports = (deployer) => {
 
     await deployer.deploy(KeepBridge)
 
-    await deployer.deploy(TBTCToken, Deposit.address)
+    await deployer.deploy(TBTCToken, TBTCSystemStub.address)
   })
 }

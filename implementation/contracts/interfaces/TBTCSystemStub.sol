@@ -2,6 +2,7 @@ pragma solidity 0.4.25;
 
 import {ITBTCSystem} from "./ITBTCSystem.sol";
 import {IERC721} from "./IERC721.sol";
+import {TBTCToken} from "./TBTCToken.sol";
 
 contract TBTCSystemStub is ITBTCSystem, IERC721 {
 
@@ -28,6 +29,21 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
             previousDifficulty = currentDifficulty;
             currentDifficulty = _currentDifficulty;
         }
+    }
+
+    //modify access with ACL implementation
+    function systemMint(address _tokenAddress, address _account, uint256 _amount) public {
+        TBTCToken(_tokenAddress).systemMint(_account, _amount);
+    }
+
+    //modify access with ACL implementation
+    function systemBurnFrom(address _tokenAddress, address _account, uint256 _amount) public {
+        TBTCToken(_tokenAddress).systemBurnFrom(_account, _amount);
+    }
+
+    //modify access with ACL implementation
+    function systemTransferFrom(address _tokenAddress, address _from, address _to, uint256 _value) public {
+        TBTCToken(_tokenAddress).systemTransferFrom(_from, _to, _value);
     }
 
     // ERC721
