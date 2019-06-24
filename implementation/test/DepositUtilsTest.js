@@ -19,6 +19,10 @@ const SystemStub = artifacts.require('SystemStub')
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDepositUtils = artifacts.require('TestDepositUtils')
 
+const UniswapDeployment = artifacts.require('UniswapDeployment')
+const IUniswapFactory = artifacts.require('IUniswapFactory')
+const IUniswapExchange = artifacts.require('IUniswapExchange')
+
 const BN = require('bn.js')
 const utils = require('./utils')
 
@@ -37,10 +41,11 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   {name: 'TestDepositUtils', contract: TestDepositUtils},
   {name: 'KeepStub', contract: KeepStub},
   {name: 'TBTCStub', contract: TBTCStub},
-  {name: 'SystemStub', contract: SystemStub}]
+  {name: 'SystemStub', contract: SystemStub}];
 
 
 import { UniswapHelpers } from './helpers/uniswap'
+
 contract('DepositUtils', accounts => {
 
   let deployed
@@ -321,13 +326,16 @@ contract('DepositUtils', accounts => {
   describe('attemptToLiquidateOnchain', async () => {
     it.only('works', async () => {
       const deposit = deployed.TestDepositUtils;
+      const keep = deployed.KeepStub;
 
       const tbtcBought = 123;
       const ethLiquidated = 123;
-      const tbtcSeller = accounts[1]
-
+      
       const tbtc = await TBTC.new()
-      await tbtc.mint(tbtcSeller, web3.utils.toWei('1.0'))
+      const tbtcSeller = accounts[1]
+      const tbtcAmt = web3.utils.toWei('1.0')
+
+      await tbtc.mint(tbtcSeller, tbtcAmt)
       
       await testUtilsInstance.setExteroriorAddresses(
         deployed.SystemStub.address,
@@ -335,54 +343,80 @@ contract('DepositUtils', accounts => {
         deployed.KeepStub.address,
       )
 
+      // Deploy Uniswap exchange for this mock TBTC
+      const uniswapDeployment = await UniswapDeployment.deployed()
+      const uniswapFactory = await IUniswapFactory.at(await uniswapDeployment.factory())
+
+      await uniswapFactory.createExchange(tbtc.address)
+
+      const exchange = await IUniswapExchange.at(
+        await uniswapFactory.getExchange(tbtc.address)
+      )
+
+      expect(
+        await web3.eth.getBalance(exchange.address)
+      ).to.eq('0')
+      
+      
+      await tbtc.approve(exchange.address, tbtcAmt, { from: tbtcSeller })
+      
+      return;
+
+      await exchange.addLiquidity(
+        '0',
+        tbtcAmt,
+        UniswapHelpers.getDeadline(),
+        { from: tbtcSeller, value: ethLiquidated }
+      )
+      
+      
+
+      // add some TBTC to the exchange
+
 
       // getLotSize
-      let lotSize = 1;
+      // let lotSize = 1;
 
-      // Send some ETH to the Keep
-      // TODO(liamz): move this into test of startSignerFraudLiquidation etc.
-      //              for now it's a good placeholder for assumptions
-      // const keepBondAmount = await deployed.KeepStub.checkBondAmount()
+      // // Send some ETH to the Keep
+      // // TODO(liamz): move this into test of startSignerFraudLiquidation etc.
+      // //              for now it's a good placeholder for assumptions
+      // // const keepBondAmount = await keep.checkBondAmount()
       const bondAmount = await deposit.fetchBondAmount()
       assert(bondAmount.gt(0))
-      // expect(await web3.eth.getBalance(deployed.KeepStub.address)).to.eq.BN(0)
-      await deployed.KeepStub.send(bondAmount, {from: accounts[0]})
+      // // expect(await web3.eth.getBalance(keep.address)).to.eq.BN(0)
+      // await keep.send(bondAmount, {from: accounts[0]})
+      await deposit.send(bondAmount, {from: accounts[0]})
 
-      // Pretend the deposit has now seized the signer bonds
-      await deposit.setState(utils.states.ACTIVE)
+      // // Pretend the deposit has now seized the signer bonds
+      // await deposit.setState(utils.states.ACTIVE)
       
-      // Liquidate
-      // TODO(liamz): make a mock uniswap exchange contract + set the price
-      // 1000000000000000000
+      // // Liquidate
+      // // TODO(liamz): make a mock uniswap exchange contract + set the price
+      // // 1000000000000000000
       await deposit.attemptToLiquidateOnchain()
       
-      // Assert balances of 
-      // beneficiary     who initially deposited btc for tbtc
-      // tbtcSeller      who performs liquidation
-      // signers         who are the keep group
-      // deposit         the deposit contract
+      // // Assert balances of 
+      // // beneficiary     who initially deposited btc for tbtc
+      // // tbtcSeller      who performs liquidation
+      // // signers         who are the keep group
+      // // deposit         the deposit contract
       expect(
         await tbtc.balanceOf(deposit.address)
       ).to.eq(tbtcBought)
 
       expect(
         await web3.eth.getBalance(deposit.address)
-      ).to.eq.BN('0') 
+      ).to.eq('0')
 
 
       expect(
         await tbtc.balanceOf(tbtcSeller)
-      ).to.eq.BN('0')
+      ).to.eq(new BN(0))
 
       expect(
         web3.eth.getBalance(tbtcSeller)
-      ).to.eq.BN(ethLiquidated)
+      ).to.eq('0')
 
-
-
-
-
-      
 
       /**
        * deposit:
