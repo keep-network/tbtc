@@ -175,6 +175,29 @@ module.exports = async function () {
         return tx.slice(outStartPosition, outEndPosition)
     }
 
+    function getTxOutputAtIndex(tx, index) {
+        outputsCount = getNumberOfOutputs(tx)
+        if (index > getNumberOfOutputs(tx)) {
+            console.error(`index [${index}] greater than number of outputs [${outputsCount}]`)
+            process.exit()
+        }
+
+        let outStartPosition = getTxOutputVectorPosition(tx) + 1
+        let outEndPosition = outStartPosition
+        let scriptLength
+
+        console.log("index", index)
+        for (let i = 0; i <= index; i++) {
+            outStartPosition = outEndPosition
+
+            scriptLength = parseInt(tx.slice(outStartPosition + 8, outStartPosition + 8 + 1))
+
+            outEndPosition = outStartPosition + 8 + 1 + scriptLength
+        }
+
+        return tx.slice(outStartPosition, outEndPosition);
+    }
+
     function getLocktime(tx) {
         return tx.slice(tx.length - 8)
     }
