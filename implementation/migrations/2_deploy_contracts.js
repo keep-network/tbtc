@@ -59,8 +59,6 @@ async function deployUniswap(deployer, network, accounts) {
 }
 
 module.exports = (deployer, network, accounts) => {
-  if(process.env.NODE_ENV == 'test') return Promise.resolve();
-  
   deployer.then(async () => {
     let uniswapFactoryAddress;
 
