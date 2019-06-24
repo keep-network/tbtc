@@ -1,7 +1,7 @@
 pragma solidity 0.4.25;
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
-import {IERC721} from "./interfaces/IERC721.sol";
+import {IERC721} from "../interfaces/IERC721.sol";
 
 contract TBTCSystem is ITBTCSystem, IERC721 {
 
