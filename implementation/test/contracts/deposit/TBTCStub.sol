@@ -4,6 +4,17 @@ contract TBTCStub {
 
     bool returnBool = true;
     uint256 returnUint = 10 ** 18;
+    address TBTCSystem;
+
+    constructor(address _TBTCSystem) public {
+        TBTCSystem = _TBTCSystem;
+    }
+
+    modifier onlySystem(){
+        require(msg.sender == TBTCSystem);
+        _;
+    }
+
     mapping (address => uint) internal balances;
     function setReturnBool(bool _res) public {returnBool = _res;}
     function setReturnUint(uint _res) public {returnUint = _res;}
@@ -21,6 +32,20 @@ contract TBTCStub {
     function getBalance(address _of) external view returns (uint256) {
         return balances[_of];
     }
+      function systemMint(address _account, uint256 _amount) public onlySystem {
+        balances[_account] += _amount;
+    }
+
+    function systemBurnFrom(address _account, uint256 _amount) public onlySystem {
+         if(balances[_account] - _amount < balances[_account]){
+            balances[_account] -= _amount;
+        }
+    }
+
+    function systemTransferFrom(address _from, address _to, uint256 _value) public onlySystem {
+        _from; _to; _value;
+    }
+
     function burnFrom(address from, uint256 value) external {
         if(balances[from] - value < balances[from]){
             balances[from] -= value;
@@ -32,4 +57,6 @@ contract TBTCStub {
         }
     }
     function mint(address to, uint256 value) external returns (bool) {balances[to] += value; return returnBool;}
+
+  
 }

@@ -39,7 +39,6 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   {name: 'DepositLiquidation', contract: DepositLiquidation},
   {name: 'TestDepositUtils', contract: TestDepositUtils},
   {name: 'KeepStub', contract: KeepStub},
-  {name: 'TBTCStub', contract: TBTCStub},
   {name: 'SystemStub', contract: SystemStub}]
 
 
@@ -47,14 +46,17 @@ contract('DepositUtils', accounts => {
 
   let deployed
   let testUtilsInstance
+  let tokenStub
 
   before(async () => {
       deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
       testUtilsInstance = deployed.TestDepositUtils
+      tokenStub = await TBTCStub.new(deployed.SystemStub.address)
+
 
       await testUtilsInstance.createNewDeposit(
         deployed.SystemStub.address,
-        deployed.TBTCStub.address,
+        tokenStub.address,
         deployed.KeepStub.address,
         1,  //m
         1)  //n
@@ -301,13 +303,13 @@ contract('DepositUtils', accounts => {
 
       const beneficiary = accounts[5];
       //reward should == 10**18. This is a stub value. parameter address is irrelevant
-      const reward = await deployed.TBTCStub.balanceOf.call(accounts[0]);
-      const initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
+      const reward = await tokenStub.balanceOf.call(accounts[0]);
+      const initialTokenBalance = await tokenStub.getBalance(beneficiary);
       await deployed.SystemStub.setDepositOwner(0, beneficiary);
 
       await testUtilsInstance.distributeBeneficiaryReward()
   
-      const finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary);
+      const finalTokenBalance = await tokenStub.getBalance(beneficiary);
       const tokenCheck = new BN(initialTokenBalance).add( new BN(reward));
       expect(finalTokenBalance, 'tokens not rewarded to beneficiary correctly').to.eq.BN(tokenCheck)
     })

@@ -3,6 +3,7 @@ pragma solidity 0.4.25;
 import {ITBTCSystem} from '../../../contracts/interfaces/ITBTCSystem.sol';
 import {IERC721} from '../../../contracts/interfaces/IERC721.sol';
 import {DepositLog} from '../../../contracts/DepositLog.sol';
+import {TBTCToken} from "../../../contracts/interfaces/TBTCToken.sol";
 
 contract SystemStub is ITBTCSystem, IERC721, DepositLog {
 
@@ -24,6 +25,22 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
     function fetchRelayCurrentDifficulty() external view returns (uint256) {return current;}
     function fetchRelayPreviousDifficulty() external view returns (uint256) {return past;}
+
+    //modify access with ACL implementation
+    function systemMint(address _tokenAddress, address _account, uint256 _amount) public {
+        TBTCToken(_tokenAddress).systemMint(_account, _amount);
+    }
+
+    //modify access with ACL implementation
+    function systemBurnFrom(address _tokenAddress, address _account, uint256 _amount) public {
+        TBTCToken(_tokenAddress).systemBurnFrom(_account, _amount);
+    }
+
+    //modify access with ACL implementation
+    function systemTransferFrom(address _tokenAddress, address _from, address _to, uint256 _value) public {
+        TBTCToken(_tokenAddress).systemTransferFrom(_from, _to, _value);
+    }
+
 
     // 721
     function balanceOf(address owner) public view returns (uint256 balance) {owner; balance = 0;}
