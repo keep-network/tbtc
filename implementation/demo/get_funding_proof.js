@@ -1,6 +1,7 @@
 module.exports = async function () {
     let txID = process.argv[4]
-    let headerLen = 6 // process.argv[5]
+    let headerLen = process.argv[5]
+    let fundingOutputIndex = process.argv[6]
 
     const merkleScript = "/Users/jakub/workspace/bitcoin-spv/scripts/merkle.py"
     let fundingProof = {}
@@ -85,7 +86,7 @@ module.exports = async function () {
         fundingProof.txInVector = web3.utils.bytesToHex(getTxInputVector(bytes))
         fundingProof.txOutVector = web3.utils.bytesToHex(getTxOutputVector(bytes))
         fundingProof.locktime = web3.utils.bytesToHex(getLocktime(bytes))
-        fundingProof.fundingOutputIndex // TODO: find output index
+        fundingProof.fundingOutputIndex = fundingOutputIndex // TODO: Find index in transaction based on deposit's public key
 
         console.log(`Result\n${JSON.stringify(fundingProof)}`)
     }
