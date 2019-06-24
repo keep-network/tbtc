@@ -14,7 +14,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
 const TBTCStub = artifacts.require('TBTCStub')
-const TBTCTBTCSystemStub = artifacts.require('TBTCSystemStub')
+const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
