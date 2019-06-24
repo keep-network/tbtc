@@ -40,6 +40,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   {name: 'SystemStub', contract: SystemStub}]
 
 
+import { UniswapHelpers } from './helpers/uniswap'
 contract('DepositUtils', accounts => {
 
   let deployed
