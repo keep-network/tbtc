@@ -91,7 +91,7 @@ module.exports = async function () {
     }
 
     function getPrefix(tx) {
-        if (tx.slice(5, 7) == "0001") {
+        if (isFlagPresent(tx)) {
             return tx.slice(0, 7)
         }
         return tx.slice(0, 4)
@@ -148,12 +148,8 @@ module.exports = async function () {
     }
 
     function getTxOutputVector(tx) {
-        txPrefix = getPrefix(tx)
-        txInput = getTxInputVector(tx)
-
-        outStartPosition = txPrefix.length + txInput.length
-
-        outputsCount = tx.slice(outStartPosition, outStartPosition + 1)
+        outStartPosition = getTxOutputVectorPosition(tx)
+        outputsCount = getNumberOfOutputs(tx)
 
         startPosition = outStartPosition + 1
         let outEndPosition
@@ -173,6 +169,19 @@ module.exports = async function () {
         }
 
         return tx.slice(outStartPosition, outEndPosition)
+    }
+
+    function getTxOutputVectorPosition(tx) {
+        txPrefix = getPrefix(tx)
+        txInput = getTxInputVector(tx)
+
+        return txPrefix.length + txInput.length
+    }
+
+    function getNumberOfOutputs(tx) {
+        outStartPosition = getTxOutputVectorPosition(tx)
+
+        return tx.slice(outStartPosition, outStartPosition + 1)
     }
 
     function getTxOutputAtIndex(tx, index) {
