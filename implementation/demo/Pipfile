@@ -1,0 +1,16 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+riemann-tx = ">=1.1.2"
+connectrum = "*"
+riemann-ether = "*"
+
+[requires]
+python_version = "3.6.6"
+
+[dev-packages]
+ipython = "*"
+mypy = "*"
