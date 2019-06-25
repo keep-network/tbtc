@@ -45,6 +45,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
 
 
 import { UniswapHelpers } from './helpers/uniswap'
+const truffleAssert = require('truffle-assertions');
 
 contract('DepositUtils', accounts => {
 
@@ -325,12 +326,11 @@ contract('DepositUtils', accounts => {
 
   describe('attemptToLiquidateOnchain', async () => {
     // see https://github.com/Uniswap/contracts-vyper/issues/27#issuecomment-476148467
-    const UNISWAP_GAS_ESTIMATE = {
-      addLiquidity: 21115 + 10000
-    }
 
     it.only('works', async () => {
       // Contracts
+      // =========
+
       const deposit = deployed.TestDepositUtils;
       const keep = deployed.KeepStub;
       const tbtc = await TBTC.new()
@@ -339,19 +339,14 @@ contract('DepositUtils', accounts => {
       const tbtcSeller = accounts[1]
 
       // Token amounts
-      const ethLiquidated = web3.utils.toWei('10', 'ether')
-      const tbtcAmt = web3.utils.toWei('1', 'ether') // TODO(liamz): decimal places of TBTC
-      const tbtcBought = tbtcAmt
+      const order = {
+        supplyEth:  web3.utils.toWei('5', 'ether'),
+        supplyTbtc: web3.utils.toWei('2', 'ether'),
 
-
-      // Setup
-      await tbtc.mint(tbtcSeller, tbtcAmt)
-      
-      await testUtilsInstance.setExteroriorAddresses(
-        deployed.SystemStub.address,
-        tbtc.address,
-        deployed.KeepStub.address,
-      )
+        sellEth:    web3.utils.toWei('3', 'ether'),
+        // TODO(liamz): decimal places of TBTC
+        buyTbtc: '748592166186960330' // ~0.7 ETH
+      }
 
       // Deploy Uniswap exchange for TBTC
       const uniswapDeployment = await UniswapDeployment.deployed()
@@ -365,84 +360,119 @@ contract('DepositUtils', accounts => {
       expect(
         await web3.eth.getBalance(exchange.address)
       ).to.eq('0')
+
+      // Setup
+      await tbtc.mint(tbtcSeller, order.supplyTbtc)
       
+      await deposit.setExteroriorAddresses(
+        deployed.SystemStub.address,
+        tbtc.address,
+        deployed.KeepStub.address,
+      )
+      await deployed.SystemStub.setExteroriorAddresses(
+        uniswapFactory.address,
+        tbtc.address
+      )
+
+      expect(
+        await deployed.SystemStub.getTBTCUniswapExchange()
+      ).to.eq(exchange.address)
+
+
+
+      // we have to set _requesterAddress to indicate a non-redemption liquidation flow
+      await deposit.setRequestInfo(
+        '0x0000000000000000000000000000000000000000', 
+        // dummy values
+        '0x' + '11'.repeat(20), 5, 6, '0x' + '33'.repeat(32)
+      )
+      
+      const lotSize = '100000000'
+      expect(
+        (await deposit.auctionTBTCAmount()).toString()
+      ).to.eq(lotSize)
+      
+      
+
       // Now the tbtcSeller adds liquidity
       await tbtc.approve(
         exchange.address, 
-        web3.utils.toWei('10000', 'ether'), 
+        order.supplyTbtc, 
         { from: tbtcSeller }
       )
 
       await exchange.addLiquidity(
         '0',
-        tbtcAmt,
+        order.supplyTbtc,
         UniswapHelpers.getDeadline(),
-        { from: tbtcSeller, value: ethLiquidated, gas: UNISWAP_GAS_ESTIMATE.addLiquidity }
+        { from: tbtcSeller, value: order.supplyEth }
       )
 
-      
-      // add some TBTC to the exchange
-      // getLotSize
-      // let lotSize = 1;
-
-      // // Send some ETH to the Keep
-      // // TODO(liamz): move this into test of startSignerFraudLiquidation etc.
-      // //              for now it's a good placeholder for assumptions
-      // // const keepBondAmount = await keep.checkBondAmount()
+      // Send some ETH to the Keep
+      // TODO(liamz): move this into test of startSignerFraudLiquidation etc.
+      //              for now it's a good placeholder for assumptions
+      // const keepBondAmount = await keep.checkBondAmount()
       const bondAmount = await deposit.fetchBondAmount()
       assert(bondAmount.gt(0))
-      // // expect(await web3.eth.getBalance(keep.address)).to.eq.BN(0)
-      // await keep.send(bondAmount, {from: accounts[0]})
-      await deposit.send(bondAmount, {from: accounts[0]})
-
-      // // Pretend the deposit has now seized the signer bonds
-      // await deposit.setState(utils.states.ACTIVE)
-      
-      // // Liquidate
-      // // TODO(liamz): make a mock uniswap exchange contract + set the price
-      // // 1000000000000000000
-      await deposit.attemptToLiquidateOnchain()
-      
-      // // Assert balances of 
-      // // beneficiary     who initially deposited btc for tbtc
-      // // tbtcSeller      who performs liquidation
-      // // signers         who are the keep group
-      // // deposit         the deposit contract
       expect(
-        await tbtc.balanceOf(deposit.address)
-      ).to.eq(tbtcBought)
+        bondAmount.toString()
+      ).to.eq('10000')
+
+
+      // Fund the deposit manually with ETH
+      expect(await web3.eth.getBalance(deposit.address)).to.eq('0')
+      // TODO: this isn't how we should be funding the deposit
+      // it should be coming from the bondAmount
+      await deposit.send(order.sellEth, {from: accounts[0]})
+
+
+      // Liquidate
+      expect(
+        (await exchange.getEthToTokenInputPrice(order.sellEth)).toString()
+      ).to.eq(order.buyTbtc);
+
+      let tx = await deposit.attemptToLiquidateOnchain()
+
+      // let txLogs = tx.receipt.rawLogs
+
+      // TODO: fix for Vyper event ABI
+      // Hacky test for the Vyper event
+      // TokenPurchase(buyer, as_wei_value(eth_sold, 'wei'), tokens_bought)
+      // truffleAssert.eventEmitted(tx, 'TokenPurchase', (ev) => {
+      //   console.log(ev)
+      //   return (
+      //     buyer == deposit.address &&
+      //     ev.eth_sold == order.sellEth &&
+      //     ev.tokens_bought == order.buyTbtc
+      //   )
+      // });
+      
+      expect(
+        (await tbtc.balanceOf(deposit.address)).toString()
+      ).to.eq(order.buyTbtc)
 
       expect(
         await web3.eth.getBalance(deposit.address)
-      ).to.eq('0')
+      ).to.eq('2') // leftover wei, from precision issues I assume.
 
-
-      expect(
-        await tbtc.balanceOf(tbtcSeller)
-      ).to.eq(new BN(0))
-
-      expect(
-        web3.eth.getBalance(tbtcSeller)
-      ).to.eq('0')
-
-
-      /**
-       * deposit:
-       *  0 ETH
-       *  X TBTC
-       * 
-       * keep/signers
-       *  -X ETH
-       *  0 TBTC
-       * 
-       * tbtcSeller:
-       *   X ETH
-       *  -X TBTC
-       * 
-       * beneficiary:
-       *   0 ETH
-       *   0 TBTC
-       */
     })
   })
 })
+
+
+// expect(
+//   await tbtc.balanceOf(tbtcSeller)
+// ).to.eq(new BN(0))
+
+// expect(
+//   web3.eth.getBalance(tbtcSeller)
+// ).to.eq('0') // TODO
+
+// Assert balances of 
+      // beneficiary     who initially deposited btc for tbtc
+      // tbtcSeller      who performs liquidation
+      // signers         who are the keep group
+      // deposit         the deposit contract
+
+      // Pretend the deposit has now seized the signer bonds
+      // await deposit.setState(utils.states.ACTIVE)

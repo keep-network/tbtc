@@ -20,14 +20,13 @@ library DepositLiquidation {
     using DepositStates for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
 
-    uint constant ONE_TBTC = (10 ** 8);
-
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
     ) public returns (bool) {
+        
         IUniswapExchange exchange = IUniswapExchange(ITBTCSystem(_d.TBTCSystem).getTBTCUniswapExchange());
 
         if (_d.auctionTBTCAmount() == 0) {
@@ -36,36 +35,32 @@ library DepositLiquidation {
 
         } else {
             // Abort/fraud flow, liquidate ETH
-
             // Signer bond is already seized.
+            require(address(this).balance > 0, "no eth to liquidate");
+            
 
             // TODO(liamz): make attemptToLiquidateOnchain internal
             //              it's possible someone could send the deposit tokens, and then call this method
             //              and could lead to some incorrect assumptions very easily (danger!)
             
-            // One TBTC
             
-            // uint minTokens = ONE_TBTC * 0.8;
-            uint minTokens = ONE_TBTC;
-            uint deadline = block.timestamp;
+            
+            uint deadline = block.timestamp + 1;
             uint ethSold = address(this).balance;
+            
+            uint ONE_TBTC = (10 ** 8);
+            // minimum: 0.4 TBTC
+            uint MIN_TBTC_BOUGHT = ONE_TBTC * 500 / 1000;
 
-            require(address(this).balance > 0, "no eth to liquidate");
-
-            uint tbtcPrice = exchange.getEthToTokenInputPrice(ethSold);
-            if(tbtcPrice < minTokens) {
+            uint tbtcBought = exchange.getEthToTokenInputPrice(ethSold);
+            if(tbtcBought < MIN_TBTC_BOUGHT) {
                 return false;
             }
 
-            // Add 0.3% Uniswap fee.
-            tbtcPrice += (tbtcPrice * 1003) / 1000;
+            exchange.ethToTokenSwapOutput.value(ethSold)(tbtcBought, deadline);
 
-            exchange.ethToTokenSwapInput.value(ethSold)(minTokens, deadline);
             return true;
         }
-
-        // uint ethBalance = address(this).balance;
-        // require()
 
         // // seizeSignerBonds
         // // _d.fetchBondAmount()
