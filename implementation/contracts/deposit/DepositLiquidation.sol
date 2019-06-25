@@ -9,6 +9,7 @@ import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
 import {IUniswapExchange} from "../uniswap/IUniswapExchange.sol";
+import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 
 library DepositLiquidation {
 
@@ -19,27 +20,56 @@ library DepositLiquidation {
     using DepositStates for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
 
+    uint constant ONE_TBTC = (10 ** 8);
+
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
     ) public returns (bool) {
-        // IUniswapExchange exchange = IUniswapExchange(_d.TBTCSystem.getTBTCUniswapExchange());
-        
+        IUniswapExchange exchange = IUniswapExchange(ITBTCSystem(_d.TBTCSystem).getTBTCUniswapExchange());
+
+        if (_d.auctionTBTCAmount() == 0) {
+            // Redemption flow, liquidate TBTC
+            uint tbtcToLiquidate = _d.auctionTBTCAmount();
+
+        } else {
+            // Abort/fraud flow, liquidate ETH
+
+            // Signer bond is already seized.
+
+            // TODO(liamz): make attemptToLiquidateOnchain internal
+            //              it's possible someone could send the deposit tokens, and then call this method
+            //              and could lead to some incorrect assumptions very easily (danger!)
+            
+            // One TBTC
+            
+            // uint minTokens = ONE_TBTC * 0.8;
+            uint minTokens = ONE_TBTC;
+            uint deadline = block.timestamp;
+            uint ethSold = address(this).balance;
+
+            require(address(this).balance > 0, "no eth to liquidate");
+
+            uint tbtcPrice = exchange.getEthToTokenInputPrice(ethSold);
+            if(tbtcPrice < minTokens) {
+                return false;
+            }
+
+            // Add 0.3% Uniswap fee.
+            tbtcPrice += (tbtcPrice * 1003) / 1000;
+
+            exchange.ethToTokenSwapInput.value(ethSold)(minTokens, deadline);
+            return true;
+        }
+
+        // uint ethBalance = address(this).balance;
+        // require()
+
         // // seizeSignerBonds
         // // _d.fetchBondAmount()
-
-        // // Signer bond is already seized.
-        // uint signerBond = address(this).balance;
-        // exchange.getEthToTokenInputPrice(signerBond)
         
-        // uint tbtcToLiquidate = _d.auctionTBTCAmount();
-
-        // requestKeepGroup
-
-        // how much eth do we have?
-
         return false;
     }
 

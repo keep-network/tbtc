@@ -324,17 +324,27 @@ contract('DepositUtils', accounts => {
 
 
   describe('attemptToLiquidateOnchain', async () => {
+    // see https://github.com/Uniswap/contracts-vyper/issues/27#issuecomment-476148467
+    const UNISWAP_GAS_ESTIMATE = {
+      addLiquidity: 21115 + 10000
+    }
+
     it.only('works', async () => {
+      // Contracts
       const deposit = deployed.TestDepositUtils;
       const keep = deployed.KeepStub;
-
-      const tbtcBought = 123;
-      const ethLiquidated = 123;
-      
       const tbtc = await TBTC.new()
+      
+      // Actors
       const tbtcSeller = accounts[1]
-      const tbtcAmt = web3.utils.toWei('1.0')
 
+      // Token amounts
+      const ethLiquidated = web3.utils.toWei('10', 'ether')
+      const tbtcAmt = web3.utils.toWei('1', 'ether') // TODO(liamz): decimal places of TBTC
+      const tbtcBought = tbtcAmt
+
+
+      // Setup
       await tbtc.mint(tbtcSeller, tbtcAmt)
       
       await testUtilsInstance.setExteroriorAddresses(
@@ -343,10 +353,9 @@ contract('DepositUtils', accounts => {
         deployed.KeepStub.address,
       )
 
-      // Deploy Uniswap exchange for this mock TBTC
+      // Deploy Uniswap exchange for TBTC
       const uniswapDeployment = await UniswapDeployment.deployed()
       const uniswapFactory = await IUniswapFactory.at(await uniswapDeployment.factory())
-
       await uniswapFactory.createExchange(tbtc.address)
 
       const exchange = await IUniswapExchange.at(
@@ -357,23 +366,22 @@ contract('DepositUtils', accounts => {
         await web3.eth.getBalance(exchange.address)
       ).to.eq('0')
       
-      
-      await tbtc.approve(exchange.address, tbtcAmt, { from: tbtcSeller })
-      
-      return;
+      // Now the tbtcSeller adds liquidity
+      await tbtc.approve(
+        exchange.address, 
+        web3.utils.toWei('10000', 'ether'), 
+        { from: tbtcSeller }
+      )
 
       await exchange.addLiquidity(
         '0',
         tbtcAmt,
         UniswapHelpers.getDeadline(),
-        { from: tbtcSeller, value: ethLiquidated }
+        { from: tbtcSeller, value: ethLiquidated, gas: UNISWAP_GAS_ESTIMATE.addLiquidity }
       )
-      
-      
 
+      
       // add some TBTC to the exchange
-
-
       // getLotSize
       // let lotSize = 1;
 
