@@ -1,6 +1,6 @@
 let Deposit = artifacts.require("./Deposit.sol");
 
-const FundingProof = require('./get_funding_proof')
+const FundingProof = require('./tools/FundingProof')
 
 module.exports = async function () {
     let deposit
