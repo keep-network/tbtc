@@ -9,9 +9,11 @@ const truffleAssert = require('truffle-assertions');
 const Web3 = require('web3');
 const web3 = new Web3()
 
+const UniswapDeployment = artifacts.require('UniswapDeployment')
+
 
 import { UniswapHelpers } from './helpers/uniswap'
-
+import expectThrow from './helpers/expectThrow'
 
 // Tests the Uniswap deployment
 
@@ -46,7 +48,8 @@ contract('Uniswap', (accounts) => {
 
             // We rely on the already pre-deployed Uniswap factory here.
             let tbtcSystem = await TBTCSystemStub.deployed();
-            let uniswapFactoryAddr = await tbtcSystem.uniswapFactory()
+            const uniswapDeployment = await UniswapDeployment.deployed()
+            let uniswapFactoryAddr = await uniswapDeployment.factory()
 
             let uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr);
         
@@ -57,12 +60,12 @@ contract('Uniswap', (accounts) => {
         })
 
         it('has no liquidity by default', async () => {
-            expect(
-                await tbtcExchange.getTokenToEthInputPrice.call(1)
-            ).to.throw;
+            await expectThrow(
+                tbtcExchange.getTokenToEthInputPrice.call(1)
+            );
         }) 
 
-        describe('e2e testing of a trade', () => {        
+        describe.only('e2e testing of a trade', () => {        
             it('adds liquidity and trades ETH for TBTC', async () => {
                 // Both tokens use 18 decimal places, so we can use toWei here.
                 const TBTC_AMT = web3.utils.toWei('50', 'ether');
