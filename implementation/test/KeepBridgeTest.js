@@ -19,7 +19,7 @@ contract('KeepBridge', (accounts) => {
 
       assert.equal(
         publicKey,
-        undefined,
+        null,
         'incorrect public key'
       )
     })
