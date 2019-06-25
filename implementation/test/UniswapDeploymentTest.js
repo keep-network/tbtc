@@ -105,10 +105,12 @@ contract('Uniswap', (accounts) => {
                 expect(priceEth.toString()).to.eq('90661089388014913')
 
                 const buyer = accounts[1];
+
+                // def ethToTokenSwapInput(min_tokens: uint256, deadline: timestamp) -> uint256:
                 await tbtcExchange.ethToTokenSwapInput(
                     TBTC_BUY_AMT,
                     UniswapHelpers.getDeadline(),
-                    { value: '90661089388014914', from: buyer }
+                    { value: UniswapHelpers.calcWithFee(priceEth), from: buyer }
                 )
                 
                 let balance = await tbtc.balanceOf(buyer)
