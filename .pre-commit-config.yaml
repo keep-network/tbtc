@@ -10,3 +10,9 @@
       files: '\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
+    - id: lint-sol
+      name: 'lint solidity'
+      entry: /usr/bin/env bash -c "cd implementation && npm run sol:lint"
+      files: '\.sol$'
+      language: script
+      description: "Checks Solidity code according to the package's linter configuration"
