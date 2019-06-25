@@ -67,6 +67,16 @@ contract('Uniswap', (accounts) => {
 
         describe.only('e2e testing of a trade', () => {        
             it('adds liquidity and trades ETH for TBTC', async () => {
+                // This avoids rabbit-hole debugging
+                // stemming from the fact Vyper is new and they don't do REVERT's
+                expect(
+                    await web3.eth.getBalance(accounts[0])
+                ).to.not.eq('0')
+
+                expect(
+                    await web3.eth.getBalance(accounts[1])
+                ).to.not.eq('0')
+
                 // Both tokens use 18 decimal places, so we can use toWei here.
                 const TBTC_AMT = web3.utils.toWei('50', 'ether');
                 const ETH_AMT = web3.utils.toWei('1', 'ether');
