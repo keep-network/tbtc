@@ -54,10 +54,8 @@ contract KeepBridge is IKeep {
     function getKeepPubkey(uint256 _keepID) external view returns (bytes){
         // TODO: keepID type should be changed from uint256 to addrress
         address _keepAddress = address(_keepID);
-        
         return ECDSAKeepContract(_keepAddress).getPublicKey();
     }
-
 
     // returns the amount of the keep's ETH bond in wei
     function checkBondAmount(uint256 _keepID) external view returns (uint256){
@@ -76,13 +74,25 @@ contract KeepBridge is IKeep {
     }
 }
 
+/// @notice Interface for communication with `KeepRegistry` contract
+/// @dev It allows to call a function without the need of low-level call
 interface KeepRegistryContract {
+
+    /// @notice Create a new ECDSA keep
+    /// @param _groupSize Number of members in the keep
+    /// @param _honestThreshold Minimum number of honest keep members
+    /// @return Created keep address
     function createECDSAKeep(
         uint256 _groupSize,
         uint256 _honestThreshold
     ) external payable returns (address keep);
 }
 
+/// @notice Interface for communication with `ECDSAKeep` contract
+/// @dev It allows to call a function without the need of low-level call
 interface ECDSAKeepContract {
-    function getPublicKey() public view returns (bytes memory);
+
+    /// @notice Returns the keep signer's public key.
+    /// @return Signer's public key.
+    function getPublicKey() external view returns (bytes memory);
 }
