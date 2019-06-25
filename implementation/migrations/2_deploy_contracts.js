@@ -100,8 +100,8 @@ module.exports = (deployer, network, accounts) => {
 
     await deployer.deploy(Deposit)
 
-    let tbtcSystem = await deployer.deploy(TBTCSystemStub)
-    let tbtc = await deployer.deploy(TBTC)
+    await deployer.deploy(TBTCSystemStub)
+    await deployer.deploy(TBTC)
  
     await deployer.deploy(KeepBridge)
   })
