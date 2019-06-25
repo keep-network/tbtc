@@ -15,13 +15,12 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
     IUniswapFactory uniswapFactory;
     TBTC tbtc;
 
-    function setup(
+    function setExteroriorAddresses(
         address _uniswapFactory,
         address _tbtc
     ) external {
         uniswapFactory = IUniswapFactory(_uniswapFactory);
         tbtc = TBTC(_tbtc);
-        uniswapFactory.createExchange(_tbtc);
     }
 
     function getTBTCUniswapExchange() external view returns (address) {
