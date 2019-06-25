@@ -6,8 +6,6 @@ const IUniswapExchange = artifacts.require('IUniswapExchange')
 const uniswap = require('../uniswap')
 
 const truffleAssert = require('truffle-assertions'); 
-const Web3 = require('web3');
-const web3 = new Web3()
 
 const UniswapDeployment = artifacts.require('UniswapDeployment')
 
@@ -132,6 +130,72 @@ contract('Uniswap', (accounts) => {
 })
 
 
+/** 
+
+
+Some notes on the cryptoeconomics of Uniswap and TBTC, time arbitrage between chains
+
+ 1. Deposit abort flow is started
+ 2. Bond goes for automatic liquidation via Uniswap
+ 3. We liquidate the signer bonds `150% * fetchOraclePrice()`. Potential options:
+  a. Uniswap 100% of ETH
+  b. Uniswap 50% ETH and 50% falling price auction
+
+I think it's worth documenting the additional complexity stemming from automatic liquidation. 3a won't necessarily buy up enough TBTC to burn, depending on the pool size, but the arbitrage incentives are going to keep the price stable to its price-oracle reported value (with a little delta). 
+*/
+
+/**
+ * 
+
+source sethenv.sh
+
+# deploy uniswap
+export FACTORY=$(seth send --create $(cat uniswap/contracts-vyper/bytecode/factory.txt))
+export EXCHANGE_TMPL=$(seth send --create $(cat uniswap/contracts-vyper/bytecode/exchange.txt))
+seth send $FACTORY "initializeFactory(address)" $EXCHANGE_TMPL
+
+
+
+
+#export TBTC=$(jq -r '.networks["5777"].address' build/contracts/TBTC.json)
+export UNISWAP_DEPLOY=$(jq -r '.networks["5777"].address' build/contracts/UniswapDeployment.json)
+export FACTORY=$(seth call $UNISWAP_DEPLOY "factory()(address)")
+
+export EXCHANGE=$(seth call $FACTORY "getExchange(address)(address)" $TBTC)
+seth balance $EXCHANGE 
+
+export BUYER=$(seth accounts | sed -n 2p | awk '{ print $1 }')
+seth balance $BUYER
+
+
+# mint some tbtc
+export TBTC=$(seth send --create $(cat build/contracts/TBTC.json | jq -r .bytecode))
+seth send $TBTC "mint(address,uint256)" $BUYER $(seth --to-uint256 10000000000)
+seth call $TBTC "balanceOf(address)(uint256)" $BUYER
+
+# create exchange + approve
+seth send $FACTORY "createExchange(address)(address)" $TBTC
+EXCHANGE=$(seth call $FACTORY "getExchange(address)(address)" $TBTC)
+seth send --from $BUYER $TBTC "approve(address,uint)(bool)" $EXCHANGE $(seth --to-uint256 10000000000)
+seth call $TBTC "allowance(address,address)(uint256)" $BUYER $EXCHANGE             
+
+
+# add to exchange
+# value must be above 1000000000 wei
+export DEADLINE=$(bc <<< "$(perl -MTime::HiRes=time -e 'printf "%d\n", time') + 200000")
+seth send --from $BUYER --value 100 $EXCHANGE "addLiquidity(uint256,uint256,uint256)(uint256)" 1 "$(seth --to-uint256 100000000)" $DEADLINE
+
+seth call $TBTC "balanceOf(address)(uint256)" $EXCHANGE
+seth balance $EXCHANGE
+
+# now estimate a proper gas margin
+export ETH_SOLD=$(seth --to-uint256 500000)
+
+export PRICE=$(seth --to-dec $(seth call $EXCHANGE "getTokenToEthInputPrice(uint256)(uint256)" $ETH_SOLD))
+seth send --from $ETH_FROM --value $PRICE $EXCHANGE "ethToTokenSwapInput(uint256,uint256)" $BUY_AMT $DEADLINE
+
+
+ */
 /**
  * 
  * 
