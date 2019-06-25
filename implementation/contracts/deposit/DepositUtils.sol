@@ -98,17 +98,17 @@ library DepositUtils {
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin tx
     /// @dev                    Stateless SPV Proof verification documented elsewhere
-    /// @param _d               deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that is purportedly included in the header chain
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
+    /// @param _d               Deposit storage pointer
+    /// @param _bitcoinTx       The bitcoin tx that is purportedly included in the header chain
+    /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (1-indexed)
+    /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
     /// @return                 The 32 byte transaction id (little-endian, not block-explorer)
-    function checkProof(
+    function checkProofFromTx(
         Deposit storage _d,
         bytes _bitcoinTx,
         bytes _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
         bytes _bitcoinHeaders
     ) public view returns (bytes32) {
         bytes memory _nIns;
@@ -119,16 +119,84 @@ library DepositUtils {
         bytes32 _txid;
         (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
         require(_txid != bytes32(0), "Failed tx parsing");
+        checkProofFromTxId(_d, _txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
+        return _txid;
+    }
+
+    /// @notice                 Syntactically check an SPV proof for a bitcoin tx
+    /// @dev                    Stateless SPV Proof verification documented elsewhere
+    /// @param _d               Deposit storage pointer
+    /// @param _txId            The bitcoin txid of the tx that is purportedly included in the header chain
+    /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (1-indexed)
+    /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
+    function checkProofFromTxId(
+        Deposit storage _d,
+        bytes32 _txId,
+        bytes _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes _bitcoinHeaders) public view{
         require(
-            _txid.prove(
+            _txId.prove(
                 _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
                 _merkleProof,
-                _index),
+                _txIndexInBlock
+            ),
             "Tx merkle proof is not valid for provided header and tx");
 
         evaluateProofDifficulty(_d, _bitcoinHeaders);
+    }
 
-        return _txid;
+    /// @dev                        Find funding output using the provided index
+    /// @param _d                   Deposit storage pointer
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector
+    /// @return                     funding value (bytes8)
+    function findAndParseFundingOutput(
+        DepositUtils.Deposit storage _d,
+        bytes _txOutputVector,
+        uint8 _fundingOutputIndex
+    ) public view returns (bytes8) {
+        bytes8 _valueBytes;
+        bytes memory _output;
+
+        uint256 _n = (_txOutputVector.slice(0, 1)).bytesToUint();
+        require(_n < 0xfd, "VarInts not supported, Number of outputs cannot exceed 252");
+
+        // Find the output paying the signer PKH
+        // This will fail if there are more than 256 outputs
+        _output = extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
+        if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d)))) {
+            _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
+            return _valueBytes;
+        }
+        // If we don't return from inside the loop, we failed.
+        revert("Did not find output with correct PKH");
+    }
+
+    /// @notice                     Extracts the output at a given index in _txOutputVector
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @return                     The specified output
+    function extractOutputAtIndex(
+        bytes _txOutputVector,
+        uint8 _fundingOutputIndex) public view returns (bytes) {
+        // Determine length of first output
+        // offset starts at 1 to skip output number varint
+        // skip the 8 byte output value to get to length
+        // next two bytes used to calculate length
+        uint _offset = 1;
+        uint _start = _offset + 8;
+        uint _length = (_txOutputVector.slice(_start, 2)).determineOutputLength();
+
+        // This loop moves forward, and then gets the len of the next one
+        for (uint i = 0; i < _fundingOutputIndex; i++) {
+            _offset = _offset + _length;
+            _length = (_txOutputVector.slice(8 + _offset, 2)).determineOutputLength();
+        }
+
+        // We now have the length and offset of the one we want
+        return _txOutputVector.slice(_offset, _length);
     }
 
     /// @notice     Calculates the amount of value at auction right now

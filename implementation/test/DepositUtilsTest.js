@@ -123,17 +123,17 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('checkProof()', async () => {
+  describe('checkProofFromTx()', async () => {
     it('returns the correct _txid', async () => {
       await deployed.SystemStub.setCurrentDiff(6379265451411)
-      const res = await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
+      const res = await testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
       assert.equal(res, utils.TX.tx_id_le)
     })
 
     it('fails with a broken proof', async () => {
       try {
         await deployed.SystemStub.setCurrentDiff(6379265451411)
-        await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
+        await testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Tx merkle proof is not valid for provided header and tx')
@@ -143,11 +143,30 @@ contract('DepositUtils', (accounts) => {
     it('fails with a broken tx', async () => {
       try {
         await deployed.SystemStub.setCurrentDiff(6379265451411)
-        await testUtilsInstance.checkProof.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
+        await testUtilsInstance.checkProofFromTx.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Failed tx parsing')
       }
+    })
+  })
+
+  describe('extractOutputAtIndex()', async () => {
+    it('extracts outputs at specified indices', async () => {
+      let res
+      const _txOutputVector1 = '0x024897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211'
+      const _txOutputVector2 = '0x024db6000000000000160014455c0ea778752831d6fc25f6f8cf55dc49d335f040420f0000000000220020aedad4518f56379ef6f1f52f2e0fed64608006b3ccaff2253d847ddc90c91922'
+      const _txOutputVector3 = '0x044897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b078952114db6000000000000160014455c0ea778752831d6fc25f6f8cf55dc49d335f040420f0000000000220020aedad4518f56379ef6f1f52f2e0fed64608006b3ccaff2253d847ddc90c91922'
+      res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector1, 0)
+      assert.equal(res, '0x4897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c18')
+      res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector1, 1)
+      assert.equal(res, '0x0000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211')
+      res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector2, 0)
+      assert.equal(res, '0x4db6000000000000160014455c0ea778752831d6fc25f6f8cf55dc49d335f0')
+      res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector2, 1)
+      assert.equal(res, '0x40420f0000000000220020aedad4518f56379ef6f1f52f2e0fed64608006b3ccaff2253d847ddc90c91922')
+      res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector3, 3)
+      assert.equal(res, '0x40420f0000000000220020aedad4518f56379ef6f1f52f2e0fed64608006b3ccaff2253d847ddc90c91922')
     })
   })
 

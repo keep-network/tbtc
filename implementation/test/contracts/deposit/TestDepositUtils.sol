@@ -19,13 +19,17 @@ contract TestDepositUtils is TestDeposit {
         return self.evaluateProofDifficulty(_bitcoinHeaders);
     }
 
-    function checkProof(
+    function checkProofFromTx(
         bytes _bitcoinTx,
         bytes _merkleProof,
         uint256 _index,
         bytes _bitcoinHeaders
     ) public view returns (bytes32) {
-        return self.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        return self.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+    }
+
+    function extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes) {
+        return DepositUtils.extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
     }
 
     function auctionValue() public view returns (uint256) {

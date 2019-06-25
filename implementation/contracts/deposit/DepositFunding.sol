@@ -111,59 +111,6 @@ library DepositFunding {
         _d.depositBeneficiary().transfer(_seized);  // Transfer whole amount
     }
 
-    /// @notice                 Parses a bitcoin tx to find an output paying the signing group PKH
-    /// @dev                    Reverts if no funding output found
-    /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that should contain the funding output
-    /// @return                 The 8-byte LE encoded value, and the index of the output
-    function findAndParseFundingOutput(
-        DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx
-    ) public view returns (bytes8, uint8) {
-        bytes8 _valueBytes;
-        bytes memory _output;
-
-        // Find the output paying the signer PKH
-        // This will fail if there are more than 256 outputs
-        for (uint8 i = 0; i < _bitcoinTx.extractNumOutputs(); i++) {
-            _output = _bitcoinTx.extractOutputAtIndex(i);
-            if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.signerPKH()))) {
-                _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
-                return (_valueBytes, i);
-            }
-        }
-        // If we don't return from inside the loop, we failed.
-        revert("Did not find output with correct PKH");
-    }
-
-    /// @notice                 Validates the funding tx and parses information from it
-    /// @dev                    Stateless SPV Proof & Bitcoin tx format documented elsewhere
-    /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contain the funding output
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 The 8-byte LE UTXO size in satoshi, the 36byte outpoint
-    function validateAndParseFundingSPVProof(
-        DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx,
-        bytes _merkleProof,
-        uint256 _index,
-        bytes _bitcoinHeaders
-    ) public view returns (bytes8 _valueBytes, bytes _outpoint) {
-        uint8 _outputIndex;
-        bytes32 _txid = _d.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
-        (_valueBytes, _outputIndex) = findAndParseFundingOutput(_d, _bitcoinTx);
-
-        // Don't validate deposits under the lot size
-        require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
-
-        // The outpoint is the LE TXID plus the index of the output as a 4-byte LE int
-        // _outputIndex is a uint8, so we know it is only 1 byte
-        // Therefore, pad with 3 more bytes
-        _outpoint = abi.encodePacked(_txid, _outputIndex, hex"000000");
-    }
-
     /// @notice     Anyone may notify the contract that signing group setup has timed out
     /// @dev        We rely on the keep system punishes the signers in this case
     /// @param  _d  deposit storage pointer
@@ -178,6 +125,45 @@ library DepositFunding {
 
         returnFunderBond(_d);
         fundingTeardown(_d);
+    }
+
+    /// @notice                     Validates the funding tx and parses information from it
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
+    /// @param  _d                  Deposit storage pointer
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
+    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
+    /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint
+    function validateAndParseFundingSPVProof(
+        DepositUtils.Deposit storage _d,
+        bytes _txVersion,
+        bytes _txInputVector,
+        bytes _txOutputVector,
+        bytes _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes _bitcoinHeaders) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
+
+        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+
+        _valueBytes = _d.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
+        require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
+
+
+        _d.checkProofFromTxId(txId, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
+
+
+        // The utxoOutpoint is the LE TXID plus the index of the output as a 4-byte LE int
+        // _fundingOutputIndex is a uint8, so we know it is only 1 byte
+        // Therefore, pad with 3 more bytes
+        _utxoOutpoint = abi.encodePacked(txId, _fundingOutputIndex, hex"000000");
+
     }
 
     /// @notice             we poll the Keep contract to retrieve our pubkey
@@ -273,26 +259,47 @@ library DepositFunding {
         fundingFraudTeardown(_d);
     }
 
-    /// @notice                 Anyone may notify the deposit of a funding proof during funding fraud
-    /// @dev                    We reward the funder the entire bond if this occurs
-    /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contains the funding output
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if successful, False if prevented by timeout, otherwise revert
+    /// @notice                     Anyone may notify the deposit of a funding proof during funding fraud
+    //                              We reward the funder the entire bond if this occurs
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
+    /// @param  _d                  Deposit storage pointer
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
+    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
+    /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx,
+        bytes _txVersion,
+        bytes _txInputVector,
+        bytes _txOutputVector,
+        bytes _txLocktime,
+        uint8 _fundingOutputIndex,
         bytes _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
         bytes _bitcoinHeaders
     ) public returns (bool) {
-        bytes8 _valueBytes;
-        bytes memory _outpoint;
+
         require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
 
-        (_valueBytes, _outpoint) = validateAndParseFundingSPVProof(_d, _bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        bytes8 _valueBytes;
+        bytes memory _utxoOutpoint;
+
+        (_valueBytes, _utxoOutpoint) = validateAndParseFundingSPVProof(
+            _d,
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
 
         _d.setFailedSetup();
         _d.logSetupFailed();
@@ -304,23 +311,30 @@ library DepositFunding {
         return true;
     }
 
-    /// @notice                 Anyone may notify the deposit of a funding proof to activate the deposit
-    /// @dev                    This is the happy-path of the funding flow. It means that we have suecceeded
-    /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contains the funding output
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if successful, False if prevented by timeout, otherwise revert
+    /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit
+    ///                             This is the happy-path of the funding flow. It means that we have succeeded
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
+    /// @param  _d                  Deposit storage pointer
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
+    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
+    /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx,
+        bytes _txVersion,
+        bytes _txInputVector,
+        bytes _txOutputVector,
+        bytes _txLocktime,
+        uint8 _fundingOutputIndex,
         bytes _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
         bytes _bitcoinHeaders
     ) public returns (bool) {
-        bytes8 _valueBytes;
-        bytes memory _outpoint;
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
@@ -331,11 +345,24 @@ library DepositFunding {
         // So if the funder manages to call this before anyone notifies of timeout
         // We let them have a freebie
 
-        (_valueBytes, _outpoint) = validateAndParseFundingSPVProof(_d, _bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        bytes8 _valueBytes;
+        bytes memory _utxoOutpoint;
+
+        (_valueBytes, _utxoOutpoint) = validateAndParseFundingSPVProof(
+            _d,
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
 
         // Write down the UTXO info and set to active. Congratulations :)
         _d.utxoSizeBytes = _valueBytes;
-        _d.utxoOutpoint = _outpoint;
+        _d.utxoOutpoint = _utxoOutpoint;
 
         fundingTeardown(_d);
         _d.setActive();
