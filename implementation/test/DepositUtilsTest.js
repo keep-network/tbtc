@@ -444,27 +444,22 @@ contract('DepositUtils', (accounts) => {
 
       let tx = await deposit.attemptToLiquidateOnchain()
 
-      // let txLogs = tx.receipt.rawLogs
+      let evs = await exchange.getPastEvents()
+      let event = evs[0]
 
-      // TODO: fix for Vyper event ABI
-      // Hacky test for the Vyper event
-      // TokenPurchase(buyer, as_wei_value(eth_sold, 'wei'), tokens_bought)
-      // truffleAssert.eventEmitted(tx, 'TokenPurchase', (ev) => {
-      //   console.log(ev)
-      //   return (
-      //     buyer == deposit.address &&
-      //     ev.eth_sold == order.sellEth &&
-      //     ev.tokens_bought == order.buyTbtc
-      //   )
-      // });
-      
+      expect(event.event).to.eq('TokenPurchase')
+      expect(event.returnValues.buyer).to.eq(deposit.address)
+      // precision error, we expect (order.sellEth - 2 wei)
+      expect(event.returnValues.eth_sold).to.eq('2999999999999999998')
+      expect(event.returnValues.tokens_bought).to.eq(order.buyTbtc)
+
       expect(
         (await tbtc.balanceOf(deposit.address)).toString()
       ).to.eq(order.buyTbtc)
 
       expect(
         await web3.eth.getBalance(deposit.address)
-      ).to.eq('2') // leftover wei, from precision issues I assume.
+      ).to.eq('2') // leftover wei from uint256 precision error
 
     })
   })
