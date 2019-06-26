@@ -110,16 +110,22 @@ library DepositUtils {
         bytes _merkleProof,
         uint256 _txIndexInBlock,
         bytes _bitcoinHeaders
-    ) public view returns (bytes32) {
+    )
+        public view returns (bytes32) 
+    {
         bytes memory _nIns;
         bytes memory _ins;
         bytes memory _nOuts;
         bytes memory _outs;
         bytes memory _locktime;
         bytes32 _txid;
+
         (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
+
         require(_txid != bytes32(0), "Failed tx parsing");
+
         checkProofFromTxId(_d, _txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
+        
         return _txid;
     }
 
@@ -135,7 +141,10 @@ library DepositUtils {
         bytes32 _txId,
         bytes _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders) public view{
+        bytes _bitcoinHeaders
+    )
+        public view
+    {
         require(
             _txId.prove(
                 _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
