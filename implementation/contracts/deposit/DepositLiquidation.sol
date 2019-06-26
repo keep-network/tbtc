@@ -38,13 +38,9 @@ library DepositLiquidation {
             // Signer bond is already seized.
             require(address(this).balance > 0, "no eth to liquidate");
             
-
             // TODO(liamz): make attemptToLiquidateOnchain internal
             //              it's possible someone could send the deposit tokens, and then call this method
             //              and could lead to some incorrect assumptions very easily (danger!)
-            
-            
-            
             uint deadline = block.timestamp + 1;
             uint ethSold = address(this).balance;
             

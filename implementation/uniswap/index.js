@@ -11,26 +11,7 @@ const bytecode = {
     factory:         readFileSync(require.resolve('./contracts-vyper/bytecode/factory.txt'),  'utf-8').slice(2).trim()
 }
 
-function getDeployment(name) {
-    try {
-        return readFileSync(
-            join(__dirname, `deployments/${name}`), 
-            'utf-8'
-        ).trim();
-    } catch(ex) {
-        return '';
-    }
-}
-
-function getDeployments() {
-    return {
-        Exchange: getDeployment('Exchange'),
-        Factory:  getDeployment('Factory')
-    }
-}
-
 module.exports = {
-    getDeployments,
     abis,
     bytecode
 }

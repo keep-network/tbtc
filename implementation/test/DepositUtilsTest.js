@@ -327,7 +327,7 @@ contract('DepositUtils', accounts => {
   describe('attemptToLiquidateOnchain', async () => {
     // see https://github.com/Uniswap/contracts-vyper/issues/27#issuecomment-476148467
 
-    it.only('works', async () => {
+    it('liquidates TBTC using Uniswap exchange', async () => {
       // Contracts
       // =========
 
@@ -469,10 +469,10 @@ contract('DepositUtils', accounts => {
 // ).to.eq('0') // TODO
 
 // Assert balances of 
-      // beneficiary     who initially deposited btc for tbtc
-      // tbtcSeller      who performs liquidation
-      // signers         who are the keep group
-      // deposit         the deposit contract
+// beneficiary     who initially deposited btc for tbtc
+// tbtcSeller      who performs liquidation
+// signers         who are the keep group
+// deposit         the deposit contract
 
-      // Pretend the deposit has now seized the signer bonds
-      // await deposit.setState(utils.states.ACTIVE)
+// Pretend the deposit has now seized the signer bonds
+// await deposit.setState(utils.states.ACTIVE)
