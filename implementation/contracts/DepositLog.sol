@@ -94,6 +94,8 @@ contract DepositLog {
     /* solium-disable-next-line no-empty-blocks */
     function approvedToLog(address _caller) public view returns (bool) {
         /* TODO: auth via system */
+        _caller; 
+        return true;
     }
 
     ///
