@@ -2,7 +2,7 @@ var Deposit = artifacts.require("./Deposit.sol");
 var KeepBridge = artifacts.require("./KeepBridge.sol");
 var TBTCSystem = artifacts.require("./TBTCSystemStub.sol");
 
-const keepRegistry = "0x3F2D36e02FbA6c0704738f2AA09f78AFC86934F8"; // KeepRegistry contract address
+const keepRegistry = "0x01E6Ba85b279fE53BC7AeA57A41dA4740aE649E4"; // KeepRegistry contract address
 
 module.exports = async function () {
     let deposit;
@@ -21,7 +21,6 @@ module.exports = async function () {
     }
 
     async function createNewDeposit() {
-        console.log('Call createNewDeposit');
         let result = await deposit.createNewDeposit(
             tbtcSystem.address, // address _TBTCSystem,
             "0x0000000000000000000000000000000000000000", // address _TBTCToken,
@@ -29,10 +28,10 @@ module.exports = async function () {
             5, // uint256 _m,
             10 // uint256 _n
         ).catch((err) => {
-            console.log(`creation failed: ${err}`);
+            console.log(`createNewDeposit failed: ${err}`);
         });
 
-        console.log('deposit creation tx: ' + result.tx);
+        console.log("createNewDeposit transaction: ", result.tx)
     }
 
     await initContracts();

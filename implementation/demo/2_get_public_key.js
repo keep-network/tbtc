@@ -11,17 +11,20 @@ module.exports = async function () {
         console.log('Call getPublicKey');
         let result = await deposit.retrieveSignerPubkey()
             .catch((err) => {
-                console.log(`creation failed: ${err}`);
+                console.log(`retrieveSignerPubkey failed: ${err}`);
             });
 
-        console.log(result.tx)
+        console.log("retrieveSignerPubkey transaction: ", result.tx)
 
         let eventList = await depositLog.getPastEvents('RegisteredPubkey', {
             fromBlock: blockNumber,
             toBlock: 'latest'
         })
 
-        console.log(eventList[0].returnValues)
+        let publicKeyX = eventList[0].returnValues._signingGroupPubkeyX
+        let publicKeyY = eventList[0].returnValues._signingGroupPubkeyY
+
+        console.log(`Registered public key:\nX: ${publicKeyX}\nY: ${publicKeyY}`)
     }
 
     await getPublicKey();
