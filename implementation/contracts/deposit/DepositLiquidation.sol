@@ -116,7 +116,6 @@ library DepositLiquidation {
     /// @param  _d      deposit storage pointer
     function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) public {
         _d.logStartedLiquidation(true);
-
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
         uint256 _seized = _d.seizeSignerBonds();
@@ -150,7 +149,15 @@ library DepositLiquidation {
         _d.logStartedLiquidation(false);
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
-        _d.seizeSignerBonds();
+        uint256 _seized = _d.seizeSignerBonds();
+
+        if (_d.auctionTBTCAmount() == 0) {
+            // we came from the redemption flow
+            _d.setLiquidated();
+            _d.requesterAddress.transfer(_seized);
+            _d.logLiquidated();
+            return;
+        }
 
         bool _liquidated = attemptToLiquidateOnchain(_d);
 
@@ -161,8 +168,8 @@ library DepositLiquidation {
             _d.logLiquidated();
         }
         if (!_liquidated) {
-            _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
             _d.setFraudLiquidationInProgress();
+            _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
         }
     }
 
