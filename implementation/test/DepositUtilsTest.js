@@ -25,7 +25,6 @@ const IUniswapExchange = artifacts.require('IUniswapExchange')
 const BN = require('bn.js')
 const utils = require('./utils')
 const chai = require('chai')
-const expect = chai.expect
 const bnChai = require('bn-chai') 
 chai.use(bnChai(BN))
 const truffleAssert = require('truffle-assertions');
