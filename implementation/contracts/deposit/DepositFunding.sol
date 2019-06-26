@@ -155,15 +155,12 @@ library DepositFunding {
         _valueBytes = _d.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
         require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
 
-
         _d.checkProofFromTxId(txId, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
-
 
         // The utxoOutpoint is the LE TXID plus the index of the output as a 4-byte LE int
         // _fundingOutputIndex is a uint8, so we know it is only 1 byte
         // Therefore, pad with 3 more bytes
         _utxoOutpoint = abi.encodePacked(txId, _fundingOutputIndex, hex"000000");
-
     }
 
     /// @notice             we poll the Keep contract to retrieve our pubkey
@@ -370,10 +367,11 @@ library DepositFunding {
 
         returnFunderBond(_d);
 
-        // Mint 95% of the deposit size
-        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
-        uint256 _value = TBTCConstants.getLotSize();
-        _tbtc.mint(_d.depositBeneficiary(), _value.mul(95).div(100));
+        // TODO: ADD WHEN TBTC TOKEN READY
+        // // Mint 95% of the deposit size
+        // IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        // uint256 _value = TBTCConstants.getLotSize();
+        // _tbtc.mint(_d.depositBeneficiary(), _value.mul(95).div(100));
 
         return true;
     }
