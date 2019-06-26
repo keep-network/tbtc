@@ -6,7 +6,7 @@
 *.out
 *.fdb_latexmk
 build.tex
-img/generated
+docs/img/generated
 *.html
 **.swp
 **.swo
