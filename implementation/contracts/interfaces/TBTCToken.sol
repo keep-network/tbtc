@@ -11,7 +11,7 @@ contract TBTCToken is ERC20Detailed, ERC20 {
     }
 
     modifier onlySystem(){
-        require(msg.sender == TBTCSystem);
+        require(msg.sender == TBTCSystem, "must be called from TBTCSystem");
         _;
     }
 

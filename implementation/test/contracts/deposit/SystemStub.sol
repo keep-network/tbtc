@@ -11,6 +11,12 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
     uint256 past = 1;
     uint256 oraclePrice = 10 ** 12;
     address _owner = address(0);
+    address _TBTCToken;
+
+    function setExternalAddresses(address _tokenAddress){
+        _TBTCToken = _tokenAddress;
+    }
+
 
     function setOraclePrice(uint256 _oraclePrice) external {oraclePrice = _oraclePrice;}
     function setCurrentDiff(uint256 _current) external {current = _current;}
@@ -27,18 +33,18 @@ contract SystemStub is ITBTCSystem, IERC721, DepositLog {
     function fetchRelayPreviousDifficulty() external view returns (uint256) {return past;}
 
     //modify access with ACL implementation
-    function systemMint(address _tokenAddress, address _account, uint256 _amount) public {
-        TBTCToken(_tokenAddress).systemMint(_account, _amount);
+    function systemMint(address _account, uint256 _amount) public {
+        TBTCToken(_TBTCToken).systemMint(_account, _amount);
     }
 
     //modify access with ACL implementation
-    function systemBurnFrom(address _tokenAddress, address _account, uint256 _amount) public {
-        TBTCToken(_tokenAddress).systemBurnFrom(_account, _amount);
+    function systemBurnFrom(address _account, uint256 _amount) public {
+        TBTCToken(_TBTCToken).systemBurnFrom(_account, _amount);
     }
 
     //modify access with ACL implementation
-    function systemTransferFrom(address _tokenAddress, address _from, address _to, uint256 _value) public {
-        TBTCToken(_tokenAddress).systemTransferFrom(_from, _to, _value);
+    function systemTransferFrom(address _from, address _to, uint256 _value) public {
+        TBTCToken(_TBTCToken).systemTransferFrom(_from, _to, _value);
     }
 
 

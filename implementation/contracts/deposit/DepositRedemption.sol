@@ -59,8 +59,8 @@ library DepositRedemption {
         uint256 _red = _d.redemptionTBTCAmount();
         require(_bal >= _red, "Not enough TBTC to cover outstanding debt");
         TBTCSystemStub _system = TBTCSystemStub(_d.TBTCSystem);
-        _system.systemBurnFrom(_d.TBTCToken, msg.sender, TBTCConstants.getLotSize());
-        _system.systemTransferFrom(_d.TBTCToken, msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
+        _system.systemBurnFrom(msg.sender, TBTCConstants.getLotSize());
+        _system.systemTransferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
     }
 
     /// @notice                     Anyone can request redemption

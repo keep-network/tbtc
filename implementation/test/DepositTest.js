@@ -62,6 +62,7 @@ contract('Deposit', accounts => {
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     tokenStub = await TBTCStub.new(deployed.SystemStub.address)
+    await deployed.SystemStub.setExternalAddresses(tokenStub.address)
     testInstance = deployed.TestDeposit
     testInstance.setExteroriorAddresses(deployed.SystemStub.address, tokenStub.address, deployed.KeepStub.address)
   })

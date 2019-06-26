@@ -10,6 +10,12 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
     address depositOwner = address(0);
+    address _TBTCToken;
+
+    //Update auth with ACL. Can't be set in constructor
+    function setExternalAddresses(address tokenAddress) external {
+        _TBTCToken = tokenAddress;
+    }
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
@@ -32,18 +38,18 @@ contract TBTCSystemStub is ITBTCSystem, IERC721 {
     }
 
     //modify access with ACL implementation
-    function systemMint(address _tokenAddress, address _account, uint256 _amount) public {
-        TBTCToken(_tokenAddress).systemMint(_account, _amount);
+    function systemMint(address _account, uint256 _amount) public {
+        TBTCToken(_TBTCToken).systemMint(_account, _amount);
     }
 
     //modify access with ACL implementation
-    function systemBurnFrom(address _tokenAddress, address _account, uint256 _amount) public {
-        TBTCToken(_tokenAddress).systemBurnFrom(_account, _amount);
+    function systemBurnFrom(address _account, uint256 _amount) public {
+        TBTCToken(_TBTCToken).systemBurnFrom(_account, _amount);
     }
 
     //modify access with ACL implementation
-    function systemTransferFrom(address _tokenAddress, address _from, address _to, uint256 _value) public {
-        TBTCToken(_tokenAddress).systemTransferFrom(_from, _to, _value);
+    function systemTransferFrom(address _from, address _to, uint256 _value) public {
+        TBTCToken(_TBTCToken).systemTransferFrom(_from, _to, _value);
     }
 
     // ERC721

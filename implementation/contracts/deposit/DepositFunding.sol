@@ -347,7 +347,7 @@ library DepositFunding {
         // Mint 95% of the deposit size
         TBTCSystemStub _system = TBTCSystemStub(_d.TBTCSystem);
         uint256 _value = TBTCConstants.getLotSize();
-        _system.systemMint(_d.TBTCToken, _d.depositBeneficiary(), _value.mul(95).div(100));
+        _system.systemMint(_d.depositBeneficiary(), _value.mul(95).div(100));
 
         return true;
     }

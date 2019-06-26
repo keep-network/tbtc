@@ -223,8 +223,7 @@ library DepositLiquidation {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         require(_tbtc.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), "Not enough TBTC to cover outstanding debt");
         TBTCSystemStub _system = TBTCSystemStub(_d.TBTCSystem);
-        uint256 _value = TBTCConstants.getLotSize();
-        _system.systemBurnFrom(_d.TBTCToken, msg.sender, TBTCConstants.getLotSize());// burn minimal amount to cover size
+        _system.systemBurnFrom(msg.sender, TBTCConstants.getLotSize());// burn minimal amount to cover size
 
         // Distribute funds to auction buyer
         uint256 _valueToDistribute = _d.auctionValue();
