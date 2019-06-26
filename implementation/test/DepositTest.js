@@ -28,21 +28,21 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
-  {name: 'BytesLib', contract: BytesLib},
-  {name: 'BTCUtils', contract: BTCUtils},
-  {name: 'ValidateSPV', contract: ValidateSPV},
-  {name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs},
-  {name: 'TBTCConstants', contract: TestTBTCConstants},  // note the name
-  {name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging},
-  {name: 'DepositStates', contract: DepositStates},
-  {name: 'DepositUtils', contract: DepositUtils},
-  {name: 'DepositFunding', contract: DepositFunding},
-  {name: 'DepositRedemption', contract: DepositRedemption},
-  {name: 'DepositLiquidation', contract: DepositLiquidation},
-  {name: 'TestDeposit', contract: TestDeposit},
-  {name: 'TestDepositUtils', contract: TestDepositUtils},
-  {name: 'KeepStub', contract: KeepStub},
-  {name: 'SystemStub', contract: SystemStub}]
+  { name: 'BytesLib', contract: BytesLib },
+  { name: 'BTCUtils', contract: BTCUtils },
+  { name: 'ValidateSPV', contract: ValidateSPV },
+  { name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs },
+  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
+  { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
+  { name: 'DepositStates', contract: DepositStates },
+  { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositFunding', contract: DepositFunding },
+  { name: 'DepositRedemption', contract: DepositRedemption },
+  { name: 'DepositLiquidation', contract: DepositLiquidation },
+  { name: 'TestDeposit', contract: TestDeposit },
+  { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'KeepStub', contract: KeepStub },
+  { name: 'SystemStub', contract: SystemStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -53,9 +53,8 @@ const TEST_DEPOSIT_DEPLOY = [
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-contract('Deposit', accounts => {
-
-  let deployed 
+contract('Deposit', (accounts) => {
+  let deployed
   let testInstance
   let withdrawalRequestTime
   let fundingProofTimerStart
@@ -975,7 +974,7 @@ contract('Deposit', accounts => {
       const beneficiary = accounts[4]
       const signerBond = 10000000000
       const initialTokenBalance = await tokenStub.getBalance(beneficiary)
-      await testInstance.send(signerBond, {from: beneficiary}) 
+      await testInstance.send(signerBond, { from: beneficiary })
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
@@ -983,11 +982,11 @@ contract('Deposit', accounts => {
 
       const balanceAfter = await web3.eth.getBalance(beneficiary)
       const balanceCheck = new BN(initialBalance).add(new BN(signerBond))
-      assert.equal(balanceCheck, balanceAfter, 'funder bond not currectly returned')  
+      assert.equal(balanceCheck, balanceAfter, 'funder bond not currectly returned')
       const endingTokenBalancce = await tokenStub.getBalance(beneficiary)
-      
-      const lotSize =  await deployed.TBTCConstants.getLotSize.call()
-      const toMint = lotSize.mul(new BN(95)).div(new BN(100));
+
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      const toMint = lotSize.mul(new BN(95)).div(new BN(100))
       const tokenCheck = initialTokenBalance.add(new BN(toMint))
       expect(tokenCheck, 'incorrect amount minted').to.eq.BN(endingTokenBalancce)
     })
@@ -1154,7 +1153,7 @@ contract('Deposit', accounts => {
     it(`burns msg.sender's tokens`, async () => {
       const caller = accounts[4]
       const beneficiary = accounts[5]
-      const lotSize =  await deployed.TBTCConstants.getLotSize.call()
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
       const initialTokenBalance = await tokenStub.getBalance(caller)
 
       await deployed.SystemStub.setDepositOwner(0, beneficiary)

@@ -25,40 +25,39 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_UTILS_DEPLOY = [
-  {name: 'BytesLib', contract: BytesLib},
-  {name: 'BTCUtils', contract: BTCUtils},
-  {name: 'ValidateSPV', contract: ValidateSPV},
-  {name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs},
-  {name: 'TBTCConstants', contract: TestTBTCConstants},  // note the name
-  {name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging},
-  {name: 'DepositStates', contract: DepositStates},
-  {name: 'DepositUtils', contract: DepositUtils},
-  {name: 'DepositFunding', contract: DepositFunding},
-  {name: 'DepositRedemption', contract: DepositRedemption},
-  {name: 'DepositLiquidation', contract: DepositLiquidation},
-  {name: 'TestDepositUtils', contract: TestDepositUtils},
-  {name: 'KeepStub', contract: KeepStub},
-  {name: 'SystemStub', contract: SystemStub}]
+  { name: 'BytesLib', contract: BytesLib },
+  { name: 'BTCUtils', contract: BTCUtils },
+  { name: 'ValidateSPV', contract: ValidateSPV },
+  { name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs },
+  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
+  { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
+  { name: 'DepositStates', contract: DepositStates },
+  { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositFunding', contract: DepositFunding },
+  { name: 'DepositRedemption', contract: DepositRedemption },
+  { name: 'DepositLiquidation', contract: DepositLiquidation },
+  { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'KeepStub', contract: KeepStub },
+  { name: 'SystemStub', contract: SystemStub }]
 
 
-contract('DepositUtils', accounts => {
-
+contract('DepositUtils', (accounts) => {
   let deployed
   let testUtilsInstance
   let tokenStub
 
   before(async () => {
-      deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
-      testUtilsInstance = deployed.TestDepositUtils
-      tokenStub = await TBTCStub.new(deployed.SystemStub.address)
+    deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
+    testUtilsInstance = deployed.TestDepositUtils
+    tokenStub = await TBTCStub.new(deployed.SystemStub.address)
 
 
-      await testUtilsInstance.createNewDeposit(
-        deployed.SystemStub.address,
-        tokenStub.address,
-        deployed.KeepStub.address,
-        1,  //m
-        1)  //n
+    await testUtilsInstance.createNewDeposit(
+      deployed.SystemStub.address,
+      tokenStub.address,
+      deployed.KeepStub.address,
+      1, // m
+      1) // n
   })
 
   describe('currentBlockDifficulty()', async () => {
@@ -298,17 +297,16 @@ contract('DepositUtils', accounts => {
 
   describe('distributeBeneficiaryReward()', async () => {
     it('checks that beneficiary is rewarded', async () => {
-
-      const beneficiary = accounts[5];
-      //reward should == 10**18. This is a stub value. parameter address is irrelevant
-      const reward = await tokenStub.balanceOf.call(accounts[0]);
-      const initialTokenBalance = await tokenStub.getBalance(beneficiary);
-      await deployed.SystemStub.setDepositOwner(0, beneficiary);
+      const beneficiary = accounts[5]
+      // reward should == 10**18. This is a stub value. parameter address is irrelevant
+      const reward = await tokenStub.balanceOf.call(accounts[0])
+      const initialTokenBalance = await tokenStub.getBalance(beneficiary)
+      await deployed.SystemStub.setDepositOwner(0, beneficiary)
 
       await testUtilsInstance.distributeBeneficiaryReward()
-  
-      const finalTokenBalance = await tokenStub.getBalance(beneficiary);
-      const tokenCheck = new BN(initialTokenBalance).add( new BN(reward));
+
+      const finalTokenBalance = await tokenStub.getBalance(beneficiary)
+      const tokenCheck = new BN(initialTokenBalance).add( new BN(reward))
       expect(finalTokenBalance, 'tokens not rewarded to beneficiary correctly').to.eq.BN(tokenCheck)
     })
   })
