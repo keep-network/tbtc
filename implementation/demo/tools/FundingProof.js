@@ -1,7 +1,3 @@
-// npm install web3-utils
-import { hexToBytes } from 'web3-utils';
-import { bytesToHex } from 'web3-utils';
-
 // Configure path to bitcoin-spv merkle proof script.
 const merkleScript = "/Users/jakub/workspace/bitcoin-spv/scripts/merkle.py"
 
@@ -73,37 +69,55 @@ async function getBitcoinSPVproof(txID, headerLen, callback) {
 function parseBitcoinSPVOutput(output) {
     console.log("Parse bitcoin-spv output...\n")
 
-    let tx = output.match(/(^-* TX -*$\n)^(.*)$/m)[2]
-    let merkleProof = output.match(/(^-* PROOF -*$\n)^(.*)$/m)[2]
+    let tx = hexToBytes(output.match(/(^-* TX -*$\n)^(.*)$/m)[2])
+    let merkleProof = hexToBytes(output.match(/(^-* PROOF -*$\n)^(.*)$/m)[2])
     let txInBlockIndex = output.match(/(^-* INDEX -*$\n)^(.*)$/m)[2]
-    let chainHeaders = output.match(/(^-* CHAIN -*$\n)^(.*)$/m)[2]
+    let chainHeaders = hexToBytes(output.match(/(^-* CHAIN -*$\n)^(.*)$/m)[2])
 
     return {
         tx: tx,
-        merkleProof: '0x' + merkleProof,
+        merkleProof: merkleProof,
         txInBlockIndex: txInBlockIndex,
-        chainHeaders: '0x' + chainHeaders
+        chainHeaders: chainHeaders
     };
 }
 
 async function parseTransaction(tx, callback) {
-    console.log(`Parse transaction...\nTX: ${tx}`)
+    console.log("Parse transaction...\nTX:", bytesToHex(tx))
 
-    let bytes = hexToBytes('0x' + tx)
+    if (tx.length == 0) {
+        console.error("cannot decode the transaction", bytesToHex(tx))
+        process.exit(1)
+    }
 
-    fundingProof.version = bytesToHex(getVersion(bytes))
-    fundingProof.txInVector = bytesToHex(getTxInputVector(bytes))
-    fundingProof.txOutVector = bytesToHex(getTxOutputVector(bytes))
-    fundingProof.locktime = bytesToHex(getLocktime(bytes))
+    fundingProof.version = getVersion(tx)
+    fundingProof.txInVector = getTxInputVector(tx)
+    fundingProof.txOutVector = getTxOutputVector(tx)
+    fundingProof.locktime = getLocktime(tx)
     // TODO: Find index in transaction based on deposit's public key
     // fundingProof.fundingOutputIndex 
+    let serializedProof = serializeProof(fundingProof)
+
+    console.log("Funding Proof:", serializedProof)
 
     callback(fundingProof)
 }
 
+function serializeProof(fundingProof) {
+    return {
+        merkleProof: bytesToHex(fundingProof.merkleProof),
+        txInBlockIndex: fundingProof.txInBlockIndex,
+        chainHeaders: bytesToHex(fundingProof.chainHeaders),
+        version: bytesToHex(fundingProof.version),
+        txInVector: bytesToHex(fundingProof.txInVector),
+        txOutVector: bytesToHex(fundingProof.txOutVector),
+        locktime: bytesToHex(fundingProof.locktime),
+    }
+}
+
 function getPrefix(tx) {
     if (isFlagPresent(tx)) {
-        return tx.slice(0, 7)
+        return tx.slice(0, 6)
     }
     return tx.slice(0, 4)
 }
@@ -113,10 +127,10 @@ function getVersion(tx) {
 }
 
 function isFlagPresent(tx) {
-    // TODO: Check for witness transaction
-    if (tx.slice(5, 7) == "0001") {
+    if (tx.slice(4, 6).equals(Buffer.from('0001', 'hex'))) {
         return true
     }
+
     return false
 }
 
@@ -126,23 +140,23 @@ function getTxInputVector(tx) {
 
     if (isFlagPresent(tx)) {
         // TODO: Implement for witness transaction
-        console.error("witness not supported")
-        process.exit(1)
+        console.log("witness is not fully supported")
+        txInVectorEndPosition = txInVectorStartPosition + 42
     } else {
-        let inputCount = parseInt('0x' + tx.slice(txInVectorStartPosition, txInVectorStartPosition + 1))
+        let inputCount = tx.slice(txInVectorStartPosition, txInVectorStartPosition + 1).readIntBE(0, 1)
 
         if (inputCount != 1) {
             // TODO: Support multiple inputs
             console.error(`exactly one input is required, got [${inputCount}]`);
-            process.exit()
+            process.exit(1)
         } else {
             let startPos = txInVectorStartPosition + 1
 
             let previousHash = tx.slice(startPos, startPos + 32).reverse()
 
-            let previousOutIndex = parseInt(tx.slice(startPos + 32, startPos + 36))
+            let previousOutIndex = tx.slice(startPos + 32, startPos + 36).readIntBE(0, 4)
 
-            let scriptLength = parseInt(tx.slice(startPos + 36, startPos + 37))
+            let scriptLength = tx.slice(startPos + 36, startPos + 37).readIntBE(0, 1)
             if (scriptLength >= 253) {
                 console.error(`VarInts not supported`);
                 process.exit(1)
@@ -155,6 +169,7 @@ function getTxInputVector(tx) {
             txInVectorEndPosition = startPos + 37 + scriptLength + 4
         }
     }
+
     return tx.slice(txInVectorStartPosition, txInVectorEndPosition)
 }
 
@@ -167,10 +182,11 @@ function getTxOutputVector(tx) {
 
     for (let i = 0; i < outputsCount; i++) {
         let value = tx.slice(startPosition, startPosition + 8)
-        let scriptLength = parseInt(tx.slice(startPosition + 8, startPosition + 8 + 1))
+        let scriptLength = tx.slice(startPosition + 8, startPosition + 8 + 1).readIntBE(0, 1)
+
         if (scriptLength >= 253) {
             console.error(`VarInts not supported`);
-            process.exit()
+            process.exit(1)
         }
 
         let script = tx.slice(startPosition + 8 + 1, startPosition + 8 + 1 + scriptLength)
@@ -192,25 +208,24 @@ function getTxOutputVectorPosition(tx) {
 function getNumberOfOutputs(tx) {
     let outStartPosition = getTxOutputVectorPosition(tx)
 
-    return tx.slice(outStartPosition, outStartPosition + 1)
+    return tx.slice(outStartPosition, outStartPosition + 1).readIntBE(0, 1)
 }
 
 function getTxOutputAtIndex(tx, index) {
     outputsCount = getNumberOfOutputs(tx)
     if (index > getNumberOfOutputs(tx)) {
         console.error(`index [${index}] greater than number of outputs [${outputsCount}]`)
-        process.exit()
+        process.exit(1)
     }
 
     let outStartPosition = getTxOutputVectorPosition(tx) + 1
     let outEndPosition = outStartPosition
     let scriptLength
 
-    console.log("index", index)
     for (let i = 0; i <= index; i++) {
         outStartPosition = outEndPosition
 
-        scriptLength = parseInt(tx.slice(outStartPosition + 8, outStartPosition + 8 + 1))
+        scriptLength = tx.slice(outStartPosition + 8, outStartPosition + 8 + 1).readIntBE(0, 1)
 
         outEndPosition = outStartPosition + 8 + 1 + scriptLength
     }
@@ -219,7 +234,16 @@ function getTxOutputAtIndex(tx, index) {
 }
 
 function getLocktime(tx) {
-    return tx.slice(tx.length - 8)
+    return tx.slice(tx.length - 4)
+}
+
+export function hexToBytes(hex) {
+    return Buffer.from(hex, 'hex');
+}
+
+export function bytesToHex(bytes) {
+    let buffer = Buffer.from(bytes);
+    return buffer.toString('hex')
 }
 
 // await initialize();
