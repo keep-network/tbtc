@@ -294,7 +294,7 @@ contract('DepositUtils', accounts => {
         assert.include(e.message, 'No funds received, unexpected')
       }
     })
-  })ß
+  })
 
   describe('distributeBeneficiaryReward()', async () => {
     it('checks that beneficiary is rewarded', async () => {
