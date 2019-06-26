@@ -4,7 +4,6 @@ const ValidateSPV = artifacts.require('ValidateSPV')
 const CheckBitcoinSigs = artifacts.require('CheckBitcoinSigs')
 
 const OutsourceDepositLogging = artifacts.require('OutsourceDepositLogging')
-const DepositLog = artifacts.require('DepositLog')
 const DepositStates = artifacts.require('DepositStates')
 const DepositUtils = artifacts.require('DepositUtils')
 const DepositFunding = artifacts.require('DepositFunding')
@@ -23,7 +22,7 @@ const utils = require('./utils')
 const chai = require('chai')
 const expect = chai.expect
 const bnChai = require('bn-chai')
-chai.use(bnChai(BN));
+chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_UTILS_DEPLOY = [
   {name: 'BytesLib', contract: BytesLib},
@@ -99,7 +98,6 @@ contract('DepositUtils', accounts => {
     it('evaluates a header proof with previous', async () => {
       await deployed.SystemStub.setPreviousDiff(5646403851534)
       await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
-
     })
 
     it('evaluates a header proof with current', async () => {
@@ -129,7 +127,7 @@ contract('DepositUtils', accounts => {
   })
 
   describe('checkProof()', async () => {
-    it('returns the correct _txid' , async () => {
+    it('returns the correct _txid', async () => {
       await deployed.SystemStub.setCurrentDiff(6379265451411)
       const res = await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
       assert.equal(res, utils.TX.tx_id_le)
@@ -282,7 +280,7 @@ contract('DepositUtils', accounts => {
   describe('seizeSignerBonds()', async () => {
     it('calls out to the keep system and returns the seized amount', async () => {
       const value = 5000
-      await deployed.KeepStub.send(value, {from: accounts[0]})
+      await deployed.KeepStub.send(value, { from: accounts[0] })
       const seized = await testUtilsInstance.seizeSignerBonds.call()
       await testUtilsInstance.seizeSignerBonds()
       assert(seized.eq(new BN(value)))
@@ -296,7 +294,7 @@ contract('DepositUtils', accounts => {
         assert.include(e.message, 'No funds received, unexpected')
       }
     })
-  })
+  })ß
 
   describe('distributeBeneficiaryReward()', async () => {
     it('checks that beneficiary is rewarded', async () => {
@@ -318,7 +316,7 @@ contract('DepositUtils', accounts => {
   describe('pushFundsToKeepGroup()', async () => {
     it('calls out to the keep contract', async () => {
       const value = 10000
-      await testUtilsInstance.send(value, {from: accounts[0]})
+      await testUtilsInstance.send(value, { from: accounts[0] })
       await testUtilsInstance.pushFundsToKeepGroup(value)
       const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(keepBalance, value) // web3 balances are integers I guess

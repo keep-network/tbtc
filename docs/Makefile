@@ -1,4 +1,4 @@
-SHELL = /bin/bash 
+SHELL = /bin/bash
 
 generated_img_dir=img/generated
 
