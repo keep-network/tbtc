@@ -3,6 +3,13 @@ pragma solidity 0.4.25;
 /* solium-disable */
 
 contract IUniswapExchange {
+    event TokenPurchase(address indexed buyer, uint256 indexed eth_sold, uint256 indexed tokens_bought);
+    event EthPurchase(address indexed buyer, uint256 indexed tokens_sold, uint256 indexed eth_bought);
+    event AddLiquidity(address indexed provider, uint256 indexed eth_amount, uint256 indexed token_amount);
+    event RemoveLiquidity(address indexed provider, uint256 indexed eth_amount, uint256 indexed token_amount);
+    event Transfer(address indexed _from, uint256 indexed _value);
+    event Approval(address indexed _owner, uint256 indexed _value);
+
     // Address of ERC20 token sold on this exchange
     function tokenAddress() external view returns (address token);
     // Address of Uniswap Factory
