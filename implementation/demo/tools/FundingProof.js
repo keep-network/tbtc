@@ -2,8 +2,6 @@
 // variable, e.g:
 // export MERKLE_SCRIPT="/Users/jakub/workspace/bitcoin-spv/scripts/merkle.py"
 
-const fundingProof = {}
-
 export function initialize() {
   console.log('Install python environment...')
 
@@ -16,8 +14,7 @@ export function initialize() {
   })
 
   spawnProcess.stderr.on('data', (data) => {
-    console.error(`Failure:\n${data}`)
-    process.exit(1)
+    throw new Error(`Failure:\n${data}`)
   })
 
   spawnProcess.on('close', (code) => {
@@ -25,45 +22,49 @@ export function initialize() {
   })
 }
 
-export async function getTransactionProof(txID, headerLen, callback) {
+export async function getTransactionProof(txID, headerLen) {
   console.log('Get transaction proof...')
 
   if (txID == undefined || txID.length < 64) {
-    console.error('missing txID argument')
-    process.exit(1)
+    throw new Error('missing txID argument')
   }
 
   console.log(`Transaction ID: ${txID}`)
 
-  await getBitcoinSPVproof(txID, headerLen, callback)
+  const spvProof = await getBitcoinSPVproof(txID, headerLen)
+  const txDetails = parseTransaction(spvProof.tx)
+
+  return {
+    version: txDetails.version,
+    txInVector: txDetails.txInVector,
+    txOutVector: txDetails.txOutVector,
+    locktime: txDetails.locktime,
+    fundingOutputIndex: txDetails.fundingOutputIndex,
+    merkleProof: spvProof.merkleProof,
+    txInBlockIndex: spvProof.txInBlockIndex,
+    chainHeaders: spvProof.chainHeaders,
+  }
 }
 
-async function getBitcoinSPVproof(txID, headerLen, callback) {
+async function getBitcoinSPVproof(txID, headerLen) {
   console.log('Get bitcoin-spv proof...')
 
   const { spawn } = require('child_process')
 
   const spawnProcess = spawn('pipenv', ['run', 'python', process.env.MERKLE_SCRIPT, txID, headerLen])
 
-  spawnProcess.stdout.on('data', (data) => {
-    console.log(`Received data from bitcoin-spv`)
-    const spvProof = parseBitcoinSPVOutput(data.toString())
+  return new Promise((resolve, reject) => {
+    spawnProcess.stdout.on('data', (data) => {
+      console.log(`Received data from bitcoin-spv`)
 
-    fundingProof.merkleProof = spvProof.merkleProof
-    fundingProof.txInBlockIndex = spvProof.txInBlockIndex
-    fundingProof.chainHeaders = spvProof.chainHeaders
+      const spvProof = parseBitcoinSPVOutput(data.toString())
 
-    parseTransaction(spvProof.tx, callback)
-  })
+      resolve(spvProof)
+    })
 
-  spawnProcess.stderr.on('data', (data) => {
-    console.error(`Failure:\n${data}`)
-    process.exit(1)
-  })
-
-  spawnProcess.on('close', (code) => {
-    console.log(`child process exited with code ${code}`)
-    return
+    spawnProcess.stderr.on('data', (data) => {
+      reject(new Error(`failure:\n${data}`))
+    })
   })
 }
 
@@ -72,7 +73,7 @@ function parseBitcoinSPVOutput(output) {
 
   const tx = hexToBytes(output.match(/(^-* TX -*$\n)^(.*)$/m)[2])
   const merkleProof = hexToBytes(output.match(/(^-* PROOF -*$\n)^(.*)$/m)[2])
-  const txInBlockIndex = output.match(/(^-* INDEX -*$\n)^(.*)$/m)[2]
+  const txInBlockIndex = parseInt(output.match(/(^-* INDEX -*$\n)^(.*)$/m)[2])
   const chainHeaders = hexToBytes(output.match(/(^-* CHAIN -*$\n)^(.*)$/m)[2])
 
   return {
@@ -83,28 +84,25 @@ function parseBitcoinSPVOutput(output) {
   }
 }
 
-async function parseTransaction(tx, callback) {
+function parseTransaction(tx) {
   console.log('Parse transaction...\nTX:', bytesToHex(tx))
 
   if (tx.length == 0) {
-    console.error('cannot decode the transaction', bytesToHex(tx))
-    process.exit(1)
+    throw new Error('cannot decode the transaction')
   }
 
-  fundingProof.version = getVersion(tx)
-  fundingProof.txInVector = getTxInputVector(tx)
-  fundingProof.txOutVector = getTxOutputVector(tx)
-  fundingProof.locktime = getLocktime(tx)
-  fundingProof.fundingOutputIndex = getFundingOutputIndex(tx)// TODO: Find index in transaction based on deposit's public key
+  const txDetails = {
+    version: getVersion(tx),
+    txInVector: getTxInputVector(tx),
+    txOutVector: getTxOutputVector(tx),
+    locktime: getLocktime(tx),
+    fundingOutputIndex: getFundingOutputIndex(tx), // TODO: Find index in transaction based on deposit's public key
+  }
 
-  const serializedProof = serializeProof(fundingProof)
-
-  console.log('Funding Proof:', serializedProof)
-
-  callback(fundingProof)
+  return txDetails
 }
 
-function serializeProof(fundingProof) {
+export function serialize(fundingProof) {
   return {
     version: bytesToHex(fundingProof.version),
     txInVector: bytesToHex(fundingProof.txInVector),
@@ -147,10 +145,9 @@ function getTxInputVector(tx) {
   } else {
     const inputCount = tx.slice(txInVectorStartPosition, txInVectorStartPosition + 1).readIntBE(0, 1)
 
-    if (inputCount != 1) {
+    if (inputCount == 1) {
       // TODO: Support multiple inputs
-      console.error(`exactly one input is required, got [${inputCount}]`)
-      process.exit(1)
+      throw new Error(`exactly one input is required, got [${inputCount}]`)
     } else {
       const startPos = txInVectorStartPosition + 1
 
@@ -160,8 +157,7 @@ function getTxInputVector(tx) {
 
       const scriptLength = tx.slice(startPos + 36, startPos + 37).readIntBE(0, 1)
       if (scriptLength >= 253) {
-        console.error(`VarInts not supported`)
-        process.exit(1)
+        throw new Error('VarInts not supported')
       }
 
       // const script = tx.slice(startPos + 37, startPos + 37 + scriptLength)
@@ -188,8 +184,7 @@ function getTxOutputVector(tx) {
     const scriptLength = tx.slice(startPosition + 8, startPosition + 8 + 1).readIntBE(0, 1)
 
     if (scriptLength >= 253) {
-      console.error(`VarInts not supported`)
-      process.exit(1)
+      throw new Error('VarInts not supported')
     }
 
     // const script = tx.slice(startPosition + 8 + 1, startPosition + 8 + 1 + scriptLength)

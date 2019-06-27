@@ -25,12 +25,11 @@ module.exports = async function() {
       deposit = await Deposit.deployed()
       depositLog = await TBTCSystem.deployed()
     } catch (err) {
-      console.error(`call failed: ${err}`)
-      process.exit(1)
+      throw new Error('cannot get deployed contracts: ', err)
     }
   }
 
-  async function callFundingProof(fundingProof) {
+  async function provideFundingProof(fundingProof) {
     console.log('Submit funding proof...')
 
     const blockNumber = await web3.eth.getBlock('latest').number
@@ -45,7 +44,7 @@ module.exports = async function() {
       fundingProof.txInBlockIndex,
       fundingProof.chainHeaders
     ).catch((err) => {
-      console.error(`provideBTCFundingProof failed: ${err}`)
+      throw new Error(`provideBTCFundingProof failed: ${err}`)
     })
 
     console.log('provideBTCFundingProof transaction: ', result.tx)
@@ -58,6 +57,22 @@ module.exports = async function() {
     console.log('Funding proof accepted for the deposit: ', eventList[0].returnValues._depositContractAddress)
   }
 
-  await initContracts()
-  await FundingProof.getTransactionProof(txID, headerLen, callFundingProof)
+  await initContracts().catch((err) => {
+    console.error('contracts initialization failed\n', err)
+    process.exit(1)
+  })
+
+  const fundingProof = await FundingProof.getTransactionProof(txID, headerLen)
+    .catch((err) => {
+      console.error('getting transaction proof failed\n', err)
+      process.exit(1)
+    })
+
+  console.log('Funding proof:', FundingProof.serialize(fundingProof))
+
+  await provideFundingProof(fundingProof)
+    .catch((err) => {
+      console.error('funding proof submission failed\n', err)
+      process.exit(1)
+    })
 }
