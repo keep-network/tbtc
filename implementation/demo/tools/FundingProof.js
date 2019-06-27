@@ -1,5 +1,6 @@
-// Configure path to bitcoin-spv merkle proof script.
-const merkleScript = '/Users/jakub/workspace/bitcoin-spv/scripts/merkle.py'
+// Configure path to bitcoin-spv merkle proof script as `MERKLE_SCRIPT` environment
+// variable, e.g:
+// export MERKLE_SCRIPT="/Users/jakub/workspace/bitcoin-spv/scripts/merkle.py"
 
 const fundingProof = {}
 
@@ -42,7 +43,7 @@ async function getBitcoinSPVproof(txID, headerLen, callback) {
 
   const { spawn } = require('child_process')
 
-  const spawnProcess = spawn('pipenv', ['run', 'python', merkleScript, txID, headerLen])
+  const spawnProcess = spawn('pipenv', ['run', 'python', process.env.MERKLE_SCRIPT, txID, headerLen])
 
   spawnProcess.stdout.on('data', (data) => {
     console.log(`Received data from bitcoin-spv`)
