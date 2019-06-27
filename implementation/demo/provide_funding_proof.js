@@ -1,3 +1,13 @@
+// The script uses merkle.py script from bitcoin-spv to get part of the data for
+// the proof.
+//
+// Format:
+// truffle exec provide_funding_proof.js <TX_ID> <HEADERS_LENGTH>
+//
+// Arguments:
+// TX_ID - id of the funding transaction
+// HEADERS_LENGTH - number of block headers in the proof
+
 const Deposit = artifacts.require('./Deposit.sol')
 const TBTCSystem = artifacts.require('./TBTCSystemStub.sol')
 
