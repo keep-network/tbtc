@@ -9,7 +9,6 @@ module.exports = async function () {
 
     let txID = process.argv[4]
     let headerLen = process.argv[5]
-    let fundingOutputIndex = process.argv[6]
 
     async function initContracts() {
         try {
@@ -31,7 +30,7 @@ module.exports = async function () {
             fundingProof.txInVector,
             fundingProof.txOutVector,
             fundingProof.locktime,
-            fundingOutputIndex,
+            fundingProof.fundingOutputIndex,
             fundingProof.merkleProof,
             fundingProof.txInBlockIndex,
             fundingProof.chainHeaders

@@ -94,8 +94,8 @@ async function parseTransaction(tx, callback) {
     fundingProof.txInVector = getTxInputVector(tx)
     fundingProof.txOutVector = getTxOutputVector(tx)
     fundingProof.locktime = getLocktime(tx)
-    // TODO: Find index in transaction based on deposit's public key
-    // fundingProof.fundingOutputIndex 
+    fundingProof.fundingOutputIndex = getFundingOutputIndex(tx)// TODO: Find index in transaction based on deposit's public key
+
     let serializedProof = serializeProof(fundingProof)
 
     console.log("Funding Proof:", serializedProof)
@@ -112,6 +112,7 @@ function serializeProof(fundingProof) {
         txInVector: bytesToHex(fundingProof.txInVector),
         txOutVector: bytesToHex(fundingProof.txOutVector),
         locktime: bytesToHex(fundingProof.locktime),
+        fundingOutputIndex: fundingProof.fundingOutputIndex
     }
 }
 
@@ -231,6 +232,12 @@ function getTxOutputAtIndex(tx, index) {
     }
 
     return tx.slice(outStartPosition, outEndPosition);
+}
+
+function getFundingOutputIndex(tx) {
+    // TODO: Implement
+    console.log("get funding output index not implemented - always expect 0")
+    return 0
 }
 
 function getLocktime(tx) {
