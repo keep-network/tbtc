@@ -1,0 +1,123 @@
+:toc: macro
+
+= RFC 1: Access Control architecture for contracts
+
+[%header,cols=3]
+|===
+
+|Status
+|Summary
+|Discussion
+|Deferred
+a|
+ - Proposed implementation doesn't map well to staker authorization
+ - https://github.com/keep-network/tbtc/pull/151#issuecomment-501311578:[Common patterns] and clear overview for ACL is desired
+ - Not yet a priority for tBTC
+|https://github.com/keep-network/tbtc/pull/151[PR#151]
+|===
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+The price oracle requires an access control / permissions architecture. A simple bespoke design would be to write a `trustedOperator` member, in turn with some condition on `updatePrice` like `require(msg.sender == trustedOperator, "unauthorised");`. However, access control is also needed elsewhere in the project - for example, link:https://github.com/keep-network/keep-core/blob/master/docs/rfc/rfc-9-upgradeable-contract-components.adoc[upgradeability of smart contract components]. It would be wise to adopt a standard architectural design for access control:
+
+ - Solidity is a well-known liability for developing secure code.
+ - Using design patterns reduces complexity and increases understanding/collaboration.
+ - Smart contracts are notoriously difficult to architect and compose (even link:https://blog.zeppelin.solutions/technical-description-of-makerdao-governance-critical-vulnerability-facce6bf5d5e[MakerDAO fails]) - enforcing a design that requires **explicit authorisation by default** helps mitigate the effects of Solidity being ultimately, message-passing implemented in C. ;)
+ - Naming roles separate from actors in the system, allows us to reason and discuss more clearly (again, good design).
+
+=== Current Functionality
+
+There is nothing in tbtc master. In keep-core's link:https://github.com/keep-network/keep-core/blob/master/contracts/solidity/contracts/KeepGroupImplV1.sol[KeepGroupImplV1] and keep-ecdsa's ECDSAKeep, we have some loose notions of roles and access control
+
+```sol
+/**
+  * @dev Checks if submitter is eligible to submit.
+  * @param submitterMemberIndex The claimed index of the submitter.
+  */
+modifier onlyEligibleSubmitter(uint256 submitterMemberIndex) {
+    uint256[] memory selected = selectedTickets();
+    require(submitterMemberIndex > 0, "Submitter member index must be greater than 0.");
+    require(_proofs[selected[submitterMemberIndex - 1]].sender == msg.sender, "Submitter member index does not match sender address.");
+    uint T_init = _ticketSubmissionStartBlock + _timeoutChallenge + _timeDKG;
+    require(block.number >= (T_init + (submitterMemberIndex-1) * _resultPublicationBlockStep), "Submitter is not eligible to submit at the current block.");
+    _;
+}
+```
+
+```sol
+function runGroupSelection(uint256 newEntry, uint256 requestId, uint256 seed) public {
+  require(msg.sender == _randomBeacon);
+```
+
+```sol
+/// @notice Calculates a signature over provided digest by the keep.
+/// @dev TODO: Access control.
+/// @param _digest Digest to be signed.
+function sign(bytes memory _digest) public {
+    require(msg.sender == owner, "Only keep owner can ask to sign");
+    emit SignatureRequested(_digest);
+}
+```
+
+Conceptually, there is little wrong with both of these implementations. `onlyEligibleSubmitter` is only used in one method, so it would be more confusing to separate the role of "submitter" from the condition of "eligibility". Likewise, `runGroupSelection` is performing a very simple check - but it still would be good to separate auth from business logic.
+
+However, if you were asked to name all of the roles/controls in the Keep system, could you? Now the lack of a standard arch becomes 1) a tech debt, 2) a communication overhead and 3) a security liability.
+
+== Proposal
+
+Implement access control through the battle-tested MakerDAO Dappsys libraries.
+
+=== Goals
+
+Define roles and access control explicitly, and enforce strong security by default.
+
+=== Implementation
+
+OpenZeppelin contracts have historically been of average quality. I did some brief exploration into MakerDAO's Dappsys libraries, which are top-notch and simple to use.
+
+The Dappsys (DS) contracts include link:https://dapp.tools/dappsys/ds-auth.html[DSAuth], link:https://dapp.tools/dappsys/ds-guard.html[DSGuard] and link:https://dapp.tools/dappsys/ds-roles.html[DSRoles].
+
+ - there is a single function modifier called `auth` which performs ACL
+ - `auth` calls into the `DSAuthority`, which performs auth based on the return value of `function canCall(address src, address dst, bytes4 sig) public view returns (bool);`
+ - intuitively, the creator/owner of the contract is by default entitled to call any functions
+ - likewise, the contract itself can call any functions on itself
+ - we can call `setAuthority` on any contract to effectively inject the authorisation system into it. This is great for depedency inversion and works well without breaking all existing test cases.
+ - there are two implementations of a DSAuthority, which differ on their granularity of control.
+ - the simpler version is `DSGuard`, which provides address-level access control on contract functions
+ - the more powerful version is `DSRoles`, which provides 3 different levels of control to contract functions - root user (all access), public capability (any user all access), role capability
+
+=== Limitations
+
+ - DSRoles need to be manually set. They cannot be dynamically computed (ie. submitter "eligibility" would be a separate function). **However**, compared with OpenZep's contracts - the DS contracts are *nano*-sized and ready for simple extension.
+
+=== Proof of Concept
+
+link:https://github.com/keep-network/tbtc/compare/minimal-price-oracle...dappsys-integration-truffle[dappsys-integration-truffle] features some preliminary investigation, only for the PriceOracle.
+
+ - `TBTC` will own the DSAuthority
+ - on setup, it injects the DSAuthority into all child system components (oracle, etc)
+ - there is a simple example with DSGuard
+ - there is a simple example with DSRoles
+
+== Future Work (optional)
+ 
+ - link:https://dapp.tools/dappsys/ds-proxy.html[DSProxy] is another simple "proxy". It could be a useful primitive for upgradeable contracts, deserving further investigation.
+ - link:https://dapp.tools/dappsys/ds-stop.html[DSAuth] is a very simple emergency failure switch.
+
+== Open Questions (optional)
+
+ - what are our complete list of roles in tbtc?
+
+[bibliography]
+== Related Links
+
+- Flowdock Links
+- Other links
+- If you have publications, you can include them in bibliography style. If you
+  start your bullet with an id in _triple_ square brackets (e.g. `+[[[AAKE]]]+`),
+  you can reference it in the content body using regular cross-reference syntax
+  (e.g. `+<<AAKE>>+`).
