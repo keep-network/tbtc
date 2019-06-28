@@ -84,7 +84,7 @@ function parseBitcoinSPVOutput(output) {
   }
 }
 
-function parseTransaction(tx) {
+export function parseTransaction(tx) {
   console.log('Parse transaction...\nTX:', bytesToHex(tx))
 
   if (tx.length == 0) {
