@@ -18,7 +18,6 @@ const SystemStub = artifacts.require('SystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
-const TestDepositUtils = artifacts.require('TestDepositUtils')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -40,7 +39,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
-  { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
   { name: 'TBTCStub', contract: TBTCStub },
   { name: 'SystemStub', contract: SystemStub }]

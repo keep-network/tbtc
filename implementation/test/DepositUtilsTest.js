@@ -45,7 +45,6 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
 contract('DepositUtils', (accounts) => {
   let deployed
   let testUtilsInstance
-
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
     testUtilsInstance = deployed.TestDepositUtils
@@ -151,6 +150,61 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
+  describe('checkProofFromTxId()', async () => {
+    it('does not error', async () => {
+      try {
+        await deployed.SystemStub.setCurrentDiff(6379265451411)
+        await testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
+        assert(true, 'passes proof validation')
+      } catch (e) {
+        assert.include(e.message, 'Failed tx parsing')
+      }
+    })
+
+    it('fails with a broken proof', async () => {
+      try {
+        await deployed.SystemStub.setCurrentDiff(6379265451411)
+        await testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Tx merkle proof is not valid for provided header and txId')
+      }
+    })
+
+    it('fails with a broken txId', async () => {
+      try {
+        await deployed.SystemStub.setCurrentDiff(6379265451411)
+        await testUtilsInstance.checkProofFromTxId.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Tx merkle proof is not valid for provided header and txId')
+      }
+    })
+  })
+
+  describe('findAndParseFundingOutput()', async () => {
+    const _txOutputVector = '0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6'
+    const _fundingOutputIndex = 0
+    const _outValueBytes = '0x2040351d00000000'
+    const _signerPubkeyX = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6e'
+    const _signerPubkeyY = '0xe8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
+    it('correctly returns valuebytes', async () => {
+      await testUtilsInstance.setPubKey(_signerPubkeyX, _signerPubkeyY)
+      const valueBytes = await testUtilsInstance.findAndParseFundingOutput.call(_txOutputVector, _fundingOutputIndex)
+      assert.equal(_outValueBytes, valueBytes, 'Got incorrect value bytes from funding output')
+    })
+
+    it('fails with incorrect singer pubKey', async () => {
+      await testUtilsInstance.setPubKey('0x' + '11'.repeat(20), '0x' + '11'.repeat(20))
+      try {
+        await testUtilsInstance.findAndParseFundingOutput.call(_txOutputVector, _fundingOutputIndex)
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Did not find output with correct PKH')
+      }
+    })
+  })
+
   describe('extractOutputAtIndex()', async () => {
     it('extracts outputs at specified indices', async () => {
       let res
@@ -167,6 +221,12 @@ contract('DepositUtils', (accounts) => {
       assert.equal(res, '0x40420f0000000000220020aedad4518f56379ef6f1f52f2e0fed64608006b3ccaff2253d847ddc90c91922')
       res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector3, 3)
       assert.equal(res, '0x40420f0000000000220020aedad4518f56379ef6f1f52f2e0fed64608006b3ccaff2253d847ddc90c91922')
+      try {
+        res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector1, 2)
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'Slice out of bounds')
+      }
     })
   })
 
@@ -208,6 +268,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('signerPubkey()', async () => {
     it('returns the concatenated signer X and Y coordinates', async () => {
+      await testUtilsInstance.setPubKey('0x' + '00'.repeat(32), '0x' + '00'.repeat(32))
       const signerPubkey = await testUtilsInstance.signerPubkey.call()
       assert.equal(signerPubkey, '0x' + '00'.repeat(64))
     })
@@ -215,6 +276,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('signerPKH()', async () => {
     it('returns the concatenated signer X and Y coordinates', async () => {
+      await testUtilsInstance.setPubKey('0x' + '00'.repeat(32), '0x' + '00'.repeat(32))
       const signerPKH = await testUtilsInstance.signerPKH.call()
       assert.equal(signerPKH, utils.hash160('02' + '00'.repeat(32)))
     })

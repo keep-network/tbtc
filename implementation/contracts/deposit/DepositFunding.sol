@@ -148,22 +148,19 @@ library DepositFunding {
         uint8 _fundingOutputIndex,
         bytes _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
-
-        bytes32 txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+        bytes _bitcoinHeaders
+    ) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
+        bytes32 txID = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
         _valueBytes = _d.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
         require(DepositUtils.bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
 
+        _d.checkProofFromTxId(txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
-        _d.checkProofFromTxId(txId, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
-
-
-        // The utxoOutpoint is the LE TXID plus the index of the output as a 4-byte LE int
+        // The utxoOutpoint is the LE txID plus the index of the output as a 4-byte LE int
         // _fundingOutputIndex is a uint8, so we know it is only 1 byte
         // Therefore, pad with 3 more bytes
-        _utxoOutpoint = abi.encodePacked(txId, _fundingOutputIndex, hex"000000");
-
+        _utxoOutpoint = abi.encodePacked(txID, _fundingOutputIndex, hex"000000");
     }
 
     /// @notice             we poll the Keep contract to retrieve our pubkey
@@ -283,7 +280,6 @@ library DepositFunding {
         uint256 _txIndexInBlock,
         bytes _bitcoinHeaders
     ) public returns (bool) {
-
         require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
 
         bytes8 _valueBytes;

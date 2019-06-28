@@ -135,23 +135,26 @@ library DepositUtils {
         bytes32 _txId,
         bytes _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders) public view{
+        bytes _bitcoinHeaders
+    ) public view{
         require(
             _txId.prove(
                 _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
                 _merkleProof,
                 _txIndexInBlock
             ),
-            "Tx merkle proof is not valid for provided header and tx");
+            "Tx merkle proof is not valid for provided header and txId");
 
         evaluateProofDifficulty(_d, _bitcoinHeaders);
     }
 
-    /// @dev                        Find funding output using the provided index
+    /// @notice                     Find and validate funding output in transaction output vector using the index
+    /// @dev                        Gets `_fundingOutputIndex` output from the output vector and validates if it's
+    ///                             Public Key Hash matches a Public Key Hash of the deposit.
     /// @param _d                   Deposit storage pointer
     /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector
-    /// @return                     funding value (bytes8)
+    /// @return                     Funding value
     function findAndParseFundingOutput(
         DepositUtils.Deposit storage _d,
         bytes _txOutputVector,
@@ -160,11 +163,7 @@ library DepositUtils {
         bytes8 _valueBytes;
         bytes memory _output;
 
-        uint256 _n = (_txOutputVector.slice(0, 1)).bytesToUint();
-        require(_n < 0xfd, "VarInts not supported, Number of outputs cannot exceed 252");
-
         // Find the output paying the signer PKH
-        // This will fail if there are more than 256 outputs
         _output = extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
         if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d)))) {
             _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
@@ -180,19 +179,31 @@ library DepositUtils {
     /// @return                     The specified output
     function extractOutputAtIndex(
         bytes _txOutputVector,
-        uint8 _fundingOutputIndex) public view returns (bytes) {
+        uint8 _fundingOutputIndex
+    ) public view returns (bytes) {
+        // Transaction outputs vector consists of a number of outputs followed by a list of outputs:
+        //
+        // |                                  outputs vector                                  |
+        // | outputs number |            output 1            |          output 2...           |
+        // | outputs number | value | script length | script | value | script length | script |
+        //
+        // Each output contains value (8 bytes), script length (VarInt) and a script.
+
+        // extract output number to verify that it's not a varint.
+        uint256 _n = (_txOutputVector.slice(0, 1)).bytesToUint();
+        require(_n < 0xfd, "VarInts not supported, Number of outputs cannot exceed 252");
+
         // Determine length of first output
         // offset starts at 1 to skip output number varint
         // skip the 8 byte output value to get to length
         // next two bytes used to calculate length
         uint _offset = 1;
-        uint _start = _offset + 8;
-        uint _length = (_txOutputVector.slice(_start, 2)).determineOutputLength();
+        uint _length = (_txOutputVector.slice(_offset + 8, 2)).determineOutputLength();
 
         // This loop moves forward, and then gets the len of the next one
         for (uint i = 0; i < _fundingOutputIndex; i++) {
             _offset = _offset + _length;
-            _length = (_txOutputVector.slice(8 + _offset, 2)).determineOutputLength();
+            _length = (_txOutputVector.slice(_offset + 8, 2)).determineOutputLength();
         }
 
         // We now have the length and offset of the one we want
