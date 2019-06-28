@@ -46,7 +46,7 @@ library DepositFunding {
         IKeep _keep = IKeep(_d.KeepBridge);
         bytes memory _pubkey = _keep.getKeepPubkey(_d.keepID);
         /* solium-disable-next-line */
-        require(_pubkey.length == 64);
+        require(_pubkey.length == 64, "public key not set or not 64-bytes long");
         return _pubkey;
     }
 
