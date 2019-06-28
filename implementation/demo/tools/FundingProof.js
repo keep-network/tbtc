@@ -145,7 +145,7 @@ function getTxInputVector(tx) {
   } else {
     const inputCount = tx.slice(txInVectorStartPosition, txInVectorStartPosition + 1).readIntBE(0, 1)
 
-    if (inputCount == 1) {
+    if (inputCount != 1) {
       // TODO: Support multiple inputs
       throw new Error(`exactly one input is required, got [${inputCount}]`)
     } else {
