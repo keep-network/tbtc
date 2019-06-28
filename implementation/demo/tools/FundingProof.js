@@ -151,18 +151,10 @@ function getTxInputVector(tx) {
     } else {
       const startPos = txInVectorStartPosition + 1
 
-      // const previousHash = tx.slice(startPos, startPos + 32).reverse()
-
-      // const previousOutIndex = tx.slice(startPos + 32, startPos + 36).readIntBE(0, 4)
-
       const scriptLength = tx.slice(startPos + 36, startPos + 37).readIntBE(0, 1)
       if (scriptLength >= 253) {
         throw new Error('VarInts not supported')
       }
-
-      // const script = tx.slice(startPos + 37, startPos + 37 + scriptLength)
-
-      // const sequenceNumber = tx.slice(startPos + 37 + scriptLength, startPos + 37 + scriptLength + 4)
 
       txInVectorEndPosition = startPos + 37 + scriptLength + 4
     }
@@ -179,15 +171,11 @@ function getTxOutputVector(tx) {
   let outEndPosition
 
   for (let i = 0; i < outputsCount; i++) {
-    // const value = tx.slice(startPosition, startPosition + 8)
-
     const scriptLength = tx.slice(startPosition + 8, startPosition + 8 + 1).readIntBE(0, 1)
 
     if (scriptLength >= 253) {
       throw new Error('VarInts not supported')
     }
-
-    // const script = tx.slice(startPosition + 8 + 1, startPosition + 8 + 1 + scriptLength)
 
     outEndPosition = startPosition + 8 + 1 + scriptLength
     startPosition = outEndPosition
