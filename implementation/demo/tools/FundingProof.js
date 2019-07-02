@@ -76,10 +76,10 @@ export function parseTransaction(tx) {
   }
 
   const txDetails = {
-    version: getVersion(tx),
+    version: getTxVersion(tx),
     txInVector: getTxInputVector(tx),
     txOutVector: getTxOutputVector(tx),
-    locktime: getLocktime(tx),
+    locktime: getTxLocktime(tx),
     fundingOutputIndex: getFundingOutputIndex(tx), // TODO: Find index in transaction based on deposit's public key
   }
 
@@ -99,18 +99,23 @@ export function serialize(fundingProof) {
   }
 }
 
-function getPrefix(tx) {
-  if (isFlagPresent(tx)) {
+// getTxPrefix returns a prefix of the transaction. For legacy transaction it is
+// first 4 bytes (version) and for witness transaction it is first 6 bytes
+// (version and flag).
+function getTxPrefix(tx) {
+  if (isWitnessFlagPresent(tx)) {
     return tx.slice(0, 6)
   }
   return tx.slice(0, 4)
 }
 
-function getVersion(tx) {
+function getTxVersion(tx) {
   return tx.slice(0, 4)
 }
 
-function isFlagPresent(tx) {
+// isWitnessFlagPresent checks if witness flag is present on the transaction.
+// Witness flag is indicated by 2-byte value `0001` after the transaction version.
+function isWitnessFlagPresent(tx) {
   if (tx.slice(4, 6).equals(Buffer.from('0001', 'hex'))) {
     return true
   }
@@ -118,11 +123,13 @@ function isFlagPresent(tx) {
   return false
 }
 
+// getTxInputVector returns vector of inputs for the transaction. It consists of
+// number of inputs and list of the inputs.
 function getTxInputVector(tx) {
-  const txInVectorStartPosition = getPrefix(tx).length
+  const txInVectorStartPosition = getTxPrefix(tx).length
   let txInVectorEndPosition
 
-  if (isFlagPresent(tx)) {
+  if (isWitnessFlagPresent(tx)) {
     // TODO: Implement for witness transaction
     console.log('witness is not fully supported')
     txInVectorEndPosition = txInVectorStartPosition + 42
@@ -147,6 +154,8 @@ function getTxInputVector(tx) {
   return tx.slice(txInVectorStartPosition, txInVectorEndPosition)
 }
 
+// getTxOutputVector returns vector of outputs for the transaction. It consists
+// of number of outputs and list of the outputs.
 function getTxOutputVector(tx) {
   const outStartPosition = getTxOutputVectorPosition(tx)
   const outputsCount = getNumberOfOutputs(tx)
@@ -168,8 +177,9 @@ function getTxOutputVector(tx) {
   return tx.slice(outStartPosition, outEndPosition)
 }
 
+// getTxOutputVector returns position on which outputs vector starts.
 function getTxOutputVectorPosition(tx) {
-  const txPrefix = getPrefix(tx)
+  const txPrefix = getTxPrefix(tx)
   const txInput = getTxInputVector(tx)
 
   return txPrefix.length + txInput.length
@@ -187,7 +197,7 @@ function getFundingOutputIndex(tx) {
   return 0
 }
 
-function getLocktime(tx) {
+function getTxLocktime(tx) {
   return tx.slice(tx.length - 4)
 }
 
