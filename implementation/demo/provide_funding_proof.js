@@ -15,19 +15,17 @@ const TBTCSystem = artifacts.require('./TBTCSystemStub.sol')
 const FundingProof = require('./tools/FundingProof')
 
 module.exports = async function() {
-  let deposit
-  let depositLog
-
   const txID = process.argv[4]
   const headersCount = process.argv[5]
 
-  async function initContracts() {
-    try {
-      deposit = await Deposit.deployed()
-      depositLog = await TBTCSystem.deployed()
-    } catch (err) {
-      throw new Error('cannot get deployed contracts: ', err)
-    }
+  let deposit
+  let depositLog
+
+  try {
+    deposit = await Deposit.deployed()
+    depositLog = await TBTCSystem.deployed()
+  } catch (err) {
+    throw new Error('contracts initialization failed', err)
   }
 
   async function provideFundingProof(fundingProof) {
@@ -57,11 +55,6 @@ module.exports = async function() {
 
     console.log('Funding proof accepted for the deposit: ', eventList[0].returnValues._depositContractAddress)
   }
-
-  await initContracts().catch((err) => {
-    console.error('contracts initialization failed\n', err)
-    process.exit(1)
-  })
 
   const fundingProof = await FundingProof.getTransactionProof(txID, headersCount)
     .catch((err) => {
