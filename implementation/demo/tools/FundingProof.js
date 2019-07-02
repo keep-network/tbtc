@@ -1,13 +1,17 @@
-// Configure path to bitcoin-spv merkle proof script as `MERKLE_SCRIPT` environment
+// Configure path to bitcoin-spv directory as `BITCOIN_SPV_DIR` environment
 // variable, e.g:
-// export MERKLE_SCRIPT="/Users/jakub/workspace/bitcoin-spv/scripts/merkle.py"
+// export BITCOIN_SPV_DIR="/Users/jakub/workspace/bitcoin-spv"
 
 export function initialize() {
   console.log('Install python environment...')
 
   const { spawn } = require('child_process')
 
-  const spawnProcess = spawn('pipenv', ['install'])
+  const spawnProcess = spawn(
+    'pipenv',
+    ['install'],
+    { cwd: process.env.BITCOIN_SPV_DIR }
+  )
 
   spawnProcess.stdout.on('data', (data) => {
     console.log(`${data}`)
@@ -51,7 +55,11 @@ async function getBitcoinSPVproof(txID, headerLen) {
 
   const { spawn } = require('child_process')
 
-  const spawnProcess = spawn('pipenv', ['run', 'python', process.env.MERKLE_SCRIPT, txID, headerLen])
+  const spawnProcess = spawn(
+    'pipenv',
+    ['run', 'python', 'scripts/merkle.py', txID, headerLen],
+    { cwd: process.env.BITCOIN_SPV_DIR }
+  )
 
   return new Promise((resolve, reject) => {
     spawnProcess.stdout.on('data', (data) => {
