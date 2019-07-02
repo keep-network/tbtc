@@ -2,30 +2,6 @@
 // variable, e.g:
 // export BITCOIN_SPV_DIR="/Users/jakub/workspace/bitcoin-spv"
 
-export function initialize() {
-  console.log('Install python environment...')
-
-  const { spawn } = require('child_process')
-
-  const spawnProcess = spawn(
-    'pipenv',
-    ['install'],
-    { cwd: process.env.BITCOIN_SPV_DIR }
-  )
-
-  spawnProcess.stdout.on('data', (data) => {
-    console.log(`${data}`)
-  })
-
-  spawnProcess.stderr.on('data', (data) => {
-    throw new Error(`Failure:\n${data}`)
-  })
-
-  spawnProcess.on('close', (code) => {
-    console.log(`child process exited with code ${code}`)
-  })
-}
-
 export async function getTransactionProof(txID, headersCount) {
   console.log('Get transaction proof...')
 
