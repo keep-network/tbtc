@@ -9,7 +9,7 @@
    
 2. Configure environment variable with a path to the cloned repository, e.g.:
     ```sh
-    export BITCOIN_SPV_DIR="~/workspace/bitcoin-spv"
+    export BITCOIN_SPV_DIR="/Users/jakub/workspace/bitcoin-spv/"
     ```
 
 3. Install python 3.6.6:
@@ -21,11 +21,12 @@
 4. Set up python environment:
     ```sh
     brew install pipenv
-    pipenv install --python ~/.pyenv/versions/3.6.6/bin/python
+    cd $BITCOIN_SPV_DIR && pipenv install --python ~/.pyenv/versions/3.6.6/bin/python
     ```
 
 5. Compile contracts
    ```sh
+   cd $BITCOIN_SPV_DIR
    npm install
    npm run compile
    ```
