@@ -26,7 +26,7 @@ export function initialize() {
   })
 }
 
-export async function getTransactionProof(txID, headerLen) {
+export async function getTransactionProof(txID, headersCount) {
   console.log('Get transaction proof...')
 
   if (txID == undefined || txID.length < 64) {
@@ -35,7 +35,7 @@ export async function getTransactionProof(txID, headerLen) {
 
   console.log(`Transaction ID: ${txID}`)
 
-  const spvProof = await getBitcoinSPVproof(txID, headerLen)
+  const spvProof = await getBitcoinSPVproof(txID, headersCount)
   const txDetails = parseTransaction(spvProof.tx)
 
   return {
@@ -50,14 +50,14 @@ export async function getTransactionProof(txID, headerLen) {
   }
 }
 
-async function getBitcoinSPVproof(txID, headerLen) {
+async function getBitcoinSPVproof(txID, headersCount) {
   console.log('Get bitcoin-spv proof...')
 
   const { spawn } = require('child_process')
 
   const spawnProcess = spawn(
     'pipenv',
-    ['run', 'python', 'scripts/merkle.py', txID, headerLen],
+    ['run', 'python', 'scripts/merkle.py', txID, headersCount],
     { cwd: process.env.BITCOIN_SPV_DIR }
   )
 

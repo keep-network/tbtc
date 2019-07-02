@@ -2,11 +2,12 @@
 // the proof.
 //
 // Format:
-// truffle exec provide_funding_proof.js <TX_ID> <HEADERS_LENGTH>
+// truffle exec provide_funding_proof.js <TX_ID> <HEADERS_COUNT>
 //
 // Arguments:
 // TX_ID - id of the funding transaction
-// HEADERS_LENGTH - number of block headers in the proof
+// HEADERS_COUNT - number of block headers required for the proof, it's a number
+//                 of confirmations for the transaction
 
 const Deposit = artifacts.require('./Deposit.sol')
 const TBTCSystem = artifacts.require('./TBTCSystemStub.sol')
@@ -18,7 +19,7 @@ module.exports = async function() {
   let depositLog
 
   const txID = process.argv[4]
-  const headerLen = process.argv[5]
+  const headersCount = process.argv[5]
 
   async function initContracts() {
     try {
@@ -62,7 +63,7 @@ module.exports = async function() {
     process.exit(1)
   })
 
-  const fundingProof = await FundingProof.getTransactionProof(txID, headerLen)
+  const fundingProof = await FundingProof.getTransactionProof(txID, headersCount)
     .catch((err) => {
       console.error('getting transaction proof failed\n', err)
       process.exit(1)
