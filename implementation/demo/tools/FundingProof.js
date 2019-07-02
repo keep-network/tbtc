@@ -30,7 +30,7 @@ export async function getTransactionProof(txID, headersCount) {
   console.log('Get transaction proof...')
 
   if (txID == undefined || txID.length < 64) {
-    throw new Error('missing txID argument')
+    throw new Error('missing or malformed argument')
   }
 
   console.log(`Transaction ID: ${txID}`)
