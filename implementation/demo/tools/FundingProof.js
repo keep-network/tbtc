@@ -37,13 +37,13 @@ async function getBitcoinSPVproof(txID, headersCount) {
     { cwd: process.env.BITCOIN_SPV_DIR }
   )
 
-  return new Promise((resolve, reject) => {
+  return new Promise((fulfill, reject) => {
     spawnProcess.stdout.on('data', (data) => {
       console.log(`Received data from bitcoin-spv`)
 
       const spvProof = parseBitcoinSPVOutput(data.toString())
 
-      resolve(spvProof)
+      fulfill(spvProof)
     })
 
     spawnProcess.stderr.on('data', (data) => {
