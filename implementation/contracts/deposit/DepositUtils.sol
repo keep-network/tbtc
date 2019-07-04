@@ -123,8 +123,8 @@ library DepositUtils {
         return _txid;
     }
 
-    /// @notice                 Syntactically check an SPV proof for a bitcoin tx
-    /// @dev                    Stateless SPV Proof verification documented elsewhere
+    /// @notice                 Syntactically check an SPV proof for a bitcoin transaction with its hash (ID)
+    /// @dev                    Stateless SPV Proof verification documented elsewhere (see github.com/summa-tx/bitcoin-spv)
     /// @param _d               Deposit storage pointer
     /// @param _txId            The bitcoin txid of the tx that is purportedly included in the header chain
     /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
@@ -170,7 +170,7 @@ library DepositUtils {
             return _valueBytes;
         }
         // If we don't return from inside the loop, we failed.
-        revert("Did not find output with correct PKH");
+        revert("could not identify output funding the required public key hash");
     }
 
     /// @notice                     Extracts the output at a given index in _txOutputVector
@@ -197,19 +197,55 @@ library DepositUtils {
         // offset starts at 1 to skip output number varint
         // skip the 8 byte output value to get to length
         // next two bytes used to calculate length
-        uint _offset = 1;
-        uint _length = (_txOutputVector.slice(_offset + 8, 2)).determineOutputLength();
+        uint _offset = 1 + 8;
+        uint _length = (_txOutputVector.slice(_offset, 2)).determineOutputLength();
 
         // This loop moves forward, and then gets the len of the next one
         for (uint i = 0; i < _fundingOutputIndex; i++) {
             _offset = _offset + _length;
-            _length = (_txOutputVector.slice(_offset + 8, 2)).determineOutputLength();
+            _length = (_txOutputVector.slice(_offset, 2)).determineOutputLength();
         }
 
         // We now have the length and offset of the one we want
-        return _txOutputVector.slice(_offset, _length);
+        return _txOutputVector.slice(_offset - 8, _length);
     }
 
+    /// @notice                     Validates the funding tx and parses information from it
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
+    /// @param  _d                  Deposit storage pointer
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
+    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
+    /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint
+    function validateAndParseFundingSPVProof(
+        DepositUtils.Deposit storage _d,
+        bytes _txVersion,
+        bytes _txInputVector,
+        bytes _txOutputVector,
+        bytes _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes _bitcoinHeaders
+    ) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
+        bytes32 txID = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+
+        _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
+        require(bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
+
+        checkProofFromTxId(_d, txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
+
+        // The utxoOutpoint is the LE txID plus the index of the output as a 4-byte LE int
+        // _fundingOutputIndex is a uint8, so we know it is only 1 byte
+        // Therefore, pad with 3 more bytes
+        _utxoOutpoint = abi.encodePacked(txID, _fundingOutputIndex, hex"000000");
+    }
+    
     /// @notice     Calculates the amount of value at auction right now
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
     /// @param _d   deposit storage pointer
