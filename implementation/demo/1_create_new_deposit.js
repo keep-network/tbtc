@@ -2,8 +2,6 @@ const Deposit = artifacts.require('./Deposit.sol')
 const KeepBridge = artifacts.require('./KeepBridge.sol')
 const TBTCSystem = artifacts.require('./TBTCSystemStub.sol')
 
-const keepRegistry = '0x01E6Ba85b279fE53BC7AeA57A41dA4740aE649E4' // KeepRegistry contract address
-
 module.exports = async function() {
   let deposit
   let tbtcSystem
@@ -13,8 +11,6 @@ module.exports = async function() {
     deposit = await Deposit.deployed()
     keepBridge = await KeepBridge.deployed()
     tbtcSystem = await TBTCSystem.deployed()
-
-    await keepBridge.initialize(keepRegistry)
   } catch (err) {
     console.error(`initialization failed: ${err}`)
     process.exit(1)
