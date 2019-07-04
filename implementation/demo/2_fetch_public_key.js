@@ -2,11 +2,13 @@ const Deposit = artifacts.require('./Deposit.sol')
 const TBTCSystemStub = artifacts.require('./TbtcSystemStub.sol')
 
 module.exports = async function() {
+  const depositAddress = process.argv[4]
+
   let deposit
   let depositLog
 
   try {
-    deposit = await Deposit.deployed()
+    deposit = await Deposit.at(depositAddress)
     depositLog = await TBTCSystemStub.deployed()
   } catch (err) {
     console.error(`initialization failed: ${err}`)
@@ -16,7 +18,7 @@ module.exports = async function() {
   async function getPublicKey() {
     const blockNumber = await web3.eth.getBlock('latest').number
 
-    console.log('Call getPublicKey')
+    console.log(`Call getPublicKey for deposit [${deposit.address}]`)
     const result = await deposit.retrieveSignerPubkey()
       .catch((err) => {
         console.error(`retrieveSignerPubkey failed: ${err}`)

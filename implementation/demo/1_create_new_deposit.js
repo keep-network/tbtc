@@ -8,9 +8,11 @@ module.exports = async function() {
   let keepBridge
 
   try {
-    deposit = await Deposit.deployed()
     keepBridge = await KeepBridge.deployed()
     tbtcSystem = await TBTCSystem.deployed()
+
+    deposit = await Deposit.new()
+    console.log('new deposit deployed: ', deposit.address)
   } catch (err) {
     console.error(`initialization failed: ${err}`)
     process.exit(1)

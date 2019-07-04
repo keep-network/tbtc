@@ -15,14 +15,15 @@ const TBTCSystem = artifacts.require('./TBTCSystemStub.sol')
 const FundingProof = require('./tools/FundingProof')
 
 module.exports = async function() {
-  const txID = process.argv[4]
-  const headersCount = process.argv[5]
+  const depositAddress = process.argv[4]
+  const txID = process.argv[5]
+  const headersCount = process.argv[6]
 
   let deposit
   let depositLog
 
   try {
-    deposit = await Deposit.deployed()
+    deposit = await Deposit.at(depositAddress)
     depositLog = await TBTCSystem.deployed()
   } catch (err) {
     throw new Error('contracts initialization failed', err)
