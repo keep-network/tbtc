@@ -32,8 +32,6 @@ module.exports = async function() {
   async function provideFundingProof(fundingProof) {
     console.log('Submit funding proof...')
 
-    const blockNumber = await web3.eth.getBlock('latest').number
-
     const result = await deposit.provideBTCFundingProof(
       fundingProof.version,
       fundingProof.txInVector,
@@ -48,9 +46,11 @@ module.exports = async function() {
     })
 
     console.log('provideBTCFundingProof transaction: ', result.tx)
+  }
 
+  async function logEvents(startBlockNumber) {
     const eventList = await depositLog.getPastEvents('Funded', {
-      fromBlock: blockNumber,
+      fromBlock: startBlockNumber,
       toBlock: 'latest',
     })
 
@@ -65,9 +65,13 @@ module.exports = async function() {
 
   console.log('Funding proof:', FundingProof.serialize(fundingProof))
 
+  const startBlockNumber = await web3.eth.getBlock('latest').number
+
   await provideFundingProof(fundingProof)
     .catch((err) => {
       console.error('funding proof submission failed\n', err)
       process.exit(1)
     })
+
+  await logEvents(startBlockNumber)
 }

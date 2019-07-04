@@ -16,8 +16,6 @@ module.exports = async function() {
   }
 
   async function getPublicKey() {
-    const blockNumber = await web3.eth.getBlock('latest').number
-
     console.log(`Call getPublicKey for deposit [${deposit.address}]`)
     const result = await deposit.retrieveSignerPubkey()
       .catch((err) => {
@@ -26,9 +24,11 @@ module.exports = async function() {
       })
 
     console.log('retrieveSignerPubkey transaction: ', result.tx)
+  }
 
+  async function logEvents(startBlockNumber) {
     const eventList = await depositLog.getPastEvents('RegisteredPubkey', {
-      fromBlock: blockNumber,
+      fromBlock: startBlockNumber,
       toBlock: 'latest',
     })
 
@@ -38,7 +38,10 @@ module.exports = async function() {
     console.log(`Registered public key:\nX: ${publicKeyX}\nY: ${publicKeyY}`)
   }
 
+  const startBlockNumber = await web3.eth.getBlock('latest').number
+
   await getPublicKey()
+  await logEvents(startBlockNumber)
 
   process.exit()
 }
