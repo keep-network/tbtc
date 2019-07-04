@@ -983,7 +983,6 @@ contract('Deposit', (accounts) => {
       const tokenCheck = initialTokenBalance.add(new BN(toMint))
       expect(tokenCheck, 'incorrect amount minted').to.eq.BN(endingTokenBalancce)
     })
-    it.skip('TODO: full test for validateAndParseFundingSPVProof', async () => {})
   })
 
   describe('provideECDSAFraudProof', async () => {

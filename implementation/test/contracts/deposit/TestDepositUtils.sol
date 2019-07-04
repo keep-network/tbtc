@@ -56,6 +56,28 @@ contract TestDepositUtils is TestDeposit {
         return DepositUtils.extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
     }
 
+    function validateAndParseFundingSPVProof(
+        bytes _txVersion,
+        bytes _txInputVector,
+        bytes _txOutputVector,
+        bytes _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes _bitcoinHeaders
+    ) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
+      return self.validateAndParseFundingSPVProof(
+        _txVersion,
+        _txInputVector,
+        _txOutputVector,
+        _txLocktime,
+        _fundingOutputIndex,
+        _merkleProof,
+        _txIndexInBlock,
+        _bitcoinHeaders
+        );
+    }
+
     function auctionValue() public view returns (uint256) {
         return self.auctionValue();
     }
