@@ -11,6 +11,8 @@ module.exports = async function() {
     keepBridge = await KeepBridge.deployed()
     tbtcSystem = await TBTCSystem.deployed()
 
+    // This is a temporary solution to deploy a new contract. It will be replaced
+    // by a deposit factory.
     deposit = await Deposit.new()
     console.log('new deposit deployed: ', deposit.address)
   } catch (err) {
