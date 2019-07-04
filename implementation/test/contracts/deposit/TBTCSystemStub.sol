@@ -4,7 +4,7 @@ import {ITBTCSystem} from '../../../contracts/interfaces/ITBTCSystem.sol';
 import {IERC721} from '../../../contracts/interfaces/IERC721.sol';
 import {DepositLog} from '../../../contracts/DepositLog.sol';
 
-contract SystemStub is ITBTCSystem, IERC721, DepositLog {
+contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
 
     uint256 current = 1;
     uint256 past = 1;
