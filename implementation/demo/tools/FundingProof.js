@@ -31,6 +31,10 @@ async function getBitcoinSPVproof(txID, headersCount) {
 
   const { spawn } = require('child_process')
 
+  if (!process.env.BITCOIN_SPV_DIR) {
+    throw new Error('environment variable BITCOIN_SPV_DIR not set')
+  }
+
   const spawnProcess = spawn(
     'pipenv',
     ['run', 'python', 'scripts/merkle.py', txID, headersCount],
