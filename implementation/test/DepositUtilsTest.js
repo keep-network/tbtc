@@ -245,7 +245,7 @@ contract('DepositUtils', (accounts) => {
       res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector2, 0)
       assert.equal(res, '0x4db6000000000000160014455c0ea778752831d6fc25f6f8cf55dc49d335f0')
       res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector2, 1)
-      assert.equal(res, '0x40420f0000000000220020aedad4518f56379ef6f1f52f2e0fed64608006b3ccaff2253d847ddc90c91922')  
+      assert.equal(res, '0x40420f0000000000220020aedad4518f56379ef6f1f52f2e0fed64608006b3ccaff2253d847ddc90c91922')
     })
 
     it('extracts outputs at specified index (vecor length 4)', async () => {

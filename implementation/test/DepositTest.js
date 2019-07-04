@@ -966,7 +966,7 @@ contract('Deposit', (accounts) => {
       const initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
 
       await testInstance.send(signerBond, { from: beneficiary })
-    
+
       await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
