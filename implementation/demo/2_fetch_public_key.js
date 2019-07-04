@@ -1,5 +1,5 @@
 const Deposit = artifacts.require('./Deposit.sol')
-const TBTCSystemStub = artifacts.require('./TbtcSystemStub.sol')
+const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 
 module.exports = async function() {
   const depositAddress = process.argv[4]
@@ -9,7 +9,7 @@ module.exports = async function() {
 
   try {
     deposit = await Deposit.at(depositAddress)
-    depositLog = await TBTCSystemStub.deployed()
+    depositLog = await TBTCSystem.deployed()
   } catch (err) {
     console.error(`initialization failed: ${err}`)
     process.exit(1)

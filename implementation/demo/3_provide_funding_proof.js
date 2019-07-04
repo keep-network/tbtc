@@ -10,7 +10,7 @@
 //                 of confirmations for the transaction
 
 const Deposit = artifacts.require('./Deposit.sol')
-const TBTCSystem = artifacts.require('./TBTCSystemStub.sol')
+const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 
 const FundingProof = require('./tools/FundingProof')
 

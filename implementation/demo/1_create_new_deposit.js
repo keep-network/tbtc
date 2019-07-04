@@ -1,6 +1,6 @@
 const Deposit = artifacts.require('./Deposit.sol')
 const KeepBridge = artifacts.require('./KeepBridge.sol')
-const TBTCSystem = artifacts.require('./TBTCSystemStub.sol')
+const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 
 module.exports = async function() {
   let deposit
