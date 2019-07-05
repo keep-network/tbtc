@@ -46,33 +46,30 @@ ganache-cli
    Requires `node` version 12.3.1 or greater. To install latest node version run
    `npm install -g node`
 
+6. Update [host details] in `merkle.py` script to point to a server running on 
+   TestNet.
+
+   Example config:
+   ```python
+    "hostname": "testnet1.bauerj.eu",
+   ```
+   If server above is not working use the [list] to find alternative one.
+   
+   [host details]:https://github.com/summa-tx/bitcoin-spv/blob/master/scripts/merkle.py#L44-L49
+   [list]:https://1209k.com/bitcoin-eye/ele.php?chain=tbtc
+
 ### Keep tECDSA
 
 **Repository**: [keep-network/keep-tecdsa](https://github.com/keep-network/keep-tecdsa)
 
 #### Prepare
 
-1. Deploy contracts
-    ```sh
-    cd solidity && truffle migrate -—reset
-    ```
-
-    You will need two contract's addresses later:
-    - `ECDSAKeepFactory`
-    - `KeepRegistry`
-
-2. Update `config.toml` with `ECDSAKeepFactory` contract address.
-
-3. Run code generation:
-   ```sh
-   cd ../ && go generate ./...
-   ```
-
-4. Build:
-   ```sh
-   go build -a -o keep-tecdsa .
-   ```
-
+1. [Deploy contracts](https://github.com/keep-network/keep-tecdsa/tree/master/solidity#deploy-contracts).
+   Note down `KeepRegistry` contract's address, you will need it later.
+   
+2. [Configure and build](https://github.com/keep-network/keep-tecdsa#keep-tecdsa) 
+   the client.
+   
 #### Run
 
 Run keep client:
@@ -92,16 +89,18 @@ You should see `Client started.` output message.
     cd implementation && npm run setup
     ```
 
-2. Deploy contracts:
+2. Provide `KeepRegistry` contract address (copied from Keep tECDSA) in 
+  [migrations/2_deploy_contracts.js](../migrations/2_deploy_contracts.js):
+   ```js
+   const KeepRegistryAddress = '0x224ee0E3dD53fED55d678cc649598D8d797c80B2' // KeepRegistry contract address
+   ```
+
+3. Deploy contracts:
     ```sh
     truffle migrate -—reset
     ```
-
-3. Prepare [demo/create_new_deposit.js](create_new_deposit.js) script:
-   - Provide `KeepRegistry` contract address (copied from Keep TECDSA) in constant:
-   ```js
-   const keepRegistry = "0x41649ff7E9E4512fbe8b42A51d73f33377D012c5"; // KeepRegistry contract address
-   ```
+    Note down `TBTCSystem` contract's address, you will need it later.
+   
 
 ### tBTC Maintainer
 
@@ -112,12 +111,8 @@ You should see `Client started.` output message.
 
 #### Prepare
 
-1. Update `config.toml` with `TBTCSystem` contract address.
-
-2. Build:
-   ```sh
-   go build -a -o tbtc-maintainer .
-   ```
+Configure and build the client according to [instructions](https://github.com/keep-network/tbtc-maintainers#tbtc-maintainers). 
+You will need `TBTCSystem` contract address.
 
 #### Run
 
@@ -138,6 +133,11 @@ Transaction can be submitted in multiple ways. Two easiest solutions are:
 
 To obtain initial funds on you Bitcoin TestNet account which you will use as a 
 source for the transaction use one of available faucets (e.g. [Coin Faucet]).
+
+*Note*: To start [Electrum] wallet in a TestNet mode run:
+```sh
+open -n /Applications/Electrum.app --args --testnet
+```
 
 [Electrum]:https://electrum.org
 [GreenAddress]:https://test.greenaddress.it/
