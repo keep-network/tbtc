@@ -15,6 +15,8 @@ module.exports = async function() {
     process.exit(1)
   }
 
+  // getPublicKey calls tBTC to fetch signer's public key from the keep dedicated
+  // for the deposit.
   async function getPublicKey() {
     console.log(`Call getPublicKey for deposit [${deposit.address}]`)
     const result = await deposit.retrieveSignerPubkey()
