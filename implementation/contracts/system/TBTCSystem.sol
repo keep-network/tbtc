@@ -2,8 +2,9 @@ pragma solidity 0.4.25;
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
+import {DepositLog} from "../DepositLog.sol";
 
-contract TBTCSystem is ITBTCSystem, IERC721 {
+contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
