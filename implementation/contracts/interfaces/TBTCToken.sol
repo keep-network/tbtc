@@ -1,7 +1,7 @@
 pragma solidity 0.4.25;
 
-import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
-import "../../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract TBTCToken is ERC20Detailed, ERC20 {
     /// @dev             Constructor, calls ERC20Detailed constructor to set Token info
