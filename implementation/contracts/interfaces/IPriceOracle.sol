@@ -5,8 +5,12 @@ pragma solidity 0.4.25;
  */
 
 contract IPriceOracle {
-    event PriceUpdated(uint128 price, uint256 zzz);
-    
+    event PriceUpdated(uint128 price, uint256 expiry);
+
+    // Get the current price of one satoshi in wei
+    // reverts if the price is invalid due to expiry
     function getPrice() external view returns (uint128);
-    function updatePrice(uint128 price) external;
+
+    // Updates the price in terms of x wei : 1 satoshi
+    function updatePrice(uint128 x) external;
 }
