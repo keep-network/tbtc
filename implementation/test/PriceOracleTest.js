@@ -8,7 +8,7 @@ const BN = require('bn.js')
 contract('PriceOracleV1', function(accounts) {
   const DEFAULT_OPERATOR = accounts[0]
 
-  // 1 wei = 1 satoshi
+  // 1 satoshi = 1 wei 
   const DEFAULT_PRICE = new BN(1)
 
   const PRICE_EXPIRY_S = 21600
