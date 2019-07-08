@@ -59,10 +59,10 @@ contract('PriceOracleV1', function(accounts) {
         await instance.updatePrice(2)
 
         const block = await web3.eth.getBlock('latest')
-        const zzz = await instance.zzz.call()
+        const expiry = await instance.expiry.call()
 
         assert(
-          zzz.toNumber() == (block.timestamp + PRICE_EXPIRY_S)
+          expiry.toNumber() == (block.timestamp + PRICE_EXPIRY_S)
         )
 
         const res = await instance.getPrice.call()
@@ -93,6 +93,27 @@ contract('PriceOracleV1', function(accounts) {
             { from: accounts[1] }
           )
         )
+      })
+
+      it('ignores 1% threshold for update, when the price is close to expiry', async () => {
+        const instance = await PriceOracleV1.new(
+          DEFAULT_OPERATOR,
+          DEFAULT_PRICE
+        )
+        const price1 = new BN('1000000')
+        const price2 = new BN('1000001')
+
+        await instance.updatePrice(price1)
+        await expectThrow(
+          instance.updatePrice(price2)
+        )
+
+        const ONE_HOUR = 3600
+        await increaseTime(PRICE_EXPIRY_S - ONE_HOUR + 1)
+        
+        await instance.updatePrice(price2)
+        const res = await instance.getPrice.call()
+        assert(res.eq(price2))
       })
     })
   })
