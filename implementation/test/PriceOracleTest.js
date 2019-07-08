@@ -110,7 +110,7 @@ contract('PriceOracleV1', function(accounts) {
 
         const ONE_HOUR = 3600
         await increaseTime(PRICE_EXPIRY_S - ONE_HOUR + 1)
-        
+
         await instance.updatePrice(price2)
         const res = await instance.getPrice.call()
         assert(res.eq(price2))
