@@ -8,10 +8,10 @@ const BN = require('bn.js')
 contract('PriceOracleV1', function(accounts) {
   const DEFAULT_OPERATOR = accounts[0]
 
-  // 1 satoshi = 1 wei 
-  const DEFAULT_PRICE = new BN(1)
+  // 1 satoshi = 1 wei
+  const DEFAULT_PRICE = new BN('323200000000')
 
-  const PRICE_EXPIRY_S = 21600
+  const PRICE_EXPIRY_S = 21600 // 6 hours = 21600 seconds
 
   describe('#constructor', () => {
     it('deploys', async () => {
@@ -49,14 +49,14 @@ contract('PriceOracleV1', function(accounts) {
 
     describe('#updatePrice', () => {
       it('sets new price', async () => {
-        const NEW_PRICE = new BN(2)
+        const newPrice = DEFAULT_PRICE.mul(new BN('0.02'))
 
         const instance = await PriceOracleV1.new(
           DEFAULT_OPERATOR,
           DEFAULT_PRICE
         )
 
-        await instance.updatePrice(2)
+        await instance.updatePrice(newPrice)
 
         const block = await web3.eth.getBlock('latest')
         const expiry = await instance.expiry.call()
@@ -66,12 +66,12 @@ contract('PriceOracleV1', function(accounts) {
         )
 
         const res = await instance.getPrice.call()
-        assert(res.eq(NEW_PRICE))
+        assert(res.eq(newPrice))
       })
 
       it('fails when price delta < 1%', async () => {
-        const price1 = new BN('1000000')
-        const price2 = new BN('1000001')
+        const price1 = new BN('323200000001')
+        const price2 = new BN('323200000010')
 
         const instance = await PriceOracleV1.new(
           DEFAULT_OPERATOR,
@@ -89,7 +89,7 @@ contract('PriceOracleV1', function(accounts) {
 
         await expectThrow(
           instance.updatePrice(
-            new BN('1000000'),
+            new BN('323200000001'),
             { from: accounts[1] }
           )
         )
@@ -98,10 +98,10 @@ contract('PriceOracleV1', function(accounts) {
       it('ignores 1% threshold for update, when the price is close to expiry', async () => {
         const instance = await PriceOracleV1.new(
           DEFAULT_OPERATOR,
-          DEFAULT_PRICE
+          new BN('1')
         )
-        const price1 = new BN('1000000')
-        const price2 = new BN('1000001')
+        const price1 = new BN('323200000001')
+        const price2 = new BN('323200000010')
 
         await instance.updatePrice(price1)
         await expectThrow(
@@ -109,7 +109,7 @@ contract('PriceOracleV1', function(accounts) {
         )
 
         const ONE_HOUR = 3600
-        await increaseTime(PRICE_EXPIRY_S - ONE_HOUR + 1)
+        await increaseTime(PRICE_EXPIRY_S - ONE_HOUR)
 
         await instance.updatePrice(price2)
         const res = await instance.getPrice.call()
