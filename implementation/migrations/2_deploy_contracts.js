@@ -16,7 +16,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const Deposit = artifacts.require('Deposit')
 
-const PriceOracle = artifacts.require('PriceOracleV1')
+const PriceOracleV1 = artifacts.require('PriceOracleV1')
 
 // system
 const TBTCConstants = artifacts.require('TBTCConstants')
@@ -29,7 +29,7 @@ const KeepRegistryAddress = '0xd04ed7D5C75cCC22DEafFD90A70c5BF932eC235e' // Keep
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
   DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystem,
-  KeepBridge, PriceOracle]
+  KeepBridge, PriceOracleV1]
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
@@ -72,7 +72,7 @@ module.exports = (deployer, network, accounts) => {
 
     await deployer.deploy(Deposit)
 
-    await deployer.deploy(PriceOracle, accounts[0], '3232000000000')
+    await deployer.deploy(PriceOracleV1, accounts[0], '323200000000')
     await deployer.deploy(TBTCSystem)
 
     // keep
