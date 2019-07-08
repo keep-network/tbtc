@@ -34,12 +34,12 @@ An ether by contrast, has 18 decimal places, the smallest unit being a wei, mean
 1 000 000 000 000 000 000 wei = 1 ether. 
 
 To express the price of bitcoin relative to ether, we must use a ratio of the number of wei to a satoshi. 
-A simple design is to use 1 wei : `x` satoshi. Hence, for a call to `getPrice` when 1 BTC : 32.32 ETH (Jun 2019), 
+A simple design is to use `x` wei : 1 satoshi. Hence, for a call to `getPrice` when 32.32 ETH : 1 BTC (Jun 2019), 
 the value 323 200 000 000 wei is returned. 
 
 However, if 1 wei is worth more than 1 sat, then the price can no longer be accurately encoded. This scenario of a 'flippening', 
 when 1 ether becomes worth 10,000,000,000x as much as 1 bitcoin, we find unlikely in the very short-term. 
-Rather than prematurely optimize, incorporating a 2 integer ratio of `x` satoshi to `y` wei and changing the call semantics, 
+Rather than prematurely optimize, incorporating a 2 integer ratio of `x` wei to `y` satoshi and changing the call semantics, 
 we leave this as a future exercise for governance.
 
 == Future design
