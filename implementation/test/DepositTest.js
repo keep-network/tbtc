@@ -14,7 +14,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
 const TBTCStub = artifacts.require('TBTCStub')
-const SystemStub = artifacts.require('SystemStub')
+const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
@@ -43,7 +43,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
   { name: 'TBTCStub', contract: TBTCStub },
-  { name: 'SystemStub', contract: SystemStub }]
+  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -64,7 +64,7 @@ contract('Deposit', (accounts) => {
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.SystemStub.address, deployed.TBTCStub.address, deployed.KeepStub.address)
+    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, deployed.TBTCStub.address, deployed.KeepStub.address)
   })
 
   beforeEach(async () => {
@@ -79,7 +79,7 @@ contract('Deposit', (accounts) => {
     it('runs and updates state and fires a created event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.createNewDeposit(
-        deployed.SystemStub.address,
+        deployed.TBTCSystemStub.address,
         deployed.TBTCStub.address,
         deployed.KeepStub.address,
         1, // m
@@ -94,7 +94,7 @@ contract('Deposit', (accounts) => {
       expect(keepInfo[1], 'signing group timestamp not as expected').not.to.eq.BN(0)
 
       // fired an event
-      const eventList = await deployed.SystemStub.getPastEvents('Created', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('Created', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._keepID, '7')
     })
 
@@ -102,7 +102,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setState(utils.states.REDEEMED)
       try {
         await testInstance.createNewDeposit.call(
-          deployed.SystemStub.address,
+          deployed.TBTCSystemStub.address,
           deployed.TBTCStub.address,
           deployed.KeepStub.address,
           1, // m
@@ -156,7 +156,7 @@ contract('Deposit', (accounts) => {
       assert.equal(requestInfo[4], sighash)
 
       // fired an event
-      const eventList = await deployed.SystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
@@ -225,7 +225,7 @@ contract('Deposit', (accounts) => {
       expect(state).to.eq.BN(utils.states.AWAITING_WITHDRAWAL_PROOF)
 
       // fired an event
-      const eventList = await deployed.SystemStub.getPastEvents('GotRedemptionSignature', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('GotRedemptionSignature', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._r, r)
       assert.equal(eventList[0].returnValues._s, s)
     })
@@ -292,7 +292,7 @@ contract('Deposit', (accounts) => {
       assert.equal(requestInfo[4], nextSighash)
 
       // fired an event
-      const eventList = await deployed.SystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._digest, nextSighash)
     })
 
@@ -358,7 +358,7 @@ contract('Deposit', (accounts) => {
     const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
-      await deployed.SystemStub.setCurrentDiff(currentDiff)
+      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
@@ -378,7 +378,7 @@ contract('Deposit', (accounts) => {
       assert.equal(requestInfo[1], utils.address0)
       assert.equal(requestInfo[4], utils.bytes32zero)
 
-      const eventList = await deployed.SystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._txid, txid_le)
     })
 
@@ -578,7 +578,7 @@ contract('Deposit', (accounts) => {
       expect(keepInfo[1], 'signingGroupRequestedAt should be 0').to.eq.BN(0)
       expect(keepInfo[2], 'fundingProofTimerStart should be 0').to.eq.BN(0)
 
-      const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1, 'Event list is the wrong length')
     })
 
@@ -604,7 +604,7 @@ contract('Deposit', (accounts) => {
       const beneficiary = accounts[4]
       const bond = 1000000000000
 
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       await testInstance.send(bond, { from: beneficiary })
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
@@ -635,7 +635,7 @@ contract('Deposit', (accounts) => {
       assert.equal(keepInfo[3], pubkeyX)
       assert.equal(keepInfo[4], pubkeyY)
 
-      const eventList = await deployed.SystemStub.getPastEvents('RegisteredPubkey', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('RegisteredPubkey', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._signingGroupPubkeyX, pubkeyX, 'Logged X is wrong')
       assert.equal(eventList[0].returnValues._signingGroupPubkeyY, pubkeyY, 'Logged Y is wrong')
     })
@@ -683,7 +683,7 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.FAILED_SETUP)
 
-      const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -744,7 +744,7 @@ contract('Deposit', (accounts) => {
       const keepState = await testInstance.getKeepInfo.call()
       assert(keepState[2].gtn(fundingProofTimerStart), 'fundingProofTimerStart did not increase')
 
-      const eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -755,7 +755,7 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.FAILED_SETUP)
 
-      const eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -787,12 +787,12 @@ contract('Deposit', (accounts) => {
       const signerBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await deployed.KeepStub.setBondAmount(bond)
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 6, utils.bytes32zero, utils.bytes32zero)
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       const finalBalance = await web3.eth.getBalance(beneficiary)
-      const eventList = await deployed.SystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       const balanceCheck = new BN(initialBalance).add(new BN(bond).add(new BN(signerBalance)))
 
       assert.equal(eventList.length, 1)
@@ -831,7 +831,7 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.FAILED_SETUP)
 
-      const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -855,7 +855,7 @@ contract('Deposit', (accounts) => {
 
     it('asserts that it partially slashes signers', async () => {
       const beneficiary = accounts[4]
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       const initialBalance = await web3.eth.getBalance(beneficiary)
       const toSeize = await web3.eth.getBalance(deployed.KeepStub.address)
 
@@ -886,7 +886,7 @@ contract('Deposit', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setKeepInfo(0, 0, 0, signerPubkeyX, signerPubkeyY)
-      await deployed.SystemStub.setCurrentDiff(currentDiff)
+      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
@@ -906,7 +906,7 @@ contract('Deposit', (accounts) => {
       const depostState = await testInstance.getState.call()
       expect(depostState).to.eq.BN(utils.states.FAILED_SETUP)
 
-      const eventList = await deployed.SystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -921,7 +921,7 @@ contract('Deposit', (accounts) => {
 
     it('assert distribute signer bonds to funder', async () => {
       const beneficiary = accounts[4]
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
       const signerBond = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -951,7 +951,7 @@ contract('Deposit', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setKeepInfo(0, 0, 0, signerPubkeyX, signerPubkeyY)
-      await deployed.SystemStub.setCurrentDiff(currentDiff)
+      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
@@ -972,7 +972,7 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.ACTIVE)
 
-      const eventList = await deployed.SystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -991,7 +991,7 @@ contract('Deposit', (accounts) => {
       const signerBond = 10000000000
       const initialTokenBalance = await deployed.TBTCStub.balanceOf(beneficiary)
       await testInstance.send(signerBond, { from: beneficiary })
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
       await testInstance.provideBTCFundingProof(tx, proof, index, headerChain)
@@ -1074,7 +1074,7 @@ contract('Deposit', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
-      await deployed.SystemStub.setCurrentDiff(currentDiff)
+      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
@@ -1154,7 +1154,7 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.LIQUIDATED)
 
-      const eventList = await deployed.SystemStub.getPastEvents('Liquidated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('Liquidated', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -1186,7 +1186,7 @@ contract('Deposit', (accounts) => {
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
       const initialTokenBalance = await deployed.TBTCStub.balanceOf(caller)
 
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalTokenBalance = await deployed.TBTCStub.balanceOf(caller)
@@ -1200,8 +1200,12 @@ contract('Deposit', (accounts) => {
       const initialTokenBalance = await deployed.TBTCStub.balanceOf(beneficiary)
       const returned = await deployed.TBTCStub.balanceOf.call(caller)
 
+<<<<<<< HEAD
       await deployed.TBTCStub.mint(caller, requiredBalance)
       await deployed.SystemStub.setDepositOwner(0, beneficiary)
+=======
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+>>>>>>> master
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalTokenBalance = await deployed.TBTCStub.balanceOf(beneficiary)
@@ -1221,7 +1225,7 @@ contract('Deposit', (accounts) => {
       await testInstance.send(value, { from: accounts[0] })
       await deployed.TBTCStub.mint(caller, requiredBalance)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(caller)
@@ -1240,7 +1244,7 @@ contract('Deposit', (accounts) => {
       await testInstance.send(value, { from: accounts[0] })
       await deployed.TBTCStub.mint(caller, requiredBalance)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -1260,7 +1264,7 @@ contract('Deposit', (accounts) => {
       await deployed.TBTCStub.mint(caller, requiredBalance)
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -1277,7 +1281,7 @@ contract('Deposit', (accounts) => {
 
     afterEach(async () => {
       await deployed.KeepStub.setBondAmount(1000)
-      await deployed.SystemStub.setOraclePrice(new BN('1000000000000', 10))
+      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
     })
 
     it('sets courtesy call state, sets the timestamp, and logs CourtesyCalled', async () => {
@@ -1291,7 +1295,7 @@ contract('Deposit', (accounts) => {
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[1]).not.to.eq.BN(0)
 
-      const eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -1307,7 +1311,7 @@ contract('Deposit', (accounts) => {
     it('reverts if sufficiently collateralized', async () => {
       try {
         await deployed.KeepStub.setBondAmount(1000)
-        await deployed.SystemStub.setOraclePrice(new BN(1))
+        await deployed.TBTCSystemStub.setOraclePrice(new BN(1))
         await testInstance.notifyCourtesyCall()
       } catch (e) {
         assert.include(e.message, 'Signers have sufficient collateral')
@@ -1322,7 +1326,7 @@ contract('Deposit', (accounts) => {
       const notifiedTime = blockTimestamp // not expired
       const fundedTime = blockTimestamp // not expired
       await deployed.KeepStub.setBondAmount(new BN('1000000000000000000000000', 10))
-      await deployed.SystemStub.setOraclePrice(new BN('1', 10))
+      await deployed.TBTCSystemStub.setOraclePrice(new BN('1', 10))
       await testInstance.setState(utils.states.COURTESY_CALL)
       await testInstance.setUTXOInfo('0x' + '00'.repeat(8), fundedTime, '0x' + '00'.repeat(36))
       await testInstance.setLiquidationAndCourtesyInitated(0, notifiedTime)
@@ -1330,7 +1334,7 @@ contract('Deposit', (accounts) => {
 
     afterEach(async () => {
       await deployed.KeepStub.setBondAmount(1000)
-      await deployed.SystemStub.setOraclePrice(new BN('1000000000000', 10))
+      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
     })
 
     it('transitions to active, and logs ExitedCourtesyCall', async () => {
@@ -1341,7 +1345,7 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.ACTIVE)
 
-      const eventList = await deployed.SystemStub.getPastEvents('ExitedCourtesyCall', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('ExitedCourtesyCall', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -1365,7 +1369,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the deposit is still undercollateralized', async () => {
       try {
-        await deployed.SystemStub.setOraclePrice(new BN('1000000000000', 10))
+        await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
         await deployed.KeepStub.setBondAmount(0)
         await testInstance.exitCourtesyCall()
       } catch (e) {
@@ -1383,7 +1387,7 @@ contract('Deposit', (accounts) => {
 
     afterEach(async () => {
       await deployed.KeepStub.setBondAmount(1000)
-      await deployed.SystemStub.setOraclePrice(new BN('1000000000000', 10))
+      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
     })
 
     it('executes', async () => {
@@ -1402,7 +1406,7 @@ contract('Deposit', (accounts) => {
     it('reverts if the deposit is not severely undercollateralized', async () => {
       try {
         await deployed.KeepStub.setBondAmount(10000000)
-        await deployed.SystemStub.setOraclePrice(new BN(1))
+        await deployed.TBTCSystemStub.setOraclePrice(new BN(1))
         await testInstance.notifyUndercollateralizedLiquidation()
       } catch (e) {
         assert.include(e.message, 'Deposit has sufficient collateral')
@@ -1498,7 +1502,7 @@ contract('Deposit', (accounts) => {
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[1]).not.to.eq.BN(0)
 
-      const eventList = await deployed.SystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
