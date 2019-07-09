@@ -245,7 +245,7 @@ library DepositUtils {
         // Therefore, pad with 3 more bytes
         _utxoOutpoint = abi.encodePacked(txID, _fundingOutputIndex, hex"000000");
     }
-    
+
     /// @notice     Calculates the amount of value at auction right now
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
     /// @param _d   deposit storage pointer

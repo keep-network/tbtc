@@ -127,8 +127,6 @@ library DepositFunding {
         fundingTeardown(_d);
     }
 
-  
-
     /// @notice             we poll the Keep contract to retrieve our pubkey
     /// @dev                We store the pubkey as 2 bytestrings, X and Y.
     /// @param  _d          deposit storage pointer
