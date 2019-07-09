@@ -14,7 +14,7 @@ contract('PriceOracleV1', function(accounts) {
   const PRICE_EXPIRY_S = 21600 // 6 hours = 21600 seconds
 
   describe('#constructor', () => {
-    it.only('deploys', async () => {
+    it('deploys', async () => {
       const instance = await PriceOracleV1.deployed()
       assert(instance.address.length == 42)
 
@@ -26,8 +26,9 @@ contract('PriceOracleV1', function(accounts) {
 
       const expiry = new BN(await instance.expiry())
       const timestamp = new BN((await web3.eth.getBlock('latest')).timestamp)
-      console.log(expiry.toNumber(), timestamp.toNumber())
-      assert(expiry.sub(timestamp).eq(new BN(PRICE_EXPIRY_S)))
+      // using an error margin of seconds here, since idk how to get the Truffle deployment time
+      const expiry_errorMargin = timestamp.add(new BN(PRICE_EXPIRY_S)).sub(expiry).abs() // eslint-disable-line
+      assert(expiry_errorMargin.lt(new BN('20')), 'unexpected expiry value')
     })
   })
 
