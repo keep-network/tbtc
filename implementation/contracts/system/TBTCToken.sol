@@ -4,7 +4,8 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract TBTCToken is ERC20Detailed, ERC20 {
-    /// @dev             Constructor, calls ERC20Detailed constructor to set Token info
+    /// @dev Constructor, calls ERC20Detailed constructor to set Token info
+    ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
     constructor() ERC20Detailed("Trustless bitcoin", "TBTC", 18) public {
         // solium-disable-previous-line no-empty-blocks
     }
@@ -24,7 +25,7 @@ contract TBTCToken is ERC20Detailed, ERC20 {
     ///                  deducting from the sender's allowance for said account.
     ///                  Uses the internal _burn function.
     /// @param _account  The account whose tokens will be burnt.
-    /// @param _amount   The amount that will be burnt.
+    /// @param _amount   The amount of tokens that will be burnt.
     function burnFrom(address _account, uint256 _amount) public {
         // NOTE: this uses internal function _burn instead of _burnFrom.
         // This will bypass allowance check for now.
