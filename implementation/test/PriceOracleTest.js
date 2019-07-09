@@ -1,7 +1,7 @@
-const PriceOracleV1 = artifacts.require('PriceOracleV1')
-
 import increaseTime from './helpers/increaseTime'
-const BN = require('bn.js')
+import BN from 'bn.js'
+
+const PriceOracleV1 = artifacts.require('PriceOracleV1')
 
 contract('PriceOracleV1', function(accounts) {
   const DEFAULT_OPERATOR = accounts[0]
@@ -48,7 +48,7 @@ contract('PriceOracleV1', function(accounts) {
           DEFAULT_PRICE
         )
 
-        await increaseTime(PRICE_EXPIRY_S + 1)
+        await increaseTime(PRICE_EXPIRY_SECONDS + 1)
 
         try {
           await instance.getPrice.call()
@@ -139,7 +139,7 @@ contract('PriceOracleV1', function(accounts) {
         }
 
         const ONE_HOUR = 3600
-        await time.increase(PRICE_EXPIRY_SECONDS - ONE_HOUR)
+        await increaseTime(PRICE_EXPIRY_SECONDS - ONE_HOUR)
 
         await instance.updatePrice(price2)
         const res = await instance.getPrice.call()
