@@ -44,7 +44,7 @@ we leave this as a future exercise for governance.
 
 == Future design
 
-The price oracle is integral to tBTC's security and in future, will be principally governed by
+The price oracle is integral to tBTC's security and in the future, will be principally governed by
 the tBTC ecosystem. The first upgrades will focus on incorporating a medianizer model from MakerDAO, where 
 multiple price feeds are voted in and the median price is calculated from their reports. Other on-chain price signals like
 decentralized exchanges (DEX's) and liquidity pools (Uniswap) are being considered.
