@@ -70,8 +70,10 @@ contract('PriceOracleV1', function(accounts) {
       })
 
       it('fails when price delta < 1%', async () => {
+        const delta = new BN('10')
         const price1 = new BN('323200000001')
-        const price2 = new BN('323200000010')
+        const price2 = new BN('323200000010').add(delta)
+        const price3 = new BN('323200000000').sub(delta)
 
         const instance = await PriceOracleV1.new(
           DEFAULT_OPERATOR,
@@ -79,6 +81,7 @@ contract('PriceOracleV1', function(accounts) {
         )
 
         await expectThrow(instance.updatePrice(price2))
+        await expectThrow(instance.updatePrice(price3))
       })
 
       it('fails when msg.sender != operator', async () => {
