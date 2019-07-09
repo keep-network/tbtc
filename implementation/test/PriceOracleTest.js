@@ -3,14 +3,13 @@ const PriceOracleV1 = artifacts.require('PriceOracleV1')
 import increaseTime from './helpers/increaseTime'
 const BN = require('bn.js')
 
-
 contract('PriceOracleV1', function(accounts) {
   const DEFAULT_OPERATOR = accounts[0]
 
   // 1 satoshi = 1 wei
   const DEFAULT_PRICE = new BN('323200000000')
 
-  const PRICE_EXPIRY_S = 21600 // 6 hours = 21600 seconds
+  const PRICE_EXPIRY_SECONDS = 21600 // 6 hours = 21600 seconds
 
   describe('#constructor', () => {
     it('deploys', async () => {
@@ -26,7 +25,7 @@ contract('PriceOracleV1', function(accounts) {
       const expiry = new BN(await instance.expiry())
       const timestamp = new BN((await web3.eth.getBlock('latest')).timestamp)
       // using an error margin of seconds here, since idk how to get the Truffle deployment time
-      const expiry_errorMargin = timestamp.add(new BN(PRICE_EXPIRY_S)).sub(expiry).abs() // eslint-disable-line
+      const expiry_errorMargin = timestamp.add(new BN(PRICE_EXPIRY_SECONDS)).sub(expiry).abs() // eslint-disable-line
       assert(expiry_errorMargin.lt(new BN('20')), 'unexpected expiry value')
     })
   })
@@ -76,7 +75,7 @@ contract('PriceOracleV1', function(accounts) {
         const expiry = await instance.expiry.call()
 
         assert(
-          expiry.toNumber() == (block.timestamp + PRICE_EXPIRY_S)
+          expiry.toNumber() == (block.timestamp + PRICE_EXPIRY_SECONDS)
         )
 
         const res = await instance.getPrice.call()
@@ -140,7 +139,7 @@ contract('PriceOracleV1', function(accounts) {
         }
 
         const ONE_HOUR = 3600
-        await increaseTime(PRICE_EXPIRY_S - ONE_HOUR)
+        await time.increase(PRICE_EXPIRY_SECONDS - ONE_HOUR)
 
         await instance.updatePrice(price2)
         const res = await instance.getPrice.call()
