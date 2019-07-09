@@ -18,14 +18,15 @@ contract('PriceOracleV1', function(accounts) {
       const instance = await PriceOracleV1.deployed()
       assert(instance.address.length == 42)
 
-      let price = await instance.getPrice()
+      const price = await instance.getPrice()
       assert(price.eq(DEFAULT_PRICE))
 
-      let operator = await instance.operator()
+      const operator = await instance.operator()
       assert(operator == accounts[0])
 
-      let expiry = new BN(await instance.expiry())
-      let timestamp = new BN((await web3.eth.getBlock('latest')).timestamp)
+      const expiry = new BN(await instance.expiry())
+      const timestamp = new BN((await web3.eth.getBlock('latest')).timestamp)
+      console.log(expiry.toNumber(), timestamp.toNumber())
       assert(expiry.sub(timestamp).eq(new BN(PRICE_EXPIRY_S)))
     })
   })
