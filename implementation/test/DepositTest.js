@@ -366,7 +366,7 @@ contract('Deposit', (accounts) => {
 
     it('updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await deployed.SystemStub.setDepositOwner(0, accounts[0])
+      await deployed.TBTCSystemStub.setDepositOwner(0, accounts[0])
 
       await testInstance.provideRedemptionProof(tx, proof, index, headerChain)
 
@@ -1200,12 +1200,8 @@ contract('Deposit', (accounts) => {
       const initialTokenBalance = await deployed.TBTCStub.balanceOf(beneficiary)
       const returned = await deployed.TBTCStub.balanceOf.call(caller)
 
-<<<<<<< HEAD
       await deployed.TBTCStub.mint(caller, requiredBalance)
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
-=======
       await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
->>>>>>> master
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalTokenBalance = await deployed.TBTCStub.balanceOf(beneficiary)

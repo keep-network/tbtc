@@ -295,21 +295,13 @@ contract('DepositUtils', (accounts) => {
 
   describe('distributeBeneficiaryReward()', async () => {
     it('checks that beneficiary is rewarded', async () => {
-<<<<<<< HEAD
       const beneficiary = accounts[2]
       // min an arbitrary reward value to the funding contract
       const reward = 100000000
       await deployed.TBTCStub.mint(testUtilsInstance.address, reward)
 
       const initialTokenBalance = await deployed.TBTCStub.balanceOf(beneficiary)
-      await deployed.SystemStub.setDepositOwner(0, beneficiary)
-=======
-      const beneficiary = accounts[5]
-      // reward should == 10**18. This is a stub value. parameter address is irrelevant
-      const reward = await deployed.TBTCStub.balanceOf.call(accounts[0])
-      const initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
       await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
->>>>>>> master
 
       await testUtilsInstance.distributeBeneficiaryReward()
 

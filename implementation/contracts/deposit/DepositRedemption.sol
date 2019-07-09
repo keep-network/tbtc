@@ -10,7 +10,7 @@ import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
-import {TBTCToken} from "../interfaces/TBTCToken.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
 import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 
@@ -240,7 +240,7 @@ library DepositRedemption {
 
         // Transfer TBTC to signers
         distributeSignerFee(_d);
-        
+
         // Transfer withheld amount to beneficiary
         _d.distributeBeneficiaryReward();
 

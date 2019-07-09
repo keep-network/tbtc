@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
-import {TBTCToken} from '../../../contracts/interfaces/TBTCToken.sol';
+import {TBTCToken} from '../../../contracts/system/TBTCToken.sol';
 
 contract TBTCStub is TBTCToken{
     

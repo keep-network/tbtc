@@ -7,7 +7,7 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {TBTCToken} from "../interfaces/TBTCToken.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositLiquidation {
 

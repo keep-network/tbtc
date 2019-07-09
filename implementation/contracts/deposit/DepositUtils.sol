@@ -8,7 +8,7 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
-import {TBTCToken} from "../interfaces/TBTCToken.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositUtils {
 
