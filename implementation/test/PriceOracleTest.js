@@ -14,9 +14,19 @@ contract('PriceOracleV1', function(accounts) {
   const PRICE_EXPIRY_S = 21600 // 6 hours = 21600 seconds
 
   describe('#constructor', () => {
-    it('deploys', async () => {
+    it.only('deploys', async () => {
       const instance = await PriceOracleV1.deployed()
       assert(instance.address.length == 42)
+
+      let price = await instance.getPrice()
+      assert(price.eq(DEFAULT_PRICE))
+
+      let operator = await instance.operator()
+      assert(operator == accounts[0])
+
+      let expiry = new BN(await instance.expiry())
+      let timestamp = new BN((await web3.eth.getBlock('latest')).timestamp)
+      assert(expiry.sub(timestamp).eq(new BN(PRICE_EXPIRY_S)))
     })
   })
 
