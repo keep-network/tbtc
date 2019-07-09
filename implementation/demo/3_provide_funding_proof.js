@@ -10,19 +10,20 @@
 //                 of confirmations for the transaction
 
 const Deposit = artifacts.require('./Deposit.sol')
-const TBTCSystem = artifacts.require('./TBTCSystemStub.sol')
+const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 
 const FundingProof = require('./tools/FundingProof')
 
 module.exports = async function() {
-  const txID = process.argv[4]
-  const headersCount = process.argv[5]
+  const depositAddress = process.argv[4]
+  const txID = process.argv[5]
+  const headersCount = process.argv[6]
 
   let deposit
   let depositLog
 
   try {
-    deposit = await Deposit.deployed()
+    deposit = await Deposit.at(depositAddress)
     depositLog = await TBTCSystem.deployed()
   } catch (err) {
     throw new Error('contracts initialization failed', err)
@@ -30,8 +31,6 @@ module.exports = async function() {
 
   async function provideFundingProof(fundingProof) {
     console.log('Submit funding proof...')
-
-    const blockNumber = await web3.eth.getBlock('latest').number
 
     const result = await deposit.provideBTCFundingProof(
       fundingProof.version,
@@ -47,9 +46,11 @@ module.exports = async function() {
     })
 
     console.log('provideBTCFundingProof transaction: ', result.tx)
+  }
 
+  async function logEvents(startBlockNumber) {
     const eventList = await depositLog.getPastEvents('Funded', {
-      fromBlock: blockNumber,
+      fromBlock: startBlockNumber,
       toBlock: 'latest',
     })
 
@@ -64,9 +65,13 @@ module.exports = async function() {
 
   console.log('Funding proof:', FundingProof.serialize(fundingProof))
 
+  const startBlockNumber = await web3.eth.getBlock('latest').number
+
   await provideFundingProof(fundingProof)
     .catch((err) => {
       console.error('funding proof submission failed\n', err)
       process.exit(1)
     })
+
+  await logEvents(startBlockNumber)
 }
