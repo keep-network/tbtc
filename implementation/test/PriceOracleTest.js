@@ -1,6 +1,5 @@
 const PriceOracleV1 = artifacts.require('PriceOracleV1')
 
-import expectThrow from './helpers/expectThrow'
 import increaseTime from './helpers/increaseTime'
 const BN = require('bn.js')
 
@@ -52,7 +51,13 @@ contract('PriceOracleV1', function(accounts) {
 
         await increaseTime(PRICE_EXPIRY_S + 1)
 
-        await expectThrow(instance.getPrice.call())
+        try {
+          await instance.getPrice.call()
+
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'price expired')
+        }
       })
     })
 
@@ -89,8 +94,14 @@ contract('PriceOracleV1', function(accounts) {
           price1
         )
 
-        await expectThrow(instance.updatePrice(price2))
-        await expectThrow(instance.updatePrice(price3))
+        try {
+          await instance.updatePrice(price2)
+          await instance.updatePrice(price3)
+
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'price change is negligible (<1%)')
+        }
       })
 
       it('fails when msg.sender != operator', async () => {
@@ -99,12 +110,16 @@ contract('PriceOracleV1', function(accounts) {
           DEFAULT_PRICE
         )
 
-        await expectThrow(
-          instance.updatePrice(
+        try {
+          await instance.updatePrice(
             new BN('323200000001'),
             { from: accounts[1] }
           )
-        )
+
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'unauthorised')
+        }
       })
 
       it('ignores 1% threshold for update, when the price is close to expiry', async () => {
@@ -116,9 +131,13 @@ contract('PriceOracleV1', function(accounts) {
         const price2 = new BN('323200000010')
 
         await instance.updatePrice(price1)
-        await expectThrow(
-          instance.updatePrice(price2)
-        )
+
+        try {
+          await instance.updatePrice(price2)
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'price change is negligible (<1%)')
+        }
 
         const ONE_HOUR = 3600
         await increaseTime(PRICE_EXPIRY_S - ONE_HOUR)
