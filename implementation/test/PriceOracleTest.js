@@ -48,9 +48,6 @@ contract('PriceOracleV1', function(accounts) {
           DEFAULT_PRICE
         )
 
-        const res = await instance.getPrice.call()
-        assert(res.eq(DEFAULT_PRICE))
-
         await increaseTime(PRICE_EXPIRY_S + 1)
 
         await expectThrow(instance.getPrice.call())
