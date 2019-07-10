@@ -10,10 +10,21 @@ contract KeepBridge is IKeep {
         return 0;
     }
 
-
+    /// @notice Approves digest for signing.
+    /// @dev Calls given keep to sign the digest. Records a current timestamp
+    /// for given keep and digest pair.
+    /// @param _keepID Keep identifier
+    /// @param _digest Digest to sign
+    /// @return True if successful.
     function approveDigest(uint256 _keepID, bytes32 _digest) external returns (bool _success){
-        //TODO: Implement
-        return _success;
+        // TODO: keepID type should be changed from uint256 to address
+        address _keepAddress = address(_keepID);
+
+        ECDSAKeepContract(_keepAddress).sign(abi.encodePacked(_digest));
+
+        approvedDigests[abi.encodePacked(_keepID, _digest)] = block.timestamp;
+
+        return true;
     }
 
     function submitSignatureFraud(
