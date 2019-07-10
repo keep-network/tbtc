@@ -11,9 +11,14 @@ contract KeepBridge is IKeep {
     /// concatenation of a keepID and a digest.
     mapping (bytes => uint256) approvedDigests;
 
+    /// @notice Gets timestamp of digest approval for signing.
+    /// @dev Identifies entry in the recorded approvals by keep ID and digest pair.
+    /// @param _keepID Keep identifier
+    /// @param _digest Digest to sign
+    /// @return Timestamp from the moment of recording the digest for signing.
+    /// Returns 0 if the digest was not recorded for signing for the given keep.
     function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256){
-        //TODO: Implement
-        return 0;
+        return approvedDigests[abi.encodePacked(_keepID, _digest)];
     }
 
     /// @notice Approves digest for signing.
