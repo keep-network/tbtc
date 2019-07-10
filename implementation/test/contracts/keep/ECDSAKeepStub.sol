@@ -7,11 +7,20 @@ import {ECDSAKeepContract} from '../../../contracts/interfaces/KeepBridge.sol';
 contract ECDSAKeepStub is ECDSAKeepContract {
     bytes publicKey;
 
+    // Notification that the keep was requested to sign a digest.
+    event SignatureRequested(
+        bytes _digest
+    );
+
     function setPublicKey(bytes _publicKey) public {
         publicKey = _publicKey;
     }
 
     function getPublicKey() external view returns (bytes memory) {
         return publicKey;
+    }
+
+    function sign(bytes _digest) external {
+          emit SignatureRequested(_digest);
     }
 }
