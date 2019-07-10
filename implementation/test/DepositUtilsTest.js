@@ -376,17 +376,17 @@ contract('DepositUtils', (accounts) => {
       await tbtc.mint(tbtcSeller, order.supplyTbtc)
 
       await deposit.setExteroriorAddresses(
-        deployed.SystemStub.address,
+        deployed.TBTCSystemStub.address,
         tbtc.address,
         deployed.KeepStub.address,
       )
-      await deployed.SystemStub.setExteroriorAddresses(
+      await deployed.TBTCSystemStub.setExteroriorAddresses(
         uniswapFactory.address,
         tbtc.address
       )
 
       expect(
-        await deployed.SystemStub.getTBTCUniswapExchange()
+        await deployed.TBTCSystemStub.getTBTCUniswapExchange()
       ).to.eq(exchange.address)
 
 

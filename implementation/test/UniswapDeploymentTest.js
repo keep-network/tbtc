@@ -1,4 +1,4 @@
-const TBTCSystemStub = artifacts.require('TBTCSystemStub')
+const TBTCSystem = artifacts.require('TBTCSystem')
 const TBTC = artifacts.require('TBTC')
 const IUniswapFactory = artifacts.require('IUniswapFactory')
 const IUniswapExchange = artifacts.require('IUniswapExchange')
@@ -16,7 +16,7 @@ contract('Uniswap', (accounts) => {
 
   describe('deployment', async () => {
     it('deployed the uniswap factory and exchange', async () => {
-      tbtcSystem = await TBTCSystemStub.deployed()
+      tbtcSystem = await TBTCSystem.deployed()
 
       tbtc = await tbtcSystem.tbtc()
       expect(tbtc).to.not.be.empty
@@ -42,7 +42,7 @@ contract('Uniswap', (accounts) => {
       tbtc = await TBTC.new()
 
       // We rely on the already pre-deployed Uniswap factory here.
-      const tbtcSystem = await TBTCSystemStub.deployed()
+      const tbtcSystem = await TBTCSystem.deployed()
       const uniswapDeployment = await UniswapDeployment.deployed()
       const uniswapFactoryAddr = await uniswapDeployment.factory()
 
@@ -63,7 +63,7 @@ contract('Uniswap', (accounts) => {
       )
     })
 
-    describe.only('e2e testing of a trade', () => {
+    describe('e2e testing of a trade', () => {
       it('adds liquidity and trades ETH for TBTC', async () => {
         // This avoids rabbit-hole debugging
         // stemming from the fact Vyper is new and they don't do REVERT's
