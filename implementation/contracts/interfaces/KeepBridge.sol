@@ -64,7 +64,7 @@ contract KeepBridge is IKeep {
         //TODO: Implement
 
         address keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
-        // TODO: keepID type should be changed from uint256 to addrress
+        // TODO: keepID type should be changed from uint256 to address
         _keepID = uint256(keepAddress);
 
         return _keepID;
