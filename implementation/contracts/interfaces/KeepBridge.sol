@@ -119,4 +119,8 @@ interface ECDSAKeepContract {
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
     function getPublicKey() external view returns (bytes memory);
+
+    /// @notice Requests a signature over the digest from the keep.
+    /// @return Digest to sign.
+    function sign(bytes _digest) external;
 }
