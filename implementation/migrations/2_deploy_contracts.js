@@ -16,6 +16,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const Deposit = artifacts.require('Deposit')
 
+// price oracle
 const PriceOracleV1 = artifacts.require('PriceOracleV1')
 
 // system
@@ -75,7 +76,10 @@ module.exports = (deployer, network, accounts) => {
 
     await deployer.deploy(Deposit)
 
+    // price oracle
     await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
+
+    // system
     await deployer.deploy(TBTCSystem)
 
     // keep
