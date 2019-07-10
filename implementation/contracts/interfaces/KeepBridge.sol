@@ -11,14 +11,24 @@ contract KeepBridge is IKeep {
     /// concatenation of a keepID and a digest.
     mapping (bytes => uint256) approvedDigests;
 
-    /// @notice Gets timestamp of digest approval for signing.
-    /// @dev Identifies entry in the recorded approvals by keep ID and digest pair.
-    /// @param _keepID Keep identifier
-    /// @param _digest Digest to sign
-    /// @return Timestamp from the moment of recording the digest for signing.
-    /// Returns 0 if the digest was not recorded for signing for the given keep.
-    function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256){
-        return approvedDigests[abi.encodePacked(_keepID, _digest)];
+    function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (uint256 _keepID){
+        //TODO: Implement
+
+        address keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
+        // TODO: keepID type should be changed from uint256 to address
+        _keepID = uint256(keepAddress);
+
+        return _keepID;
+    }
+
+    // get the result of a keep formation
+    // should return a 64 byte packed pubkey (x and y)
+    // error if not ready yet
+    function getKeepPubkey(uint256 _keepID) external view returns (bytes){
+        // TODO: keepID type should be changed from uint256 to addrress
+        address _keepAddress = address(_keepID);
+
+        return ECDSAKeepContract(_keepAddress).getPublicKey();
     }
 
     /// @notice Approves digest for signing.
@@ -36,6 +46,16 @@ contract KeepBridge is IKeep {
         approvedDigests[abi.encodePacked(_keepID, _digest)] = block.timestamp;
 
         return true;
+    }
+
+    /// @notice Gets timestamp of digest approval for signing.
+    /// @dev Identifies entry in the recorded approvals by keep ID and digest pair.
+    /// @param _keepID Keep identifier
+    /// @param _digest Digest to sign
+    /// @return Timestamp from the moment of recording the digest for signing.
+    /// Returns 0 if the digest was not recorded for signing for the given keep.
+    function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256){
+        return approvedDigests[abi.encodePacked(_keepID, _digest)];
     }
 
     function submitSignatureFraud(
@@ -59,27 +79,6 @@ contract KeepBridge is IKeep {
         //TODO: Implement
         return false;
     }
-
-    function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (uint256 _keepID){
-        //TODO: Implement
-
-        address keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
-        // TODO: keepID type should be changed from uint256 to address
-        _keepID = uint256(keepAddress);
-
-        return _keepID;
-    }
-
-    // get the result of a keep formation
-    // should return a 64 byte packed pubkey (x and y)
-    // error if not ready yet
-    function getKeepPubkey(uint256 _keepID) external view returns (bytes){
-        // TODO: keepID type should be changed from uint256 to addrress
-        address _keepAddress = address(_keepID);
-
-        return ECDSAKeepContract(_keepAddress).getPublicKey();
-    }
-
 
     // returns the amount of the keep's ETH bond in wei
     function checkBondAmount(uint256 _keepID) external view returns (uint256){
