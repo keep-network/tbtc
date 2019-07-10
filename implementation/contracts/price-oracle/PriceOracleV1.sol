@@ -3,10 +3,8 @@ pragma solidity 0.4.25;
 import "../interfaces/IPriceOracle.sol";
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 
-/**
- * The price oracle implements a simple price feed, managed
- * by a trusted operator.
- */
+/// @title BTC-ETH Price Oracle V1
+/// @notice implements a simple price feed, managed by a trusted operator.
 contract PriceOracleV1 is IPriceOracle {
     using SafeMath for uint128;
 
@@ -24,12 +22,12 @@ contract PriceOracleV1 is IPriceOracle {
     //               price = 323200000000
     //
     // uint128 can store an int of max size 2^128 (3.403 e38)
-    // 38 decimal places should be enough... :)
+    // 38 decimals should be enough to store the price of a satoshi in wei
     uint128 internal price;
 
     // The time at which the last price update is not valid for usage.
     uint256 public expiry;
-    uint256 constant PRICE_EXPIRY = 6 hours;
+    uint256 constant PRICE_EXPIRY_PERIOD = 6 hours;
 
     // Trusted user that updates the oracle.
     address public operator;
@@ -40,7 +38,7 @@ contract PriceOracleV1 is IPriceOracle {
     ) public {
         operator = _operator;
         price = _defaultPrice;
-        expiry = block.timestamp + PRICE_EXPIRY;
+        expiry = block.timestamp + PRICE_EXPIRY_PERIOD;
     }
 
     function getPrice() external view returns (uint128) {
@@ -67,7 +65,7 @@ contract PriceOracleV1 is IPriceOracle {
         }
 
         price = _newPrice;
-        expiry = block.timestamp + PRICE_EXPIRY;
+        expiry = block.timestamp + PRICE_EXPIRY_PERIOD;
 
         emit PriceUpdated(price, expiry);
     }

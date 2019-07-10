@@ -14,19 +14,23 @@ contract('PriceOracleV1', function(accounts) {
   describe('#constructor', () => {
     it('deploys', async () => {
       const instance = await PriceOracleV1.deployed()
-      assert(instance.address.length == 42)
 
       const price = await instance.getPrice()
       assert(price.eq(DEFAULT_PRICE))
 
       const operator = await instance.operator()
-      assert(operator == accounts[0])
+      assert.equal(operator, accounts[0])
+    })
 
-      const expiry = new BN(await instance.expiry())
-      const timestamp = new BN((await web3.eth.getBlock('latest')).timestamp)
-      // using an error margin of seconds here, since idk how to get the Truffle deployment time
-      const expiry_errorMargin = timestamp.add(new BN(PRICE_EXPIRY_SECONDS)).sub(expiry).abs() // eslint-disable-line
-      assert(expiry_errorMargin.lt(new BN('20')), 'unexpected expiry value')
+    it('sets price expiry correctly', async () => {
+      const instance = await PriceOracleV1.new(DEFAULT_OPERATOR, DEFAULT_PRICE)
+
+      const deployBlockNumber = (await web3.eth.getTransaction(instance.transactionHash)).blockNumber
+      const deployTimestamp = (await web3.eth.getBlock(deployBlockNumber)).timestamp
+      const expectedExpiry = new BN(deployTimestamp).add(new BN(PRICE_EXPIRY_SECONDS))
+
+      const expiry = await instance.expiry()
+      assert(expiry.eq(expectedExpiry))
     })
   })
 
@@ -69,38 +73,68 @@ contract('PriceOracleV1', function(accounts) {
           DEFAULT_PRICE
         )
 
-        await instance.updatePrice(newPrice)
+        const tx = await instance.updatePrice(newPrice)
+        const block = await web3.eth.getBlock(tx.receipt.blockNumber)
 
-        const block = await web3.eth.getBlock('latest')
         const expiry = await instance.expiry.call()
 
-        assert(
-          expiry.toNumber() == (block.timestamp + PRICE_EXPIRY_SECONDS)
+        assert.equal(
+          expiry.toNumber(), block.timestamp + PRICE_EXPIRY_SECONDS
         )
 
         const res = await instance.getPrice.call()
         assert(res.eq(newPrice))
       })
 
-      it('fails when price delta < 1%', async () => {
-        const delta = new BN('10')
-        const price1 = new BN('323200000001')
-        const price2 = new BN('323200000010').add(delta)
-        const price3 = new BN('323200000000').sub(delta)
+      describe('fails when price delta < 1%', async () => {
+        let instance
+        const price = new BN('323200000000')
 
-        const instance = await PriceOracleV1.new(
-          DEFAULT_OPERATOR,
-          price1
-        )
+        // DO NOT try to use BN.js, it is a sinkhole of time
+        // These test cases were created using `bc`
+        // An example:
+        // $ bc
+        // scale=100
+        // 323200000000*1.009
+        // etc.
 
-        try {
+        beforeEach(async () => {
+          instance = await PriceOracleV1.new(
+            DEFAULT_OPERATOR,
+            price
+          )
+        })
+
+        it('fails upper bound 0.9%', async () => {
+          const price2 = new BN('326108800000')
+          try {
+            await instance.updatePrice(price2)
+            assert(false, 'Test call did not error as expected')
+          } catch (e) {
+            assert.include(e.message, 'Price change is negligible (<1%)')
+          }
+        })
+
+        it('fails lower bound 0.9%', async () => {
+          const price2 = new BN('320317145688')
+
+          try {
+            await instance.updatePrice(price2)
+            assert(false, 'Test call did not error as expected')
+          } catch (e) {
+            assert.include(e.message, 'Price change is negligible (<1%)')
+          }
+        })
+
+        it('passes upper bound 1.1%', async () => {
+          const price2 = new BN('326755200000')
           await instance.updatePrice(price2)
-          await instance.updatePrice(price3)
+        })
 
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Price change is negligible (<1%)')
-        }
+        it('passes lower bound 1.1%', async () => {
+          const price2 = new BN('319683481701')
+          await instance.updatePrice(price2)
+        })
       })
 
       it('fails when msg.sender != operator', async () => {
