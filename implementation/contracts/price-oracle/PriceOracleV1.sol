@@ -44,12 +44,12 @@ contract PriceOracleV1 is IPriceOracle {
     }
 
     function getPrice() external view returns (uint128) {
-        require(block.timestamp < expiry, "price expired");
+        require(block.timestamp < expiry, "Price expired");
         return price;
     }
 
     function updatePrice(uint128 _newPrice) external {
-        require(msg.sender == operator, "unauthorised");
+        require(msg.sender == operator, "Unauthorised");
 
         bool nearExpiry = (expiry - 1 hours) <= block.timestamp;
 
@@ -63,7 +63,7 @@ contract PriceOracleV1 is IPriceOracle {
                             ? _newPrice.sub(price)
                             : price.sub(_newPrice);
             /* solium-enable */
-            require(delta > minDelta, "price change is negligible (<1%)");
+            require(delta > minDelta, "Price change is negligible (<1%)");
         }
 
         price = _newPrice;

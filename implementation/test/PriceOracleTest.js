@@ -55,7 +55,7 @@ contract('PriceOracleV1', function(accounts) {
 
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, 'price expired')
+          assert.include(e.message, 'Price expired')
         }
       })
     })
@@ -99,7 +99,7 @@ contract('PriceOracleV1', function(accounts) {
 
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, 'price change is negligible (<1%)')
+          assert.include(e.message, 'Price change is negligible (<1%)')
         }
       })
 
@@ -117,7 +117,7 @@ contract('PriceOracleV1', function(accounts) {
 
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, 'unauthorised')
+          assert.include(e.message, 'Unauthorised')
         }
       })
 
@@ -135,7 +135,7 @@ contract('PriceOracleV1', function(accounts) {
           await instance.updatePrice(price2)
           assert(false, 'Test call did not error as expected')
         } catch (e) {
-          assert.include(e.message, 'price change is negligible (<1%)')
+          assert.include(e.message, 'Price change is negligible (<1%)')
         }
 
         const ONE_HOUR = 3600
