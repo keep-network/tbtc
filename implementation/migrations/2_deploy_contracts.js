@@ -32,6 +32,9 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   KeepBridge, PriceOracleV1]
 
 module.exports = (deployer, network, accounts) => {
+  const PRICE_ORACLE_OPERATOR = accounts[0]
+  const PRICE_ORACLE_DEFAULT_PRICE = '323200000000'
+
   deployer.then(async () => {
     // bitcoin-spv
     await deployer.deploy(BytesLib)
@@ -72,7 +75,7 @@ module.exports = (deployer, network, accounts) => {
 
     await deployer.deploy(Deposit)
 
-    await deployer.deploy(PriceOracleV1, accounts[0], '323200000000')
+    await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
     await deployer.deploy(TBTCSystem)
 
     // keep
