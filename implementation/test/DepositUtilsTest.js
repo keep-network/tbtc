@@ -363,7 +363,6 @@ contract('DepositUtils', (accounts) => {
       const expectedSignerPKH = '0xa99c23add58e3d0712278b2873c3c0bd21657115'
       await testUtilsInstance.setPubKey(_signerPubkeyX, _signerPubkeyX)
       const signerPKH = await testUtilsInstance.signerPKH.call()
-      console.log(signerPKH)
       assert.equal(signerPKH, expectedSignerPKH)
     })
   })
