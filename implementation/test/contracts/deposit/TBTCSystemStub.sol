@@ -6,7 +6,7 @@ import {DepositLog} from '../../../contracts/DepositLog.sol';
 import {IUniswapFactory} from "../../../contracts/uniswap/IUniswapFactory.sol";
 import {TBTC} from "../../../contracts/tokens/TBTC.sol";
 
-contract SystemStub is ITBTCSystem, IERC721, DepositLog {
+contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
 
     uint256 current = 1;
     uint256 past = 1;

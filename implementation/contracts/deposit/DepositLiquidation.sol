@@ -31,7 +31,7 @@ library DepositLiquidation {
 
         if (_d.auctionTBTCAmount() == 0) {
             // Redemption flow, liquidate TBTC
-            uint tbtcToLiquidate = _d.auctionTBTCAmount();
+            // uint tbtcToLiquidate = _d.auctionTBTCAmount();
 
         } else {
             // Abort/fraud flow, liquidate ETH

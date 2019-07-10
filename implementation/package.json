@@ -14,7 +14,7 @@
     "clean": "rm -r build/contracts/*"
   },
   "config": {
-    "eslintPaths": "test/ migrations/"
+    "eslintPaths": "test/ migrations/ demo/"
   },
   "precommit": "npm run lint",
   "author": "James Prestwich",

@@ -3,12 +3,7 @@ const TBTC = artifacts.require('TBTC')
 const IUniswapFactory = artifacts.require('IUniswapFactory')
 const IUniswapExchange = artifacts.require('IUniswapExchange')
 
-const uniswap = require('../uniswap')
-
-const truffleAssert = require('truffle-assertions'); 
-
 const UniswapDeployment = artifacts.require('UniswapDeployment')
-
 
 import { UniswapHelpers } from './helpers/uniswap'
 import expectThrow from './helpers/expectThrow'
@@ -16,121 +11,125 @@ import expectThrow from './helpers/expectThrow'
 // Tests the Uniswap deployment
 
 contract('Uniswap', (accounts) => {
-    let tbtcSystem;
-    let tbtc;
+  let tbtcSystem
+  let tbtc
 
-    describe('deployment', async () => {
-        it('deployed the uniswap factory and exchange', async () => {
-            let tbtcSystem = await TBTCSystemStub.deployed();
+  describe('deployment', async () => {
+    it('deployed the uniswap factory and exchange', async () => {
+      tbtcSystem = await TBTCSystemStub.deployed()
 
-            let tbtc = await tbtcSystem.tbtc()
-            expect(tbtc).to.not.be.empty;
+      tbtc = await tbtcSystem.tbtc()
+      expect(tbtc).to.not.be.empty
 
-            let uniswapFactoryAddr = await tbtcSystem.uniswapFactory()
-            expect(uniswapFactoryAddr).to.not.be.empty;
+      const uniswapFactoryAddr = await tbtcSystem.uniswapFactory()
+      expect(uniswapFactoryAddr).to.not.be.empty
 
-            let uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr);
-            let tbtcExchangeAddr = await uniswapFactory.getExchange(tbtc)
-            expect(tbtcExchangeAddr).to.not.be.empty;
-        })
-
-        it('has liquidity by default', async () => {})
+      const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
+      const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtc)
+      expect(tbtcExchangeAddr).to.not.be.empty
     })
 
-    describe('TBTC Uniswap Exchange', () => {
-        let tbtc;
-        let tbtcExchange;
+    it('has liquidity by default', async () => {})
+  })
 
-        beforeEach(async () => {
-            tbtc = await TBTC.new()
+  describe('TBTC Uniswap Exchange', () => {
+    let tbtc
+    let tbtcExchange
 
-            // We rely on the already pre-deployed Uniswap factory here.
-            let tbtcSystem = await TBTCSystemStub.deployed();
-            const uniswapDeployment = await UniswapDeployment.deployed()
-            let uniswapFactoryAddr = await uniswapDeployment.factory()
 
-            let uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr);
-        
-            let res = await uniswapFactory.createExchange(tbtc.address)
-            let tbtcExchangeAddr = await uniswapFactory.getExchange.call(tbtc.address)
+    beforeEach(async () => {
+      /* eslint-disable no-unused-vars */
+      tbtc = await TBTC.new()
 
-            tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddr)
-        })
+      // We rely on the already pre-deployed Uniswap factory here.
+      const tbtcSystem = await TBTCSystemStub.deployed()
+      const uniswapDeployment = await UniswapDeployment.deployed()
+      const uniswapFactoryAddr = await uniswapDeployment.factory()
 
-        it('has no liquidity by default', async () => {
-            await expectThrow(
-                tbtcExchange.getTokenToEthInputPrice.call(1)
-            );
-        }) 
+      const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
 
-        describe.only('e2e testing of a trade', () => {        
-            it('adds liquidity and trades ETH for TBTC', async () => {
-                // This avoids rabbit-hole debugging
-                // stemming from the fact Vyper is new and they don't do REVERT's
-                expect(
-                    await web3.eth.getBalance(accounts[0])
-                ).to.not.eq('0')
+      const res = await uniswapFactory.createExchange(tbtc.address)
+      const tbtcExchangeAddr = await uniswapFactory.getExchange.call(tbtc.address)
 
-                expect(
-                    await web3.eth.getBalance(accounts[1])
-                ).to.not.eq('0')
 
-                // Both tokens use 18 decimal places, so we can use toWei here.
-                const TBTC_AMT = web3.utils.toWei('50', 'ether');
-                const ETH_AMT = web3.utils.toWei('1', 'ether');
-
-                // Mint TBTC
-                await tbtc.mint(
-                    accounts[0],
-                    TBTC_AMT
-                )
-                await tbtc.mint(
-                    accounts[1],
-                    TBTC_AMT
-                )
-                
-                await tbtc.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[0] })
-                await tbtc.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[1] })
-
-                // min_liquidity, max_tokens, deadline
-                const TBTC_ADDED = web3.utils.toWei('10', 'ether')
-                await tbtcExchange.addLiquidity(
-                    '0', 
-                    TBTC_ADDED, 
-                    UniswapHelpers.getDeadline(),
-                    { value: ETH_AMT }
-                )
-
-                // it will be at an exchange rate of 
-                // 10 TBTC : 1 ETH
-                const TBTC_BUY_AMT = web3.utils.toWei('1', 'ether');
-
-                // rough price - we don't think about slippage
-                // we are testing that Uniswap works, not testing the exact
-                // formulae of the price invariant
-                // when they come out with uniswap.js, this code could be made better
-                let priceEth = await tbtcExchange.getTokenToEthInputPrice.call(TBTC_BUY_AMT)
-                expect(priceEth.toString()).to.eq('90661089388014913')
-
-                const buyer = accounts[1];
-
-                // def ethToTokenSwapInput(min_tokens: uint256, deadline: timestamp) -> uint256:
-                await tbtcExchange.ethToTokenSwapInput(
-                    TBTC_BUY_AMT,
-                    UniswapHelpers.getDeadline(),
-                    { value: UniswapHelpers.calcWithFee(priceEth), from: buyer }
-                )
-                
-                let balance = await tbtc.balanceOf(buyer)
-                expect(balance.gt(TBTC_BUY_AMT));
-            })
-        })
+      tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddr)
+      /* eslint-enable no-unused-vars */
     })
 
+
+    it('has no liquidity by default', async () => {
+      await expectThrow(
+        tbtcExchange.getTokenToEthInputPrice.call(1)
+      )
+    })
+
+    describe.only('e2e testing of a trade', () => {
+      it('adds liquidity and trades ETH for TBTC', async () => {
+        // This avoids rabbit-hole debugging
+        // stemming from the fact Vyper is new and they don't do REVERT's
+        expect(
+          await web3.eth.getBalance(accounts[0])
+        ).to.not.eq('0')
+
+        expect(
+          await web3.eth.getBalance(accounts[1])
+        ).to.not.eq('0')
+
+        // Both tokens use 18 decimal places, so we can use toWei here.
+        const TBTC_AMT = web3.utils.toWei('50', 'ether')
+        const ETH_AMT = web3.utils.toWei('1', 'ether')
+
+        // Mint TBTC
+        await tbtc.mint(
+          accounts[0],
+          TBTC_AMT
+        )
+        await tbtc.mint(
+          accounts[1],
+          TBTC_AMT
+        )
+
+        await tbtc.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[0] })
+        await tbtc.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[1] })
+
+        // min_liquidity, max_tokens, deadline
+        const TBTC_ADDED = web3.utils.toWei('10', 'ether')
+        await tbtcExchange.addLiquidity(
+          '0',
+          TBTC_ADDED,
+          UniswapHelpers.getDeadline(),
+          { value: ETH_AMT }
+        )
+
+        // it will be at an exchange rate of
+        // 10 TBTC : 1 ETH
+        const TBTC_BUY_AMT = web3.utils.toWei('1', 'ether')
+
+        // rough price - we don't think about slippage
+        // we are testing that Uniswap works, not testing the exact
+        // formulae of the price invariant
+        // when they come out with uniswap.js, this code could be made better
+        const priceEth = await tbtcExchange.getTokenToEthInputPrice.call(TBTC_BUY_AMT)
+        expect(priceEth.toString()).to.eq('90661089388014913')
+
+        const buyer = accounts[1]
+
+        // def ethToTokenSwapInput(min_tokens: uint256, deadline: timestamp) -> uint256:
+        await tbtcExchange.ethToTokenSwapInput(
+          TBTC_BUY_AMT,
+          UniswapHelpers.getDeadline(),
+          { value: UniswapHelpers.calcWithFee(priceEth), from: buyer }
+        )
+
+        const balance = await tbtc.balanceOf(buyer)
+        expect(balance.gt(TBTC_BUY_AMT))
+      })
+    })
+  })
 })
 
 
-/** 
+/**
 
 
 Some notes on the cryptoeconomics of Uniswap and TBTC, time arbitrage between chains
@@ -141,11 +140,11 @@ Some notes on the cryptoeconomics of Uniswap and TBTC, time arbitrage between ch
   a. Uniswap 100% of ETH
   b. Uniswap 50% ETH and 50% falling price auction
 
-I think it's worth documenting the additional complexity stemming from automatic liquidation. 3a won't necessarily buy up enough TBTC to burn, depending on the pool size, but the arbitrage incentives are going to keep the price stable to its price-oracle reported value (with a little delta). 
+I think it's worth documenting the additional complexity stemming from automatic liquidation. 3a won't necessarily buy up enough TBTC to burn, depending on the pool size, but the arbitrage incentives are going to keep the price stable to its price-oracle reported value (with a little delta).
 */
 
 /**
- * 
+ *
 
 source sethenv.sh
 
@@ -155,14 +154,12 @@ export EXCHANGE_TMPL=$(seth send --create $(cat uniswap/contracts-vyper/bytecode
 seth send $FACTORY "initializeFactory(address)" $EXCHANGE_TMPL
 
 
-
-
 #export TBTC=$(jq -r '.networks["5777"].address' build/contracts/TBTC.json)
 export UNISWAP_DEPLOY=$(jq -r '.networks["5777"].address' build/contracts/UniswapDeployment.json)
 export FACTORY=$(seth call $UNISWAP_DEPLOY "factory()(address)")
 
 export EXCHANGE=$(seth call $FACTORY "getExchange(address)(address)" $TBTC)
-seth balance $EXCHANGE 
+seth balance $EXCHANGE
 
 export BUYER=$(seth accounts | sed -n 2p | awk '{ print $1 }')
 seth balance $BUYER
@@ -177,7 +174,7 @@ seth call $TBTC "balanceOf(address)(uint256)" $BUYER
 seth send $FACTORY "createExchange(address)(address)" $TBTC
 EXCHANGE=$(seth call $FACTORY "getExchange(address)(address)" $TBTC)
 seth send --from $BUYER $TBTC "approve(address,uint)(bool)" $EXCHANGE $(seth --to-uint256 10000000000)
-seth call $TBTC "allowance(address,address)(uint256)" $BUYER $EXCHANGE             
+seth call $TBTC "allowance(address,address)(uint256)" $BUYER $EXCHANGE
 
 
 # add to exchange
@@ -197,10 +194,10 @@ seth send --from $ETH_FROM --value $PRICE $EXCHANGE "ethToTokenSwapInput(uint256
 
  */
 /**
- * 
- * 
- * 
- * 
+ *
+ *
+ *
+ *
 
 
 export ETH_FROM=$(seth accounts | head -n1 | awk '{ print $1 }')
@@ -239,8 +236,6 @@ seth call $EXCHANGE "getTokenToEthInputPrice(uint)(uint)" 1
 0000000000000000000000000000000000000000000000000000000015770098
 
 
-
-
 export BUYER=$(seth accounts | sed -n 2p | awk '{ print $1 }')
 
 # function ethToTokenSwapInput(uint256 min_tokens, uint256 deadline) external payable returns (uint256  tokens_bought);
@@ -250,7 +245,6 @@ seth send --from $BUYER --value 402343423423423 $EXCHANGE "ethToTokenSwapInput(u
 some issue with the block timestamp, probs encoded as hex
 
 
-
 0x9e9073f8d4e877d88da842a039a3698fb5267723 http://127.0.0.1:8545
 0x86841052ae15beb5a1b95148999ef9c640de7463 http://127.0.0.1:8545
 0x69a97fe59cfab7b9f8fd2854f99a895f00e1f5c6 http://127.0.0.1:8545
@@ -258,26 +252,26 @@ some issue with the block timestamp, probs encoded as hex
 
 
 exchange.methods.addLiquidity(
-    min_liquidity, 
-    max_tokens, 
-    deadline 
+    min_liquidity,
+    max_tokens,
+    deadline
 )
 
 
-The ethAmount sent to addLiquidity is the exact amount of ETH that will be deposited into the liquidity reserves. It should be 50% of the total value a liquidity provider wishes to deposit into the reserves. 
+The ethAmount sent to addLiquidity is the exact amount of ETH that will be deposited into the liquidity reserves. It should be 50% of the total value a liquidity provider wishes to deposit into the reserves.
 
 value = 10000
 
-the Uniswap smart contracts use ethAmount to determine the amount of ERC20 tokens that must be deposited. This token amount is the remaining 50% of total value a liquidity provider wishes to deposit. 
+the Uniswap smart contracts use ethAmount to determine the amount of ERC20 tokens that must be deposited. This token amount is the remaining 50% of total value a liquidity provider wishes to deposit.
 
-Since exchange rate can change between when a transaction is signed and when it is executed on Ethereum, max_tokens is used to bound the amount this rate can fluctuate. 
+Since exchange rate can change between when a transaction is signed and when it is executed on Ethereum, max_tokens is used to bound the amount this rate can fluctuate.
 
-For the first liquidity provider, max_tokens is the exact amount of tokens deposited. 
+For the first liquidity provider, max_tokens is the exact amount of tokens deposited.
 
-Liquidity tokens are minted to track the relative proportion of total reserves that each liquidity provider has contributed. 
+Liquidity tokens are minted to track the relative proportion of total reserves that each liquidity provider has contributed.
 
-min_liquidity is used in combination with max_tokens and ethAmount to bound the rate at which liquidity tokens are minted. 
+min_liquidity is used in combination with max_tokens and ethAmount to bound the rate at which liquidity tokens are minted.
 
-For the first liquidity provider, min_liquidity does not do anything and can be set to 0. 
+For the first liquidity provider, min_liquidity does not do anything and can be set to 0.
 
  */
