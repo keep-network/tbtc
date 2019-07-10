@@ -5,6 +5,12 @@ import {IKeep} from "./IKeep.sol";
 contract KeepBridge is IKeep {
     address keepRegistry;
 
+    /// @notice Map of digests approval for signing timestamps.
+    /// @dev Holds a timestamp from the moment when the digest was approved for
+    /// signing for a given keep ID and digest pair. Map key is formed by
+    /// concatenation of a keepID and a digest.
+    mapping (bytes => uint256) approvedDigests;
+
     function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256){
         //TODO: Implement
         return 0;
