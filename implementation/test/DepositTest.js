@@ -137,16 +137,16 @@ contract('Deposit', (accounts) => {
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
-      // make sure to ozero TBTC balance of caller
+      // make sure to clear TBTC balance of caller
       await deployed.TBTCTokenStub.clearBalance(accounts[0])
+      // mint the required balance to request redemption
+      await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.setKeepInfo(0, 0, 0, keepPubkeyX, keepPubkeyY)
 
-      // mint the required balance to request redemption
-      await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
       // the fee is ~12,297,829,380 BTC
       await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
 
@@ -170,8 +170,6 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the fee is low', async () => {
-      // mint the required balance to request redemption
-      await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
       try {
         await testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20))
       } catch (e) {
@@ -180,8 +178,6 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the keep returns false', async () => {
-      // mint the required balance to request redemption
-      await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
       try {
         await deployed.KeepStub.setSuccess(false)
         await testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20))
@@ -1169,9 +1165,12 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if TBTC balance is insufficient', async () => {
-      await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
+      // mint 1 less than lot size
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      await deployed.TBTCTokenStub.mint(accounts[0], lotSize - 1)
       try {
         await testInstance.purchaseSignerBondsAtAuction()
+        assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Not enough TBTC to cover outstanding debt')
       }

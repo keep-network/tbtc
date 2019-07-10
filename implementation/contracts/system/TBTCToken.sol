@@ -13,7 +13,7 @@ contract TBTCToken is ERC20Detailed, ERC20 {
     /// @dev             Mints an amount of the token and assigns it to an account.
     ///                  Uses the internal _mint function
     /// @param _account  The account that will receive the created tokens.
-    /// @param _amount   The amount that will be created.
+    /// @param _amount   The amount of tokens that will be created.
     function mint(address _account, uint256 _amount) public returns (bool){
         // NOTE: this is a public function with unchecked minting.
         // TODO: enforce calling authority.
@@ -36,7 +36,7 @@ contract TBTCToken is ERC20Detailed, ERC20 {
     /// @dev           Transfer tokens from one address to another
     ///                Uses the internal _transfer function.
     /// @param _from   The address to send tokens from
-    /// @param _to     The address to transfer to
+    /// @param _to     The address to transfer tokens to
     /// @param _value  The amount of tokens to be transferred
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         // NOTE: this overrides transferFrom in openZeppelin ERC20.sol
