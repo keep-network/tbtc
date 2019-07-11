@@ -28,6 +28,7 @@ contract PriceOracleV1 is IPriceOracle {
     // The time at which the last price update is not valid for usage.
     uint256 public expiry;
     uint256 constant PRICE_EXPIRY_PERIOD = 6 hours;
+    uint256 constant NEAR_EXPIRY_PERIOD = 1 hours;
 
     // Trusted user that updates the oracle.
     address public operator;
@@ -49,7 +50,7 @@ contract PriceOracleV1 is IPriceOracle {
     function updatePrice(uint128 _newPrice) external {
         require(msg.sender == operator, "Unauthorised");
 
-        bool nearExpiry = (expiry - 1 hours) <= block.timestamp;
+        bool nearExpiry = (expiry - NEAR_EXPIRY_PERIOD) <= block.timestamp;
 
         if(!nearExpiry) {
             // abs(1 - (p1 / p0)) > 0.01
