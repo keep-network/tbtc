@@ -1038,8 +1038,69 @@ contract('Deposit', (accounts) => {
         assert.include(e.message, 'Signature is not fraud')
       }
     })
+  })
 
-    it.skip('TODO: full test for startSignerFraudLiquidation', async () => {})
+  describe('liquidation flows', async () => {
+    it('#startSignerAbortLiquidation', async () => {
+      // eth bonds should be liquidated for tbtc
+      // via uniswap
+      //
+      // if this is coming from redemption, then tbtc is refunded to redeemer
+      // if this is not, tbtc lotSize is burnt to maintain supply peg
+      //
+      // in either case, the beneficiary reward (0.005 tbtc) should be sent back to the beneficiary
+      // and the keep group should get the remaining eth via pushFundsToKeepGroup
+      //
+      // we also need to check for the case in which onchain liquidation fails
+    })
+
+    it.only('#startSignerFraudLiquidation', async () => {
+      // eth bonds should be liquidated for tbtc
+      // via uniswap
+      //
+      // if this is coming from redemption, then tbtc is refunded to redeemer
+      // if this is not, tbtc is burnt to maintain supply peg
+      //
+      // in either case, the beneficiary reward (0.005 tbtc) should be sent back to the beneficiary
+      // and the requestor should get whatever remaining eth
+      //
+      // we also need to check for the case in which onchain liquidation fails
+
+
+      // const beneficiary = ''
+      // const deposit = {}
+
+      // Send some ETH to the Keep
+      // TODO(liamz): move this into test of startSignerFraudLiquidation etc.
+      //              for now it's a good placeholder for assumptions
+      // const keepBondAmount = await keep.checkBondAmount()
+
+
+      // eslint-disable-next-line no-unused-vars
+      // const keep = deployed.KeepStub
+
+      // check distributeEthToKeepGroup was called
+      // TODO(liamz): implement
+      // keepGroupTotalEth
+
+      // const beneficiaryTbtcBalance = (await tbtc.balanceOf(beneficiary)).toString()
+      // expect(depositTbtcBalance).to.eq('5000000000')
+
+      // const signersEthBalanace = await web3.eth.getBalance(deposit.address)
+      // expect(signersEthBalance).to.eq('0')
+
+      // const depositTbtcBalance = (await tbtc.balanceOf(deposit.address)).toString()
+      // expect(depositTbtcBalance).to.eq(order.buyTbtc)
+
+      // const depositEthBalance = await web3.eth.getBalance(deposit.address)
+      // expect(depositEthBalance).to.eq('2') // leftover wei from uint256 precision error
+
+
+      // _d.distributeBeneficiaryReward();
+      // _d.pushFundsToKeepGroup(address(this).balance);
+      // _d.setLiquidated();
+      // _d.logLiquidated();
+    })
   })
 
   describe('provideSPVFraudProof', async () => {
@@ -1111,7 +1172,9 @@ contract('Deposit', (accounts) => {
       }
     })
 
-    it.skip('TODO: full test for startSignerFraudLiquidation', async () => {})
+    it('startSignerFraudLiquidation', async () => {
+      //
+    })
   })
 
   describe('purchaseSignerBondsAtAuction', async () => {
