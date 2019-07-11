@@ -9,6 +9,7 @@ contract KeepStub is IKeep {
     uint256 bondAmount = 10000;
     uint256 keepID = 7;
     bytes pubkey = hex"00";
+    uint256 public keepGroupTotalEth = 0;
 
     function () payable public {}
 
@@ -43,6 +44,7 @@ contract KeepStub is IKeep {
 
     function distributeEthToKeepGroup(uint256 _keepID) external payable returns (bool) {
         _keepID;
+        keepGroupTotalEth += msg.value;
         return success;
     }
 
