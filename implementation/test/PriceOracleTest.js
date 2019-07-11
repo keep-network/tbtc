@@ -1,6 +1,11 @@
 import increaseTime from './helpers/increaseTime'
 import BN from 'bn.js'
 
+const chai = require('chai')
+const expect = chai.expect
+const bnChai = require('bn-chai')
+chai.use(bnChai(BN))
+
 const PriceOracleV1 = artifacts.require('PriceOracleV1')
 
 contract('PriceOracleV1', function(accounts) {
@@ -16,7 +21,7 @@ contract('PriceOracleV1', function(accounts) {
       const instance = await PriceOracleV1.deployed()
 
       const price = await instance.getPrice()
-      assert(price.eq(DEFAULT_PRICE))
+      expect(price).to.eq.BN(DEFAULT_PRICE)
 
       const operator = await instance.operator()
       assert.equal(operator, accounts[0])
@@ -30,7 +35,7 @@ contract('PriceOracleV1', function(accounts) {
       const expectedExpiry = new BN(deployTimestamp).add(new BN(PRICE_EXPIRY_SECONDS))
 
       const expiry = await instance.expiry()
-      assert(expiry.eq(expectedExpiry))
+      expect(expiry).to.eq.BN(expectedExpiry)
     })
   })
 
@@ -43,7 +48,7 @@ contract('PriceOracleV1', function(accounts) {
         )
 
         const res = await instance.getPrice.call()
-        assert(res.eq(DEFAULT_PRICE))
+        expect(res).to.eq.BN(DEFAULT_PRICE)
       })
 
       it('fails when the price is expired', async () => {
@@ -83,7 +88,7 @@ contract('PriceOracleV1', function(accounts) {
         )
 
         const res = await instance.getPrice.call()
-        assert(res.eq(newPrice))
+        expect(res).to.eq.BN(newPrice)
       })
 
       describe('fails when price delta < 1%', async () => {
