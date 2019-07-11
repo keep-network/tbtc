@@ -66,7 +66,7 @@ contract('PriceOracleV1', function(accounts) {
 
     describe('#updatePrice', () => {
       it('sets new price', async () => {
-        const newPrice = DEFAULT_PRICE.mul(new BN('0.02'))
+        const newPrice = DEFAULT_PRICE.mul(2)
 
         const instance = await PriceOracleV1.new(
           DEFAULT_OPERATOR,
@@ -105,7 +105,7 @@ contract('PriceOracleV1', function(accounts) {
           )
         })
 
-        it('fails upper bound 0.9%', async () => {
+        it('fails +0.9% delta', async () => {
           const price2 = new BN('326108800000')
           try {
             await instance.updatePrice(price2)
@@ -115,7 +115,7 @@ contract('PriceOracleV1', function(accounts) {
           }
         })
 
-        it('fails lower bound 0.9%', async () => {
+        it('fails -0.9% delta', async () => {
           const price2 = new BN('320317145688')
 
           try {
@@ -126,12 +126,12 @@ contract('PriceOracleV1', function(accounts) {
           }
         })
 
-        it('passes upper bound 1.1%', async () => {
+        it('passes +1.1% delta', async () => {
           const price2 = new BN('326755200000')
           await instance.updatePrice(price2)
         })
 
-        it('passes lower bound 1.1%', async () => {
+        it('passes -1.1% delta', async () => {
           const price2 = new BN('319683481701')
           await instance.updatePrice(price2)
         })
