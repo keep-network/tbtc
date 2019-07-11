@@ -1,6 +1,6 @@
 pragma solidity 0.4.25;
 
-import {IUniswapExchange} from "../uniswap/IUniswapExchange.sol";
+import {IUniswapExchange} from "../../../contracts/uniswap/IUniswapExchange.sol";
 import {IBurnableERC20} from '../../../contracts/interfaces/IBurnableERC20.sol';
 
 contract UniswapExchangeStub is IUniswapExchange {

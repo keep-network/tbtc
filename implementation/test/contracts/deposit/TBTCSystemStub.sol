@@ -16,6 +16,8 @@ contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
     IUniswapFactory uniswapFactory;
     TBTC tbtc;
 
+    address tbtcUniswapExchange;
+
     function setExteroriorAddresses(
         address _uniswapFactory,
         address _tbtc
@@ -24,8 +26,12 @@ contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
         tbtc = TBTC(_tbtc);
     }
 
+    function setTBTCUniswapExchange(address _exchange) external {
+        tbtcUniswapExchange = _exchange;
+    }
+
     function getTBTCUniswapExchange() external view returns (address) {
-        return uniswapFactory.getExchange(address(tbtc));
+        return tbtcUniswapExchange;
     }
 
     function setOraclePrice(uint256 _oraclePrice) external {oraclePrice = _oraclePrice;}
