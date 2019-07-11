@@ -334,7 +334,7 @@ contract('DepositUtils', (accounts) => {
   })
 
 
-  describe.only('attemptToLiquidateOnchain', async () => {
+  describe('attemptToLiquidateOnchain', async () => {
     let tbtc
     let exchange
     let deposit

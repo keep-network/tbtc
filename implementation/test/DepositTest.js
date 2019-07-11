@@ -14,6 +14,8 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
 const TBTCStub = artifacts.require('TBTCStub')
+const TBTC = artifacts.require('TBTC')
+const UniswapExchangeStub = artifacts.require('UniswapExchangeStub')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -1040,7 +1042,31 @@ contract('Deposit', (accounts) => {
     })
   })
 
-  describe('liquidation flows', async () => {
+  describe.only('liquidation flows', async () => {
+    let uniswapExchange
+    let tbtc
+    let deposit
+
+    beforeEach(async () => {
+      tbtc = await TBTC.new()
+      uniswapExchange = await UniswapExchangeStub.new(tbtc.address)
+      deposit = deployed.TestDepositUtils
+
+      const tbtcSystem = deployed.TBTCSystemStub
+
+      // Set exterior addresses
+      await tbtcSystem.setExteroriorAddresses(
+        '0x0000000000000000000000000000000000000000',
+        tbtc.address
+      )
+      await tbtcSystem.setTBTCUniswapExchange(uniswapExchange.address)
+      await deposit.setExteroriorAddresses(
+        tbtcSystem.address,
+        tbtc.address,
+        deployed.KeepStub.address,
+      )
+    })
+
     it('#startSignerAbortLiquidation', async () => {
       // eth bonds should be liquidated for tbtc
       // via uniswap
