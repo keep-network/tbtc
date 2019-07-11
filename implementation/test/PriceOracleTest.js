@@ -66,7 +66,7 @@ contract('PriceOracleV1', function(accounts) {
 
     describe('#updatePrice', () => {
       it('sets new price', async () => {
-        const newPrice = DEFAULT_PRICE.mul(2)
+        const newPrice = DEFAULT_PRICE.mul(new BN('2'))
 
         const instance = await PriceOracleV1.new(
           DEFAULT_OPERATOR,
