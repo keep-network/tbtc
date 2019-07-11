@@ -381,7 +381,7 @@ contract('Deposit', (accounts) => {
       assert.equal(requestInfo[4], utils.bytes32zero)
 
       const eventList = await deployed.TBTCSystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' })
-      assert.equal(eventList[0].returnValues._txid, txid_le)
+      assert.equal(eventList[0].returnValues._txid, txidLE)
     })
 
     it('reverts if not in the redemption flow', async () => {
@@ -873,8 +873,8 @@ contract('Deposit', (accounts) => {
 
   describe('provideFraudBTCFundingProof', async () => {
     beforeEach(async () => {
-      await testInstance.setKeepInfo(0, 0, 0, signerPubkeyX, signerPubkeyY)
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
+      await testInstance.setKeepInfo(0, 0, 0, _signerPubkeyX, _signerPubkeyY)
+      await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
@@ -925,8 +925,8 @@ contract('Deposit', (accounts) => {
 
   describe('provideBTCFundingProof', async () => {
     beforeEach(async () => {
-      await testInstance.setKeepInfo(0, 0, 0, signerPubkeyX, signerPubkeyY)
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
+      await testInstance.setKeepInfo(0, 0, 0, _signerPubkeyX, _signerPubkeyY)
+      await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })

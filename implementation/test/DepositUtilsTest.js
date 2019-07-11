@@ -145,14 +145,14 @@ contract('DepositUtils', (accounts) => {
   describe('checkProofFromTx()', async () => {
     it('returns the correct _txid', async () => {
       await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
-      const res = await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
+      const res = await testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
       assert.equal(res, utils.TX.tx_id_le)
     })
 
     it('fails with a broken proof', async () => {
       try {
         await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
-        await testUtilsInstance.checkProof.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
+        await testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Tx merkle proof is not valid for provided header and tx')
@@ -162,7 +162,7 @@ contract('DepositUtils', (accounts) => {
     it('fails with a broken tx', async () => {
       try {
         await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
-        await testUtilsInstance.checkProof.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
+        await testUtilsInstance.checkProofFromTx.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'Failed tx parsing')
@@ -172,7 +172,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('checkProofFromTxId()', async () => {
     before(async () => {
-      await deployed.SystemStub.setCurrentDiff(utils.TX.difficulty)
+      await deployed.TBTCSystemStub.setCurrentDiff(utils.TX.difficulty)
     })
 
     it('does not error', async () => {
@@ -194,7 +194,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails with bad difficulty', async () => {
-      await deployed.SystemStub.setCurrentDiff(1)
+      await deployed.TBTCSystemStub.setCurrentDiff(1)
       try {
         await testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
         assert(false, 'Test call did not error as expected')
@@ -278,7 +278,7 @@ contract('DepositUtils', (accounts) => {
   describe('validateAndParseFundingSPVProof()', async () => {
     before(async () => {
       await testUtilsInstance.setPubKey(_signerPubkeyX, _signerPubkeyY)
-      await deployed.SystemStub.setCurrentDiff(currentDifficulty)
+      await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
     })
 
     it('returns correct value and outpoint', async () => {
@@ -353,7 +353,6 @@ contract('DepositUtils', (accounts) => {
     it('returns base value for unset public key', async () => {
       const newTestUtilsInstance = await TestDepositUtils.new()
       const signerPubkey = await newTestUtilsInstance.signerPubkey.call()
-      console.log(signerPubkey)
       assert.equal(signerPubkey, '0x' + '00'.repeat(64))
     })
   })
