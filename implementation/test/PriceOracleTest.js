@@ -91,7 +91,7 @@ contract('PriceOracleV1', function(accounts) {
         expect(res).to.eq.BN(newPrice)
       })
 
-      describe('fails when price delta < 1%', async () => {
+      describe.only('fails when price delta < 1%', async () => {
         let instance
         const price = new BN('323200000000')
 
@@ -131,14 +131,19 @@ contract('PriceOracleV1', function(accounts) {
           }
         })
 
+        it('passes +1.0% delta', async () => {
+          await instance.updatePrice(new BN('326432000000'))
+        })
+        it('passes -1.0% delta', async () => {
+          await instance.updatePrice(new BN('319968000000'))
+        })
+
         it('passes +1.1% delta', async () => {
-          const price2 = new BN('326755200000')
-          await instance.updatePrice(price2)
+          await instance.updatePrice(new BN('326755200000'))
         })
 
         it('passes -1.1% delta', async () => {
-          const price2 = new BN('319683481701')
-          await instance.updatePrice(price2)
+          await instance.updatePrice(new BN('319683481701'))
         })
       })
 

@@ -61,7 +61,7 @@ contract PriceOracleV1 is IPriceOracle {
                             ? _newPrice.sub(price)
                             : price.sub(_newPrice);
             /* solium-enable */
-            require(delta > minDelta, "Price change is negligible (<1%)");
+            require(delta >= minDelta, "Price change is negligible (<1%)");
         }
 
         price = _newPrice;
