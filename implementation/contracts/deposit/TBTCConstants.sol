@@ -6,7 +6,7 @@ library TBTCConstants {
     // During testing swap this out with another constats contract
 
     // System Parameters
-    uint256 public constant LOT_SIZE = 10 ** 8;  // tsatoshi
+    uint256 public constant LOT_SIZE = 100; // satoshi TODO: decreased for testing, set it back original value `10 ** 8`
     uint256 public constant SIGNER_FEE_DIVISOR = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint256 public constant BENEFICIARY_FEE_DIVISOR = 1000;  // 1/1000 = 10 bps = 0.1% = 0.001
     uint256 public constant FUNDING_FRAUD_PARTIAL_SLASH_DIVISOR = 2;  // 1/2 = 5000bps = 50% = 0.5
