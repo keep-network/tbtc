@@ -47,6 +47,8 @@ contract PriceOracleV1 is IPriceOracle {
         return price;
     }
 
+    /// @notice Updates the price
+    /// @dev requires price to differ by at least 1%, unless it is close to expiry
     function updatePrice(uint128 _newPrice) external {
         require(msg.sender == operator, "Unauthorised");
 
