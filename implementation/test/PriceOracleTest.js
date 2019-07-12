@@ -93,7 +93,7 @@ contract('PriceOracleV1', function(accounts) {
 
       describe.only('fails when price delta < 1%', async () => {
         let instance
-        const price = new BN('323200000000')
+        const initialPrice = new BN('323200000000')
 
         // DO NOT try to use BN.js, it is a sinkhole of time
         // These test cases were created using `bc`
@@ -106,44 +106,44 @@ contract('PriceOracleV1', function(accounts) {
         beforeEach(async () => {
           instance = await PriceOracleV1.new(
             DEFAULT_OPERATOR,
-            price
+            initialPrice
           )
         })
 
-        it('fails +0.9% delta', async () => {
-          const price2 = new BN('326108800000')
+        // delta = 3 231 999 999 (< 1%)
+        const price11 = new BN('326431999999')
+        const price12 = new BN('319968000001')
+        // delta = 3 232 000 000 (1%)
+        const price21 = new BN('326432000000')
+        const price22 = new BN('319968000000')
+        // delta = 3 232 000 001 (> 1%)
+        const price31 = new BN('326432000001')
+        const price32 = new BN('319967999999')
+
+        it('fails >1% delta', async () => {
           try {
-            await instance.updatePrice(price2)
+            await instance.updatePrice(price11)
+            await instance.updatePrice(price12)
             assert(false, 'Test call did not error as expected')
           } catch (e) {
             assert.include(e.message, 'Price change is negligible (<1%)')
           }
         })
 
-        it('fails -0.9% delta', async () => {
-          const price2 = new BN('320317145688')
-
-          try {
-            await instance.updatePrice(price2)
-            assert(false, 'Test call did not error as expected')
-          } catch (e) {
-            assert.include(e.message, 'Price change is negligible (<1%)')
-          }
+        it('passes -1% delta', async () => {
+          await instance.updatePrice(price21)
         })
 
-        it('passes +1.0% delta', async () => {
-          await instance.updatePrice(new BN('326432000000'))
-        })
-        it('passes -1.0% delta', async () => {
-          await instance.updatePrice(new BN('319968000000'))
+        it('passes +1% delta', async () => {
+          await instance.updatePrice(price22)
         })
 
         it('passes +1.1% delta', async () => {
-          await instance.updatePrice(new BN('326755200000'))
+          await instance.updatePrice(price31)
         })
 
         it('passes -1.1% delta', async () => {
-          await instance.updatePrice(new BN('319683481701'))
+          await instance.updatePrice(price32)
         })
       })
 
