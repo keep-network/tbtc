@@ -54,7 +54,7 @@ module.exports = async function() {
       toBlock: 'latest',
     })
 
-    console.log('Funding proof accepted for the deposit: ', eventList[0].returnValues._depositContractAddress)
+    console.log('Funding proof accepted for the deposit:', eventList[0].returnValues._depositContractAddress)
   }
 
   const fundingProof = await FundingProof.getTransactionProof(txID, headersCount)
@@ -74,4 +74,10 @@ module.exports = async function() {
     })
 
   await logEvents(startBlockNumber)
+    .catch((err) => {
+      console.error('getting events log failed\n', err)
+      process.exit(1)
+    })
+
+  process.exit()
 }
