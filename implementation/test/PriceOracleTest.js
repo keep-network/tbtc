@@ -41,22 +41,21 @@ contract('PriceOracleV1', function(accounts) {
 
   describe('Methods', () => {
     describe('#getPrice', () => {
-      it('returns a default price', async () => {
-        const instance = await PriceOracleV1.new(
+      let instance
+
+      beforeEach(async () => {
+        instance = await PriceOracleV1.new(
           DEFAULT_OPERATOR,
           DEFAULT_PRICE
         )
+      })
 
+      it('returns a default price', async () => {
         const res = await instance.getPrice.call()
         expect(res).to.eq.BN(DEFAULT_PRICE)
       })
 
       it('fails when the price is expired', async () => {
-        const instance = await PriceOracleV1.new(
-          DEFAULT_OPERATOR,
-          DEFAULT_PRICE
-        )
-
         await increaseTime(PRICE_EXPIRY_SECONDS + 1)
 
         try {
@@ -92,16 +91,17 @@ contract('PriceOracleV1', function(accounts) {
       })
 
       describe('1% minimum price delta', async () => {
-        let instance
-        const initialPrice = new BN('323200000000')
-
         // DO NOT try to use BN.js, it is a sinkhole of time
         // These test cases were created using `bc`
         // An example:
         // $ bc
         // scale=100
-        // 323200000000*1.009
+        // 323200000000/100
         // etc.
+
+
+        let instance
+        const initialPrice = new BN('323200000000')
 
         beforeEach(async () => {
           instance = await PriceOracleV1.new(
