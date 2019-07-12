@@ -23,6 +23,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //solhint-disable max-line-length
 //solhint-disable no-inline-assembly
 
+// implementation of EIP1167 (https://eips.ethereum.org/EIPS/eip-1167)
+// source: (https://github.com/optionality/clone-factory)
 contract CloneFactory {
 
     function createClone(address target) internal returns (address result) {
