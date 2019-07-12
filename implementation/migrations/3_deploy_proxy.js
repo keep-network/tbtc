@@ -1,5 +1,3 @@
-// proxy
-// const CloneFactory = artifacts.require(CloneFactory)
 const DepositFactory = artifacts.require('DepositFactory')
 const Deposit = artifacts.require('Deposit')
 
