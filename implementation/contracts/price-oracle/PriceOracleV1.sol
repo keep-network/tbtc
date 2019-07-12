@@ -26,9 +26,9 @@ contract PriceOracleV1 is IPriceOracle {
     uint128 internal price;
 
     // The time at which the last price update is not valid for usage.
-    uint256 public expiry;
+    uint256 public priceExpiryTime;
     uint256 constant PRICE_EXPIRY_PERIOD = 6 hours;
-    uint256 constant NEAR_EXPIRY_PERIOD = 1 hours;
+    uint256 constant PRICE_NEAR_EXPIRY_PERIOD = 1 hours;
 
     // Trusted user that updates the oracle.
     address public operator;
@@ -39,18 +39,18 @@ contract PriceOracleV1 is IPriceOracle {
     ) public {
         operator = _operator;
         price = _defaultPrice;
-        expiry = block.timestamp + PRICE_EXPIRY_PERIOD;
+        priceExpiryTime = block.timestamp + PRICE_EXPIRY_PERIOD;
     }
 
     function getPrice() external view returns (uint128) {
-        require(block.timestamp < expiry, "Price expired");
+        require(block.timestamp < priceExpiryTime, "Price expired");
         return price;
     }
 
     function updatePrice(uint128 _newPrice) external {
         require(msg.sender == operator, "Unauthorised");
 
-        bool nearExpiry = (expiry - NEAR_EXPIRY_PERIOD) <= block.timestamp;
+        bool nearExpiry = (priceExpiryTime - PRICE_NEAR_EXPIRY_PERIOD) <= block.timestamp;
 
         if(!nearExpiry) {
             // abs(1 - (p1 / p0)) > 0.01
@@ -66,8 +66,8 @@ contract PriceOracleV1 is IPriceOracle {
         }
 
         price = _newPrice;
-        expiry = block.timestamp + PRICE_EXPIRY_PERIOD;
+        priceExpiryTime = block.timestamp + PRICE_EXPIRY_PERIOD;
 
-        emit PriceUpdated(price, expiry);
+        emit PriceUpdated(price, priceExpiryTime);
     }
 }

@@ -11,7 +11,7 @@ const PriceOracleV1 = artifacts.require('PriceOracleV1')
 contract('PriceOracleV1', function(accounts) {
   const DEFAULT_OPERATOR = accounts[0]
 
-  // 1 satoshi = 1 wei
+  // 1 BTC : 32.32 ETH
   const DEFAULT_PRICE = new BN('323200000000')
 
   const PRICE_EXPIRY_SECONDS = 21600 // 6 hours = 21600 seconds
@@ -32,10 +32,10 @@ contract('PriceOracleV1', function(accounts) {
 
       const deployBlockNumber = (await web3.eth.getTransaction(instance.transactionHash)).blockNumber
       const deployTimestamp = (await web3.eth.getBlock(deployBlockNumber)).timestamp
-      const expectedExpiry = new BN(deployTimestamp).add(new BN(PRICE_EXPIRY_SECONDS))
+      const expectedPriceExpiryTime = new BN(deployTimestamp).add(new BN(PRICE_EXPIRY_SECONDS))
 
-      const expiry = await instance.expiry()
-      expect(expiry).to.eq.BN(expectedExpiry)
+      const priceExpiryTime = await instance.priceExpiryTime()
+      expect(priceExpiryTime).to.eq.BN(expectedPriceExpiryTime)
     })
   })
 
@@ -80,10 +80,10 @@ contract('PriceOracleV1', function(accounts) {
         const tx = await instance.updatePrice(newPrice)
         const block = await web3.eth.getBlock(tx.receipt.blockNumber)
 
-        const expiry = await instance.expiry.call()
+        const priceExpiryTime = await instance.priceExpiryTime.call()
 
         assert.equal(
-          expiry.toNumber(), block.timestamp + PRICE_EXPIRY_SECONDS
+          priceExpiryTime.toNumber(), block.timestamp + PRICE_EXPIRY_SECONDS
         )
 
         const res = await instance.getPrice.call()
@@ -98,7 +98,6 @@ contract('PriceOracleV1', function(accounts) {
         // scale=100
         // 323200000000/100
         // etc.
-
 
         let instance
         const initialPrice = new BN('323200000000')
