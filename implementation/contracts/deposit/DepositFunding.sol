@@ -3,7 +3,7 @@ pragma solidity 0.4.25;
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
 import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
-import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
@@ -344,7 +344,7 @@ library DepositFunding {
         returnFunderBond(_d);
 
         // Mint 95% of the deposit size
-        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         uint256 _value = TBTCConstants.getLotSize();
         _tbtc.mint(_d.depositBeneficiary(), _value.mul(95).div(100));
 

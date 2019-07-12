@@ -8,7 +8,7 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
-import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositUtils {
 
@@ -296,9 +296,9 @@ library DepositUtils {
     /// @dev        We distribute the whole TBTC balance as a convenience,
     ///             whenever this is called we are shutting down.
     function distributeBeneficiaryReward(Deposit storage _d) public {
-        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         /* solium-disable-next-line */
-        require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))));
+        require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))),"Transfer failed");
     }
 
     /// @notice             pushes ether held by the deposit to the signer group

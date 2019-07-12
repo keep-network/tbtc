@@ -11,7 +11,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
-const TBTCStub = artifacts.require('TBTCStub')
+const TBTCTokenStub = artifacts.require('TBTCTokenStub')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -38,7 +38,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCStub', contract: TBTCStub },
+  { name: 'TBTCTokenStub', contract: TBTCTokenStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 
@@ -52,7 +52,7 @@ contract('DepositUtils', (accounts) => {
 
     await testUtilsInstance.createNewDeposit(
       deployed.TBTCSystemStub.address,
-      deployed.TBTCStub.address,
+      deployed.TBTCTokenStub.address,
       deployed.KeepStub.address,
       1, // m
       1) // n
@@ -295,15 +295,17 @@ contract('DepositUtils', (accounts) => {
 
   describe('distributeBeneficiaryReward()', async () => {
     it('checks that beneficiary is rewarded', async () => {
-      const beneficiary = accounts[5]
-      // reward should == 10**18. This is a stub value. parameter address is irrelevant
-      const reward = await deployed.TBTCStub.balanceOf.call(accounts[0])
-      const initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
+      const beneficiary = accounts[2]
+      // min an arbitrary reward value to the funding contract
+      const reward = 100000000
+      await deployed.TBTCTokenStub.mint(testUtilsInstance.address, reward)
+
+      const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
       await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
 
       await testUtilsInstance.distributeBeneficiaryReward()
 
-      const finalTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
+      const finalTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
       const tokenCheck = new BN(initialTokenBalance).add( new BN(reward))
       expect(finalTokenBalance, 'tokens not rewarded to beneficiary correctly').to.eq.BN(tokenCheck)
     })
