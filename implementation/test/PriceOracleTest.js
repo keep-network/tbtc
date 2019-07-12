@@ -91,7 +91,7 @@ contract('PriceOracleV1', function(accounts) {
         expect(res).to.eq.BN(newPrice)
       })
 
-      describe.only('fails when price delta < 1%', async () => {
+      describe('1% minimum price delta', async () => {
         let instance
         const initialPrice = new BN('323200000000')
 
