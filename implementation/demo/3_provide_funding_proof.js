@@ -11,6 +11,7 @@
 
 const Deposit = artifacts.require('./Deposit.sol')
 const TBTCSystem = artifacts.require('./TBTCSystem.sol')
+const TBTCToken = artifacts.require('./TBTCToken.sol')
 
 const FundingProof = require('./tools/FundingProof')
 
@@ -21,16 +22,30 @@ module.exports = async function() {
 
   let deposit
   let depositLog
+  let tbtcSystem
+  let tbtcToken
 
   try {
     deposit = await Deposit.at(depositAddress)
     depositLog = await TBTCSystem.deployed()
+    tbtcSystem = await TBTCSystem.deployed()
+    tbtcToken = await TBTCToken.deployed()
   } catch (err) {
     throw new Error('contracts initialization failed', err)
   }
 
   async function provideFundingProof(fundingProof) {
     console.log('Submit funding proof...')
+
+    const depositOwner = await tbtcSystem.ownerOf(depositAddress)
+      .catch((err) => {
+        throw new Error(`cannot get owner of deposit ${depositAddress}: ${err}`)
+      })
+
+    const initialTokenBalance = await tbtcToken.balanceOf(depositOwner)
+      .catch((err) => {
+        throw new Error(`cannot get token balance for deposit owner ${depositOwner}: ${err}`)
+      })
 
     const result = await deposit.provideBTCFundingProof(
       fundingProof.version,
@@ -46,6 +61,19 @@ module.exports = async function() {
     })
 
     console.log('provideBTCFundingProof transaction: ', result.tx)
+
+    const tokenBalance = await tbtcToken.balanceOf(depositOwner)
+      .catch((err) => {
+        throw new Error(`cannot get token balance for account ${depositOwner}: ${err}`)
+      })
+
+    mintedTokens = tokenBalance - initialTokenBalance
+
+    if (mintedTokens <= 0) {
+      throw new Error(`new tokens has not been minted`)
+    }
+
+    console.log(`Minted tokens:`, mintedTokens)
   }
 
   async function logEvents(startBlockNumber) {
