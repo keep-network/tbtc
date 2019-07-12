@@ -77,7 +77,6 @@ module.exports = (deployer) => {
     await deployer.deploy(TBTCToken)
 
     // keep
-
     await deployer.deploy(KeepBridge).then((instance) => {
       instance.initialize(KeepRegistryAddress)
     })
