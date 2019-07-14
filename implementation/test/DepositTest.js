@@ -29,6 +29,8 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
+import { AssertBalanceHelpers } from './helpers/assert_balance'
+
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },
@@ -85,7 +87,8 @@ contract('Deposit', (accounts) => {
         deployed.TBTCStub.address,
         deployed.KeepStub.address,
         1, // m
-        1)
+        1
+      )
 
       // state updates
       const depositState = await testInstance.getState.call()
@@ -1045,14 +1048,19 @@ contract('Deposit', (accounts) => {
   describe.only('liquidation flows', async () => {
     let uniswapExchange
     let tbtc
+    let tbtcSystem
     let deposit
+    let keep
+
+    let assertBalance
 
     beforeEach(async () => {
       tbtc = await TBTC.new()
       uniswapExchange = await UniswapExchangeStub.new(tbtc.address)
       deposit = deployed.TestDepositUtils
 
-      const tbtcSystem = deployed.TBTCSystemStub
+      tbtcSystem = deployed.TBTCSystemStub
+      keep = deployed.KeepStub
 
       // Set exterior addresses
       await tbtcSystem.setExteroriorAddresses(
@@ -1063,8 +1071,13 @@ contract('Deposit', (accounts) => {
       await deposit.setExteroriorAddresses(
         tbtcSystem.address,
         tbtc.address,
-        deployed.KeepStub.address,
+        keep.address,
       )
+
+      const tbtcPrice = web3.utils.toWei('1', 'ether')
+      await uniswapExchange.setEthToTokenInputPrice(tbtcPrice)
+
+      assertBalance = new AssertBalanceHelpers(tbtc)
     })
 
     it('#startSignerAbortLiquidation', async () => {
@@ -1080,7 +1093,7 @@ contract('Deposit', (accounts) => {
       // we also need to check for the case in which onchain liquidation fails
     })
 
-    it.only('#startSignerFraudLiquidation', async () => {
+    it.only('#startSignerFraudLiquidation (redemption)', async () => {
       // eth bonds should be liquidated for tbtc
       // via uniswap
       //
@@ -1092,40 +1105,64 @@ contract('Deposit', (accounts) => {
       //
       // we also need to check for the case in which onchain liquidation fails
 
+      // const redeemer = accounts[0]
+      const beneficiary = accounts[1]
+      const requestor = accounts[2]
 
-      // const beneficiary = ''
-      // const deposit = {}
+      // createNewDeposit
+      // thereby funding it with ETH
 
-      // Send some ETH to the Keep
-      // TODO(liamz): move this into test of startSignerFraudLiquidation etc.
-      //              for now it's a good placeholder for assumptions
-      // const keepBondAmount = await keep.checkBondAmount()
+      // requestRedemption
+      // which burns tbtc
+      // and puts deposit in a redemption state
+
+      // TODO(liamz): this is disgusting, things that need to be cleaned up:
+      // 1) beneficiary ownership being set non-hackily
+      // 2) keep bonds / deposit eth non-hackily
+      // 3) requestor address set non-hackily
+
+      // set the owner/beneficiary of the deposit
+      await tbtcSystem.setOwner(beneficiary)
+
+      // give the keep/deposit eth
+      await assertBalance.eth(keep.address, '0')
+      await keep.send(1000000, { from: accounts[0] })
+      // await keep.checkBondAmount()
+      await assertBalance.eth(keep.address, '1000000')
+
+      // set requestor
+      const digest = '0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc'
+      await deposit.setRequestInfo(
+        requestor,
+        '0x' + '11'.repeat(20),
+        0, 0, digest
+      )
+
+      await assertBalance.tbtc(deposit.address, '0')
 
 
-      // eslint-disable-next-line no-unused-vars
-      // const keep = deployed.KeepStub
+      await deposit.startSignerFraudLiquidation()
+
+
+      // check tbtc refunded to redeemer/requestor
+      await assertBalance.tbtc(requestor, web3.utils.toWei('1', 'ether'))
+      // beneficiary reward
+      await assertBalance.tbtc(beneficiary, web3.utils.toWei('0.0005', 'ether'))
+
+      // requestor gets remaining eth
+      await assertBalance.tbtc(requestor, '2')
+
+      // deposit should have 0
+      await assertBalance.tbtc(deposit.address, '0')
+      await assertBalance.eth(deposit.address, '0')
+
 
       // check distributeEthToKeepGroup was called
-      // TODO(liamz): implement
-      // keepGroupTotalEth
+      const keepGroupTotalEth = await keep.keepGroupTotalEth()
+      expect(keepGroupTotalEth).to.eq('0')
 
-      // const beneficiaryTbtcBalance = (await tbtc.balanceOf(beneficiary)).toString()
-      // expect(depositTbtcBalance).to.eq('5000000000')
-
-      // const signersEthBalanace = await web3.eth.getBalance(deposit.address)
-      // expect(signersEthBalance).to.eq('0')
-
-      // const depositTbtcBalance = (await tbtc.balanceOf(deposit.address)).toString()
-      // expect(depositTbtcBalance).to.eq(order.buyTbtc)
-
-      // const depositEthBalance = await web3.eth.getBalance(deposit.address)
-      // expect(depositEthBalance).to.eq('2') // leftover wei from uint256 precision error
-
-
-      // _d.distributeBeneficiaryReward();
-      // _d.pushFundsToKeepGroup(address(this).balance);
-      // _d.setLiquidated();
-      // _d.logLiquidated();
+      // assert liquidated
+      assert(await deposit.inLiquidated())
     })
   })
 
