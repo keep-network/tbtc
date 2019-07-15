@@ -30,6 +30,7 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 import { AssertBalanceHelpers } from './helpers/assert_balance'
+// import truffleAssert from 'truffle-assertions'
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
@@ -1054,10 +1055,20 @@ contract('Deposit', (accounts) => {
 
     let assertBalance
 
+    let lotSize
+    let beneficiaryReward
+    // let signerFee
+
+    const keepBondAmount = 1000000
+
     beforeEach(async () => {
       tbtc = await TBTC.new()
       uniswapExchange = await UniswapExchangeStub.new(tbtc.address)
       deposit = deployed.TestDepositUtils
+
+      lotSize = await deployed.TBTCConstants.getLotSize()
+      beneficiaryReward = await deposit.beneficiaryReward()
+      // signerFee = await deposit.signerFee()
 
       tbtcSystem = deployed.TBTCSystemStub
       keep = deployed.KeepStub
@@ -1074,95 +1085,118 @@ contract('Deposit', (accounts) => {
         keep.address,
       )
 
-      const tbtcPrice = web3.utils.toWei('1', 'ether')
-      await uniswapExchange.setEthToTokenInputPrice(tbtcPrice)
+      // Setup mock Uniswap with liquidity, set prices
+      const tbtcSupply = new BN(lotSize).mul(new BN(5))
+      const tbtcPrice = new BN(lotSize).add(new BN(beneficiaryReward))
+      await tbtc.mint(accounts[0], tbtcSupply, { from: accounts[0] })
+      await tbtc.approve(uniswapExchange.address, tbtcSupply, { from: accounts[0] })
+      await uniswapExchange.mockLiquidity(tbtcSupply, { from: accounts[0], value: keepBondAmount })
+      await uniswapExchange.setPrices(keepBondAmount, tbtcPrice)
 
       assertBalance = new AssertBalanceHelpers(tbtc)
     })
 
-    it('#startSignerAbortLiquidation', async () => {
-      // eth bonds should be liquidated for tbtc
-      // via uniswap
-      //
-      // if this is coming from redemption, then tbtc is refunded to redeemer
-      // if this is not, tbtc lotSize is burnt to maintain supply peg
-      //
-      // in either case, the beneficiary reward (0.005 tbtc) should be sent back to the beneficiary
-      // and the keep group should get the remaining eth via pushFundsToKeepGroup
-      //
-      // we also need to check for the case in which onchain liquidation fails
+
+    describe('#attemptToLiquidateOnchain', async () => {
+      it('liquidates for 1.005 tbtc', async () => {
+        await deposit.send(keepBondAmount, { from: accounts[0] })
+        await assertBalance.tbtc(deposit.address, '0')
+        await assertBalance.eth(deposit.address, ''+keepBondAmount)
+
+        await deposit.attemptToLiquidateOnchain()
+      })
+
+      it('returns false if buy under MIN_TBTC threshold', async () => {})
     })
 
-    it.only('#startSignerFraudLiquidation (redemption)', async () => {
-      // eth bonds should be liquidated for tbtc
-      // via uniswap
-      //
-      // if this is coming from redemption, then tbtc is refunded to redeemer
-      // if this is not, tbtc is burnt to maintain supply peg
-      //
-      // in either case, the beneficiary reward (0.005 tbtc) should be sent back to the beneficiary
-      // and the requestor should get whatever remaining eth
-      //
-      // we also need to check for the case in which onchain liquidation fails
+    describe('redemption', async () => {
+      it('#startSignerFraudLiquidation', async () => {
+        // eth bonds should be liquidated for tbtc
+        // via uniswap
+        //
+        // if this is coming from redemption, then tbtc is refunded to redeemer
+        // if this is not, tbtc is burnt to maintain supply peg
+        //
+        // in either case, the beneficiary reward (0.005 tbtc) should be sent back to the beneficiary
+        // and the requestor should get whatever remaining eth
+        //
+        // we also need to check for the case in which onchain liquidation fails
 
-      // const redeemer = accounts[0]
-      const beneficiary = accounts[1]
-      const requestor = accounts[2]
+        const beneficiary = accounts[1]
+        const requestor = accounts[2]
 
-      // createNewDeposit
-      // thereby funding it with ETH
+        const requestorBalance1 = new BN(await web3.eth.getBalance(requestor))
 
-      // requestRedemption
-      // which burns tbtc
-      // and puts deposit in a redemption state
+        // set the owner/beneficiary of the deposit
+        // TODO(liamz): set beneficiary more realistically
+        await tbtcSystem.setOwner(beneficiary)
 
-      // TODO(liamz): this is disgusting, things that need to be cleaned up:
-      // 1) beneficiary ownership being set non-hackily
-      // 2) keep bonds / deposit eth non-hackily
-      // 3) requestor address set non-hackily
+        // give the keep/deposit eth
+        // TODO(liamz): use createNewDeposit when it works
+        await assertBalance.eth(keep.address, '0')
+        await keep.send(keepBondAmount, { from: accounts[0] })
+        await assertBalance.eth(keep.address, '1000000') // TODO(liamz): replace w/ keep.checkBondAmount()
+        await assertBalance.tbtc(deposit.address, '0')
 
-      // set the owner/beneficiary of the deposit
-      await tbtcSystem.setOwner(beneficiary)
-
-      // give the keep/deposit eth
-      await assertBalance.eth(keep.address, '0')
-      await keep.send(1000000, { from: accounts[0] })
-      // await keep.checkBondAmount()
-      await assertBalance.eth(keep.address, '1000000')
-
-      // set requestor
-      const digest = '0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc'
-      await deposit.setRequestInfo(
-        requestor,
-        '0x' + '11'.repeat(20),
-        0, 0, digest
-      )
-
-      await assertBalance.tbtc(deposit.address, '0')
+        // set requestor
+        // TODO(liamz): set requestorAddress more realistically
+        const digest = '0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc'
+        await deposit.setRequestInfo(
+          requestor,
+          '0x' + '11'.repeat(20),
+          0, 0, digest
+        )
 
 
-      await deposit.startSignerFraudLiquidation()
+        await deposit.startSignerFraudLiquidation()
+
+        // truffleAssert.eventEmitted(tx, 'ECDSAKeepCreated', (ev) => {
+        //   instanceAddress = ev.keepAddress;
+        //   return true;
+        // });
+
+        const requestorBalance2 = new BN(await web3.eth.getBalance(requestor))
 
 
-      // check tbtc refunded to redeemer/requestor
-      await assertBalance.tbtc(requestor, web3.utils.toWei('1', 'ether'))
-      // beneficiary reward
-      await assertBalance.tbtc(beneficiary, web3.utils.toWei('0.0005', 'ether'))
+        // assert liquidated
+        const depositState = await deposit.getState.call()
+        expect(depositState).to.eq.BN(utils.states.LIQUIDATED)
 
-      // requestor gets remaining eth
-      await assertBalance.tbtc(requestor, '2')
+        // tbtc distributed to requestor and beneficiary
+        await assertBalance.tbtc(requestor, lotSize)
+        await assertBalance.tbtc(beneficiary, beneficiaryReward)
 
-      // deposit should have 0
-      await assertBalance.tbtc(deposit.address, '0')
-      await assertBalance.eth(deposit.address, '0')
+        // requestor gets (any) remaining eth
+        // TODO(liamz): no remaining eth in this test, but in another forsho
+        expect(
+          requestorBalance2.sub(requestorBalance1)
+        ).to.eq.BN(new BN('0'))
 
+        // deposit should have 0
+        await assertBalance.tbtc(deposit.address, new BN('0'))
+        await assertBalance.eth(deposit.address, '0')
 
-      // check distributeEthToKeepGroup was called
-      const keepGroupTotalEth = await keep.keepGroupTotalEth()
-      expect(keepGroupTotalEth).to.eq('0')
+        // check distributeEthToKeepGroup
+        const keepGroupTotalEth = await keep.keepGroupTotalEth()
+        expect(keepGroupTotalEth).to.eq.BN(new BN('0'))
+      })
 
-      // assert liquidated
-      assert(await deposit.inLiquidated())
+      it('#startSignerAbortLiquidation', async () => {
+        // eth bonds should be liquidated for tbtc
+        // via uniswap
+        //
+        // if this is coming from redemption, then tbtc is refunded to redeemer
+        // if this is not, tbtc lotSize is burnt to maintain supply peg
+        //
+        // in either case, the beneficiary reward (0.005 tbtc) should be sent back to the beneficiary
+        // and the keep group should get the remaining eth via pushFundsToKeepGroup
+        //
+        // we also need to check for the case in which onchain liquidation fails
+      })
+    })
+
+    describe('non-redemption', async () => {
+
     })
   })
 
