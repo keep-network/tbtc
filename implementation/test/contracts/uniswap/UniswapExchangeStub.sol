@@ -1,37 +1,35 @@
 pragma solidity 0.4.25;
 
 import {IUniswapExchange} from "../../../contracts/uniswap/IUniswapExchange.sol";
-import {IBurnableERC20} from '../../../contracts/interfaces/IBurnableERC20.sol';
+import {TBTC} from '../../../contracts/tokens/TBTC.sol';
 
 contract UniswapExchangeStub {
-    IBurnableERC20 tbtc;
+    TBTC tbtc;
 
-    uint256 ethToTokenPrice = 0;
+    uint256 ethPrice = 0;
+    uint256 tbtcPrice = 0;
 
-    constructor(address tbtc) {
-        tbtc = IBurnableERC20(tbtc);
-    }
-
-    function() public {
-        revert("unimplemented");
+    constructor(address _tbtc) public {
+        tbtc = TBTC(_tbtc);
     }
 
     // Give some mock liquidity to the stub
-    function mockLiquidity() {
+    function mockLiquidity(uint256 _tbtcAmount) public payable {
         require(msg.value > 0, "requires ETH for liquidity");
-        uint ONE_TBTC = (10 ** 8);
-        tbtc.transfer(address(this), ONE_TBTC * 10);
+        tbtc.transferFrom(msg.sender, address(this), _tbtcAmount);
     }
 
-    function setEthToTokenInputPrice(uint256 _price) {
-        ethToTokenPrice = _price;
+    function setPrices(uint256 _ethPrice, uint256 _tbtcPrice) public {
+        ethPrice = _ethPrice;
+        tbtcPrice = _tbtcPrice;
     }
 
     function getEthToTokenInputPrice(uint256 eth_sold)
         external view
-        returns (uint256 tokens_bought)
+        returns (uint256)
     {
-        return ethToTokenPrice;
+        eth_sold;
+        return tbtcPrice;
     }
 
     function ethToTokenSwapOutput(uint256 tokens_bought, uint256 deadline)
@@ -39,8 +37,10 @@ contract UniswapExchangeStub {
         returns (uint256 eth_sold)
     {
         deadline;
-        require(msg.value == ethToTokenPrice, "incorrect eth sent");
-        tbtc.transfer(msg.sender, tokens_bought);
+        require(msg.value     == ethPrice, "incorrect eth sent");
+        require(tokens_bought == tbtcPrice, "incorrect tbtc ask");
+        require(tbtc.balanceOf(address(this)) >= tokens_bought, "not enough tbtc for trade");
+        require(tbtc.transferFrom(address(this), msg.sender, tokens_bought), "transfer failed");
         
         return msg.value;
     }
