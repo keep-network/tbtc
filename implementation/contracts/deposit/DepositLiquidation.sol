@@ -23,45 +23,28 @@ library DepositLiquidation {
     /// @notice     Tries to liquidate the position on-chain using the signer bond
     /// @dev        Calls out to other contracts, watch for re-entrance
     /// @return     True if Liquidated, False otherwise
+    // TODO(liamz): make attemptToLiquidateOnchain internal, check for re-entry
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
     ) public returns (bool) {
-        
+        require(address(this).balance > 0, "no ether to liquidate");
+
         IUniswapExchange exchange = IUniswapExchange(ITBTCSystem(_d.TBTCSystem).getTBTCUniswapExchange());
 
-        if (_d.auctionTBTCAmount() == 0) {
-            // Redemption flow, liquidate TBTC
-            // uint tbtcToLiquidate = _d.auctionTBTCAmount();
+        // with collateralization = 125%, we can assume an order of
+        // 1.0005 TBTC (equivalent to will be filled
+        uint MIN_TBTC = TBTCConstants.getLotSize().add(DepositUtils.beneficiaryReward());
 
-        } else {
-            // Abort/fraud flow, liquidate ETH
-            // Signer bond is already seized.
-            require(address(this).balance > 0, "no eth to liquidate");
-            
-            // TODO(liamz): make attemptToLiquidateOnchain internal
-            //              it's possible someone could send the deposit tokens, and then call this method
-            //              and could lead to some incorrect assumptions very easily (danger!)
-            uint deadline = block.timestamp + 1;
-            uint ethSold = address(this).balance;
-            
-            uint ONE_TBTC = (10 ** 8);
-            // minimum: 0.4 TBTC
-            uint MIN_TBTC_BOUGHT = ONE_TBTC * 500 / 1000;
-
-            uint tbtcBought = exchange.getEthToTokenInputPrice(ethSold);
-            if(tbtcBought < MIN_TBTC_BOUGHT) {
-                return false;
-            }
-
-            exchange.ethToTokenSwapOutput.value(ethSold)(tbtcBought, deadline);
-
-            return true;
+        uint ethSold = address(this).balance;
+        uint tbtcBought = exchange.getEthToTokenInputPrice(ethSold);
+        if(tbtcBought < MIN_TBTC) {
+            return false;
         }
 
-        // // seizeSignerBonds
-        // // _d.fetchBondAmount()
-        
-        return false;
+        uint deadline = block.timestamp + 1;
+        exchange.ethToTokenSwapOutput.value(ethSold)(tbtcBought, deadline);
+
+        return true;
     }
 
     /// @notice                 Notifies the keep contract of fraud
@@ -120,23 +103,26 @@ library DepositLiquidation {
         _d.redemptionTeardown();
         uint256 _seized = _d.seizeSignerBonds();
 
-        if (_d.auctionTBTCAmount() == 0) {
-            // we came from the redemption flow
-            _d.setLiquidated();
-            _d.requesterAddress.transfer(_seized);
-            _d.logLiquidated();
-            return;
-        }
-
         bool _liquidated = attemptToLiquidateOnchain(_d);
 
         if (_liquidated) {
-            _d.distributeBeneficiaryReward();
             _d.setLiquidated();
             _d.logLiquidated();
-            address(0).transfer(address(this).balance);  // burn it down
-        }
-        if (!_liquidated) {
+
+            _d.distributeBeneficiaryReward();
+
+            if (_d.auctionTBTCAmount() == 0) { // redemption
+                IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+                _tbtc.transferFrom(address(this), _d.requesterAddress, TBTCConstants.getLotSize());
+                address(_d.requesterAddress).transfer(address(this).balance);
+            } else {
+                // maintain supply peg
+                _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
+                address(0).transfer(address(this).balance); // burn down eth
+            }
+
+
+        } else if (!_liquidated) {
             _d.setFraudLiquidationInProgress();
             _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
         }
