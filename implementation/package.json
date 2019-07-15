@@ -20,13 +20,19 @@
   "author": "James Prestwich",
   "license": "UNLICENSED",
   "dependencies": {
+    "@babel/cli": "^7.5.0",
+    "@babel/core": "^7.5.4",
+    "@babel/preset-env": "^7.5.4",
+    "@babel/register": "^7.4.4",
     "bn-chai": "^1.0.1",
     "bn.js": "^4.11.8",
     "chai": "^4.2.0",
+    "core-js": "3",
     "create-hash": "^1.2.0",
     "openzeppelin-solidity": "2.0.0",
     "remixd": "^0.1.8-alpha.6",
     "solc": "^0.4.25",
+    "source-map-support": "^0.5.12",
     "web3": "^1.0.0-beta.55"
   },
   "devDependencies": {
