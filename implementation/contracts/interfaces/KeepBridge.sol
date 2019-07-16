@@ -40,14 +40,14 @@ contract KeepBridge is IKeep {
 
     function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
         //TODO: Implement
-        _keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
+        _keepAddress = KeepRegistry(keepRegistry).createECDSAKeep(_n,_m);
     }
 
     // get the result of a keep formation
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
     function getKeepPubkey(address _keepAddress) external view returns (bytes memory){
-        return ECDSAKeepContract(_keepAddress).getPublicKey();
+        return ECDSAKeep(_keepAddress).getPublicKey();
     }
 
 
@@ -70,7 +70,7 @@ contract KeepBridge is IKeep {
 
 /// @notice Interface for communication with `KeepRegistry` contract
 /// @dev It allows to call a function without the need of low-level call
-interface KeepRegistryContract {
+interface KeepRegistry {
 
     /// @notice Create a new ECDSA keep
     /// @param _groupSize Number of members in the keep
@@ -82,9 +82,12 @@ interface KeepRegistryContract {
     ) external payable returns (address keep);
 }
 
+interface ECDSAKeepVendor {
+}
+
 /// @notice Interface for communication with `ECDSAKeep` contract
 /// @dev It allows to call a function without the need of low-level call
-interface ECDSAKeepContract {
+interface ECDSAKeep {
 
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
