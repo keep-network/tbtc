@@ -39,8 +39,11 @@ contract KeepBridge is IKeep {
     }
 
     function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
-        //TODO: Implement
-        _keepAddress = KeepRegistry(keepRegistry).createECDSAKeep(_n,_m);
+        address keepVendorAddress = KeepRegistry(keepRegistry)
+            .getKeepTypeVendor("ECDSAKeep");
+            
+        _keepAddress = ECDSAKeepVendor(keepVendorAddress)
+            .openKeep(_n,_m, msg.sender);
     }
 
     // get the result of a keep formation
@@ -71,24 +74,30 @@ contract KeepBridge is IKeep {
 /// @notice Interface for communication with `KeepRegistry` contract
 /// @dev It allows to call a function without the need of low-level call
 interface KeepRegistry {
-
-    /// @notice Create a new ECDSA keep
-    /// @param _groupSize Number of members in the keep
-    /// @param _honestThreshold Minimum number of honest keep members
-    /// @return Created keep address
-    function createECDSAKeep(
-        uint256 _groupSize,
-        uint256 _honestThreshold
-    ) external payable returns (address keep);
+    /// @notice Get a keep vendor contract address for a keep type.
+    /// @param _keepType Keep type.
+    /// @return Keep vendor contract address.
+    function getKeepTypeVendor(string _keepType) external view returns (address);
 }
 
+/// @notice Interface for communication with `ECDSAKeepVendor` contract
+/// @dev It allows to call a function without the need of low-level call
 interface ECDSAKeepVendor {
+    /// @notice Open a new ECDSA keep.
+    /// @param _groupSize Number of members in the keep.
+    /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _owner Address of the keep owner.
+    /// @return Opened keep address.
+    function openKeep(
+        uint256 _groupSize,
+        uint256 _honestThreshold,
+        address _owner
+    ) external payable returns (address keepAddress);
 }
 
 /// @notice Interface for communication with `ECDSAKeep` contract
 /// @dev It allows to call a function without the need of low-level call
 interface ECDSAKeep {
-
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
     function getPublicKey() external view returns (bytes memory);
