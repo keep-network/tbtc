@@ -102,13 +102,6 @@ contract('PriceOracleV1', function(accounts) {
         let instance
         const initialPrice = new BN('323200000000')
 
-        beforeEach(async () => {
-          instance = await PriceOracleV1.new(
-            DEFAULT_OPERATOR,
-            initialPrice
-          )
-        })
-
         // delta = 3 231 999 999 (< 1%)
         const price11 = new BN('326431999999')
         const price12 = new BN('319968000001')
@@ -119,9 +112,24 @@ contract('PriceOracleV1', function(accounts) {
         const price31 = new BN('326432000001')
         const price32 = new BN('319967999999')
 
-        it('fails >1% delta', async () => {
+        beforeEach(async () => {
+          instance = await PriceOracleV1.new(
+            DEFAULT_OPERATOR,
+            initialPrice
+          )
+        })
+
+        it('fails lesser than +1% delta', async () => {
           try {
             await instance.updatePrice(price11)
+            assert(false, 'Test call did not error as expected')
+          } catch (e) {
+            assert.include(e.message, 'Price change is negligible (<1%)')
+          }
+        })
+
+        it('fails lesser than -1% delta', async () => {
+          try {
             await instance.updatePrice(price12)
             assert(false, 'Test call did not error as expected')
           } catch (e) {
@@ -129,11 +137,11 @@ contract('PriceOracleV1', function(accounts) {
           }
         })
 
-        it('passes -1% delta', async () => {
+        it('passes +1% delta', async () => {
           await instance.updatePrice(price21)
         })
 
-        it('passes +1% delta', async () => {
+        it('passes -1% delta', async () => {
           await instance.updatePrice(price22)
         })
 
