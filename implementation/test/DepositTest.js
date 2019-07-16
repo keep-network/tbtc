@@ -15,6 +15,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 const KeepStub = artifacts.require('KeepStub')
 const TBTCStub = artifacts.require('TBTCStub')
 const TBTC = artifacts.require('TBTC')
+const UniswapFactoryStub = artifacts.require('UniswapFactoryStub')
 const UniswapExchangeStub = artifacts.require('UniswapExchangeStub')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -1063,6 +1064,7 @@ contract('Deposit', (accounts) => {
 
     beforeEach(async () => {
       tbtc = await TBTC.new()
+      const uniswapFactory = await UniswapFactoryStub.new()
       uniswapExchange = await UniswapExchangeStub.new(tbtc.address)
       deposit = deployed.TestDepositUtils
 
@@ -1075,10 +1077,10 @@ contract('Deposit', (accounts) => {
 
       // Set exterior addresses
       await tbtcSystem.setExteroriorAddresses(
-        '0x0000000000000000000000000000000000000000',
+        uniswapFactory.address,
         tbtc.address
       )
-      await tbtcSystem.setTBTCUniswapExchange(uniswapExchange.address)
+      await uniswapFactory.setTbtcExchange(uniswapExchange.address)
       await deposit.setExteroriorAddresses(
         tbtcSystem.address,
         tbtc.address,

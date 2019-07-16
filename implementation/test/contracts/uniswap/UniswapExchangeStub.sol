@@ -1,6 +1,5 @@
 pragma solidity 0.4.25;
 
-import {IUniswapExchange} from "../../../contracts/uniswap/IUniswapExchange.sol";
 import {TBTC} from '../../../contracts/tokens/TBTC.sol';
 
 contract UniswapExchangeStub {

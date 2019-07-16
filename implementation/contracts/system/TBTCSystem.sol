@@ -12,19 +12,16 @@ contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
     address depositOwner = address(0);
-    IUniswapFactory public uniswapFactory;
-    TBTC public tbtc;
+
+    address public uniswapFactory;
+    address public tbtc;
 
     function setExteroriorAddresses(
         address _uniswapFactory,
         address _tbtc
     ) external {
-        uniswapFactory = IUniswapFactory(_uniswapFactory);
-        tbtc = TBTC(_tbtc);
-    }
-
-    function getTBTCUniswapExchange() external view returns (address) {
-        return uniswapFactory.getExchange(address(tbtc));
+        uniswapFactory = _uniswapFactory;
+        tbtc = _tbtc;
     }
 
     // Price Oracle
@@ -38,6 +35,10 @@ contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
 
     function fetchRelayPreviousDifficulty() external view returns (uint256) {
         return previousDifficulty;
+    }
+
+    function getUniswapFactory() public view returns (address) {
+        return uniswapFactory;
     }
 
     function submitCurrentDifficulty(uint256 _currentDifficulty) public {

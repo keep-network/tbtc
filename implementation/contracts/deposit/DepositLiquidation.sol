@@ -8,6 +8,7 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {IUniswapFactory} from "../uniswap/IUniswapFactory.sol";
 import {IUniswapExchange} from "../uniswap/IUniswapExchange.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 
@@ -27,9 +28,15 @@ library DepositLiquidation {
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
     ) public returns (bool) {
-        require(address(this).balance > 0, "no ether to liquidate");
+        if(address(this).balance < 0) {
+            return false;
+        }
 
-        IUniswapExchange exchange = IUniswapExchange(ITBTCSystem(_d.TBTCSystem).getTBTCUniswapExchange());
+        IUniswapFactory uniswapFactory = IUniswapFactory(ITBTCSystem(_d.TBTCSystem).getUniswapFactory());
+        IUniswapExchange exchange = IUniswapExchange(uniswapFactory.getExchange(_d.TBTCToken));
+        if(exchange == address(0x0)) {
+            return false;
+        }
 
         // with collateralization = 125%, we can assume an order of
         // 1.0005 TBTC (equivalent to will be filled

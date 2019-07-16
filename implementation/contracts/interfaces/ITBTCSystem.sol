@@ -23,5 +23,7 @@ interface ITBTCSystem {
     function fetchRelayCurrentDifficulty() external view returns (uint256);
     function fetchRelayPreviousDifficulty() external view returns (uint256);
 
-    function getTBTCUniswapExchange() external view returns (address);
+    // function uniswapFactory() external view returns (address);
+
+    function getUniswapFactory() public view returns (address);
 }
