@@ -4,7 +4,7 @@ import "../interfaces/IPriceOracle.sol";
 import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 
 /// @title BTC-ETH Price Oracle V1
-/// @notice implements a simple price feed, managed by a trusted operator.
+/// @notice Implements a simple price feed, managed by a trusted operator.
 contract PriceOracleV1 is IPriceOracle {
     using SafeMath for uint128;
 
@@ -48,7 +48,7 @@ contract PriceOracleV1 is IPriceOracle {
     }
 
     /// @notice Updates the price
-    /// @dev requires price to differ by at least 1%, unless it is close to expiry
+    /// @dev Requires price to differ by at least 1%, unless it is close to expiry
     function updatePrice(uint128 _newPrice) external {
         require(msg.sender == operator, "Unauthorised");
 
