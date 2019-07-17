@@ -18,6 +18,7 @@ const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
+const TestDepositUtils = artifacts.require('TestDepositUtils')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -39,6 +40,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
+  { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
   { name: 'TBTCTokenStub', contract: TBTCTokenStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
@@ -976,12 +978,7 @@ contract('Deposit', (accounts) => {
       const beneficiary = accounts[4]
       await deployed.TBTCTokenStub.clearBalance(beneficiary)
       const signerBond = 10000000000
-<<<<<<< HEAD
-      const initialTokenBalance = await deployed.TBTCStub.getBalance(beneficiary)
-
-=======
       const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
->>>>>>> master
       await testInstance.send(signerBond, { from: beneficiary })
 
       await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
@@ -993,12 +990,8 @@ contract('Deposit', (accounts) => {
       const balanceCheck = new BN(initialBalance).add(new BN(signerBond))
 
       assert.equal(balanceCheck, balanceAfter, 'funder bond not currectly returned')
-<<<<<<< HEAD
-=======
       const endingTokenBalancce = await deployed.TBTCTokenStub.balanceOf(beneficiary)
->>>>>>> master
 
-      const endingTokenBalancce = await deployed.TBTCStub.getBalance(beneficiary)
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
       const toMint = lotSize.mul(new BN(95)).div(new BN(100))
       const tokenCheck = initialTokenBalance.add(new BN(toMint))
