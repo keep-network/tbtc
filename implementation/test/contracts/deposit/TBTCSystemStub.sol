@@ -24,7 +24,7 @@ contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
         tbtc = TBTC(_tbtc);
     }
 
-    function getUniswapFactory() public view returns (address) {
+    function getUniswapFactory() external view returns (address) {
         return uniswapFactory;
     }
 

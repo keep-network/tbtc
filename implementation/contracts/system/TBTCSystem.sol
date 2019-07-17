@@ -37,7 +37,7 @@ contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
         return previousDifficulty;
     }
 
-    function getUniswapFactory() public view returns (address) {
+    function getUniswapFactory() external view returns (address) {
         return uniswapFactory;
     }
 
