@@ -17,34 +17,34 @@ contract DepositFactory is CloneFactory{
 
     event DepositCloneCreated(address depositCloneAddress);
 
-    /// @dev                    Set the deposit address on contract initialization
-    /// @param _implementation  The address of the deployed Deposit contract
-    constructor(address _implementation) public {
-        masterDepositAddress = _implementation;
+    /// @dev                          Set the master deposit contract address
+    ///                               on contract initialization
+    /// @param _masterDepositAddress  The address of the master deposit contract
+    constructor(address _masterDepositAddress) public {
+        masterDepositAddress = _masterDepositAddress;
     }
 
-    /// @notice             Creates a new deposit instance
-    /// @dev                Calls createNewDeposit from deposit contract as init method. 
-    ///                     We don't offer pure createClone, meaning that the only way
-    ///                     to create a clone is by also calling createNewDeposit()
-    ///                     Deposits created this way will never pass by state 0 (START)
-    /// @param _TBTCSystem  Address of system contract
-    /// @param _TBTCToken   Address of Token contract
-    /// @param _KeepBridge  Address of Keep contract
-    /// @param _m           m for m-of-n
-    /// @param _n           n for m-of-n
-    /// @return             True if successful, otherwise revert
+    /// @notice                Creates a new deposit instance
+    /// @dev                   Calls createNewDeposit from deposit contract as init method. 
+    ///                        We don't offer pure createClone, meaning that the only way
+    ///                        to create a clone is by also calling createNewDeposit()
+    ///                        Deposits created this way will never pass by state 0 (START)
+    /// @param _TBTCSystem     Address of system contract
+    /// @param _TBTCToken      Address of TBTC token contract
+    /// @param _KeepBridge     Address of Keep Bridge contract
+    /// @param _keepThreshold  Minimum number of honest keep members
+    /// @param _keepSize       Number of all members in a keep
+    /// @return                True if successful, otherwise revert
     function createDeposit (
         address _TBTCSystem,
         address _TBTCToken,
         address _KeepBridge,
-        uint256 _m,
-        uint256 _n
+        uint256 _keepThreshold,
+        uint256 _keepSize
     ) public {
+        address cloneAddress = createClone(masterDepositAddress);
+        Deposit(cloneAddress).createNewDeposit(_TBTCSystem, _TBTCToken, _KeepBridge, _keepThreshold, _keepSize);
 
-        address clone = createClone(masterDepositAddress);
-        Deposit(clone).createNewDeposit(_TBTCSystem, _TBTCToken, _KeepBridge, _m, _n);
-
-        emit DepositCloneCreated(clone);
+        emit DepositCloneCreated(cloneAddress);
     }
 }
