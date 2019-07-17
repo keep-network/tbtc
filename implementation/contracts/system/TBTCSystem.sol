@@ -9,7 +9,7 @@ contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
-    address depositOwner = address(0);
+    address depositOwner = address(1);
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
