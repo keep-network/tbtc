@@ -118,7 +118,7 @@ library DepositLiquidation {
 
             _d.distributeBeneficiaryReward();
 
-            if (_d.auctionTBTCAmount() == 0) { // redemption
+            if (_d.requesterAddress != address(0)) { // redemption
                 IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
                 _tbtc.transferFrom(address(this), _d.requesterAddress, TBTCConstants.getLotSize());
                 address(_d.requesterAddress).transfer(address(this).balance);
