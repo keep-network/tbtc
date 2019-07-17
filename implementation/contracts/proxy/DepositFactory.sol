@@ -12,14 +12,14 @@ import "../deposit/Deposit.sol";
 contract DepositFactory is CloneFactory{
 
     // holds the address of the deposit contract
-    address public implementation;
+    address public masterDepositAddress;
 
     event DepositCloneCreated(address clonedContract);
 
     /// @dev                    Set the deposit address on contract initialization
     /// @param _implementation  The address of the deployed Deposit contract
     constructor(address _implementation) public {
-        implementation = _implementation;
+        masterDepositAddress = _implementation;
     }
 
     /// @notice             Creates a new deposit instance
@@ -40,7 +40,7 @@ contract DepositFactory is CloneFactory{
         uint256 _n
     ) public {
 
-        address clone = createClone(implementation);
+        address clone = createClone(masterDepositAddress);
         Deposit(clone).createNewDeposit(_TBTCSystem, _TBTCToken, _KeepBridge, _m, _n);
 
         emit DepositCloneCreated(clone);
