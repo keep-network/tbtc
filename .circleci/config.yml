@@ -43,6 +43,11 @@ jobs:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
             command: npm install && npm run setup && npm run test
+        - run:
+            name: Generate Sol coverage report
+            command: npm run coverage
+        - store_artifacts:
+            path: ~/project/implementation/coverage
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
