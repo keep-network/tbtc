@@ -15,7 +15,7 @@ contract DepositFactory is CloneFactory{
     // which will be used as a master contract for cloning.
     address public masterDepositAddress;
 
-    event DepositCloneCreated(address clonedContract);
+    event DepositCloneCreated(address depositCloneAddress);
 
     /// @dev                    Set the deposit address on contract initialization
     /// @param _implementation  The address of the deployed Deposit contract
