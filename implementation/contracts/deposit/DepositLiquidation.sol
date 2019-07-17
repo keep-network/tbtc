@@ -28,10 +28,6 @@ library DepositLiquidation {
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
     ) public returns (bool) {
-        if(address(this).balance < 0) {
-            return false;
-        }
-
         IUniswapFactory uniswapFactory = IUniswapFactory(ITBTCSystem(_d.TBTCSystem).getUniswapFactory());
         IUniswapExchange exchange = IUniswapExchange(uniswapFactory.getExchange(_d.TBTCToken));
         if(exchange == address(0x0)) {
@@ -108,8 +104,8 @@ library DepositLiquidation {
         _d.logStartedLiquidation(true);
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
-        uint256 _seized = _d.seizeSignerBonds();
 
+        _d.seizeSignerBonds();
         bool _liquidated = attemptToLiquidateOnchain(_d);
 
         if (_liquidated) {
@@ -139,31 +135,7 @@ library DepositLiquidation {
     /// @dev            We first attempt to liquidate on chain, then by auction
     /// @param  _d      deposit storage pointer
     function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
-        _d.logStartedLiquidation(false);
-        // Reclaim used state for gas savings
-        _d.redemptionTeardown();
-        uint256 _seized = _d.seizeSignerBonds();
-
-        if (_d.auctionTBTCAmount() == 0) {
-            // we came from the redemption flow
-            _d.setLiquidated();
-            _d.requesterAddress.transfer(_seized);
-            _d.logLiquidated();
-            return;
-        }
-
-        bool _liquidated = attemptToLiquidateOnchain(_d);
-
-        if (_liquidated) {
-            _d.distributeBeneficiaryReward();
-            _d.pushFundsToKeepGroup(address(this).balance);
-            _d.setLiquidated();
-            _d.logLiquidated();
-        }
-        if (!_liquidated) {
-            _d.setLiquidationInProgress();
-            _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
-        }
+        revert("unimplemented");
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud
