@@ -11,7 +11,7 @@
     "sol:lint": "solium -d contracts/",
     "sol:lint:fix": "solium -d contracts/ --fix",
     "remix": "remixd -s . --remix-ide https://remix.ethereum.org",
-    "clean": "rm -r build/contracts/*"
+    "coverage": "solidity-coverage"
   },
   "config": {
     "eslintPaths": "test/ migrations/ demo/"
@@ -46,6 +46,7 @@
     "eth-gas-reporter": "^0.1.12",
     "ethlint": "^1.2.4",
     "ganache-cli": "^6.4.3",
+    "solidity-coverage": "^0.6.2",
     "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.1",
     "truffle": "^5.0.17",
     "truffle-assertions": "^0.9.1"
