@@ -98,7 +98,6 @@ contract('DepositLiquidation', (accounts) => {
       await uniswapExchange.mockLiquidity(tbtcSupply, { from: accounts[0], value: keepBondAmount })
       await uniswapExchange.setPrices(keepBondAmount, tbtcPrice)
 
-      // await keep.send(keepBondAmount, { from: accounts[0] })
       await deposit.send(keepBondAmount, { from: accounts[0] })
       await assertBalance.tbtc(deposit.address, '0')
       await assertBalance.eth(deposit.address, ''+keepBondAmount)
@@ -118,6 +117,8 @@ contract('DepositLiquidation', (accounts) => {
     let deployed
     let deposit
     let tbtc
+    let uniswapExchange
+    let keep
 
     let assertBalance
 
@@ -126,22 +127,37 @@ contract('DepositLiquidation', (accounts) => {
 
     beforeEach(async () => {
       deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-      deposit = deployed.TestDepositLiquidation
       tbtc = await TBTC.new()
+      uniswapExchange = await UniswapExchangeStub.new(tbtc.address)
 
+      deposit = deployed.TestDepositLiquidation
+      keep = deployed.KeepStub
+
+      const uniswapFactory = deployed.UniswapFactoryStub
       const tbtcSystem = deployed.TBTCSystemStub
-      const keep = deployed.KeepStub
 
+      await tbtcSystem.setExteroriorAddresses(
+        uniswapFactory.address,
+        tbtc.address
+      )
       await deposit.setExteroriorAddresses(
         tbtcSystem.address,
         tbtc.address,
         keep.address,
       )
+      await uniswapFactory.setTbtcExchange(uniswapExchange.address)
 
       assertBalance = new AssertBalanceHelpers(tbtc)
 
 
       // ----------
+
+      // setup stub uniswap exchange
+      const ethSupply = web3.utils.toWei('3', 'ether')
+      const tbtcSupply = new BN(lotSize).mul(new BN(5))
+      await tbtc.mint(accounts[0], tbtcSupply, { from: accounts[0] })
+      await tbtc.approve(uniswapExchange.address, tbtcSupply, { from: accounts[0] })
+      await uniswapExchange.mockLiquidity(tbtcSupply, { from: accounts[0], value: ethSupply })
 
       // set the owner/beneficiary of the deposit
       // TODO(liamz): set beneficiary more realistically
@@ -173,7 +189,8 @@ contract('DepositLiquidation', (accounts) => {
       })
 
       it('#startSignerFraudLiquidation', async () => {
-        await deposit.setAttemptToLiquidateOnchain(true)
+        const tbtcPrice = new BN(lotSize).add(new BN(beneficiaryReward))
+        await uniswapExchange.setPrices(keepBondAmount, tbtcPrice)
 
         await deposit.startSignerFraudLiquidation()
 
@@ -201,7 +218,9 @@ contract('DepositLiquidation', (accounts) => {
         expect(keepGroupTotalEth).to.eq.BN(new BN('0'))
       })
 
-      it('#startSignerAbortLiquidation', async () => {})
+      it('#startSignerAbortLiquidation', async () => {
+
+      })
     })
 
     describe('non-redemption', async () => {
