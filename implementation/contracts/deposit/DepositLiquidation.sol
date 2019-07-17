@@ -97,10 +97,7 @@ library DepositLiquidation {
         return (_bondValue.mul(100).div(_lotValue));
     }
 
-    /// @notice         Starts signer liquidation due to fraud
-    /// @dev            We first attempt to liquidate on chain, then by auction
-    /// @param  _d      deposit storage pointer
-    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) public {
+    function startLiquidation(DepositUtils.Deposit storage _d) public {
         _d.logStartedLiquidation(true);
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
@@ -121,13 +118,27 @@ library DepositLiquidation {
             } else {
                 // maintain supply peg
                 _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
-                address(0).transfer(address(this).balance); // burn down eth
+                // TODO: transfer remaining eth to maintainer
+                // address(0).transfer(address(this).balance);
+                return;
             }
 
 
         } else if (!_liquidated) {
-            _d.setFraudLiquidationInProgress();
             _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+        }
+    }
+
+
+    /// @notice         Starts signer liquidation due to fraud
+    /// @dev            We first attempt to liquidate on chain, then by auction
+    /// @param  _d      deposit storage pointer
+    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) public {
+        startLiquidation(_d);
+        if(_d.inLiquidated()) {
+            // send remaining eth to maintainer
+        } else {
+            _d.setFraudLiquidationInProgress();
         }
     }
 
@@ -135,7 +146,12 @@ library DepositLiquidation {
     /// @dev            We first attempt to liquidate on chain, then by auction
     /// @param  _d      deposit storage pointer
     function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
-        revert("unimplemented");
+        startLiquidation(_d);
+        if(_d.inLiquidated()) {
+            // send remaining eth to signers
+        } else {
+            _d.setLiquidationInProgress();
+        }
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud
