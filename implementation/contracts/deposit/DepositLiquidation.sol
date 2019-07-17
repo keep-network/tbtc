@@ -161,7 +161,7 @@ library DepositLiquidation {
             _d.logLiquidated();
         }
         if (!_liquidated) {
-            _d.setFraudLiquidationInProgress();
+            _d.setLiquidationInProgress();
             _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
         }
     }
