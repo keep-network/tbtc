@@ -122,7 +122,7 @@ contract('DepositFactory', (accounts) => {
         })
 
       await masterDeposit.retrieveSignerPubkey()
-      
+
       // master deposit should now be in AWAITING_BTC_FUNDING_PROOF
       const masterState = await masterDeposit.getCurrentState()
 
@@ -141,7 +141,7 @@ contract('DepositFactory', (accounts) => {
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
       const cloneNew = eventList[0].returnValues.depositCloneAddress
       const depositNew = await Deposit.at(cloneNew)
-      
+
       // should be behind Master, at AWAITING_SIGNER_SETUP
       const newCloneState = await depositNew.getCurrentState()
 
