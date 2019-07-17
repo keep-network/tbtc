@@ -3,12 +3,12 @@ pragma solidity ^0.4.25;
 import "@optionality.io/clone-factory/contracts/CloneFactory.sol";
 import "../deposit/Deposit.sol";
 
-
-// We avoid redeployment of deposit contract by using the cloneFactory.
-// Proxy delegates calls to Deposit and therefore does not effect deposit state
-// This means that we only need to deploy the deposit contracts once.
-// The factory provides clean state for every new deposit clone.
-
+/// @title Deposit Factory
+/// @notice Factory for the creation of new deposit clones. 
+/// @dev We avoid redeployment of deposit contract by using the clone factory.
+/// Proxy delegates calls to Deposit and therefore does not affect deposit state.
+/// This means that we only need to deploy the deposit contracts once.
+/// The factory provides clean state for every new deposit clone.
 contract DepositFactory is CloneFactory{
 
     // holds the address of the deposit contract
