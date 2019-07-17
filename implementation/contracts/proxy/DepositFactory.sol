@@ -11,7 +11,8 @@ import "../deposit/Deposit.sol";
 /// The factory provides clean state for every new deposit clone.
 contract DepositFactory is CloneFactory{
 
-    // holds the address of the deposit contract
+    // Holds the address of the deposit contract 
+    // which will be used as a master contract for cloning.
     address public masterDepositAddress;
 
     event DepositCloneCreated(address clonedContract);
@@ -23,8 +24,9 @@ contract DepositFactory is CloneFactory{
     }
 
     /// @notice             Creates a new deposit instance
-    /// @dev                Calls createNewDeposit from deposit contract as init method. We don't offer pure createClone,
-    ///                     meaning that the only way to create a clone is by also calling createNewDeposit()
+    /// @dev                Calls createNewDeposit from deposit contract as init method. 
+    ///                     We don't offer pure createClone, meaning that the only way
+    ///                     to create a clone is by also calling createNewDeposit()
     ///                     Deposits created this way will never pass by state 0 (START)
     /// @param _TBTCSystem  Address of system contract
     /// @param _TBTCToken   Address of Token contract
