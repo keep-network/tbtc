@@ -298,7 +298,7 @@ library DepositUtils {
     function distributeBeneficiaryReward(Deposit storage _d) public {
         IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
         /* solium-disable-next-line */
-        require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))));
+        require(_tbtc.transfer(depositBeneficiary(_d), beneficiaryReward()));
     }
 
     /// @notice             pushes ether held by the deposit to the signer group
