@@ -1,6 +1,6 @@
 pragma solidity ^0.4.25;
 
-import "./CloneFactory.sol";
+import "@optionality.io/clone-factory/contracts/CloneFactory.sol";
 import "../deposit/Deposit.sol";
 
 
