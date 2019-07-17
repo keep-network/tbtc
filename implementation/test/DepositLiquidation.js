@@ -19,7 +19,7 @@ const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
-const TestDepositUtils = artifacts.require('TestDepositUtils')
+const TestDepositLiquidation = artifacts.require('TestDepositLiquidation')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -43,70 +43,54 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
-  { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'TestDepositLiquidation', contract: TestDepositLiquidation },
   { name: 'KeepStub', contract: KeepStub },
   { name: 'TBTCStub', contract: TBTCStub },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
+  { name: 'TBTCSystemStub', contract: TBTCSystemStub },
+  { name: 'UniswapFactoryStub', contract: UniswapFactoryStub }]
 
+
+const lotSize = '100000000'
+const beneficiaryReward = '100000'
+const keepBondAmount = 1000000
 
 contract('DepositLiquidation', (accounts) => {
-  let deployed
-  let testInstance
-
-
-  before(async () => {
-    deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-    testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(
-      deployed.TBTCSystemStub.address, deployed.TBTCStub.address, deployed.KeepStub.address
-    )
-  })
-
-  beforeEach(async () => {
-    await testInstance.reset()
-  })
-
-  describe.only('liquidation flows', async () => {
-    let uniswapExchange
-    let tbtc
-    let tbtcSystem
+  describe('#attemptToLiquidateOnchain', () => {
+    let deployed
     let deposit
-    let keep
+    let tbtc
+    let uniswapExchange
 
     let assertBalance
 
-    let lotSize
-    let beneficiaryReward
-    // let signerFee
-
-    const keepBondAmount = 1000000
-
     beforeEach(async () => {
+      deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
       tbtc = await TBTC.new()
-      const uniswapFactory = await UniswapFactoryStub.new()
+      deposit = await TestDeposit.new()
       uniswapExchange = await UniswapExchangeStub.new(tbtc.address)
-      deposit = deployed.TestDepositUtils
 
-      lotSize = await deployed.TBTCConstants.getLotSize()
-      beneficiaryReward = await deposit.beneficiaryReward()
-      // signerFee = await deposit.signerFee()
+      const uniswapFactory = deployed.UniswapFactoryStub
+      const tbtcSystem = deployed.TBTCSystemStub
+      const keep = deployed.KeepStub
 
-      tbtcSystem = deployed.TBTCSystemStub
-      keep = deployed.KeepStub
-
-      // Set exterior addresses
-      await tbtcSystem.setExteroriorAddresses(
-        uniswapFactory.address,
-        tbtc.address
-      )
-      await uniswapFactory.setTbtcExchange(uniswapExchange.address)
       await deposit.setExteroriorAddresses(
         tbtcSystem.address,
         tbtc.address,
         keep.address,
       )
 
-      // Setup mock Uniswap with liquidity, set prices
+      // Inject mock exchange
+      await tbtcSystem.setExteroriorAddresses(
+        uniswapFactory.address,
+        tbtc.address
+      )
+      await uniswapFactory.setTbtcExchange(uniswapExchange.address)
+
+      // Test helpers
+      assertBalance = new AssertBalanceHelpers(tbtc)
+    })
+
+    it('liquidates eth for 1.005 tbtc (MIN_TBTC)', async () => {
       const tbtcSupply = new BN(lotSize).mul(new BN(5))
       const tbtcPrice = new BN(lotSize).add(new BN(beneficiaryReward))
       await tbtc.mint(accounts[0], tbtcSupply, { from: accounts[0] })
@@ -114,74 +98,92 @@ contract('DepositLiquidation', (accounts) => {
       await uniswapExchange.mockLiquidity(tbtcSupply, { from: accounts[0], value: keepBondAmount })
       await uniswapExchange.setPrices(keepBondAmount, tbtcPrice)
 
+      // await keep.send(keepBondAmount, { from: accounts[0] })
+      await deposit.send(keepBondAmount, { from: accounts[0] })
+      await assertBalance.tbtc(deposit.address, '0')
+      await assertBalance.eth(deposit.address, ''+keepBondAmount)
+
+      const retval = await deposit.attemptToLiquidateOnchain.call()
+      expect(retval).to.be.true
+      await deposit.attemptToLiquidateOnchain()
+
+      await assertBalance.tbtc(deposit.address, '100100000')
+      await assertBalance.eth(deposit.address, '0')
+    })
+
+    // it('returns false if buy under MIN_TBTC threshold', async () => {})
+  })
+
+  describe.only('liquidation flows', async () => {
+    let deployed
+    let deposit
+    let tbtc
+
+    let assertBalance
+
+    const beneficiary = accounts[1]
+    const DIGEST = '0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc'
+
+    beforeEach(async () => {
+      deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+      deposit = deployed.TestDepositLiquidation
+      tbtc = await TBTC.new()
+
+      const tbtcSystem = deployed.TBTCSystemStub
+      const keep = deployed.KeepStub
+
+      await deposit.setExteroriorAddresses(
+        tbtcSystem.address,
+        tbtc.address,
+        keep.address,
+      )
+
       assertBalance = new AssertBalanceHelpers(tbtc)
+
+
+      // ----------
+
+      // set the owner/beneficiary of the deposit
+      // TODO(liamz): set beneficiary more realistically
+      await tbtcSystem.setOwner(beneficiary)
+
+      // give the keep/deposit eth
+      // TODO(liamz): use createNewDeposit when it works
+      await assertBalance.eth(keep.address, '0')
+      await keep.send(keepBondAmount, { from: accounts[0] })
+      await assertBalance.eth(keep.address, '1000000') // TODO(liamz): replace w/ keep.checkBondAmount()
+      await assertBalance.tbtc(deposit.address, '0')
     })
 
-
-    describe('#attemptToLiquidateOnchain', async () => {
-      it('liquidates for 1.005 tbtc', async () => {
-        await deposit.send(keepBondAmount, { from: accounts[0] })
-        await assertBalance.tbtc(deposit.address, '0')
-        await assertBalance.eth(deposit.address, ''+keepBondAmount)
-
-        await deposit.attemptToLiquidateOnchain()
-      })
-
-      it('returns false if buy under MIN_TBTC threshold', async () => {})
-    })
 
     describe('redemption', async () => {
-      it('#startSignerFraudLiquidation', async () => {
-        // eth bonds should be liquidated for tbtc
-        // via uniswap
-        //
-        // if this is coming from redemption, then tbtc is refunded to redeemer
-        // if this is not, tbtc is burnt to maintain supply peg
-        //
-        // in either case, the beneficiary reward (0.005 tbtc) should be sent back to the beneficiary
-        // and the requestor should get whatever remaining eth
-        //
-        // we also need to check for the case in which onchain liquidation fails
+      const requestor = accounts[2]
+      let requestorBalance1
 
-        const beneficiary = accounts[1]
-        const requestor = accounts[2]
-
-        const requestorBalance1 = new BN(await web3.eth.getBalance(requestor))
-
-        // set the owner/beneficiary of the deposit
-        // TODO(liamz): set beneficiary more realistically
-        await tbtcSystem.setOwner(beneficiary)
-
-        // give the keep/deposit eth
-        // TODO(liamz): use createNewDeposit when it works
-        await assertBalance.eth(keep.address, '0')
-        await keep.send(keepBondAmount, { from: accounts[0] })
-        await assertBalance.eth(keep.address, '1000000') // TODO(liamz): replace w/ keep.checkBondAmount()
-        await assertBalance.tbtc(deposit.address, '0')
+      beforeEach(async () => {
+        requestorBalance1 = new BN(await web3.eth.getBalance(requestor))
 
         // set requestor
         // TODO(liamz): set requestorAddress more realistically
-        const digest = '0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc'
         await deposit.setRequestInfo(
           requestor,
           '0x' + '11'.repeat(20),
-          0, 0, digest
+          0, 0, DIGEST
         )
+      })
 
+      it('#startSignerFraudLiquidation', async () => {
+        await deposit.setAttemptToLiquidateOnchain(true)
 
         await deposit.startSignerFraudLiquidation()
-
-        // truffleAssert.eventEmitted(tx, 'ECDSAKeepCreated', (ev) => {
-        //   instanceAddress = ev.keepAddress;
-        //   return true;
-        // });
-
-        const requestorBalance2 = new BN(await web3.eth.getBalance(requestor))
-
 
         // assert liquidated
         const depositState = await deposit.getState.call()
         expect(depositState).to.eq.BN(utils.states.LIQUIDATED)
+
+        // deposit should have 0
+        await assertBalance.tbtc(deposit.address, new BN('0'))
+        await assertBalance.eth(deposit.address, '0')
 
         // tbtc distributed to requestor and beneficiary
         await assertBalance.tbtc(requestor, lotSize)
@@ -189,35 +191,34 @@ contract('DepositLiquidation', (accounts) => {
 
         // requestor gets (any) remaining eth
         // TODO(liamz): no remaining eth in this test, but in another forsho
+        const requestorBalance2 = new BN(await web3.eth.getBalance(requestor))
         expect(
           requestorBalance2.sub(requestorBalance1)
         ).to.eq.BN(new BN('0'))
-
-        // deposit should have 0
-        await assertBalance.tbtc(deposit.address, new BN('0'))
-        await assertBalance.eth(deposit.address, '0')
 
         // check distributeEthToKeepGroup
         const keepGroupTotalEth = await keep.keepGroupTotalEth()
         expect(keepGroupTotalEth).to.eq.BN(new BN('0'))
       })
 
-      it('#startSignerAbortLiquidation', async () => {
-        // eth bonds should be liquidated for tbtc
-        // via uniswap
-        //
-        // if this is coming from redemption, then tbtc is refunded to redeemer
-        // if this is not, tbtc lotSize is burnt to maintain supply peg
-        //
-        // in either case, the beneficiary reward (0.005 tbtc) should be sent back to the beneficiary
-        // and the keep group should get the remaining eth via pushFundsToKeepGroup
-        //
-        // we also need to check for the case in which onchain liquidation fails
-      })
+      it('#startSignerAbortLiquidation', async () => {})
     })
 
     describe('non-redemption', async () => {
+      const NON_REDEMPTION_ADDRESS = '0x' + '00'.repeat(20)
 
+      beforeEach(async () => {
+        // set requestor
+        // TODO(liamz): set requestorAddress more realistically
+        await deposit.setRequestInfo(
+          NON_REDEMPTION_ADDRESS,
+          '0x' + '11'.repeat(20),
+          0, 0, DIGEST
+        )
+      })
+
+      it('#startSignerFraudLiquidation', async () => {})
+      it('#startSignerAbortLiquidation', async () => {})
     })
   })
 })
