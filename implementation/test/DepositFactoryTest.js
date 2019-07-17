@@ -15,6 +15,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCStub', contract: TBTCStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
+
 contract('DepositFactory', (accounts) => {
   let deployed
   let factory
@@ -24,9 +25,11 @@ contract('DepositFactory', (accounts) => {
   let keep2
   let deposit1
   let deposit2
+  let masterDeposit
 
   before(async () => {
     factory = await DepositFactory.deployed()
+    masterDeposit = await Deposit.deployed()
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
   })
 
@@ -60,8 +63,8 @@ contract('DepositFactory', (accounts) => {
 
       assert.equal(eventList.length, 2)
 
-      clone1 = eventList[0].returnValues.clonedContract
-      clone2 = eventList[1].returnValues.clonedContract
+      clone1 = eventList[0].returnValues.depositCloneAddress
+      clone2 = eventList[1].returnValues.depositCloneAddress
     })
   })
 
@@ -101,6 +104,49 @@ contract('DepositFactory', (accounts) => {
 
       expect(deposit1state, 'Deposit 1 should be in AWAITING_BTC_FUNDING_PROOF').to.eq.BN(utils.states.AWAITING_BTC_FUNDING_PROOF)
       expect(deposit2state, 'Deposit 2 should be in ACTIVE').to.eq.BN(utils.states.ACTIVE)
+    })
+  })
+
+  describe('Master state cheange does not impact clones', async () => {
+    it('master state change does not affect new clone', async () => {
+      const keepDep = await KeepStub.new()
+
+      await masterDeposit.createNewDeposit(
+        deployed.TBTCSystemStub.address,
+        deployed.TBTCStub.address,
+        keepDep.address,
+        1,
+        1)
+        .catch((err) => {
+          assert.fail(`cannot create clone: ${err}`)
+        })
+
+      await masterDeposit.retrieveSignerPubkey()
+      
+      // master deposit should now be in AWAITING_BTC_FUNDING_PROOF
+      const masterState = await masterDeposit.getCurrentState()
+
+      const blockNumber = await web3.eth.getBlockNumber()
+      const keepNew = await KeepStub.new()
+      await factory.createDeposit(
+        deployed.TBTCSystemStub.address,
+        deployed.TBTCStub.address,
+        keepNew.address,
+        1,
+        1)
+        .catch((err) => {
+          assert.fail(`cannot create clone: ${err}`)
+        })
+
+      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const cloneNew = eventList[0].returnValues.depositCloneAddress
+      const depositNew = await Deposit.at(cloneNew)
+      
+      // should be behind Master, at AWAITING_SIGNER_SETUP
+      const newCloneState = await depositNew.getCurrentState()
+
+      expect(masterState, 'Master deposit should be in AWAITING_BTC_FUNDING_PROOF').to.eq.BN(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      expect(newCloneState, 'New clone should be in AWAITING_SIGNER_SETUP').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
     })
   })
 })
