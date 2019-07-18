@@ -18,9 +18,11 @@ const TEST_DEPOSIT_DEPLOY = [
 contract('DepositFactory', (accounts) => {
   let deployed
   let factory
+  let depositContract
 
   before(async () => {
-    factory = await DepositFactory.deployed()
+    depositContract = await Deposit.deployed()
+    factory = await DepositFactory.new(depositContract.address)
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
   })
 
@@ -55,12 +57,12 @@ contract('DepositFactory', (accounts) => {
       assert.equal(eventList.length, 2)
       assert(web3.utils.isAddress(eventList[0].returnValues.depositCloneAddress))
       assert(web3.utils.isAddress(eventList[1].returnValues.depositCloneAddress))
-      assert.notEqual(eventList[0].returnValues.depositCloneAddress, eventList[1].returnValues.depositCloneAddress, 'clone addresses should nbot be equal')
+      assert.notEqual(eventList[0].returnValues.depositCloneAddress, eventList[1].returnValues.depositCloneAddress, 'clone addresses should not be equal')
     })
   })
 
-  describe('Deposit clones have unique state', async () => {
-    it('deposit clone state not afected by state changes to other clone', async () => {
+  describe('clone state', async () => {
+    it('is not affected by state changes to other clone', async () => {
       const keep1 = await KeepStub.new()
       const keep2 = await KeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
@@ -113,14 +115,11 @@ contract('DepositFactory', (accounts) => {
       expect(deposit1state, 'Deposit 1 should be in AWAITING_BTC_FUNDING_PROOF').to.eq.BN(utils.states.AWAITING_BTC_FUNDING_PROOF)
       expect(deposit2state, 'Deposit 2 should be in ACTIVE').to.eq.BN(utils.states.ACTIVE)
     })
-  })
 
-  describe('Master state cheange does not impact clones', async () => {
-    it('master state change does not affect new clone', async () => {
+    it('is not affected by state changes to master', async () => {
       const keep3 = await KeepStub.new()
-      const masterDeposit = await Deposit.deployed()
 
-      await masterDeposit.createNewDeposit(
+      await depositContract.createNewDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCStub.address,
         keep3.address,
@@ -130,10 +129,10 @@ contract('DepositFactory', (accounts) => {
           assert.fail(`cannot create clone: ${err}`)
         })
 
-      await masterDeposit.retrieveSignerPubkey()
+      await depositContract.retrieveSignerPubkey()
 
       // master deposit should now be in AWAITING_BTC_FUNDING_PROOF
-      const masterState = await masterDeposit.getCurrentState()
+      const masterState = await depositContract.getCurrentState()
 
       const blockNumber = await web3.eth.getBlockNumber()
       const keepNew = await KeepStub.new()
