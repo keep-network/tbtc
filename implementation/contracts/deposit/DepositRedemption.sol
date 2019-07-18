@@ -226,15 +226,8 @@ library DepositRedemption {
 
         require(_d.inRedemption(), "Redemption proof only allowed from redemption flow");
         (_txid, _fundingOutputValue) = redemptionTransactionChecks(_d, _bitcoinTx);
-        // We don't use checkproof here because we need access to the parse info
-        require(
-            _txid.prove(
-                _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
-                _merkleProof,
-                _index),
-            "Tx merkle proof is not valid for provided header");
 
-        _d.evaluateProofDifficulty(_bitcoinHeaders);
+        _d.checkProofFromTxId(_txid, _merkleProof, _index, _bitcoinHeaders);
 
         require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, "Fee unexpectedly very high");
 

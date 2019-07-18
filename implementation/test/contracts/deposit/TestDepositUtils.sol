@@ -19,13 +19,63 @@ contract TestDepositUtils is TestDeposit {
         return self.evaluateProofDifficulty(_bitcoinHeaders);
     }
 
-    function checkProof(
+    function checkProofFromTx(
         bytes _bitcoinTx,
         bytes _merkleProof,
         uint256 _index,
         bytes _bitcoinHeaders
     ) public view returns (bytes32) {
-        return self.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        return self.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+    }
+
+    function checkProofFromTxId(
+        bytes32 _bitcoinTxId,
+        bytes _merkleProof,
+        uint256 _index,
+        bytes _bitcoinHeaders
+    ) public view returns (bytes32) {
+        self.checkProofFromTxId(_bitcoinTxId, _merkleProof, _index, _bitcoinHeaders);
+    }
+    
+    function setPubKey(
+        bytes32 _signingGroupPubkeyX,
+        bytes32 _signingGroupPubkeyY
+    ) public {
+        self.signingGroupPubkeyX = _signingGroupPubkeyX;
+        self.signingGroupPubkeyY = _signingGroupPubkeyY;
+    }
+
+    function findAndParseFundingOutput(
+        bytes _txOutputVector,
+        uint8 _fundingOutputIndex
+    ) public view returns (bytes8) {
+        return self.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
+    }
+
+    function extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes) {
+        return DepositUtils.extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
+    }
+
+    function validateAndParseFundingSPVProof(
+        bytes _txVersion,
+        bytes _txInputVector,
+        bytes _txOutputVector,
+        bytes _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes _bitcoinHeaders
+    ) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
+      return self.validateAndParseFundingSPVProof(
+        _txVersion,
+        _txInputVector,
+        _txOutputVector,
+        _txLocktime,
+        _fundingOutputIndex,
+        _merkleProof,
+        _txIndexInBlock,
+        _bitcoinHeaders
+        );
     }
 
     function auctionValue() public view returns (uint256) {
