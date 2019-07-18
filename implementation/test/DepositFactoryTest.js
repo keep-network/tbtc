@@ -15,28 +15,19 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCStub', contract: TBTCStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
-
 contract('DepositFactory', (accounts) => {
   let deployed
   let factory
-  let clone1
-  let clone2
-  let keep1
-  let keep2
-  let deposit1
-  let deposit2
-  let masterDeposit
 
   before(async () => {
     factory = await DepositFactory.deployed()
-    masterDeposit = await Deposit.deployed()
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
   })
 
   describe('createDeposit()', async () => {
     it('creates new clone instances', async () => {
-      keep1 = await KeepStub.new()
-      keep2 = await KeepStub.new()
+      const keep1 = await KeepStub.new()
+      const keep2 = await KeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
@@ -62,29 +53,45 @@ contract('DepositFactory', (accounts) => {
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       assert.equal(eventList.length, 2)
-
-      clone1 = eventList[0].returnValues.depositCloneAddress
-      clone2 = eventList[1].returnValues.depositCloneAddress
+      assert(web3.utils.isAddress(eventList[0].returnValues.depositCloneAddress))
+      assert(web3.utils.isAddress(eventList[1].returnValues.depositCloneAddress))
+      assert.notEqual(eventList[0].returnValues.depositCloneAddress, eventList[1].returnValues.depositCloneAddress, 'clone addresses should nbot be equal')
     })
   })
 
   describe('Deposit clones have unique state', async () => {
-    it('deposit 2 is not affected by state changes to deposit 1', async () => {
-      deposit1 = await Deposit.at(clone1)
-      deposit2 = await Deposit.at(clone2)
+    it('deposit clone state not afected by state changes to other clone', async () => {
+      const keep1 = await KeepStub.new()
+      const keep2 = await KeepStub.new()
+      const blockNumber = await web3.eth.getBlockNumber()
 
-      await deposit1.retrieveSignerPubkey()
+      await factory.createDeposit(
+        deployed.TBTCSystemStub.address,
+        deployed.TBTCStub.address,
+        keep1.address,
+        1,
+        1)
+        .catch((err) => {
+          assert.fail(`cannot create clone: ${err}`)
+        })
 
-      // deposit1 should be AWAITING_BTC_FUNDING_PROOF (2)
-      // deposit2 should be AWAITING_SIGNER_SETUP (1)
-      const deposit1state = await deposit1.getCurrentState()
-      const deposit2state = await deposit2.getCurrentState()
+      await factory.createDeposit(
+        deployed.TBTCSystemStub.address,
+        deployed.TBTCStub.address,
+        keep2.address,
+        1,
+        1)
+        .catch((err) => {
+          assert.fail(`cannot create clone: ${err}`)
+        })
 
-      expect(deposit1state, 'Deposit 1 should be in AWAITING_BTC_FUNDING_PROOF').to.eq.BN(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      expect(deposit2state, 'Deposit 2 should be in AWAITING_SIGNER_SETUP').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
-    })
+      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
-    it('deposit 1 is not affected by state changes to deposit 2', async () => {
+      const clone1 = eventList[0].returnValues.depositCloneAddress
+      const clone2 = eventList[1].returnValues.depositCloneAddress
+      const deposit1 = await Deposit.at(clone1)
+      const deposit2 = await Deposit.at(clone2)
+
       const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
       const currentDifficulty = 6353030562983
       const _txIndexInBlock = 130
@@ -92,6 +99,7 @@ contract('DepositFactory', (accounts) => {
       const _pubKey = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6ee8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
       const _merkleProof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
 
+      await deposit1.retrieveSignerPubkey()
       await keep2.setPubkey(_pubKey)
       await deposit2.retrieveSignerPubkey()
       await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
@@ -109,12 +117,13 @@ contract('DepositFactory', (accounts) => {
 
   describe('Master state cheange does not impact clones', async () => {
     it('master state change does not affect new clone', async () => {
-      const keepDep = await KeepStub.new()
+      const keep3 = await KeepStub.new()
+      const masterDeposit = await Deposit.deployed()
 
       await masterDeposit.createNewDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCStub.address,
-        keepDep.address,
+        keep3.address,
         1,
         1)
         .catch((err) => {
@@ -128,6 +137,7 @@ contract('DepositFactory', (accounts) => {
 
       const blockNumber = await web3.eth.getBlockNumber()
       const keepNew = await KeepStub.new()
+
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCStub.address,
