@@ -5,19 +5,19 @@ import {IKeep} from "./IKeep.sol";
 contract KeepBridge is IKeep {
     address keepRegistry;
 
-    function wasDigestApprovedForSigning(uint256 _keepID, bytes32 _digest) external view returns (uint256){
+    function wasDigestApprovedForSigning(address _keepID, bytes32 _digest) external view returns (uint256){
         //TODO: Implement
         return 0;
     }
 
 
-    function approveDigest(uint256 _keepID, bytes32 _digest) external returns (bool _success){
+    function approveDigest(address _keepID, bytes32 _digest) external returns (bool _success){
         //TODO: Implement
         return _success;
     }
 
     function submitSignatureFraud(
-        uint256 _keepID,
+        address _keepID,
         uint8 _v,
         bytes32 _r,
         bytes32 _s,
@@ -28,44 +28,37 @@ contract KeepBridge is IKeep {
         return _isFraud;
     }
 
-    function distributeEthToKeepGroup(uint256 _keepID) external payable returns (bool){
+    function distributeEthToKeepGroup(address _keepID) external payable returns (bool){
         //TODO: Implement
         return false;
     }
 
-    function distributeERC20ToKeepGroup(uint256 _keepID, address _asset, uint256 _value) external returns (bool){
+    function distributeERC20ToKeepGroup(address _keepID, address _asset, uint256 _value) external returns (bool){
         //TODO: Implement
         return false;
     }
 
-    function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (uint256 _keepID){
+    function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (address _keepID){
         //TODO: Implement
-
-        address keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
-        // TODO: keepID type should be changed from uint256 to addrress
-        _keepID = uint256(keepAddress);
-
-        return _keepID;
+        _keepID = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
     }
 
     // get the result of a keep formation
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
-    function getKeepPubkey(uint256 _keepID) external view returns (bytes){
+    function getKeepPubkey(address _keepID) external view returns (bytes){
         // TODO: keepID type should be changed from uint256 to addrress
-        address _keepAddress = address(_keepID);
-
-        return ECDSAKeepContract(_keepAddress).getPublicKey();
+        return ECDSAKeepContract(_keepID).getPublicKey();
     }
 
 
     // returns the amount of the keep's ETH bond in wei
-    function checkBondAmount(uint256 _keepID) external view returns (uint256){
+    function checkBondAmount(address _keepID) external view returns (uint256){
         //TODO: Implement
         return 0;
     }
 
-    function seizeSignerBonds(uint256 _keepID) external returns (bool){
+    function seizeSignerBonds(address _keepID) external returns (bool){
         //TODO: Implement
         return false;
     }

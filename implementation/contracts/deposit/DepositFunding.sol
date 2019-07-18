@@ -32,7 +32,7 @@ library DepositFunding {
     /// @notice     Deletes state after the funding ECDSA fraud process
     /// @dev        This is only called as we transition to setup failed
     function fundingFraudTeardown(DepositUtils.Deposit storage _d) public {
-        _d.keepID = 0;
+        _d.keepID = address(0);
         _d.signingGroupRequestedAt = 0;
         _d.fundingProofTimerStart = 0;
         _d.signingGroupPubkeyX = bytes32(0);

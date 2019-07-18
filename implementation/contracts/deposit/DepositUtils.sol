@@ -32,7 +32,7 @@ library DepositUtils {
         uint256 courtesyCallInitiated; // When the courtesy call is issued
 
         // written when we request a keep
-        uint256 keepID;  // The ID of our keep group
+        address keepID;  // The address of our keep contract
         uint256 signingGroupRequestedAt;  // timestamp of signing group request
 
         // written when we get a keep result
