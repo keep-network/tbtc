@@ -108,12 +108,6 @@ contract TestDeposit is Deposit {
         return self.pushFundsToKeepGroup(_ethValue);
     }
 
-    // bool setAttemptToLiquidateOnchain = false;
-
-    // function setAttemptToLiquidateOnchain(bool _success) returns (bool) {
-    //     setAttemptToLiquidateOnchain = _success;
-    // }
-
     function attemptToLiquidateOnchain() public returns (bool) {
         return self.attemptToLiquidateOnchain();
     }

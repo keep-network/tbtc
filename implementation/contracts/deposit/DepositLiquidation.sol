@@ -27,7 +27,7 @@ library DepositLiquidation {
     // TODO(liamz): make attemptToLiquidateOnchain internal, check for re-entry
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
-    ) public returns (bool) {
+    ) internal returns (bool) {
         IUniswapFactory uniswapFactory = IUniswapFactory(ITBTCSystem(_d.TBTCSystem).getUniswapFactory());
         IUniswapExchange exchange = IUniswapExchange(uniswapFactory.getExchange(_d.TBTCToken));
         if(exchange == address(0x0)) {
@@ -97,7 +97,7 @@ library DepositLiquidation {
         return (_bondValue.mul(100).div(_lotValue));
     }
 
-    function startLiquidation(DepositUtils.Deposit storage _d) public {
+    function startLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(true);
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
@@ -111,18 +111,15 @@ library DepositLiquidation {
 
             _d.distributeBeneficiaryReward();
 
+            IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+
             if (_d.requesterAddress != address(0)) { // redemption
-                IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
                 _tbtc.transferFrom(address(this), _d.requesterAddress, TBTCConstants.getLotSize());
                 address(_d.requesterAddress).transfer(address(this).balance);
             } else {
                 // maintain supply peg
                 _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
-                // TODO: transfer remaining eth to maintainer
-                // address(0).transfer(address(this).balance);
-                return;
             }
-
 
         } else if (!_liquidated) {
             _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
@@ -137,6 +134,7 @@ library DepositLiquidation {
         startLiquidation(_d);
         if(_d.inLiquidated()) {
             // send remaining eth to maintainer
+            msg.sender.transfer(address(this).balance);
         } else {
             _d.setFraudLiquidationInProgress();
         }
@@ -149,6 +147,7 @@ library DepositLiquidation {
         startLiquidation(_d);
         if(_d.inLiquidated()) {
             // send remaining eth to signers
+            _d.pushFundsToKeepGroup(address(this).balance);
         } else {
             _d.setLiquidationInProgress();
         }
