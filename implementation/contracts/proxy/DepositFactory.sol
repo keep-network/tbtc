@@ -41,10 +41,11 @@ contract DepositFactory is CloneFactory{
         address _KeepBridge,
         uint256 _keepThreshold,
         uint256 _keepSize
-    ) public {
+    ) public returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
         Deposit(cloneAddress).createNewDeposit(_TBTCSystem, _TBTCToken, _KeepBridge, _keepThreshold, _keepSize);
 
         emit DepositCloneCreated(cloneAddress);
+        return cloneAddress;
     }
 }
