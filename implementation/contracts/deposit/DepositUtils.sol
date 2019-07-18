@@ -32,7 +32,7 @@ library DepositUtils {
         uint256 courtesyCallInitiated; // When the courtesy call is issued
 
         // written when we request a keep
-        address keepID;  // The address of our keep contract
+        address keepAddress;  // The address of our keep contract
         uint256 signingGroupRequestedAt;  // timestamp of signing group request
 
         // written when we get a keep result
@@ -358,7 +358,7 @@ library DepositUtils {
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
         IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.checkBondAmount(_d.keepID);
+        return _keep.checkBondAmount(_d.keepAddress);
     }
 
     /// @notice         Convert a LE bytes8 to a uint256
@@ -374,7 +374,7 @@ library DepositUtils {
     /// @return         the time it was approved. 0 if unapproved
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
         IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.wasDigestApprovedForSigning(_d.keepID, _digest);
+        return _keep.wasDigestApprovedForSigning(_d.keepAddress, _digest);
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
@@ -401,7 +401,7 @@ library DepositUtils {
     function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IKeep _keep = IKeep(_d.KeepBridge);
-        _keep.seizeSignerBonds(_d.keepID);
+        _keep.seizeSignerBonds(_d.keepAddress);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
         return _postCallBalance.sub(_preCallBalance);
@@ -423,6 +423,6 @@ library DepositUtils {
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepID);
+        return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepAddress);
     }
 }

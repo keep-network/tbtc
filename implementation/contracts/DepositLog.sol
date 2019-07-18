@@ -13,7 +13,7 @@ contract DepositLog {
     // This event is fired when we init the deposit
     event Created(
         address indexed _depositContractAddress,
-        address indexed _keepID,
+        address indexed _keepAddress,
         uint256 _timestamp
     );
 
@@ -102,15 +102,15 @@ contract DepositLog {
     /// Logging
     ///
 
-    /// @notice             Fires a Created event
-    /// @dev                We append the sender, which is the deposit contract that called
-    /// @param  _keepID     The address of the associated keep request
-    /// @return             True if successful, else revert
-    function logCreated(address _keepID) public returns (bool) {
+    /// @notice               Fires a Created event
+    /// @dev                  We append the sender, which is the deposit contract that called
+    /// @param  _keepAddress  The address of the associated keep request
+    /// @return               True if successful, else revert
+    function logCreated(address _keepAddress) public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
         emit Created(
             msg.sender,
-            _keepID,
+            _keepAddress,
             block.timestamp);
         return true;
     }

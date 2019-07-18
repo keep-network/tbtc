@@ -41,13 +41,13 @@ contract TestDeposit is Deposit {
     }
 
     function setKeepInfo(
-        address _keepID,
+        address _keepAddress,
         uint256 _signingGroupRequestedAt,
         uint256 _fundingProofTimerStart,
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
     ) public {
-        self.keepID = _keepID;
+        self.keepAddress = _keepAddress;
         self.signingGroupRequestedAt = _signingGroupRequestedAt;
         self.fundingProofTimerStart = _fundingProofTimerStart;
         self.signingGroupPubkeyX = _signingGroupPubkeyX;
@@ -55,7 +55,7 @@ contract TestDeposit is Deposit {
     }
 
     function getKeepInfo() public view returns (address, uint256, uint256, bytes32, bytes32) {
-        return (self.keepID, self.signingGroupRequestedAt, self.fundingProofTimerStart, self.signingGroupPubkeyX, self.signingGroupPubkeyY);
+        return (self.keepAddress, self.signingGroupRequestedAt, self.fundingProofTimerStart, self.signingGroupPubkeyX, self.signingGroupPubkeyY);
     }
 
     function setRequestInfo(

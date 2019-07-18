@@ -114,12 +114,12 @@ contract('Deposit', (accounts) => {
       expect(depositState, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
 
       const keepInfo = await testInstance.getKeepInfo.call()
-      expect(keepInfo[0], 'keepID not as expected').to.equal(expectedKeepAddress)
+      expect(keepInfo[0], 'keepAddress not as expected').to.equal(expectedKeepAddress)
       expect(keepInfo[1], 'signing group timestamp not as expected').not.to.eq.BN(0)
 
       // fired an event
       const eventList = await deployed.TBTCSystemStub.getPastEvents('Created', { fromBlock: blockNumber, toBlock: 'latest' })
-      assert.equal(eventList[0].returnValues._keepID, expectedKeepAddress)
+      assert.equal(eventList[0].returnValues._keepAddress, expectedKeepAddress)
     })
 
     it('reverts if not in the start state', async () => {
@@ -841,7 +841,7 @@ contract('Deposit', (accounts) => {
 
       const keepState = await testInstance.getKeepInfo.call()
 
-      assert.equal(keepState[0], ADDRESS_ZERO, 'Keep id not deconsted')
+      assert.equal(keepState[0], ADDRESS_ZERO, 'Keep address not deconsted')
       assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted')
       assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted')
       assert.equal(keepState[3], utils.bytes32zero) // pubkey X
@@ -904,7 +904,7 @@ contract('Deposit', (accounts) => {
       await testInstance.provideFraudBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       const keepState = await testInstance.getKeepInfo.call()
-      assert.equal(keepState[0], ADDRESS_ZERO, 'Keep id not deconsted')
+      assert.equal(keepState[0], ADDRESS_ZERO, 'Keep address not deconsted')
       assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted')
       assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted')
       assert.equal(keepState[3], utils.bytes32zero) // pubkey X

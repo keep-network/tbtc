@@ -38,7 +38,7 @@ library DepositRedemption {
         IKeep _keep = IKeep(_d.KeepBridge);
 
         _tbtc.approve(_d.KeepBridge, DepositUtils.signerFee());
-        _keep.distributeERC20ToKeepGroup(_d.keepID, _tbtcAddress, DepositUtils.signerFee());
+        _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcAddress, DepositUtils.signerFee());
     }
 
     /// @notice         approves a digest for signing by our keep group
@@ -47,7 +47,7 @@ library DepositRedemption {
     /// @return         true if approved, otherwise revert
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
         IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.approveDigest(_d.keepID, _digest);
+        return _keep.approveDigest(_d.keepAddress, _digest);
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
