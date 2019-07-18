@@ -27,6 +27,8 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
+const ADDRESS_ZERO = '0x' + '0'.repeat(40)
+
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },
@@ -97,6 +99,8 @@ contract('Deposit', (accounts) => {
 
   describe('createNewDeposit', async () => {
     it('runs and updates state and fires a created event', async () => {
+      const expectedKeepAddress = '0x0000000000000000000000000000000000000007'
+
       const blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.createNewDeposit(
         deployed.TBTCSystemStub.address,
@@ -110,12 +114,12 @@ contract('Deposit', (accounts) => {
       expect(depositState, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
 
       const keepInfo = await testInstance.getKeepInfo.call()
-      expect(keepInfo[0], 'keepID not as expected').to.eq.BN(7)
+      expect(keepInfo[0], 'keepID not as expected').to.equal(expectedKeepAddress)
       expect(keepInfo[1], 'signing group timestamp not as expected').not.to.eq.BN(0)
 
       // fired an event
       const eventList = await deployed.TBTCSystemStub.getPastEvents('Created', { fromBlock: blockNumber, toBlock: 'latest' })
-      assert.equal(eventList[0].returnValues._keepID, '7')
+      assert.equal(eventList[0].returnValues._keepID, expectedKeepAddress)
     })
 
     it('reverts if not in the start state', async () => {
@@ -165,7 +169,7 @@ contract('Deposit', (accounts) => {
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await testInstance.setKeepInfo(0, 0, 0, keepPubkeyX, keepPubkeyY)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
       await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
@@ -209,7 +213,7 @@ contract('Deposit', (accounts) => {
 
     it('calls Keep to approve the digest', async () => {
       // test relies on a side effect
-      const approved = await deployed.KeepStub.wasDigestApprovedForSigning.call(0, sighash)
+      const approved = await deployed.KeepStub.wasDigestApprovedForSigning.call(ADDRESS_ZERO, sighash)
       assert(!approved.eqn(0), 'digest was not approved')
     })
   })
@@ -232,7 +236,7 @@ contract('Deposit', (accounts) => {
     it('updates the state and logs GotRedemptionSignature', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await testInstance.setKeepInfo(0, 0, 0, pubkeyX, pubkeyY)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, pubkeyX, pubkeyY)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 0, 0, digest)
 
       await testInstance.provideRedemptionSignature(v, r, s)
@@ -295,7 +299,7 @@ contract('Deposit', (accounts) => {
       withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
       await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
-      await testInstance.setKeepInfo(0, 0, 0, keepPubkeyX, keepPubkeyY)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, keepPubkeyX, keepPubkeyY)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, prevSighash)
     })
@@ -381,7 +385,7 @@ contract('Deposit', (accounts) => {
 
     it('updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await deployed.TBTCSystemStub.setDepositOwner(0, accounts[0])
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, accounts[0])
 
       await testInstance.provideRedemptionProof(tx, proof, index, headerChain)
 
@@ -581,7 +585,7 @@ contract('Deposit', (accounts) => {
       const blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
       await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP)
-      await testInstance.setKeepInfo(0, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
     })
 
     it('updates state to setup failed, deconstes state, and logs SetupFailed', async () => {
@@ -607,7 +611,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the timer has not yet elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(0, fundingProofTimerStart * 5, 0, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.setKeepInfo(ADDRESS_ZERO, fundingProofTimerStart * 5, 0, utils.bytes32zero, utils.bytes32zero)
         await testInstance.notifySignerSetupFailure()
       } catch (e) {
         assert.include(e.message, 'Signing group formation timeout not yet elapsed')
@@ -618,12 +622,12 @@ contract('Deposit', (accounts) => {
       const beneficiary = accounts[4]
       const bond = 1000000000000
 
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       await testInstance.send(bond, { from: beneficiary })
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
-      await testInstance.setKeepInfo(0, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
       await deployed.KeepStub.setBondAmount(bond)
       await testInstance.notifySignerSetupFailure()
 
@@ -686,7 +690,7 @@ contract('Deposit', (accounts) => {
       const blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
     })
 
     it('updates the state to failed setup, deconstes funding info, and logs SetupFailed', async () => {
@@ -712,7 +716,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the timeout has not elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
         await testInstance.notifyFundingTimeout()
       } catch (e) {
         assert.include(e.message, 'Funding timeout has not elapsed')
@@ -722,7 +726,7 @@ contract('Deposit', (accounts) => {
     it('distributes the funder bond to the keep group', async () => {
       const beneficiary = accounts[4]
       const bond = 1000000
-      await testInstance.setKeepInfo(0, 0, withdrawalRequestTime, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, withdrawalRequestTime, utils.bytes32zero, utils.bytes32zero)
       await testInstance.send(bond, { from: beneficiary })
       await testInstance.notifyFundingTimeout()
       const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -743,13 +747,13 @@ contract('Deposit', (accounts) => {
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1 // has elapsed
       await deployed.KeepStub.setSuccess(true)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates to awaiting fraud funding proof and logs FraudDuringSetup if the timer has not elapsed', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero) // timer has not elapsed
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero) // timer has not elapsed
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       const depositState = await testInstance.getState.call()
@@ -801,8 +805,8 @@ contract('Deposit', (accounts) => {
       const signerBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await deployed.KeepStub.setBondAmount(bond)
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
-      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 6, utils.bytes32zero, utils.bytes32zero)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 6, utils.bytes32zero, utils.bytes32zero)
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       const finalBalance = await web3.eth.getBalance(beneficiary)
@@ -826,7 +830,7 @@ contract('Deposit', (accounts) => {
       const blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1 // timer has elapsed
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
@@ -836,7 +840,8 @@ contract('Deposit', (accounts) => {
       await testInstance.notifyFraudFundingTimeout()
 
       const keepState = await testInstance.getKeepInfo.call()
-      assert(keepState[0].eqn(0), 'Keep id not deconsted')
+
+      assert.equal(keepState[0], ADDRESS_ZERO, 'Keep id not deconsted')
       assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted')
       assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted')
       assert.equal(keepState[3], utils.bytes32zero) // pubkey X
@@ -860,7 +865,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the timer has not elapsed', async () => {
       try {
-        await testInstance.setKeepInfo(0, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
+        await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
         await testInstance.notifyFraudFundingTimeout()
       } catch (e) {
         assert.include(e.message, 'Fraud funding proof timeout has not elapsed')
@@ -869,11 +874,11 @@ contract('Deposit', (accounts) => {
 
     it('asserts that it partially slashes signers', async () => {
       const beneficiary = accounts[4]
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       const initialBalance = await web3.eth.getBalance(beneficiary)
       const toSeize = await web3.eth.getBalance(deployed.KeepStub.address)
 
-      await testInstance.setKeepInfo(0, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
       await testInstance.notifyFraudFundingTimeout()
 
       const divisor = await deployed.TBTCConstants.getFundingFraudPartialSlashDivisor.call()
@@ -887,7 +892,7 @@ contract('Deposit', (accounts) => {
 
   describe('provideFraudBTCFundingProof', async () => {
     beforeEach(async () => {
-      await testInstance.setKeepInfo(0, 0, 0, _signerPubkeyX, _signerPubkeyY)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, _signerPubkeyX, _signerPubkeyY)
       await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
@@ -899,7 +904,7 @@ contract('Deposit', (accounts) => {
       await testInstance.provideFraudBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       const keepState = await testInstance.getKeepInfo.call()
-      assert(keepState[0].eqn(0), 'Keep id not deconsted')
+      assert.equal(keepState[0], ADDRESS_ZERO, 'Keep id not deconsted')
       assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted')
       assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted')
       assert.equal(keepState[3], utils.bytes32zero) // pubkey X
@@ -923,7 +928,7 @@ contract('Deposit', (accounts) => {
 
     it('assert distribute signer bonds to funder', async () => {
       const beneficiary = accounts[4]
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
       const signerBond = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -939,7 +944,7 @@ contract('Deposit', (accounts) => {
 
   describe('provideBTCFundingProof', async () => {
     beforeEach(async () => {
-      await testInstance.setKeepInfo(0, 0, 0, _signerPubkeyX, _signerPubkeyY)
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, _signerPubkeyX, _signerPubkeyY)
       await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
@@ -981,7 +986,7 @@ contract('Deposit', (accounts) => {
       const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
       await testInstance.send(signerBond, { from: beneficiary })
 
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
       await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
@@ -1046,7 +1051,7 @@ contract('Deposit', (accounts) => {
       }
     })
 
-    it.skip('TODO: full test for startSignerFraudLiquidation', async () => {})
+    it.skip('TODO: full test for startSignerFraudLiquidation', async () => { })
   })
 
   describe('provideSPVFraudProof', async () => {
@@ -1118,7 +1123,7 @@ contract('Deposit', (accounts) => {
       }
     })
 
-    it.skip('TODO: full test for startSignerFraudLiquidation', async () => {})
+    it.skip('TODO: full test for startSignerFraudLiquidation', async () => { })
   })
 
   describe('purchaseSignerBondsAtAuction', async () => {
@@ -1130,7 +1135,7 @@ contract('Deposit', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
-      for ( let i = 0; i < 4; i++) {
+      for (let i = 0; i < 4; i++) {
         await deployed.TBTCTokenStub.clearBalance(accounts[i])
       }
     })
@@ -1179,11 +1184,11 @@ contract('Deposit', (accounts) => {
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
       const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(caller)
 
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalTokenBalance = await deployed.TBTCTokenStub.balanceOf(caller)
-      const tokenCheck = new BN(finalTokenBalance).add( new BN(lotSize) )
+      const tokenCheck = new BN(finalTokenBalance).add(new BN(lotSize))
       expect(tokenCheck, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
     })
 
@@ -1194,11 +1199,11 @@ contract('Deposit', (accounts) => {
       const returned = await deployed.TBTCTokenStub.balanceOf.call(caller)
 
       await deployed.TBTCTokenStub.mint(caller, requiredBalance)
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
-      const tokenCheck = new BN(initialTokenBalance).add( new BN(returned))
+      const tokenCheck = new BN(initialTokenBalance).add(new BN(returned))
 
       expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
     })
@@ -1214,7 +1219,7 @@ contract('Deposit', (accounts) => {
       await testInstance.send(value, { from: accounts[0] })
       await deployed.TBTCTokenStub.mint(caller, requiredBalance)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(caller)
@@ -1233,7 +1238,7 @@ contract('Deposit', (accounts) => {
       await testInstance.send(value, { from: accounts[0] })
       await deployed.TBTCTokenStub.mint(caller, requiredBalance)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -1253,7 +1258,7 @@ contract('Deposit', (accounts) => {
       await deployed.TBTCTokenStub.mint(caller, requiredBalance)
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
