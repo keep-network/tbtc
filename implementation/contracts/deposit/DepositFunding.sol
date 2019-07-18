@@ -10,6 +10,7 @@ import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCSystem} from "../system/TBTCSystem.sol";
 
 library DepositFunding {
 
@@ -344,9 +345,9 @@ library DepositFunding {
         returnFunderBond(_d);
 
         // Mint 95% of the deposit size
-        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
         uint256 _value = TBTCConstants.getLotSize();
-        _tbtc.mint(_d.depositBeneficiary(), _value.mul(95).div(100));
+        _system.systemMint(_d.depositBeneficiary(), _value.mul(95).div(100));
 
         return true;
     }

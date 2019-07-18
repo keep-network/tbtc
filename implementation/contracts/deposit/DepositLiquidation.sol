@@ -8,6 +8,7 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
+import {TBTCSystem} from "../system/TBTCSystem.sol";
 
 library DepositLiquidation {
 
@@ -220,8 +221,9 @@ library DepositLiquidation {
 
         // Burn the outstanding TBTC
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
         require(_tbtc.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), "Not enough TBTC to cover outstanding debt");
-        _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
+        _system.systemBurnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
 
         // Distribute funds to auction buyer
         uint256 _valueToDistribute = _d.auctionValue();

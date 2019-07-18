@@ -2,11 +2,16 @@ pragma solidity 0.4.25;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "./MinterAuthority.sol";
 
-contract TBTCToken is ERC20Detailed, ERC20 {
+contract TBTCToken is ERC20Detailed, ERC20, MinterAuthority {
+
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
-    constructor() ERC20Detailed("Trustless bitcoin", "TBTC", 18) public {
+    constructor(address _system)
+        ERC20Detailed("Trustless bitcoin", "TBTC", 18)
+        MinterAuthority(_system)
+    public {
         // solium-disable-previous-line no-empty-blocks
     }
 
@@ -14,7 +19,7 @@ contract TBTCToken is ERC20Detailed, ERC20 {
     ///                  Uses the internal _mint function
     /// @param _account  The account that will receive the created tokens.
     /// @param _amount   The amount of tokens that will be created.
-    function mint(address _account, uint256 _amount) public returns (bool){
+    function mint(address _account, uint256 _amount) public onlySystem returns (bool){
         // NOTE: this is a public function with unchecked minting.
         // TODO: enforce calling authority.
         _mint(_account, _amount);
@@ -26,7 +31,7 @@ contract TBTCToken is ERC20Detailed, ERC20 {
     ///                  Uses the internal _burn function.
     /// @param _account  The account whose tokens will be burnt.
     /// @param _amount   The amount of tokens that will be burnt.
-    function burnFrom(address _account, uint256 _amount) public {
+    function burnFrom(address _account, uint256 _amount) public onlySystem {
         // NOTE: this uses internal function _burn instead of _burnFrom.
         // This will bypass allowance check for now.
         // TODO: enforce calling authority.
@@ -38,7 +43,7 @@ contract TBTCToken is ERC20Detailed, ERC20 {
     /// @param _from   The address to send tokens from
     /// @param _to     The address to transfer tokens to
     /// @param _value  The amount of tokens to be transferred
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public onlySystem returns (bool) {
         // NOTE: this overrides transferFrom in openZeppelin ERC20.sol
         // in order to bypass allowance check for now.
         // TODO: enforce calling authority.

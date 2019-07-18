@@ -3,6 +3,7 @@ pragma solidity 0.4.25;
 import {ITBTCSystem} from '../../../contracts/interfaces/ITBTCSystem.sol';
 import {IERC721} from '../../../contracts/interfaces/IERC721.sol';
 import {DepositLog} from '../../../contracts/DepositLog.sol';
+import {TBTCToken} from "../../../contracts/system/TBTCToken.sol";
 
 contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
 
@@ -10,6 +11,11 @@ contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
     uint256 past = 1;
     uint256 oraclePrice = 10 ** 12;
     address _owner = address(0);
+    address _TBTCToken;
+
+    function setExternalAddresses(address _tokenAddress){
+        _TBTCToken = _tokenAddress;
+    }
 
     function setOraclePrice(uint256 _oraclePrice) external {oraclePrice = _oraclePrice;}
     function setCurrentDiff(uint256 _current) external {current = _current;}
@@ -24,6 +30,25 @@ contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
     function fetchRelayCurrentDifficulty() external view returns (uint256) {return current;}
     function fetchRelayPreviousDifficulty() external view returns (uint256) {return past;}
+
+    //Token functions
+    function systemMint(address _account, uint256 _amount) public returns (bool){
+        return TBTCToken(_TBTCToken).mint(_account, _amount);
+    }
+  
+    function systemBurnFrom(address _account, uint256 _amount) public {
+        TBTCToken(_TBTCToken).burnFrom(_account, _amount);
+    }
+
+  
+    function systemTransferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        return TBTCToken(_TBTCToken).transferFrom(_from, _to, _value);
+    }
+
+    function clearBalance(address _of) public {
+        uint256 currentBalance = balanceOf(_of);
+        TBTCToken(_TBTCToken).burnFrom(_of, currentBalance);
+    }
 
     // 721
     function balanceOf(address owner) public view returns (uint256 balance) {owner; balance = 0;}

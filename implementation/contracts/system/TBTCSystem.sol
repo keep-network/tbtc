@@ -3,6 +3,7 @@ pragma solidity 0.4.25;
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
 import {DepositLog} from "../DepositLog.sol";
+import {TBTCToken} from "./TBTCToken.sol";
 
 contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
 
@@ -10,7 +11,11 @@ contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
     address depositOwner = address(0);
+    address TBTCTokenAddress;
 
+    function setExteriorAddresses(address _token) external {
+        TBTCTokenAddress = _token;
+    }
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
 
@@ -29,6 +34,20 @@ contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
             previousDifficulty = currentDifficulty;
             currentDifficulty = _currentDifficulty;
         }
+    }
+
+    function systemMint(address _account, uint256 _amount) public returns (bool){
+        return TBTCToken(TBTCTokenAddress).mint(_account, _amount);
+    }
+  
+    function systemBurnFrom(address _account, uint256 _amount) public {
+        TBTCToken(TBTCTokenAddress).burnFrom(_account, _amount);
+    }
+
+  
+    function systemTransferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        return TBTCToken(TBTCTokenAddress).transferFrom(_from, _to, _value);
+        
     }
 
     // ERC721
