@@ -90,7 +90,7 @@ contract('PriceOracleV1', function(accounts) {
         expect(res).to.eq.BN(newPrice)
       })
 
-      describe('1% minimum price delta', async () => {
+      describe.only('1% minimum price delta', async () => {
         // DO NOT try to use BN.js, it is a sinkhole of time
         // These test cases were created using `bc`
         // An example:
@@ -119,38 +119,42 @@ contract('PriceOracleV1', function(accounts) {
           )
         })
 
-        it('fails lesser than +1% delta', async () => {
-          try {
-            await instance.updatePrice(price11)
-            assert(false, 'Test call did not error as expected')
-          } catch (e) {
-            assert.include(e.message, 'Price change is negligible (<1%)')
-          }
+        describe('less than 1% delta', async () => {
+          it('fails price increase', async () => {
+            try {
+              await instance.updatePrice(price11)
+              assert(false, 'Test call did not error as expected')
+            } catch (e) {
+              assert.include(e.message, 'Price change is negligible (<1%)')
+            }
+          })
+          it('fails price decrease', async () => {
+            try {
+              await instance.updatePrice(price12)
+              assert(false, 'Test call did not error as expected')
+            } catch (e) {
+              assert.include(e.message, 'Price change is negligible (<1%)')
+            }
+          })
         })
 
-        it('fails lesser than -1% delta', async () => {
-          try {
-            await instance.updatePrice(price12)
-            assert(false, 'Test call did not error as expected')
-          } catch (e) {
-            assert.include(e.message, 'Price change is negligible (<1%)')
-          }
+        describe('equal to 1% delta', async () => {
+          it('passes price increase', async () => {
+            await instance.updatePrice(price21)
+          })
+          it('passes price decrease', async () => {
+            await instance.updatePrice(price22)
+          })
         })
 
-        it('passes +1% delta', async () => {
-          await instance.updatePrice(price21)
-        })
+        describe('greater than 1% delta', async () => {
+          it('passes price increase', async () => {
+            await instance.updatePrice(price31)
+          })
 
-        it('passes -1% delta', async () => {
-          await instance.updatePrice(price22)
-        })
-
-        it('passes +1.1% delta', async () => {
-          await instance.updatePrice(price31)
-        })
-
-        it('passes -1.1% delta', async () => {
-          await instance.updatePrice(price32)
+          it('passes price decrease', async () => {
+            await instance.updatePrice(price32)
+          })
         })
       })
 
