@@ -61,7 +61,7 @@ contract('KeepBridge', (accounts) => {
       )
 
       assert.equal(
-        eventList[0].returnValues._digest,
+        eventList[0].returnValues.digest,
         digest,
         'incorrect digest in emitted event',
       )
