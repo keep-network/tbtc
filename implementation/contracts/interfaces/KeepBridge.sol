@@ -41,7 +41,7 @@ contract KeepBridge is IKeep {
         // TODO: keepID type should be changed from uint256 to address
         address _keepAddress = address(_keepID);
 
-        ECDSAKeepContract(_keepAddress).sign(abi.encodePacked(_digest));
+        ECDSAKeepContract(_keepAddress).sign(_digest);
 
         approvedDigests[abi.encodePacked(_keepID, _digest)] = block.timestamp;
 
@@ -121,5 +121,5 @@ interface ECDSAKeepContract {
 
     /// @notice Requests a signature over the digest from the keep.
     /// @return Digest to sign.
-    function sign(bytes _digest) external;
+    function sign(bytes32 _digest) external;
 }

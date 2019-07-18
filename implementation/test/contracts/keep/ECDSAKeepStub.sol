@@ -9,7 +9,7 @@ contract ECDSAKeepStub is ECDSAKeepContract {
 
     // Notification that the keep was requested to sign a digest.
     event SignatureRequested(
-        bytes _digest
+        bytes32 _digest
     );
 
     function setPublicKey(bytes _publicKey) public {
@@ -20,7 +20,7 @@ contract ECDSAKeepStub is ECDSAKeepContract {
         return publicKey;
     }
 
-    function sign(bytes _digest) external {
+    function sign(bytes32 _digest) external {
           emit SignatureRequested(_digest);
     }
 }
