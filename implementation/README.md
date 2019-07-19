@@ -2,7 +2,7 @@
 ### Setup
 
 ```
-npm run setup
+npm run install
 ```
 
 ### Compilation

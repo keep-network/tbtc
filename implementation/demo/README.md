@@ -86,7 +86,7 @@ You should see `Client started.` output message.
 
 1. Run setup:
     ```sh
-    cd implementation && npm run setup
+    cd implementation && npm run install
     ```
 
 2. Provide `KeepRegistry` contract address (copied from Keep tECDSA) in 
