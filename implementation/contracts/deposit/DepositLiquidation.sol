@@ -38,14 +38,13 @@ library DepositLiquidation {
         // 1.0005 TBTC (equivalent to will be filled
         uint MIN_TBTC = TBTCConstants.getLotSize().add(DepositUtils.beneficiaryReward());
 
-        uint ethSold = address(this).balance;
-        uint tbtcBought = exchange.getEthToTokenInputPrice(ethSold);
-        if(tbtcBought < MIN_TBTC) {
+        uint ethPrice = exchange.getTokenToEthInputPrice(MIN_TBTC);
+        if(address(this).balance < ethPrice) {
             return false;
         }
 
         uint deadline = block.timestamp + 1;
-        exchange.ethToTokenSwapOutput.value(ethSold)(tbtcBought, deadline);
+        exchange.ethToTokenSwapOutput.value(ethPrice)(MIN_TBTC, deadline);
 
         return true;
     }
@@ -115,7 +114,6 @@ library DepositLiquidation {
 
             if (_d.requesterAddress != address(0)) { // redemption
                 _tbtc.transferFrom(address(this), _d.requesterAddress, TBTCConstants.getLotSize());
-                address(_d.requesterAddress).transfer(address(this).balance);
             } else {
                 // maintain supply peg
                 _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());

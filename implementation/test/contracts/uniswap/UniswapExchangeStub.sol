@@ -23,12 +23,12 @@ contract UniswapExchangeStub {
         tbtcPrice = _tbtcPrice;
     }
 
-    function getEthToTokenInputPrice(uint256 eth_sold)
+    function getTokenToEthInputPrice(uint256 tokens_sold)
         external view
         returns (uint256)
     {
-        eth_sold;
-        return tbtcPrice;
+        tokens_sold;
+        return ethPrice;
     }
 
     function ethToTokenSwapOutput(uint256 tokens_bought, uint256 deadline)
@@ -40,7 +40,7 @@ contract UniswapExchangeStub {
         require(tokens_bought == tbtcPrice, "incorrect tbtc ask");
         require(tbtc.balanceOf(address(this)) >= tokens_bought, "not enough tbtc for trade");
         require(tbtc.transferFrom(address(this), msg.sender, tokens_bought), "transfer failed");
-        
+
         return msg.value;
     }
 }
