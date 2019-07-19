@@ -7,7 +7,7 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositLiquidation {
 
@@ -185,7 +185,7 @@ library DepositLiquidation {
         );
         require(!_d.inEndState(), "Contract has halted");
 
-        _d.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        _d.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         for (i = 0; i < _bitcoinTx.extractNumInputs(); i++) {
             _input = _bitcoinTx.extractInputAtIndex(i);
             if (keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint)) {
@@ -219,7 +219,7 @@ library DepositLiquidation {
         _d.logLiquidated();
 
         // Burn the outstanding TBTC
-        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         require(_tbtc.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), "Not enough TBTC to cover outstanding debt");
         _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
 
