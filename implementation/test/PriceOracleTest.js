@@ -90,7 +90,7 @@ contract('PriceOracleV1', function(accounts) {
         expect(res).to.eq.BN(newPrice)
       })
 
-      describe.only('1% minimum price delta', async () => {
+      describe('1% minimum price delta', async () => {
         // DO NOT try to use BN.js, it is a sinkhole of time
         // These test cases were created using `bc`
         // An example:
