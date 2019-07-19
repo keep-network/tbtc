@@ -1,17 +1,16 @@
 pragma solidity 0.4.25;
 
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
+import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
+import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
+import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
+import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
+import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
-import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
-import {ValidateSPV} from "../bitcoin-spv/ValidateSPV.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
-import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 
 
