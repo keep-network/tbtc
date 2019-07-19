@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "setup": "git submodule update --init --recursive && npm i",
-    "test": "node --async-stack-traces node_modules/.bin/truffle test",
+    "test": "truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
     "sol:lint": "solium -d contracts/",
