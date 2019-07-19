@@ -318,7 +318,7 @@ contract('DepositLiquidation', (accounts) => {
       // check remaining eth sent to keep group
       await assertBalance.eth(deposit.address, '0')
       const keepGroupTotalEth = await keep.keepGroupTotalEth.call()
-      expect(keepGroupTotalEth).to.equal(remainingEthAfterLiquidation.toString())
+      expect(keepGroupTotalEth).to.eq.BN(remainingEthAfterLiquidation)
     })
   })
 })
