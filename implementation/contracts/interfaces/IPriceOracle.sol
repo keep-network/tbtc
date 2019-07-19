@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 /// @title Bitcoin-Ether price oracle interface.
 contract IPriceOracle {

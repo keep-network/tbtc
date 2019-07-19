@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "../interfaces/IERC721.sol";

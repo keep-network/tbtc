@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -18,7 +18,7 @@ contract Deposit {
     /* solium-disable-next-line no-empty-blocks */
     constructor () public {}
 
-    function () public payable {}
+    function () external payable {}
 
     /// @notice     Get the integer representing the current state
     /// @dev        We implement this because contracts don't handle foreign enums well
@@ -95,10 +95,10 @@ contract Deposit {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 True if successful, otherwise revert
     function provideRedemptionProof(
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
         self.provideRedemptionProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         return true;
@@ -161,7 +161,7 @@ contract Deposit {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public returns (bool) {
         self.provideFundingECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
         return true;
@@ -188,14 +188,14 @@ contract Deposit {
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
-        bytes _txVersion,
-        bytes _txInputVector,
-        bytes _txOutputVector,
-        bytes _txLocktime,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         uint8 _fundingOutputIndex,
-        bytes _merkleProof,
+        bytes memory _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
         self.provideFraudBTCFundingProof(
             _txVersion,
@@ -223,14 +223,14 @@ contract Deposit {
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
-        bytes _txVersion,
-        bytes _txInputVector,
-        bytes _txOutputVector,
-        bytes _txLocktime,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         uint8 _fundingOutputIndex,
-        bytes _merkleProof,
+        bytes memory _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
         self.provideBTCFundingProof(
             _txVersion,
@@ -262,7 +262,7 @@ contract Deposit {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public returns (bool) {
         self.provideECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
         return true;
@@ -276,10 +276,10 @@ contract Deposit {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 True if successful, otherwise revert
     function provideSPVFraudProof(
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
         self.provideSPVFraudProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         return true;

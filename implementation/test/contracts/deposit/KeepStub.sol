@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {IKeep} from '../../../contracts/interfaces/IKeep.sol';
 
@@ -56,7 +56,7 @@ contract KeepStub {
         return keepID;
     }
 
-    function getKeepPubkey(uint256 _keepID) external view returns (bytes) {
+    function getKeepPubkey(uint256 _keepID) external view returns (bytes memory) {
         _keepID; success;
         // this is the pubkey coresponding to 32 '11' bytes
         if (keccak256(pubkey) != keccak256(hex"00")) {

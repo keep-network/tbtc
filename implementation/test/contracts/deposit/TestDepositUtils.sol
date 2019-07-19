@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {DepositUtils} from '../../../contracts/deposit/DepositUtils.sol';
 import {TestDeposit} from './TestDeposit.sol';
@@ -52,7 +52,7 @@ contract TestDepositUtils is TestDeposit {
         return self.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
     }
 
-    function extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes) {
+    function extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes memory) {
         return DepositUtils.extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
     }
 
@@ -98,15 +98,15 @@ contract TestDepositUtils is TestDeposit {
         return self.auctionTBTCAmount();
     }
 
-    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes) {
+    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes memory) {
         return DepositUtils.determineCompressionPrefix(_pubkeyY);
     }
 
-    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes) {
+    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes memory) {
         return DepositUtils.compressPubkey(_pubkeyX, _pubkeyY);
     }
 
-    function signerPubkey() public view returns (bytes) {
+    function signerPubkey() public view returns (bytes memory) {
         return self.signerPubkey();
     }
 
@@ -134,7 +134,7 @@ contract TestDepositUtils is TestDeposit {
         return self.wasDigestApprovedForSigning(_digest);
     }
 
-    function depositBeneficiary() public view returns (address) {
+    function depositBeneficiary() public view returns (address payable) {
         return self.depositBeneficiary();
     }
 

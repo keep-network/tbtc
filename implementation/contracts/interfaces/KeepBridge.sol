@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {IKeep} from "./IKeep.sol";
 
@@ -22,7 +22,7 @@ contract KeepBridge is IKeep {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes calldata _preimage
     ) external returns (bool _isFraud){
         //TODO: Implement
         return _isFraud;
@@ -51,7 +51,7 @@ contract KeepBridge is IKeep {
     // get the result of a keep formation
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
-    function getKeepPubkey(uint256 _keepID) external view returns (bytes){
+    function getKeepPubkey(uint256 _keepID) external view returns (bytes memory){
         // TODO: keepID type should be changed from uint256 to addrress
         address _keepAddress = address(_keepID);
 
