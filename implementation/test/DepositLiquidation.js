@@ -170,6 +170,7 @@ contract('DepositLiquidation', (accounts) => {
     let assertBalance
 
     const beneficiary = accounts[1]
+    const maintainer = accounts[5]
     const DIGEST = '0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc'
 
     beforeEach(async () => {
@@ -228,7 +229,6 @@ contract('DepositLiquidation', (accounts) => {
         await uniswapExchange.setPrices(keepBondAmount, tbtcPrice)
 
         const requestor = accounts[2]
-        // const requestorBalance1 = new BN(await web3.eth.getBalance(requestor))
 
         // set requestor
         // TODO(liamz): set requestorAddress more realistically
@@ -243,13 +243,6 @@ contract('DepositLiquidation', (accounts) => {
 
         // expect tbtc to be refunded to requestor
         await assertBalance.tbtc(requestor, lotSize)
-
-        // requestor gets (any) remaining eth
-        // TODO(liamz): no remaining eth in this test, but in another forsho
-        // const requestorBalance2 = new BN(await web3.eth.getBalance(requestor))
-        // expect(
-        //   requestorBalance2.sub(requestorBalance1)
-        // ).to.eq.BN(new BN('0'))
       })
 
 
@@ -279,7 +272,6 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('#startSignerFraudLiquidation', async () => {
-      const maintainer = accounts[5]
       const maintainerBalance = new BN(await web3.eth.getBalance(maintainer))
 
       await uniswapExchange.setPrices(
