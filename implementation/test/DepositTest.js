@@ -1109,10 +1109,6 @@ contract('Deposit', (accounts) => {
         assert.include(e.message, 'Found an output paying the redeemer as requested')
       }
     })
-
-    it('startSignerFraudLiquidation', async () => {
-      //
-    })
   })
 
   describe('purchaseSignerBondsAtAuction', async () => {

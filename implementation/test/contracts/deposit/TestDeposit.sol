@@ -111,12 +111,4 @@ contract TestDeposit is Deposit {
     function attemptToLiquidateOnchain() public returns (bool) {
         return self.attemptToLiquidateOnchain();
     }
-
-    function startSignerFraudLiquidation() public {
-        return self.startSignerFraudLiquidation();
-    }
-
-    function startSignerAbortLiquidation() public {
-        return self.startSignerAbortLiquidation();
-    }
 }
