@@ -6,7 +6,6 @@ const IUniswapExchange = artifacts.require('IUniswapExchange')
 const UniswapDeployment = artifacts.require('UniswapDeployment')
 
 import { UniswapHelpers } from './helpers/uniswap'
-import expectThrow from './helpers/expectThrow'
 
 // Tests the Uniswap deployment
 
@@ -28,8 +27,6 @@ contract('Uniswap', (accounts) => {
       const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtc)
       expect(tbtcExchangeAddr).to.not.be.empty
     })
-
-    it('has liquidity by default', async () => {})
   })
 
   describe('TBTC Uniswap Exchange', () => {
@@ -56,11 +53,13 @@ contract('Uniswap', (accounts) => {
       /* eslint-enable no-unused-vars */
     })
 
-
     it('has no liquidity by default', async () => {
-      await expectThrow(
-        tbtcExchange.getTokenToEthInputPrice.call(1)
-      )
+      try {
+        await tbtcExchange.getTokenToEthInputPrice.call(1)
+        assert(false, 'Test call did not error as expected')
+      } catch (e) {
+        assert.include(e.message, 'invalid JUMP')
+      }
     })
 
     describe('e2e testing of a trade', () => {

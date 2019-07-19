@@ -352,12 +352,11 @@ contract('DepositUtils', (accounts) => {
         await uniswapFactory.getExchange(tbtc.address)
       )
 
-      // Set exterior addresses
+      // Inject mock exchange
       await tbtcSystem.setExteroriorAddresses(
         uniswapFactory.address,
         tbtc.address
       )
-      await tbtcSystem.setTBTCUniswapExchange(exchange.address)
       await deposit.setExteroriorAddresses(
         tbtcSystem.address,
         tbtc.address,
