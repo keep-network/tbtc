@@ -23,6 +23,7 @@
     "chai": "^4.2.0",
     "create-hash": "^1.2.0",
     "openzeppelin-solidity": "2.3.0",
+    "bitcoin-spv": "git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0",
     "solc": "^0.5.10"
   },
   "devDependencies": {
