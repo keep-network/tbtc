@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
 import "../interfaces/IPriceOracle.sol";

@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
 import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
@@ -40,7 +40,7 @@ library DepositLiquidation {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public returns (bool _isFraud) {
         IKeep _keep = IKeep(_d.KeepBridge);
         return _keep.submitSignatureFraud(_d.keepID, _v, _r, _s, _signedDigest, _preimage);
@@ -141,7 +141,7 @@ library DepositLiquidation {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public {
         require(
             !_d.inFunding() && !_d.inFundingFailure(),
@@ -165,10 +165,10 @@ library DepositLiquidation {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideSPVFraudProof(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public {
         bytes memory _input;
         bytes memory _output;

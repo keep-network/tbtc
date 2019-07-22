@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 contract DepositLog {
 
@@ -130,7 +130,7 @@ contract DepositLog {
         uint256 _utxoSize,
         bytes20 _requesterPKH,
         uint256 _requestedFee,
-        bytes _outpoint
+        bytes memory _outpoint
     ) public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
         emit RedemptionRequested(

@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
 import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
@@ -215,10 +215,10 @@ library DepositRedemption {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideRedemptionProof(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public {
         bytes32 _txid;
         uint256 _fundingOutputValue;
@@ -244,7 +244,7 @@ library DepositRedemption {
 
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx
+        bytes memory _bitcoinTx
     ) public view returns (bytes32, uint256) {
         bytes memory _nIns;
         bytes memory _ins;

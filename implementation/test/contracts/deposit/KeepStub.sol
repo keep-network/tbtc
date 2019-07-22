@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {IKeep} from '../../../contracts/interfaces/IKeep.sol';
 
@@ -10,9 +10,9 @@ contract KeepStub {
     uint256 keepID = 7;
     bytes pubkey = hex"00";
 
-    function () payable public {}
+    function () payable external {}
 
-    function setPubkey(bytes _pubkey) public {pubkey = _pubkey;}
+    function setPubkey(bytes memory _pubkey) public {pubkey = _pubkey;}
     function setSuccess(bool _success) public {success = _success;}
     function setBondAmount(uint256 _bondAmount) public {bondAmount = _bondAmount;}
     function setKeepID(uint256 _id) public {keepID = _id;}
@@ -35,7 +35,7 @@ contract KeepStub {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes calldata _preimage
     ) external returns (bool _isFraud) {
         _keepID; _v; _r; _s; _signedDigest; _preimage; success = success;
         _isFraud = success;
@@ -56,7 +56,7 @@ contract KeepStub {
         return keepID;
     }
 
-    function getKeepPubkey(uint256 _keepID) external view returns (bytes) {
+    function getKeepPubkey(uint256 _keepID) external view returns (bytes memory) {
         _keepID; success;
         // this is the pubkey coresponding to 32 '11' bytes
         if (keccak256(pubkey) != keccak256(hex"00")) {

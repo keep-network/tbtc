@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 /**
  * @title Keep interface
@@ -23,7 +23,7 @@ interface IKeep {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes calldata _preimage
     ) external returns (bool _isFraud);
 
     // Allow sending funds to a keep group
@@ -42,7 +42,7 @@ interface IKeep {
     // get the result of a keep formation
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
-    function getKeepPubkey(uint256 _keepID) external view returns (bytes);
+    function getKeepPubkey(uint256 _keepID) external view returns (bytes memory);
 
 
     // returns the amount of the keep's ETH bond in wei
