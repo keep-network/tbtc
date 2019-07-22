@@ -45,6 +45,7 @@ jobs:
             command: npm install && npm run setup && npm run test
         - run:
             name: Generate Sol coverage report
+            working_directory: ~/project/implementation/contracts
             command: npm run coverage
         - store_artifacts:
             path: ~/project/implementation/coverage
