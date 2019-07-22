@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {ECDSAKeepContract} from '../../../contracts/interfaces/KeepBridge.sol';
 
@@ -7,7 +7,7 @@ import {ECDSAKeepContract} from '../../../contracts/interfaces/KeepBridge.sol';
 contract ECDSAKeepStub is ECDSAKeepContract {
     bytes publicKey;
 
-    function setPublicKey(bytes _publicKey) public {
+    function setPublicKey(bytes memory _publicKey) public {
         publicKey = _publicKey;
     }
 

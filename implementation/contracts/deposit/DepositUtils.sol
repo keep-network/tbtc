@@ -1,9 +1,9 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
-import {ValidateSPV} from "../bitcoin-spv/ValidateSPV.sol";
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
-import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
+import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
+import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
+import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
+import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
@@ -41,8 +41,8 @@ library DepositUtils {
         bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
-        address requesterAddress;  // The requester's addr4ess, used as fallback for fraud in redemption
-        bytes20 requesterPKH;  // The 20-byte requeser PKH
+        address payable requesterAddress;  // The requester's address, used as fallback for fraud in redemption
+        bytes20 requesterPKH;  // The 20-byte requester PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
@@ -73,7 +73,7 @@ library DepositUtils {
     /// @dev                        Uses the light oracle to source recent difficulty
     /// @param  _bitcoinHeaders     The header chain to evaluate
     /// @return                     True if acceptable, otherwise revert
-    function evaluateProofDifficulty(Deposit storage _d, bytes _bitcoinHeaders) public view {
+    function evaluateProofDifficulty(Deposit storage _d, bytes memory _bitcoinHeaders) public view {
         uint256 _reqDiff;
         uint256 _current = currentBlockDifficulty(_d);
         uint256 _previous = previousBlockDifficulty(_d);
@@ -106,10 +106,10 @@ library DepositUtils {
     /// @return                 The 32 byte transaction id (little-endian, not block-explorer)
     function checkProofFromTx(
         Deposit storage _d,
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public view returns (bytes32) {
         bytes memory _nIns;
         bytes memory _ins;
@@ -133,9 +133,9 @@ library DepositUtils {
     function checkProofFromTxId(
         Deposit storage _d,
         bytes32 _txId,
-        bytes _merkleProof,
+        bytes memory _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public view{
         require(
             _txId.prove(
@@ -157,7 +157,7 @@ library DepositUtils {
     /// @return                     Funding value
     function findAndParseFundingOutput(
         DepositUtils.Deposit storage _d,
-        bytes _txOutputVector,
+        bytes memory _txOutputVector,
         uint8 _fundingOutputIndex
     ) public view returns (bytes8) {
         bytes8 _valueBytes;
@@ -178,9 +178,9 @@ library DepositUtils {
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @return                     The specified output
     function extractOutputAtIndex(
-        bytes _txOutputVector,
+        bytes memory _txOutputVector,
         uint8 _fundingOutputIndex
-    ) public view returns (bytes) {
+    ) public view returns (bytes memory) {
         // Transaction outputs vector consists of a number of outputs followed by a list of outputs:
         //
         // |                                  outputs vector                                  |
@@ -224,15 +224,15 @@ library DepositUtils {
     /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint
     function validateAndParseFundingSPVProof(
         DepositUtils.Deposit storage _d,
-        bytes _txVersion,
-        bytes _txInputVector,
-        bytes _txOutputVector,
-        bytes _txLocktime,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         uint8 _fundingOutputIndex,
-        bytes _merkleProof,
+        bytes memory _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders
-    ) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
+        bytes memory _bitcoinHeaders
+    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
         bytes32 txID = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
         _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
@@ -305,7 +305,7 @@ library DepositUtils {
     /// @dev                The prefix encodes the parity of the Y coordinate
     /// @param  _pubkeyY    The Y coordinate of the public key
     /// @return             The 1-byte prefix for the compressed key
-    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes) {
+    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes memory) {
         if(uint256(_pubkeyY) & 1 == 1) {
             return hex"03";  // Odd Y
         } else {
@@ -318,14 +318,14 @@ library DepositUtils {
     /// @param  _pubkeyX    The X coordinate of the public key
     /// @param  _pubkeyY    The Y coordinate of the public key
     /// @return             The 33-byte compressed pubkey
-    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes) {
+    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes memory) {
         return abi.encodePacked(determineCompressionPrefix(_pubkeyY), _pubkeyX);
     }
 
     /// @notice         Returns the packed public key (64 bytes) for the signing group
     /// @dev            We store it as 2 bytes32, (2 slots) then repack it on demand
     /// @return         64 byte public key
-    function signerPubkey(Deposit storage _d) public view returns (bytes) {
+    function signerPubkey(Deposit storage _d) public view returns (bytes memory) {
         return abi.encodePacked(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
     }
 
@@ -380,9 +380,9 @@ library DepositUtils {
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
-    function depositBeneficiary(Deposit storage _d) public view returns (address) {
+    function depositBeneficiary(Deposit storage _d) public view returns (address payable) {
         IERC721 _systemContract = IERC721(_d.TBTCSystem);
-        return _systemContract.ownerOf(uint256(address(this)));
+        return address(uint160(_systemContract.ownerOf(uint256(address(this)))));
     }
 
     /// @notice     Deletes state after termination of redemption process

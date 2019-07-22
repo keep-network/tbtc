@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
@@ -59,7 +59,7 @@ contract TestDeposit is Deposit {
     }
 
     function setRequestInfo(
-        address _requesterAddress,
+        address payable _requesterAddress,
         bytes20 _requesterPKH,
         uint256 _initialRedemptionFee,
         uint256 _withdrawalRequestTime,
@@ -84,19 +84,19 @@ contract TestDeposit is Deposit {
     function setUTXOInfo(
         bytes8 _utxoSizeBytes,
         uint256 _fundedAt,
-        bytes _utxoOutpoint
+        bytes memory _utxoOutpoint
     ) public {
         self.utxoSizeBytes = _utxoSizeBytes;
         self.fundedAt = _fundedAt;
         self.utxoOutpoint = _utxoOutpoint;
     }
 
-    function getUTXOInfo() public view returns (bytes8, uint256, bytes) {
+    function getUTXOInfo() public view returns (bytes8, uint256, bytes memory) {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
 
     // passthrough for direct testing
-    function redemptionTransactionChecks(bytes _bitcoinTx) public view returns (bytes32, uint256) {
+    function redemptionTransactionChecks(bytes memory _bitcoinTx) public view returns (bytes32, uint256) {
         return self.redemptionTransactionChecks(_bitcoinTx);
     }
 

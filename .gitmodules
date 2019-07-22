@@ -1,4 +1,0 @@
-[submodule "implementation/contracts/bitcoin-spv"]
-	path = implementation/contracts/bitcoin-spv
-	url = git@github.com:summa-tx/bitcoin-spv.git
-	branch = 1.0.0-embedabble

@@ -1,17 +1,16 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
+import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
+import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
+import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
+import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
+import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
-import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
-import {ValidateSPV} from "../bitcoin-spv/ValidateSPV.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
-import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 
 
@@ -216,10 +215,10 @@ library DepositRedemption {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideRedemptionProof(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public {
         bytes32 _txid;
         uint256 _fundingOutputValue;
@@ -245,7 +244,7 @@ library DepositRedemption {
 
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx
+        bytes memory _bitcoinTx
     ) public view returns (bytes32, uint256) {
         bytes memory _nIns;
         bytes memory _ins;

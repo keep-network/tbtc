@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {DepositLog} from "../DepositLog.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -30,7 +30,7 @@ library OutsourceDepositLogging {
         uint256 _utxoSize,
         bytes20 _requesterPKH,
         uint256 _requestedFee,
-        bytes _outpoint
+        bytes calldata _outpoint
     ) external {
         DepositLog _logger = DepositLog(_d.TBTCSystem);
         _logger.logRedemptionRequested(
