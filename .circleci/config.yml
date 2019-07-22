@@ -28,7 +28,6 @@ jobs:
             command: |
               set -ex
               npm install
-              npm run setup
               npm run sol:lint
   test_solidity:
     executor: docker-node
@@ -42,7 +41,7 @@ jobs:
         - run:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
-            command: npm install && npm run setup && npm run test
+            command: npm install && npm run test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15

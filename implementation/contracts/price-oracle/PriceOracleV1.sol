@@ -1,7 +1,7 @@
 pragma solidity 0.4.25;
 
+import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
 import "../interfaces/IPriceOracle.sol";
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
 
 /// @title BTC-ETH Price Oracle V1
 /// @notice Implements a simple price feed, managed by a trusted operator.

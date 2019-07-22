@@ -2,7 +2,7 @@
 ### Setup
 
 ```
-npm run setup
+npm install
 ```
 
 ### Compilation
@@ -23,4 +23,6 @@ npm run js:lint:fix
 npm run sol:lint:fix
 ```
 
-Eslint errors can be disabled using a comment on the previous line. For example, to disable linter errors for the 'no-unused-vars' rule: `// eslint-disable-next-line no-unused-vars`.
+Eslint errors can be disabled using a comment on the previous line. For example, 
+to disable linter errors for the 'no-unused-vars' rule: 
+`// eslint-disable-next-line no-unused-vars`.
