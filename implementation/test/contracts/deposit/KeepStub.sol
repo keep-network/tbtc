@@ -51,7 +51,7 @@ contract KeepStub {
         return success;
     }
 
-    function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (address _keepAddress) {
+    function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress) {
         _m; _n;
         return keepAddress;
     }

@@ -38,7 +38,7 @@ contract KeepBridge is IKeep {
         return false;
     }
 
-    function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
+    function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
         //TODO: Implement
         _keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
     }
