@@ -20,7 +20,9 @@ The docs and Solidity are built [via CircleCI](.circleci/).
 
 The documentation includes a project overview and rationale, as well as the
 on-chain specification. Docs should always be updated before or in tandem with
-code.
+code. 
+
+Latest build from master is available at [http://docs.keep.network/tbtc/](http://docs.keep.network/tbtc/) ([pdf](http://docs.keep.network/tbtc/index.pdf)).
 
 ### Building
 
