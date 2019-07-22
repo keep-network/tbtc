@@ -104,7 +104,7 @@ contract DepositLog {
 
     /// @notice               Fires a Created event
     /// @dev                  We append the sender, which is the deposit contract that called
-    /// @param  _keepAddress  The address of the associated keep request
+    /// @param  _keepAddress  The address of the associated keep
     /// @return               True if successful, else revert
     function logCreated(address _keepAddress) public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;

@@ -47,7 +47,6 @@ contract KeepBridge is IKeep {
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
     function getKeepPubkey(address _keepAddress) external view returns (bytes){
-        // TODO: keepAddress type should be changed from uint256 to addrress
         return ECDSAKeepContract(_keepAddress).getPublicKey();
     }
 
