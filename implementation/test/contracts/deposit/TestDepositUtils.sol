@@ -15,24 +15,24 @@ contract TestDepositUtils is TestDeposit {
         return self.previousBlockDifficulty();
     }
 
-    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
+    function evaluateProofDifficulty(bytes memory _bitcoinHeaders) public view {
         return self.evaluateProofDifficulty(_bitcoinHeaders);
     }
 
     function checkProofFromTx(
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public view returns (bytes32) {
         return self.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
     }
 
     function checkProofFromTxId(
         bytes32 _bitcoinTxId,
-        bytes _merkleProof,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public view returns (bytes32) {
         self.checkProofFromTxId(_bitcoinTxId, _merkleProof, _index, _bitcoinHeaders);
     }
@@ -46,26 +46,26 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function findAndParseFundingOutput(
-        bytes _txOutputVector,
+        bytes memory _txOutputVector,
         uint8 _fundingOutputIndex
     ) public view returns (bytes8) {
         return self.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
     }
 
-    function extractOutputAtIndex(bytes _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes memory) {
+    function extractOutputAtIndex(bytes memory _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes memory) {
         return DepositUtils.extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
     }
 
     function validateAndParseFundingSPVProof(
-        bytes _txVersion,
-        bytes _txInputVector,
-        bytes _txOutputVector,
-        bytes _txLocktime,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         uint8 _fundingOutputIndex,
-        bytes _merkleProof,
+        bytes memory _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders
-    ) public view returns (bytes8 _valueBytes, bytes _utxoOutpoint){
+        bytes memory _bitcoinHeaders
+    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
       return self.validateAndParseFundingSPVProof(
         _txVersion,
         _txInputVector,

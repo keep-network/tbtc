@@ -7,7 +7,7 @@ import {ECDSAKeepContract} from '../../../contracts/interfaces/KeepBridge.sol';
 contract ECDSAKeepStub is ECDSAKeepContract {
     bytes publicKey;
 
-    function setPublicKey(bytes _publicKey) public {
+    function setPublicKey(bytes memory _publicKey) public {
         publicKey = _publicKey;
     }
 
