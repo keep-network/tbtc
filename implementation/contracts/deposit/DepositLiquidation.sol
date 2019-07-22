@@ -1,7 +1,7 @@
 pragma solidity ^0.5.10;
 
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
+import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
+import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
