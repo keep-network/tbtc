@@ -39,6 +39,9 @@ library DepositLiquidation {
         uint MIN_TBTC = TBTCConstants.getLotSize().add(DepositUtils.beneficiaryReward());
 
         uint ethPrice = exchange.getTokenToEthInputPrice(MIN_TBTC);
+        uint uniswapFee = ethPrice * 1003 / 1000; // 0.3% fee
+        ethPrice += uniswapFee;
+
         if(address(this).balance < ethPrice) {
             return false;
         }
