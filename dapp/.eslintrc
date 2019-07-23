@@ -1,0 +1,17 @@
+{
+  "extends": "eslint-config-keep",
+  "parserOptions": {
+    "ecmaVersion": 2017,
+    "sourceType": "module"
+  },
+  "env": {
+    "es6": true,
+    "mocha": true
+  },
+  "rules": {
+    "semi": [
+      2,
+      "never"
+    ]
+  }
+}

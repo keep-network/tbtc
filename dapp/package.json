@@ -1,0 +1,27 @@
+{
+  "name": "tbtc-dapp",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "CONFIG_FILE=${npm_package_config_file} mocha --timeout 5000",
+    "start": "CONFIG_FILE=${npm_package_config_file} node index.js"
+  },
+  "config": {
+    "file": "./config/config.json"
+  },
+  "author": "Jakub Nowakowski <jakub.nowakowski@keep.network>",
+  "license": "ISC",
+  "dependencies": {
+    "create-hash": "^1.2.0",
+    "electrum-client": "git+https://github.com/keep-network/node-electrum-client.git",
+    "web3": "^1.2.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "fs": "0.0.1-security",
+    "mocha": "^6.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.2.0"
+  }
+}
