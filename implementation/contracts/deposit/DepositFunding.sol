@@ -32,7 +32,7 @@ library DepositFunding {
     /// @notice     Deletes state after the funding ECDSA fraud process
     /// @dev        This is only called as we transition to setup failed
     function fundingFraudTeardown(DepositUtils.Deposit storage _d) public {
-        _d.keepID = 0;
+        _d.keepAddress = address(0);
         _d.signingGroupRequestedAt = 0;
         _d.fundingProofTimerStart = 0;
         _d.signingGroupPubkeyX = bytes32(0);
@@ -44,7 +44,7 @@ library DepositFunding {
     /// @return         the 64 byte pubkey
     function getKeepPubkeyResult(DepositUtils.Deposit storage _d) public view returns (bytes memory) {
         IKeep _keep = IKeep(_d.KeepBridge);
-        bytes memory _pubkey = _keep.getKeepPubkey(_d.keepID);
+        bytes memory _pubkey = _keep.getKeepPubkey(_d.keepAddress);
         /* solium-disable-next-line */
         require(_pubkey.length == 64, "public key not set or not 64-bytes long");
         return _pubkey;
@@ -66,11 +66,11 @@ library DepositFunding {
         IKeep _keep = IKeep(_d.KeepBridge);
 
         /* solium-disable-next-line value-in-payable */
-        _d.keepID = _keep.requestKeepGroup.value(msg.value)(_m, _n);  // kinda gross but
+        _d.keepAddress = _keep.requestNewKeep.value(msg.value)(_m, _n);  // kinda gross but
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
-        _d.logCreated(_d.keepID);
+        _d.logCreated(_d.keepAddress);
 
         return true;
     }
