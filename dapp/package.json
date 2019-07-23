@@ -13,6 +13,8 @@
   "author": "Jakub Nowakowski <jakub.nowakowski@keep.network>",
   "license": "ISC",
   "dependencies": {
+    "bcoin": "git+https://github.com/bcoin-org/bcoin.git",
+    "bufio": "^1.0.6",
     "create-hash": "^1.2.0",
     "electrum-client": "git+https://github.com/keep-network/node-electrum-client.git#44e9d8893213bcd772bf982e913f50b60e0defbc",
     "web3": "^1.2.0"
