@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -18,7 +18,7 @@ contract Deposit {
     /* solium-disable-next-line no-empty-blocks */
     constructor () public {}
 
-    function () public payable {}
+    function () external payable {}
 
     /// @notice     Get the integer representing the current state
     /// @dev        We implement this because contracts don't handle foreign enums well
@@ -95,10 +95,10 @@ contract Deposit {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 True if successful, otherwise revert
     function provideRedemptionProof(
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
         self.provideRedemptionProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         return true;
@@ -161,7 +161,7 @@ contract Deposit {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public returns (bool) {
         self.provideFundingECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
         return true;
@@ -175,37 +175,73 @@ contract Deposit {
         return true;
     }
 
-    /// @notice                 Anyone may notify the deposit of a funding proof during funding fraud
-    /// @dev                    We reward the funder the entire bond if this occurs
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contains the funding output
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if successful, False if prevented by timeout, otherwise revert
+    /// @notice                     Anyone may notify the deposit of a funding proof during funding fraud
+    //                              We reward the funder the entire bond if this occurs
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
+    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
+    /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
-        bytes _bitcoinTx,
-        bytes _merkleProof,
-        uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes memory _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
-        self.provideFraudBTCFundingProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        self.provideFraudBTCFundingProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
         return true;
     }
 
-    /// @notice                 Anyone may notify the deposit of a funding proof to activate the deposit
-    /// @dev                    This is the happy-path of the funding flow. It means that we have suecceeded
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contains the funding output
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if successful, False if prevented by timeout, otherwise revert
+    /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit
+    ///                             This is the happy-path of the funding flow. It means that we have succeeded
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
+    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
+    /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
-        bytes _bitcoinTx,
-        bytes _merkleProof,
-        uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes memory _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
-        self.provideBTCFundingProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        self.provideBTCFundingProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
         return true;
     }
 
@@ -226,7 +262,7 @@ contract Deposit {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public returns (bool) {
         self.provideECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
         return true;
@@ -240,10 +276,10 @@ contract Deposit {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 True if successful, otherwise revert
     function provideSPVFraudProof(
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
         self.provideSPVFraudProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         return true;

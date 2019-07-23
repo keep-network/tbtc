@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {DepositUtils} from '../../../contracts/deposit/DepositUtils.sol';
 import {TestDeposit} from './TestDeposit.sol';
@@ -15,17 +15,67 @@ contract TestDepositUtils is TestDeposit {
         return self.previousBlockDifficulty();
     }
 
-    function evaluateProofDifficulty(bytes _bitcoinHeaders) public view {
+    function evaluateProofDifficulty(bytes memory _bitcoinHeaders) public view {
         return self.evaluateProofDifficulty(_bitcoinHeaders);
     }
 
-    function checkProof(
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+    function checkProofFromTx(
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public view returns (bytes32) {
-        return self.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        return self.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+    }
+
+    function checkProofFromTxId(
+        bytes32 _bitcoinTxId,
+        bytes memory _merkleProof,
+        uint256 _index,
+        bytes memory _bitcoinHeaders
+    ) public view returns (bytes32) {
+        self.checkProofFromTxId(_bitcoinTxId, _merkleProof, _index, _bitcoinHeaders);
+    }
+    
+    function setPubKey(
+        bytes32 _signingGroupPubkeyX,
+        bytes32 _signingGroupPubkeyY
+    ) public {
+        self.signingGroupPubkeyX = _signingGroupPubkeyX;
+        self.signingGroupPubkeyY = _signingGroupPubkeyY;
+    }
+
+    function findAndParseFundingOutput(
+        bytes memory _txOutputVector,
+        uint8 _fundingOutputIndex
+    ) public view returns (bytes8) {
+        return self.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
+    }
+
+    function extractOutputAtIndex(bytes memory _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes memory) {
+        return DepositUtils.extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
+    }
+
+    function validateAndParseFundingSPVProof(
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes memory _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes memory _bitcoinHeaders
+    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
+      return self.validateAndParseFundingSPVProof(
+        _txVersion,
+        _txInputVector,
+        _txOutputVector,
+        _txLocktime,
+        _fundingOutputIndex,
+        _merkleProof,
+        _txIndexInBlock,
+        _bitcoinHeaders
+        );
     }
 
     function auctionValue() public view returns (uint256) {
@@ -48,15 +98,15 @@ contract TestDepositUtils is TestDeposit {
         return self.auctionTBTCAmount();
     }
 
-    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes) {
+    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes memory) {
         return DepositUtils.determineCompressionPrefix(_pubkeyY);
     }
 
-    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes) {
+    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes memory) {
         return DepositUtils.compressPubkey(_pubkeyX, _pubkeyY);
     }
 
-    function signerPubkey() public view returns (bytes) {
+    function signerPubkey() public view returns (bytes memory) {
         return self.signerPubkey();
     }
 
@@ -84,7 +134,7 @@ contract TestDepositUtils is TestDeposit {
         return self.wasDigestApprovedForSigning(_digest);
     }
 
-    function depositBeneficiary() public view returns (address) {
+    function depositBeneficiary() public view returns (address payable) {
         return self.depositBeneficiary();
     }
 

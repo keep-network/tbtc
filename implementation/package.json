@@ -4,7 +4,6 @@
   "description": "deposit contract for TBTC",
   "main": "index.js",
   "scripts": {
-    "setup": "git submodule update --init --recursive && npm i",
     "test": "truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
@@ -21,9 +20,11 @@
     "@optionality.io/clone-factory": "^0.2.1",
     "bn-chai": "^1.0.1",
     "bn.js": "^4.11.8",
+    "bitcoin-spv": "git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0",
     "chai": "^4.2.0",
     "create-hash": "^1.2.0",
-    "solc": "^0.4.25"
+    "openzeppelin-solidity": "2.3.0",
+    "solc": "^0.5.10"
   },
   "devDependencies": {
     "babel-polyfill": "^6.26.0",
@@ -32,7 +33,7 @@
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "eslint": "^5.16.0",
-    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.1.2",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.2.0",
     "eth-gas-reporter": "^0.1.12",
     "ethlint": "^1.2.4",
     "ganache-cli": "^6.4.3",

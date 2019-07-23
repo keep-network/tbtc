@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {DepositLog} from "../DepositLog.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -6,12 +6,12 @@ import {DepositUtils} from "./DepositUtils.sol";
 library OutsourceDepositLogging {
 
 
-    /// @notice             Fires a Created event
-    /// @dev                We append the sender, which is the deposit contract that called
-    /// @param  _keepID     The ID of the associated keep request
-    function logCreated(DepositUtils.Deposit storage _d, uint256 _keepID) external {
+    /// @notice               Fires a Created event
+    /// @dev                  We append the sender, which is the deposit contract that called
+    /// @param  _keepAddress  The address of the associated keep
+    function logCreated(DepositUtils.Deposit storage _d, address _keepAddress) external {
         DepositLog _logger = DepositLog(_d.TBTCSystem);
-        _logger.logCreated(_keepID);
+        _logger.logCreated(_keepAddress);
     }
 
     /// @notice                 Fires a RedemptionRequested event
@@ -30,7 +30,7 @@ library OutsourceDepositLogging {
         uint256 _utxoSize,
         bytes20 _requesterPKH,
         uint256 _requestedFee,
-        bytes _outpoint
+        bytes calldata _outpoint
     ) external {
         DepositLog _logger = DepositLog(_d.TBTCSystem);
         _logger.logRedemptionRequested(

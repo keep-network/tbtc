@@ -1,4 +1,8 @@
 version: 2.1
+
+orbs:
+  gcp-cli: circleci/gcp-cli@1.8.2
+
 executors:
   docker-node:
     docker:
@@ -24,7 +28,6 @@ jobs:
             command: |
               set -ex
               npm install
-              npm run setup
               npm run sol:lint
   test_solidity:
     executor: docker-node
@@ -38,7 +41,7 @@ jobs:
         - run:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
-            command: npm install && npm run setup && npm run test
+            command: npm install && npm run test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -99,9 +102,17 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/docs
-      - store_artifacts:
-          path: /tmp/docs
-          destination: .
+      - gcp-cli/initialize:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY_DOC_UPLOAD
+      - run:
+          name: Upload Document Files to docs.keep.network
+          command: |
+            cd /tmp/docs
+            export DIR=$(test $CIRCLE_BRANCH != master && echo $CIRCLE_BRANCH/)
+            gsutil -m cp -r * gs://docs.keep.network/tbtc/$DIR
 
 workflows:
   version: 2
@@ -120,6 +131,7 @@ workflows:
           requires:
             - generate_pngs
       - upload_docs:
+          context: keep-docs
           requires:
             - generate_docs_tex
             - generate_docs_asciidoctor

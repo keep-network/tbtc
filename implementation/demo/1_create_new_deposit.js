@@ -1,14 +1,17 @@
 const Deposit = artifacts.require('./Deposit.sol')
-const KeepBridge = artifacts.require('./KeepBridge.sol')
 const TBTCSystem = artifacts.require('./TBTCSystem.sol')
+const TBTCToken = artifacts.require('./TBTCToken.sol')
+const KeepBridge = artifacts.require('./KeepBridge.sol')
 
 module.exports = async function() {
   let deposit
   let tbtcSystem
+  let tbtcToken
   let keepBridge
 
   try {
     keepBridge = await KeepBridge.deployed()
+    tbtcToken = await TBTCToken.deployed()
     tbtcSystem = await TBTCSystem.deployed()
   } catch (err) {
     console.error(`initialization failed: ${err}`)
@@ -22,10 +25,10 @@ module.exports = async function() {
     console.log('new deposit deployed: ', deposit.address)
 
     const result = await deposit.createNewDeposit(
-      tbtcSystem.address, // address _TBTCSystem,
-      '0x0000000000000000000000000000000000000000', // address _TBTCToken,
-      keepBridge.address, // address _KeepBridge,
-      5, // uint256 _m,
+      tbtcSystem.address, // address _TBTCSystem
+      tbtcToken.address, // address _TBTCToken
+      keepBridge.address, // address _KeepBridge
+      5, // uint256 _m
       10 // uint256 _n
     ).catch((err) => {
       console.error(`createNewDeposit failed: ${err}`)

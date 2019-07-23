@@ -1,17 +1,16 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
+import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
+import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
+import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
+import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
+import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
-import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
-import {ValidateSPV} from "../bitcoin-spv/ValidateSPV.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
-import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
-import {CheckBitcoinSigs} from "../bitcoin-spv/SigCheck.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 
 
@@ -33,12 +32,12 @@ library DepositRedemption {
     /// @dev        Approves the keep contract, then expects it to call transferFrom
     function distributeSignerFee(DepositUtils.Deposit storage _d) public {
         address _tbtcAddress = _d.TBTCToken;
-        IBurnableERC20 _tbtc = IBurnableERC20(_tbtcAddress);
+        TBTCToken _tbtc = TBTCToken(_tbtcAddress);
 
         IKeep _keep = IKeep(_d.KeepBridge);
 
         _tbtc.approve(_d.KeepBridge, DepositUtils.signerFee());
-        _keep.distributeERC20ToKeepGroup(_d.keepID, _tbtcAddress, DepositUtils.signerFee());
+        _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcAddress, DepositUtils.signerFee());
     }
 
     /// @notice         approves a digest for signing by our keep group
@@ -47,14 +46,14 @@ library DepositRedemption {
     /// @return         true if approved, otherwise revert
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
         IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.approveDigest(_d.keepID, _digest);
+        return _keep.approveDigest(_d.keepAddress, _digest);
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
         // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
         // Requires user to approve first
         /* TODO: implement such that it calls the system to burn TBTC? */
-        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         uint256 _bal = _tbtc.balanceOf(msg.sender);
         uint256 _red = _d.redemptionTBTCAmount();
         require(_bal >= _red, "Not enough TBTC to cover outstanding debt");
@@ -216,25 +215,18 @@ library DepositRedemption {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideRedemptionProof(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public {
         bytes32 _txid;
         uint256 _fundingOutputValue;
 
         require(_d.inRedemption(), "Redemption proof only allowed from redemption flow");
         (_txid, _fundingOutputValue) = redemptionTransactionChecks(_d, _bitcoinTx);
-        // We don't use checkproof here because we need access to the parse info
-        require(
-            _txid.prove(
-                _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
-                _merkleProof,
-                _index),
-            "Tx merkle proof is not valid for provided header");
 
-        _d.evaluateProofDifficulty(_bitcoinHeaders);
+        _d.checkProofFromTxId(_txid, _merkleProof, _index, _bitcoinHeaders);
 
         require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, "Fee unexpectedly very high");
 
@@ -252,7 +244,7 @@ library DepositRedemption {
 
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx
+        bytes memory _bitcoinTx
     ) public view returns (bytes32, uint256) {
         bytes memory _nIns;
         bytes memory _ins;

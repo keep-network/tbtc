@@ -1,13 +1,13 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
+import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
+import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {IBurnableERC20} from "../interfaces/IBurnableERC20.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositLiquidation {
 
@@ -40,10 +40,10 @@ library DepositLiquidation {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public returns (bool _isFraud) {
         IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.submitSignatureFraud(_d.keepID, _v, _r, _s, _signedDigest, _preimage);
+        return _keep.submitSignatureFraud(_d.keepAddress, _v, _r, _s, _signedDigest, _preimage);
     }
 
     /// @notice     Determines the collateralization percentage of the signing group
@@ -141,7 +141,7 @@ library DepositLiquidation {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public {
         require(
             !_d.inFunding() && !_d.inFundingFailure(),
@@ -165,10 +165,10 @@ library DepositLiquidation {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideSPVFraudProof(
         DepositUtils.Deposit storage _d,
-        bytes _bitcoinTx,
-        bytes _merkleProof,
+        bytes memory _bitcoinTx,
+        bytes memory _merkleProof,
         uint256 _index,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public {
         bytes memory _input;
         bytes memory _output;
@@ -185,7 +185,7 @@ library DepositLiquidation {
         );
         require(!_d.inEndState(), "Contract has halted");
 
-        _d.checkProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        _d.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
         for (i = 0; i < _bitcoinTx.extractNumInputs(); i++) {
             _input = _bitcoinTx.extractInputAtIndex(i);
             if (keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint)) {
@@ -219,7 +219,7 @@ library DepositLiquidation {
         _d.logLiquidated();
 
         // Burn the outstanding TBTC
-        IBurnableERC20 _tbtc = IBurnableERC20(_d.TBTCToken);
+        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         require(_tbtc.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), "Not enough TBTC to cover outstanding debt");
         _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
 
