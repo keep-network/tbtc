@@ -32,26 +32,20 @@ contract('DepositFactory', (accounts) => {
       const keep2 = await KeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await factory.createDeposit(
+      const a = await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCStub.address,
         keep1.address,
         1,
         1)
-        .catch((err) => {
-          assert.fail(`cannot create clone: ${err}`)
-        })
 
-      await factory.createDeposit(
+      const b = await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCStub.address,
         keep2.address,
         1,
         1)
-        .catch((err) => {
-          assert.fail(`cannot create clone: ${err}`)
-        })
-
+      
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       assert.equal(eventList.length, 2)
@@ -73,9 +67,6 @@ contract('DepositFactory', (accounts) => {
         keep1.address,
         1,
         1)
-        .catch((err) => {
-          assert.fail(`cannot create clone: ${err}`)
-        })
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
@@ -83,9 +74,6 @@ contract('DepositFactory', (accounts) => {
         keep2.address,
         1,
         1)
-        .catch((err) => {
-          assert.fail(`cannot create clone: ${err}`)
-        })
 
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
@@ -125,9 +113,6 @@ contract('DepositFactory', (accounts) => {
         keep3.address,
         1,
         1)
-        .catch((err) => {
-          assert.fail(`cannot create clone: ${err}`)
-        })
 
       await depositContract.retrieveSignerPubkey()
 
@@ -143,9 +128,6 @@ contract('DepositFactory', (accounts) => {
         keepNew.address,
         1,
         1)
-        .catch((err) => {
-          assert.fail(`cannot create clone: ${err}`)
-        })
 
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
       const cloneNew = eventList[0].returnValues.depositCloneAddress
