@@ -27,12 +27,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //solhint-disable max-line-length
 //solhint-disable no-inline-assembly
 
-// Implementation of [EIP-1167] based on [clone-factory] 
+// Implementation of [EIP-1167] based on [clone-factory]
 // source code.
 //
 // EIP 1167: https://eips.ethereum.org/EIPS/eip-1167
 // clone-factory: https://github.com/optionality/clone-factory
-// Modified to use ^0.5.10; instead of ^0.4.23 solidity version 
+// Modified to use ^0.5.10; instead of ^0.4.23 solidity version
+/* solium-disable */
 
 contract CloneFactory {
 
