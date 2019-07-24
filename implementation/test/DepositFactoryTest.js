@@ -32,20 +32,20 @@ contract('DepositFactory', (accounts) => {
       const keep2 = await KeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
 
-      const a = await factory.createDeposit(
+      await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCTokenStub.address,
         keep1.address,
         1,
         1)
 
-      const b = await factory.createDeposit(
+      await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCTokenStub.address,
         keep2.address,
         1,
         1)
-      
+
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       assert.equal(eventList.length, 2)
