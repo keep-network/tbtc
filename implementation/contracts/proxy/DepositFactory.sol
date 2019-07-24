@@ -1,6 +1,6 @@
-pragma solidity ^0.4.25;
+pragma solidity ^0.5.10;
 
-import "@optionality.io/clone-factory/contracts/CloneFactory.sol";
+import "./CloneFactory.sol";
 import "../deposit/Deposit.sol";
 
 /// @title Deposit Factory
@@ -43,7 +43,7 @@ contract DepositFactory is CloneFactory{
         uint256 _keepSize
     ) public returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
-        Deposit(cloneAddress).createNewDeposit(_TBTCSystem, _TBTCToken, _KeepBridge, _keepThreshold, _keepSize);
+        Deposit(address(uint160(cloneAddress))).createNewDeposit(_TBTCSystem, _TBTCToken, _KeepBridge, _keepThreshold, _keepSize);
 
         emit DepositCloneCreated(cloneAddress);
         return cloneAddress;
