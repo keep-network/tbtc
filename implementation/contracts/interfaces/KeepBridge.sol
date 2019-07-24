@@ -40,8 +40,8 @@ contract KeepBridge is IKeep {
 
     function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
         address keepVendorAddress = KeepRegistry(keepRegistry)
-            .getKeepTypeVendor("ECDSAKeep");
-            
+            .getVendor("ECDSAKeep");
+
         _keepAddress = ECDSAKeepVendor(keepVendorAddress)
             .openKeep(_n,_m, msg.sender);
     }
@@ -77,7 +77,7 @@ interface KeepRegistry {
     /// @notice Get a keep vendor contract address for a keep type.
     /// @param _keepType Keep type.
     /// @return Keep vendor contract address.
-    function getKeepTypeVendor(string _keepType) external view returns (address);
+    function getVendor(string calldata _keepType) external view returns (address);
 }
 
 /// @notice Interface for communication with `ECDSAKeepVendor` contract
