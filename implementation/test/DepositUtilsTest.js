@@ -24,6 +24,8 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
+const ADDRESS_ZERO = '0x' + '0'.repeat(40)
+
 const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },
@@ -254,7 +256,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails to extract output from bad index', async () => {
-      const _txOutputVector= '0x024897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211'
+      const _txOutputVector = '0x024897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211'
       try {
         res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector, 2)
         assert(false, 'Test call did not error as expected')
@@ -265,7 +267,7 @@ contract('DepositUtils', (accounts) => {
 
     it('fails to extract output from a vector with too big VarInt output counter', async () => {
       // we don't need to include the number of outputs suggested by the varint
-      const _txOutputVector= '0xfe123412344897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211'
+      const _txOutputVector = '0xfe123412344897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211'
       try {
         res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector, 2)
         assert(false, 'Test call did not error as expected')
@@ -415,7 +417,7 @@ contract('DepositUtils', (accounts) => {
       const approved = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
       assert.equal(approved, false)
 
-      await deployed.KeepStub.approveDigest(7, '0x' + '00'.repeat(32))
+      await deployed.KeepStub.approveDigest('0x0000000000000000000000000000000000000007', '0x' + '00'.repeat(32))
       const newApproved = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
       assert(newApproved.eq(new BN(100)))
     })
@@ -466,12 +468,12 @@ contract('DepositUtils', (accounts) => {
       await deployed.TBTCTokenStub.mint(testUtilsInstance.address, reward)
 
       const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
-      await deployed.TBTCSystemStub.setDepositOwner(0, beneficiary)
+      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
 
       await testUtilsInstance.distributeBeneficiaryReward()
 
       const finalTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
-      const tokenCheck = new BN(initialTokenBalance).add( new BN(reward))
+      const tokenCheck = new BN(initialTokenBalance).add(new BN(reward))
       expect(finalTokenBalance, 'tokens not rewarded to beneficiary correctly').to.eq.BN(tokenCheck)
     })
   })

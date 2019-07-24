@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {IKeep} from "./IKeep.sol";
 
@@ -11,23 +11,15 @@ contract KeepBridge is IKeep {
     /// concatenation of a keepID and a digest.
     mapping (bytes => uint256) approvedDigests;
 
-    function requestKeepGroup(uint256 _m, uint256 _n) external payable returns (uint256 _keepID){
+    function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
         //TODO: Implement
-
-        address keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
-        // TODO: keepID type should be changed from uint256 to address
-        _keepID = uint256(keepAddress);
-
-        return _keepID;
+        _keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
     }
 
     // get the result of a keep formation
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
-    function getKeepPubkey(uint256 _keepID) external view returns (bytes){
-        // TODO: keepID type should be changed from uint256 to addrress
-        address _keepAddress = address(_keepID);
-
+    function getKeepPubkey(address _keepAddress) external view returns (bytes memory){
         return ECDSAKeepContract(_keepAddress).getPublicKey();
     }
 
@@ -37,10 +29,7 @@ contract KeepBridge is IKeep {
     /// @param _keepID Keep identifier
     /// @param _digest Digest to sign
     /// @return True if successful.
-    function approveDigest(uint256 _keepID, bytes32 _digest) external returns (bool _success){
-        // TODO: keepID type should be changed from uint256 to address
-        address _keepAddress = address(_keepID);
-
+    function approveDigest(address _keepAddress, bytes32 _digest) external returns (bool _success){
         ECDSAKeepContract(_keepAddress).sign(_digest);
 
         approvedDigests[abi.encodePacked(_keepID, _digest)] = block.timestamp;
@@ -59,34 +48,34 @@ contract KeepBridge is IKeep {
     }
 
     function submitSignatureFraud(
-        uint256 _keepID,
+        address _keepAddress,
         uint8 _v,
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes calldata _preimage
     ) external returns (bool _isFraud){
         //TODO: Implement
         return _isFraud;
     }
 
-    function distributeEthToKeepGroup(uint256 _keepID) external payable returns (bool){
+    function distributeEthToKeepGroup(address _keepAddress) external payable returns (bool){
         //TODO: Implement
         return false;
     }
 
-    function distributeERC20ToKeepGroup(uint256 _keepID, address _asset, uint256 _value) external returns (bool){
+    function distributeERC20ToKeepGroup(address _keepAddress, address _asset, uint256 _value) external returns (bool){
         //TODO: Implement
         return false;
     }
 
     // returns the amount of the keep's ETH bond in wei
-    function checkBondAmount(uint256 _keepID) external view returns (uint256){
+    function checkBondAmount(address _keepAddress) external view returns (uint256){
         //TODO: Implement
         return 0;
     }
 
-    function seizeSignerBonds(uint256 _keepID) external returns (bool){
+    function seizeSignerBonds(address _keepAddress) external returns (bool){
         //TODO: Implement
         return false;
     }

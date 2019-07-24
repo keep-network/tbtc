@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {TBTCToken} from '../../../contracts/system/TBTCToken.sol';
 

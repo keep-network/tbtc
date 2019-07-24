@@ -1,8 +1,8 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
-import {SafeMath} from "../bitcoin-spv/SafeMath.sol";
-import {BytesLib} from "../bitcoin-spv/BytesLib.sol";
-import {BTCUtils} from "../bitcoin-spv/BTCUtils.sol";
+import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
+import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
+import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -32,7 +32,7 @@ library DepositFunding {
     /// @notice     Deletes state after the funding ECDSA fraud process
     /// @dev        This is only called as we transition to setup failed
     function fundingFraudTeardown(DepositUtils.Deposit storage _d) public {
-        _d.keepID = 0;
+        _d.keepAddress = address(0);
         _d.signingGroupRequestedAt = 0;
         _d.fundingProofTimerStart = 0;
         _d.signingGroupPubkeyX = bytes32(0);
@@ -42,9 +42,9 @@ library DepositFunding {
     /// @notice         get the signer pubkey for our keep
     /// @dev            calls out to the keep contract, should get 64 bytes back
     /// @return         the 64 byte pubkey
-    function getKeepPubkeyResult(DepositUtils.Deposit storage _d) public view returns (bytes) {
+    function getKeepPubkeyResult(DepositUtils.Deposit storage _d) public view returns (bytes memory) {
         IKeep _keep = IKeep(_d.KeepBridge);
-        bytes memory _pubkey = _keep.getKeepPubkey(_d.keepID);
+        bytes memory _pubkey = _keep.getKeepPubkey(_d.keepAddress);
         /* solium-disable-next-line */
         require(_pubkey.length == 64, "public key not set or not 64-bytes long");
         return _pubkey;
@@ -66,11 +66,11 @@ library DepositFunding {
         IKeep _keep = IKeep(_d.KeepBridge);
 
         /* solium-disable-next-line value-in-payable */
-        _d.keepID = _keep.requestKeepGroup.value(msg.value)(_m, _n);  // kinda gross but
+        _d.keepAddress = _keep.requestNewKeep.value(msg.value)(_m, _n);  // kinda gross but
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
-        _d.logCreated(_d.keepID);
+        _d.logCreated(_d.keepAddress);
 
         return true;
     }
@@ -177,7 +177,7 @@ library DepositFunding {
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
-        bytes _preimage
+        bytes memory _preimage
     ) public {
         require(
             _d.inAwaitingBTCFundingProof(),
@@ -235,19 +235,19 @@ library DepositFunding {
     /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
         DepositUtils.Deposit storage _d,
-        bytes _txVersion,
-        bytes _txInputVector,
-        bytes _txOutputVector,
-        bytes _txLocktime,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         uint8 _fundingOutputIndex,
-        bytes _merkleProof,
+        bytes memory _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
         require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
 
         bytes8 _valueBytes;
-        bytes memory _utxoOutpoint;
+        bytes memory  _utxoOutpoint;
 
         (_valueBytes, _utxoOutpoint) = _d.validateAndParseFundingSPVProof(
             _txVersion,
@@ -285,14 +285,14 @@ library DepositFunding {
     /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
         DepositUtils.Deposit storage _d,
-        bytes _txVersion,
-        bytes _txInputVector,
-        bytes _txOutputVector,
-        bytes _txLocktime,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         uint8 _fundingOutputIndex,
-        bytes _merkleProof,
+        bytes memory _merkleProof,
         uint256 _txIndexInBlock,
-        bytes _bitcoinHeaders
+        bytes memory _bitcoinHeaders
     ) public returns (bool) {
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
@@ -305,7 +305,7 @@ library DepositFunding {
         // We let them have a freebie
 
         bytes8 _valueBytes;
-        bytes memory _utxoOutpoint;
+        bytes memory  _utxoOutpoint;
 
         (_valueBytes, _utxoOutpoint) = _d.validateAndParseFundingSPVProof(
             _txVersion,
