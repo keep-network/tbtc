@@ -6,7 +6,7 @@ pragma solidity ^0.5.10;
 
 interface IKeep {
 
-        // request a new m-of-n group
+    // request a new m-of-n group
     // should return a unique keep contract address
     function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress);
 
@@ -25,7 +25,7 @@ interface IKeep {
     // Expected behavior:
     // Error if not fraud
     // Return true if fraud
-    //     This means if the signature is valid, but was not approved via approveDigest
+    // This means if the signature is valid, but was not approved via approveDigest
     function submitSignatureFraud(
         address _keepAddress,
         uint8 _v,
