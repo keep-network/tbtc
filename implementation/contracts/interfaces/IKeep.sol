@@ -10,7 +10,7 @@ interface IKeep {
     // should return a unique keep contract address
     function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress);
 
-        // get the result of a keep formation
+    // get the result of a keep formation
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
     function getKeepPubkey(address _keepAddress) external view returns (bytes memory);
