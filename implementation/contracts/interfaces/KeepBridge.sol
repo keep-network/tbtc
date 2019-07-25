@@ -39,15 +39,18 @@ contract KeepBridge is IKeep {
     }
 
     function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
-        //TODO: Implement
-        _keepAddress = KeepRegistryContract(keepRegistry).createECDSAKeep(_n,_m);
+        address keepVendorAddress = KeepRegistry(keepRegistry)
+            .getVendor("ECDSAKeep");
+
+        _keepAddress = ECDSAKeepVendor(keepVendorAddress)
+            .openKeep(_n,_m, msg.sender);
     }
 
     // get the result of a keep formation
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
     function getKeepPubkey(address _keepAddress) external view returns (bytes memory){
-        return ECDSAKeepContract(_keepAddress).getPublicKey();
+        return ECDSAKeep(_keepAddress).getPublicKey();
     }
 
 
@@ -70,22 +73,31 @@ contract KeepBridge is IKeep {
 
 /// @notice Interface for communication with `KeepRegistry` contract
 /// @dev It allows to call a function without the need of low-level call
-interface KeepRegistryContract {
+interface KeepRegistry {
+    /// @notice Get a keep vendor contract address for a keep type.
+    /// @param _keepType Keep type.
+    /// @return Keep vendor contract address.
+    function getVendor(string calldata _keepType) external view returns (address);
+}
 
-    /// @notice Create a new ECDSA keep
-    /// @param _groupSize Number of members in the keep
-    /// @param _honestThreshold Minimum number of honest keep members
-    /// @return Created keep address
-    function createECDSAKeep(
+/// @notice Interface for communication with `ECDSAKeepVendor` contract
+/// @dev It allows to call a function without the need of low-level call
+interface ECDSAKeepVendor {
+    /// @notice Open a new ECDSA keep.
+    /// @param _groupSize Number of members in the keep.
+    /// @param _honestThreshold Minimum number of honest keep members.
+    /// @param _owner Address of the keep owner.
+    /// @return Opened keep address.
+    function openKeep(
         uint256 _groupSize,
-        uint256 _honestThreshold
-    ) external payable returns (address keep);
+        uint256 _honestThreshold,
+        address _owner
+    ) external payable returns (address keepAddress);
 }
 
 /// @notice Interface for communication with `ECDSAKeep` contract
 /// @dev It allows to call a function without the need of low-level call
-interface ECDSAKeepContract {
-
+interface ECDSAKeep {
     /// @notice Returns the keep signer's public key.
     /// @return Signer's public key.
     function getPublicKey() external view returns (bytes memory);
