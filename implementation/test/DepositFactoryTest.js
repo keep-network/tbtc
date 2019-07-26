@@ -111,12 +111,12 @@ contract('DepositFactory', (accounts) => {
     })
 
     it('is not affected by state changes to master', async () => {
-      const keep3 = await KeepStub.new()
+      const keep1 = await KeepStub.new()
 
       await depositContract.createNewDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCTokenStub.address,
-        keep3.address,
+        keep1.address,
         1,
         1)
 
