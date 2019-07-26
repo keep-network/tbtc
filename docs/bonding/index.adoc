@@ -67,7 +67,7 @@ rebalancing without the fallback of signer bond forfeiture.
 
 // TODO insert a little historical analysis for a decent starting number
 
-== A resilient price feed
+== A resilient price oracle
 
 Unlike popular synthetic stablecoin schemes, the tBTC system design makes no
 effort to stabilize the value of TBTC relative to BTC-- TBTC will be priced by
@@ -75,11 +75,11 @@ the market. Instead, the goal is to ensure that the TBTC supply is strictly
 less than its backing BTC reserves.
 
 For this reason, the only price relationship the system needs to understand is
-between the signing bond collateral and BTC.
+between the signing bond collateral and BTC. 
 
 In concrete terms, that means the price of ETH to BTC. Due to only needing
-prices for a single pair of assets, tBTC will initially use a simple price feed
-based on MakerDAO's https://developer.makerdao.com/feeds/[Medianizer].
+prices for a single pair of assets, tBTC will initially use a simple 
+<<price-oracle/index.adoc#price-oracle,price oracle>>.
 
 == Undercollateralization
 

@@ -245,6 +245,8 @@ include::deposits/index.adoc[leveloffset=+2]
 
 include::bonding/index.adoc[leveloffset=+2]
 
+include::price-oracle/index.adoc[leveloffset=+2]
+
 include::custodial-fees/index.adoc[leveloffset=+2]
 
 include::signing/index.adoc[leveloffset=+2]

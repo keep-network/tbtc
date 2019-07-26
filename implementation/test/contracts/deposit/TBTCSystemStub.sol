@@ -1,4 +1,4 @@
-pragma solidity 0.4.25;
+pragma solidity ^0.5.10;
 
 import {ITBTCSystem} from '../../../contracts/interfaces/ITBTCSystem.sol';
 import {IERC721} from '../../../contracts/interfaces/IERC721.sol';
@@ -15,7 +15,7 @@ contract TBTCSystemStub is ITBTCSystem, IERC721, DepositLog {
     function setCurrentDiff(uint256 _current) external {current = _current;}
     function setPreviousDiff(uint256 _past) external {past = _past;}
     function setOwner(address owner) external {_owner = owner;}
-    function setDepositOwner(uint256 _keepId, address _newOwner) external {_keepId; _owner = _newOwner;}
+    function setDepositOwner(address _keepAddress, address _newOwner) external {_keepAddress; _owner = _newOwner;}
 
     // override parent
     function approvedToLog(address _caller) public view returns (bool) {_caller; return true;}
