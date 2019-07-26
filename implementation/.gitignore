@@ -4,5 +4,6 @@ __pycache__/
 node_modules/
 .mypy_cache
 coverage/
+coverageEnv/
 coverage.json
 yarn.lock
