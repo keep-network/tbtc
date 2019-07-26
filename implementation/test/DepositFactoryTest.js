@@ -3,6 +3,7 @@ const KeepStub = artifacts.require('KeepStub')
 const TBTCTokenStub = artifacts.require('TBTCTokenStub')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const Deposit = artifacts.require('Deposit')
+const TestCloneFactory = artifacts.require('TestCloneFactory')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -13,6 +14,7 @@ chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCTokenStub', contract: TBTCTokenStub },
+  { name: 'TestCloneFactory', contract: TestCloneFactory },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 contract('DepositFactory', (accounts) => {
@@ -24,6 +26,35 @@ contract('DepositFactory', (accounts) => {
     depositContract = await Deposit.deployed()
     factory = await DepositFactory.new(depositContract.address)
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+  })
+
+  describe('CloneFactory', async () => {
+    it('createClone()', async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
+
+      await deployed.TestCloneFactory.getCloneAddress(depositContract.address)
+
+      const eventList = await deployed.TestCloneFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1, 'eventList length should be 1')
+
+      const cloneAddress = eventList[0].returnValues.depositCloneAddress
+      assert(web3.utils.isAddress(cloneAddress), 'cloneAddress should be an address')
+
+      const depositInstance = await Deposit.at(cloneAddress)
+      const depositInstanceState = await depositInstance.getCurrentState()
+      expect(depositInstanceState, 'Deposit instance should be in START').to.eq.BN(utils.states.START)
+    })
+
+    it('isClone()', async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
+
+      await deployed.TestCloneFactory.getCloneAddress(depositContract.address)
+      const eventList = await deployed.TestCloneFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const cloneAddress = eventList[0].returnValues.depositCloneAddress
+
+      const checkClone = await deployed.TestCloneFactory.checkClone.call(depositContract.address, cloneAddress)
+      assert(checkClone, 'isClone() should return true')
+    })
   })
 
   describe('createDeposit()', async () => {
