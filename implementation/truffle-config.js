@@ -52,12 +52,15 @@ module.exports = {
      gasPrice: 1
     },
 
+    // Environment for generating test coverage reports over the smart contracts.
     coverage: {
       host: "localhost",
       network_id: "*",
-      port: 8555,         // <-- If you change this, also set the port option in .solcover.js.
-      gas: 0xfffffffffff, // <-- Use this high gas value
-      gasPrice: 0x01      // <-- Use this low gas price
+      port: 8555,
+      // solidity-coverage requires that the gas parameters are set like this
+      // so keep in mind that coverage doesn't 'cover' transaction cost
+      gas: 0xfffffffffff,
+      gasPrice: 0x01
     },
 
     // Another network with more advanced options...
