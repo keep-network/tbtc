@@ -4,14 +4,14 @@ import {CloneFactory} from '../../../contracts/proxy/CloneFactory.sol';
 
 contract TestCloneFactory is CloneFactory {
 
-    event DepositCloneCreated(address depositCloneAddress);
+    event ContractCloneCreated(address contractCloneAddress);
 
-    function getCloneAddress(address _target) external returns (address){
+    function createClone_exposed(address _target) external returns (address){
         address cloneAddress = createClone(_target);
-        emit DepositCloneCreated(cloneAddress);
+        emit ContractCloneCreated(cloneAddress);
     }
 
-    function checkClone(address _target, address _query)external view returns (bool result){
+    function isClone_exposed(address _target, address _query)external view returns (bool result){
         return isClone(_target, _query);
     }
 }
