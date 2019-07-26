@@ -43,6 +43,15 @@ jobs:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
             command: npm install && npm run setup && npm run test
+  coverage_solidity:
+    executor: docker-node
+    steps:
+        - checkout
+        - run: sudo npm install -g ganache-cli@6.4.2
+        - run:
+            name: Running testrpc
+            command: ganache-cli
+            background: true
         - run:
             name: Generate Sol coverage report
             working_directory: ~/project/implementation/contracts
@@ -130,6 +139,7 @@ workflows:
   solidity:
     jobs:
       - test_solidity
+      - coverage_solidity
   docs:
     jobs:
       - generate_pngs
