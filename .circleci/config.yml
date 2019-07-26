@@ -52,12 +52,13 @@ jobs:
             name: Running testrpc
             command: ganache-cli
             background: true
-        - run: npm install
-          working_directory: ~/project/implementation
         - run:
             name: Generate Sol coverage report
             working_directory: ~/project/implementation
-            command: npm run coverage
+            command: |
+              set -ex
+              npm install
+              npm run coverage
         - store_artifacts:
             path: ~/project/implementation/coverage
   generate_pngs:
