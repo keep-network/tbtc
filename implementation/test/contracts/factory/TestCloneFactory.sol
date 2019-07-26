@@ -1,7 +1,6 @@
 pragma solidity ^0.5.10;
 
 import {CloneFactory} from '../../../contracts/proxy/CloneFactory.sol';
-import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
 contract TestCloneFactory is CloneFactory {
 
