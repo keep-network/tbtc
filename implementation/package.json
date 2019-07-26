@@ -10,7 +10,6 @@
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
     "sol:lint": "solium -d contracts/",
     "sol:lint:fix": "solium -d contracts/ --fix",
-    "remix": "remixd -s . --remix-ide https://remix.ethereum.org",
     "coverage": "solidity-coverage"
   },
   "config": {
