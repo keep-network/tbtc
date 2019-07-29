@@ -28,6 +28,9 @@ const KeepBridge = artifacts.require('KeepBridge')
 const TBTCToken = artifacts.require('TBTCToken')
 const KeepRegistryAddress = '0xd04ed7D5C75cCC22DEafFD90A70c5BF932eC235e' // KeepRegistry contract address
 
+// deposit factory
+const DepositFactory = artifacts.require('DepositFactory')
+
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
   DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystem,
@@ -89,5 +92,8 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(KeepBridge).then((instance) => {
       instance.initialize(KeepRegistryAddress)
     })
+
+    // deposit factory
+    await deployer.deploy(DepositFactory, Deposit.address)
   })
 }
