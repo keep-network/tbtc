@@ -2,7 +2,7 @@ const KeepStub = artifacts.require('KeepStub')
 const TBTCTokenStub = artifacts.require('TBTCTokenStub')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const Deposit = artifacts.require('Deposit')
-const TestCloneFactory = artifacts.require('TestCloneFactory')
+const CloneFactoryStub = artifacts.require('CloneFactoryStub')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -13,7 +13,7 @@ chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCTokenStub', contract: TBTCTokenStub },
-  { name: 'TestCloneFactory', contract: TestCloneFactory },
+  { name: 'CloneFactoryStub', contract: CloneFactoryStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 contract('CloneFactory', (accounts) => {
@@ -28,9 +28,9 @@ contract('CloneFactory', (accounts) => {
   describe('createClone()', async () => {
     it('creates new clone', async () => {
       const blockNumber = await web3.eth.getBlockNumber()
-      await deployed.TestCloneFactory.createClone_exposed(depositContract.address)
+      await deployed.CloneFactoryStub.createClone_exposed(depositContract.address)
 
-      const eventList = await deployed.TestCloneFactory.getPastEvents('ContractCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.CloneFactoryStub.getPastEvents('ContractCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1, 'eventList length should be 1')
 
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
@@ -41,19 +41,19 @@ contract('CloneFactory', (accounts) => {
       expect(depositInstanceState, 'Deposit instance should be in START').to.eq.BN(utils.states.START)
     })
     it('does not impact master contract state', async () => {
-      const keep1 = await KeepStub.new()
+      const keep = await KeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await deployed.TestCloneFactory.createClone_exposed(depositContract.address)
+      await deployed.CloneFactoryStub.createClone_exposed(depositContract.address)
 
-      const eventList = await deployed.TestCloneFactory.getPastEvents('ContractCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.CloneFactoryStub.getPastEvents('ContractCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
       const depositInstance = await Deposit.at(cloneAddress)
 
       await depositInstance.createNewDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCTokenStub.address,
-        keep1.address,
+        keep.address,
         1,
         1)
 
@@ -68,16 +68,40 @@ contract('CloneFactory', (accounts) => {
       expect(masterDepositState, 'Deposit instance should be in START').to.eq.BN(utils.states.START)
     })
   })
+
   describe('isClone()', async () => {
     it('correctly checks if address is a clone', async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await deployed.TestCloneFactory.createClone_exposed(depositContract.address)
-      const eventList = await deployed.TestCloneFactory.getPastEvents('ContractCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      await deployed.CloneFactoryStub.createClone_exposed(depositContract.address)
+      const eventList = await deployed.CloneFactoryStub.getPastEvents(
+        'ContractCloneCreated',
+        { fromBlock: blockNumber, toBlock: 'latest' }
+      )
+      
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
 
-      const checkClone = await deployed.TestCloneFactory.isClone_exposed.call(depositContract.address, cloneAddress)
+      const checkClone = await deployed.CloneFactoryStub.isClone_exposed.call(depositContract.address, cloneAddress)
       assert(checkClone, 'isClone() should return true')
+    })
+    it('correctly checks if address is not a clone', async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
+      const depositContract2 = await Deposit.new()
+
+      await deployed.CloneFactoryStub.createClone_exposed(depositContract.address)
+
+      const eventList = await deployed.CloneFactoryStub.getPastEvents(
+        'ContractCloneCreated',
+        { fromBlock: blockNumber, toBlock: 'latest' }
+      )
+
+      const cloneAddress = eventList[0].returnValues.contractCloneAddress
+
+      const checkClone = await deployed.CloneFactoryStub.isClone_exposed.call(
+        depositContract2.address,
+        cloneAddress
+      )
+      assert(!checkClone, 'isClone() should return false')
     })
   })
 })
