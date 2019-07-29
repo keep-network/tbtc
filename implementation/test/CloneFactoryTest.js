@@ -1,4 +1,4 @@
-const CloneFactoryTestDummy = artifacts.require('CloneFactoryTestDummy')
+const Dummy = artifacts.require('Dummy')
 const CloneFactoryStub = artifacts.require('CloneFactoryStub')
 
 const BN = require('bn.js')
@@ -10,20 +10,20 @@ chai.use(bnChai(BN))
 
 const DEPLOY = [
   { name: 'CloneFactoryStub', contract: CloneFactoryStub },
-  { name: 'CloneFactoryTestDummy', contract: CloneFactoryTestDummy }]
+  { name: 'Dummy', contract: Dummy }]
 
 contract('CloneFactory', (accounts) => {
   let deployed
-  let dummyContract
+  let masterContract
 
   before(async () => {
     deployed = await utils.deploySystem(DEPLOY)
-    dummyContract = deployed.CloneFactoryTestDummy
+    masterContract = deployed.Dummy
   })
 
   describe('createClone()', async () => {
     it('creates new clone', async () => {
-      await deployed.CloneFactoryStub.createClone_exposed(dummyContract.address)
+      await deployed.CloneFactoryStub.createClone_exposed(masterContract.address)
 
       const blockNumber = await web3.eth.getBlockNumber()
       const eventList = await deployed.CloneFactoryStub.getPastEvents('ContractCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
@@ -32,33 +32,33 @@ contract('CloneFactory', (accounts) => {
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
       assert(web3.utils.isAddress(cloneAddress), 'cloneAddress should be an address')
 
-      const dummyContractInstance = await CloneFactoryTestDummy.at(cloneAddress)
-      const dummyContractInstanceState = await dummyContractInstance.getState()
-      expect(dummyContractInstanceState, 'State should be unset').to.eq.BN(0)
+      const cloneInstance = await Dummy.at(cloneAddress)
+      const cloneInstanceState = await cloneInstance.getState()
+      expect(cloneInstanceState, 'State should be unset').to.eq.BN(0)
     })
 
     it('does not impact master contract state', async () => {
-      await deployed.CloneFactoryStub.createClone_exposed(dummyContract.address)
+      await deployed.CloneFactoryStub.createClone_exposed(masterContract.address)
 
       const blockNumber = await web3.eth.getBlockNumber()
       const eventList = await deployed.CloneFactoryStub.getPastEvents('ContractCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
-      const dummyContractInstance = await CloneFactoryTestDummy.at(cloneAddress)
+      const cloneInstance = await Dummy.at(cloneAddress)
 
-      await dummyContractInstance.setState(1)
+      await cloneInstance.setState(1)
 
-      const dummyContractInstanceState = await dummyContractInstance.getState()
+      const cloneInstanceState = await cloneInstance.getState()
 
       // master should still be in START
-      const masterDummyState = await dummyContract.getState()
-      expect(dummyContractInstanceState, 'state should be 1').to.eq.BN(1)
-      expect(masterDummyState, 'State should be unset').to.eq.BN(0)
+      const masterContractState = await masterContract.getState()
+      expect(cloneInstanceState, 'state should be 1').to.eq.BN(1)
+      expect(masterContractState, 'State should be unset').to.eq.BN(0)
     })
   })
 
   describe('isClone()', async () => {
     it('correctly checks if address is a clone', async () => {
-      await deployed.CloneFactoryStub.createClone_exposed(dummyContract.address)
+      await deployed.CloneFactoryStub.createClone_exposed(masterContract.address)
 
       const blockNumber = await web3.eth.getBlockNumber()
       const eventList = await deployed.CloneFactoryStub.getPastEvents(
@@ -68,14 +68,14 @@ contract('CloneFactory', (accounts) => {
 
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
 
-      const checkClone = await deployed.CloneFactoryStub.isClone_exposed.call(dummyContract.address, cloneAddress)
+      const checkClone = await deployed.CloneFactoryStub.isClone_exposed.call(masterContract.address, cloneAddress)
       expect(checkClone, 'isClone() should return true').to.be.true
     })
 
     it('correctly checks if address is not a clone', async () => {
-      const dummyContract2 = await CloneFactoryTestDummy.new()
+      const masterContract2 = await Dummy.new()
 
-      await deployed.CloneFactoryStub.createClone_exposed(dummyContract.address)
+      await deployed.CloneFactoryStub.createClone_exposed(masterContract.address)
 
       const blockNumber = await web3.eth.getBlockNumber()
       const eventList = await deployed.CloneFactoryStub.getPastEvents(
@@ -86,7 +86,7 @@ contract('CloneFactory', (accounts) => {
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
 
       const checkClone = await deployed.CloneFactoryStub.isClone_exposed.call(
-        dummyContract2.address,
+        masterContract2.address,
         cloneAddress
       )
       expect(checkClone, 'isClone() should return false').not.to.be.true
