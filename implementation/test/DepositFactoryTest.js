@@ -3,7 +3,6 @@ const KeepStub = artifacts.require('KeepStub')
 const TBTCTokenStub = artifacts.require('TBTCTokenStub')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const Deposit = artifacts.require('Deposit')
-const TestCloneFactory = artifacts.require('TestCloneFactory')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -14,7 +13,6 @@ chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCTokenStub', contract: TBTCTokenStub },
-  { name: 'TestCloneFactory', contract: TestCloneFactory },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 contract('DepositFactory', (accounts) => {
@@ -113,12 +111,12 @@ contract('DepositFactory', (accounts) => {
     })
 
     it('is not affected by state changes to master', async () => {
-      const keep1 = await KeepStub.new()
+      const keep = await KeepStub.new()
 
       await depositContract.createNewDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCTokenStub.address,
-        keep1.address,
+        keep.address,
         1,
         1)
 
