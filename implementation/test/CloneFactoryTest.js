@@ -78,7 +78,7 @@ contract('CloneFactory', (accounts) => {
         'ContractCloneCreated',
         { fromBlock: blockNumber, toBlock: 'latest' }
       )
-      
+
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
 
       const checkClone = await deployed.CloneFactoryStub.isClone_exposed.call(depositContract.address, cloneAddress)
