@@ -52,7 +52,7 @@ contract('CloneFactory', (accounts) => {
       // master should still be in START
       const masterDummyState = await dummyContract.getState()
       expect(dummyContractInstanceState, 'state should be 1').to.eq.BN(1)
-      expect(masterDummyState, 'State should be unset').to.eq.BN(utils.states.START)
+      expect(masterDummyState, 'State should be unset').to.eq.BN(0)
     })
   })
 
@@ -69,7 +69,7 @@ contract('CloneFactory', (accounts) => {
       const cloneAddress = eventList[0].returnValues.contractCloneAddress
 
       const checkClone = await deployed.CloneFactoryStub.isClone_exposed.call(dummyContract.address, cloneAddress)
-      assert(checkClone, 'isClone() should return true')
+      expect(checkClone, 'isClone() should return true').to.be.true
     })
 
     it('correctly checks if address is not a clone', async () => {
@@ -89,7 +89,7 @@ contract('CloneFactory', (accounts) => {
         dummyContract2.address,
         cloneAddress
       )
-      assert(!checkClone, 'isClone() should return false')
+      expect(checkClone, 'isClone() should return false').not.to.be.true
     })
   })
 })
