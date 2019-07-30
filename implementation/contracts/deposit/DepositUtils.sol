@@ -91,7 +91,7 @@ library DepositUtils {
         require(_observedDiff > 3, "ValidateSPV returned an error code");
         /* TODO: make this better than 6 */
         require(
-            _observedDiff >= _reqDiff.mul(6),
+            _observedDiff >= _reqDiff.mul(TBTCConstants.getRequiredDifficultyFactor()),
             "Insufficient accumulated difficulty in header chain"
         );
     }
