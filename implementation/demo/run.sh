@@ -15,4 +15,4 @@ echo '--- SUBMIT FUNDING PROOF'
 echo "Enter funding transaction ID and press [ENTER]: "
 read txID
 
-truffle exec 3_provide_funding_proof.js $depositAddress $txID 6
+truffle exec 3_provide_funding_proof.js $depositAddress $txID 1
