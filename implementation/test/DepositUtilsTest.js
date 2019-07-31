@@ -67,9 +67,13 @@ const _outValueBytes = '0x2040351d00000000'
 contract('DepositUtils', (accounts) => {
   let deployed
   let testUtilsInstance
+  let beneficiary
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
     testUtilsInstance = deployed.TestDepositUtils
+    beneficiary = accounts[2]
+    deployed.TBTCSystemStub.mint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
+
 
     await testUtilsInstance.createNewDeposit(
       deployed.TBTCSystemStub.address,
@@ -426,7 +430,7 @@ contract('DepositUtils', (accounts) => {
   describe('depositBeneficiary()', async () => {
     it('calls out to the system', async () => {
       const res = await testUtilsInstance.depositBeneficiary.call()
-      assert.equal(res, '0x' + '00'.repeat(19) + '00')
+      assert.equal(res, accounts[2])
     })
   })
 
@@ -462,13 +466,11 @@ contract('DepositUtils', (accounts) => {
 
   describe('distributeBeneficiaryReward()', async () => {
     it('checks that beneficiary is rewarded', async () => {
-      const beneficiary = accounts[2]
       // min an arbitrary reward value to the funding contract
       const reward = 100000000
       await deployed.TBTCTokenStub.mint(testUtilsInstance.address, reward)
 
       const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
-      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
 
       await testUtilsInstance.distributeBeneficiaryReward()
 
