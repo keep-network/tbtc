@@ -42,7 +42,7 @@ ssh utilitybox << EOF
   echo "<<<<<<START Port Forward eth-tx-node START<<<<<<"
   echo "nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
   echo "sleep 10s"
-  nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
+  nohup timeout 900 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
   sleep 10s
   echo ">>>>>>FINISH Port Forward eth-tx-node FINISH>>>>>>"
 
@@ -54,7 +54,22 @@ ssh utilitybox << EOF
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/implementation
 
-  npm install
+  
+npm install git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0
+npm install bn-chai@1.0.1
+npm install bn.js@4.11.8
+npm install chai@4.2.0
+npm install create-hash@1.2.0
+npm install openzeppelin-solidity@2.3.0
+npm install solc@0.5.10
+npm install babel-polyfill@6.26.0
+npm install babel-preset-es2015@6.18.0
+npm install babel-preset-stage-2@6.18.0
+npm install babel-preset-stage-3@6.17.0
+npm install babel-register@6.26.0
+npm install eth-gas-reporter@0.1.12
+npm install ganache-cli@6.4.3
+npm install truffle@5.0.7
 
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
