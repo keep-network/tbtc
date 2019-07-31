@@ -24,8 +24,6 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-const ADDRESS_ZERO = '0x' + '0'.repeat(40)
-
 const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },

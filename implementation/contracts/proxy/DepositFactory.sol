@@ -2,7 +2,7 @@ pragma solidity ^0.5.10;
 
 import "./CloneFactory.sol";
 import "../deposit/Deposit.sol";
-import {TBTCSystem} from '../system/TBTCSystem.sol';
+import "../system/TBTCSystem.sol";
 
 /// @title Deposit Factory
 /// @notice Factory for the creation of new deposit clones.
