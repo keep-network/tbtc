@@ -1,15 +1,16 @@
 pragma solidity ^0.5.10;
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
-import {IERC721} from "../interfaces/IERC721.sol";
 import {DepositLog} from "../DepositLog.sol";
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 
-contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
+
+contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
-    address depositOwner = address(1);
+    //address depositOwner = address(1);
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
@@ -32,13 +33,7 @@ contract TBTCSystem is ITBTCSystem, IERC721, DepositLog {
     }
 
     // ERC721
-    function balanceOf(address _owner) public view returns (uint256 balance) {_owner; balance = 0;}
-    function ownerOf(uint256 _tokenId) public view returns (address owner) {_tokenId; owner = depositOwner;}
-    function approve(address _to, uint256 _tokenId) public {_to; _tokenId;}
-    function getApproved(uint256 _tokenId) public view returns (address operator) {_tokenId; operator = address(8);}
-    function setApprovalForAll(address _operator, bool _approved) public {_operator; _approved;}
-    function isApprovedForAll(address _owner, address _operator) public view returns (bool) {_owner; _operator;}
-    function transferFrom(address _from, address _to, uint256 _tokenId) public {_from; _to; _tokenId;}
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId) public {_from; _to; _tokenId;}
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory _data) public {_from; _to; _tokenId; _data;}
+    function mint(address _to, uint256 keepId) public {
+        _mint(_to, keepId);
+    }
 }
