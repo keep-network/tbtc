@@ -133,14 +133,44 @@ contract('DepositUtils', (accounts) => {
       }
     })
 
-    it('reverts on a ValidateSPV error code (3 or lower)', async () => {
-      try {
-        await deployed.TBTCSystemStub.setPreviousDiff(1)
-        await testUtilsInstance.evaluateProofDifficulty(utils.LOW_DIFF_HEADER)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'ValidateSPV returned an error code')
-      }
+    describe('reverts on a ValidateSPV errors', async () => {
+      before(async () => {
+        await deployed.TBTCSystemStub.setCurrentDiff(5646403851534)
+      })
+
+      it('bad headers chain length work', async () => {
+        // Cut one byte from a last header
+        const badLengthChain = utils.HEADER_PROOFS[0].slice(0, (160 * 4 + 2) - 2)
+
+        try {
+          await testUtilsInstance.evaluateProofDifficulty(badLengthChain)
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'Invalid length of the headers chain')
+        }
+      })
+
+      it('invalid headers chain', async () => {
+        // Cut out one header from the headers chain
+        const invalidChain = utils.HEADER_PROOFS[0].slice(0, (2 + 160))
+          + utils.HEADER_PROOFS[0].slice((2 + (160 * 2)), (2 + (160 * 4)))
+
+        try {
+          await testUtilsInstance.evaluateProofDifficulty(invalidChain)
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'Invalid headers chain')
+        }
+      })
+
+      it('insufficient work in a header', async () => {
+        try {
+          await testUtilsInstance.evaluateProofDifficulty(utils.LOW_WORK_HEADER)
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'Insufficient work in a header')
+        }
+      })
     })
   })
 
