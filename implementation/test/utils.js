@@ -3,7 +3,9 @@ const tx = require('./tx.json')
 const createHash = require('create-hash')
 const BN = require('bn.js')
 
-// Header with low work.
+// Header with insufficient work. It's used for negative scenario tests when we
+// want to validate invalid header which hash (work) doesn't meet requirement of
+// the target.
 const lowWorkHeader = '0xbbbbbbbb7777777777777777777777777777777777777777777777777777777777777777e0e333d0fd648162d344c1a760a319f2184ab2dce1335353f36da2eea155f97fcccccccc7cd93117e85f0000bbbbbbbbcbee0f1f713bdfca4aa550474f7f252581268935ef8948f18d48ec0a2b4800008888888888888888888888888888888888888888888888888888888888888888cccccccc7cd9311701440000bbbbbbbbfe6c72f9b42e11c339a9cbe1185b2e16b74acce90c8316f4a5c8a6c0a10f00008888888888888888888888888888888888888888888888888888888888888888dccccccc7cd9311730340000'
 
 const states = {
