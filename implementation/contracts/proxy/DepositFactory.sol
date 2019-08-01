@@ -50,7 +50,7 @@ contract DepositFactory is CloneFactory{
         _system.mint(msg.sender, uint256(cloneAddress));
 
         emit DepositCloneCreated(cloneAddress);
-        
+
         return cloneAddress;
     }
 }
