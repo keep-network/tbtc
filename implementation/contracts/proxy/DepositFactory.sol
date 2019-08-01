@@ -48,7 +48,9 @@ contract DepositFactory is CloneFactory{
 
         TBTCSystem _system = TBTCSystem(_TBTCSystem);
         _system.mint(msg.sender, uint256(cloneAddress));
+
         emit DepositCloneCreated(cloneAddress);
+        
         return cloneAddress;
     }
 }
