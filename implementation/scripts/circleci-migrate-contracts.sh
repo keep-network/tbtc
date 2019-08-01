@@ -40,7 +40,7 @@ ssh utilitybox << EOF
   echo ">>>>>>FINISH Download Kube Creds FINISH>>>>>>"
 
   echo "<<<<<<START Port Forward eth-tx-node START<<<<<<"
-  echo "nohup timeout 600 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
+  echo "nohup timeout 900 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
   echo "sleep 10s"
   nohup timeout 900 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
   sleep 10s
