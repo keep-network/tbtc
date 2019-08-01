@@ -4,13 +4,11 @@ import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {DepositLog} from "../DepositLog.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 
-
 contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
-    //address depositOwner = address(1);
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
@@ -33,7 +31,14 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
     }
 
     // ERC721
-    function mint(address _to, uint256 keepId) public {
-        _mint(_to, keepId);
+
+     /**
+     * @dev             Function to mint a new token.
+     *                  Reverts if the given token ID already exists.
+     * @param _to       The address that will own the minted token
+     * @param _tokenId  uint256 ID of the token to be minted
+     */
+    function mint(address _to, uint256 _tokenId) public {
+        _mint(_to, _tokenId);
     }
 }
