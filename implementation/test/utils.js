@@ -3,8 +3,10 @@ const tx = require('./tx.json')
 const createHash = require('create-hash')
 const BN = require('bn.js')
 
-// genesis header -- diff 1
-const lowDiffHeader = '0x0100000000000000000000000000000000000000000000000000000000000000000000003BA3EDFD7A7B12B27AC72C3E67768F617FC81BC3888A51323A9FB8AA4B1E5E4A29AB5F49FFFF001D1DAC2B7C'
+// Header with insufficient work. It's used for negative scenario tests when we
+// want to validate invalid header which hash (work) doesn't meet requirement of
+// the target.
+const lowWorkHeader = '0xbbbbbbbb7777777777777777777777777777777777777777777777777777777777777777e0e333d0fd648162d344c1a760a319f2184ab2dce1335353f36da2eea155f97fcccccccc7cd93117e85f0000bbbbbbbbcbee0f1f713bdfca4aa550474f7f252581268935ef8948f18d48ec0a2b4800008888888888888888888888888888888888888888888888888888888888888888cccccccc7cd9311701440000bbbbbbbbfe6c72f9b42e11c339a9cbe1185b2e16b74acce90c8316f4a5c8a6c0a10f00008888888888888888888888888888888888888888888888888888888888888888dccccccc7cd9311730340000'
 
 const states = {
   START: new BN(0),
@@ -67,7 +69,7 @@ function increaseTime(duration) {
       web3.currentProvider.send({
         jsonrpc: '2.0',
         method: 'evm_mine',
-        id: id+1,
+        id: id + 1,
       }, (err2, res) => {
         return err2 ? reject(err2) : resolve(res)
       })
@@ -80,7 +82,7 @@ module.exports = {
   bytes32zero: '0x' + '00'.repeat(32),
   hash160: hash160,
   states: states,
-  LOW_DIFF_HEADER: lowDiffHeader,
+  LOW_WORK_HEADER: lowWorkHeader,
   deploySystem: deploySystem,
   HEADER_CHAINS: headerChains,
   increaseTime: increaseTime,

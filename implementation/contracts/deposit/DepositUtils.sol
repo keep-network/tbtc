@@ -88,10 +88,14 @@ library DepositUtils {
         }
 
         uint256 _observedDiff = _bitcoinHeaders.validateHeaderChain();
-        require(_observedDiff > 3, "ValidateSPV returned an error code");
+
+        require(_observedDiff != ValidateSPV.getErrBadLength(), "Invalid length of the headers chain");
+        require(_observedDiff != ValidateSPV.getErrInvalidChain(), "Invalid headers chain");
+        require(_observedDiff != ValidateSPV.getErrLowWork(), "Insufficient work in a header");
+        
         /* TODO: make this better than 6 */
         require(
-            _observedDiff >= _reqDiff.mul(6),
+            _observedDiff >= _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),
             "Insufficient accumulated difficulty in header chain"
         );
     }
