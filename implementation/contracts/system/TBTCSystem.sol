@@ -32,12 +32,10 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
 
     // ERC721
 
-     /**
-     * @dev             Function to mint a new token.
-     *                  Reverts if the given token ID already exists.
-     * @param _to       The address that will own the minted token
-     * @param _tokenId  uint256 ID of the token to be minted
-     */
+    /// @dev             Function to mint a new token.
+    ///                  Reverts if the given token ID already exists.
+    /// @param _to       The address that will own the minted token
+    /// @param _tokenId  uint256 ID of the token to be minted
     function mint(address _to, uint256 _tokenId) public {
         _mint(_to, _tokenId);
     }
