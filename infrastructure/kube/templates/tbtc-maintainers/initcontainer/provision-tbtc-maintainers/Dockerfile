@@ -22,7 +22,7 @@ ENV ETH_WS_PORT=$ETH_WS_PORT
 ARG ETH_NETWORK_ID
 ENV ETH_NETWORK_ID=$ETH_NETWORK_ID
 
-COPY ./ECDSAKeepFactory.json /tmp/ECDSAKeepFactory.json
+COPY ./TBTCSystem.json /tmp/TBTCSystem.json
 
 COPY ./tbtc-maintainers-template.toml /tmp/tbtc-maintainers-template.toml
 

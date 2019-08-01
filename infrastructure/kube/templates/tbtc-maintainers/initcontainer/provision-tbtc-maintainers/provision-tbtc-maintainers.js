@@ -62,7 +62,7 @@ async function provisionTbtcMaintainers() {
     await fundOperatorAccount(operator, purse, '1');
 
     console.log('\n<<<<<<<<<<<< Creating tbtc-maintainers Config File >>>>>>>>>>>>');
-    await createTbtcMaintainersConfig(operatorAccount('privateKey'));
+    await createTbtcMaintainersConfig(operatorAccount['privateKey']);
 
     console.log("\n########### tbtc-maintainers Provisioning Complete! ###########");
   }
