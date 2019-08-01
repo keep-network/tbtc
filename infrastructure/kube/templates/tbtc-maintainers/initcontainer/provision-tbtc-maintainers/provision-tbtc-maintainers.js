@@ -118,7 +118,7 @@ async function createTbtcMaintainersConfig(operatorPrivateKey) {
     let parsedConfigFile = toml.parse(data);
 
     parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
-    parsedConfigFile.ethereum.PrivateKey = operatorPrivateKey
+    parsedConfigFile.ethereum.PrivateKey = operatorPrivateKey.replace('0x', '')
     parsedConfigFile.ethereum.ContractAddresses.TBTCSystem = tbtcSystemContractAddress;
 
     fs.writeFile('/mnt/tbtc-maintainers/config/tbtc-maintainers-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
