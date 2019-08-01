@@ -139,8 +139,12 @@ contract('DepositUtils', (accounts) => {
       })
 
       it('bad headers chain length work', async () => {
-        // Cut one byte from a last header
-        const badLengthChain = utils.HEADER_PROOFS[0].slice(0, (160 * 4 + 2) - 2)
+        // Cut one byte from a last header. We slice a hexadecimal representation
+        // of concatenated chain headers bytes, followed by the `0x` prefix (add
+        // `2`). Each header is expected to be `160` characters, we take
+        // `4` headers and cut out a last byte from the last header (subtract
+        // `2`).
+        const badLengthChain = utils.HEADER_PROOFS[0].slice(0, (2 + (160 * 4)) - 2)
 
         try {
           await testUtilsInstance.evaluateProofDifficulty(badLengthChain)
@@ -151,7 +155,8 @@ contract('DepositUtils', (accounts) => {
       })
 
       it('invalid headers chain', async () => {
-        // Cut out one header from the headers chain
+        // Cut out one header from the headers chain. Take out second header
+        // from the headers chain.
         const invalidChain = utils.HEADER_PROOFS[0].slice(0, (2 + 160))
           + utils.HEADER_PROOFS[0].slice((2 + (160 * 2)), (2 + (160 * 4)))
 
