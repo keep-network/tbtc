@@ -190,6 +190,22 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-tbtc-maintainers
           tag: latest
+  publish_contract_data:
+      executor: gcp-cli/default
+      steps:
+        - attach_workspace:
+            at: /tmp/tbtc
+        - gcp-cli/install        
+        - gcp-cli/initialize:
+            google-project-id: GOOGLE_PROJECT_ID
+            google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+            # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+            gcloud-service-key: GCLOUD_SERVICE_KEY
+        - run:
+            name: Upload contract data
+            command: |
+              cd /tmp/tbtc/contracts
+              gsutil -m cp * gs://keep-dev-contract-data
 
 workflows:
   version: 2
@@ -234,4 +250,11 @@ workflows:
           requires:
             - migrate_contracts
             - build_initcontainer
+      - publish_contract_data:
+          filters:
+            branches:
+              only: master        
+          context: keep-dev
+          requires:
+            - migrate_contracts            
       
