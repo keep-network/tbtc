@@ -8,8 +8,8 @@
 
 # TLS configuration for a SSL connection to a Electrum Server.
 [electrum.TLSConfig] 
-    # Skip server certificates verification - a temporary solution for development.
-    InsecureSkipVerify = true
+  # Skip server certificates verification - a temporary solution for development.
+  InsecureSkipVerify = true
 
 # Connection details for Block Cypher API.
 [blockcypher]
