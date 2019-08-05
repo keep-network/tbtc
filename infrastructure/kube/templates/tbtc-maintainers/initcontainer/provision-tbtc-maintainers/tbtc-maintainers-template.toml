@@ -4,6 +4,7 @@
 [electrum]
   ServerHost  = "electrumx-server.tbtc.svc.cluster.local"
   ServerPort  = "50002"
+  Protocol    = "SSL" # TCP or SSL
 
 # Connection details for Block Cypher API.
 [blockcypher]
