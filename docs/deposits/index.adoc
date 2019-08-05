@@ -121,40 +121,41 @@ systems and their security properties is included in the appendix.
 
 ==== Overpayment & Underpayment
 
-To maintain a standard lot size for all _Deposits_ we require the depositor to
-send a precise amount of BTC in the funding transaction. Because we can't
-enforce this behavior on the Bitcoin chain, the system must account for
-overpayment and underpayment. The primary impact of overpayment and
-underpayment is on the _Deposit's_ collateralization ratio. The system requires
-a minimum collateralization ratio from signers, while the signers desire a
-predictable payment for their services. If the depositor sends too much or too
-little BTC, the signer incentives are at odds with the system's interests. As
-the main goal of the system is to align signer incentives, we treat overpayment
-and underpayment as faulty depositor behavior, and pass on the associated costs
-to the depositor.
+The system is designed to function with a predefined lot size for all _Deposits_
+which is given as a system parameter. **Depositors should send the exact lot
+amount of BTC in the funding transaction, or expect loss of funds.**
+Since it is not possible for the system to force users into sending any specific
+amount, the system must gracefully handle overpayment and underpayment. The
+primary  impact of overpayment and underpayment is on the `Deposit`'s collateralization
+ratio. We treat overpayment and underpayment as faulty depositor behavior, 
+and pass on the associated costs to the depositor.
 
-Allowing underpayment on _Deposit_ would result in over-bonded signers. To
+### Underpayment
+
+Allowing underpayment on `Deposit` would result in over-bonded signers. To
 prevent this, the system will not accept funding proofs of less than the lot
-size. This implies that the BTC is forfeit to the signers, although they cannot
-access it until after the _Deposit_ is resolved on-chain (see
+size (`1.0 BTC` initially). This implies that the a user that sends less than `1.0
+BTC` in the funding transaction does not receive any tBTC, and forfeits the BTC 
+locked in the funding transactions to the Signers. The Signers can unlock and
+evenly split the funds in the transaction after the _Deposit_ is resolved on-chain (see
 <<Multiple UTXOs>> for a full discussion).
 
-Overpayment, in contrast, would result in under-bonded signers. Because theft
-of the BTC may be worth more than the signers' bonds, the signers may have an
-incentive to collude to steal the BTC. When overfunding occurs, the system
-accepts the funding proof, but mints TBTC according to the regular lot size,
-and allows redemption of the _Deposit_ by anyone willing to burn a normal lot's
-amount of TBTC.
+### Overpayment
+
+Overpayment, in contrast, would result in under-bonded signers. When overfunding
+occurs, the system accepts the funding proof, but mints TBTC according to the 
+regular lot size. 
 
 In an efficient market, this _Deposit_ will be immediately redeemed,
-as the redeemer expects to take the overfunded amount as arbitrage. The signers
-now have a choice: behave honestly, and receive the signer fee immediately, or
-collude to steal the deposit. Should they behave honestly, the redeemer's
-arbitrage succeeds, and the signers are paid. Should they collude, the
-redeemer may prove ECDSA fraud, and take their bonds. Either way, the TBTC
-supply peg is preserved. However, unless the depositor is able to redeem
-immediately, she essentially forfeits the overfunded value to other
-participants.
+as the redeemer expects to take the overfunded amount as arbitrage. 
+
+Example: A user providing a funding proof for `1.6 BTC` in a system
+with lot size of `1 BTC` mints only `1.0 tBTC`. Any user that burns `1.0 tBTC`
+is able to claim the `1.6 tBTC` _Deposit_.
+
+A depositor should notice this and immediately try to burn their tBTC to reclaim
+the amount. If not, the depositor effectively forfeits the overfunded value to
+other participants.
 
 ==== Multiple UTXOs
 
@@ -171,8 +172,9 @@ UTXO of an appropriate size.
 
 As a particularly damaging example, consider a naive human depositor. If she
 mistakenly sends half the lot size in one transaction and half in another, both
-UTXOs would be forfeit. This represents a serious pitfall for depositors that
-must be carefully addressed by the user interface.
+UTXOs would be forfeit. **This represents a serious pitfall for depositors that
+must be carefully addressed by the user interface since significant loss of
+funds can occur.**
 
 The signers, while they may collude to move the BTC to other UTXOs, may not do
 so during the life of the _Deposit_ contract as the production of the required
@@ -232,17 +234,14 @@ requests and fund multiple deposits. This allows each deposit to be backed by
 a different signing group, both simplifying the bonding of signing groups and
 improving the resilience of the system to signing group failure.
 
-// TODO Set a proper initial lot size.
-
-
 == Deposit Economics
 
 :signer-fee-withheld: 0.005 TBTC
 
-Once a deposit has been made and funded, the corresponding TBTC are minted.
-Minted TBTC are immediately issued to the funder, who is now the beneficiary of
+Once a deposit has been made and funded, the corresponding TBTC is minted.
+Minted TBTC is immediately issued to the funder, who is now the beneficiary of
 a funded _Deposit_. To prevent denial of service attacks {signer-fee-withheld}
-is withheld on mintng. This will be returned to the beneficiary when the
+is withheld on minting. This will be returned to the beneficiary when the
 _Deposit_ is closed. This ensures that DoS attacks based on repeatedly creating
 signing groups have high economic cost.
 
