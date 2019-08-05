@@ -55,7 +55,7 @@ ssh utilitybox << EOF
   cd /tmp/$BUILD_TAG/implementation
 
   
-npm install git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0
+npm install git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0-high-err
 npm install bn-chai@1.0.1
 npm install bn.js@4.11.8
 npm install chai@4.2.0
