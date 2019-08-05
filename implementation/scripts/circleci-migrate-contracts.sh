@@ -48,7 +48,7 @@ ssh utilitybox << EOF
 
   echo "<<<<<<START Unlock Contract Owner ETH Account START<<<<<<"
   echo "geth --exec \"personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 1800)\" attach http://localhost:8545"
-  geth --exec "personal.unlockAccount(\"${GETH_ETHEREUM_ACCOUNT}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 1800)" attach http://localhost:8545
+  geth --exec "personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 1800)" attach http://localhost:8545
   echo ">>>>>>FINISH Unlock Contract Owner ETH Account FINISH>>>>>>"
 
   echo "<<<<<<START Contract Migration START<<<<<<"
