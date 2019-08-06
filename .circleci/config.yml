@@ -233,19 +233,19 @@ workflows:
       - migrate_contracts:
           filters:
             branches:
-              only: master
+              only: demo
           context: keep-dev
       - build_initcontainer:
           filters:
             branches:
-              only: master        
+              only: demo        
           context: keep-dev
           requires:
             - migrate_contracts
       - publish_images:
           filters:
             branches:
-              only: master        
+              only: demo        
           context: keep-dev
           requires:
             - migrate_contracts
@@ -253,7 +253,7 @@ workflows:
       - publish_contract_data:
           filters:
             branches:
-              only: master        
+              only: demo        
           context: keep-dev
           requires:
             - migrate_contracts            
