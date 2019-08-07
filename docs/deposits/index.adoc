@@ -243,7 +243,9 @@ Minted TBTC is immediately issued to the funder, who is now the beneficiary of
 a funded _Deposit_. To prevent denial of service attacks {signer-fee-withheld}
 is withheld on minting. This will be returned to the beneficiary when the
 _Deposit_ is closed. This ensures that DoS attacks based on repeatedly creating
-signing groups have high economic cost.
+signing groups (e.g. Attacker creates signing group, locks 1 BTC, creates 1
+TBTC via a Deposit, trades for 1 BTC in an exchange and repeats the Deposit
+process multiple times) have high economic cost.
 
 Beneficary status is transferable (in Ethereum this is implemented as an
 ERC721-compatible non-fungible token). When the _Deposit_ resolves, the
@@ -251,7 +253,10 @@ withheld TBTC (or equivalent value) will be returned to the current beneficiary
 along with a small additional payment. In this way the beneficiary NFT
 functions as a zero-coupon bond issued by the signing group upon funding. If
 the signing group performs its obligations, the beneficiary will eventually
-receive the bond payout.
+receive the bond payout. It can be expected that there will be service providers
+willing to trade {signer-fee-witheld} TBTC for 1 TBTC-coupon-bond along with
+some fee, for providing liquidity to holders of the otherwise illiquid for the
+duration of a Deposit coupon.
 
 Signer fees are described in more detail in
 <<../custodial-fees/index#,their own section>>.
