@@ -92,7 +92,8 @@ Increasing this percentage can increase the robustness of the system, at
 the expense of opportunity cost to the Signers which should be compensated via fees.
 
 If the value of ETH crosses a security threshold, open _Deposit_ s will enter
-<<Undercollateralization>>.
+<<preliq, pre-liquidation>>, followed by <<liq, liquidation>> if they do not top
+up their collateral.
  
 // TODO insert a little historical analysis for a decent starting number
  
@@ -103,16 +104,16 @@ overcollateralization factored in), a BTC value drop against the
 bonded asset translates in lower fees for Signers. Note that this does not
 create any issue for tBTC reserves, but it makes the system less attractive to
 signers looking to earn interest via fees on their assets.
- 
-At a certain threshold, a _Deposit_ whose BTC collateral has devalued will move
-into a variant of the <<preliq, pre-liquidation>> phase that allows bond
-rebalancing without the fallback of signer bond forfeiture.
 
+Overly overcollateralized Signers have the ability to safely rebalance their
+bonds back to {totalcollateral}.
+ 
 // TODO insert a little historical analysis for a decent starting number
-// Should this actually be called pre-liquidation? In this case, we have a
-// Signer overcollateralizing by an amount whihc is more than the minimum, this
+// How did this relate to pre-liquidation? In this case, we have a
+// Signer overcollateralizing by an amount which is more than the minimum, this
 // is OK to happen, but is capital inefficient for them. Why not allow them to
-// rebalance anytime they want, as long as their collateral is >=150% of btc value?
+// rebalance anytime they want (contrary to having one more parameter to set), 
+// as long as their collateral is >=150% of btc value?
 
 Example:
 Let 1 BTC be worth $10,000, and 1 ETH be worth $200. Signers have to put up 75
@@ -127,7 +128,7 @@ capital efficiency.
 == A resilient price oracle
 
 Unlike popular synthetic stablecoin schemes, the tBTC system design makes no
-effort to stabilize the value of TBTC relative to BTC-- TBTC will be priced by
+effort to stabilize the value of TBTC relative to BTC -- TBTC will be priced by
 the market. Instead, the goal is to ensure that the TBTC supply is strictly
 less than its backing BTC reserves.
 
@@ -141,21 +142,27 @@ prices for a single pair of assets, tBTC will initially use a simple
 == Undercollateralization
 
 // TODO explain the undercollateralization curve
-
-
 === Pre-liquidation: a courtesy call
 [[preliq]]
 
 :preliquidation-period: 6 hours
-:second-threshold: 125%
+:first-threshold: 125%
+:second-threshold: 110%
 
-At the first threshold, a _Deposit_ enters pre-liquidation. Pre-liquidation
-indicates that the signers should be close the _Deposit__ or face forced
-liquidation. If the _Deposit_ is not closed within {preliquidation-period}, or
+At the first threshold of  {first-threshold}, a _Deposit_ enters
+pre-liquidation. 
+Pre-liquidation indicates that the signers should close the _Deposit__ or face forced
+liquidation after a pre-liquidation period. If the _Deposit_ is not closed within {preliquidation-period}, or
 if the _Deposit_ collateral falls below {second-threshold} collateralization,
 liquidation will follow. This gives each signer an incentive to close the
-position before it becomes severely undercollateralized, as all signers risk
+position before it becomes severely undercollateralized, or rebalance their
+bonds above the pre-liquidation threshold, as all signers risk
 losing funds in the liquidation process.
+// comment(Georgios): Once the collateral <125%, we go into preliq, then we have
+// to top up above 125%. Should we instead top-up back to 150%? I think as a
+// spec we should say "Signers MUST top up above 125% to avoid liquidation, but
+// SHOULD consider topping up back to 150% or more, to avoid going through the
+// courtesy call on further price fluctiation in a short amount of time "
 
 In future versions of the system, more complex pre-liquidation mechanisms could
 be introduced. For the initial version it seems prudent to choose a simple
@@ -163,25 +170,34 @@ mechanism with large penalties for ongoing undercollateralization.
 
 
 === Liquidation
+[[liq]]
 
 :auction-start-percent: 80%
+
+//  James comment from issue: 
+//  We start by offering 75% of the signer' bonds for LOT_SIZE TBTC 
+//  (just enough to bring supply peg back in line). 
+//  We increase the percentage on offer smoothly over AUCTION_PERIOD seconds in increments of 1%.
+
 
 Forced liquidation should be rare, as rational signers will redeem _Deposits_
 before liquidation becomes necessary. However, the possibility of extreme
 punishment via liquidation is necessary to prevent dishonest behavior from
 signers. Liquidation may occur because because signers didn't produce a valid
 signature  in response a redemption request, because the value of the signing
-bond dropped below the collateralization threshold, or because the signers
-produced an unauthorized signature.
+bond dropped below the liquidation threshold, because they did not respond to the
+courtesy call, or because the signers produced an unauthorized signature. 
+// comment(Georgios): What does unauthorized signature mean here?
 
 The primary goal of the liquidation process is to bring the TBTC supply in line
 with the BTC custodied by _Deposits_. The most valuable asset held by the
 system is the signers' bonds. Therefore, the liquidation process seizes the
 signers bonds and attempts to use the bonded value to purchase and burn TBTC.
 
-// TODO: cite uniswap
 First, the contract attempts to use on-chain liquidity sources, such as
-Uniswap. If the bond is sufficient to cover the outstanding TBTC value on these
+[Uniswap](https://hackmd.io/@477aQ9OrQTCbVR3fq1Qzxg/HJ9jLsfTz). 
+
+If the bond is sufficient to cover the outstanding TBTC value on these
 markets, it is immediately exchanged for TBTC.
 
 Second, the contract starts a falling-price auction. It offers
@@ -192,7 +208,7 @@ remain open until a buyer is found.
 
 TBTC received during this process is burned to maintain the supply peg. If any
 bond value is left after liquidation, a small fee is distributed to the account
-which trigger liquidation. After that, any remaining value is either
+which triggered the liquidation. After that, any remaining value is either
 distributed to the signers (in case of liquidation due to
 undercollateralization) or burned (in case of liquidation due to fraud).
 
