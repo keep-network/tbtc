@@ -108,7 +108,7 @@ anyone may do so if the signers do not.
 A _redemption proof_ is an SPV proof that a _redemption transaction_ was
 confirmed by the Bitcoin blockchain. Once a request to redeem is confirmed, the
 deposit smart contract expects a _redemption proof_ within
-{:redemption-proof-timeout}. To validate a _redemption proof_, the smart
+{redemption-proof-timeout}. To validate a _redemption proof_, the smart
 contract performs normal SPV proof verification, and additionally verifies that
 the recipient matches the requester's pulic key hash, and the value is greater
 than or equal `UTXO Size - highest allowed fee` (see
