@@ -1,0 +1,41 @@
+% !TEX root = ../build.tex
+% !texpackages = rotating,tikz-uml,xstring,pgfopts
+% !tikzlibraries = arrows.meta
+% !include = _common.tikz
+% !figuretype = sidewaysfigure
+% Underline that goes through descender.
+
+\global\pdfpageattr\expandafter{\the\pdfpageattr/Rotate 90}
+
+\begin{tikzpicture}
+  \begin{umlseqdiag}
+    \umlbasicobject[fill=white]{Bitcoin}
+    \umlbasicobject[fill=white]{tECDSA Signers}
+    \umlbasicobject[fill=white]{Deposit Contract}
+
+    \tikzset{
+      tikzuml call-msg style/.append style={text width=2.5cm,align=center},
+      tikzuml return-msg style/.append style={text width=2.5cm,align=center},
+      tikzuml asynchron-msg style/.append style={text width=2.5cm,align=center},
+      tikzuml synchron-msg style/.append style={text width=2.5cm,align=center},
+      tikzuml activity-msg style/.append style={text width=2.5cm,align=center}
+    }
+
+    \begin{umlfragment}[type=loop,label=tx confirmation not seen]
+      \begin{umlcall}[op=\texttt{requestSignature},dt=10]{Deposit Contract}{tECDSA Signers}
+        \begin{umlcallself}[op=create signature]{tECDSA Signers}
+          \begin{umlcall}[op=broadcast redemption tx]{tECDSA Signers}{Bitcoin}
+            \begin{umlcallself}[op=wait for confirmation]{tECDSA Signers}
+              \begin{umlcall}[op=\texttt{increaseFee},dt=5]{tECDSA Signers}{Deposit Contract}
+              \end{umlcall}
+            \end{umlcallself}
+          \end{umlcall}
+        \end{umlcallself}
+      \end{umlcall}
+    \end{umlfragment}
+
+    \umlsdnode[dt=7.5]{Bitcoin}
+    \umlsdnode[dt=2]{tECDSA Signers}
+    \umlsdnode[dt=2]{Deposit Contract}
+  \end{umlseqdiag}
+\end{tikzpicture}
