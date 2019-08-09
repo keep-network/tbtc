@@ -4,7 +4,7 @@ generated_img_dir=img/generated
 
 tikz_files := $(filter-out img-src/_%,$(wildcard img-src/*.tikz))
 
-tikz_pngs := $(foreach file, $(tikz_files), $(generated_img_dir)/$(notdir $(basename $(file))).png)
+tikz_pngs := $(addprefix $(generated_img_dir)/,$(addsuffix .png,$(notdir $(basename $(tikz_files)))))
 
 .PHONY: clean docs pngs
 
