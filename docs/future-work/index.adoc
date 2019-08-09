@@ -1,0 +1,57 @@
+:toc: macro
+
+[#bonding]
+= Future Work
+
+ifndef::tbtc[toc::[]]
+
+In this section we describe improvements which can be made in the TBTC protocol
+in order to its capital efficiency and security.
+
+== Using TBTC instead of ETH for Signers' bonds
+
+As described previously in the document, we require each 1 BTC deposit to be
+backed by 1.5 BTCETH ("1.5 BTC worth of ETH") before 1 tBTC is minted on
+Ethereum. The overcollateralization is done in order to prevent the system from
+being undercollateralized when large ETH price fluctuations occur. This means
+that  for each minted `1 tBTC` a total lockup of `2.5 BTC` value is required
+(2.5x of the value). 
+
+We can reduce this capital cost by allowing `1 BTCTBTC` ("1 BTC worth of TBTC"),
+to be used as collateral to mint `1 tBTC`. We believe this is a
+reasonable design to choice, since due to the supply peg between BTC and TBTC, there
+will always be less TBTC than BTC and they should trade at parity. 
+Initially, the TBTC supply will be bootstrapped by using ETH as bonds, 
+and the system will get more capital efficient as TBTC is used to back further
+TBTC minting. 
+
+Example:
+
+Consider 10 BTC under custody, 10 TBTC supply, and 9.95 TBTC in circulation (due to fees), 
+backed by 15 BTCETH. By using 9 TBTC as collateral, 9 more TBTC can be minted,
+resulting in a total supply of 19 TBTC, backed by 9 TBTC and 15 BTCETH on
+Ethereum. This results in 9.95 TBTC being liquid, while 10.05 is used in bonds. 
+If 9 TBTC more get created in the same way, only 9.9 TBTC would be liquid, 
+but the TBTC supply will be 28. Following this example, the
+capital efficiency (tBTC supply over illiquid collateral) of the mechanism can
+approach 100% asymptotically, which is a significant improvement over the 66%
+capital efficiency when using only ETH.
+
+This mechanism effectively improves capital efficiency by
+reducing TBTC liquidity. This incentive loop
+can be maintained with proper fee generation to signers. We expect that signers
+who want exposure in ETH will still use ETH as collateral, which will also
+increase TBTC's liquidity. The following chart indicates how TBTC liquid supply
+and capital efficiency behave in the previous example as the TBTC supply
+approaches 100. Note how when we additionally back a deposit with ETH, TBTC
+liquidity improves at the expense of capital efficiency.
+
+// full data: https://docs.google.com/spreadsheets/d/1rG9XS6xJbulltwKBMfszfkHeqG5Bl6JboIpIjO1Qn3Q/edit#gid=0
+image::tbtc_bonds.png[]
+
+In the next section, we explore potential approaches towards 
+maximizing the fee revenue of signers by leveraging decentralized finance
+lending  and market making protocols.
+
+
+== Optimize returns on Signers' bonds
