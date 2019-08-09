@@ -1,6 +1,6 @@
 % !TEX root = ../build.tex
 % !texpackages = rotating,tikz-uml,xstring,pgfopts
-% !tikzlibraries = arrows.meta
+% !tikzlibraries = arrows.meta,positioning
 % !include = _common.tikz
 % !figuretype = sidewaysfigure
 % Underline that goes through descender.
