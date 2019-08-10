@@ -32,10 +32,10 @@ like to make a similar return on the total capital it is locking up.
 - `OvercollateralizationFactor`: The additional amount which must be deposited as
 collateral by the Signer 
 - `Deposit`: The amount a `Signer` must lock in a smart contract as
-collateral to mint `tBTC`. Initially this will be denominated in `ETH`. `Deposit
+collateral to mint `TBTC`. Initially this will be denominated in `ETH`. `Deposit
 = OverCollateralizationFactor * LotSize * (BTCETH conversion rate)`. In the
-future, `tBTC` may be used to collateralize a deposit. As a result, assuming a
-1:1 ratio between `BTC` and `tBTC`, the price conversion can be skipped.
+future, `TBTC` may be used to collateralize a deposit. As a result, assuming a
+1:1 ratio between `BTC` and `TBTC`, the price conversion can be skipped.
 - `N`: The number of Signers authorized to sign on a `Deposit`'s withdrawal request.
 - `M`: The minimum number of Signers required to sign the authoization of a `Deposit`'s withdrawal request.
 
@@ -50,9 +50,9 @@ BTC` and `OverCollateralizationFactor = 150%`, that is `1.5 BTC / N`.
 An initial parameterization of the system will use `15` Signers per lot. In
 addition, due to the lack of attributability in the aggregate signature
 mechanism used, we pick `M = N`. This inquires a `0.1` BTC value in capital
-cost for **each** Signer per `1.0 tBTC` minted.
+cost for **each** Signer per `1.0 TBTC` minted.
 
 Taking into account the fees from centralized custodians (`0.00025-0.00075 BTC`),
-we choose to reward signers with a flat `0.0005 tBTC` per `1.0 tBTC` minted,
+we choose to reward signers with a flat `0.0005 TBTC` per `1.0 TBTC` minted,
 meaning the total signing revenue is `0.5%` of the market cap of the minted amount
-of `tBTC` each year.
+of `TBTC` each year.

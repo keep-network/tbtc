@@ -11,19 +11,19 @@ in order to its capital efficiency and security.
 == Using TBTC instead of ETH for Signers' bonds
 
 As described previously in the document, we require each 1 BTC deposit to be
-backed by 1.5 BTCETH ("1.5 BTC worth of ETH") before 1 tBTC is minted on
+backed by 1.5 BTCETH ("1.5 BTC worth of ETH") before 1 TBTC is minted on
 Ethereum. The overcollateralization is done in order to prevent the system from
 being undercollateralized when large ETH price fluctuations occur. This means
-that  for each minted `1 tBTC` a total lockup of `2.5 BTC` value is required
+that  for each minted `1 TBTC` a total lockup of `2.5 BTC` value is required
 (2.5x of the value). 
 
-We can reduce this capital cost by allowing `1 BTCTBTC` ("1 BTC worth of TBTC"),
-to be used as collateral to mint `1 tBTC`. We believe this is a
-reasonable design to choice, since due to the supply peg between BTC and TBTC, there
-will always be less TBTC than BTC and they should trade at parity. 
-Initially, the TBTC supply will be bootstrapped by using ETH as bonds, 
-and the system will get more capital efficient as TBTC is used to back further
-TBTC minting. 
+Since the system's goal is to ensure that TBTC supply never exceeds the amount
+of locked BTC, we can reduce this capital cost by allowing `1 TBTC` to back the
+creation of another `1 TBTC`, regardless of the price between `TBTC` and `BTC`.
+In case of signer misbehavior, the `1 TBTC` will be seized and burned,
+maintaining the supply peg. Initially, the TBTC supply will be bootstrapped by
+using ETH as bonds, and the system will get more capital efficient as TBTC is
+used to back further TBTC minting. 
 
 Example:
 
@@ -33,7 +33,7 @@ resulting in a total supply of 19 TBTC, backed by 9 TBTC and 15 BTCETH on
 Ethereum. This results in 9.95 TBTC being liquid, while 10.05 is used in bonds. 
 If 9 TBTC more get created in the same way, only 9.9 TBTC would be liquid, 
 but the TBTC supply will be 28. Following this example, the
-capital efficiency (tBTC supply over illiquid collateral) of the mechanism can
+capital efficiency (TBTC supply over illiquid collateral) of the mechanism can
 approach 100% asymptotically, which is a significant improvement over the 66%
 capital efficiency when using only ETH.
 

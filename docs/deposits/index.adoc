@@ -30,7 +30,7 @@ image::{root-prefix}img/generated/initiate-deposit.png[]
 
 The starting point for acquiring TBTC is generating a _deposit request_. This is
 a transaction to a smart contract on tBTC's host chain that informs the tBTC
-system that the sender account is interested in creating a tBTC deposit. The
+system that the sender account is interested in creating a TBTC deposit. The
 transaction is a signal that the sender is interested in a signing group to back
 a wallet that will receive bitcoin from a wallet the sender controls, in order
 to produce TBTC. Because signing groups are not free to create, deposit requests
@@ -135,7 +135,7 @@ and pass on the associated costs to the depositor.
 Allowing underpayment on `Deposit` would result in over-bonded signers. To
 prevent this, the system will not accept funding proofs of less than the lot
 size (`1.0 BTC` initially). This implies that the a user that sends less than `1.0
-BTC` in the funding transaction does not receive any tBTC, and forfeits the BTC 
+BTC` in the funding transaction does not receive any TBTC, and forfeits the BTC 
 locked in the funding transactions to the Signers. The Signers can unlock and
 evenly split the funds in the transaction after the _Deposit_ is resolved on-chain (see
 <<Multiple UTXOs>> for a full discussion).
@@ -150,10 +150,10 @@ In an efficient market, this _Deposit_ will be immediately redeemed,
 as the redeemer expects to take the overfunded amount as arbitrage. 
 
 Example: A user providing a funding proof for `1.6 BTC` in a system
-with lot size of `1 BTC` mints only `1.0 tBTC`. Any user that burns `1.0 tBTC`
-is able to claim the `1.6 tBTC` _Deposit_.
+with lot size of `1 BTC` mints only `1.0 TBTC`. Any user that burns `1.0 TBTC`
+is able to claim the `1.6 TBTC` _Deposit_.
 
-A depositor should notice this and immediately try to burn their tBTC to reclaim
+A depositor should notice this and immediately try to burn their TBTC to reclaim
 the amount. If not, the depositor effectively forfeits the overfunded value to
 other participants.
 

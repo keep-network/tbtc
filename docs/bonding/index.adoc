@@ -30,7 +30,7 @@ native token. For the initial release of tBTC, that means ETH. As the ecosystem
 matures, other bond collateral options might become feasible at the expense of a
 more complex price feed implementation.
 
-=== Measuring security
+== Measuring security
 
 :lot-size: 1 BTC
 
@@ -48,12 +48,12 @@ worse case, 3 of the signers can be malicious and try to steal the Deposit,
 which would net them each 1/3 BTC. As a result, all 5 Signers must bond 0.33 BTC
 each, denominated in ETH.
 
-=== Pricing currency fluctuations
+== Pricing currency fluctuations
 
 The above assumes a constant exchange rate between BTC and ETH, but in truth
 the two currencies fluctuate relative to each other, sometimes wildly.
 
-==== ETH Price Drop relative to BTC
+=== ETH Price Drop relative to BTC
 
 :extracollateral: 50%
 :totalcollateral: 150%
@@ -99,7 +99,7 @@ bonded asset translates in lower fees for Signers. Note that this does not
 create any issue for tBTC reserves, but it makes the system less attractive to
 signers looking to earn interest via fees on their assets.
 
-Signers SHOULD buy tBTC from the markets in anticipation of such overly 
+Signers SHOULD buy TBTC from the markets in anticipation of such overly 
 overcollateralized Deposits and they SHOULD use it to redeem these positions,
 thus reclaiming their ETH liquidity which can be used to back other Deposits. An
 alternative would be to provide Signers with the ability to safely rebalance their
@@ -114,9 +114,9 @@ points for $15,000 (150% of $10,000): $7.5. Due to market conditions, ETH soars
 25% to $250, while BTC maintains its value. The Signers still get $7.5 per BTC
 under custody, however the 75 ETH is worth $18750 (hence 187.5%
 overcollateralized), meaning 5 basis points for its custody would be $9.375. A
-signer redeems the Deposit by paying 1 tBTC, reclaiming 1 BTC and unlocking the
+signer redeems the Deposit by paying 1 TBTC, reclaiming 1 BTC and unlocking the
 75 ETH which was locked by all Signers. All over-overcollateralized Signers now
-have liquid ETH which they can use to back another deposit to mint new tBTC.
+have liquid ETH which they can use to back another deposit to mint new TBTC.
 
 == A resilient price oracle
 
@@ -204,15 +204,15 @@ Example:
 1. Signers guard a deposit of 1 BTC, backed by 75 ETH at 0.02 BTC/ETH (1.5 BTC
 in ETH, 150% collateralization ratio).
 2. ETH price drops to 0.01333 BTC/ETH. 75 ETH now only collateralizes 100% of the Deposit (1 BTC / 75 ETH)
-3. Liquidation is triggered and the 75 ETH is seized to buy back tBTC.
-4. Assuming Uniswap has only 0.8 tBTC available in its reserves, that amount is
+3. Liquidation is triggered and the 75 ETH is seized to buy back TBTC.
+4. Assuming Uniswap has only 0.8 TBTC available in its reserves, that amount is
 bought, at market price, for 60 ETH (`0.8 BTC / (1/75) = 60`) and is
 subsequently burned. 
-Note: There may be slippage here so the contract SHOULD check that it does not purchase tBTC at non-favorable rates
-5. The Deposit is left with 15 ETH which must be used to purchase 0.2 tBTC. In
+Note: There may be slippage here so the contract SHOULD check that it does not purchase TBTC at non-favorable rates
+5. The Deposit is left with 15 ETH which must be used to purchase 0.2 TBTC. In
 an attempt to get a discount, it auctions {auction-start-percent} of its ETH
 reserves.
-6. An arbitrageur burns 0.2 tBTC at 90% of the auction and obtains 13.5 ETH. The
+6. An arbitrageur burns 0.2 TBTC at 90% of the auction and obtains 13.5 ETH. The
 liquidation of the Deposit is now over.
 7. The remaining 1.4 ETH is distributed to the signers (if they had committed
 fraud it'd be burned), and 0.1 ETH is given to the account which called the
