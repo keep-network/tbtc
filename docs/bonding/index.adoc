@@ -115,7 +115,7 @@ points for $15,000 (150% of $10,000): $7.5. Due to market conditions, ETH soars
 under custody, however the 75 ETH is worth $18750 (hence 187.5%
 overcollateralized), meaning 5 basis points for its custody would be $9.375. A
 signer redeems the Deposit by paying 1 TBTC, reclaiming 1 BTC and unlocking the
-75 ETH which was locked by all Signers. All over-overcollateralized Signers now
+75 ETH which was locked by all Signers. All significantly overcollateralized Signers now
 have liquid ETH which they can use to back another deposit to mint new TBTC.
 
 == A resilient price oracle
@@ -149,14 +149,14 @@ liquidation after a pre-liquidation period. If the _Deposit_ is not closed withi
 if the _Deposit_ collateral falls below {second-threshold} collateralization,
 liquidation will follow. This gives each signer an incentive to close the
 position before it becomes severely undercollateralized. Alternatively, if the
-BTCETH ratio recovers such that the deposit becomes at least {first-threshold}
+ETHBTC ratio recovers such that the deposit becomes at least {first-threshold}
 collateralized during the {preliquidation-period} the Deposit is safe and is
 moved away from the pre-liquidation state. 
 
 In future versions of the system, more complex pre-liquidation mechanisms could
 be introduced. For the initial version it seems prudent to choose a simple
 mechanism with large penalties for ongoing undercollateralization. In addition,
-by incentivizing redemption of undercollateralized or over-overcollateralized
+by incentivizing redemption of undercollateralized or significantly overcollateralized
 positions, Signers are protected from being long ETH for long periods of time.
 
 === Liquidation
@@ -170,7 +170,7 @@ punishment via liquidation is necessary to prevent dishonest behavior from
 signers. Liquidation may occur because because signers didn't produce a valid
 signature  in response a redemption request, because the value of the signing
 bond dropped below the liquidation threshold, because they did not respond to the
-courtesy call, or because the signers produced an unauthorized signature. 
+courtesy call, or because the signers produced a fraudulent signature. 
 // comment(Georgios): What does unauthorized signature mean here?
 
 The primary goal of the liquidation process is to bring the TBTC supply in line
@@ -203,18 +203,26 @@ lost permanently.
 Example: 
 1. Signers guard a deposit of 1 BTC, backed by 75 ETH at 0.02 BTC/ETH (1.5 BTC
 in ETH, 150% collateralization ratio).
-2. ETH price drops to 0.01333 BTC/ETH. 75 ETH now only collateralizes 100% of the Deposit (1 BTC / 75 ETH)
-3. Liquidation is triggered and the 75 ETH is seized to buy back TBTC.
-4. Assuming Uniswap has only 0.8 TBTC available in its reserves, that amount is
+
+1. ETH price drops to 0.01333 BTC/ETH. 75 ETH now only collateralizes 100% of
+the Deposit (1 BTC / 75 ETH)
+
+1. Liquidation is triggered and the 75 ETH is seized to buy back TBTC.
+
+1. Assuming Uniswap has only 0.8 TBTC available in its reserves, that amount is
 bought, at market price, for 60 ETH (`0.8 BTC / (1/75) = 60`) and is
-subsequently burned. 
-Note: There may be slippage here so the contract SHOULD check that it does not purchase TBTC at non-favorable rates
-5. The Deposit is left with 15 ETH which must be used to purchase 0.2 TBTC. In
+subsequently burned. Note that there may be slippage here so the contract SHOULD
+check that it does not purchase TBTC at non-favorable rates
+
+1. The Deposit is left with 15 ETH which must be used to purchase 0.2 TBTC. In
 an attempt to get a discount, it auctions {auction-start-percent} of its ETH
 reserves.
-6. An arbitrageur burns 0.2 TBTC at 90% of the auction and obtains 13.5 ETH. The
+
+1. An arbitrageur burns 0.2 TBTC at 90% of the auction and obtains 13.5 ETH. The
 liquidation of the Deposit is now over.
-7. The remaining 1.4 ETH is distributed to the signers (if they had committed
+
+1. The remaining 1.4 ETH is distributed to the signers (if they had committed
 fraud it'd be burned), and 0.1 ETH is given to the account which called the
 liquidation function on the Ethereum smart contract.
-8. The 1 BTC is distributed evenly across the N signers that guarded the deposit.
+
+1. The N signers coordinate and agree on how they will distribute the 1 BTC deposit.

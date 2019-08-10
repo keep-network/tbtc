@@ -11,7 +11,7 @@ in order to its capital efficiency and security.
 == Using TBTC instead of ETH for Signers' bonds
 
 As described previously in the document, we require each 1 BTC deposit to be
-backed by 1.5 BTCETH ("1.5 BTC worth of ETH") before 1 TBTC is minted on
+backed by 1.5 BTC worth of ETH before 1 TBTC is minted on
 Ethereum. The overcollateralization is done in order to prevent the system from
 being undercollateralized when large ETH price fluctuations occur. This means
 that  for each minted `1 TBTC` a total lockup of `2.5 BTC` value is required
@@ -28,11 +28,17 @@ used to back further TBTC minting.
 Example:
 
 Consider 10 BTC under custody, 10 TBTC supply, and 9.95 TBTC in circulation (due to fees), 
-backed by 15 BTCETH. By using 9 TBTC as collateral, 9 more TBTC can be minted,
-resulting in a total supply of 19 TBTC, backed by 9 TBTC and 15 BTCETH on
-Ethereum. This results in 9.95 TBTC being liquid, while 10.05 is used in bonds. 
+backed by 15 BTC worth of ETH. 
+
+By using 9 TBTC as collateral, 9 more TBTC can be minted,
+resulting in a total supply of 19 TBTC, backed by 9 TBTC and 15 BTC worth of ETH on
+Ethereum. 
+
+This results in 9.95 TBTC being liquid, while 10.05 is used in bonds. 
 If 9 TBTC more get created in the same way, only 9.9 TBTC would be liquid, 
-but the TBTC supply will be 28. Following this example, the
+but the TBTC supply will be 28. 
+
+Following this example, the
 capital efficiency (TBTC supply over illiquid collateral) of the mechanism can
 approach 100% asymptotically, which is a significant improvement over the 66%
 capital efficiency when using only ETH.
