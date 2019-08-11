@@ -2,11 +2,17 @@
 
 = Signing
 
+ifndef::tbtc[toc::[]]
+
 All of the aforementioned mechanisms require that there is a M-of-N
 multisignature wallet guarding each Deposit on Bitcoin. 
 
 Bitcoin's consensus rules restrict script size to 520 bytes (10,000 bytes for Segwit
-outputs), limiting the size of multisignature scripts. Future proposals such as
+outputs), limiting the maximum size of multisignature scripts to about 80
+participants (OP_CHECKMULTISIG is limited to
+link:https://github.com/bitcoin/bitcoin/blob/master/src/script/script.h#L28-L29[20
+public keys], but this can be bypassed by using `OP_CHECKSIG ADD` and
+`<threshold> OP_GREATERTHAN` as shown by link:https://github.com/nomic-io/bitcoin-peg/blob/master/bitcoinPeg.md[Nomic Labs]). Future proposals such as
 link:https://github.com/bitcoin/bips/blob/master/bip-0114.mediawiki[MAST] would
 allow implementing larger multisigs, however the activation of new features on
 Bitcoin has historically been a procedure with unclear timelines. 
@@ -14,8 +20,9 @@ Bitcoin has historically been a procedure with unclear timelines.
 Finally, large multisignature wallets in Ethereum and Bitcoin both have
 increasing verification costs as the number of participants increases. Building
 multisgs on Ethereum is link:https://www.coindesk.com/30-million-ether-reported-stolen-parity-wallet-breach[particularly] link:https://www.coindesk.com/ico-funds-among-millions-frozen-parity-wallets[hard]. By
-utilizing link:https://crypto.stanford.edu/~dabo/pubs/papers/aggreg.pdf[provably
-secure aggregate signatures], we can remove all of the above complexities and
+utilizing
+link:https://crypto.stanford.edu/~dabo/pubs/papers/aggreg.pdf[aggregate
+signatures with public key aggregation], we can remove all of the above complexities and
 replace them by a simple single signature verification. 
 
 Intuitively, an aggregate public key is generated from all multisignature
@@ -30,13 +37,47 @@ M-of-N configurations. If another configuration is required, the script or the
 smart contract only need to be configured to use a new aggregate public key
 after re-executing the DKG.
 
-ifndef::tbtc[toc::[]]
-
 == Threshold ECDSA
 
 == Aborts
 
 == Future Signature Schemes
 
-* Schnorr: MuSig
-* BLS
+In this section we explore other aggregate signature schemes we may explore
+using in the future. The described techniques are secure in the plain public key
+model, meaning that users do not need to prove ownership of their secret key, making them attractive for usage in blockchains. We briefly describe
+link:https://eprint.iacr.org/2018/068/[MuSig], a
+link:https://en.wikipedia.org/wiki/Schnorr_signature[Schnorr Signature] 
+variant and link:https://www.iacr.org/archive/asiacrypt2001/22480516.pdf[BLS] signatures.
+
+=== MuSig
+
+_Note: This section is taken from the last section of the link:https://blockstream.com/2018/01/23/en-musig-key-aggregation-schnorr-signatures/[official MuSig
+blogpost] by Blockstream_
+
+1. Call `L = H(X_1,X_2,…)``
+2. Call `X` the sum of all `H(L,X_i) * X_i`
+3. Each signer chooses a random nonce `r_i`, and shares `R_i = r_i * G` with the other signers
+4. Call `R` the sum of the `R_i` points
+5. Each signer computes `s_i = r_i + H(X,R,m) * H(L,X_i) * x_i`
+6. The final signature is `(R,s)`, where `s` is the sum of the `s_i` values
+7. Verification must satisfy: `sG = R + H(X,R,m) * X`
+
+Contrary to earlier constructions, this signature verification algorithm is
+secure against rogue key attacks because X is defined as a weighted sum of the
+signers' public keys, where the weighting factor depends on the hash of all
+participating public keys.
+
+=== Pairing based multisignatures
+
+Building on the work from MuSig and BLS signatures, Boneh, Drijvers and Neven introduce an
+efficient variant of previous BLS signature constructions which requires only 2
+pairing operations for verification and is also secure against rogue key
+attacks. 
+
+This multisignature is shorter than MuSig since it is only 1
+group element instead of 2. MuSig also requires an additional round of
+communication to generate the nonce `R`, which is not present in BLS. All
+signers can send their signatures to a third party who will aggregate them,
+removing the need for further interaction and for all parties to be online at the
+same time.
