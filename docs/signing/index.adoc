@@ -19,7 +19,7 @@ Bitcoin has historically been a procedure with unclear timelines.
 
 Finally, large multisignature wallets in Ethereum and Bitcoin both have
 increasing verification costs as the number of participants increases. Building
-multisgs on Ethereum is link:https://www.coindesk.com/30-million-ether-reported-stolen-parity-wallet-breach[particularly] link:https://www.coindesk.com/ico-funds-among-millions-frozen-parity-wallets[hard]. By
+multisigs on Ethereum is link:https://www.coindesk.com/30-million-ether-reported-stolen-parity-wallet-breach[particularly] link:https://www.coindesk.com/ico-funds-among-millions-frozen-parity-wallets[hard]. By
 utilizing
 link:https://crypto.stanford.edu/~dabo/pubs/papers/aggreg.pdf[aggregate
 signatures with public key aggregation], we can remove all of the above complexities and
@@ -34,7 +34,7 @@ with an OP_CHECKSIGVERIFY on Bitcoin, or an ECRECOVER operation on Ethereum.
 This process is simple and inexpensive, and avoids the path of implementing
 complex multisignature verification logic which can be upgraded for different
 M-of-N configurations. If another configuration is required, the script or the
-smart contract only need to be configured to use a new aggregate public key
+smart contract only needs to be configured to use a new aggregate public key
 after re-executing the DKG.
 
 == Threshold ECDSA
@@ -43,8 +43,7 @@ after re-executing the DKG.
 
 == Future Signature Schemes
 
-In this section we explore other aggregate signature schemes we may explore
-using in the future. The described techniques are secure in the plain public key
+In this section we explore other aggregate signature schemes we may use in the future. The described techniques are secure in the plain public key
 model, meaning that users do not need to prove ownership of their secret key, making them attractive for usage in blockchains. We briefly describe
 link:https://eprint.iacr.org/2018/068/[MuSig], a
 link:https://en.wikipedia.org/wiki/Schnorr_signature[Schnorr Signature] 
@@ -81,3 +80,4 @@ communication to generate the nonce `R`, which is not present in BLS. All
 signers can send their signatures to a third party who will aggregate them,
 removing the need for further interaction and for all parties to be online at the
 same time.
+
