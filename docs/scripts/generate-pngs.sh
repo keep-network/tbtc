@@ -53,4 +53,7 @@ pdflatex -halt-on-error $target_basename.tex $target_basename.pdf
 mkdir -p $img_dir
 echo "Generating $img_dir/$target_basename.png from $target_basename.pdf..."
 pdftoppm $target_basename.pdf $img_dir/$target_basename -png -f 1 -singlefile -rx 300 -ry 300
-echo "Finished with exit status $?."
+
+finalstatus=$?
+echo "Finished with exit status $finalstatus."
+exit $finalstatus
