@@ -26,7 +26,7 @@
     \begin{umlcall}[op=\texttt{requestRedemption}, dt=10]{User}{Deposit Contract}
       \begin{umlcall}[op=\texttt{requestSignature}, dt=0]{Deposit Contract}{tECDSA Keep Contract}
         \begin{umlcall}[type=asynchron, op=emit \texttt{SignatureRequested}]{tECDSA Keep Contract}{tECDSA Signers}
-          \begin{umlcallself}[op=create signature]{tECDSA Signers}
+          \begin{umlcallself}[op=create signature,padding=1.2]{tECDSA Signers}
             \begin{umlcall}[type=return,op=\texttt{provideSignature}]{tECDSA Signers}{tECDSA Keep Contract}
               \begin{umlcall}[type=return,op=\texttt{requestSignature} callback,name=requestSig]{tECDSA Keep Contract}{Deposit Contract}
                 \begin{umlcall}[type=return,op=emit \texttt{RedemptionSigned}]{Deposit Contract}{User}
@@ -36,7 +36,7 @@
 
             \begin{umlfragment}[type=,name=transaction publish]
               \begin{umlcall}[op=broadcast transaction]{tECDSA Signers}{Bitcoin}
-                \begin{umlcallself}[op=wait for confirmation]{tECDSA Signers}
+                \begin{umlcallself}[op=wait for confirmation,padding=1.2]{tECDSA Signers}
                   \begin{umlcall}[type=return,op=confirmation,dt=10]{Bitcoin}{tECDSA Signers}
                     \begin{umlcall}[op=\texttt{provideRedemptionProof}]{tECDSA Signers}{Deposit Contract}
                       \begin{umlcall}[type=return,op=emit \texttt{Redeemed}]{Deposit Contract}{User}

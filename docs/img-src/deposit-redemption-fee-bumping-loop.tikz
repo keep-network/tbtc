@@ -14,18 +14,18 @@
     \umlbasicobject[fill=white]{Bitcoin}
 
     \tikzset{
-      tikzuml call-msg style/.append style={text width=2.5cm,align=center},
-      tikzuml return-msg style/.append style={text width=2.5cm,align=center},
-      tikzuml asynchron-msg style/.append style={text width=2.5cm,align=center},
-      tikzuml synchron-msg style/.append style={text width=2.5cm,align=center},
-      tikzuml activity-msg style/.append style={text width=2.5cm,align=center}
+      tikzuml call-msg style/.append style={text width=3cm,align=center},
+      tikzuml return-msg style/.append style={text width=3cm,align=center},
+      tikzuml asynchron-msg style/.append style={text width=3cm,align=center},
+      tikzuml synchron-msg style/.append style={text width=3cm,align=center},
+      tikzuml activity-msg style/.append style={text width=3cm,align=center}
     }
 
     \begin{umlfragment}[type=loop,label=tx confirmation not seen,inner ysep=8,inner xsep=3]
       \begin{umlcall}[op=\texttt{requestSignature},dt=16]{Deposit Contract}{tECDSA Signers}
-        \begin{umlcallself}[op=create signature]{tECDSA Signers}
-          \begin{umlcall}[op=broadcast redemption tx,dt=8]{tECDSA Signers}{Bitcoin}
-            \begin{umlcallself}[op=wait for confirmation,dt=4]{tECDSA Signers}
+        \begin{umlcallself}[op=create signature,padding=1.2]{tECDSA Signers}
+          \begin{umlcall}[op=broadcast\\redemption tx,dt=8]{tECDSA Signers}{Bitcoin}
+            \begin{umlcallself}[op=wait for confirmation,dt=4,padding=1.2]{tECDSA Signers}
               \begin{umlcall}[op=\texttt{increaseFee}]{tECDSA Signers}{Deposit Contract}
               \end{umlcall}
             \end{umlcallself}
