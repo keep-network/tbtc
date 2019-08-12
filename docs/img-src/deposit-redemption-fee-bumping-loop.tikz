@@ -9,9 +9,9 @@
 
 \begin{tikzpicture}
   \begin{umlseqdiag}
-    \umlbasicobject[fill=white]{Bitcoin}
-    \umlbasicobject[fill=white]{tECDSA Signers}
     \umlbasicobject[fill=white]{Deposit Contract}
+    \umlbasicobject[fill=white]{tECDSA Signers}
+    \umlbasicobject[fill=white]{Bitcoin}
 
     \tikzset{
       tikzuml call-msg style/.append style={text width=2.5cm,align=center},
@@ -21,12 +21,12 @@
       tikzuml activity-msg style/.append style={text width=2.5cm,align=center}
     }
 
-    \begin{umlfragment}[type=loop,label=tx confirmation not seen]
-      \begin{umlcall}[op=\texttt{requestSignature},dt=10]{Deposit Contract}{tECDSA Signers}
+    \begin{umlfragment}[type=loop,label=tx confirmation not seen,inner ysep=8,inner xsep=3]
+      \begin{umlcall}[op=\texttt{requestSignature},dt=16]{Deposit Contract}{tECDSA Signers}
         \begin{umlcallself}[op=create signature]{tECDSA Signers}
-          \begin{umlcall}[op=broadcast redemption tx]{tECDSA Signers}{Bitcoin}
-            \begin{umlcallself}[op=wait for confirmation]{tECDSA Signers}
-              \begin{umlcall}[op=\texttt{increaseFee},dt=5]{tECDSA Signers}{Deposit Contract}
+          \begin{umlcall}[op=broadcast redemption tx,dt=8]{tECDSA Signers}{Bitcoin}
+            \begin{umlcallself}[op=wait for confirmation,dt=4]{tECDSA Signers}
+              \begin{umlcall}[op=\texttt{increaseFee}]{tECDSA Signers}{Deposit Contract}
               \end{umlcall}
             \end{umlcallself}
           \end{umlcall}
@@ -34,8 +34,8 @@
       \end{umlcall}
     \end{umlfragment}
 
-    \umlsdnode[dt=7.5]{Bitcoin}
-    \umlsdnode[dt=2]{tECDSA Signers}
-    \umlsdnode[dt=2]{Deposit Contract}
+    \umlsdnode[dt=14.5]{Bitcoin}
+    \umlsdnode[dt=9]{tECDSA Signers}
+    \umlsdnode[dt=9]{Deposit Contract}
   \end{umlseqdiag}
 \end{tikzpicture}
