@@ -27,7 +27,7 @@
       \begin{umlcall}[op=\texttt{requestSignature}, dt=0]{Deposit Contract}{tECDSA Keep Contract}
         \begin{umlcall}[type=asynchron, op=emit \texttt{SignatureRequested}]{tECDSA Keep Contract}{tECDSA Signers}
           \begin{umlcallself}[op=create signature]{tECDSA Signers}
-            \begin{umlcall}[type=return,op=\texttt{publishSignature}]{tECDSA Signers}{tECDSA Keep Contract}
+            \begin{umlcall}[type=return,op=\texttt{provideSignature}]{tECDSA Signers}{tECDSA Keep Contract}
               \begin{umlcall}[type=return,op=\texttt{requestSignature} callback,name=requestSig]{tECDSA Keep Contract}{Deposit Contract}
                 \begin{umlcall}[type=return,op=emit \texttt{RedemptionSigned}]{Deposit Contract}{User}
                 \end{umlcall}
