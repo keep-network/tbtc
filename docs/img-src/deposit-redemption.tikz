@@ -39,6 +39,8 @@
                 \begin{umlcallself}[op=wait for confirmation]{tECDSA Signers}
                   \begin{umlcall}[type=return,op=confirmation,dt=10]{Bitcoin}{tECDSA Signers}
                     \begin{umlcall}[op=\texttt{provideRedemptionProof}]{tECDSA Signers}{Deposit Contract}
+                      \begin{umlcall}[type=return,op=emit \texttt{Redeemed}]{Deposit Contract}{User}
+                      \end{umlcall}
                     \end{umlcall}
                   \end{umlcall}
                 \end{umlcallself}
