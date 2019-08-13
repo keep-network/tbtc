@@ -988,6 +988,7 @@ contract('Deposit', (accounts) => {
 
       await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
       const initialBalance = await web3.eth.getBalance(beneficiary)
+      const initialDepositBalance = await deployed.TBTCTokenStub.balanceOf(testInstance.address)
 
       await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
@@ -995,12 +996,23 @@ contract('Deposit', (accounts) => {
       const balanceCheck = new BN(initialBalance).add(new BN(signerBond))
 
       assert.equal(balanceCheck, balanceAfter, 'funder bond not currectly returned')
+
       const endingTokenBalancce = await deployed.TBTCTokenStub.balanceOf(beneficiary)
+      const endingDepositBalance = await deployed.TBTCTokenStub.balanceOf(testInstance.address)
 
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
-      const toMint = lotSize.mul(new BN(95)).div(new BN(100))
-      const tokenCheck = initialTokenBalance.add(new BN(toMint))
+      const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
+      const signerFee = await deployed.TestDepositUtils.signerFee()
+
+      const totalMinted = lotSize.mul(new BN(satoshiMultiplier))
+      const toBeneficiary = totalMinted.sub(signerFee)
+      const tokenCheck = initialTokenBalance.add(new BN(toBeneficiary))
+      const depositBalanceCheck = initialDepositBalance.add(new BN(signerFee))
+      const totalCheck = signerFee.add(toBeneficiary)
+
       expect(tokenCheck, 'incorrect amount minted').to.eq.BN(endingTokenBalancce)
+      expect(totalMinted, 'fees and awarded tokens don\'t add up to minted amount').to.eq.BN(totalCheck)
+      expect(depositBalanceCheck, 'signer fee not withheld properly').to.eq.BN(endingDepositBalance)
     })
   })
 
