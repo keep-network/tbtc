@@ -273,7 +273,9 @@ library DepositUtils {
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee() public pure returns (uint256) {
-        return TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier()).div(TBTCConstants.getSignerFeeDivisor());
+        return TBTCConstants.getLotSize()
+            .mul(TBTCConstants.getSatoshiMultiplier())
+            .div(TBTCConstants.getSignerFeeDivisor());
     }
 
     /// @notice     calculates the beneficiary reward based on the deposit size
