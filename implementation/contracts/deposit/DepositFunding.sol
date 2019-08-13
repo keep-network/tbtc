@@ -95,6 +95,16 @@ library DepositFunding {
         }
     }
 
+    /// @dev    Mints TBTC to the beneficiary and a small percentage to the Deposit contract
+    function _mintTBTC(DepositUtils.Deposit storage _d) internal {
+        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+        uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
+        uint256 _value = TBTCConstants.getLotSize().mul(_multiplier);
+        uint256 _signerFee = DepositUtils.signerFee();
+        _tbtc.mint(_d.depositBeneficiary(), _value.sub(_signerFee));
+        _tbtc.mint(address(this), _signerFee);
+    }
+
     /// @notice     slashes the signers partially for committing fraud before funding occurs
     /// @dev        called only by notifyFraudFundingTimeout
     function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) public {
@@ -327,12 +337,7 @@ library DepositFunding {
         _d.logFunded();
 
         returnFunderBond(_d);
-
-        // Mint 95% of the deposit size
-        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
-        uint256 _value = TBTCConstants.getLotSize();
-        _tbtc.mint(_d.depositBeneficiary(), _value.mul(95).div(100));
-
+        _mintTBTC(_d);
         return true;
     }
 }
