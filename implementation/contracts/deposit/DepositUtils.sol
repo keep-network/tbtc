@@ -92,7 +92,7 @@ library DepositUtils {
         require(_observedDiff != ValidateSPV.getErrBadLength(), "Invalid length of the headers chain");
         require(_observedDiff != ValidateSPV.getErrInvalidChain(), "Invalid headers chain");
         require(_observedDiff != ValidateSPV.getErrLowWork(), "Insufficient work in a header");
-        
+
         /* TODO: make this better than 6 */
         require(
             _observedDiff >= _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),

@@ -14,7 +14,7 @@ library TBTCConstants {
     uint256 public constant UNDERCOLLATERALIZED_THRESHOLD_PERCENT = 140;  // percent
     uint256 public constant SEVERELY_UNDERCOLLATERALIZED_THRESHOLD_PERCENT = 120; // percent
     uint256 public constant TX_PROOF_DIFFICULTY_FACTOR = 1; // TODO: decreased for testing, original value: `6`
-    uint256 public constant SATOSHI_MULTIPLIER = 10 ** 10; // multiple 
+    uint256 public constant SATOSHI_MULTIPLIER = 10 ** 10; // multiple
 
     // Redemption Flow
     uint256 public constant REDEMPTION_SIGNATURE_TIMEOUT = 2 * 60 * 60;  // seconds
