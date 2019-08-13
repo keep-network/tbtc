@@ -353,7 +353,7 @@ contract('DepositUtils', (accounts) => {
   describe('signerFee()', async () => {
     it('returns a derived constant', async () => {
       const signerFee = await testUtilsInstance.signerFee.call()
-      assert(signerFee.eq(new BN(500000)))
+      assert(signerFee.eq(new BN(5000000000000000)))
     })
   })
 
