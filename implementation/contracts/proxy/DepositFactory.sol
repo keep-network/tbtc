@@ -2,6 +2,7 @@ pragma solidity ^0.5.10;
 
 import "./CloneFactory.sol";
 import "../deposit/Deposit.sol";
+import "../system/TBTCSystem.sol";
 
 /// @title Deposit Factory
 /// @notice Factory for the creation of new deposit clones.
@@ -45,7 +46,11 @@ contract DepositFactory is CloneFactory{
         address cloneAddress = createClone(masterDepositAddress);
         Deposit(address(uint160(cloneAddress))).createNewDeposit(_TBTCSystem, _TBTCToken, _KeepBridge, _keepThreshold, _keepSize);
 
+        TBTCSystem _system = TBTCSystem(_TBTCSystem);
+        _system.mint(msg.sender, uint256(cloneAddress));
+
         emit DepositCloneCreated(cloneAddress);
+
         return cloneAddress;
     }
 }

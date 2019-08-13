@@ -98,7 +98,6 @@ contract('DepositFactory', (accounts) => {
       await keep2.setPubkey(_pubKey)
       await deposit2.retrieveSignerPubkey()
       await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
-      await deployed.TBTCSystemStub.setDepositOwner('0x' + '0'.repeat(40), accounts[0])
       await deposit2.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       // deposit1 should be AWAITING_BTC_FUNDING_PROOF (2)
