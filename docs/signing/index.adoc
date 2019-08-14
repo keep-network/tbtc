@@ -39,7 +39,28 @@ after re-executing the DKG.
 
 == Threshold ECDSA
 
-TODO
+For a private key `x`, a message `M`, a hash function `H`, and a uniformly
+chosen `k`, an ECDSA signature is the pair `(r, s)`, 
+where `s = k (m + xr)`, `r = R_x`, `R = g^(k^-1)` and `m = H(m)`. Intuitively,
+this signature can be converted to a threshold signature if `k` and `x` are
+calculated via secret sharing between t of n protocol participants.
+link:https://eprint.iacr.org/2019/114.pdf[Gennaro and Goldfeder's paper]
+describes an efficient mechanism for performing this procedure. 
+Note that a similar mechanism was proposed by
+link:https://eprint.iacr.org/2018/987.pdf[Lindell at al] in the same year.
+
+Informally, 
+the participants perform the following actions to sign a message:
+
+1. Produce an additive share of `k * x`, where each participant `i` holds `k_i` and `x_i`.
+1. Efficiently calculate `R = g^(1/k)` using Bar-Ilan and Beaver's inversion
+trick, without any participant `i` revealing `k_i`, and set `r = R_x`.
+1. Each participant calculates their share of the signature: `s_i = m * k_i + r * k_i * x_i`.
+1. The threshold signature is the sum of all signatures `s_i`.
+
+A more in-depth description of the protocol can be found in Section 4.1  and 4.2
+of the paper. 
+
 
 == Improved Fault Attribution
 
