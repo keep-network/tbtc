@@ -14,6 +14,7 @@ library TestTBTCConstants {
     uint256 public constant UNDERCOLLATERALIZED_THRESHOLD_PERCENT = 140;  // percent
     uint256 public constant SEVERELY_UNDERCOLLATERALIZED_THRESHOLD_PERCENT = 120; // percent
     uint256 public constant TX_PROOF_DIFFICULTY_FACTOR = 6;
+    uint256 public constant SATOSHI_MULTIPLIER = 10 ** 10; // multiple 
 
     // Redemption Flow
     uint256 public constant REDEMPTION_SIGNATURE_TIMEOUT = 2 * 60 * 60;  // seconds
@@ -40,6 +41,7 @@ library TestTBTCConstants {
     function getUndercollateralizedPercent() public pure returns (uint256) { return UNDERCOLLATERALIZED_THRESHOLD_PERCENT; }
     function getSeverelyUndercollateralizedPercent() public pure returns (uint256) { return SEVERELY_UNDERCOLLATERALIZED_THRESHOLD_PERCENT; }
     function getTxProofDifficultyFactor() public pure returns (uint256) { return TX_PROOF_DIFFICULTY_FACTOR; }
+    function getSatoshiMultiplier() public pure returns (uint256) { return SATOSHI_MULTIPLIER; }
 
     function getSignatureTimeout() public pure returns (uint256) { return REDEMPTION_SIGNATURE_TIMEOUT; }
     function getIncreaseFeeTimer() public pure returns (uint256) { return INCREASE_FEE_TIMER; }

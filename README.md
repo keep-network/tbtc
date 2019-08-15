@@ -8,7 +8,7 @@ possible via today's Bitcoin network, while bringing superior money to other
 chains.
 
 This is the primary repo of the project, containing the
-[project documentation](./docs/index.adoc) and majority of the [on-chain code](implementation/).
+[project documentation](docs/index.adoc) and majority of the [on-chain code](implementation/).
 
 ## Building
 
@@ -26,7 +26,7 @@ Latest build from master is available at [http://docs.keep.network/tbtc/](http:/
 
 ### Building
 
-Docs are written in [AsciiDoc](http://asciidoc.org/), diagrams in a LaTeX package called [Tikz](https://www.overleaf.com/learn/latex/TikZ_package). To build:
+Docs are written in [AsciiDoctor](http://asciidoctor.org/), diagrams in a LaTeX package called [Tikz](https://www.overleaf.com/learn/latex/TikZ_package). To build:
 
 ```sh
 cd docs
