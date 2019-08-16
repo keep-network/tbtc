@@ -16,14 +16,6 @@ fleshed out, and are certainly not final.
 ****
 endif::[]
 
-ifndef::public[]
-.CONFIDENTIAL
-****
-WARNING: This document is currently CONFIDENTIAL. Sharing with anyone without
-the express authorization of Keep SEZC is not permitted.
-****
-endif::[]
-
 toc::[]
 
 [abstract]
