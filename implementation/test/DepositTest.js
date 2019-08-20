@@ -1145,8 +1145,9 @@ contract('Deposit', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
+      let balance
       for (let i = 0; i < 4; i++) {
-        let balance = await token.balanceOf(accounts[i])
+        balance = await token.balanceOf(accounts[i])
         await deployed.TBTCSystemStub.systemBurnFrom(accounts[i], balance)
       }
     })
@@ -1176,12 +1177,8 @@ contract('Deposit', (accounts) => {
 
     it('reverts if TBTC balance is insufficient', async () => {
       // mint 1 less than lot size
-      //const initial = await token.balanceOf(accounts[0])
-      //console.log(initial.toString())
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
       await deployed.TBTCSystemStub.systemMint(accounts[0], lotSize - 1)
-      //const preCall = await token.balanceOf(accounts[0])
-      //console.log(preCall.toString())
       try {
         await testInstance.purchaseSignerBondsAtAuction()
         assert(false, 'Test call did not error as expected')
