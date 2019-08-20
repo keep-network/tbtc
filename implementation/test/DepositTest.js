@@ -167,8 +167,6 @@ contract('Deposit', (accounts) => {
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
-      // make sure to clear TBTC balance of caller
-      // await deployed.TBTCSystemStub.clearBalance(accounts[0])
       // mint the required balance to request redemption
       await deployed.TBTCSystemStub.systemMint(accounts[0], requiredBalance)
     })
