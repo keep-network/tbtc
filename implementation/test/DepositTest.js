@@ -88,7 +88,6 @@ contract('Deposit', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     token = await TBTCToken.new(deployed.TBTCSystemStub.address)
     await deployed.TBTCSystemStub.setExternalAddresses(token.address)
-    await deployed.TBTCSystemStub.systemMint(accounts[0], '0xA')
     testInstance = deployed.TestDeposit
     testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, token.address, deployed.KeepStub.address)
     await deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
