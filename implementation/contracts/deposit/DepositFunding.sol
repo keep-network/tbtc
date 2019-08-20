@@ -10,6 +10,7 @@ import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCSystem} from "../system/TBTCSystem.sol";
 
 library DepositFunding {
 
@@ -101,15 +102,15 @@ library DepositFunding {
     /// Minted tokens are split between the beneficiary (99,5%) and the deposit
     /// contract (0,5%).
     function mintTBTC(DepositUtils.Deposit storage _d) internal {
-        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
 
         uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
         uint256 _signerFee = DepositUtils.signerFee();
 
         uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
 
-        _tbtc.mint(_d.depositBeneficiary(), _totalValue.sub(_signerFee));
-        _tbtc.mint(address(this), _signerFee);
+        _system.systemMint(_d.depositBeneficiary(), _totalValue.sub(_signerFee));
+        _system.systemMint(address(this), _signerFee);
     }
 
     /// @notice     slashes the signers partially for committing fraud before funding occurs
