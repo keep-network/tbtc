@@ -88,10 +88,14 @@ library DepositUtils {
         }
 
         uint256 _observedDiff = _bitcoinHeaders.validateHeaderChain();
-        require(_observedDiff > 3, "ValidateSPV returned an error code");
+
+        require(_observedDiff != ValidateSPV.getErrBadLength(), "Invalid length of the headers chain");
+        require(_observedDiff != ValidateSPV.getErrInvalidChain(), "Invalid headers chain");
+        require(_observedDiff != ValidateSPV.getErrLowWork(), "Insufficient work in a header");
+
         /* TODO: make this better than 6 */
         require(
-            _observedDiff >= _reqDiff.mul(6),
+            _observedDiff >= _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),
             "Insufficient accumulated difficulty in header chain"
         );
     }
@@ -269,7 +273,9 @@ library DepositUtils {
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee() public pure returns (uint256) {
-        return TBTCConstants.getLotSize().div(TBTCConstants.getSignerFeeDivisor());
+        return TBTCConstants.getLotSize()
+            .mul(TBTCConstants.getSatoshiMultiplier())
+            .div(TBTCConstants.getSignerFeeDivisor());
     }
 
     /// @notice     calculates the beneficiary reward based on the deposit size

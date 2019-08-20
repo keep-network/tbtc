@@ -16,14 +16,6 @@ fleshed out, and are certainly not final.
 ****
 endif::[]
 
-ifndef::public[]
-.CONFIDENTIAL
-****
-WARNING: This document is currently CONFIDENTIAL. Sharing with anyone without
-the express authorization of Keep SEZC is not permitted.
-****
-endif::[]
-
 toc::[]
 
 [abstract]
@@ -32,6 +24,19 @@ toc::[]
 --
 
 == Overview
+
+== Conventions
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
+
+== A note on naming
+
+The system, in its entirety, is called "tBTC". In this document and throughout
+the project, the fungible Bitcoin-backed token is called "TBTC" to distinguish
+it from the rest of the project, and strongly suggest an eventual ticker.
+
+Further discussion can be found on
+https://github.com/keep-network/tbtc/issues/17[Github].
 
 == Prior Work
 
@@ -136,7 +141,7 @@ remain
 
 * Censorship and seizure resistant, across friendly and unfriendly
 jurisdictions
-* Inflation-resistant. tBTC may only be minted after proof is provided of a
+* Inflation-resistant. TBTC may only be minted after proof is provided of a
 backing BTC deposit.
 * Leverage-resistant. The existence of tBTC shouldn't allow cross-chain
 "printing" of additional synthetic Bitcoin. We can't stop someone from launching

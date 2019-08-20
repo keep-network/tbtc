@@ -24,8 +24,6 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-const ADDRESS_ZERO = '0x' + '0'.repeat(40)
-
 const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },
@@ -67,9 +65,13 @@ const _outValueBytes = '0x2040351d00000000'
 contract('DepositUtils', (accounts) => {
   let deployed
   let testUtilsInstance
+  let beneficiary
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
     testUtilsInstance = deployed.TestDepositUtils
+    beneficiary = accounts[2]
+    deployed.TBTCSystemStub.mint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
+
 
     await testUtilsInstance.createNewDeposit(
       deployed.TBTCSystemStub.address,
@@ -133,14 +135,49 @@ contract('DepositUtils', (accounts) => {
       }
     })
 
-    it('reverts on a ValidateSPV error code (3 or lower)', async () => {
-      try {
-        await deployed.TBTCSystemStub.setPreviousDiff(1)
-        await testUtilsInstance.evaluateProofDifficulty(utils.LOW_DIFF_HEADER)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'ValidateSPV returned an error code')
-      }
+    describe('reverts on a ValidateSPV errors', async () => {
+      before(async () => {
+        await deployed.TBTCSystemStub.setCurrentDiff(5646403851534)
+      })
+
+      it('bad headers chain length work', async () => {
+        // Cut one byte from a last header. We slice a hexadecimal representation
+        // of concatenated chain headers bytes, followed by the `0x` prefix (add
+        // `2`). Each header is expected to be `160` characters, we take
+        // `4` headers and cut out a last byte from the last header (subtract
+        // `2`).
+        const badLengthChain = utils.HEADER_PROOFS[0].slice(0, (2 + (160 * 4)) - 2)
+
+        try {
+          await testUtilsInstance.evaluateProofDifficulty(badLengthChain)
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'Invalid length of the headers chain')
+        }
+      })
+
+      it('invalid headers chain', async () => {
+        // Cut out one header from the headers chain. Take out second header
+        // from the headers chain.
+        const invalidChain = utils.HEADER_PROOFS[0].slice(0, (2 + 160))
+          + utils.HEADER_PROOFS[0].slice((2 + (160 * 2)), (2 + (160 * 4)))
+
+        try {
+          await testUtilsInstance.evaluateProofDifficulty(invalidChain)
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'Invalid headers chain')
+        }
+      })
+
+      it('insufficient work in a header', async () => {
+        try {
+          await testUtilsInstance.evaluateProofDifficulty(utils.LOW_WORK_HEADER)
+          assert(false, 'Test call did not error as expected')
+        } catch (e) {
+          assert.include(e.message, 'Insufficient work in a header')
+        }
+      })
     })
   })
 
@@ -316,7 +353,7 @@ contract('DepositUtils', (accounts) => {
   describe('signerFee()', async () => {
     it('returns a derived constant', async () => {
       const signerFee = await testUtilsInstance.signerFee.call()
-      assert(signerFee.eq(new BN(500000)))
+      assert(signerFee.eq(new BN(5000000000000000)))
     })
   })
 
@@ -426,7 +463,7 @@ contract('DepositUtils', (accounts) => {
   describe('depositBeneficiary()', async () => {
     it('calls out to the system', async () => {
       const res = await testUtilsInstance.depositBeneficiary.call()
-      assert.equal(res, '0x' + '00'.repeat(19) + '00')
+      assert.equal(res, accounts[2])
     })
   })
 
@@ -462,13 +499,11 @@ contract('DepositUtils', (accounts) => {
 
   describe('distributeBeneficiaryReward()', async () => {
     it('checks that beneficiary is rewarded', async () => {
-      const beneficiary = accounts[2]
       // min an arbitrary reward value to the funding contract
       const reward = 100000000
       await deployed.TBTCTokenStub.mint(testUtilsInstance.address, reward)
 
       const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
-      await deployed.TBTCSystemStub.setDepositOwner(ADDRESS_ZERO, beneficiary)
 
       await testUtilsInstance.distributeBeneficiaryReward()
 
