@@ -13,4 +13,4 @@ contract MinterAuthority {
         require(msg.sender == _systemAddress, "Caller must be TBTC System contract");
         _;
     }
-}                    
+}
