@@ -1,6 +1,6 @@
 const DepositFactory = artifacts.require('DepositFactory')
 const KeepStub = artifacts.require('KeepStub')
-const TBTCTokenStub = artifacts.require('TBTCTokenStub')
+const TBTCToken = artifacts.require('TBTCToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const Deposit = artifacts.require('Deposit')
 
@@ -12,18 +12,20 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
-  { name: 'TBTCTokenStub', contract: TBTCTokenStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 contract('DepositFactory', (accounts) => {
   let deployed
   let factory
   let depositContract
+  let token
 
   before(async () => {
+    deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    token = await TBTCToken.new(deployed.TBTCSystemStub.address)
+    await deployed.TBTCSystemStub.setExternalAddresses(token.address)
     depositContract = await Deposit.deployed()
     factory = await DepositFactory.new(depositContract.address)
-    deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
   })
 
   describe('createDeposit()', async () => {
@@ -34,14 +36,14 @@ contract('DepositFactory', (accounts) => {
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        deployed.TBTCTokenStub.address,
+        token.address,
         keep1.address,
         1,
         1)
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        deployed.TBTCTokenStub.address,
+        token.address,
         keep2.address,
         1,
         1)
@@ -63,14 +65,14 @@ contract('DepositFactory', (accounts) => {
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        deployed.TBTCTokenStub.address,
+        token.address,
         keep1.address,
         1,
         1)
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        deployed.TBTCTokenStub.address,
+        token.address,
         keep2.address,
         1,
         1)
@@ -114,7 +116,7 @@ contract('DepositFactory', (accounts) => {
 
       await depositContract.createNewDeposit(
         deployed.TBTCSystemStub.address,
-        deployed.TBTCTokenStub.address,
+        token.address,
         keep.address,
         1,
         1)
@@ -129,7 +131,7 @@ contract('DepositFactory', (accounts) => {
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        deployed.TBTCTokenStub.address,
+        token.address,
         keepNew.address,
         1,
         1)
