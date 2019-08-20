@@ -1,7 +1,7 @@
 pragma solidity ^0.5.10;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../openzeppelin-contracts/contracts/token/ERC20/ERC20Detailed.sol";
+import "../../openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import "./MinterAuthority.sol";
 
 contract TBTCToken is ERC20Detailed, ERC20, MinterAuthority {
