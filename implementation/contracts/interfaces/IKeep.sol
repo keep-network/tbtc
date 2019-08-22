@@ -15,11 +15,17 @@ interface IKeep {
     // error if not ready yet
     function getKeepPubkey(address _keepAddress) external view returns (bytes memory);
 
-    // onlyKeepOwner
-    // record a digest as approved for signing
+    /// @notice Approves digest for signing.
+    /// @param _keepAddress Keep address
+    /// @param _digest Digest to sign
+    /// @return True if successful.
     function approveDigest(address _keepAddress, bytes32 _digest) external returns (bool _success);
 
-    // returns the timestamp when it was approved
+    /// @notice Gets timestamp of digest approval for signing.
+    /// @param _keepAddress Keep address
+    /// @param _digest Digest to sign
+    /// @return Timestamp from the moment of recording the digest for signing.
+    /// Returns 0 if the digest was not recorded for signing for the given keep.
     function wasDigestApprovedForSigning(address _keepAddress, bytes32 _digest) external view returns (uint256);
 
     // Expected behavior:

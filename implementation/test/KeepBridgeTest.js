@@ -79,7 +79,7 @@ contract('KeepBridge', (accounts) => {
   })
 
   describe('wasDigestApprovedForSigning()', async () => {
-    it('returns 0 when digest has not been registered', async () => {
+    it('returns 0 when digest has not been approved', async () => {
       const digest = '0x' + '01'.repeat(32)
 
       const result = await keepBridge.wasDigestApprovedForSigning(ecdsaKeepStub.address, digest)
@@ -117,7 +117,7 @@ contract('KeepBridge', (accounts) => {
       )
     })
 
-    it('returns 0 when digest has been registered for another keep', async () => {
+    it('returns 0 when digest has been approved to sign by another keep', async () => {
       const digest = '0x' + '03'.repeat(32)
       const keep2address = '0x' + '04'.repeat(20)
 
