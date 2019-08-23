@@ -11,7 +11,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
-const TBTCToken = artifacts.require('TBTCToken')
+const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -69,7 +69,7 @@ contract('DepositUtils', (accounts) => {
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
-    token = await TBTCToken.new(deployed.TBTCSystemStub.address)
+    token = await TestToken.new(deployed.TBTCSystemStub.address)
     await deployed.TBTCSystemStub.setExternalAddresses(token.address)
     testUtilsInstance = deployed.TestDepositUtils
     beneficiary = accounts[2]
@@ -504,7 +504,7 @@ contract('DepositUtils', (accounts) => {
     it('checks that beneficiary is rewarded', async () => {
       // min an arbitrary reward value to the funding contract
       const reward = 100000000
-      await deployed.TBTCSystemStub.systemMint(testUtilsInstance.address, reward)
+      await token.forceMint(testUtilsInstance.address, reward)
 
       const initialTokenBalance = await token.balanceOf(beneficiary)
 
