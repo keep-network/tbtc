@@ -14,8 +14,6 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
 const TestToken = artifacts.require('TestToken')
-const TBTCToken = artifacts.require('TBTCToken')
-
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -45,8 +43,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  //{ name: 'TestToken', contract: TestToken },
-  //{ name: 'TBTCtoken', contract: TBTCToken },
   { name: 'KeepStub', contract: KeepStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
