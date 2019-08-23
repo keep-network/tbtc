@@ -11,7 +11,7 @@ contract MinterAuthority {
         _systemAddress = _system;
     }
 
-    modifier isApproved(){
+    modifier onlyDeposit(){
         require(TBTCSystem(_systemAddress).isDeposit(msg.sender), "caller must be a deposit");
         _;
     }
