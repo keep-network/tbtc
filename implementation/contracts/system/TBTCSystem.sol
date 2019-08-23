@@ -36,18 +36,6 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
         }
     }
 
-    function systemMint(address _account, uint256 _amount) public returns (bool){
-        return TBTCToken(TBTCTokenAddress).mint(_account, _amount);
-    }
-
-    function systemBurnFrom(address _account, uint256 _amount) public {
-        TBTCToken(TBTCTokenAddress).burnFrom(_account, _amount);
-    }
-
-    function systemTransferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        return TBTCToken(TBTCTokenAddress).transferFrom(_from, _to, _value);
-    }
-
     // ERC721
 
     /// @dev             Function to mint a new token.
@@ -56,5 +44,13 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
     /// @param _tokenId  uint256 ID of the token to be minted
     function mint(address _to, uint256 _tokenId) public {
         _mint(_to, _tokenId);
+    }
+
+    // ACL
+
+    /// @dev             Checks if an address is a deposit
+    /// @param _address  The address to check
+    function isDeposit(address _address) public returns (bool){
+        return _exists(uint256(_address));
     }
 }
