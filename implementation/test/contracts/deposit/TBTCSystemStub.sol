@@ -5,12 +5,6 @@ import {TBTCToken} from "../../../contracts/system/TBTCToken.sol";
 
 contract TBTCSystemStub is TBTCSystem {
 
-    address _TBTCToken;
-
-    function setExternalAddresses(address _tokenAddress) public {
-        _TBTCToken = _tokenAddress;
-    }
-
     function setOraclePrice(uint256 _oraclePrice) external {
         oraclePrice = _oraclePrice;
     }
