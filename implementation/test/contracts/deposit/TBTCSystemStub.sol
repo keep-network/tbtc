@@ -27,17 +27,4 @@ contract TBTCSystemStub is TBTCSystem {
     function approvedToLog(address _caller) public view returns (bool) {
         _caller; return true;
     }
-
-    //Token functions
-    function systemMint(address _account, uint256 _amount) public returns (bool){
-        return TBTCToken(_TBTCToken).mint(_account, _amount);
-    }
-
-    function systemBurnFrom(address _account, uint256 _amount) public {
-        TBTCToken(_TBTCToken).burnFrom(_account, _amount);
-    }
-
-    function systemTransferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        return TBTCToken(_TBTCToken).transferFrom(_from, _to, _value);
-    }
 }
