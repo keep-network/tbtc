@@ -23,7 +23,6 @@ contract('DepositFactory', (accounts) => {
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     token = await TBTCToken.new(deployed.TBTCSystemStub.address)
-    await deployed.TBTCSystemStub.setExternalAddresses(token.address)
     depositContract = await Deposit.deployed()
     factory = await DepositFactory.new(depositContract.address)
   })
