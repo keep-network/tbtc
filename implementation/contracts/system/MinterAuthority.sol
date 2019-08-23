@@ -1,5 +1,7 @@
 pragma solidity 0.5.10;
 
+import {TBTCSystem} from "./TBTCSystem.sol";
+
 contract MinterAuthority {
 
     address internal _systemAddress;
@@ -9,8 +11,8 @@ contract MinterAuthority {
         _systemAddress = _system;
     }
 
-    modifier onlySystem(){
-        require(msg.sender == _systemAddress, "Caller must be TBTC System contract");
+    modifier isApproved(){
+        require(TBTCSystem(_systemAddress).isDeposit(msg.sender), "caller must be a deposit");
         _;
     }
 }
