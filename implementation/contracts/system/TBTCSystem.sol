@@ -10,11 +10,6 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
-    address internal TBTCTokenAddress;
-
-    function setExteriorAddresses(address _token) external {
-        TBTCTokenAddress = _token;
-    }
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
