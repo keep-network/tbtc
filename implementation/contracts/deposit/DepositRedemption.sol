@@ -12,8 +12,6 @@ import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
-import {TBTCSystem} from "../system/TBTCSystem.sol";
-
 
 library DepositRedemption {
 
@@ -55,12 +53,11 @@ library DepositRedemption {
         // Requires user to approve first
         /* TODO: implement such that it calls the system to burn TBTC? */
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
-        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
         uint256 _bal = _tbtc.balanceOf(msg.sender);
         uint256 _red = _d.redemptionTBTCAmount();
         require(_bal >= _red, "Not enough TBTC to cover outstanding debt");
-        _system.systemBurnFrom(msg.sender, TBTCConstants.getLotSize());
-        _system.systemTransferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
+        _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
+        _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
     }
 
     /// @notice                     Anyone can request redemption
