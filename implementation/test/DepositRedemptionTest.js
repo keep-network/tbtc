@@ -99,6 +99,7 @@ contract('Deposit', (accounts) => {
       await deployed.TBTCTokenStub.clearBalance(accounts[0])
       // mint the required balance to request redemption
       await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
+      await deployed.KeepStub.setSuccess(true)
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
@@ -120,29 +121,27 @@ contract('Deposit', (accounts) => {
 
     it('reverts if not in Active or Courtesy', async () => {
       await testInstance.setState(utils.states.LIQUIDATED)
-      try {
-        await testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20))
-      } catch (e) {
-        assert.include(e.message, 'Redemption only available from Active or Courtesy state')
-      }
+
+      await expectThrow(
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
+        'Redemption only available from Active or Courtesy state'
+      )
     })
 
     it('reverts if the fee is low', async () => {
-      try {
-        await testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20))
-      } catch (e) {
-        assert.include(e.message, 'Fee is too low')
-      }
+      await expectThrow(
+        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
+        'Fee is too low'
+      )
     })
 
     it('reverts if the keep returns false', async () => {
-      try {
-        await deployed.KeepStub.setSuccess(false)
-        await testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20))
-      } catch (e) {
-        await deployed.KeepStub.setSuccess(true)
-        assert.include(e.message, 'Keep returned false')
-      }
+      await deployed.KeepStub.setSuccess(false)
+
+      await expectThrow(
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
+        'Keep returned false'
+      )
     })
 
     it('calls Keep to approve the digest', async () => {
@@ -185,20 +184,19 @@ contract('Deposit', (accounts) => {
     })
 
     it('errors if not awaiting withdrawal signature', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.provideRedemptionSignature(v, r, s)
-      } catch (e) {
-        assert.include(e.message, 'Not currently awaiting a signature')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.provideRedemptionSignature(v, r, s),
+        'Not currently awaiting a signature'
+      )
     })
 
     it('errors on invaid sig', async () => {
-      try {
-        await testInstance.provideRedemptionSignature(28, r, s)
-      } catch (e) {
-        assert.include(e.message, 'Invalid signature')
-      }
+      await expectThrow(
+        testInstance.provideRedemptionSignature(28, r, s),
+        'Invalid signature'
+      )
     })
   })
 
@@ -236,6 +234,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, keepPubkeyX, keepPubkeyY)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, prevSighash)
+      await deployed.KeepStub.setSuccess(true)
     })
 
     it('approves a new digest for signing, updates the state, and logs RedemptionRequested', async () => {
@@ -251,49 +250,48 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting withdrawal proof', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes)
-      } catch (e) {
-        assert.include(e.message, 'Fee increase only available after signature provided')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
+        'Fee increase only available after signature provided'
+      )
     })
 
     it('reverts if the increase fee timer has not elapsed', async () => {
-      try {
-        const block = await web3.eth.getBlock('latest')
-        await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, block.timestamp, prevSighash)
-        await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes)
-      } catch (e) {
-        assert.include(e.message, 'Fee increase not yet permitted')
-      }
+      const block = await web3.eth.getBlock('latest')
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, block.timestamp, prevSighash)
+
+
+      await expectThrow(
+        testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
+        'Fee increase not yet permitted'
+      )
     })
 
     it('reverts if the fee step is not linear', async () => {
-      try {
-        await testInstance.increaseRedemptionFee(previousOutputBytes, '0x1101010101102201')
-      } catch (e) {
-        assert.include(e.message, 'Not an allowed fee step')
-      }
+      await expectThrow(
+        testInstance.increaseRedemptionFee(previousOutputBytes, '0x1101010101102201'),
+        'Not an allowed fee step'
+      )
     })
 
     it('reverts if the previous sighash was not the latest approved', async () => {
-      try {
-        await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
-        await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes)
-      } catch (e) {
-        assert.include(e.message, 'Provided previous value does not yield previous sighash')
-      }
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
+
+      await expectThrow(
+        testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
+        'Provided previous value does not yield previous sighash'
+      )
     })
 
     it('reverts if the keep returned false', async () => {
-      try {
-        await deployed.KeepStub.setSuccess(false)
-        await testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes)
-      } catch (e) {
-        await deployed.KeepStub.setSuccess(true)
-        assert.include(e.message, 'Keep returned false')
-      }
+      await deployed.KeepStub.setSuccess(false)
+
+      await expectThrow(
+        testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
+        'Keep returned false'
+      )
     })
   })
 
@@ -335,20 +333,19 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not in the redemption flow', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.provideRedemptionProof(tx, proof, index, headerChain)
-      } catch (e) {
-        assert.include(e.message, 'Redemption proof only allowed from redemption flow')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.provideRedemptionProof(tx, proof, index, headerChain),
+        'Redemption proof only allowed from redemption flow'
+      )
     })
 
     it('reverts if the merkle proof is not validated successfully', async () => {
-      try {
-        await testInstance.provideRedemptionProof(tx, proof, 0, headerChain)
-      } catch (e) {
-        assert.include(e.message, 'Tx merkle proof is not valid for provided header')
-      }
+      await expectThrow(
+        testInstance.provideRedemptionProof(tx, proof, 0, headerChain),
+        'Tx merkle proof is not valid for provided header'
+      )
     })
   })
 
@@ -373,29 +370,28 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if tx parsing fails', async () => {
-      try {
-        await testInstance.redemptionTransactionChecks(badtx)
-      } catch (e) {
-        assert.include(e.message, 'Failed tx parsing')
-      }
+      await expectThrow(
+        testInstance.redemptionTransactionChecks(badtx),
+        'Failed tx parsing'
+      )
     })
 
     it('reverts if the tx spends the wrong utxo', async () => {
-      try {
-        await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '33'.repeat(36))
-        await testInstance.redemptionTransactionChecks.call(tx)
-      } catch (e) {
-        assert.include(e.message, 'Tx spends the wrong UTXO')
-      }
+      await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '33'.repeat(36))
+
+      await expectThrow(
+        await testInstance.redemptionTransactionChecks.call(tx),
+        'Tx spends the wrong UTXO'
+      )
     })
 
     it('reverts if the tx sends value to the wrong pkh', async () => {
-      try {
-        await testInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 14544, 0, '0x' + '11' * 32)
-        await testInstance.redemptionTransactionChecks.call(tx)
-      } catch (e) {
-        assert.include(e.message, 'Tx sends value to wrong pubkeyhash')
-      }
+      await testInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 14544, 0, '0x' + '11' * 32)
+
+      await expectThrow(
+        testInstance.redemptionTransactionChecks.call(tx),
+        'Tx sends value to wrong pubkeyhash'
+      )
     })
   })
 
@@ -416,31 +412,29 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting redemption signature', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-      } catch (e) {
-        assert.include(e.message, 'Not currently awaiting a signature')
-      }
+      await expectThrow(
+        testInstance.setState(utils.states.START),
+        'Not currently awaiting a signature'
+      )
     })
 
     it('reverts if the signature timeout has not elapsed', async () => {
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime + timer + 1, utils.bytes32zero)
-      try {
-        await testInstance.notifySignatureTimeout()
-      } catch (e) {
-        assert.include(e.message, 'Signature timer has not elapsed')
-      }
+      await expectThrow(
+        testInstance.notifySignatureTimeout(),
+        'Signature timer has not elapsed'
+      )
     })
 
     it('reverts if no funds recieved as signer bond', async () => {
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero)
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
-      try {
-        await expectThrow(testInstance.notifySignatureTimeout())
-      } catch (e) {
-        assert.include(e.message, 'No funds should be received as signer bond')
-      }
+
+      await expectThrow(
+        testInstance.notifySignatureTimeout(),
+        'No funds should be received as signer bond'
+      )
     })
 
     it('starts abort liquidation', async () => {
@@ -472,26 +466,32 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting redemption proof', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-      } catch (e) {
-        assert.include(e.message, 'Not currently awaiting a redemption proof')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.notifyRedemptionProofTimeout(),
+        'Not currently awaiting a redemption proof'
+      )
     })
 
     it('reverts if the proof timeout has not elapsed', async () => {
-      try {
-        await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero)
-        await testInstance.notifyRedemptionProofTimeout()
-      } catch (e) {
-        assert.include(e.message, 'Proof timer has not elapsed')
-      }
+      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero)
+
+      await expectThrow(
+        testInstance.notifyRedemptionProofTimeout(),
+        'Proof timer has not elapsed'
+      )
     })
+
     it('reverts if no funds recieved as signer bond', async () => {
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
-      await expectThrow(testInstance.notifyRedemptionProofTimeout())
+
+      await expectThrow(
+        testInstance.notifyRedemptionProofTimeout(),
+        'No funds received, unexpected'
+      )
     })
 
     it('starts abort liquidation', async () => {

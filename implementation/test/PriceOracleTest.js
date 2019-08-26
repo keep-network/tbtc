@@ -1,4 +1,6 @@
 import increaseTime from './helpers/increaseTime'
+import expectThrow from './helpers/expectThrow'
+
 import BN from 'bn.js'
 
 const chai = require('chai')
@@ -58,13 +60,10 @@ contract('PriceOracleV1', function(accounts) {
       it('fails when the price is expired', async () => {
         await increaseTime(PRICE_EXPIRY_SECONDS + 1)
 
-        try {
-          await instance.getPrice.call()
-
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Price expired')
-        }
+        await expectThrow(
+          instance.getPrice.call(),
+          'Price expired'
+        )
       })
     })
 
@@ -121,20 +120,17 @@ contract('PriceOracleV1', function(accounts) {
 
         describe('less than 1% delta', async () => {
           it('fails price increase', async () => {
-            try {
-              await instance.updatePrice(price11)
-              assert(false, 'Test call did not error as expected')
-            } catch (e) {
-              assert.include(e.message, 'Price change is negligible (<1%)')
-            }
+            await expectThrow(
+              instance.updatePrice(price11),
+              'Price change is negligible (<1%)'
+            )
           })
+
           it('fails price decrease', async () => {
-            try {
-              await instance.updatePrice(price12)
-              assert(false, 'Test call did not error as expected')
-            } catch (e) {
-              assert.include(e.message, 'Price change is negligible (<1%)')
-            }
+            await expectThrow(
+              instance.updatePrice(price12),
+              'Price change is negligible (<1%)'
+            )
           })
         })
 
@@ -142,6 +138,7 @@ contract('PriceOracleV1', function(accounts) {
           it('passes price increase', async () => {
             await instance.updatePrice(price21)
           })
+
           it('passes price decrease', async () => {
             await instance.updatePrice(price22)
           })
@@ -164,16 +161,13 @@ contract('PriceOracleV1', function(accounts) {
           DEFAULT_PRICE
         )
 
-        try {
-          await instance.updatePrice(
+        await expectThrow(
+          instance.updatePrice(
             new BN('323200000001'),
             { from: accounts[1] }
-          )
-
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Unauthorised')
-        }
+          ),
+          'Unauthorised'
+        )
       })
 
       it('ignores 1% threshold for update, when the price is close to expiry', async () => {
@@ -186,12 +180,10 @@ contract('PriceOracleV1', function(accounts) {
 
         await instance.updatePrice(price1)
 
-        try {
-          await instance.updatePrice(price2)
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Price change is negligible (<1%)')
-        }
+        await expectThrow(
+          instance.updatePrice(price2),
+          'Price change is negligible (<1%)'
+        )
 
         const ONE_HOUR = 3600
         await increaseTime(PRICE_EXPIRY_SECONDS - ONE_HOUR)

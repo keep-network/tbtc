@@ -1,3 +1,5 @@
+import expectThrow from './helpers/expectThrow'
+
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
 const ValidateSPV = artifacts.require('ValidateSPV')
@@ -99,24 +101,23 @@ contract('Deposit', (accounts) => {
 
     it('reverts if not in a liquidation auction', async () => {
       await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.purchaseSignerBondsAtAuction()
-      } catch (e) {
-        assert.include(e.message, 'No active auction')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.purchaseSignerBondsAtAuction(),
+        'No active auction'
+      )
     })
 
     it('reverts if TBTC balance is insufficient', async () => {
       // mint 1 less than lot size
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
       await deployed.TBTCTokenStub.mint(accounts[0], lotSize - 1)
-      try {
-        await testInstance.purchaseSignerBondsAtAuction()
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Not enough TBTC to cover outstanding debt')
-      }
+
+      await expectThrow(
+        testInstance.purchaseSignerBondsAtAuction(),
+        'Not enough TBTC to cover outstanding debt'
+      )
     })
 
     it(`burns msg.sender's tokens`, async () => {
@@ -228,22 +229,22 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not in active state', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.notifyCourtesyCall()
-      } catch (e) {
-        assert.include(e.message, 'Can only courtesy call from active state')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.notifyCourtesyCall(),
+        'Can only courtesy call from active state'
+      )
     })
 
     it('reverts if sufficiently collateralized', async () => {
-      try {
-        await deployed.KeepStub.setBondAmount(1000)
-        await deployed.TBTCSystemStub.setOraclePrice(new BN(1))
-        await testInstance.notifyCourtesyCall()
-      } catch (e) {
-        assert.include(e.message, 'Signers have sufficient collateral')
-      }
+      await deployed.KeepStub.setBondAmount(1000)
+      await deployed.TBTCSystemStub.setOraclePrice(new BN(1))
+
+      await expectThrow(
+        testInstance.notifyCourtesyCall(),
+        'Signers have sufficient collateral'
+      )
     })
   })
 
@@ -278,31 +279,31 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not in courtesy call state', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.exitCourtesyCall()
-      } catch (e) {
-        assert.include(e.message, 'Not currently in courtesy call')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.exitCourtesyCall(),
+        'Not currently in courtesy call'
+      )
     })
 
     it('reverts if the deposit term is expiring anyway', async () => {
-      try {
-        await testInstance.setUTXOInfo('0x' + '00'.repeat(8), 0, '0x' + '00'.repeat(36))
-        await testInstance.exitCourtesyCall()
-      } catch (e) {
-        assert.include(e.message, 'Deposit is expiring')
-      }
+      await testInstance.setUTXOInfo('0x' + '00'.repeat(8), 0, '0x' + '00'.repeat(36))
+
+      await expectThrow(
+        testInstance.exitCourtesyCall(),
+        'Deposit is expiring'
+      )
     })
 
     it('reverts if the deposit is still undercollateralized', async () => {
-      try {
-        await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
-        await deployed.KeepStub.setBondAmount(0)
-        await testInstance.exitCourtesyCall()
-      } catch (e) {
-        assert.include(e.message, 'Deposit is still undercollateralized')
-      }
+      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
+      await deployed.KeepStub.setBondAmount(0)
+
+      await expectThrow(
+        testInstance.exitCourtesyCall(),
+        'Deposit is still undercollateralized'
+      )
     })
   })
 
@@ -323,22 +324,22 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not in active or courtesy call', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.notifyUndercollateralizedLiquidation()
-      } catch (e) {
-        assert.include(e.message, 'Deposit not in active or courtesy call')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.notifyUndercollateralizedLiquidation(),
+        'Deposit not in active or courtesy call'
+      )
     })
 
     it('reverts if the deposit is not severely undercollateralized', async () => {
-      try {
-        await deployed.KeepStub.setBondAmount(10000000)
-        await deployed.TBTCSystemStub.setOraclePrice(new BN(1))
-        await testInstance.notifyUndercollateralizedLiquidation()
-      } catch (e) {
-        assert.include(e.message, 'Deposit has sufficient collateral')
-      }
+      await deployed.KeepStub.setBondAmount(10000000)
+      await deployed.TBTCSystemStub.setOraclePrice(new BN(1))
+
+      await expectThrow(
+        testInstance.notifyUndercollateralizedLiquidation(),
+        'Deposit has sufficient collateral'
+      )
     })
 
     it('assert starts signer abort liquidation', async () => {
@@ -374,21 +375,19 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not in a courtesy call period', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.notifyCourtesyTimeout()
-      } catch (e) {
-        assert.include(e.message, 'Not in a courtesy call period')
-      }
+      await testInstance.setState(utils.states.START)
+      await expectThrow(
+        testInstance.notifyCourtesyTimeout(),
+        'Not in a courtesy call period'
+      )
     })
 
     it('reverts if the period has not elapsed', async () => {
-      try {
-        await testInstance.setLiquidationAndCourtesyInitated(0, courtesyTime * 5)
-        await testInstance.notifyCourtesyTimeout()
-      } catch (e) {
-        assert.include(e.message, 'Courtesy period has not elapsed')
-      }
+      await testInstance.setLiquidationAndCourtesyInitated(0, courtesyTime * 5)
+      await expectThrow(
+        testInstance.notifyCourtesyTimeout(),
+        'Courtesy period has not elapsed'
+      )
     })
 
     it('assert starts signer abort liquidation', async () => {
@@ -435,21 +434,21 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not in active', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.notifyDepositExpiryCourtesyCall()
-      } catch (e) {
-        assert.include(e.message, 'Deposit is not active')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.notifyDepositExpiryCourtesyCall(),
+        'Deposit is not active'
+      )
     })
 
     it('reverts if deposit not yet expiring', async () => {
-      try {
-        await testInstance.setUTXOInfo('0x' + '00'.repeat(8), fundedTime * 5, '0x' + '00'.repeat(36))
-        await testInstance.notifyDepositExpiryCourtesyCall()
-      } catch (e) {
-        assert.include(e.message, 'Deposit term not elapsed')
-      }
+      await testInstance.setUTXOInfo('0x' + '00'.repeat(8), fundedTime * 5, '0x' + '00'.repeat(36))
+
+      await expectThrow(
+        testInstance.notifyDepositExpiryCourtesyCall(),
+        'Deposit term not elapsed'
+      )
     })
   })
 })
