@@ -414,8 +414,10 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting redemption signature', async () => {
+      testInstance.setState(utils.states.START)
+
       await expectThrow(
-        testInstance.setState(utils.states.START),
+        testInstance.notifySignatureTimeout(),
         'Not currently awaiting a signature'
       )
     })
