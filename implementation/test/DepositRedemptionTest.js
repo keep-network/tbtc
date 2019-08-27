@@ -382,7 +382,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '33'.repeat(36))
 
       await expectThrow(
-        await testInstance.redemptionTransactionChecks.call(tx),
+        testInstance.redemptionTransactionChecks.call(tx),
         'Tx spends the wrong UTXO'
       )
     })
