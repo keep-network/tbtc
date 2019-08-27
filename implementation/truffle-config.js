@@ -1,5 +1,10 @@
-require('babel-register');
-require('babel-polyfill');
+require('source-map-support').install({
+  handleUncaughtExceptions: true,
+  hookRequire: true,
+  environment: 'node'
+});
+require("@babel/register");
+
 /**
  * Use this file to configure your truffle project. It's seeded with some
  * common settings for different networks and features like migrations,
