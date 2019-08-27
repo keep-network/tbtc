@@ -262,7 +262,6 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, block.timestamp, prevSighash)
 
-
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
         'Fee increase not yet permitted'
@@ -278,6 +277,9 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the previous sighash was not the latest approved', async () => {
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
+
+      // Previous sigHash is not approved for signing.
+      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, 0)
 
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
@@ -380,7 +382,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '33'.repeat(36))
 
       await expectThrow(
-        await testInstance.redemptionTransactionChecks.call(tx),
+        testInstance.redemptionTransactionChecks.call(tx),
         'Tx spends the wrong UTXO'
       )
     })
@@ -412,8 +414,10 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting redemption signature', async () => {
+      testInstance.setState(utils.states.START)
+
       await expectThrow(
-        testInstance.setState(utils.states.START),
+        testInstance.notifySignatureTimeout(),
         'Not currently awaiting a signature'
       )
     })
@@ -426,14 +430,13 @@ contract('Deposit', (accounts) => {
       )
     })
 
-    it('reverts if no funds recieved as signer bond', async () => {
-      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero)
+    it('reverts if no funds received as signer bond', async () => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
 
       await expectThrow(
         testInstance.notifySignatureTimeout(),
-        'No funds should be received as signer bond'
+        'No funds received, unexpected'
       )
     })
 
