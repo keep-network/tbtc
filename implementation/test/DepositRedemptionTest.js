@@ -430,14 +430,13 @@ contract('Deposit', (accounts) => {
       )
     })
 
-    it('reverts if no funds recieved as signer bond', async () => {
-      await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime * 5, utils.bytes32zero)
+    it('reverts if no funds received as signer bond', async () => {
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
 
       await expectThrow(
         testInstance.notifySignatureTimeout(),
-        'No funds should be received as signer bond'
+        'No funds received, unexpected'
       )
     })
 
