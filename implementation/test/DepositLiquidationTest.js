@@ -328,19 +328,38 @@ contract('Deposit', (accounts) => {
   })
 
   describe('notifyUndercollateralizedLiquidation', async () => {
+    let oraclePrice
+    let lotSize
+    let lotValue
+    let severelyUndercollateralizedPercent
+
+    before(async () => {
+      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
+
+      oraclePrice = await deployed.TBTCSystemStub.fetchOraclePrice.call()
+      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      lotValue = lotSize.mul(oraclePrice)
+
+      severelyUndercollateralizedPercent = await deployed.TBTCConstants.getSeverelyUndercollateralizedPercent.call()
+    })
+
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await deployed.KeepStub.setBondAmount(0)
       await deployed.KeepStub.send(1000000, { from: accounts[0] })
     })
 
-    afterEach(async () => {
-      await deployed.KeepStub.setBondAmount(1000)
-      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
-    })
-
     it('executes', async () => {
+      // Bond value is calculated as:
+      // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
+      // Here we test collateralization less than severely undercollateralized
+      // threshold (120%).
+      const bondValue = severelyUndercollateralizedPercent.mul(lotValue).div(new BN(100)).sub(new BN(1))
+      await deployed.KeepStub.setBondAmount(bondValue)
+
       await testInstance.notifyUndercollateralizedLiquidation()
+      // TODO: Add validations or cover with `reverts if the deposit is not
+      // severely undercollateralized` test case.
     })
 
     it('reverts if not in active or courtesy call', async () => {
@@ -353,8 +372,11 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the deposit is not severely undercollateralized', async () => {
-      await deployed.KeepStub.setBondAmount(10000000)
-      await deployed.TBTCSystemStub.setOraclePrice(new BN(1))
+      // Bond value is calculated as:
+      // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
+      // Here we test collateralization equal severely undercollateralized threshold (120%).
+      const bondValue = severelyUndercollateralizedPercent.mul(lotValue).div(new BN(100))
+      await deployed.KeepStub.setBondAmount(bondValue)
 
       await expectThrow(
         testInstance.notifyUndercollateralizedLiquidation(),
