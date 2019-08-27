@@ -203,18 +203,35 @@ contract('Deposit', (accounts) => {
   })
 
   describe('notifyCourtesyCall', async () => {
+    let oraclePrice
+    let lotSize
+    let lotValue
+    let undercollateralizedPercent
+
+    before(async () => {
+      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
+
+      oraclePrice = await deployed.TBTCSystemStub.fetchOraclePrice.call()
+      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      lotValue = lotSize.mul(oraclePrice)
+
+      undercollateralizedPercent = await deployed.TBTCConstants.getUndercollateralizedPercent.call()
+    })
+
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await deployed.KeepStub.setBondAmount(0)
     })
 
-    afterEach(async () => {
-      await deployed.KeepStub.setBondAmount(1000)
-      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
-    })
-
     it('sets courtesy call state, sets the timestamp, and logs CourtesyCalled', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
+
+      // Bond value is calculated as:
+      // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
+      // Here we subtract `1` to test collateralization less than undercollateralized
+      // threshold (140%).
+      const bondValue = undercollateralizedPercent.mul(lotValue).div(new BN(100)).sub(new BN(1))
+      await deployed.KeepStub.setBondAmount(bondValue)
 
       await testInstance.notifyCourtesyCall()
 
@@ -238,8 +255,11 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if sufficiently collateralized', async () => {
-      await deployed.KeepStub.setBondAmount(1000)
-      await deployed.TBTCSystemStub.setOraclePrice(new BN(1))
+      // Bond value is calculated as:
+      // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
+      // Here we test collateralization equal undercollateralized threshold (140%).
+      const bondValue = undercollateralizedPercent.mul(lotValue).div(new BN(100))
+      await deployed.KeepStub.setBondAmount(bondValue)
 
       await expectThrow(
         testInstance.notifyCourtesyCall(),
