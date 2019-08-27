@@ -262,7 +262,6 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, block.timestamp, prevSighash)
 
-
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
         'Fee increase not yet permitted'
@@ -278,6 +277,9 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the previous sighash was not the latest approved', async () => {
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
+
+      // Previous sigHash is not approved for signing.
+      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, 0)
 
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
