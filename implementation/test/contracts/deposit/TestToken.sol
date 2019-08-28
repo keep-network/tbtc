@@ -6,8 +6,8 @@ import "../../../contracts/system/TBTCToken.sol";
 
 contract TestToken is TBTCToken{
 
-    constructor(address _system)
-        TBTCToken(_system)
+    constructor(address _TBTCSystem)
+        TBTCToken(_TBTCSystem)
     public {
         // solium-disable-previous-line no-empty-blocks
     }
