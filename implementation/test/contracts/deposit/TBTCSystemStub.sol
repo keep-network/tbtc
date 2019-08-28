@@ -1,7 +1,6 @@
 pragma solidity ^0.5.10;
 
 import {TBTCSystem} from '../../../contracts/system/TBTCSystem.sol';
-import {TBTCToken} from "../../../contracts/system/TBTCToken.sol";
 
 contract TBTCSystemStub is TBTCSystem {
 
