@@ -8,6 +8,9 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
+import {IUniswapFactory} from "../uniswap/IUniswapFactory.sol";
+import {IUniswapExchange} from "../uniswap/IUniswapExchange.sol";
+import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 
 library DepositLiquidation {
 
@@ -17,13 +20,6 @@ library DepositLiquidation {
     using DepositUtils for DepositUtils.Deposit;
     using DepositStates for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
-
-    /// @notice     Tries to liquidate the position on-chain using the signer bond
-    /// @dev        Calls out to other contracts, watch for re-entrance
-    /// @return     True if Liquidated, False otherwise
-    function attemptToLiquidateOnchain() public pure returns (bool) {
-        return false;
-    }
 
     /// @notice                 Notifies the keep contract of fraud
     /// @dev                    Calls out to the keep contract. this could get expensive if preimage is large
@@ -70,61 +66,6 @@ library DepositLiquidation {
 
         // This converts into a percentage
         return (_bondValue.mul(100).div(_lotValue));
-    }
-
-    /// @notice         Starts signer liquidation due to fraud
-    /// @dev            We first attempt to liquidate on chain, then by auction
-    /// @param  _d      deposit storage pointer
-    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) public {
-        _d.logStartedLiquidation(true);
-
-        // Reclaim used state for gas savings
-        _d.redemptionTeardown();
-        uint256 _seized = _d.seizeSignerBonds();
-
-        if (_d.auctionTBTCAmount() == 0) {
-            // we came from the redemption flow
-            _d.setLiquidated();
-            _d.requesterAddress.transfer(_seized);
-            _d.logLiquidated();
-            return;
-        }
-
-        bool _liquidated = attemptToLiquidateOnchain();
-
-        if (_liquidated) {
-            _d.distributeBeneficiaryReward();
-            _d.setLiquidated();
-            _d.logLiquidated();
-            address(0).transfer(address(this).balance);  // burn it down
-        }
-        if (!_liquidated) {
-            _d.setFraudLiquidationInProgress();
-            _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
-        }
-    }
-
-    /// @notice         Starts signer liquidation due to abort or undercollateralization
-    /// @dev            We first attempt to liquidate on chain, then by auction
-    /// @param  _d      deposit storage pointer
-    function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
-        _d.logStartedLiquidation(false);
-        // Reclaim used state for gas savings
-        _d.redemptionTeardown();
-        _d.seizeSignerBonds();
-
-        bool _liquidated = attemptToLiquidateOnchain();
-
-        if (_liquidated) {
-            _d.distributeBeneficiaryReward();
-            _d.pushFundsToKeepGroup(address(this).balance);
-            _d.setLiquidated();
-            _d.logLiquidated();
-        }
-        if (!_liquidated) {
-            _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
-            _d.setFraudLiquidationInProgress();
-        }
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud
@@ -291,5 +232,94 @@ library DepositLiquidation {
         _d.setCourtesyCall();
         _d.logCourtesyCalled();
         _d.courtesyCallInitiated = block.timestamp;
+    }
+
+    /// @notice     Tries to liquidate the position on-chain using the signer bond
+    /// @dev        Calls out to other contracts, watch for re-entrance
+    /// @return     True if Liquidated, False otherwise
+    // TODO(liamz): check for re-entry
+    function attemptToLiquidateOnchain(
+        DepositUtils.Deposit storage _d
+    ) internal returns (bool) {
+        IUniswapFactory uniswapFactory = IUniswapFactory(ITBTCSystem(_d.TBTCSystem).getUniswapFactory());
+        IUniswapExchange exchange = IUniswapExchange(uniswapFactory.getExchange(_d.TBTCToken));
+        if(address(exchange) == address(0x0)) {
+            return false;
+        }
+
+        // with collateralization = 125%, we can assume an order of
+        // 1.0005 TBTC (equivalent to will be filled
+        uint MIN_TBTC = TBTCConstants.getLotSize().add(DepositUtils.beneficiaryReward());
+
+        uint ethPrice = exchange.getTokenToEthInputPrice(MIN_TBTC);
+        uint uniswapFee = ethPrice * 1003 / 1000; // 0.3% fee
+        ethPrice += uniswapFee;
+
+        if(address(this).balance < ethPrice) {
+            return false;
+        }
+
+        uint deadline = block.timestamp + 1;
+        exchange.ethToTokenSwapOutput.value(ethPrice)(MIN_TBTC, deadline);
+
+        return true;
+    }
+
+    /// @notice     Enacts common liquidation logic
+    /// @dev        Calls out to other contracts, watch for re-entrance
+    /// @return     True if Liquidated, False otherwise
+    // TODO(liamz): make attemptToLiquidateOnchain internal, check for re-entry
+    function startLiquidation(DepositUtils.Deposit storage _d) internal {
+        _d.logStartedLiquidation(true);
+        // Reclaim used state for gas savings
+        _d.redemptionTeardown();
+
+        _d.seizeSignerBonds();
+        bool _liquidated = attemptToLiquidateOnchain(_d);
+
+        if (_liquidated) {
+            _d.setLiquidated();
+            _d.logLiquidated();
+
+            TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+
+            if (_d.requesterAddress != address(0)) { // redemption
+                _tbtc.transferFrom(address(this), _d.requesterAddress, TBTCConstants.getLotSize());
+            } else {
+                // maintain supply peg
+                _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
+            }
+
+            _d.distributeBeneficiaryReward();
+
+        } else if (!_liquidated) {
+            _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+        }
+    }
+
+    /// @notice         Starts signer liquidation due to fraud
+    /// @dev            We first attempt to liquidate on chain, then by auction
+    /// @param  _d      deposit storage pointer
+    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) public {
+        startLiquidation(_d);
+        if(_d.inLiquidated()) {
+            // send any remaining eth to maintainer
+            msg.sender.transfer(address(this).balance);
+        } else {
+            _d.setFraudLiquidationInProgress();
+        }
+    }
+
+    /// @notice         Starts signer liquidation due to abort or undercollateralization
+    /// @dev            We first attempt to liquidate on chain, then by auction
+    /// @param  _d      deposit storage pointer
+    function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
+        startLiquidation(_d);
+        if(_d.inLiquidated()) {
+            // send any remaining eth to signers
+            _d.pushFundsToKeepGroup(address(this).balance);
+        } else {
+            _d.setLiquidationInProgress();
+        }
     }
 }
