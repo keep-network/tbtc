@@ -7,9 +7,9 @@ import "./MinterAuthority.sol";
 contract TBTCToken is ERC20Detailed, ERC20, MinterAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
-    constructor(address _system)
+    constructor(address _TBTCSystem)
         ERC20Detailed("Trustless bitcoin", "TBTC", 18)
-        MinterAuthority(_system)
+        MinterAuthority(_TBTCSystem)
     public {
         // solium-disable-previous-line no-empty-blocks
     }
