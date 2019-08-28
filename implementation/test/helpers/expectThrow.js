@@ -1,4 +1,4 @@
-export default async (promise) => {
+export default async (promise, expectedErrorMessage) => {
   try {
     await promise
   } catch (error) {
@@ -15,6 +15,11 @@ export default async (promise) => {
       invalidOpcode || outOfGas || revert,
       'Expected throw, got \'' + error + '\' instead',
     )
+
+    if (expectedErrorMessage) {
+      assert.include(error.message, expectedErrorMessage)
+    }
+
     return
   }
   assert.fail('Expected throw not received')
