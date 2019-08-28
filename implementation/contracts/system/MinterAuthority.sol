@@ -11,6 +11,7 @@ contract MinterAuthority {
         _TBTCSystem = _system;
     }
 
+    // function modifier ensures modified function caller address exists as an ERC721 token
     modifier onlyDeposit(){
         require(TBTCSystem(_TBTCSystem).isDeposit(msg.sender), "caller must be a deposit");
         _;
