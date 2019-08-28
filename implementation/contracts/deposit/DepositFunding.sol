@@ -101,15 +101,15 @@ library DepositFunding {
     /// Minted tokens are split between the beneficiary (99,5%) and the deposit
     /// contract (0,5%).
     function mintTBTC(DepositUtils.Deposit storage _d) internal {
-        TBTCToken _token = TBTCToken(_d.TBTCToken);
+        TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
 
         uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
         uint256 _signerFee = DepositUtils.signerFee();
 
         uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
 
-        _token.mint(_d.depositBeneficiary(), _totalValue.sub(_signerFee));
-        _token.mint(address(this), _signerFee);
+        _tbtcToken.mint(_d.depositBeneficiary(), _totalValue.sub(_signerFee));
+        _tbtcToken.mint(address(this), _signerFee);
     }
 
     /// @notice     slashes the signers partially for committing fraud before funding occurs

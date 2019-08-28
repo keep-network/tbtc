@@ -31,11 +31,11 @@ library DepositRedemption {
     /// @dev        Approves the keep contract, then expects it to call transferFrom
     function distributeSignerFee(DepositUtils.Deposit storage _d) public {
         address _tbtcTokenAddress = _d.TBTCToken;
-        TBTCToken _token = TBTCToken(_tbtcTokenAddress);
+        TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 
         IKeep _keep = IKeep(_d.KeepBridge);
 
-        _token.approve(_d.KeepBridge, DepositUtils.signerFee());
+        _tbtcToken.approve(_d.KeepBridge, DepositUtils.signerFee());
         _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcTokenAddress, DepositUtils.signerFee());
     }
 
