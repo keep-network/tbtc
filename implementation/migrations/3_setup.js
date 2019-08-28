@@ -1,6 +1,7 @@
 const TBTCToken = artifacts.require('TBTCToken')
 const UniswapDeployment = artifacts.require('UniswapDeployment')
 const IUniswapFactory = artifacts.require('IUniswapFactory')
+const TBTCSystem = artifacts.require('TBTCSystem')
 
 module.exports = async (deployer, network, accounts) => {
   const tbtcToken = await TBTCToken.deployed()
@@ -10,4 +11,7 @@ module.exports = async (deployer, network, accounts) => {
   )
 
   await uniswapFactory.createExchange(tbtcToken.address)
+
+  const tbtcSystem = await TBTCSystem.deployed()
+  await tbtcSystem.setExternalAddresses(uniswapFactory.address)
 }
