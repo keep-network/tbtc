@@ -4,6 +4,8 @@
   "description": "deposit contract for TBTC",
   "main": "index.js",
   "scripts": {
+    "clean": "rm -rf build/",
+    "compile": "truffle compile",
     "test": "truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
