@@ -28,7 +28,9 @@ contract UniswapExchangeStub {
         returns (uint256)
     {
         tokens_sold;
-        return ethPrice;
+        // TODO(liamz): fix this
+        // return msg.sender.balance;
+        return 2**250;
     }
 
     function ethToTokenSwapOutput(uint256 tokens_bought, uint256 deadline)
@@ -36,7 +38,7 @@ contract UniswapExchangeStub {
         returns (uint256 eth_sold)
     {
         deadline;
-        // require(msg.value     == ethPrice, "incorrect eth sent");
+        require(msg.value     == ethPrice, "incorrect eth sent");
         // require(tokens_bought == tbtcPrice, "incorrect tbtc ask");
         // require(tbtc.balanceOf(address(this)) >= tokens_bought, "not enough tbtc for trade");
         tbtc.mint(msg.sender, tokens_bought);

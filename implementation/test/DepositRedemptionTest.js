@@ -20,6 +20,9 @@ const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
 const TestDepositUtils = artifacts.require('TestDepositUtils')
 
+const UniswapFactoryStub = artifacts.require('UniswapFactoryStub')
+const UniswapExchangeStub = artifacts.require('UniswapExchangeStub')
+
 const BN = require('bn.js')
 const utils = require('./utils')
 const chai = require('chai')
@@ -45,7 +48,8 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
   { name: 'TBTCTokenStub', contract: TBTCTokenStub },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
+  { name: 'TBTCSystemStub', contract: TBTCSystemStub },
+  { name: 'UniswapFactoryStub', contract: UniswapFactoryStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -65,6 +69,12 @@ contract('Deposit', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     testInstance = deployed.TestDeposit
     testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, deployed.TBTCTokenStub.address, deployed.KeepStub.address)
+
+    const uniswapFactory = deployed.UniswapFactoryStub
+    const uniswapExchange = await UniswapExchangeStub.new(deployed.TBTCTokenStub.address)
+    await uniswapFactory.setExchange(uniswapExchange.address)
+    await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
+
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
   })
 
