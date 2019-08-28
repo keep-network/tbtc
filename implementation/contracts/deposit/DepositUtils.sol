@@ -419,6 +419,7 @@ library DepositUtils {
     function distributeBeneficiaryReward(Deposit storage _d) public {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         /* solium-disable-next-line */
+        // TODO(liamz): change this to use beneficiaryReward() when TBTCConstants is overridable
         require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))),"Transfer failed");
     }
 
