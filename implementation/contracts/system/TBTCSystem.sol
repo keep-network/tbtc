@@ -43,9 +43,9 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
 
     // ACL
 
-    /// @dev             Checks if an address is a deposit
-    /// @param _address  The address to check
-    function isDeposit(address _address) public returns (bool){
-        return _exists(uint256(_address));
+    /// @dev                    Checks if an address is a deposit
+    /// @param _depositAddress  The address to check
+    function isDeposit(address _depositAddress) public returns (bool){
+        return _exists(uint256(_depositAddress));
     }
 }
