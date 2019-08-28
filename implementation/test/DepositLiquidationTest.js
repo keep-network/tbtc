@@ -13,7 +13,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
-const TBTCTokenStub = artifacts.require('TBTCTokenStub')
+const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -42,7 +42,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCTokenStub', contract: TBTCTokenStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 // spare signature:
@@ -58,11 +57,13 @@ contract('Deposit', (accounts) => {
   let deployed
   let testInstance
   let beneficiary
+  let tbtcToken
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, deployed.TBTCTokenStub.address, deployed.KeepStub.address)
+    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
     beneficiary = accounts[4]
   })
@@ -81,14 +82,16 @@ contract('Deposit', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
+      let balance
       for (let i = 0; i < 4; i++) {
-        await deployed.TBTCTokenStub.clearBalance(accounts[i])
+        balance = await tbtcToken.balanceOf(accounts[i])
+        await tbtcToken.forceBurn(accounts[i], balance)
       }
     })
 
     it('sets state to liquidated, logs Liquidated, ', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
+      await tbtcToken.forceMint(accounts[0], requiredBalance)
 
       await testInstance.purchaseSignerBondsAtAuction()
 
@@ -100,7 +103,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not in a liquidation auction', async () => {
-      await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
+      await tbtcToken.forceMint(accounts[0], requiredBalance)
       await testInstance.setState(utils.states.START)
 
       await expectThrow(
@@ -112,7 +115,7 @@ contract('Deposit', (accounts) => {
     it('reverts if TBTC balance is insufficient', async () => {
       // mint 1 less than lot size
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
-      await deployed.TBTCTokenStub.mint(accounts[0], lotSize - 1)
+      await tbtcToken.forceMint(accounts[0], lotSize - 1)
 
       await expectThrow(
         testInstance.purchaseSignerBondsAtAuction(),
@@ -123,27 +126,27 @@ contract('Deposit', (accounts) => {
     it(`burns msg.sender's tokens`, async () => {
       const caller = accounts[2]
 
-      await deployed.TBTCTokenStub.mint(caller, requiredBalance)
+      await tbtcToken.forceMint(caller, requiredBalance)
 
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
-      const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(caller)
+      const initialTokenBalance = await tbtcToken.balanceOf(caller)
 
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
-      const finalTokenBalance = await deployed.TBTCTokenStub.balanceOf(caller)
+      const finalTokenBalance = await tbtcToken.balanceOf(caller)
       const tokenCheck = new BN(finalTokenBalance).add(new BN(lotSize))
       expect(tokenCheck, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
     })
 
     it('distributes beneficiary reward', async () => {
       const caller = accounts[2]
-      const initialTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
-      const returned = await deployed.TBTCTokenStub.balanceOf.call(caller)
+      const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
+      const returned = await tbtcToken.balanceOf.call(caller)
 
-      await deployed.TBTCTokenStub.mint(caller, requiredBalance)
+      await tbtcToken.forceMint(caller, requiredBalance)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
-      const finalTokenBalance = await deployed.TBTCTokenStub.balanceOf(beneficiary)
+      const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
       const tokenCheck = new BN(initialTokenBalance).add(new BN(returned))
 
       expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
@@ -157,7 +160,7 @@ contract('Deposit', (accounts) => {
       const initialBalance = await web3.eth.getBalance(caller)
 
       await testInstance.send(value, { from: accounts[0] })
-      await deployed.TBTCTokenStub.mint(caller, requiredBalance)
+      await tbtcToken.forceMint(caller, requiredBalance)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
@@ -174,7 +177,7 @@ contract('Deposit', (accounts) => {
       const initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await testInstance.send(value, { from: accounts[0] })
-      await deployed.TBTCTokenStub.mint(caller, requiredBalance)
+      await tbtcToken.forceMint(caller, requiredBalance)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
@@ -191,7 +194,7 @@ contract('Deposit', (accounts) => {
       const initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
       await testInstance.send(value, { from: accounts[0] })
-      await deployed.TBTCTokenStub.mint(caller, requiredBalance)
+      await tbtcToken.forceMint(caller, requiredBalance)
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })

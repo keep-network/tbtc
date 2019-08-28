@@ -18,11 +18,11 @@ contract('DepositFactory', (accounts) => {
   let deployed
   let factory
   let depositContract
-  let token
+  let tbtcToken
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-    token = await TBTCToken.new(deployed.TBTCSystemStub.address)
+    tbtcToken = await TBTCToken.new(deployed.TBTCSystemStub.address)
     depositContract = await Deposit.deployed()
     factory = await DepositFactory.new(depositContract.address)
   })
@@ -35,14 +35,14 @@ contract('DepositFactory', (accounts) => {
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        token.address,
+        tbtcToken.address,
         keep1.address,
         1,
         1)
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        token.address,
+        tbtcToken.address,
         keep2.address,
         1,
         1)
@@ -64,14 +64,14 @@ contract('DepositFactory', (accounts) => {
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        token.address,
+        tbtcToken.address,
         keep1.address,
         1,
         1)
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        token.address,
+        tbtcToken.address,
         keep2.address,
         1,
         1)
@@ -115,7 +115,7 @@ contract('DepositFactory', (accounts) => {
 
       await depositContract.createNewDeposit(
         deployed.TBTCSystemStub.address,
-        token.address,
+        tbtcToken.address,
         keep.address,
         1,
         1)
@@ -130,7 +130,7 @@ contract('DepositFactory', (accounts) => {
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        token.address,
+        tbtcToken.address,
         keepNew.address,
         1,
         1)
