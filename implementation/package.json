@@ -4,6 +4,7 @@
   "description": "deposit contract for TBTC",
   "main": "index.js",
   "scripts": {
+    "preinstall": "git submodule update --init --recursive",
     "test": "truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
