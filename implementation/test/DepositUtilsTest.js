@@ -1,3 +1,5 @@
+import expectThrow from './helpers/expectThrow'
+
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
 const ValidateSPV = artifacts.require('ValidateSPV')
@@ -107,12 +109,11 @@ contract('DepositUtils', (accounts) => {
     it('reverts on unknown difficulty', async () => {
       await deployed.TBTCSystemStub.setCurrentDiff(1)
       await deployed.TBTCSystemStub.setPreviousDiff(1)
-      try {
-        await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'not at current or previous difficulty')
-      }
+
+      await expectThrow(
+        testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0]),
+        'not at current or previous difficulty'
+      )
     })
 
     it('evaluates a header proof with previous', async () => {
@@ -127,12 +128,10 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('reverts on low difficulty', async () => {
-      try {
-        await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0].slice(0, 160 * 4 + 2))
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Insufficient accumulated difficulty in header chain')
-      }
+      await expectThrow(
+        testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0].slice(0, 160 * 4 + 2)),
+        'Insufficient accumulated difficulty in header chain'
+      )
     })
 
     describe('reverts on a ValidateSPV errors', async () => {
@@ -148,12 +147,10 @@ contract('DepositUtils', (accounts) => {
         // `2`).
         const badLengthChain = utils.HEADER_PROOFS[0].slice(0, (2 + (160 * 4)) - 2)
 
-        try {
-          await testUtilsInstance.evaluateProofDifficulty(badLengthChain)
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Invalid length of the headers chain')
-        }
+        await expectThrow(
+          testUtilsInstance.evaluateProofDifficulty(badLengthChain),
+          'Invalid length of the headers chain'
+        )
       })
 
       it('invalid headers chain', async () => {
@@ -162,21 +159,17 @@ contract('DepositUtils', (accounts) => {
         const invalidChain = utils.HEADER_PROOFS[0].slice(0, (2 + 160))
           + utils.HEADER_PROOFS[0].slice((2 + (160 * 2)), (2 + (160 * 4)))
 
-        try {
-          await testUtilsInstance.evaluateProofDifficulty(invalidChain)
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Invalid headers chain')
-        }
+        await expectThrow(
+          testUtilsInstance.evaluateProofDifficulty(invalidChain),
+          'Invalid headers chain'
+        )
       })
 
       it('insufficient work in a header', async () => {
-        try {
-          await testUtilsInstance.evaluateProofDifficulty(utils.LOW_WORK_HEADER)
-          assert(false, 'Test call did not error as expected')
-        } catch (e) {
-          assert.include(e.message, 'Insufficient work in a header')
-        }
+        await expectThrow(
+          testUtilsInstance.evaluateProofDifficulty(utils.LOW_WORK_HEADER),
+          'Insufficient work in a header'
+        )
       })
     })
   })
@@ -189,23 +182,21 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails with a broken proof', async () => {
-      try {
-        await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
-        await testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Tx merkle proof is not valid for provided header and tx')
-      }
+      await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
+
+      await expectThrow(
+        testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0]),
+        'Tx merkle proof is not valid for provided header and tx'
+      )
     })
 
     it('fails with a broken tx', async () => {
-      try {
-        await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
-        await testUtilsInstance.checkProofFromTx.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Failed tx parsing')
-      }
+      await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
+
+      await expectThrow(
+        testUtilsInstance.checkProofFromTx.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0]),
+        'Failed tx parsing'
+      )
     })
   })
 
@@ -215,31 +206,23 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('does not error', async () => {
-      try {
-        await testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
-        assert(true, 'passes proof validation')
-      } catch (e) {
-        assert.include(e.message, 'Failed tx parsing')
-      }
+      await testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
     })
 
     it('fails with a broken proof', async () => {
-      try {
-        await testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0])
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Tx merkle proof is not valid for provided header and txId')
-      }
+      await expectThrow(
+        testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0]),
+        'Tx merkle proof is not valid for provided header and txId'
+      )
     })
 
     it('fails with bad difficulty', async () => {
       await deployed.TBTCSystemStub.setCurrentDiff(1)
-      try {
-        await testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'not at current or previous difficulty')
-      }
+
+      await expectThrow(
+        testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0]),
+        'not at current or previous difficulty'
+      )
     })
   })
 
@@ -256,12 +239,11 @@ contract('DepositUtils', (accounts) => {
 
     it('fails with incorrect signer pubKey', async () => {
       await testUtilsInstance.setPubKey('0x' + '11'.repeat(20), '0x' + '11'.repeat(20))
-      try {
-        await testUtilsInstance.findAndParseFundingOutput.call(_txOutputVector, _fundingOutputIndex)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'could not identify output funding the required public key hash')
-      }
+
+      await expectThrow(
+        testUtilsInstance.findAndParseFundingOutput.call(_txOutputVector, _fundingOutputIndex),
+        'could not identify output funding the required public key hash'
+      )
     })
   })
 
@@ -294,23 +276,21 @@ contract('DepositUtils', (accounts) => {
 
     it('fails to extract output from bad index', async () => {
       const _txOutputVector = '0x024897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211'
-      try {
-        res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector, 2)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Slice out of bounds')
-      }
+
+      await expectThrow(
+        testUtilsInstance.extractOutputAtIndex.call(_txOutputVector, 2),
+        'Slice out of bounds'
+      )
     })
 
     it('fails to extract output from a vector with too big VarInt output counter', async () => {
       // we don't need to include the number of outputs suggested by the varint
       const _txOutputVector = '0xfe123412344897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211'
-      try {
-        res = await testUtilsInstance.extractOutputAtIndex.call(_txOutputVector, 2)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'VarInts not supported, Number of outputs cannot exceed 252')
-      }
+
+      await expectThrow(
+        testUtilsInstance.extractOutputAtIndex.call(_txOutputVector, 2),
+        'VarInts not supported, Number of outputs cannot exceed 252'
+      )
     })
   })
 
@@ -327,22 +307,19 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails with bad _txInputVector', async () => {
-      try {
-        await testUtilsInstance.validateAndParseFundingSPVProof.call(_version, '0x' + '00'.repeat(32), _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Tx merkle proof is not valid for provided header and txId')
-      }
+      await expectThrow(
+        testUtilsInstance.validateAndParseFundingSPVProof.call(_version, '0x' + '00'.repeat(32), _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders),
+        'Tx merkle proof is not valid for provided header and txId'
+      )
     })
 
     it('fails with insufficient difficulty', async () => {
       const _badheaders = `0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6`
-      try {
-        await testUtilsInstance.validateAndParseFundingSPVProof.call(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _badheaders)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Insufficient accumulated difficulty in header chain')
-      }
+
+      await expectThrow(
+        testUtilsInstance.validateAndParseFundingSPVProof.call(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _badheaders),
+        'Insufficient accumulated difficulty in header chain'
+      )
     })
   })
 
@@ -488,12 +465,10 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('errors if no funds were seized', async () => {
-      try {
-        await testUtilsInstance.seizeSignerBonds.call()
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'No funds received, unexpected')
-      }
+      await expectThrow(
+        testUtilsInstance.seizeSignerBonds.call(),
+        'No funds received, unexpected'
+      )
     })
   })
 
@@ -523,12 +498,10 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('reverts if insufficient value', async () => {
-      try {
-        await testUtilsInstance.pushFundsToKeepGroup.call(10000000000000)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, ('Not enough funds to send'))
-      }
+      await expectThrow(
+        testUtilsInstance.pushFundsToKeepGroup.call(10000000000000),
+        'Not enough funds to send'
+      )
     })
   })
 })
