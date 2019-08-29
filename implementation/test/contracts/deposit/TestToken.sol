@@ -12,7 +12,7 @@ contract TestToken is TBTCToken{
         // solium-disable-previous-line no-empty-blocks
     }
 
-    /// @dev             We Can't call TBTCToken mint function from deposit Test becuase of ACL.
+    /// @dev             We can't call TBTCToken mint function from deposit Test becuase of ACL.
     ///                  This function bypasses ACL and can be called in Deposit tests
     ///                  Mints an amount of the token and assigns it to an account.
     ///                  Uses the internal _mint function.
@@ -24,7 +24,7 @@ contract TestToken is TBTCToken{
         return true;
     }
 
-    /// @dev             We Can't call TBTCToken burn function from deposit Test becuase of ACL. 
+    /// @dev             We can't call TBTCToken burn function from deposit Test becuase of ACL. 
     ///                  This function bypasses ACL and can be called in Deposit tests.
     ///                  Burns an amount of the token of a given account
     ///                  deducting from the sender's allowance for said account.
