@@ -2,7 +2,6 @@ pragma solidity ^0.5.10;
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {DepositLog} from "../DepositLog.sol";
-import {TBTCToken} from "./TBTCToken.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 
 contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
