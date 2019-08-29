@@ -23,13 +23,13 @@ contract UniswapExchangeStub {
     //     tbtcPrice = _tbtcPrice;
     // }
 
-    function getTokenToEthInputPrice(uint256 tokens_sold)
+    function getEthToTokenOutputPrice(uint256 tokens_sold)
         external view
         returns (uint256)
     {
         tokens_sold;
-        // TODO(liamz): fix this
-        // return msg.sender.balance;
+        // The below returns an absurdly large price for tBTC
+        // such that attemptToLiquidateOnchain will return early, from not being funded enough
         return 2**250;
     }
 
