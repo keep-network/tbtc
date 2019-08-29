@@ -247,20 +247,15 @@ library DepositLiquidation {
             return false;
         }
 
-        // with collateralization = 125%, we can assume an order of
-        // 1.0005 TBTC (equivalent to will be filled
-        uint MIN_TBTC = TBTCConstants.getLotSize().add(DepositUtils.beneficiaryReward());
+        uint tbtcAmount = TBTCConstants.getLotSize().add(DepositUtils.beneficiaryReward());
+        uint ethAmount = exchange.getEthToTokenOutputPrice(tbtcAmount);
 
-        uint ethPrice = exchange.getTokenToEthInputPrice(MIN_TBTC);
-        uint uniswapFee = ethPrice * 1003 / 1000; // 0.3% fee
-        ethPrice += uniswapFee;
-
-        if(address(this).balance < ethPrice) {
+        if(address(this).balance < ethAmount) {
             return false;
         }
 
         uint deadline = block.timestamp + 1;
-        exchange.ethToTokenSwapOutput.value(ethPrice)(MIN_TBTC, deadline);
+        exchange.ethToTokenSwapOutput.value(ethAmount)(tbtcAmount, deadline);
 
         return true;
     }
