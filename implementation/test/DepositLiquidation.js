@@ -593,4 +593,53 @@ contract('DepositLiquidation', (accounts) => {
       expect(retval).to.be.false
     })
   })
+
+  describe('startLiquidation', async () => {
+    // it('seizes signer bonds')
+
+    describe('redemption', async () => {
+      // _tbtc.transferFrom(address(this), _d.requesterAddress, TBTCConstants.getLotSize());
+
+      // _d.distributeBeneficiaryReward();
+
+      // setLiquidated
+    })
+
+    describe('non-redemption', async () => {
+      // maintain supply peg
+      // _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
+
+      // _d.distributeBeneficiaryReward();
+
+      // setLiquidated
+    })
+
+    describe('was not liquidated', async () => {
+      // _d.liquidationInitiated = block.timestamp;
+    })
+  })
+
+  describe('startSignerFraudLiquidation', async () => {
+    it('was liquidated', async () => {
+      // msg.sender.transfer(address(this).balance);
+    })
+
+    it('was not liquidated', async () => {
+      // _d.setFraudLiquidationInProgress();
+    })
+  })
+
+  describe('startSignerAbortLiquidation', async () => {
+    it('was liquidated', async () => {
+      // _d.pushFundsToKeepGroup(address(this).balance);
+    })
+
+    it('was not liquidated', async () => {
+      // _d.setLiquidationInProgress();
+    })
+  })
 })
+
+// * tests redemption flows of startSignerAbortLiquidation/startSignerFraudLiquidation
+// * tests non-redemption flows of startSignerAbortLiquidation/startSignerFraudLiquidation
+// * changes to fraud/abort liquidation logic, auctionTBTCAmount as detailed in [this comment](https://github.com/keep-network/tbtc/issues/105#issuecomment-511513898)

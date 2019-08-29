@@ -348,8 +348,6 @@ contract('Deposit', (accounts) => {
         assert.include(e.message, 'Signature is not fraud')
       }
     })
-
-    it.skip('TODO: full test for startSignerFraudLiquidation', async () => { })
   })
 
   describe('provideSPVFraudProof', async () => {
@@ -420,7 +418,5 @@ contract('Deposit', (accounts) => {
         assert.include(e.message, 'Found an output paying the redeemer as requested')
       }
     })
-
-    it.skip('TODO: full test for startSignerFraudLiquidation', async () => { })
   })
 })
