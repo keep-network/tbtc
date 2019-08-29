@@ -1,4 +1,4 @@
 [submodule "implementation/uniswap/contracts-vyper"]
 	path = implementation/uniswap/contracts-vyper
-	url = https://github.com/Uniswap/contracts-vyper
+	url = https://github.com/Uniswap/contracts-vyper.git
 	branch = c10c08d81d6114f694baa8bd32f555a40f6264da
