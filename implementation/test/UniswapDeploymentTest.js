@@ -8,8 +8,9 @@ import { UniswapHelpers } from './helpers/uniswap'
 
 // Tests the Uniswap deployment
 
-contract('Uniswap', (accounts) => {
+contract.only('Uniswap', (accounts) => {
   let tbtcToken
+  let tbtcExchange
 
   describe('deployment', async () => {
     it('deployed the uniswap factory and exchange', async () => {
@@ -27,12 +28,9 @@ contract('Uniswap', (accounts) => {
   })
 
   describe('TBTC Uniswap Exchange', () => {
-    let tbtc
-    let tbtcExchange
-
     beforeEach(async () => {
       /* eslint-disable no-unused-vars */
-      tbtc = await TBTCToken.new()
+      tbtcToken = await TBTCToken.new()
 
       // We rely on the already pre-deployed Uniswap factory here.
       const uniswapDeployment = await UniswapDeployment.deployed()
@@ -40,8 +38,8 @@ contract('Uniswap', (accounts) => {
 
       const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
 
-      const res = await uniswapFactory.createExchange(tbtc.address)
-      const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtc.address)
+      await uniswapFactory.createExchange(tbtcToken.address)
+      const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtcToken.address)
 
 
       tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddr)
@@ -57,67 +55,65 @@ contract('Uniswap', (accounts) => {
       }
     })
 
-    describe('e2e testing of a trade', () => {
-      it('adds liquidity and trades ETH for TBTC', async () => {
-        // This avoids rabbit-hole debugging
-        // stemming from the fact Vyper is new and they don't do REVERT's
-        expect(
-          await web3.eth.getBalance(accounts[0])
-        ).to.not.eq('0')
+    it('adds liquidity and trades ETH for TBTC', async () => {
+      // This avoids rabbit-hole debugging
+      // stemming from the fact Vyper is new and they don't do REVERT's
+      expect(
+        await web3.eth.getBalance(accounts[0])
+      ).to.not.eq('0')
 
-        expect(
-          await web3.eth.getBalance(accounts[1])
-        ).to.not.eq('0')
+      expect(
+        await web3.eth.getBalance(accounts[1])
+      ).to.not.eq('0')
 
-        // Both tokens use 18 decimal places, so we can use toWei here.
-        const TBTC_AMT = web3.utils.toWei('50', 'ether')
-        const ETH_AMT = web3.utils.toWei('1', 'ether')
+      // Both tokens use 18 decimal places, so we can use toWei here.
+      const TBTC_AMT = web3.utils.toWei('50', 'ether')
+      const ETH_AMT = web3.utils.toWei('1', 'ether')
 
-        // Mint TBTC
-        await tbtc.mint(
-          accounts[0],
-          TBTC_AMT
-        )
-        await tbtc.mint(
-          accounts[1],
-          TBTC_AMT
-        )
+      // Mint TBTC
+      await tbtcToken.mint(
+        accounts[0],
+        TBTC_AMT
+      )
+      await tbtcToken.mint(
+        accounts[1],
+        TBTC_AMT
+      )
 
-        await tbtc.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[0] })
-        await tbtc.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[1] })
+      await tbtcToken.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[0] })
+      await tbtcToken.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[1] })
 
-        // min_liquidity, max_tokens, deadline
-        const TBTC_ADDED = web3.utils.toWei('10', 'ether')
-        await tbtcExchange.addLiquidity(
-          '0',
-          TBTC_ADDED,
-          UniswapHelpers.getDeadline(),
-          { value: ETH_AMT }
-        )
+      // min_liquidity, max_tokens, deadline
+      const TBTC_ADDED = web3.utils.toWei('10', 'ether')
+      await tbtcExchange.addLiquidity(
+        '0',
+        TBTC_ADDED,
+        UniswapHelpers.getDeadline(),
+        { value: ETH_AMT }
+      )
 
-        // it will be at an exchange rate of
-        // 10 TBTC : 1 ETH
-        const TBTC_BUY_AMT = web3.utils.toWei('1', 'ether')
+      // it will be at an exchange rate of
+      // 10 TBTC : 1 ETH
+      const TBTC_BUY_AMT = web3.utils.toWei('1', 'ether')
 
-        // rough price - we don't think about slippage
-        // we are testing that Uniswap works, not testing the exact
-        // formulae of the price invariant
-        // when they come out with uniswap.js, this code could be made better
-        const priceEth = await tbtcExchange.getTokenToEthInputPrice.call(TBTC_BUY_AMT)
-        expect(priceEth.toString()).to.eq('90661089388014913')
+      // rough price - we don't think about slippage
+      // we are testing that Uniswap works, not testing the exact
+      // formulae of the price invariant
+      // when they come out with uniswap.js, this code could be made better
+      const priceEth = await tbtcExchange.getEthToTokenOutputPrice.call(TBTC_BUY_AMT)
+      expect(priceEth.toString()).to.eq('111445447453471526')
 
-        const buyer = accounts[1]
+      const buyer = accounts[1]
 
-        // def ethToTokenSwapInput(min_tokens: uint256, deadline: timestamp) -> uint256:
-        await tbtcExchange.ethToTokenSwapInput(
-          TBTC_BUY_AMT,
-          UniswapHelpers.getDeadline(),
-          { value: UniswapHelpers.calcWithFee(priceEth), from: buyer }
-        )
+      // def ethToTokenSwapInput(min_tokens: uint256, deadline: timestamp) -> uint256:
+      await tbtcExchange.ethToTokenSwapOutput(
+        TBTC_BUY_AMT,
+        UniswapHelpers.getDeadline(),
+        { value: priceEth, from: buyer }
+      )
 
-        const balance = await tbtc.balanceOf(buyer)
-        expect(balance.gt(TBTC_BUY_AMT))
-      })
+      const balance = await tbtcToken.balanceOf(buyer)
+      expect(balance.gt(TBTC_BUY_AMT))
     })
   })
 })
