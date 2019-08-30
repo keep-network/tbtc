@@ -3,7 +3,9 @@ pragma solidity ^0.5.10;
 import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
 import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
+
 import {TBTCToken} from "../system/TBTCToken.sol";
+import {TBTCSystem} from "../system/TBTCSystem.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
@@ -63,10 +65,8 @@ library DepositFunding {
     ) public returns (bool) {
         require(_d.inStart(), "Deposit setup already requested");
 
-        IKeep _keep = IKeep(_d.KeepBridge);
-
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _keep.requestNewKeep.value(msg.value)(_m, _n);  // kinda gross but
+        _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep.value(msg.value)(_m, _n);  // kinda gross but
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();

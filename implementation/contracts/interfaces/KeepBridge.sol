@@ -11,14 +11,6 @@ contract KeepBridge is IKeep {
     /// concatenation of a keepID and a digest.
     mapping (bytes => uint256) approvedDigests;
 
-    function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
-        address keepVendorAddress = KeepRegistry(keepRegistry)
-            .getVendor("ECDSAKeep");
-
-        _keepAddress = ECDSAKeepVendor(keepVendorAddress)
-            .openKeep(_n,_m, msg.sender);
-    }
-
     // get the result of a keep formation
     // should return a 64 byte packed pubkey (x and y)
     // error if not ready yet
