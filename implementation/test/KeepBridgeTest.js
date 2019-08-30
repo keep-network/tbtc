@@ -138,15 +138,4 @@ contract('KeepBridge', (accounts) => {
       )
     })
   })
-
-  describe('requestNewKeep()', async () => {
-    it('sends caller as owner to open new keep', async () => {
-      const expectedKeepOwner = accounts[2]
-
-      await keepBridge.requestNewKeep(5, 10, { from: expectedKeepOwner })
-      const keepOwner = await ecdsaKeepVendor.keepOwner.call()
-
-      assert.equal(expectedKeepOwner, keepOwner, 'incorrect keep owner address')
-    })
-  })
 })

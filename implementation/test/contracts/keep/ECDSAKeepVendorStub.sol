@@ -14,5 +14,6 @@ contract ECDSAKeepVendorStub is ECDSAKeepVendor {
         address _owner
     ) external payable returns (address _keepAddress) {
         keepOwner = _owner;
+        _keepAddress = address(888);
     }
 }
