@@ -1,3 +1,4 @@
+/* solium-disable function-order */
 pragma solidity ^0.5.10;
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
@@ -9,6 +10,13 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
+
+    address keepRegistry;
+
+    //TODO: add: onlyOwner
+    function initialize(address _keepRegistry) public {
+        keepRegistry = _keepRegistry;
+    }
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
@@ -29,6 +37,7 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
             currentDifficulty = _currentDifficulty;
         }
     }
+
 
     // ERC721
 
