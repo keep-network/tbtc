@@ -84,7 +84,9 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
 
     // system
-    await deployer.deploy(TBTCSystem)
+    await deployer.deploy(TBTCSystem).then((instance) => {
+      instance.initialize(KeepRegistryAddress)
+    })
 
     await deployer.deploy(TBTCToken, TBTCSystem.address)
 
