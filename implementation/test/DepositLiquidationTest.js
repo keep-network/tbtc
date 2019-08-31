@@ -561,31 +561,11 @@ contract('DepositLiquidation', (accounts) => {
       tbtcToken = deployed.TBTCTokenStub
 
       // Deploy Uniswap
-      const uniswap = require('../uniswap')
-
-      async function deployFromBytecode(abi, bytecode) {
-        const Contract = new web3.eth.Contract(abi)
-        const instance = await Contract
-          .deploy({
-            data: `0x`+bytecode,
-          })
-          .send({
-            from: accounts[0],
-            gas: 4712388,
-          })
-        return instance
-      }
-
-      // eslint-disable-next-line camelcase
-      const uniswapExchange_web3 = await deployFromBytecode(uniswap.abis.exchange, uniswap.bytecode.exchange)
-      // eslint-disable-next-line camelcase
-      const uniswapFactory_web3 = await deployFromBytecode(uniswap.abis.factory, uniswap.bytecode.factory)
-
-      // Required for Uniswap to clone and create factories
-      await uniswapFactory_web3.methods.initializeFactory(uniswapExchange_web3.options.address).send({ from: accounts[0] })
+      const { deployUniswap } = require('../uniswap')
+      const { factory } = await deployUniswap(web3, accounts)
 
       // Create tBTC exchange
-      const uniswapFactory = await IUniswapFactory.at(uniswapFactory_web3.options.address)
+      const uniswapFactory = await IUniswapFactory.at(factory.options.address)
       await uniswapFactory.createExchange(tbtcToken.address)
       const tbtcExchangeAddr = await uniswapFactory.getExchange.call(tbtcToken.address)
       uniswapExchange = await IUniswapExchange.at(tbtcExchangeAddr)
