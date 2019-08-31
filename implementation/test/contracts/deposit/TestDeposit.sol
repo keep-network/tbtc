@@ -115,4 +115,12 @@ contract TestDeposit is Deposit {
     function startLiquidation() public {
         return self.startLiquidation();
     }
+
+    function startSignerAbortLiquidation() public {
+        return self.startSignerAbortLiquidation();
+    }
+
+    function startSignerFraudLiquidation() public {
+        return self.startSignerFraudLiquidation();
+    }
 }
