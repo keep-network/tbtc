@@ -261,9 +261,6 @@ library DepositLiquidation {
     }
 
     /// @notice     Enacts common liquidation logic
-    /// @dev        Calls out to other contracts, watch for re-entrance
-    /// @return     True if Liquidated, False otherwise
-    // TODO(liamz): make attemptToLiquidateOnchain internal, check for re-entry
     function startLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(true);
         // Reclaim used state for gas savings
