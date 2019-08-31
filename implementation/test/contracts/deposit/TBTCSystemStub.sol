@@ -20,16 +20,4 @@ contract TBTCSystemStub is TBTCSystem {
     function approvedToLog(address _caller) public view returns (bool) {
         _caller; return true;
     }
-
-
-    address depositOwner;
-    
-    function setDepositOwner(address user) public returns (address) {
-        depositOwner = user;
-    }
-
-    function ownerOf(uint _id) public view returns (address) {
-        _id;
-        return depositOwner;
-    }
 }

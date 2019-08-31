@@ -647,7 +647,6 @@ contract('DepositLiquidation', (accounts) => {
     const beneficiaryReward = '100000'
     const keepBondAmount = 1000000
     const lotSize = '100000000'
-    const beneficiary = accounts[1]
 
     let snapshotId
 
@@ -670,10 +669,6 @@ contract('DepositLiquidation', (accounts) => {
       await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
 
       await keep.send(keepBondAmount, { from: accounts[0] })
-
-      // set the owner/beneficiary of the deposit
-      // TODO(liamz): set beneficiary more realistically when DepositCloneFactory works with
-      await deployed.TBTCSystemStub.setDepositOwner(beneficiary)
 
       // Helpers
       assertBalance = new AssertBalanceHelpers(tbtcToken)
