@@ -5,32 +5,25 @@ import {TBTCToken} from '../../../contracts/system/TBTCToken.sol';
 contract UniswapExchangeStub {
     TBTCToken tbtc;
 
+
+    // The below returns an absurdly large price for tBTC
+    // such that attemptToLiquidateOnchain will return early, from not being funded enough
     uint256 ethPrice = 10**8;
-    // uint256 tbtcPrice = 0;
 
     constructor(address _tbtc) public {
         tbtc = TBTCToken(_tbtc);
     }
 
-    // Give some mock liquidity to the stub
-    // function mockLiquidity(uint256 _tbtcAmount) public payable {
-    //     require(msg.value > 0, "requires ETH for liquidity");
-    //     tbtc.transferFrom(msg.sender, address(this), _tbtcAmount);
-    // }
-
-    // function setPrices(uint256 _ethPrice, uint256 _tbtcPrice) public {
-    //     ethPrice = _ethPrice;
-    //     tbtcPrice = _tbtcPrice;
-    // }
+    function setEthPrice(uint256 _ethPrice) public {
+        ethPrice = _ethPrice;
+    }
 
     function getEthToTokenOutputPrice(uint256 tokens_sold)
         external view
         returns (uint256)
     {
         tokens_sold;
-        // The below returns an absurdly large price for tBTC
-        // such that attemptToLiquidateOnchain will return early, from not being funded enough
-        return 2**250;
+        return ethPrice;
     }
 
     function ethToTokenSwapOutput(uint256 tokens_bought, uint256 deadline)
