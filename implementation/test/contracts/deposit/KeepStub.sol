@@ -9,6 +9,7 @@ contract KeepStub {
     uint256 bondAmount = 10000;
     address keepAddress = address(7);
     bytes pubkey = hex"00";
+    uint public keepGroupEth = 0;
 
     function () payable external {}
 
@@ -43,6 +44,7 @@ contract KeepStub {
 
     function distributeEthToKeepGroup(address _keepAddress) external payable returns (bool) {
         _keepAddress;
+        keepGroupEth += msg.value;
         return success;
     }
 
