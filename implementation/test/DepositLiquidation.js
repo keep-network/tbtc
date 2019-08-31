@@ -32,6 +32,7 @@ chai.use(bnChai(BN))
 
 import { AssertBalanceHelpers } from './helpers/assertBalance'
 import { UniswapHelpers } from './helpers/uniswap'
+import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
@@ -595,27 +596,122 @@ contract('DepositLiquidation', (accounts) => {
   })
 
   describe('startLiquidation', async () => {
-    // it('seizes signer bonds')
+    let assertBalance
+    let uniswapExchange
+    let deposit
+    let keep
+    let tbtcToken
 
-    describe('redemption', async () => {
-      // _tbtc.transferFrom(address(this), _d.requesterAddress, TBTCConstants.getLotSize());
+    const DIGEST = '0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc'
+    const beneficiaryReward = '100000'
+    const keepBondAmount = 1000000
+    const lotSize = '100000000'
+    const beneficiary = accounts[1]
 
-      // _d.distributeBeneficiaryReward();
+    let snapshotId
 
-      // setLiquidated
+    beforeEach(async () => {
+      snapshotId = await createSnapshot()
     })
 
-    describe('non-redemption', async () => {
-      // maintain supply peg
-      // _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
-
-      // _d.distributeBeneficiaryReward();
-
-      // setLiquidated
+    afterEach(async () => {
+      await restoreSnapshot(snapshotId)
     })
 
-    describe('was not liquidated', async () => {
-      // _d.liquidationInitiated = block.timestamp;
+    beforeEach(async () => {
+      deposit = testInstance
+      keep = deployed.KeepStub
+      tbtcToken = deployed.TBTCTokenStub
+
+      const uniswapFactory = deployed.UniswapFactoryStub
+      uniswapExchange = await UniswapExchangeStub.new(deployed.TBTCTokenStub.address)
+      await uniswapFactory.setExchange(uniswapExchange.address)
+      await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
+
+      await keep.send(keepBondAmount, { from: accounts[0] })
+
+      // set the owner/beneficiary of the deposit
+      // TODO(liamz): set beneficiary more realistically when DepositCloneFactory works with
+      await deployed.TBTCSystemStub.setDepositOwner(beneficiary)
+
+      // Helpers
+      assertBalance = new AssertBalanceHelpers(tbtcToken)
+    })
+
+    it('redemption', async () => {
+      await uniswapExchange.setEthPrice(keepBondAmount)
+
+      // give the keep/deposit eth
+      // TODO(liamz): use createNewDeposit when it works
+      await assertBalance.eth(keep.address, '1000000') // TODO(liamz): replace w/ keep.checkBondAmount()
+      await assertBalance.tbtc(deposit.address, '0')
+
+      const requestor = accounts[2]
+      await deposit.setRequestInfo(
+        requestor,
+        '0x' + '11'.repeat(20),
+        0, 0, DIGEST
+      )
+
+      await deposit.startLiquidation()
+
+      // assert liquidated
+      const depositState = await deposit.getState.call()
+      expect(depositState, 'Deposit state should be LIQUIDATED').to.eq.BN(utils.states.LIQUIDATED)
+
+      // deposit should have 0 eth
+      await assertBalance.eth(deposit.address, '0')
+
+      // tbtc distributions
+      await assertBalance.tbtc(deposit.address, '0')
+      await assertBalance.tbtc(requestor, lotSize)
+      await assertBalance.tbtc(beneficiary, beneficiaryReward)
+    })
+
+    it('non-redemption', async () => {
+      await uniswapExchange.setEthPrice(keepBondAmount)
+
+      const NON_REDEMPTION_ADDRESS = '0x' + '00'.repeat(20)
+      await deposit.setRequestInfo(
+        NON_REDEMPTION_ADDRESS,
+        '0x' + '11'.repeat(20),
+        0, 0, DIGEST
+      )
+
+      const tx = await deposit.startLiquidation()
+
+      // assert liquidated
+      const depositState = await deposit.getState.call()
+      expect(depositState, 'Deposit state should be LIQUIDATED').to.eq.BN(utils.states.LIQUIDATED)
+
+      // deposit should have 0 eth
+      await assertBalance.eth(deposit.address, '0')
+
+      // tbtc distributions
+      await assertBalance.tbtc(deposit.address, '0')
+      await assertBalance.tbtc(beneficiary, beneficiaryReward)
+
+      // expect TBTC to be burnt from deposit's account
+      const evs = await tbtcToken.getPastEvents({ fromBlock: tx.receipt.blockNumber })
+      const ev = evs[1]
+      expect(ev.event).to.equal('Transfer')
+      expect(ev.returnValues.from).to.equal(deposit.address)
+      expect(ev.returnValues.to).to.equal('0x0000000000000000000000000000000000000000')
+      expect(ev.returnValues.value).to.equal(lotSize.toString())
+    })
+
+    it('not liquidated', async () => {
+      await uniswapExchange.setEthPrice(keepBondAmount + 1)
+
+      const res = await deposit.startLiquidation()
+
+      // assert not liquidated
+      const depositState = await deposit.getState.call()
+      expect(depositState).to.not.eq.BN(utils.states.LIQUIDATED)
+
+      const liquidationTime = await deposit.getLiquidationAndCourtesyInitiated.call()
+      const block = await web3.eth.getBlock(res.receipt.blockNumber)
+      expect(liquidationTime[0]).to.eq.BN(block.timestamp)
     })
   })
 
