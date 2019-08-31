@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "preinstall": "cd ../ && git submodule update --init --recursive",
+    "clean": "rm -rf build/",
+    "compile": "truffle compile",
     "test": "truffle test",
     "test:debug": "node --inspect node_modules/.bin/truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
