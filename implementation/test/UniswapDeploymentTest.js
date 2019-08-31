@@ -8,7 +8,7 @@ import { UniswapHelpers } from './helpers/uniswap'
 
 // Tests the Uniswap deployment
 
-contract.only('Uniswap', (accounts) => {
+contract('Uniswap', (accounts) => {
   let tbtcToken
   let tbtcExchange
 
