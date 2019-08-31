@@ -4,6 +4,7 @@ const IUniswapExchange = artifacts.require('IUniswapExchange')
 
 const UniswapDeployment = artifacts.require('UniswapDeployment')
 
+import { deployUniswap } from '../uniswap'
 import { UniswapHelpers } from './helpers/uniswap'
 
 // Tests the Uniswap deployment
@@ -13,7 +14,7 @@ contract('Uniswap', (accounts) => {
   let tbtcExchange
 
   describe('deployment', async () => {
-    it('deployed the uniswap factory and exchange', async () => {
+    it('deployed the uniswap factory and created the exchange', async () => {
       tbtcToken = await TBTCToken.deployed()
       expect(tbtcToken).to.not.be.empty
 
@@ -32,18 +33,14 @@ contract('Uniswap', (accounts) => {
       /* eslint-disable no-unused-vars */
       tbtcToken = await TBTCToken.new()
 
-      // We rely on the already pre-deployed Uniswap factory here.
-      const uniswapDeployment = await UniswapDeployment.deployed()
-      const uniswapFactoryAddr = await uniswapDeployment.factory()
-
-      const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
+      const { factory } = await deployUniswap(web3, accounts)
+      const uniswapFactory = await IUniswapFactory.at(factory.options.address)
 
       await uniswapFactory.createExchange(tbtcToken.address)
       const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtcToken.address)
 
 
       tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddr)
-      /* eslint-enable no-unused-vars */
     })
 
     it('has no liquidity by default', async () => {

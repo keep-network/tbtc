@@ -1,3 +1,5 @@
+import expectThrow from './helpers/expectThrow'
+
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
 const ValidateSPV = artifacts.require('ValidateSPV')
@@ -54,7 +56,6 @@ const TEST_DEPOSIT_DEPLOY = [
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-
 // real tx from mainnet bitcoin, interpreted as funding tx
 // tx source: https://www.blockchain.com/btc/tx/7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f
 // const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
@@ -74,7 +75,6 @@ const _merkleProof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b5
 const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c00000000'
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
-
 
 contract('Deposit', (accounts) => {
   let deployed
@@ -99,6 +99,7 @@ contract('Deposit', (accounts) => {
       const expectedKeepAddress = '0x0000000000000000000000000000000000000007'
 
       const blockNumber = await web3.eth.getBlock('latest').number
+
       await testInstance.createNewDeposit(
         deployed.TBTCSystemStub.address,
         deployed.TBTCTokenStub.address,
@@ -115,23 +116,25 @@ contract('Deposit', (accounts) => {
       expect(keepInfo[1], 'signing group timestamp not as expected').not.to.eq.BN(0)
 
       // fired an event
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('Created', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents(
+        'Created',
+        { fromBlock: blockNumber, toBlock: 'latest' }
+      )
       assert.equal(eventList[0].returnValues._keepAddress, expectedKeepAddress)
     })
 
     it('reverts if not in the start state', async () => {
       await testInstance.setState(utils.states.REDEEMED)
-      try {
-        await testInstance.createNewDeposit.call(
+
+      await expectThrow(
+        testInstance.createNewDeposit.call(
           deployed.TBTCSystemStub.address,
           deployed.TBTCTokenStub.address,
           deployed.KeepStub.address,
           1, // m
-          1)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        assert.include(e.message, 'Deposit setup already requested')
-      }
+          1),
+        'Deposit setup already requested'
+      )
     })
   })
 
@@ -146,8 +149,16 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
+
       await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP)
-      await testInstance.setKeepInfo(ADDRESS_ZERO, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
+
+      await testInstance.setKeepInfo(
+        ADDRESS_ZERO,
+        fundingProofTimerStart,
+        0,
+        utils.bytes32zero,
+        utils.bytes32zero
+      )
     })
 
     it('updates state to setup failed, deconstes state, and logs SetupFailed', async () => {
@@ -158,26 +169,35 @@ contract('Deposit', (accounts) => {
       expect(keepInfo[1], 'signingGroupRequestedAt should be 0').to.eq.BN(0)
       expect(keepInfo[2], 'fundingProofTimerStart should be 0').to.eq.BN(0)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await deployed.TBTCSystemStub.getPastEvents(
+        'SetupFailed',
+        { fromBlock: blockNumber, toBlock: 'latest' }
+      )
       assert.equal(eventList.length, 1, 'Event list is the wrong length')
     })
 
     it('reverts if not awaiting signer setup', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.notifySignerSetupFailure()
-      } catch (e) {
-        assert.include(e.message, 'Not awaiting setup')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.notifySignerSetupFailure(),
+        'Not awaiting setup'
+      )
     })
 
     it('reverts if the timer has not yet elapsed', async () => {
-      try {
-        await testInstance.setKeepInfo(ADDRESS_ZERO, fundingProofTimerStart * 5, 0, utils.bytes32zero, utils.bytes32zero)
-        await testInstance.notifySignerSetupFailure()
-      } catch (e) {
-        assert.include(e.message, 'Signing group formation timeout not yet elapsed')
-      }
+      await testInstance.setKeepInfo(
+        ADDRESS_ZERO,
+        fundingProofTimerStart * 5,
+        0,
+        utils.bytes32zero,
+        utils.bytes32zero
+      )
+
+      await expectThrow(
+        testInstance.notifySignerSetupFailure(),
+        'Signing group formation timeout not yet elapsed'
+      )
     })
 
     it('returns funder bond', async () => {
@@ -219,22 +239,21 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting signer setup', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.retrieveSignerPubkey()
-      } catch (e) {
-        assert.include(e.message, 'Not currently awaiting signer setup')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.retrieveSignerPubkey(),
+        'Not currently awaiting signer setup'
+      )
     })
 
     it('reverts if either half of the pubkey is 0', async () => {
-      try {
-        await deployed.KeepStub.setPubkey('0x' + '00'.repeat(64))
-        await testInstance.retrieveSignerPubkey()
-      } catch (e) {
-        await deployed.KeepStub.setPubkey('0x' + '00')
-        assert.include(e.message, 'Keep returned bad pubkey')
-      }
+      await deployed.KeepStub.setPubkey('0x' + '00'.repeat(64))
+
+      await expectThrow(
+        testInstance.retrieveSignerPubkey(),
+        'Keep returned bad pubkey'
+      )
     })
   })
 
@@ -266,21 +285,21 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting a funding proof', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.notifyFundingTimeout()
-      } catch (e) {
-        assert.include(e.message, 'Funding timeout has not started')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.notifyFundingTimeout(),
+        'Funding timeout has not started'
+      )
     })
 
     it('reverts if the timeout has not elapsed', async () => {
-      try {
-        await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
-        await testInstance.notifyFundingTimeout()
-      } catch (e) {
-        assert.include(e.message, 'Funding timeout has not elapsed')
-      }
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
+
+      await expectThrow(
+        testInstance.notifyFundingTimeout(),
+        'Funding timeout has not elapsed'
+      )
     })
 
     it('distributes the funder bond to the keep group', async () => {
@@ -322,12 +341,21 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting funding proof', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-      } catch (e) {
-        assert.include(e.message, 'Not awaiting funding')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.provideBTCFundingProof(
+          _version,
+          _txInputVector,
+          _txOutputVector,
+          _txLocktime,
+          _fundingOutputIndex,
+          _merkleProof,
+          _txIndexInBlock,
+          _bitcoinHeaders
+        ),
+        'Not awaiting funding'
+      )
     })
 
     it('returns funder bonds', async () => {

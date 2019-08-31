@@ -1,3 +1,5 @@
+import expectThrow from './helpers/expectThrow'
+
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
 const ValidateSPV = artifacts.require('ValidateSPV')
@@ -144,22 +146,33 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting funding proof', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
-      } catch (e) {
-        assert.include(e.message, 'Signer fraud during funding flow only available while awaiting funding')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.provideFundingECDSAFraudProof(
+          0,
+          utils.bytes32zero,
+          utils.bytes32zero,
+          utils.bytes32zero,
+          '0x00'
+        ),
+        'Signer fraud during funding flow only available while awaiting funding'
+      )
     })
 
     it('reverts if the signature is not fraud', async () => {
-      try {
-        await deployed.KeepStub.setSuccess(false)
-        await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
-      } catch (e) {
-        await deployed.KeepStub.setSuccess(true)
-        assert.include(e.message, 'Signature is not fraudulent')
-      }
+      await deployed.KeepStub.setSuccess(false)
+
+      await expectThrow(
+        testInstance.provideFundingECDSAFraudProof(
+          0,
+          utils.bytes32zero,
+          utils.bytes32zero,
+          utils.bytes32zero,
+          '0x00'
+        ),
+        'Signature is not fraudulent'
+      )
     })
 
     it('returns the funder bond if the timer has not elapsed', async () => {
@@ -219,21 +232,21 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting fraud funding proof', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.notifyFraudFundingTimeout()
-      } catch (e) {
-        assert.include(e.message, 'Not currently awaiting fraud-related funding proof')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.notifyFraudFundingTimeout(),
+        'Not currently awaiting fraud-related funding proof'
+      )
     })
 
     it('reverts if the timer has not elapsed', async () => {
-      try {
-        await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
-        await testInstance.notifyFraudFundingTimeout()
-      } catch (e) {
-        assert.include(e.message, 'Fraud funding proof timeout has not elapsed')
-      }
+      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
+
+      await expectThrow(
+        testInstance.notifyFraudFundingTimeout(),
+        'Fraud funding proof timeout has not elapsed'
+      )
     })
 
     it('asserts that it partially slashes signers', async () => {
@@ -280,12 +293,21 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if not awaiting a funding proof during setup fraud', async () => {
-      try {
-        await testInstance.setState(utils.states.START)
-        await testInstance.provideFraudBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-      } catch (e) {
-        assert.include(e.message, 'Not awaiting a funding proof during setup fraud')
-      }
+      await testInstance.setState(utils.states.START)
+
+      await expectThrow(
+        testInstance.provideFraudBTCFundingProof(
+          _version,
+          _txInputVector,
+          _txOutputVector,
+          _txLocktime,
+          _fundingOutputIndex,
+          _merkleProof,
+          _txIndexInBlock,
+          _bitcoinHeaders
+        ),
+        'Not awaiting a funding proof during setup fraud'
+      )
     })
 
     it('assert distribute signer bonds to funder', async () => {
@@ -313,40 +335,39 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if in the funding flow', async () => {
-      try {
-        await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-        await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
-      } catch (e) {
-        assert.include(e.message, 'Use provideFundingECDSAFraudProof instead')
-      }
+      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+
+      await expectThrow(
+        testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00'),
+        'Use provideFundingECDSAFraudProof instead'
+      )
     })
 
     it('reverts if already in signer liquidation', async () => {
-      try {
-        await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
-        await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
-      } catch (e) {
-        assert.include(e.message, 'Signer liquidation already in progress')
-      }
+      await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
+
+      await expectThrow(
+        testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00'),
+        'Signer liquidation already in progress'
+      )
     })
 
     it('reverts if the contract has halted', async () => {
-      try {
-        await testInstance.setState(utils.states.REDEEMED)
-        await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
-      } catch (e) {
-        assert.include(e.message, 'Contract has halted')
-      }
+      await testInstance.setState(utils.states.REDEEMED)
+
+      await expectThrow(
+        testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00'),
+        'Contract has halted'
+      )
     })
 
     it('reverts if signature is not fraud according to Keep', async () => {
-      try {
-        await deployed.KeepStub.setSuccess(false)
-        await testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
-      } catch (e) {
-        await deployed.KeepStub.setSuccess(true)
-        assert.include(e.message, 'Signature is not fraud')
-      }
+      await deployed.KeepStub.setSuccess(false)
+
+      await expectThrow(
+        testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00'),
+        'Signature is not fraud'
+      )
     })
   })
 
@@ -360,7 +381,7 @@ contract('Deposit', (accounts) => {
     const index = 130
     const headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
-    const prevoutValueBytes = '0xf078351d00000000'
+    const prevoutValueBytes = '0xf078351d00000000' // 490043632
     const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
@@ -375,48 +396,59 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if in the funding flow', async () => {
-      try {
-        await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-        await testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00')
-      } catch (e) {
-        assert.include(e.message, 'SPV Fraud proofs not valid before Active state')
-      }
+      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+
+      await expectThrow(
+        testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00'),
+        'SPV Fraud proofs not valid before Active state'
+      )
     })
 
     it('reverts if already in signer liquidation', async () => {
-      try {
-        await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
-        await testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00')
-      } catch (e) {
-        assert.include(e.message, 'Signer liquidation already in progress')
-      }
+      await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
+
+      await expectThrow(
+        testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00'),
+        'Signer liquidation already in progress'
+      )
     })
 
     it('reverts if the contract has halted', async () => {
-      try {
-        await testInstance.setState(utils.states.REDEEMED)
-        await testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00')
-      } catch (e) {
-        assert.include(e.message, 'Contract has halted')
-      }
+      await testInstance.setState(utils.states.REDEEMED)
+
+      await expectThrow(
+        testInstance.provideSPVFraudProof('0x00', '0x00', 0, '0x00'),
+        'Contract has halted'
+      )
     })
 
     it('reverts if it can\'t verify the Deposit UTXO was consumed', async () => {
-      try {
-        await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '00'.repeat(36))
-        await testInstance.provideSPVFraudProof(tx, proof, index, headerChain)
-      } catch (e) {
-        assert.include(e.message, 'No input spending custodied UTXO found')
-      }
+      await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '00'.repeat(36))
+
+      await expectThrow(
+        testInstance.provideSPVFraudProof(tx, proof, index, headerChain),
+        'No input spending custodied UTXO found'
+      )
     })
 
     it('reverts if it finds an output paying the redeemer', async () => {
-      try {
-        await testInstance.setRequestInfo(utils.address0, requesterPKH, 100, 0, utils.bytes32zero)
-        await testInstance.provideSPVFraudProof(tx, proof, index, headerChain)
-      } catch (e) {
-        assert.include(e.message, 'Found an output paying the redeemer as requested')
-      }
+      // Set initialRedemptionFee to `2424` so the calculated requiredOutputSize
+      // is `490043632 - (2424 * 6) = 490029088`.
+      await testInstance.setRequestInfo(
+        utils.address0,
+        requesterPKH,
+        2424,
+        0,
+        utils.bytes32zero
+      )
+
+      // Provide proof of a transaction where output is sent to a requestor, with
+      // value `490029088`.
+      // Expect revert of the transaction.
+      await expectThrow(
+        testInstance.provideSPVFraudProof(tx, proof, index, headerChain),
+        'Found an output paying the redeemer as requested'
+      )
     })
   })
 })
