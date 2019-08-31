@@ -35,6 +35,7 @@ chai.use(bnChai(BN))
 import { AssertBalanceHelpers } from './helpers/assertBalance'
 import { UniswapHelpers } from './helpers/uniswap'
 import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
+import { getTxCost } from './helpers/txCost'
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
@@ -69,6 +70,25 @@ contract('DepositLiquidation', (accounts) => {
   let testInstance
   let beneficiary
 
+
+  let snapshotId
+
+  before(async () => {
+    snapshotId = await createSnapshot()
+  })
+
+  beforeEach(async () => {
+    snapshotId = await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot(snapshotId)
+  })
+
+  after(async () => {
+    await restoreSnapshot(snapshotId)
+  })
+
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     testInstance = deployed.TestDeposit
@@ -82,11 +102,6 @@ contract('DepositLiquidation', (accounts) => {
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
     beneficiary = accounts[4]
   })
-
-  beforeEach(async () => {
-    await testInstance.reset()
-  })
-
 
   describe('purchaseSignerBondsAtAuction', async () => {
     let requiredBalance
@@ -585,6 +600,7 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('returns false if address(exchange) = 0x0', async () => {
+      // Override and use mock
       const uniswapFactory = deployed.UniswapFactoryStub
       await uniswapFactory.setExchange('0x0000000000000000000000000000000000000000')
       await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
@@ -636,7 +652,7 @@ contract('DepositLiquidation', (accounts) => {
     })
   })
 
-  describe('startLiquidation', async () => {
+  describe('liquidation flows', async () => {
     let assertBalance
     let uniswapExchange
     let deposit
@@ -647,16 +663,6 @@ contract('DepositLiquidation', (accounts) => {
     const beneficiaryReward = '100000'
     const keepBondAmount = 1000000
     const lotSize = '100000000'
-
-    let snapshotId
-
-    beforeEach(async () => {
-      snapshotId = await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot(snapshotId)
-    })
 
     beforeEach(async () => {
       deposit = testInstance
@@ -674,104 +680,141 @@ contract('DepositLiquidation', (accounts) => {
       assertBalance = new AssertBalanceHelpers(tbtcToken)
     })
 
-    it('redemption', async () => {
-      await uniswapExchange.setEthPrice(keepBondAmount)
+    describe('startLiquidation', async () => {
+      it('redemption', async () => {
+        await uniswapExchange.setEthPrice(keepBondAmount)
 
-      // give the keep/deposit eth
-      // TODO(liamz): use createNewDeposit when it works
-      await assertBalance.eth(keep.address, '1000000') // TODO(liamz): replace w/ keep.checkBondAmount()
-      await assertBalance.tbtc(deposit.address, '0')
+        // give the keep/deposit eth
+        // TODO(liamz): use createNewDeposit when it works
+        await assertBalance.eth(keep.address, '1000000') // TODO(liamz): replace w/ keep.checkBondAmount()
+        await assertBalance.tbtc(deposit.address, '0')
 
-      const requestor = accounts[2]
-      await deposit.setRequestInfo(
-        requestor,
-        '0x' + '11'.repeat(20),
-        0, 0, DIGEST
-      )
+        const requestor = accounts[2]
+        await deposit.setRequestInfo(
+          requestor,
+          '0x' + '11'.repeat(20),
+          0, 0, DIGEST
+        )
 
-      await deposit.startLiquidation()
+        await deposit.startLiquidation()
 
-      // assert liquidated
-      const depositState = await deposit.getState.call()
-      expect(depositState, 'Deposit state should be LIQUIDATED').to.eq.BN(utils.states.LIQUIDATED)
+        // assert liquidated
+        const depositState = await deposit.getState.call()
+        expect(depositState, 'Deposit state should be LIQUIDATED').to.eq.BN(utils.states.LIQUIDATED)
 
-      // deposit should have 0 eth
-      await assertBalance.eth(deposit.address, '0')
+        // deposit should have 0 eth
+        await assertBalance.eth(deposit.address, '0')
 
-      // tbtc distributions
-      await assertBalance.tbtc(deposit.address, '0')
-      await assertBalance.tbtc(requestor, lotSize)
-      await assertBalance.tbtc(beneficiary, beneficiaryReward)
+        // tbtc distributions
+        await assertBalance.tbtc(deposit.address, '0')
+        await assertBalance.tbtc(requestor, lotSize)
+        await assertBalance.tbtc(beneficiary, beneficiaryReward)
+      })
+
+      it('non-redemption', async () => {
+        await uniswapExchange.setEthPrice(keepBondAmount)
+
+        const NON_REDEMPTION_ADDRESS = '0x' + '00'.repeat(20)
+        await deposit.setRequestInfo(
+          NON_REDEMPTION_ADDRESS,
+          '0x' + '11'.repeat(20),
+          0, 0, DIGEST
+        )
+
+        const tx = await deposit.startLiquidation()
+
+        // assert liquidated
+        const depositState = await deposit.getState.call()
+        expect(depositState, 'Deposit state should be LIQUIDATED').to.eq.BN(utils.states.LIQUIDATED)
+
+        // deposit should have 0 eth
+        await assertBalance.eth(deposit.address, '0')
+
+        // tbtc distributions
+        await assertBalance.tbtc(deposit.address, '0')
+        await assertBalance.tbtc(beneficiary, beneficiaryReward)
+
+        // expect TBTC to be burnt from deposit's account
+        const evs = await tbtcToken.getPastEvents({ fromBlock: tx.receipt.blockNumber })
+        const ev = evs[1]
+        expect(ev.event).to.equal('Transfer')
+        expect(ev.returnValues.from).to.equal(deposit.address)
+        expect(ev.returnValues.to).to.equal('0x0000000000000000000000000000000000000000')
+        expect(ev.returnValues.value).to.equal(lotSize.toString())
+      })
+
+      it('not liquidated', async () => {
+        await uniswapExchange.setEthPrice(keepBondAmount + 1)
+
+        const res = await deposit.startLiquidation()
+
+        // assert not liquidated
+        const depositState = await deposit.getState.call()
+        expect(depositState, 'Deposit state should not be LIQUIDATED').to.not.eq.BN(utils.states.LIQUIDATED)
+
+        const liquidationTime = await deposit.getLiquidationAndCourtesyInitiated.call()
+        const block = await web3.eth.getBlock(res.receipt.blockNumber)
+        expect(liquidationTime[0]).to.eq.BN(block.timestamp)
+      })
     })
 
-    it('non-redemption', async () => {
-      await uniswapExchange.setEthPrice(keepBondAmount)
+    describe('startSignerFraudLiquidation', async () => {
+      const maintainer = accounts[5]
 
-      const NON_REDEMPTION_ADDRESS = '0x' + '00'.repeat(20)
-      await deposit.setRequestInfo(
-        NON_REDEMPTION_ADDRESS,
-        '0x' + '11'.repeat(20),
-        0, 0, DIGEST
-      )
+      it('was liquidated', async () => {
+        const remainingEthAfterLiquidation = new BN(10)
+        const maintainerBalance1 = new BN(await web3.eth.getBalance(maintainer))
+        await deployed.KeepStub.send(remainingEthAfterLiquidation, { from: accounts[0] })
+        await uniswapExchange.setEthPrice(keepBondAmount)
 
-      const tx = await deposit.startLiquidation()
+        const res = await deposit.startSignerFraudLiquidation({ from: maintainer })
+        const txCostEth = await getTxCost(res)
 
-      // assert liquidated
-      const depositState = await deposit.getState.call()
-      expect(depositState, 'Deposit state should be LIQUIDATED').to.eq.BN(utils.states.LIQUIDATED)
+        // assert liquidated
+        const depositState = await deposit.getState.call()
+        expect(depositState, 'Deposit state should be LIQUIDATED').to.eq.BN(utils.states.LIQUIDATED)
 
-      // deposit should have 0 eth
-      await assertBalance.eth(deposit.address, '0')
+        // assert msg.sender.transfer(address(this).balance)
+        await assertBalance.eth(deposit.address, '0')
+        const maintainerBalanceExpected = maintainerBalance1.sub(txCostEth).add(remainingEthAfterLiquidation)
+        const maintainerBalance2 = await web3.eth.getBalance(maintainer)
+        expect(maintainerBalance2).to.eq.BN(maintainerBalanceExpected)
+      })
 
-      // tbtc distributions
-      await assertBalance.tbtc(deposit.address, '0')
-      await assertBalance.tbtc(beneficiary, beneficiaryReward)
+      it('was not liquidated', async () => {
+        await uniswapExchange.setEthPrice(keepBondAmount + 1)
+        await deposit.startSignerFraudLiquidation()
 
-      // expect TBTC to be burnt from deposit's account
-      const evs = await tbtcToken.getPastEvents({ fromBlock: tx.receipt.blockNumber })
-      const ev = evs[1]
-      expect(ev.event).to.equal('Transfer')
-      expect(ev.returnValues.from).to.equal(deposit.address)
-      expect(ev.returnValues.to).to.equal('0x0000000000000000000000000000000000000000')
-      expect(ev.returnValues.value).to.equal(lotSize.toString())
+        // assert liquidation in process
+        const depositState = await deposit.getState.call()
+        expect(depositState, 'Deposit state should be FRAUD_LIQUIDATION_IN_PROGRESS').to.eq.BN(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
+      })
     })
 
-    it('not liquidated', async () => {
-      await uniswapExchange.setEthPrice(keepBondAmount + 1)
+    describe('startSignerAbortLiquidation', async () => {
+      it('was liquidated', async () => {
+        await uniswapExchange.setEthPrice(keepBondAmount - 10)
 
-      const res = await deposit.startLiquidation()
+        await deposit.startSignerAbortLiquidation()
 
-      // assert not liquidated
-      const depositState = await deposit.getState.call()
-      expect(depositState).to.not.eq.BN(utils.states.LIQUIDATED)
+        // assert liquidated
+        const depositState = await deposit.getState.call()
+        expect(depositState, 'Deposit state should be LIQUIDATED').to.eq.BN(utils.states.LIQUIDATED)
 
-      const liquidationTime = await deposit.getLiquidationAndCourtesyInitiated.call()
-      const block = await web3.eth.getBlock(res.receipt.blockNumber)
-      expect(liquidationTime[0]).to.eq.BN(block.timestamp)
-    })
-  })
+        // check distributeEthToKeepGroup
+        const keepGroupEth = await keep.keepGroupEth()
+        expect(keepGroupEth).to.eq.BN(new BN('10'))
+      })
 
-  describe('startSignerFraudLiquidation', async () => {
-    it('was liquidated', async () => {
-      // msg.sender.transfer(address(this).balance);
-    })
+      it('was not liquidated', async () => {
+        await uniswapExchange.setEthPrice(keepBondAmount + 1)
 
-    it('was not liquidated', async () => {
-      // _d.setFraudLiquidationInProgress();
-    })
-  })
+        await deposit.startSignerAbortLiquidation()
 
-  describe('startSignerAbortLiquidation', async () => {
-    it('was liquidated', async () => {
-      // _d.pushFundsToKeepGroup(address(this).balance);
-    })
-
-    it('was not liquidated', async () => {
-      // _d.setLiquidationInProgress();
+        // assert liquidation in process
+        const depositState = await deposit.getState.call()
+        expect(depositState, 'Deposit state should be FRAUD_LIQUIDATION_IN_PROGRESS').to.eq.BN(utils.states.LIQUIDATION_IN_PROGRESS)
+      })
     })
   })
 })
-
-// * tests redemption flows of startSignerAbortLiquidation/startSignerFraudLiquidation
-// * tests non-redemption flows of startSignerAbortLiquidation/startSignerFraudLiquidation
-// * changes to fraud/abort liquidation logic, auctionTBTCAmount as detailed in [this comment](https://github.com/keep-network/tbtc/issues/105#issuecomment-511513898)
