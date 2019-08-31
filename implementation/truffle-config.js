@@ -51,6 +51,12 @@ module.exports = {
       //  gas: 100000000000000,
       gasPrice: 1
     },
+    keep_dev: {
+      host: "localhost",
+      port: 8545,
+      network_id: "*",
+      from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB",
+    },    
 
     // Environment for generating test coverage reports over the smart contracts.
     coverage: {

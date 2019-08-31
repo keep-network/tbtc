@@ -2,11 +2,18 @@ version: 2.1
 
 orbs:
   gcp-cli: circleci/gcp-cli@1.8.2
+  gcp-gcr: circleci/gcp-gcr@0.0.4  
 
 executors:
   docker-node:
     docker:
       - image: circleci/node:11
+  docker-git:
+    docker:
+      - image: docker:18.06.0-ce-git      
+  docker-thesis-buildpack:
+    docker:
+      - image: thesisco/docker-buildpack:bionic      
 jobs:
   lint_js:
     executor: docker-node
@@ -131,6 +138,92 @@ jobs:
             cd /tmp/docs
             export DIR=$(test $CIRCLE_BRANCH != master && echo $CIRCLE_BRANCH/)
             gsutil -m cp -r * gs://docs.keep.network/tbtc/$DIR
+  migrate_contracts:
+    executor: docker-thesis-buildpack
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Set Gcloud Auth
+          command: |
+            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      - run:
+          name: Migrate Contracts
+          command: |
+            export BUILD_TAG=$CIRCLE_SHA1
+            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
+            mkdir -p /tmp/tbtc/contracts
+            implementation/scripts/circleci-migrate-contracts.sh
+      - persist_to_workspace:
+          root: /tmp/tbtc
+          paths:
+            - contracts
+  build_initcontainer:
+    executor: docker-git
+    steps:
+      - attach_workspace:
+          at: /tmp/tbtc
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Run Docker build
+          command: |
+            mkdir -p /tmp/tbtc/docker-images
+            cp /tmp/tbtc/contracts/* infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
+            cd infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
+            docker build \
+              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
+              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
+              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
+              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
+              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers .
+      - run:
+          name: Save tbtc-maintainers-initcontainer image
+          command: |
+            docker save -o /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers
+      - persist_to_workspace:
+          root: /tmp/tbtc
+          paths:
+            - docker-images
+  publish_images:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/tbtc
+      - run:
+          name: Load Docker images
+          command: |
+            docker load -i /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: initcontainer-provision-tbtc-maintainers
+          tag: latest
+  publish_contract_data:
+      executor: gcp-cli/default
+      steps:
+        - attach_workspace:
+            at: /tmp/tbtc
+        - gcp-cli/install        
+        - gcp-cli/initialize:
+            google-project-id: GOOGLE_PROJECT_ID
+            google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+            # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+            gcloud-service-key: GCLOUD_SERVICE_KEY
+        - run:
+            name: Upload contract data
+            command: |
+              cd /tmp/tbtc/contracts
+              gsutil -m cp * gs://keep-dev-contract-data
 
 workflows:
   version: 2
@@ -154,3 +247,33 @@ workflows:
           requires:
             - generate_docs_tex
             - generate_docs_asciidoctor
+  migrate-build-publish:
+    jobs:
+      - migrate_contracts:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+      - build_initcontainer:
+          filters:
+            branches:
+              only: master        
+          context: keep-dev
+          requires:
+            - migrate_contracts
+      - publish_images:
+          filters:
+            branches:
+              only: master        
+          context: keep-dev
+          requires:
+            - migrate_contracts
+            - build_initcontainer
+      - publish_contract_data:
+          filters:
+            branches:
+              only: master        
+          context: keep-dev
+          requires:
+            - migrate_contracts            
+      
