@@ -32,7 +32,7 @@ const KeepRegistryAddress = '0xca961E001d2551186731b384fA2Dddf96Ba474bD' // Keep
 const DepositFactory = artifacts.require('DepositFactory')
 
 // uniswap
-const uniswap = require('../uniswap')
+const { deployUniswap } = require('../uniswap')
 const UniswapDeployment = artifacts.require('UniswapDeployment')
 
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
@@ -40,40 +40,15 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystem,
   KeepBridge, PriceOracleV1]
 
-
-async function deployUniswap(deployer, network, accounts) {
-  async function deployFromBytecode(abi, bytecode) {
-    const Contract = new web3.eth.Contract(abi)
-    const instance = await Contract
-      .deploy({
-        data: `0x`+bytecode,
-      })
-      .send({
-        from: accounts[0],
-        gas: 4712388,
-      })
-    return instance
-  }
-
-  const exchange = await deployFromBytecode(uniswap.abis.exchange, uniswap.bytecode.exchange)
-  const factory = await deployFromBytecode(uniswap.abis.factory, uniswap.bytecode.factory)
-
-  // Required for Uniswap to clone and create factories
-  await factory.methods.initializeFactory(exchange.options.address).send({ from: accounts[0] })
-
-  // Save the deployed addresses to the UniswapDeployment contract
-  await deployer.deploy(UniswapDeployment, factory.options.address, exchange.options.address)
-
-  return factory.options.address
-}
-
 module.exports = (deployer, network, accounts) => {
   const PRICE_ORACLE_OPERATOR = accounts[0]
   const PRICE_ORACLE_DEFAULT_PRICE = '323200000000'
 
   deployer.then(async () => {
     try {
-      await deployUniswap(deployer, network, accounts)
+      const { factory, exchange } = await deployUniswap(web3, accounts)
+      // Save the deployed addresses to the UniswapDeployment contract
+      await deployer.deploy(UniswapDeployment, factory.options.address, exchange.options.address)
     } catch (err) {
       throw new Error(`uniswap deployment failed: ${err}`)
     }

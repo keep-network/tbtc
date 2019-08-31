@@ -4,6 +4,7 @@ const IUniswapExchange = artifacts.require('IUniswapExchange')
 
 const UniswapDeployment = artifacts.require('UniswapDeployment')
 
+import { deployUniswap } from '../uniswap'
 import { UniswapHelpers } from './helpers/uniswap'
 
 // Tests the Uniswap deployment
@@ -12,7 +13,7 @@ contract('Uniswap', (accounts) => {
   let tbtcToken
 
   describe('deployment', async () => {
-    it('deployed the uniswap factory and exchange', async () => {
+    it('deployed the uniswap factory and created the exchange', async () => {
       tbtcToken = await TBTCToken.deployed()
       expect(tbtcToken).to.not.be.empty
 
@@ -26,26 +27,19 @@ contract('Uniswap', (accounts) => {
     })
   })
 
-  describe('TBTC Uniswap Exchange', () => {
+  describe('tBTC Uniswap Exchange', () => {
     let tbtc
     let tbtcExchange
 
     beforeEach(async () => {
-      /* eslint-disable no-unused-vars */
       tbtc = await TBTCToken.new()
 
-      // We rely on the already pre-deployed Uniswap factory here.
-      const uniswapDeployment = await UniswapDeployment.deployed()
-      const uniswapFactoryAddr = await uniswapDeployment.factory()
+      const { factory } = await deployUniswap(web3, accounts)
+      const uniswapFactory = await IUniswapFactory.at(factory.options.address)
 
-      const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
-
-      const res = await uniswapFactory.createExchange(tbtc.address)
+      await uniswapFactory.createExchange(tbtc.address)
       const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtc.address)
-
-
       tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddr)
-      /* eslint-enable no-unused-vars */
     })
 
     it('has no liquidity by default', async () => {
@@ -61,6 +55,7 @@ contract('Uniswap', (accounts) => {
       it('adds liquidity and trades ETH for TBTC', async () => {
         // This avoids rabbit-hole debugging
         // stemming from the fact Vyper is new and they don't do REVERT's
+        // so any failed assert's will throw an invalid JMP or something cryptic
         expect(
           await web3.eth.getBalance(accounts[0])
         ).to.not.eq('0')
