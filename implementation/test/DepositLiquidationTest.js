@@ -539,7 +539,7 @@ contract('DepositLiquidation', (accounts) => {
       const supplyFactor = new BN(10)
 
       const tbtcSupply = new BN(tbtcAmount).mul(supplyFactor)
-      await tbtcToken.mint(accounts[0], tbtcSupply, { from: accounts[0] })
+      await tbtcToken.forceMint(accounts[0], tbtcSupply, { from: accounts[0] })
       await tbtcToken.approve(uniswapExchange.address, tbtcSupply, { from: accounts[0] })
 
       // Uniswap requires a minimum of 1000000000 wei for the initial addLiquidity call
