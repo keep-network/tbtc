@@ -47,7 +47,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCTokenStub', contract: TBTCTokenStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub },
   { name: 'UniswapFactoryStub', contract: UniswapFactoryStub }]
 
@@ -70,10 +69,10 @@ contract('Deposit', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, deployed.TBTCTokenStub.address, deployed.KeepStub.address)
+    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
 
     const uniswapFactory = deployed.UniswapFactoryStub
-    const uniswapExchange = await UniswapExchangeStub.new(deployed.TBTCTokenStub.address)
+    const uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
     await uniswapFactory.setExchange(uniswapExchange.address)
     await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
 

@@ -52,7 +52,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCTokenStub', contract: TBTCTokenStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub },
   { name: 'UniswapFactoryStub', contract: UniswapFactoryStub }]
 
@@ -94,10 +93,10 @@ contract('DepositLiquidation', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, deployed.TBTCTokenStub.address, deployed.KeepStub.address)
+    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
 
     const uniswapFactory = deployed.UniswapFactoryStub
-    const uniswapExchange = await UniswapExchangeStub.new(deployed.TBTCTokenStub.address)
+    const uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
     await uniswapFactory.setExchange(uniswapExchange.address)
     await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
 
@@ -533,7 +532,6 @@ contract('DepositLiquidation', (accounts) => {
     let assertBalance
     let deposit
     let uniswapExchange
-    let tbtcToken
 
     async function addLiquidity(ethAmount, tbtcAmount) {
       // Mint tBTC, mock liquidity
@@ -562,7 +560,6 @@ contract('DepositLiquidation', (accounts) => {
 
     beforeEach(async () => {
       deposit = testInstance
-      tbtcToken = deployed.TBTCTokenStub
 
       // Deploy Uniswap
       const { deployUniswap } = require('../uniswap')
@@ -578,9 +575,6 @@ contract('DepositLiquidation', (accounts) => {
 
       // Helpers
       assertBalance = new AssertBalanceHelpers(tbtcToken)
-
-
-      await tbtcToken.clearBalance(deposit.address)
     })
 
     it('returns false if address(exchange) = 0x0', async () => {
@@ -641,7 +635,6 @@ contract('DepositLiquidation', (accounts) => {
     let uniswapExchange
     let deposit
     let keep
-    let tbtcToken
 
     const DIGEST = '0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc'
     const beneficiaryReward = '100000'
@@ -651,10 +644,9 @@ contract('DepositLiquidation', (accounts) => {
     beforeEach(async () => {
       deposit = testInstance
       keep = deployed.KeepStub
-      tbtcToken = deployed.TBTCTokenStub
 
       const uniswapFactory = deployed.UniswapFactoryStub
-      uniswapExchange = await UniswapExchangeStub.new(deployed.TBTCTokenStub.address)
+      uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
       await uniswapFactory.setExchange(uniswapExchange.address)
       await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
 

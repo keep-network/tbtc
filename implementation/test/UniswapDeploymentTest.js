@@ -1,15 +1,23 @@
 const TBTCToken = artifacts.require('TBTCToken')
+const TestToken = artifacts.require('TestToken')
 const IUniswapFactory = artifacts.require('IUniswapFactory')
 const IUniswapExchange = artifacts.require('IUniswapExchange')
+const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const UniswapDeployment = artifacts.require('UniswapDeployment')
 
+const utils = require('./utils')
 import { deployUniswap } from '../uniswap'
 import { UniswapHelpers } from './helpers/uniswap'
 
 // Tests the Uniswap deployment
 
+const TEST_DEPOSIT_DEPLOY = [
+  { name: 'TBTCSystemStub', contract: TBTCSystemStub },
+]
+
 contract('Uniswap', (accounts) => {
+  let deployed
   let tbtcToken
   let tbtcExchange
 
@@ -30,15 +38,14 @@ contract('Uniswap', (accounts) => {
 
   describe('TBTC Uniswap Exchange', () => {
     beforeEach(async () => {
-      /* eslint-disable no-unused-vars */
-      tbtcToken = await TBTCToken.new()
+      deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+      tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
 
       const { factory } = await deployUniswap(web3, accounts)
       const uniswapFactory = await IUniswapFactory.at(factory.options.address)
 
       await uniswapFactory.createExchange(tbtcToken.address)
       const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtcToken.address)
-
 
       tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddr)
     })
@@ -68,11 +75,11 @@ contract('Uniswap', (accounts) => {
       const ETH_AMT = web3.utils.toWei('1', 'ether')
 
       // Mint TBTC
-      await tbtcToken.mint(
+      await tbtcToken.forceMint(
         accounts[0],
         TBTC_AMT
       )
-      await tbtcToken.mint(
+      await tbtcToken.forceMint(
         accounts[1],
         TBTC_AMT
       )

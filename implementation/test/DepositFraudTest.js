@@ -47,7 +47,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCTokenStub', contract: TBTCTokenStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub },
   { name: 'UniswapFactoryStub', contract: UniswapFactoryStub }]
 
@@ -93,7 +92,7 @@ contract('Deposit', (accounts) => {
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     const uniswapFactory = deployed.UniswapFactoryStub
-    const uniswapExchange = await UniswapExchangeStub.new(deployed.TBTCTokenStub.address)
+    const uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
     await uniswapFactory.setExchange(uniswapExchange.address)
     await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
 
