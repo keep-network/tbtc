@@ -1,9 +1,9 @@
 pragma solidity ^0.5.10;
 
-import {TBTCToken} from '../../../contracts/system/TBTCToken.sol';
+import {TestToken} from '../deposit/TestToken.sol';
 
 contract UniswapExchangeStub {
-    TBTCToken tbtc;
+    TestToken tbtc;
 
 
     // The below returns an absurdly large price for tBTC
@@ -11,7 +11,7 @@ contract UniswapExchangeStub {
     uint256 ethPrice = 10**8;
 
     constructor(address _tbtc) public {
-        tbtc = TBTCToken(_tbtc);
+        tbtc = TestToken(_tbtc);
     }
 
     function setEthPrice(uint256 _ethPrice) public {
@@ -32,10 +32,7 @@ contract UniswapExchangeStub {
     {
         deadline;
         require(msg.value     == ethPrice, "incorrect eth sent");
-        // require(tokens_bought == tbtcPrice, "incorrect tbtc ask");
-        // require(tbtc.balanceOf(address(this)) >= tokens_bought, "not enough tbtc for trade");
-        tbtc.mint(msg.sender, tokens_bought);
-        // require(tbtc.transferFrom(address(this), msg.sender, tokens_bought), "transfer failed");
+        tbtc.forceMint(msg.sender, tokens_bought);
         return msg.value;
     }
 }
