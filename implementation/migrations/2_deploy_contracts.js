@@ -98,7 +98,7 @@ module.exports = (deployer, network, accounts) => {
     // system
     await deployer.deploy(TBTCSystem)
 
-    await deployer.deploy(TBTCToken)
+    await deployer.deploy(TBTCToken, TBTCSystem.address)
 
     // keep
     await deployer.deploy(KeepBridge).then((instance) => {

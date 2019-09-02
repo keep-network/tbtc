@@ -13,7 +13,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
-const TBTCTokenStub = artifacts.require('TBTCTokenStub')
+const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -64,9 +64,11 @@ contract('Deposit', (accounts) => {
   let deployed
   let testInstance
   let withdrawalRequestTime
+  let tbtcToken
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
     testInstance = deployed.TestDeposit
     testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, deployed.TBTCTokenStub.address, deployed.KeepStub.address)
 
@@ -97,6 +99,7 @@ contract('Deposit', (accounts) => {
     const keepPubkeyY = '0x' + '44'.repeat(32)
     const requesterPKH = '0x' + '33'.repeat(20)
     let requiredBalance
+    let callerBalance
 
     before(async () => {
       requiredBalance = await deployed.TestDepositUtils.redemptionTBTCAmount.call()
@@ -106,9 +109,10 @@ contract('Deposit', (accounts) => {
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
       // make sure to clear TBTC balance of caller
-      await deployed.TBTCTokenStub.clearBalance(accounts[0])
+      callerBalance = await tbtcToken.balanceOf(accounts[0])
+      await tbtcToken.forceBurn(accounts[0], callerBalance)
       // mint the required balance to request redemption
-      await deployed.TBTCTokenStub.mint(accounts[0], requiredBalance)
+      await tbtcToken.forceMint(accounts[0], requiredBalance)
       await deployed.KeepStub.setSuccess(true)
     })
 

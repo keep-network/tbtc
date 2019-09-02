@@ -13,7 +13,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
-const TBTCTokenStub = artifacts.require('TBTCTokenStub')
+const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -83,11 +83,13 @@ contract('Deposit', (accounts) => {
   let testInstance
   let fundingProofTimerStart
   let beneficiary
+  let tbtcToken
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, deployed.TBTCTokenStub.address, deployed.KeepStub.address)
+    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     const uniswapFactory = deployed.UniswapFactoryStub
