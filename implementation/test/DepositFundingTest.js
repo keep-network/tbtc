@@ -13,6 +13,8 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
+
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -219,11 +221,28 @@ contract('Deposit', (accounts) => {
   })
 
   describe('retrieveSignerPubkey', async () => {
+    const publicKey = '0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1'
     const pubkeyX = '0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa'
     const pubkeyY = '0x385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1'
 
+    let ecdsaKeepStub
+
+    before(async () => {
+      ecdsaKeepStub = await ECDSAKeepStub.new()
+    })
+
     beforeEach(async () => {
       await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP)
+
+      await testInstance.setKeepInfo(
+        ecdsaKeepStub.address,
+        0,
+        0,
+        utils.bytes32zero,
+        utils.bytes32zero
+      )
+
+      await ecdsaKeepStub.setPublicKey(publicKey)
     })
 
     it('updates the pubkey X and Y, changes state, and logs RegisteredPubkey', async () => {
@@ -248,8 +267,17 @@ contract('Deposit', (accounts) => {
       )
     })
 
+    it('reverts when public key is not 64-bytes long', async () => {
+      await ecdsaKeepStub.setPublicKey('0x' + '00'.repeat(63))
+
+      await expectThrow(
+        testInstance.retrieveSignerPubkey(),
+        'public key not set or not 64-bytes long'
+      )
+    })
+
     it('reverts if either half of the pubkey is 0', async () => {
-      await deployed.KeepStub.setPubkey('0x' + '00'.repeat(64))
+      await ecdsaKeepStub.setPublicKey('0x' + '00'.repeat(64))
 
       await expectThrow(
         testInstance.retrieveSignerPubkey(),
