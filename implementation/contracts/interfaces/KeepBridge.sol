@@ -11,13 +11,6 @@ contract KeepBridge is IKeep {
     /// concatenation of a keepID and a digest.
     mapping (bytes => uint256) approvedDigests;
 
-    // get the result of a keep formation
-    // should return a 64 byte packed pubkey (x and y)
-    // error if not ready yet
-    function getKeepPubkey(address _keepAddress) external view returns (bytes memory){
-        return ECDSAKeep(_keepAddress).getPublicKey();
-    }
-
     /// @notice Approves digest for signing.
     /// @dev Calls given keep to sign the digest. Records a current timestamp
     /// for given keep and digest pair.

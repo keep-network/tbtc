@@ -5,12 +5,6 @@ pragma solidity ^0.5.10;
  */
 
 interface IKeep {
-
-    // get the result of a keep formation
-    // should return a 64 byte packed pubkey (x and y)
-    // error if not ready yet
-    function getKeepPubkey(address _keepAddress) external view returns (bytes memory);
-
     /// @notice Approves digest for signing.
     /// @param _keepAddress Keep address
     /// @param _digest Digest to sign
