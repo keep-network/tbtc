@@ -39,4 +39,12 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
     function mint(address _to, uint256 _tokenId) public {
         _mint(_to, _tokenId);
     }
+
+    /// @notice  Checks if an address is a deposit.
+    /// @dev     Verifies if Deposit ERC721 token with given address exists.
+    /// @param _depositAddress  The address to check
+    /// @return  True if deposit with given value exists, false otherwise.
+    function isDeposit(address _depositAddress) public returns (bool){
+        return _exists(uint256(_depositAddress));
+    }
 }

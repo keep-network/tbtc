@@ -13,7 +13,6 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 
-
 library DepositRedemption {
 
     using SafeMath for uint256;
@@ -31,13 +30,13 @@ library DepositRedemption {
     /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address
     /// @dev        Approves the keep contract, then expects it to call transferFrom
     function distributeSignerFee(DepositUtils.Deposit storage _d) public {
-        address _tbtcAddress = _d.TBTCToken;
-        TBTCToken _tbtc = TBTCToken(_tbtcAddress);
+        address _tbtcTokenAddress = _d.TBTCToken;
+        TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 
         IKeep _keep = IKeep(_d.KeepBridge);
 
-        _tbtc.approve(_d.KeepBridge, DepositUtils.signerFee());
-        _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcAddress, DepositUtils.signerFee());
+        _tbtcToken.approve(_d.KeepBridge, DepositUtils.signerFee());
+        _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcTokenAddress, DepositUtils.signerFee());
     }
 
     /// @notice         approves a digest for signing by our keep group
