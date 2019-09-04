@@ -137,15 +137,6 @@ contract('Deposit', (accounts) => {
         'Fee is too low'
       )
     })
-
-    it('reverts if the keep returns false', async () => {
-      await deployed.KeepStub.setSuccess(false)
-
-      await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
-        'Keep returned false'
-      )
-    })
   })
 
   describe('approveDigest', async () => {
@@ -333,15 +324,6 @@ contract('Deposit', (accounts) => {
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
         'Provided previous value does not yield previous sighash'
-      )
-    })
-
-    it('reverts if the keep returned false', async () => {
-      await deployed.KeepStub.setSuccess(false)
-
-      await expectThrow(
-        testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
-        'Keep returned false'
       )
     })
   })

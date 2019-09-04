@@ -95,7 +95,7 @@ contract TestDeposit is Deposit {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
 
-    function approveDigest(bytes32 _digest) public returns (bool) {
+    function approveDigest(bytes32 _digest) public {
         return self.approveDigest(_digest);
     }
 

@@ -46,12 +46,10 @@ library DepositRedemption {
     /// @param _digest Digest to approve
     /// @return True if successful
     // TODO: Shouldn't it be changed to internal?
-    function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
+    function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public {
         ECDSAKeep(_d.keepAddress).sign(_digest);
 
         _d.approvedDigests[abi.encodePacked(_digest)] = block.timestamp;
-
-        return true;
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
@@ -99,7 +97,8 @@ library DepositRedemption {
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash), "Keep returned false");
+
+        approveDigest(_d, _sighash);
 
         _d.setAwaitingWithdrawalSignature();
         _d.logRedemptionRequested(
@@ -174,7 +173,8 @@ library DepositRedemption {
         // Ratchet the signature and redemption proof timeouts
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash), "Keep returned false");
+
+        approveDigest(_d, _sighash);
 
         // Go back to waiting for a signature
         _d.setAwaitingWithdrawalSignature();
