@@ -13,7 +13,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const KeepStub = artifacts.require('KeepStub')
-const TBTCTokenStub = artifacts.require('TBTCTokenStub')
+const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -44,7 +44,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
   { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCTokenStub', contract: TBTCTokenStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 // spare signature:
@@ -81,11 +80,13 @@ contract('Deposit', (accounts) => {
   let testInstance
   let fundingProofTimerStart
   let beneficiary
+  let tbtcToken
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, deployed.TBTCTokenStub.address, deployed.KeepStub.address)
+    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
     beneficiary = accounts[4]
   })
@@ -102,7 +103,7 @@ contract('Deposit', (accounts) => {
 
       await testInstance.createNewDeposit(
         deployed.TBTCSystemStub.address,
-        deployed.TBTCTokenStub.address,
+        tbtcToken.address,
         deployed.KeepStub.address,
         1, // m
         1)
@@ -129,7 +130,7 @@ contract('Deposit', (accounts) => {
       await expectThrow(
         testInstance.createNewDeposit.call(
           deployed.TBTCSystemStub.address,
-          deployed.TBTCTokenStub.address,
+          tbtcToken.address,
           deployed.KeepStub.address,
           1, // m
           1),
@@ -373,9 +374,9 @@ contract('Deposit', (accounts) => {
     })
 
     it('mints tokens', async () => {
-      const initialTokenBalanceTotal = await deployed.TBTCTokenStub.totalSupply()
-      const initialTokenBalanceBeneficiary = await deployed.TBTCTokenStub.balanceOf(beneficiary)
-      const initialTokenBalanceDeposit = await deployed.TBTCTokenStub.balanceOf(testInstance.address)
+      const initialTokenBalanceTotal = await tbtcToken.totalSupply()
+      const initialTokenBalanceBeneficiary = await tbtcToken.balanceOf(beneficiary)
+      const initialTokenBalanceDeposit = await tbtcToken.balanceOf(testInstance.address)
 
       await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
@@ -391,9 +392,9 @@ contract('Deposit', (accounts) => {
       const expectedTokenBalanceBeneficiary = initialTokenBalanceBeneficiary.add(expectedMintedTokenBeneficiary)
       const expectedTokenBalanceDeposit = initialTokenBalanceDeposit.add(expectedMintedTokenDeposit)
 
-      const actualTokenBalanceTotal = await deployed.TBTCTokenStub.totalSupply()
-      const actualTokenBalanceBeneficiary = await deployed.TBTCTokenStub.balanceOf(beneficiary)
-      const actualTokenBalanceDeposit = await deployed.TBTCTokenStub.balanceOf(testInstance.address)
+      const actualTokenBalanceTotal = await tbtcToken.totalSupply()
+      const actualTokenBalanceBeneficiary = await tbtcToken.balanceOf(beneficiary)
+      const actualTokenBalanceDeposit = await tbtcToken.balanceOf(testInstance.address)
 
       expect(actualTokenBalanceTotal, 'incorrect total amount minted').to.eq.BN(expectedTokenBalanceTotal)
       expect(actualTokenBalanceBeneficiary, 'incorrect amount minted for beneficiary').to.eq.BN(expectedTokenBalanceBeneficiary)

@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   gcp-cli: circleci/gcp-cli@1.8.2
-  gcp-gcr: circleci/gcp-gcr@0.0.4  
+  gcp-gcr: circleci/gcp-gcr@0.0.4
 
 executors:
   docker-node:
@@ -10,10 +10,10 @@ executors:
       - image: circleci/node:11
   docker-git:
     docker:
-      - image: docker:18.06.0-ce-git      
+      - image: docker:18.06.0-ce-git
   docker-thesis-buildpack:
     docker:
-      - image: thesisco/docker-buildpack:bionic      
+      - image: thesisco/docker-buildpack:bionic
 jobs:
   lint_js:
     executor: docker-node
@@ -199,7 +199,7 @@ jobs:
       steps:
         - attach_workspace:
             at: /tmp/tbtc
-        - gcp-cli/install        
+        - gcp-cli/install
         - gcp-cli/initialize:
             google-project-id: GOOGLE_PROJECT_ID
             google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -209,7 +209,7 @@ jobs:
             name: Upload contract data
             command: |
               cd /tmp/tbtc/contracts
-              gsutil -m cp * gs://keep-dev-contract-data
+              gsutil -m cp * gs://keep-dev-contract-data/tbtc
 
 workflows:
   version: 2
@@ -242,14 +242,14 @@ workflows:
       - build_initcontainer:
           filters:
             branches:
-              only: master        
+              only: master
           context: keep-dev
           requires:
             - migrate_contracts
       - publish_images:
           filters:
             branches:
-              only: master        
+              only: master
           context: keep-dev
           requires:
             - migrate_contracts
@@ -257,8 +257,7 @@ workflows:
       - publish_contract_data:
           filters:
             branches:
-              only: master        
+              only: master
           context: keep-dev
           requires:
-            - migrate_contracts            
-      
+            - migrate_contracts
