@@ -8,7 +8,7 @@ import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 
 // Tests the Uniswap deployment
 
-contract.only('Uniswap', (accounts) => {
+contract('Uniswap', (accounts) => {
   let tbtcToken
 
   before(async () => {
