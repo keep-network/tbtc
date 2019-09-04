@@ -1,24 +1,40 @@
 const TBTCToken = artifacts.require('TBTCToken')
+const TBTCSystem = artifacts.require('TBTCSystem')
 const IUniswapFactory = artifacts.require('IUniswapFactory')
 const IUniswapExchange = artifacts.require('IUniswapExchange')
 
-const UniswapDeployment = artifacts.require('UniswapDeployment')
-
-import { deployUniswap } from '../uniswap'
 import { UniswapHelpers } from './helpers/uniswap'
+import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 
 // Tests the Uniswap deployment
 
 contract('Uniswap', (accounts) => {
   let tbtcToken
+  let snapshotId
+
+  before(async () => {
+    snapshotId = await createSnapshot()
+  })
+
+  beforeEach(async () => {
+    snapshotId = await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot(snapshotId)
+  })
+
+  after(async () => {
+    await restoreSnapshot(snapshotId)
+  })
 
   describe('deployment', async () => {
     it('deployed the uniswap factory and created the exchange', async () => {
       tbtcToken = await TBTCToken.deployed()
       expect(tbtcToken).to.not.be.empty
 
-      const uniswapDeployment = await UniswapDeployment.deployed()
-      const uniswapFactoryAddr = await uniswapDeployment.factory()
+      const tbtcSystem = await TBTCSystem.deployed()
+      const uniswapFactoryAddr = await tbtcSystem.getUniswapFactory()
       expect(uniswapFactoryAddr).to.not.be.empty
 
       const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
@@ -34,8 +50,9 @@ contract('Uniswap', (accounts) => {
     beforeEach(async () => {
       tbtc = await TBTCToken.new()
 
-      const { factory } = await deployUniswap(web3, accounts)
-      const uniswapFactory = await IUniswapFactory.at(factory.options.address)
+      const tbtcSystem = await TBTCSystem.deployed()
+      const uniswapFactoryAddr = await tbtcSystem.getUniswapFactory()
+      const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
 
       await uniswapFactory.createExchange(tbtc.address)
       const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtc.address)

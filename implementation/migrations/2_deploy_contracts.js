@@ -32,8 +32,8 @@ const KeepRegistryAddress = '0x21dB9E2A9fFa5B5019D55D1a7e7DFD16c116a800' // Keep
 const DepositFactory = artifacts.require('DepositFactory')
 
 // uniswap
-const { deployUniswap } = require('../uniswap')
-const UniswapDeployment = artifacts.require('UniswapDeployment')
+const IUniswapFactory = artifacts.require('IUniswapFactory')
+const UniswapFactoryAddress = '0x622B525445aD939f1b0fF1193E57DC0ED75dAb6e' // UniswapFactory contract address
 
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
@@ -45,14 +45,6 @@ module.exports = (deployer, network, accounts) => {
   const PRICE_ORACLE_DEFAULT_PRICE = '323200000000'
 
   deployer.then(async () => {
-    try {
-      const { factory, exchange } = await deployUniswap(web3, accounts)
-      // Save the deployed addresses to the UniswapDeployment contract
-      await deployer.deploy(UniswapDeployment, factory.options.address, exchange.options.address)
-    } catch (err) {
-      throw new Error(`uniswap deployment failed: ${err}`)
-    }
-
     // bitcoin-spv
     await deployer.deploy(BytesLib)
     await deployer.link(BytesLib, all)
@@ -96,9 +88,9 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
 
     // system
-    await deployer.deploy(TBTCSystem)
+    const tbtcSystem = await deployer.deploy(TBTCSystem)
 
-    await deployer.deploy(TBTCToken)
+    const tbtcToken = await deployer.deploy(TBTCToken)
 
     // keep
     await deployer.deploy(KeepBridge).then((instance) => {
@@ -107,5 +99,13 @@ module.exports = (deployer, network, accounts) => {
 
     // deposit factory
     await deployer.deploy(DepositFactory, Deposit.address)
+
+    // uniswap
+    const uniswapFactory = await IUniswapFactory.at(UniswapFactoryAddress)
+    if (await uniswapFactory.getExchange(tbtcToken.address) == '0x0000000000000000000000000000000000000000') {
+      await uniswapFactory.createExchange(tbtcToken.address)
+    }
+
+    await tbtcSystem.setExternalAddresses(uniswapFactory.address)
   })
 }
