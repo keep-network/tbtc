@@ -429,13 +429,24 @@ contract('DepositUtils', (accounts) => {
   })
 
   describe('wasDigestApprovedForSigning()', async () => {
-    it('calls out to the keep system', async () => {
-      const approved = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
-      assert.equal(approved, false)
+    it('returns 0 when digest has not been approved', async () => {
+      const digest = '0x' + '71'.repeat(32)
+      const expectedApprovalTime = new BN(0)
 
-      await deployed.KeepStub.approveDigest('0x0000000000000000000000000000000000000007', '0x' + '00'.repeat(32))
-      const newApproved = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
-      assert(newApproved.eq(new BN(100)))
+      const approvalTime = await testUtilsInstance.wasDigestApprovedForSigning.call(digest)
+
+      assert(approvalTime.eq(expectedApprovalTime))
+    })
+
+    it('returns approval time for approved digest', async () => {
+      const digest = '0x' + '02'.repeat(32)
+      const expectedApprovalTime = new BN(100)
+
+      await testUtilsInstance.setDigestApprovedAtTime(digest, expectedApprovalTime)
+
+      const approvalTime = await testUtilsInstance.wasDigestApprovedForSigning.call(digest)
+
+      assert(approvalTime.eq(expectedApprovalTime))
     })
   })
 

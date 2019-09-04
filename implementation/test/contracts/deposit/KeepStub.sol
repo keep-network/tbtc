@@ -4,7 +4,6 @@ import {IKeep} from '../../../contracts/interfaces/IKeep.sol';
 
 contract KeepStub {
 
-    mapping (bytes32 => uint256) approved;
     bool success = true;
     uint256 bondAmount = 10000;
     address keepAddress = address(7);
@@ -16,18 +15,6 @@ contract KeepStub {
     function setSuccess(bool _success) public {success = _success;}
     function setBondAmount(uint256 _bondAmount) public {bondAmount = _bondAmount;}
     function setKeepAddress(address _id) public {keepAddress = _id;}
-    function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {approved[_digest] = _timestamp;}
-
-    function wasDigestApprovedForSigning(address _keepAddress, bytes32 _digest) external view returns (uint256) {
-        _keepAddress;
-        return approved[_digest];
-    }
-
-    function approveDigest(address _keepAddress, bytes32 _digest) external returns (bool _success) {
-        _keepAddress;
-        approved[_digest] = 100;
-        _success = success;
-    }
 
     function submitSignatureFraud(
         address _keepAddress,

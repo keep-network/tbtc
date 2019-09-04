@@ -95,6 +95,18 @@ contract TestDeposit is Deposit {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
 
+    function approveDigest(bytes32 _digest) public returns (bool) {
+        return self.approveDigest(_digest);
+    }
+
+    function wasDigestApprovedForSigning(bytes32 _digest) public view returns (uint256) {
+        return self.wasDigestApprovedForSigning(_digest);
+    }
+
+    function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
+        self.approvedDigests[abi.encodePacked(_digest)] = _timestamp;
+    }
+
     // passthrough for direct testing
     function redemptionTransactionChecks(bytes memory _bitcoinTx) public view returns (bytes32, uint256) {
         return self.redemptionTransactionChecks(_bitcoinTx);
