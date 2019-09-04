@@ -83,8 +83,11 @@ module.exports = (deployer, network, accounts) => {
     // price oracle
     await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
 
+    // deposit factory
+    await deployer.deploy(DepositFactory, Deposit.address)
+
     // system
-    await deployer.deploy(TBTCSystem)
+    await deployer.deploy(TBTCSystem, DepositFactory.address)
 
     await deployer.deploy(TBTCToken, TBTCSystem.address)
 
@@ -92,8 +95,5 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(KeepBridge).then((instance) => {
       instance.initialize(KeepRegistryAddress)
     })
-
-    // deposit factory
-    await deployer.deploy(DepositFactory, Deposit.address)
   })
 }
