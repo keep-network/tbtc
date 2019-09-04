@@ -13,9 +13,9 @@ contract TBTCSystem is ITBTCSystem, ERC721, ERC721MinterAuthority, DepositLog {
 
     constructor(address _depositFactory)
         ERC721MinterAuthority(_depositFactory)
-        public{
+        public {
             // solium-disable-previous-line no-empty-blocks
-        }
+    }
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
