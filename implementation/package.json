@@ -20,10 +20,6 @@
   "author": "James Prestwich",
   "license": "UNLICENSED",
   "dependencies": {
-    "@babel/cli": "^7.5.0",
-    "@babel/core": "^7.5.4",
-    "@babel/preset-env": "^7.5.4",
-    "@babel/register": "^7.4.4",
     "bn-chai": "^1.0.1",
     "bn.js": "^4.11.8",
     "bitcoin-spv": "git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0-high-err",
@@ -34,6 +30,7 @@
     "solc": "^0.5.10"
   },
   "devDependencies": {
+    "@keep-network/uniswap": "../uniswap",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-stage-2": "^6.18.0",
