@@ -4,6 +4,14 @@ import {TBTCSystem} from '../../../contracts/system/TBTCSystem.sol';
 
 contract TBTCSystemStub is TBTCSystem {
 
+    constructor(address _depositFactory)
+        // Set expected factory address to 0-address.
+        // Address is irelevant as test use forceMint function to bypass ACL
+        TBTCSystem(_depositFactory)
+    public {
+        // solium-disable-previous-line no-empty-blocks
+    }
+
     function setOraclePrice(uint256 _oraclePrice) external {
         oraclePrice = _oraclePrice;
     }
@@ -20,4 +28,13 @@ contract TBTCSystemStub is TBTCSystem {
     function approvedToLog(address _caller) public view returns (bool) {
         _caller; return true;
     }
-}
+
+    /// @notice          Function to mint a new token.
+    /// @dev             We can't call 721 mint function from deposit Test becuase of ACL.
+    ///                  This function bypasses ACL and can be called in Deposit tests
+    ///                  Reverts if the given token ID already exists.
+    /// @param _to       The address that will own the minted token
+    /// @param _tokenId  uint256 ID of the token to be minted
+    function forceMint(address _to, uint256 _tokenId) public {
+        _mint(_to, _tokenId);
+    }}
