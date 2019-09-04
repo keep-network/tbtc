@@ -4,7 +4,6 @@
   "description": "deposit contract for TBTC",
   "main": "index.js",
   "scripts": {
-    "preinstall": "cd ../ && git submodule update --init --recursive",
     "clean": "rm -rf build/",
     "compile": "truffle compile",
     "test": "truffle test",
@@ -15,7 +14,7 @@
     "sol:lint:fix": "solium -d contracts/ --fix"
   },
   "config": {
-    "eslintPaths": "test/ migrations/ demo/ uniswap/index.js"
+    "eslintPaths": "test/ migrations/ demo/"
   },
   "precommit": "npm run lint",
   "author": "James Prestwich",
