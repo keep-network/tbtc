@@ -8,24 +8,23 @@ import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 
 // Tests the Uniswap deployment
 
-contract('Uniswap', (accounts) => {
+contract.only('Uniswap', (accounts) => {
   let tbtcToken
-  let snapshotId
 
   before(async () => {
-    snapshotId = await createSnapshot()
+    await createSnapshot()
   })
 
   beforeEach(async () => {
-    snapshotId = await createSnapshot()
+    await createSnapshot()
   })
 
   afterEach(async () => {
-    await restoreSnapshot(snapshotId)
+    await restoreSnapshot()
   })
 
   after(async () => {
-    await restoreSnapshot(snapshotId)
+    await restoreSnapshot()
   })
 
   describe('deployment', async () => {
