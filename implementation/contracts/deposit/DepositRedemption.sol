@@ -7,6 +7,7 @@ import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
 import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
+import {ECDSAKeep} from "keep-tecdsa/solidity/contracts/ECDSAKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
@@ -39,13 +40,18 @@ library DepositRedemption {
         _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcTokenAddress, DepositUtils.signerFee());
     }
 
-    /// @notice         approves a digest for signing by our keep group
-    /// @dev            calls out to the keep contract
-    /// @param  _digest the digest to approve
-    /// @return         true if approved, otherwise revert
+    /// @notice Approves digest for signing by a keep
+    /// @dev Calls given keep to sign the digest. Records a current timestamp
+    /// for given digest
+    /// @param _digest Digest to approve
+    /// @return True if successful
+    // TODO: Shouldn't it be changed to internal?
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
-        IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.approveDigest(_d.keepAddress, _digest);
+        ECDSAKeep(_d.keepAddress).sign(_digest);
+
+        _d.approvedDigests[abi.encodePacked(_digest)] = block.timestamp;
+
+        return true;
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {

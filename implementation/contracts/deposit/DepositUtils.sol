@@ -51,6 +51,12 @@ library DepositUtils {
         bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
+
+
+        /// @notice Map of timestamps for each digest approved for signing
+        /// @dev Holds a timestamp from the moment when the digest was approved for
+        /// signing for a given digest
+        mapping (bytes => uint256) approvedDigests;
     }
 
     /// @notice         Gets the current block difficulty
@@ -374,13 +380,13 @@ library DepositUtils {
         return abi.encodePacked(_b).reverseEndianness().bytesToUint();
     }
 
-    /// @notice         determines whether a digest has been approved for our keep group
-    /// @dev            calls out to the keep contract, storing a 256bit int costs the same as a bool
-    /// @param  _digest the digest to check approval time for
-    /// @return         the time it was approved. 0 if unapproved
+    /// @notice Gets timestamp of digest approval for signing
+    /// @dev Identifies entry in the recorded approvals by keep ID and digest pair
+    /// @param _digest Digest to check approval for
+    /// @return Timestamp from the moment of recording the digest for signing.
+    /// Returns 0 if the digest was not approved for signing
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.wasDigestApprovedForSigning(_d.keepAddress, _digest);
+        return _d.approvedDigests[abi.encodePacked(_digest)];
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
