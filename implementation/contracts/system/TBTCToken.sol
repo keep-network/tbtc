@@ -2,14 +2,14 @@ pragma solidity ^0.5.10;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
-import "./MinterAuthority.sol";
+import "./ERC20MinterAuthority.sol";
 
-contract TBTCToken is ERC20Detailed, ERC20, MinterAuthority {
+contract TBTCToken is ERC20Detailed, ERC20, ERC20MinterAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
     constructor(address _TBTCSystem)
         ERC20Detailed("Trustless bitcoin", "TBTC", 18)
-        MinterAuthority(_TBTCSystem)
+        ERC20MinterAuthority(_TBTCSystem)
     public {
         // solium-disable-previous-line no-empty-blocks
     }
