@@ -74,7 +74,7 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract('Deposit', (accounts) => {
+contract('DepositFunding', (accounts) => {
   let deployed
   let testInstance
   let fundingProofTimerStart
@@ -112,9 +112,11 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
 
-      const keepInfo = await testInstance.getKeepInfo.call()
-      expect(keepInfo[0], 'keepAddress not as expected').to.equal(expectedKeepAddress)
-      expect(keepInfo[1], 'signing group timestamp not as expected').not.to.eq.BN(0)
+      const keepAddress = await testInstance.getKeepAddress.call()
+      expect(keepAddress, 'keepAddress not as expected').to.equal(expectedKeepAddress)
+
+      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
+      expect(signingGroupRequestedAt, 'signing group timestamp not as expected').not.to.eq.BN(0)
 
       // fired an event
       const eventList = await deployed.TBTCSystemStub.getPastEvents(
@@ -152,22 +154,18 @@ contract('Deposit', (accounts) => {
 
       await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP)
 
-      await testInstance.setKeepInfo(
-        ADDRESS_ZERO,
-        fundingProofTimerStart,
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero
-      )
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart)
     })
 
     it('updates state to setup failed, deconstes state, and logs SetupFailed', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.notifySignerSetupFailure()
 
-      const keepInfo = await testInstance.getKeepInfo.call()
-      expect(keepInfo[1], 'signingGroupRequestedAt should be 0').to.eq.BN(0)
-      expect(keepInfo[2], 'fundingProofTimerStart should be 0').to.eq.BN(0)
+      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
+      expect(signingGroupRequestedAt, 'signingGroupRequestedAt should be 0').to.eq.BN(0)
+
+      const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
+      expect(fundingProofTimerStart, 'fundingProofTimerStart should be 0').to.eq.BN(0)
 
       const eventList = await deployed.TBTCSystemStub.getPastEvents(
         'SetupFailed',
@@ -186,13 +184,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the timer has not yet elapsed', async () => {
-      await testInstance.setKeepInfo(
-        ADDRESS_ZERO,
-        fundingProofTimerStart * 5,
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero
-      )
+      await testInstance.setSigningGroupRequestedAt(fundingProofTimerStart * 5)
 
       await expectThrow(
         testInstance.notifySignerSetupFailure(),
@@ -207,7 +199,9 @@ contract('Deposit', (accounts) => {
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
+      await testInstance.setSigningGroupRequestedAt(fundingProofTimerStart)
       await deployed.ECDSAKeepStub.setBondAmount(bond)
+
       await testInstance.notifySignerSetupFailure()
 
       const balance = await web3.eth.getBalance(beneficiary)
@@ -229,15 +223,7 @@ contract('Deposit', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.AWAITING_SIGNER_SETUP)
-
-      await testInstance.setKeepInfo(
-        ecdsaKeepStub.address,
-        0,
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero
-      )
-
+      await testInstance.setKeepAddress(ecdsaKeepStub.address)
       await ecdsaKeepStub.setPublicKey(publicKey)
     })
 
@@ -245,9 +231,9 @@ contract('Deposit', (accounts) => {
       const blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.retrieveSignerPubkey()
 
-      const keepInfo = await testInstance.getKeepInfo.call()
-      assert.equal(keepInfo[3], pubkeyX)
-      assert.equal(keepInfo[4], pubkeyY)
+      const signingGroupPublicKey = await testInstance.getSigningGroupPublicKey.call()
+      assert.equal(signingGroupPublicKey[0], pubkeyX)
+      assert.equal(signingGroupPublicKey[1], pubkeyY)
 
       const eventList = await deployed.TBTCSystemStub.getPastEvents('RegisteredPubkey', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._signingGroupPubkeyX, pubkeyX, 'Logged X is wrong')
@@ -293,8 +279,9 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
+
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart)
     })
 
     it('updates the state to failed setup, deconstes funding info, and logs SetupFailed', async () => {
@@ -319,7 +306,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the timeout has not elapsed', async () => {
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart * 5)
 
       await expectThrow(
         testInstance.notifyFundingTimeout(),
@@ -329,9 +316,12 @@ contract('Deposit', (accounts) => {
 
     it('distributes the funder bond to the keep group', async () => {
       const bond = 1000000
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
+
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart)
       await testInstance.send(bond, { from: beneficiary })
+
       await testInstance.notifyFundingTimeout()
+
       const keepBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(keepBalance, new BN(bond), 'funder bond not distributed properly')
     })
@@ -339,9 +329,9 @@ contract('Deposit', (accounts) => {
 
   describe('provideBTCFundingProof', async () => {
     beforeEach(async () => {
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, _signerPubkeyX, _signerPubkeyY)
       await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
       await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
@@ -354,9 +344,11 @@ contract('Deposit', (accounts) => {
       assert.equal(UTXOInfo[0], _outValueBytes)
       assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
 
-      const keepState = await testInstance.getKeepInfo.call()
-      assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted')
-      assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted')
+      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
+      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not deconsted')
+
+      const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
+      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not deconsted')
 
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.ACTIVE)

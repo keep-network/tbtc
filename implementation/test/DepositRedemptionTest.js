@@ -53,7 +53,7 @@ const TEST_DEPOSIT_DEPLOY = [
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-contract('Deposit', (accounts) => {
+contract('DepositRedemption', (accounts) => {
   let deployed
   let testInstance
   let withdrawalRequestTime
@@ -107,7 +107,8 @@ contract('Deposit', (accounts) => {
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await testInstance.setKeepInfo(deployed.ECDSAKeepStub.address, 0, 0, keepPubkeyX, keepPubkeyY)
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
       await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
@@ -141,7 +142,7 @@ contract('Deposit', (accounts) => {
 
   describe('approveDigest', async () => {
     beforeEach(async () => {
-      await testInstance.setKeepInfo(deployed.ECDSAKeepStub.address, 0, 0, '0x00', '0x00')
+      await testInstance.setSigningGroupPublicKey('0x00', '0x00')
     })
 
     it('calls keep for signing', async () => {
@@ -209,7 +210,7 @@ contract('Deposit', (accounts) => {
     it('updates the state and logs GotRedemptionSignature', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await testInstance.setKeepInfo(deployed.ECDSAKeepStub.address, 0, 0, pubkeyX, pubkeyY)
+      await testInstance.setSigningGroupPublicKey(pubkeyX, pubkeyY)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 0, 0, digest)
 
       await testInstance.provideRedemptionSignature(v, r, s)
@@ -271,10 +272,10 @@ contract('Deposit', (accounts) => {
       withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
       await testInstance.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
-      await testInstance.setKeepInfo(deployed.ECDSAKeepStub.address, 0, 0, keepPubkeyX, keepPubkeyY)
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, prevSighash)
-      await deployed.KeepStub.setSuccess(true)
+      await deployed.ECDSAKeepStub.setSuccess(true)
     })
 
     it('approves a new digest for signing, updates the state, and logs RedemptionRequested', async () => {
@@ -462,7 +463,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if no funds received as signer bond', async () => {
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
 
       await expectThrow(
@@ -475,7 +476,7 @@ contract('Deposit', (accounts) => {
       await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifySignatureTimeout()
 
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
@@ -529,10 +530,10 @@ contract('Deposit', (accounts) => {
     })
 
     it('starts abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifyRedemptionProofTimeout()
 
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()

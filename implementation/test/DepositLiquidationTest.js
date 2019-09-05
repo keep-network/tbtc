@@ -53,7 +53,7 @@ const TEST_DEPOSIT_DEPLOY = [
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-contract('Deposit', (accounts) => {
+contract('DepositLiquidation', (accounts) => {
   let deployed
   let testInstance
   let beneficiary
