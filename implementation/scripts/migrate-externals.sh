@@ -2,6 +2,18 @@
 
 set -ex
 
+SED="sed"
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if ! [ -x "$(command -v gsed)" ]; then
+        echo 'Error: gsed is not installed.' >&2
+        echo 'Install with: brew install gnu-sed'
+        exit 1
+    fi
+    SED="gsed"
+fi
+
+
 uniswap() {
     # Clone Uniswap for deployment
     if [ ! -d uniswap ]; then
@@ -20,10 +32,7 @@ uniswap() {
     FACTORY=$(echo "$UNISWAP_DEPLOYMENT" | sed -n /Factory/p | cut -d' ' -f2)
 
     # Update UniswapFactoryAddress in migration
-    sed -i -e "/UniswapFactoryAddress/s/0x[a-fA-F0-9]\{0,40\}/$FACTORY/" ../../migrations/2_deploy_contracts.js
-    if [[ -e ../../migrations/2_deploy_contracts.js-e ]]; then
-        rm ../../migrations/2_deploy_contracts.js-e
-    fi
+    $SED -i -e "/UniswapFactoryAddress/s/0x[a-fA-F0-9]\{0,40\}/$FACTORY/" ../../migrations/2_deploy_contracts.js
 }
 
 uniswap
