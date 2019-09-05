@@ -12,7 +12,7 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -39,7 +39,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub },
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 // real tx from mainnet bitcoin, interpreted as funding tx
@@ -76,13 +76,13 @@ contract('DepositUtils', (accounts) => {
     beneficiary = accounts[2]
     deployed.TBTCSystemStub.mint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
 
-
     await testUtilsInstance.createNewDeposit(
       deployed.TBTCSystemStub.address,
       tbtcToken.address,
-      deployed.KeepStub.address,
       1, // m
       1) // n
+
+    await testUtilsInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   describe('currentBlockDifficulty()', async () => {
@@ -411,7 +411,7 @@ contract('DepositUtils', (accounts) => {
       const bondAmount = await testUtilsInstance.fetchBondAmount.call()
       assert(bondAmount.eq(new BN(10000)))
 
-      await deployed.KeepStub.setBondAmount(44)
+      await deployed.ECDSAKeepStub.setBondAmount(44)
       const newBondAmount = await testUtilsInstance.fetchBondAmount.call()
       assert(newBondAmount.eq(new BN(44)))
     })
@@ -471,7 +471,7 @@ contract('DepositUtils', (accounts) => {
   describe('seizeSignerBonds()', async () => {
     it('calls out to the keep system and returns the seized amount', async () => {
       const value = 5000
-      await deployed.KeepStub.send(value, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(value, { from: accounts[0] })
       const seized = await testUtilsInstance.seizeSignerBonds.call()
       await testUtilsInstance.seizeSignerBonds()
       assert(seized.eq(new BN(value)))
@@ -506,7 +506,7 @@ contract('DepositUtils', (accounts) => {
       const value = 10000
       await testUtilsInstance.send(value, { from: accounts[0] })
       await testUtilsInstance.pushFundsToKeepGroup(value)
-      const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      const keepBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(keepBalance, value) // web3 balances are integers I guess
     })
 

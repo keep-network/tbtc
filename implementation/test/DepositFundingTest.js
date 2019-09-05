@@ -12,7 +12,6 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 
 const TestToken = artifacts.require('TestToken')
@@ -29,8 +28,6 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-const ADDRESS_ZERO = '0x' + '0'.repeat(40)
-
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },
@@ -45,7 +42,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub },
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
 // spare signature:
@@ -88,13 +85,15 @@ contract('Deposit', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
+    testInstance.setExteriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address)
+
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
     beneficiary = accounts[4]
   })
 
   beforeEach(async () => {
     await testInstance.reset()
+    await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   describe('createNewDeposit', async () => {
@@ -106,7 +105,6 @@ contract('Deposit', (accounts) => {
       await testInstance.createNewDeposit(
         deployed.TBTCSystemStub.address,
         tbtcToken.address,
-        deployed.KeepStub.address,
         1, // m
         1)
 
@@ -133,7 +131,6 @@ contract('Deposit', (accounts) => {
         testInstance.createNewDeposit.call(
           deployed.TBTCSystemStub.address,
           tbtcToken.address,
-          deployed.KeepStub.address,
           1, // m
           1),
         'Deposit setup already requested'
@@ -210,8 +207,7 @@ contract('Deposit', (accounts) => {
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
-      await testInstance.setKeepInfo(ADDRESS_ZERO, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
-      await deployed.KeepStub.setBondAmount(bond)
+      await deployed.ECDSAKeepStub.setBondAmount(bond)
       await testInstance.notifySignerSetupFailure()
 
       const balance = await web3.eth.getBalance(beneficiary)
@@ -336,7 +332,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
       await testInstance.send(bond, { from: beneficiary })
       await testInstance.notifyFundingTimeout()
-      const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      const keepBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(keepBalance, new BN(bond), 'funder bond not distributed properly')
     })
   })
@@ -346,7 +342,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, _signerPubkeyX, _signerPubkeyY)
       await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates to active, stores UTXO info, deconstes funding info, logs Funded', async () => {

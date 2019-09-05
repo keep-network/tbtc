@@ -12,7 +12,6 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
@@ -42,7 +41,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub },
   { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
 
@@ -65,12 +63,14 @@ contract('Deposit', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
+    testInstance.setExteriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address)
+
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
   })
 
   beforeEach(async () => {
     await testInstance.reset()
+    await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   describe('requestRedemption', async () => {
@@ -102,7 +102,7 @@ contract('Deposit', (accounts) => {
       await tbtcToken.forceBurn(accounts[0], callerBalance)
       // mint the required balance to request redemption
       await tbtcToken.forceMint(accounts[0], requiredBalance)
-      await deployed.KeepStub.setSuccess(true)
+      await deployed.ECDSAKeepStub.setSuccess(true)
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
@@ -439,7 +439,7 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
-      await deployed.KeepStub.burnContractBalance()
+      await deployed.ECDSAKeepStub.burnContractBalance()
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_SIGNATURE)
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
     })
@@ -472,7 +472,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('starts abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifySignatureTimeout()
 
       const bond = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -494,7 +494,7 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
-      await deployed.KeepStub.burnContractBalance()
+      await deployed.ECDSAKeepStub.burnContractBalance()
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
     })
@@ -519,7 +519,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if no funds recieved as signer bond', async () => {
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
 
       await expectThrow(
