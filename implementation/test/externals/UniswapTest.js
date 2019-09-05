@@ -5,9 +5,9 @@ const IUniswapExchange = artifacts.require('IUniswapExchange')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCSystem = artifacts.require('TBTCSystem')
 
-const utils = require('./utils')
-import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
-import { UniswapHelpers } from './helpers/uniswap'
+const utils = require('../utils')
+import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
+import { UniswapHelpers } from '../helpers/uniswap'
 
 const BN = require('bn.js')
 const chai = require('chai')
@@ -21,7 +21,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCSystemStub', contract: TBTCSystemStub },
 ]
 
-contract('Uniswap', (accounts) => {
+contract.only('Uniswap', (accounts) => {
   let deployed
   let tbtcToken
 
