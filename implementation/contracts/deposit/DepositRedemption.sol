@@ -6,8 +6,7 @@ import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
 import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
-import {ECDSAKeep} from "keep-tecdsa/solidity/contracts/ECDSAKeep.sol";
+import {IECDSAKeep} from "keep-tecdsa/solidity/contracts/api/IECDSAKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
@@ -47,7 +46,7 @@ library DepositRedemption {
     /// @return True if successful
     // TODO: Shouldn't it be changed to internal?
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public {
-        ECDSAKeep(_d.keepAddress).sign(_digest);
+        IECDSAKeep(_d.keepAddress).sign(_digest);
 
         _d.approvedDigests[abi.encodePacked(_digest)] = block.timestamp;
     }

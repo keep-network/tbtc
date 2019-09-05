@@ -1,11 +1,13 @@
 /* solium-disable function-order */
 pragma solidity ^0.5.10;
 
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
+
+import {IKeepRegistry} from "keep-tecdsa/solidity/contracts/api/IKeepRegistry.sol";
+import {IECDSAKeepVendor} from "keep-tecdsa/solidity/contracts/api/IECDSAKeepVendor.sol";
+
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {DepositLog} from "../DepositLog.sol";
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
-import {KeepRegistry} from "keep-tecdsa/solidity/contracts/KeepRegistry.sol";
-import {ECDSAKeepVendor} from "keep-tecdsa/solidity/contracts/ECDSAKeepVendor.sol";
 
 contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
     uint256 currentDifficulty = 1;
@@ -44,10 +46,10 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
     /// @param _n Number of members in the keep.
     /// @return Address of a new keep.
     function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
-        address keepVendorAddress = KeepRegistry(keepRegistry)
+        address keepVendorAddress = IKeepRegistry(keepRegistry)
             .getVendor("ECDSAKeep");
 
-        _keepAddress = ECDSAKeepVendor(keepVendorAddress)
+        _keepAddress = IECDSAKeepVendor(keepVendorAddress)
             .openKeep(_n,_m, msg.sender);
     }
 

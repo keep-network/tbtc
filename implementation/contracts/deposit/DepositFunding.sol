@@ -4,8 +4,7 @@ import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
 import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
 
-import {IKeep} from "../interfaces/IKeep.sol";
-import {ECDSAKeep} from "keep-tecdsa/solidity/contracts/ECDSAKeep.sol";
+import {IECDSAKeep} from "keep-tecdsa/solidity/contracts/api/IECDSAKeep.sol";
 
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {TBTCSystem} from "../system/TBTCSystem.sol";
@@ -70,7 +69,7 @@ library DepositFunding {
     /// @dev Calls out to the keep contract, expects to get 64 bytes back
     /// @return Public key (64-bytes)
     function getKeepPublicKey(DepositUtils.Deposit storage _d) public view returns (bytes memory) {
-        bytes memory _publicKey = ECDSAKeep(_d.keepAddress).getPublicKey();
+        bytes memory _publicKey = IECDSAKeep(_d.keepAddress).getPublicKey();
 
         require(_publicKey.length == 64, "public key not set or not 64-bytes long");
 
