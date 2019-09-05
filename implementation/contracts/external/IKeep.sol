@@ -1,9 +1,7 @@
 pragma solidity ^0.5.10;
 
-/**
- * @title Keep interface
- */
-
+// TODO: This is a contract holding functions which are required to be implemented
+// on keep side and added to IECDSAKeep interface.
 interface IKeep {
     // Expected behavior:
     // Error if not fraud
@@ -24,7 +22,7 @@ interface IKeep {
 
     // Allow sending tokens to a keep group
     // Useful for sending signers their TBTC
-    // The Keep contract should call transferFrom on the token contrcact
+    // The Keep contract should call transferFrom on the token contract
     function distributeERC20ToKeepGroup(address _keepAddress, address _asset, uint256 _value) external returns (bool);
 
     // returns the amount of the keep's ETH bond in wei

@@ -6,6 +6,7 @@ import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
 import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
+import {IKeep} from "../external/IKeep.sol";
 import {IECDSAKeep} from "keep-tecdsa/solidity/contracts/api/IECDSAKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";

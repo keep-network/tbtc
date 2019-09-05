@@ -5,7 +5,7 @@ import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {IKeep} from "../external/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 

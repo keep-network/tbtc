@@ -7,7 +7,7 @@ import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {IKeep} from "../external/IKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositUtils {
@@ -50,7 +50,6 @@ library DepositUtils {
         bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
-
 
         /// @notice Map of timestamps for each digest approved for signing
         /// @dev Holds a timestamp from the moment when the digest was approved for
@@ -368,7 +367,7 @@ library DepositUtils {
     /// @dev        Calls the keep contract to do so
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IKeep _keep = IKeep(_d.keepAddress);
         return _keep.checkBondAmount(_d.keepAddress);
     }
 
