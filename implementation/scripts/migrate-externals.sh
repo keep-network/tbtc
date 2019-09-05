@@ -6,7 +6,9 @@ SED="sed"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     if ! [ -x "$(command -v gsed)" ]; then
+        # See also: https://unix.stackexchange.com/questions/13711/differences-between-sed-on-mac-osx-and-other-standard-sed
         echo 'Error: gsed is not installed.' >&2
+        echo 'GNU sed is required due to difference in functionality from OSX/FreeBSD sed.'
         echo 'Install with: brew install gnu-sed'
         exit 1
     fi
