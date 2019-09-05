@@ -4,6 +4,18 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "./MinterAuthority.sol";
 
+/**
+ @dev Interface of recipient contract for approveAndCall pattern.
+*/
+interface tokenRecipient {
+     function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes calldata _extraData)
+    external;
+}
+
 contract TBTCToken is ERC20Detailed, ERC20, MinterAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
@@ -30,19 +42,6 @@ contract TBTCToken is ERC20Detailed, ERC20, MinterAuthority {
     /// @param _account  The account whose tokens will be burnt.
     /// @param _amount   The amount of tokens that will be burnt.
     function burnFrom(address _account, uint256 _amount) public onlyDeposit {
-        // NOTE: this uses internal function _burn instead of _burnFrom.
-        // This will bypass allowance check for now.
-        _burn(_account, _amount);
-    }
-
-    /// @notice        Transfer tokens from one address to another
-    /// @dev           Uses the internal _transfer function and
-    ///                bypasses allowance check.
-    /// @param _from   The address to send tokens from
-    /// @param _to     The address to transfer tokens to
-    /// @param _value  The amount of tokens to be transferred
-    function onlyDepositTransferFrom(address _from, address _to, uint256 _value) public onlyDeposit returns (bool) {
-        _transfer(_from, _to, _value);
-        return true;
+        _burnFrom(_account, _amount);
     }
 }
