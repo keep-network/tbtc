@@ -1,11 +1,10 @@
 pragma solidity ^0.5.10;
 
-import {ECDSAKeepVendor} from '../../../contracts/interfaces/KeepBridge.sol';
-import {ECDSAKeepStub} from './ECDSAKeepStub.sol';
+import {IECDSAKeepVendor} from "keep-tecdsa/solidity/contracts/api/IECDSAKeepVendor.sol";
 
 /// @notice Implementation of ECDSAKeepVendor interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
-contract ECDSAKeepVendorStub is ECDSAKeepVendor {
+contract ECDSAKeepVendorStub is IECDSAKeepVendor {
      address public keepOwner;
 
     function openKeep(
