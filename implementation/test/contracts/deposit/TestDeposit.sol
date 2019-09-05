@@ -17,9 +17,13 @@ contract TestDeposit is Deposit {
     function reset() public {
         setState(0);
         setLiquidationAndCourtesyInitated(0, 0);
-        setKeepInfo(address(0), 0, 0, bytes32(0), bytes32(0));
         setRequestInfo(address(0), bytes20(0), 0, 0, bytes32(0));
         setUTXOInfo(bytes8(0), 0, '');
+
+        setKeepAddress(address(0));
+        setSigningGroupRequestedAt(0);
+        setFundingProofTimerStart(0);
+        setSigningGroupPublicKey(bytes32(0), bytes32(0));
     }
 
     function setState(uint8 _state) public {
@@ -40,22 +44,37 @@ contract TestDeposit is Deposit {
         return (self.liquidationInitiated, self.courtesyCallInitiated);
     }
 
-    function setKeepInfo(
-        address _keepAddress,
-        uint256 _signingGroupRequestedAt,
-        uint256 _fundingProofTimerStart,
-        bytes32 _signingGroupPubkeyX,
-        bytes32 _signingGroupPubkeyY
-    ) public {
+    function setKeepAddress(address _keepAddress) public {
         self.keepAddress = _keepAddress;
-        self.signingGroupRequestedAt = _signingGroupRequestedAt;
-        self.fundingProofTimerStart = _fundingProofTimerStart;
-        self.signingGroupPubkeyX = _signingGroupPubkeyX;
-        self.signingGroupPubkeyY = _signingGroupPubkeyY;
     }
 
-    function getKeepInfo() public view returns (address, uint256, uint256, bytes32, bytes32) {
-        return (self.keepAddress, self.signingGroupRequestedAt, self.fundingProofTimerStart, self.signingGroupPubkeyX, self.signingGroupPubkeyY);
+    function getKeepAddress() public view returns (address) {
+        return self.keepAddress;
+    }
+
+    function setSigningGroupRequestedAt(uint256 _signingGroupRequestedAt) public {
+        self.signingGroupRequestedAt = _signingGroupRequestedAt;
+    }
+
+    function getSigningGroupRequestedAt() public view returns (uint256) {
+        return self.signingGroupRequestedAt;
+    }
+
+    function setFundingProofTimerStart(uint256 _fundingProofTimerStart) public {
+        self.fundingProofTimerStart = _fundingProofTimerStart;
+    }
+
+    function getFundingProofTimerStart() public view returns (uint256) {
+        return self.fundingProofTimerStart;
+    }
+
+    function setSigningGroupPublicKey(bytes32 _x,bytes32 _y) public {
+        self.signingGroupPubkeyX = _x;
+        self.signingGroupPubkeyY = _y;
+    }
+
+    function getSigningGroupPublicKey() public returns (bytes32, bytes32){
+        return (self.signingGroupPubkeyX, self.signingGroupPubkeyY);
     }
 
     function setRequestInfo(
