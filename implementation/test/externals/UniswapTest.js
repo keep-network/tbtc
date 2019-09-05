@@ -21,7 +21,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCSystemStub', contract: TBTCSystemStub },
 ]
 
-contract.only('Uniswap', (accounts) => {
+contract('Uniswap', (accounts) => {
   let deployed
   let tbtcToken
 
