@@ -33,9 +33,9 @@ library DepositRedemption {
         address _tbtcTokenAddress = _d.TBTCToken;
         TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IKeep _keep = IKeep(_d.keepAddress);
 
-        _tbtcToken.approve(_d.KeepBridge, DepositUtils.signerFee());
+        _tbtcToken.approve(_d.keepAddress, DepositUtils.signerFee());
         _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcTokenAddress, DepositUtils.signerFee());
     }
 

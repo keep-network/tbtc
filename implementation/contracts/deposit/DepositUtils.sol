@@ -24,7 +24,6 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
-        address KeepBridge;
         uint8 currentState;
 
         // SET ON FRAUD
@@ -412,7 +411,7 @@ library DepositUtils {
     /// @return     the amount of ether seized
     function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IKeep _keep = IKeep(_d.keepAddress);
         _keep.seizeSignerBonds(_d.keepAddress);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
@@ -434,7 +433,7 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IKeep _keep = IKeep(_d.keepAddress);
         return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepAddress);
     }
 }
