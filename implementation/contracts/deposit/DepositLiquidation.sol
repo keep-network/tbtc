@@ -243,6 +243,8 @@ library DepositLiquidation {
     ) internal returns (bool) {
         IUniswapFactory uniswapFactory = IUniswapFactory(ITBTCSystem(_d.TBTCSystem).getUniswapFactory());
         IUniswapExchange exchange = IUniswapExchange(uniswapFactory.getExchange(_d.TBTCToken));
+        
+        // Return early if there was no Uniswap exchange found for the used TBTC token
         if(address(exchange) == address(0x0)) {
             return false;
         }
