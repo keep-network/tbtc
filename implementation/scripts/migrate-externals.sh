@@ -22,6 +22,7 @@ uniswap() {
 
     # Setup repo
     cd uniswap
+    git checkout v0.1.0
     npm i
     export ETH_RPC_URL="http://localhost:8545"
     
