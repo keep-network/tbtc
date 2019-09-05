@@ -62,7 +62,7 @@ contract('DepositFactory', (accounts) => {
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
-        deployed.TBTCTokenStub.address,
+        tbtcToken.address,
         keep.address,
         1,
         1,
