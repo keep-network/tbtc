@@ -57,7 +57,7 @@ library DepositRedemption {
         uint256 _red = _d.redemptionTBTCAmount();
         require(_bal >= _red, "Not enough TBTC to cover outstanding debt");
         _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
-        _tbtc.onlyDepositTransferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
+        _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
     }
 
     /// @notice                     Anyone can request redemption

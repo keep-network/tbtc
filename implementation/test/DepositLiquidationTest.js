@@ -72,7 +72,6 @@ contract('Deposit', (accounts) => {
     await testInstance.reset()
   })
 
-
   describe('purchaseSignerBondsAtAuction', async () => {
     let requiredBalance
 
@@ -83,7 +82,10 @@ contract('Deposit', (accounts) => {
     beforeEach(async () => {
       await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
       let balance
+      let allowance
       for (let i = 0; i < 4; i++) {
+        allowance = await tbtcToken.allowance(accounts[i], testInstance.address)
+        await tbtcToken.decreaseAllowance(testInstance.address, allowance, { from: accounts[i] })
         balance = await tbtcToken.balanceOf(accounts[i])
         await tbtcToken.forceBurn(accounts[i], balance)
       }
@@ -92,6 +94,8 @@ contract('Deposit', (accounts) => {
     it('sets state to liquidated, logs Liquidated, ', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
       await tbtcToken.forceMint(accounts[0], requiredBalance)
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      await tbtcToken.approve(testInstance.address, lotSize, { from: accounts[0] })
 
       await testInstance.purchaseSignerBondsAtAuction()
 
@@ -104,6 +108,8 @@ contract('Deposit', (accounts) => {
 
     it('reverts if not in a liquidation auction', async () => {
       await tbtcToken.forceMint(accounts[0], requiredBalance)
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      await tbtcToken.approve(testInstance.address, lotSize, { from: accounts[0] })
       await testInstance.setState(utils.states.START)
 
       await expectThrow(
@@ -116,6 +122,7 @@ contract('Deposit', (accounts) => {
       // mint 1 less than lot size
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
       await tbtcToken.forceMint(accounts[0], lotSize - 1)
+      await tbtcToken.approve(testInstance.address, lotSize, { from: accounts[0] })
 
       await expectThrow(
         testInstance.purchaseSignerBondsAtAuction(),
@@ -129,6 +136,8 @@ contract('Deposit', (accounts) => {
       await tbtcToken.forceMint(caller, requiredBalance)
 
       const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      await tbtcToken.approve(testInstance.address, lotSize, { from: caller })
+
       const initialTokenBalance = await tbtcToken.balanceOf(caller)
 
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
@@ -144,6 +153,9 @@ contract('Deposit', (accounts) => {
       const returned = await tbtcToken.balanceOf.call(caller)
 
       await tbtcToken.forceMint(caller, requiredBalance)
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      await tbtcToken.approve(testInstance.address, lotSize, { from: caller })
+
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
@@ -161,6 +173,8 @@ contract('Deposit', (accounts) => {
 
       await testInstance.send(value, { from: accounts[0] })
       await tbtcToken.forceMint(caller, requiredBalance)
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      await tbtcToken.approve(testInstance.address, lotSize, { from: caller })
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
@@ -178,6 +192,9 @@ contract('Deposit', (accounts) => {
 
       await testInstance.send(value, { from: accounts[0] })
       await tbtcToken.forceMint(caller, requiredBalance)
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      await tbtcToken.approve(testInstance.address, lotSize, { from: caller })
+
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
@@ -195,6 +212,9 @@ contract('Deposit', (accounts) => {
 
       await testInstance.send(value, { from: accounts[0] })
       await tbtcToken.forceMint(caller, requiredBalance)
+      const lotSize = await deployed.TBTCConstants.getLotSize.call()
+      await tbtcToken.approve(testInstance.address, lotSize, { from: caller })
+
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })

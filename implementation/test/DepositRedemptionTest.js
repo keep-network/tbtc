@@ -89,6 +89,7 @@ contract('Deposit', (accounts) => {
     const requesterPKH = '0x' + '33'.repeat(20)
     let requiredBalance
     let callerBalance
+    let allowance
 
     before(async () => {
       requiredBalance = await deployed.TestDepositUtils.redemptionTBTCAmount.call()
@@ -103,11 +104,15 @@ contract('Deposit', (accounts) => {
       // mint the required balance to request redemption
       await tbtcToken.forceMint(accounts[0], requiredBalance)
       await deployed.KeepStub.setSuccess(true)
+
+      allowance = await tbtcToken.allowance(accounts[0], testInstance.address)
+      await tbtcToken.decreaseAllowance(testInstance.address, allowance, { from: accounts[0] })
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, keepPubkeyX, keepPubkeyY)
+      await tbtcToken.approve(testInstance.address, requiredBalance, { from: accounts[0] })
 
       // the fee is ~12,297,829,380 BTC
       await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
@@ -124,6 +129,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if not in Active or Courtesy', async () => {
       await testInstance.setState(utils.states.LIQUIDATED)
+      await tbtcToken.approve(testInstance.address, requiredBalance, { from: accounts[0] })
 
       await expectThrow(
         testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
@@ -132,6 +138,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the fee is low', async () => {
+      await tbtcToken.approve(testInstance.address, requiredBalance, { from: accounts[0] })
       await expectThrow(
         testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
         'Fee is too low'
@@ -140,6 +147,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the keep returns false', async () => {
       await deployed.KeepStub.setSuccess(false)
+      await tbtcToken.approve(testInstance.address, requiredBalance, { from: accounts[0] })
 
       await expectThrow(
         testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
