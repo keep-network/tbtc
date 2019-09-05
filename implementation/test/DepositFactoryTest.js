@@ -1,5 +1,4 @@
 const DepositFactory = artifacts.require('DepositFactory')
-const KeepStub = artifacts.require('KeepStub')
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TBTCToken = artifacts.require('TBTCToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
@@ -40,21 +39,17 @@ contract('DepositFactory', (accounts) => {
 
   describe('createDeposit()', async () => {
     it('creates new clone instances', async () => {
-      const keep1 = await ECDSAKeepStub.new()
-      const keep2 = await ECDSAKeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         tbtcToken.address,
-        keep1.address,
         1,
         1)
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         tbtcToken.address,
-        keep2.address,
         1,
         1)
 
@@ -79,14 +74,12 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         tbtcToken.address,
-        keep1.address,
         1,
         1)
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         tbtcToken.address,
-        keep2.address,
         1,
         1)
 
@@ -97,21 +90,9 @@ contract('DepositFactory', (accounts) => {
       const deposit1 = await TestDeposit.at(clone1)
       const deposit2 = await TestDeposit.at(clone2)
 
-      await deposit1.setKeepInfo(
-        keep1.address,
-        0,
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero
-      )
+      await deposit1.setKeepAddress(keep1.address)
 
-      await deposit2.setKeepInfo(
-        keep2.address,
-        0,
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero
-      )
+      await deposit2.setKeepAddress(keep2.address)
 
       const currentDifficulty = 6353030562983
       const _version = '0x01000000'
@@ -147,17 +128,10 @@ contract('DepositFactory', (accounts) => {
       await depositContract.createNewDeposit(
         deployed.TBTCSystemStub.address,
         tbtcToken.address,
-        keep.address,
         1,
         1)
 
-      await depositContract.setKeepInfo(
-        keep.address,
-        0,
-        0,
-        utils.bytes32zero,
-        utils.bytes32zero
-      )
+      await depositContract.setKeepAddress(keep.address)
 
       await keep.setPublicKey(publicKey)
 
@@ -167,12 +141,10 @@ contract('DepositFactory', (accounts) => {
       const masterState = await depositContract.getCurrentState()
 
       const blockNumber = await web3.eth.getBlockNumber()
-      const keepNew = await KeepStub.new()
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         tbtcToken.address,
-        keepNew.address,
         1,
         1)
 
