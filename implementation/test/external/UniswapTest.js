@@ -74,7 +74,7 @@ contract('Uniswap', (accounts) => {
 
     it('has no liquidity by default', async () => {
       try {
-        await tbtcExchange.getTokenToEthInputPrice.call(1)
+        await tbtcExchange.getEthToTokenOutputPrice(1)
         assert(false, 'Test call did not error as expected')
       } catch (e) {
         assert.include(e.message, 'invalid JUMP')
