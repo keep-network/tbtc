@@ -4,18 +4,6 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "./MinterAuthority.sol";
 
-/**
- @dev Interface of recipient contract for approveAndCall pattern.
-*/
-interface tokenRecipient {
-     function receiveApproval(
-        address _from,
-        uint256 _value,
-        address _token,
-        bytes calldata _extraData)
-    external;
-}
-
 contract TBTCToken is ERC20Detailed, ERC20, MinterAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
