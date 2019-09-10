@@ -45,8 +45,7 @@ library DepositRedemption {
     /// for given digest
     /// @param _digest Digest to approve
     /// @return True if successful
-    // TODO: Shouldn't it be changed to internal?
-    function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public {
+    function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) internal {
         IECDSAKeep(_d.keepAddress).sign(_digest);
 
         _d.approvedDigests[abi.encodePacked(_digest)] = block.timestamp;
