@@ -36,7 +36,7 @@ jobs:
               set -ex
               npm install
               npm run sol:lint
-  test_solidity:
+  unit_tests:
     executor: docker-node
     steps:
         - checkout
@@ -53,7 +53,7 @@ jobs:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
             command: npm install && npm run test
-  test_e2e:
+  integration_tests:
     executor: docker-node
     steps:
         - checkout
