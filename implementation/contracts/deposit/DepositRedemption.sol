@@ -6,7 +6,7 @@ import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
 import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {IKeep} from "../external/IKeep.sol";
+import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {IECDSAKeep} from "keep-tecdsa/solidity/contracts/api/IECDSAKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
@@ -34,7 +34,7 @@ library DepositRedemption {
         address _tbtcTokenAddress = _d.TBTCToken;
         TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 
-        IKeep _keep = IKeep(_d.keepAddress);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
         _tbtcToken.approve(_d.keepAddress, DepositUtils.signerFee());
         _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcTokenAddress, DepositUtils.signerFee());

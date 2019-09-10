@@ -7,7 +7,7 @@ import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
-import {IKeep} from "../external/IKeep.sol";
+import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositUtils {
@@ -367,7 +367,7 @@ library DepositUtils {
     /// @dev        Calls the keep contract to do so
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.keepAddress);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.checkBondAmount(_d.keepAddress);
     }
 
@@ -410,7 +410,7 @@ library DepositUtils {
     /// @return     the amount of ether seized
     function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
-        IKeep _keep = IKeep(_d.keepAddress);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.seizeSignerBonds(_d.keepAddress);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
@@ -432,7 +432,7 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IKeep _keep = IKeep(_d.keepAddress);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepAddress);
     }
 }

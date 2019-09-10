@@ -1,11 +1,11 @@
 pragma solidity ^0.5.10;
 
 import {IECDSAKeep} from "keep-tecdsa/solidity/contracts/api/IECDSAKeep.sol";
-import {IKeep} from "../../../contracts/external/IKeep.sol";
+import {IBondedECDSAKeep} from "../../../contracts/external/IBondedECDSAKeep.sol";
 
 /// @notice Implementation of ECDSAKeep interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
-contract ECDSAKeepStub is IECDSAKeep, IKeep {
+contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
     bytes publicKey;
     bool success;
     uint256 bondAmount = 10000;
@@ -46,7 +46,7 @@ contract ECDSAKeepStub is IECDSAKeep, IKeep {
           emit SignatureRequested(_digest);
     }
 
-    // Functions implemented for IKeep interface.
+    // Functions implemented for IBondedECDSAKeep interface.
 
     function submitSignatureFraud(
         address _keepAddress,
