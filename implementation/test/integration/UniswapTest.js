@@ -20,6 +20,22 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCSystemStub', contract: TBTCSystemStub },
 ]
 
+/**
+ * Tests integration with the external Uniswap deployment.
+ *
+ * A briefer on Uniswap - it's programmed in Vyper. Vyper is an experimental alternative
+ * language to Solidity.
+ *
+ * One problem with using anything built in Vyper, is that it doesn't error in
+ * the same way a Solidity-compiled contract will. Where Solidity has `require` statements,
+ * Vyper has `assert` statements. A failed `require` will `REVERT` the EVM, but a failed
+ * `assert` in Vyper will throw cryptic errors like `invalid JUMP`
+ *
+ * In the test below, there are manual sanity checks for Vyper `assert`'s to avoid wasting programmer time.
+ * One example is `assert balance(msg.sender) > 0`, which can easily fail due to the Ganache default account
+ * running out of its 100ETH.
+ */
+
 integration('Uniswap', (accounts) => {
   let deployed
   let tbtcToken
@@ -76,22 +92,15 @@ integration('Uniswap', (accounts) => {
         await tbtcExchange.getEthToTokenOutputPrice(1)
         assert(false, 'Test call did not error as expected')
       } catch (e) {
+        // See file header for an explanation
         assert.include(e.message, 'invalid JUMP')
       }
     })
 
     it('adds liquidity and trades ETH for tBTC', async () => {
-      // This avoids rabbit-hole debugging
-      // stemming from the fact Vyper is new and they don't do REVERT's
-      // so any failed assertions in Vyper, will throw cryptic errors like "invalid JMP"
-      // for something simple like `assert balance(msg.sender) > 0`
-      expect(
-        await web3.eth.getBalance(accounts[0])
-      ).to.not.equal('0')
-
-      expect(
-        await web3.eth.getBalance(accounts[1])
-      ).to.not.equal('0')
+      // Manual sanity checks for Vyper assertions. (see file header)
+      expect(await web3.eth.getBalance(accounts[0])).to.not.equal('0')
+      expect(await web3.eth.getBalance(accounts[1])).to.not.equal('0')
 
       // Both tokens use 18 decimal places, so we can use toWei here.
       const TBTC_AMT = web3.utils.toWei('50', 'ether')
@@ -106,11 +115,10 @@ integration('Uniswap', (accounts) => {
       await tbtcToken.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[0] })
       const TBTC_ADDED = web3.utils.toWei('10', 'ether')
 
-      // min_liquidity, max_tokens, deadline
       await tbtcExchange.addLiquidity(
-        '0',
-        TBTC_ADDED,
-        UniswapHelpers.getDeadline(),
+        '0', // min_liquidity
+        TBTC_ADDED, // max_tokens
+        UniswapHelpers.getDeadline(), // deadline
         { value: ETH_AMT }
       )
 
