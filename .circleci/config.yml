@@ -69,7 +69,7 @@ jobs:
         - run:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
-            command: npm install && npm run test:e2e
+            command: npm install && npm run integration-test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
