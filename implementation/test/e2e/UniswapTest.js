@@ -8,7 +8,7 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 import utils from '../utils'
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
 import { UniswapHelpers } from '../helpers/uniswap'
-import { e2e } from './helper'
+import { e2e } from '../helpers/e2e'
 
 const BN = require('bn.js')
 const chai = require('chai')
