@@ -65,17 +65,6 @@ library DepositFunding {
         return true;
     }
 
-    /// @notice Get a signer's public key for a keep associated with the deposit
-    /// @dev Calls out to the keep contract, expects to get 64 bytes back
-    /// @return Public key (64-bytes)
-    function getKeepPublicKey(DepositUtils.Deposit storage _d) public view returns (bytes memory) {
-        bytes memory _publicKey = IECDSAKeep(_d.keepAddress).getPublicKey();
-
-        require(_publicKey.length == 64, "public key not set or not 64-bytes long");
-
-        return _publicKey;
-    }
-
     /// @notice     Transfers the funders bond to the signers if the funder never funds
     /// @dev        Called only by notifyFundingTimeout
     function revokeFunderBond(DepositUtils.Deposit storage _d) public {
@@ -151,10 +140,12 @@ library DepositFunding {
     /// @return             True if successful, otherwise revert
     function retrieveSignerPubkey(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not currently awaiting signer setup");
-        bytes memory _keepResult = getKeepPublicKey(_d);
 
-        _d.signingGroupPubkeyX = _keepResult.slice(0, 32).toBytes32();
-        _d.signingGroupPubkeyY = _keepResult.slice(32, 32).toBytes32();
+        bytes memory _publicKey = IECDSAKeep(_d.keepAddress).getPublicKey();
+        require(_publicKey.length == 64, "public key not set or not 64-bytes long");
+
+        _d.signingGroupPubkeyX = _publicKey.slice(0, 32).toBytes32();
+        _d.signingGroupPubkeyY = _publicKey.slice(32, 32).toBytes32();
         require(_d.signingGroupPubkeyY != bytes32(0) && _d.signingGroupPubkeyX != bytes32(0), "Keep returned bad pubkey");
         _d.fundingProofTimerStart = block.timestamp;
 
