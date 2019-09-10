@@ -46,9 +46,9 @@ jobs:
             command: ganache-cli
             background: true
         - run:
-            name: Migrate external systems
+            name: Deploy Uniswap
             working_directory: ~/project/implementation/scripts
-            command: ./migrate-externals.sh
+            command: ./deploy_uniswap.sh
         - run:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
@@ -63,9 +63,9 @@ jobs:
             command: ganache-cli
             background: true
         - run:
-            name: Migrate external systems
+            name: Deploy Uniswap
             working_directory: ~/project/implementation/scripts
-            command: ./migrate-externals.sh
+            command: ./deploy_uniswap.sh
         - run:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
