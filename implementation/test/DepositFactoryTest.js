@@ -57,7 +57,7 @@ contract('DepositFactory', (accounts) => {
 
     it('correctly forwards value to Deposit', async () => {
       const keep = await KeepStub.new()
-      const msgValue = 200000
+      const msgValue = 2000000000000
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
@@ -71,8 +71,8 @@ contract('DepositFactory', (accounts) => {
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       assert.equal(eventList.length, 1)
-      const cloneAddress = eventList[0].returnValues.depositCloneAddress
-      const balance = await web3.eth.getBalance(cloneAddress)
+      // const cloneAddress = eventList[0].returnValues.depositCloneAddress
+      const balance = await web3.eth.getBalance(keep.address)
 
       assert.equal(balance, msgValue, 'Factory did not correctly forward value on Deposit creation')
     })
