@@ -113,7 +113,7 @@ contract TestDeposit is Deposit {
     }
 
     function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
-        self.approvedDigests[abi.encodePacked(_digest)] = _timestamp;
+        self.approvedDigests[_digest] = _timestamp;
     }
 
     // passthrough for direct testing

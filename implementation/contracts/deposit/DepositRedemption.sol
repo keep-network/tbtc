@@ -48,7 +48,7 @@ library DepositRedemption {
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) internal {
         IECDSAKeep(_d.keepAddress).sign(_digest);
 
-        _d.approvedDigests[abi.encodePacked(_digest)] = block.timestamp;
+        _d.approvedDigests[_digest] = block.timestamp;
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {

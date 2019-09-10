@@ -54,7 +54,7 @@ library DepositUtils {
         /// @notice Map of timestamps for each digest approved for signing
         /// @dev Holds a timestamp from the moment when the digest was approved for
         /// signing for a given digest
-        mapping (bytes => uint256) approvedDigests;
+        mapping (bytes32 => uint256) approvedDigests;
     }
 
     /// @notice         Gets the current block difficulty
@@ -384,7 +384,7 @@ library DepositUtils {
     /// @return Timestamp from the moment of recording the digest for signing.
     /// Returns 0 if the digest was not approved for signing
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
-        return _d.approvedDigests[abi.encodePacked(_digest)];
+        return _d.approvedDigests[_digest];
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
