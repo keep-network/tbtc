@@ -8,7 +8,7 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 import utils from '../utils'
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
 import { UniswapHelpers } from '../helpers/uniswap'
-import { e2e } from '../helpers/e2e'
+import { integration } from '../helpers/integration'
 
 const BN = require('bn.js')
 const chai = require('chai')
@@ -20,7 +20,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCSystemStub', contract: TBTCSystemStub },
 ]
 
-e2e('Uniswap', (accounts) => {
+integration('Uniswap', (accounts) => {
   let deployed
   let tbtcToken
 
