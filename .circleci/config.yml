@@ -46,13 +46,26 @@ jobs:
             command: ganache-cli
             background: true
         - run:
+            name: Run NPM tests
+            working_directory: ~/project/implementation/contracts
+            command: npm install && npm run test
+  test_e2e:
+    executor: docker-node
+    steps:
+        - checkout
+        - run: sudo npm install -g ganache-cli@6.4.2
+        - run:
+            name: Running testrpc
+            command: ganache-cli
+            background: true
+        - run:
             name: Migrate external contracts
             working_directory: ~/project/implementation/scripts
             command: ./migrate-externals.sh
         - run:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
-            command: npm install && npm run test
+            command: npm install && npm run test:e2e
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
