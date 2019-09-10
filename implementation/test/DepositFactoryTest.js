@@ -65,7 +65,6 @@ contract('DepositFactory', (accounts) => {
   describe('clone state', async () => {
     const publicKey = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6ee8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
 
-
     it('is not affected by state changes to other clone', async () => {
       const keep1 = await ECDSAKeepStub.new()
       const keep2 = await ECDSAKeepStub.new()

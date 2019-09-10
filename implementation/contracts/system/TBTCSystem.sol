@@ -42,7 +42,7 @@ contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
     }
 
     /// @notice Request a new keep opening.
-    /// @param _m Minimum number of honest keep members.
+    /// @param _m Minimum number of honest keep members required to sign.
     /// @param _n Number of members in the keep.
     /// @return Address of a new keep.
     function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){

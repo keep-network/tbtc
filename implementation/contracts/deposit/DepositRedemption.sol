@@ -44,7 +44,6 @@ library DepositRedemption {
     /// @dev Calls given keep to sign the digest. Records a current timestamp
     /// for given digest
     /// @param _digest Digest to approve
-    /// @return True if successful
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) internal {
         IECDSAKeep(_d.keepAddress).sign(_digest);
 
