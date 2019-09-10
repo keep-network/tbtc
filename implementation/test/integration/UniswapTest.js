@@ -98,50 +98,51 @@ integration('Uniswap', (accounts) => {
     })
 
     it('adds liquidity and trades ETH for tBTC', async () => {
+      const seller = accounts[0]
+      const buyer = accounts[1]
+
       // Manual sanity checks for Vyper assertions. (see file header)
-      expect(await web3.eth.getBalance(accounts[0])).to.not.equal('0')
-      expect(await web3.eth.getBalance(accounts[1])).to.not.equal('0')
+      expect(await web3.eth.getBalance(seller)).to.not.equal('0')
+      expect(await web3.eth.getBalance(buyer)).to.not.equal('0')
 
       // Both tokens use 18 decimal places, so we can use toWei here.
-      const TBTC_AMT = web3.utils.toWei('50', 'ether')
-      const ETH_AMT = web3.utils.toWei('1', 'ether')
+      const TBTC_SUPPLY_AMOUNT = web3.utils.toWei('50', 'ether')
+      const ETH_SUPPLY_AMOUNT = web3.utils.toWei('1', 'ether')
+      const TBTC_BUY_AMOUNT = web3.utils.toWei('1', 'ether')
 
       // Mint TBTC
       await tbtcToken.forceMint(
-        accounts[0],
-        TBTC_AMT
+        seller,
+        TBTC_SUPPLY_AMOUNT
       )
 
-      await tbtcToken.approve(tbtcExchange.address, TBTC_AMT, { from: accounts[0] })
-      const TBTC_ADDED = web3.utils.toWei('10', 'ether')
+      await tbtcToken.approve(tbtcExchange.address, TBTC_SUPPLY_AMOUNT, { from: seller })
 
+      /* eslint-disable no-multi-spaces */
       await tbtcExchange.addLiquidity(
-        '0', // min_liquidity
-        TBTC_ADDED, // max_tokens
-        UniswapHelpers.getDeadline(), // deadline
-        { value: ETH_AMT }
+        '0',                           // min_liquidity
+        TBTC_SUPPLY_AMOUNT,            // max_tokens
+        UniswapHelpers.getDeadline(),  // deadline
+        { value: ETH_SUPPLY_AMOUNT }
       )
-
-      // it will be at an exchange rate of
-      // 10 TBTC : 1 ETH
-      const TBTC_BUY_AMT = web3.utils.toWei('1', 'ether')
+      /* eslint-enable no-multi-spaces */
 
       // Rough price - we don't think about slippage
       // We are testing that Uniswap works, not testing the exact formulae of the price invariant.
       // When they come out with uniswap.js, this code could be made better
-      const priceEth = await tbtcExchange.getEthToTokenOutputPrice.call(TBTC_BUY_AMT)
-      expect(priceEth.toString()).to.equal('111445447453471526')
+      const priceEth = await tbtcExchange.getEthToTokenOutputPrice.call(TBTC_BUY_AMOUNT)
+      expect(priceEth.toString()).to.equal('20469571981249873')
 
-      // def ethToTokenSwapInput(min_tokens: uint256, deadline: timestamp) -> uint256:
-      const buyer = accounts[1]
+      /* eslint-disable no-multi-spaces */
       await tbtcExchange.ethToTokenSwapOutput(
-        TBTC_BUY_AMT,
-        UniswapHelpers.getDeadline(),
+        TBTC_BUY_AMOUNT,                 // min_tokens
+        UniswapHelpers.getDeadline(),    // deadline
         { value: priceEth, from: buyer }
       )
+      /* eslint-enable no-multi-spaces */
 
       const balance = await tbtcToken.balanceOf(buyer)
-      expect(balance).to.eq.BN(TBTC_BUY_AMT)
+      expect(balance).to.eq.BN(TBTC_BUY_AMOUNT)
     })
   })
 })
