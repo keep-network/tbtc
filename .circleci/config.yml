@@ -46,6 +46,10 @@ jobs:
             command: ganache-cli
             background: true
         - run:
+            name: Migrate external systems
+            working_directory: ~/project/implementation/scripts
+            command: ./migrate-externals.sh
+        - run:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
             command: npm install && npm run test
@@ -59,7 +63,7 @@ jobs:
             command: ganache-cli
             background: true
         - run:
-            name: Migrate external contracts
+            name: Migrate external systems
             working_directory: ~/project/implementation/scripts
             command: ./migrate-externals.sh
         - run:
