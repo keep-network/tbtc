@@ -7,7 +7,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract TBTCSystem is Ownable, ITBTCSystem, ERC721, DepositLog {
 
-    bool initialized = false;
+    bool _initialized = false;
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
@@ -15,9 +15,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, DepositLog {
 
     address public uniswapFactory;
 
-    function setExternalAddresses(address _uniswapFactory) external onlyOwner {
-        require(!initialized, "already initialized");
+    function initialize(address _uniswapFactory) external onlyOwner {
+        require(!_initialized, "already initialized");
         uniswapFactory = _uniswapFactory;
+        _initialized = true;
     }
     
     function getUniswapFactory() external view returns (address) {

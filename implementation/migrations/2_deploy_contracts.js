@@ -106,6 +106,6 @@ module.exports = (deployer, network, accounts) => {
       await uniswapFactory.createExchange(tbtcToken.address)
     }
 
-    await tbtcSystem.setExternalAddresses(uniswapFactory.address)
+    await tbtcSystem.initialize(uniswapFactory.address)
   })
 }
