@@ -34,11 +34,9 @@ _redemption transaction_ to the Bitcoin blockchain using that signature.
 // TODO: fill in real numbers for all of these
 :min-redemption-fee: 2345 satoshi
 :min-redemption-feerate: ~20 satoshi/vbyte
-:minimal-custodial-period: 6 months
 
 If the deposit is in good standing (has not been accused of fraud, or entered
-signer liquidation), and {minimal-custodial-period} has elapsed since the
-deposit was created, anyone may request redemption. To do so that person makes
+signer liquidation), anyone may request redemption. To do so that person makes
 a _redemption request_ transaction to the smart contract on the host chain. The
 _redemption request_ includes the following:
 
