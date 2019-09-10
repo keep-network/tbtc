@@ -5,9 +5,10 @@ const IUniswapExchange = artifacts.require('IUniswapExchange')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCSystem = artifacts.require('TBTCSystem')
 
-const utils = require('../utils')
+import utils from '../utils'
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
 import { UniswapHelpers } from '../helpers/uniswap'
+import { e2e } from './helper'
 
 const BN = require('bn.js')
 const chai = require('chai')
@@ -15,13 +16,11 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-// Tests the Uniswap deployment
-
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCSystemStub', contract: TBTCSystemStub },
 ]
 
-module.exports = () => contract('Uniswap', (accounts) => {
+e2e('Uniswap', (accounts) => {
   let deployed
   let tbtcToken
 
@@ -81,7 +80,7 @@ module.exports = () => contract('Uniswap', (accounts) => {
       }
     })
 
-    it('adds liquidity and trades ETH for TBTC', async () => {
+    it('adds liquidity and trades ETH for tBTC', async () => {
       // This avoids rabbit-hole debugging
       // stemming from the fact Vyper is new and they don't do REVERT's
       // so any failed assertions in Vyper, will throw cryptic errors like "invalid JMP"
