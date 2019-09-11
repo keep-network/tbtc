@@ -62,7 +62,7 @@ contract('DepositFactory', (accounts) => {
     })
 
     it('correctly forwards value to Deposit', async () => {
-      const keep = await KeepStub.new()
+      const keep = await ECDSAKeepStub.new()
       const msgValue = 2000000000000
       const blockNumber = await web3.eth.getBlockNumber()
 
