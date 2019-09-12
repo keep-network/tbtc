@@ -54,6 +54,28 @@ contract('DepositFactory', (accounts) => {
       assert(web3.utils.isAddress(eventList[1].returnValues.depositCloneAddress))
       assert.notEqual(eventList[0].returnValues.depositCloneAddress, eventList[1].returnValues.depositCloneAddress, 'clone addresses should not be equal')
     })
+
+    it('correctly forwards value to Deposit', async () => {
+      const keep = await KeepStub.new()
+      const msgValue = 2000000000000
+      const blockNumber = await web3.eth.getBlockNumber()
+
+      await factory.createDeposit(
+        deployed.TBTCSystemStub.address,
+        tbtcToken.address,
+        keep.address,
+        1,
+        1,
+        { value: msgValue })
+
+      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+
+      assert.equal(eventList.length, 1)
+
+      const balance = await web3.eth.getBalance(keep.address)
+
+      assert.equal(balance, msgValue, 'Factory did not correctly forward value on Deposit creation')
+    })
   })
 
   describe('clone state', async () => {
