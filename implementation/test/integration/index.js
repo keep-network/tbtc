@@ -1,4 +1,4 @@
-import { tests } from '../helpers/integration'
+import { tests } from './helpers/integration'
 
 /*
  * The entire suite is only run when `INTEGRATION_TEST` is set.
