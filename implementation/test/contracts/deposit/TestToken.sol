@@ -36,4 +36,20 @@ contract TestToken is TBTCToken{
         // This will bypass allowance check for now.
         _burn(_account, _amount);
     }
+
+    function resetBalance(uint256 _newBalance) public {
+        uint256 currentBalance = balanceOf(msg.sender);
+        if(currentBalance > 0){ 
+            forceBurn(msg.sender, currentBalance);
+        }
+        forceMint(msg.sender, _newBalance);
+    }
+
+    function resetAllowance(address _spender, uint256 _newAllowance) public {
+        uint256 currentAllowance = allowance(msg.sender, _spender);
+        if (currentAllowance > 0){
+            decreaseAllowance(_spender, currentAllowance);
+        }
+        approve(_spender, _newAllowance);
+    }
 }
