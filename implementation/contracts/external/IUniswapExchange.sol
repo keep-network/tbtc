@@ -1,7 +1,5 @@
 pragma solidity 0.5.10;
 
-/* solium-disable */
-
 interface IUniswapExchange {
     // Provide Liquidity
     function addLiquidity(uint256 min_liquidity, uint256 max_tokens, uint256 deadline) external payable returns (uint256);
