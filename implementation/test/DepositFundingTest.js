@@ -138,6 +138,9 @@ contract('DepositFunding', (accounts) => {
         'Deposit setup already requested'
       )
     })
+
+    it.skip('stores payment value as funder\'s bond', async () => {
+    })
   })
 
   describe('notifySignerSetupFailure', async () => {

@@ -62,23 +62,19 @@ contract('DepositFactory', (accounts) => {
     })
 
     it('correctly forwards value to Deposit', async () => {
-      const keep = await ECDSAKeepStub.new()
       const msgValue = 2000000000000
-      const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
         deployed.TBTCSystemStub.address,
         tbtcToken.address,
-        keep.address,
         1,
         1,
-        { value: msgValue })
+        { value: msgValue }
+      )
 
-      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
-
-      assert.equal(eventList.length, 1)
-
-      const balance = await web3.eth.getBalance(keep.address)
+      // TODO: Currently value is forwarded to TBTC System due to a bug described
+      // in: https://github.com/keep-network/tbtc/issues/279.
+      const balance = await web3.eth.getBalance(deployed.TBTCSystemStub.address)
 
       assert.equal(balance, msgValue, 'Factory did not correctly forward value on Deposit creation')
     })
