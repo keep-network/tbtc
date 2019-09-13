@@ -26,14 +26,9 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 // keep
 const KeepBridge = artifacts.require('KeepBridge')
 const TBTCToken = artifacts.require('TBTCToken')
-const KeepRegistryAddress = '0x21dB9E2A9fFa5B5019D55D1a7e7DFD16c116a800' // KeepRegistry contract address
 
 // deposit factory
 const DepositFactory = artifacts.require('DepositFactory')
-
-// uniswap
-const IUniswapFactory = artifacts.require('IUniswapFactory')
-const UniswapFactoryAddress = '0x622B525445aD939f1b0fF1193E57DC0ED75dAb6e' // UniswapFactory contract address
 
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
@@ -88,24 +83,13 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
 
     // system
-    const tbtcSystem = await deployer.deploy(TBTCSystem)
-
-    const tbtcToken = await deployer.deploy(TBTCToken, TBTCSystem.address)
+    await deployer.deploy(TBTCSystem)
+    await deployer.deploy(TBTCToken, TBTCSystem.address)
 
     // keep
-    await deployer.deploy(KeepBridge).then((instance) => {
-      instance.initialize(KeepRegistryAddress)
-    })
+    await deployer.deploy(KeepBridge)
 
     // deposit factory
     await deployer.deploy(DepositFactory, Deposit.address)
-
-    // uniswap
-    const uniswapFactory = await IUniswapFactory.at(UniswapFactoryAddress)
-    if (await uniswapFactory.getExchange(tbtcToken.address) == '0x0000000000000000000000000000000000000000') {
-      await uniswapFactory.createExchange(tbtcToken.address)
-    }
-
-    await tbtcSystem.initialize(uniswapFactory.address)
   })
 }
