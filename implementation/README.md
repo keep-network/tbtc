@@ -17,7 +17,7 @@ During development, these must be deployed to your local blockchain (ie. Ganache
 
 ```sh
 cd scripts/
-./migrate-externals.sh
+./deploy_uniswap.sh
 ```
 
 ### Compilation
