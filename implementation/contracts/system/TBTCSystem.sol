@@ -13,16 +13,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, DepositLog {
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
 
-    address public uniswapFactory;
+    address public tbtcUniswapExchange;
 
-    function initialize(address _uniswapFactory) external onlyOwner {
+    function initialize(address _tbtcUniswapExchange) external onlyOwner {
         require(!_initialized, "already initialized");
-        uniswapFactory = _uniswapFactory;
+        tbtcUniswapExchange = _tbtcUniswapExchange;
         _initialized = true;
     }
-    
-    function getUniswapFactory() external view returns (address) {
-        return uniswapFactory;
+
+    function getTBTCUniswapExchange() external view returns (address) {
+        return tbtcUniswapExchange;
     }
 
     // Price Oracle

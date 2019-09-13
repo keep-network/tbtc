@@ -34,7 +34,7 @@ UNISWAP_DEPLOYMENT=$(npm run migrate)
 FACTORY=$(echo "$UNISWAP_DEPLOYMENT" | sed -n /Factory/p | cut -d' ' -f2)
 
 # Update UniswapFactoryAddress in migration
-$SED -i -e "/UniswapFactoryAddress/s/0x[a-fA-F0-9]\{0,40\}/$FACTORY/" ../../migrations/3_initialize.js
+$SED -i -e "/UniswapFactoryAddress/s/0x[a-fA-F0-9]\{0,40\}/$FACTORY/" ../../migrations/externals.js
 
 # Clean up
 rm -rf uniswap

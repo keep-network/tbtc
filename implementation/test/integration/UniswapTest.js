@@ -5,6 +5,8 @@ const IUniswapExchange = artifacts.require('IUniswapExchange')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCSystem = artifacts.require('TBTCSystem')
 
+import { UniswapFactoryAddress } from '../../migrations/externals'
+
 import utils from '../utils'
 import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
 import { UniswapHelpers } from './helpers/uniswap'
@@ -62,12 +64,11 @@ integration('Uniswap', (accounts) => {
       expect(tbtcToken).to.not.be.empty
 
       const tbtcSystem = await TBTCSystem.deployed()
-      const uniswapFactoryAddr = await tbtcSystem.getUniswapFactory()
-      expect(uniswapFactoryAddr).to.not.be.empty
+      const tbtcExchangeAddress = await tbtcSystem.getTBTCUniswapExchange()
+      expect(tbtcExchangeAddress).to.not.be.empty
 
-      const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
-      const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtcToken.address)
-      expect(tbtcExchangeAddr).to.not.be.empty
+      const uniswapFactory = await IUniswapFactory.at(UniswapFactoryAddress)
+      expect(await uniswapFactory.getExchange(tbtcToken.address)).to.equal(tbtcExchangeAddress)
     })
   })
 
@@ -78,13 +79,11 @@ integration('Uniswap', (accounts) => {
       deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
       tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
 
-      const tbtcSystem = await TBTCSystem.deployed()
-      const uniswapFactoryAddr = await tbtcSystem.getUniswapFactory()
-      const uniswapFactory = await IUniswapFactory.at(uniswapFactoryAddr)
-
+      // create a uniswap exchange for our TestToken
+      const uniswapFactory = await IUniswapFactory.at(UniswapFactoryAddress)
       await uniswapFactory.createExchange(tbtcToken.address)
-      const tbtcExchangeAddr = await uniswapFactory.getExchange(tbtcToken.address)
-      tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddr)
+      const tbtcExchangeAddress = await uniswapFactory.getExchange(tbtcToken.address)
+      tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddress)
     })
 
     it('has no liquidity by default', async () => {
@@ -132,6 +131,7 @@ integration('Uniswap', (accounts) => {
       // When they come out with uniswap.js, this code could be made better
       /* eslint-disable no-irregular-whitespace */
       const priceEth = await tbtcExchange.getEthToTokenOutputPrice.call(TBTC_BUY_AMOUNT)
+
       // Uniswap uses constant product formula to price trades
       // Where (x,y) are the reserves of two tokens respectively
       //     k = xy  (1)
