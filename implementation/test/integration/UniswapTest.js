@@ -130,8 +130,30 @@ integration('Uniswap', (accounts) => {
       // Rough price - we don't think about slippage
       // We are testing that Uniswap works, not testing the exact formulae of the price invariant.
       // When they come out with uniswap.js, this code could be made better
+      /* eslint-disable no-irregular-whitespace */
       const priceEth = await tbtcExchange.getEthToTokenOutputPrice.call(TBTC_BUY_AMOUNT)
-      expect(priceEth.toString()).to.equal('20469571981249873')
+      // Uniswap uses constant product formula to price trades
+      // Where (x,y) are the reserves of two tokens respectively
+      //     k = xy  (1)
+      // (1) is the price invariant. When liquidity is first added, k is set.
+      // We added x=50 (tBTC) and y=1 (ETH) of liquidity.
+      // k = xy = 50*1 = 50
+      // Every trade includes a 0.3% Uniswap fee
+      // x = 50
+      // y = 1
+      // The buy amount is 1 TBTC, we calculate the change in supply (cx)
+      // b = 1
+      // cx = (50 - b) = 49
+      // We have to include the 0.3% fee into the calculation:
+      // cx = (50 - b)*0.997
+      //    = 48.853
+      // Then we calculate the shift in the reserve of y, to maintain the invariant:
+      // cy = y / cx
+      //    = 1 / 48.853
+      //    = 0.02047
+      // And that's the price we must pay in ETH (y)
+      /* eslint-enable no-irregular-whitespace */
+      expect(priceEth.toString()).to.equal(web3.utils.toWei('0.020469571981249873'))
 
       /* eslint-disable no-multi-spaces */
       await tbtcExchange.ethToTokenSwapOutput(
