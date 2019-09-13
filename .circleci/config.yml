@@ -46,10 +46,6 @@ jobs:
             command: ganache-cli
             background: true
         - run:
-            name: Deploy Uniswap
-            working_directory: ~/project/implementation/scripts
-            command: ./deploy_uniswap.sh
-        - run:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
             command: npm install && npm run test
