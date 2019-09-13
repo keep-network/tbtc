@@ -8,8 +8,8 @@ const KeepRegistryAddress = '0x622B525445aD939f1b0fF1193E57DC0ED75dAb6e'
 const UniswapFactoryAddress = '0xE6766544a13aD18C54B72875A62e61033ac81D47'
 
 module.exports = async function(deployer) {
-  // Don't enact this setup during testing.
-  if (process.env.NODE_ENV == 'test') return
+  // Don't enact this setup during unit testing.
+  if (process.env.NODE_ENV == 'test' && !process.env.INTEGRATION_TEST) return
 
   // Keep
   const keepBridge = await KeepBridge.deployed()
