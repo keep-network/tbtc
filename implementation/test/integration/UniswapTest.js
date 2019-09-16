@@ -40,27 +40,10 @@ const TEST_DEPOSIT_DEPLOY = [
 
 integration('Uniswap', (accounts) => {
   let deployed
-  let tbtcToken
-
-  before(async () => {
-    await createSnapshot()
-  })
-
-  beforeEach(async () => {
-    await createSnapshot()
-  })
-
-  afterEach(async () => {
-    await restoreSnapshot()
-  })
-
-  after(async () => {
-    await restoreSnapshot()
-  })
 
   describe('deployment', async () => {
     it('created the tBTC UniswapExchange', async () => {
-      tbtcToken = await TBTCToken.deployed()
+      const tbtcToken = await TBTCToken.deployed()
       expect(tbtcToken).to.not.be.empty
 
       const tbtcSystem = await TBTCSystem.deployed()
@@ -73,6 +56,7 @@ integration('Uniswap', (accounts) => {
   })
 
   describe('end-to-end trade with tBTC', () => {
+    let tbtcToken
     let tbtcExchange
 
     before(async () => {
@@ -84,6 +68,14 @@ integration('Uniswap', (accounts) => {
       await uniswapFactory.createExchange(tbtcToken.address)
       const tbtcExchangeAddress = await uniswapFactory.getExchange(tbtcToken.address)
       tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddress)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it('has no liquidity by default', async () => {
