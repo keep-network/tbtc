@@ -13,7 +13,7 @@ export async function createSnapshot() {
     web3.currentProvider.send({
       jsonrpc: '2.0',
       method: 'evm_snapshot',
-      id: 12345,
+      params: [],
     }, function(err, result) {
       if (err) rej(err)
       const snapshotId = result.result
@@ -32,7 +32,6 @@ export async function restoreSnapshot() {
     web3.currentProvider.send({
       jsonrpc: '2.0',
       method: 'evm_revert',
-      id: 12345,
       params: [snapshotId],
     }, function(err, result) {
       if (err) rej(err)
