@@ -71,8 +71,9 @@ contract('DepositFactory', (accounts) => {
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       assert.equal(eventList.length, 1)
+      const clone = eventList[0].returnValues.depositCloneAddress
 
-      const balance = await web3.eth.getBalance(keep.address)
+      const balance = await web3.eth.getBalance(clone)
 
       assert.equal(balance, msgValue, 'Factory did not correctly forward value on Deposit creation')
     })
