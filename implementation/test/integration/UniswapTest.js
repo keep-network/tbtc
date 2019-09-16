@@ -8,7 +8,6 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 import { UniswapFactoryAddress } from '../../migrations/externals'
 
 import utils from '../utils'
-import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
 import { UniswapHelpers } from './helpers/uniswap'
 import { integration } from './helpers/integration'
 
@@ -68,14 +67,6 @@ integration('Uniswap', (accounts) => {
       await uniswapFactory.createExchange(tbtcToken.address)
       const tbtcExchangeAddress = await uniswapFactory.getExchange(tbtcToken.address)
       tbtcExchange = await IUniswapExchange.at(tbtcExchangeAddress)
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it('has no liquidity by default', async () => {
