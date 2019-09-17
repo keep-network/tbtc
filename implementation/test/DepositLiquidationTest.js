@@ -95,10 +95,8 @@ contract('DepositLiquidation', (accounts) => {
     testInstance = deployed.TestDeposit
     testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
 
-    const uniswapFactory = deployed.UniswapFactoryStub
     const uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
-    await uniswapFactory.setExchange(uniswapExchange.address)
-    await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
+    await deployed.TBTCSystemStub.initialize(uniswapExchange.address)
 
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
     beneficiary = accounts[4]
@@ -578,10 +576,7 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('returns false if address(exchange) = 0x0', async () => {
-      // Override and use mock
-      const uniswapFactory = deployed.UniswapFactoryStub
-      await uniswapFactory.setExchange('0x0000000000000000000000000000000000000000')
-      await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
+      await deployed.TBTCSystemStub.initialize('0x0000000000000000000000000000000000000000')
 
       const retval = await deposit.attemptToLiquidateOnchain.call()
       expect(retval).to.be.false

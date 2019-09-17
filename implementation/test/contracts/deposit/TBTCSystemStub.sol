@@ -16,6 +16,11 @@ contract TBTCSystemStub is TBTCSystem {
         previousDifficulty = _previousDifficulty;
     }
 
+    function initialize(address _tbtcUniswapExchange) external {
+        _initialized = false;
+        initialize(_tbtcUniswapExchange);
+    }
+
     // override parent
     function approvedToLog(address _caller) public view returns (bool) {
         _caller; return true;

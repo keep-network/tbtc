@@ -14,6 +14,6 @@ interface ITBTCSystem {
     // passthrough requests for the oracle
     function fetchRelayCurrentDifficulty() external view returns (uint256);
     function fetchRelayPreviousDifficulty() external view returns (uint256);
-    
-    function getUniswapFactory() external view returns (address);
+
+    function getTBTCUniswapExchange() external view returns (address);
 }

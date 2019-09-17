@@ -4,32 +4,27 @@
   "description": "deposit contract for TBTC",
   "main": "index.js",
   "scripts": {
-    "preinstall": "cd ../ && git submodule update --init --recursive",
     "clean": "rm -rf build/",
     "compile": "truffle compile",
-    "test": "truffle test",
-    "test:debug": "node --inspect node_modules/.bin/truffle test",
+    "test": "NODE_ENV=test truffle test",
+    "integration-test": "NODE_ENV=test INTEGRATION_TEST=true truffle test",
+    "test:debug": "NODE_ENV=test node --inspect node_modules/.bin/truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
     "sol:lint": "solium -d contracts/",
     "sol:lint:fix": "solium -d contracts/ --fix"
   },
   "config": {
-    "eslintPaths": "test/ migrations/ demo/ uniswap/index.js"
+    "eslintPaths": "test/ migrations/ demo/"
   },
   "precommit": "npm run lint",
   "author": "James Prestwich",
   "license": "UNLICENSED",
   "dependencies": {
-    "@babel/cli": "^7.5.0",
-    "@babel/core": "^7.5.4",
-    "@babel/preset-env": "^7.5.4",
-    "@babel/register": "^7.4.4",
     "bn-chai": "^1.0.1",
     "bn.js": "^4.11.8",
     "bitcoin-spv": "git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0-high-err",
     "chai": "^4.2.0",
-    "core-js": "3",
     "create-hash": "^1.2.0",
     "openzeppelin-solidity": "2.3.0",
     "solc": "^0.5.10"

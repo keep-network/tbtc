@@ -91,10 +91,8 @@ contract('Deposit', (accounts) => {
     testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
-    const uniswapFactory = deployed.UniswapFactoryStub
     const uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
-    await uniswapFactory.setExchange(uniswapExchange.address)
-    await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
+    await deployed.TBTCSystemStub.initialize(uniswapExchange.address)
 
     beneficiary = accounts[4]
   })

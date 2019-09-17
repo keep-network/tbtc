@@ -54,3 +54,4 @@ sudo cp docs/latex/tikz-uml.sty /usr/local/texlive/texmf-local/
 # Update TeX package tree
 sudo texhash
 ```
+

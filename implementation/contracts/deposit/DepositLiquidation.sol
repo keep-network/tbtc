@@ -8,8 +8,8 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
-import {IUniswapFactory} from "../uniswap/IUniswapFactory.sol";
-import {IUniswapExchange} from "../uniswap/IUniswapExchange.sol";
+import {IUniswapFactory} from "../external/IUniswapFactory.sol";
+import {IUniswapExchange} from "../external/IUniswapExchange.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 
 library DepositLiquidation {
@@ -241,8 +241,7 @@ library DepositLiquidation {
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
     ) internal returns (bool) {
-        IUniswapFactory uniswapFactory = IUniswapFactory(ITBTCSystem(_d.TBTCSystem).getUniswapFactory());
-        IUniswapExchange exchange = IUniswapExchange(uniswapFactory.getExchange(_d.TBTCToken));
+        IUniswapExchange exchange = IUniswapExchange(ITBTCSystem(_d.TBTCSystem).getTBTCUniswapExchange());
         
         // Return early if there was no Uniswap exchange found for the used TBTC token
         if(address(exchange) == address(0x0)) {
