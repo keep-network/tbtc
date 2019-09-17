@@ -39,6 +39,7 @@ contract TBTCSystem is ITBTCSystem, ERC721, ERC721MinterAuthority, DepositLog {
 
     /// @notice          Function to mint a new token.
     /// @dev             Reverts if the given token ID already exists.
+    ///                  This function can only be called by depositFactory
     /// @param _to       The address that will own the minted token
     /// @param _tokenId  uint256 ID of the token to be minted
     function mint(address _to, uint256 _tokenId) public onlyFactory {
