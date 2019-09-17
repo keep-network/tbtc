@@ -100,12 +100,13 @@ integration('Uniswap', (accounts) => {
 
       await tbtcToken.approve(tbtcExchange.address, TBTC_SUPPLY_AMOUNT, { from: seller })
 
+      let deadline = await UniswapHelpers.getDeadline(web3)
       /* eslint-disable no-multi-spaces */
       await tbtcExchange.addLiquidity(
         '0',                           // min_liquidity
         TBTC_SUPPLY_AMOUNT,            // max_tokens
-        UniswapHelpers.getDeadline(),  // deadline
-        { value: ETH_SUPPLY_AMOUNT }
+        deadline,                      // deadline
+        { value: ETH_SUPPLY_AMOUNT, from: seller }
       )
       /* eslint-enable no-multi-spaces */
 
@@ -138,10 +139,11 @@ integration('Uniswap', (accounts) => {
       /* eslint-enable no-irregular-whitespace */
       expect(priceEth.toString()).to.equal(web3.utils.toWei('0.020469571981249873'))
 
+      deadline = await UniswapHelpers.getDeadline(web3)
       /* eslint-disable no-multi-spaces */
       await tbtcExchange.ethToTokenSwapOutput(
         TBTC_BUY_AMOUNT,                 // min_tokens
-        UniswapHelpers.getDeadline(),    // deadline
+        deadline,                        // deadline
         { value: priceEth, from: buyer }
       )
       /* eslint-enable no-multi-spaces */
