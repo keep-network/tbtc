@@ -241,9 +241,8 @@ library DepositLiquidation {
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
     ) internal returns (bool) {
+        // Return early if there is no Uniswap TBTC Exchange
         IUniswapExchange exchange = IUniswapExchange(ITBTCSystem(_d.TBTCSystem).getTBTCUniswapExchange());
-        
-        // Return early if there was no Uniswap exchange found for the used TBTC token
         if(address(exchange) == address(0x0)) {
             return false;
         }
