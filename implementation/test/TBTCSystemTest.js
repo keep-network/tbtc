@@ -27,7 +27,7 @@ contract('TBTCSystem', (accounts) => {
     })
 
     it('returns keep address', async () => {
-      const expectedKeepAddress = '0x0000000000000000000000000000000000000378'
+      const expectedKeepAddress = await ecdsaKeepVendor.keepAddress.call()
 
       const result = await tbtcSystem.requestNewKeep.call(5, 10)
 
