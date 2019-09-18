@@ -293,7 +293,7 @@ library DepositLiquidation {
     /// @notice         Starts signer liquidation due to fraud
     /// @dev            We first attempt to liquidate on chain, then by auction
     /// @param  _d      deposit storage pointer
-    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) public {
+    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) internal {
         startLiquidation(_d);
         if(_d.inLiquidated()) {
             // send any remaining eth to maintainer
@@ -306,7 +306,7 @@ library DepositLiquidation {
     /// @notice         Starts signer liquidation due to abort or undercollateralization
     /// @dev            We first attempt to liquidate on chain, then by auction
     /// @param  _d      deposit storage pointer
-    function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
+    function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) internal {
         startLiquidation(_d);
         if(_d.inLiquidated()) {
             // send any remaining eth to signers
