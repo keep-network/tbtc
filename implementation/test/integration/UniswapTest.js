@@ -10,6 +10,7 @@ import { UniswapFactoryAddress } from '../../migrations/externals'
 import utils from '../utils'
 import { UniswapHelpers } from './helpers/uniswap'
 import { integration } from './helpers/integration'
+import expectThrow from '../helpers/expectThrow'
 
 const BN = require('bn.js')
 const chai = require('chai')
@@ -70,13 +71,9 @@ integration('Uniswap', (accounts) => {
     })
 
     it('has no liquidity by default', async () => {
-      try {
-        await tbtcExchange.getEthToTokenOutputPrice(1)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        // See file header for an explanation
-        assert.include(e.message, 'invalid JUMP')
-      }
+      await expectThrow(
+        tbtcExchange.getEthToTokenOutputPrice(1)
+      )
     })
 
     it('adds liquidity and trades ETH for tBTC', async () => {
