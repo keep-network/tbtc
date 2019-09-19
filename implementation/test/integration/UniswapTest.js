@@ -33,7 +33,6 @@ chai.use(bnChai(BN))
  */
 
 integration('Uniswap', (accounts) => {
-
   describe('deployment', async () => {
     it('created the TBTC UniswapExchange', async () => {
       const tbtcToken = await TBTCToken.deployed()
