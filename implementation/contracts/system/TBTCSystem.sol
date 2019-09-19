@@ -19,8 +19,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
         ERC721MinterAuthority(_depositFactory)
         public {
             // solium-disable-previous-line no-empty-blocks
-        }
-        
+    }
+
     function initialize(address _tbtcUniswapExchange) external onlyOwner {
         require(!_initialized, "already initialized");
         tbtcUniswapExchange = _tbtcUniswapExchange;
