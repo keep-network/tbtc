@@ -8,7 +8,7 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 import { UniswapFactoryAddress } from '../../migrations/externals'
 
 import utils from '../utils'
-import { UniswapHelpers } from '../helpers/uniswap'
+import { UniswapHelpers } from './helpers/uniswap'
 import { integration } from './helpers/integration'
 import expectThrow from '../helpers/expectThrow'
 
