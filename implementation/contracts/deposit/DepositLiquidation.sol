@@ -284,6 +284,7 @@ library DepositLiquidation {
                 _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
             }
 
+            // TODO(liamz): should this occur first?
             _d.distributeBeneficiaryReward();
 
         } else if (!_liquidated) {
