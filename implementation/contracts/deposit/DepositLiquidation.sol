@@ -254,7 +254,9 @@ library DepositLiquidation {
             return false;
         }
 
-        uint deadline = block.timestamp + 1;
+        // `deadline` ensures that the order does not get withheld by miners and submitted later
+        // (commonly referred to as frontrunning)
+        uint deadline = block.timestamp;
         exchange.ethToTokenSwapOutput.value(ethAmount)(tbtcAmount, deadline);
 
         return true;
