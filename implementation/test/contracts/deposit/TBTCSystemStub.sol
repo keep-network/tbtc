@@ -16,9 +16,9 @@ contract TBTCSystemStub is TBTCSystem {
         previousDifficulty = _previousDifficulty;
     }
 
-    function initialize(address _tbtcUniswapExchange) external {
-        _initialized = false;
-        initialize(_tbtcUniswapExchange);
+    // override the ACL on TBTCSystem.initialize
+    function reinitialize(address _tbtcUniswapExchange) external {
+        tbtcUniswapExchange = _tbtcUniswapExchange;
     }
 
     // override parent
