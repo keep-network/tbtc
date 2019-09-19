@@ -42,7 +42,7 @@ contract TBTCToken is ERC20Detailed, ERC20, ERC20MinterAuthority {
     /// @param _from   The address to send tokens from
     /// @param _to     The address to transfer tokens to
     /// @param _value  The amount of tokens to be transferred
-    function transferFrom(address _from, address _to, uint256 _value) public onlyDeposit returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         // NOTE: this overrides transferFrom in openZeppelin ERC20.sol
         // in order to bypass allowance check for now.
         // TODO: enforce calling authority.

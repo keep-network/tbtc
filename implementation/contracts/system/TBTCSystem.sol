@@ -3,18 +3,32 @@ pragma solidity ^0.5.10;
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {DepositLog} from "../DepositLog.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ERC721MinterAuthority.sol";
 
-contract TBTCSystem is ITBTCSystem, ERC721, ERC721MinterAuthority, DepositLog {
+contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, DepositLog {
+
+    bool _initialized = false;
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
+    address public tbtcUniswapExchange;
 
     constructor(address _depositFactory)
         ERC721MinterAuthority(_depositFactory)
         public {
             // solium-disable-previous-line no-empty-blocks
+        }
+        
+    function initialize(address _tbtcUniswapExchange) external onlyOwner {
+        require(!_initialized, "already initialized");
+        tbtcUniswapExchange = _tbtcUniswapExchange;
+        _initialized = true;
+    }
+
+    function getTBTCUniswapExchange() external view returns (address) {
+        return tbtcUniswapExchange;
     }
 
     // Price Oracle
