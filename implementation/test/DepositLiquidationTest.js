@@ -22,8 +22,6 @@ const TestDepositUtils = artifacts.require('TestDepositUtils')
 
 const UniswapFactoryStub = artifacts.require('UniswapFactoryStub')
 const UniswapExchangeStub = artifacts.require('UniswapExchangeStub')
-const IUniswapFactory = artifacts.require('IUniswapFactory')
-const IUniswapExchange = artifacts.require('IUniswapExchange')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -33,7 +31,6 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 import { AssertBalanceHelpers } from './helpers/assertBalance'
-import { UniswapHelpers } from './helpers/uniswap'
 import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 import { getTxCost } from './helpers/txCost'
 
@@ -69,20 +66,12 @@ contract('DepositLiquidation', (accounts) => {
   let testInstance
   let beneficiary
   let tbtcToken
-
+  let uniswapExchange
 
   let snapshotId
 
   before(async () => {
     snapshotId = await createSnapshot()
-  })
-
-  beforeEach(async () => {
-    snapshotId = await createSnapshot()
-  })
-
-  afterEach(async () => {
-    await restoreSnapshot(snapshotId)
   })
 
   after(async () => {
@@ -95,11 +84,19 @@ contract('DepositLiquidation', (accounts) => {
     testInstance = deployed.TestDeposit
     testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
 
-    const uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
+    uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
     await deployed.TBTCSystemStub.initialize(uniswapExchange.address)
 
     deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
     beneficiary = accounts[4]
+  })
+
+  beforeEach(async () => {
+    snapshotId = await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot(snapshotId)
   })
 
   describe('purchaseSignerBondsAtAuction', async () => {
@@ -529,54 +526,16 @@ contract('DepositLiquidation', (accounts) => {
   describe('#attemptToLiquidateOnchain', async () => {
     let assertBalance
     let deposit
-    let uniswapExchange
-
-    async function addLiquidity(ethAmount, tbtcAmount) {
-      // Mint tBTC, mock liquidity
-      // supply the equivalent of 10 actors posting liquidity
-      const supplyFactor = new BN(10)
-
-      const tbtcSupply = new BN(tbtcAmount).mul(supplyFactor)
-      await tbtcToken.forceMint(accounts[0], tbtcSupply, { from: accounts[0] })
-      await tbtcToken.approve(uniswapExchange.address, tbtcSupply, { from: accounts[0] })
-
-      // Uniswap requires a minimum of 1000000000 wei for the initial addLiquidity call
-      // So we add an extreme amount of ETH here.
-      // We will use different values for keepBondAmount in future,
-      // so multiplying by 1000000000x, while excessive, is robust.
-      const UNISWAP_MINIMUM_INITIAL_LIQUIDITY_WEI = new BN('1000000000')
-      const ethSupply = new BN(ethAmount).add(UNISWAP_MINIMUM_INITIAL_LIQUIDITY_WEI).mul(supplyFactor)
-
-      // def addLiquidity(min_liquidity: uint256, max_tokens: uint256, deadline: timestamp) -> uint256:
-      await uniswapExchange.addLiquidity(
-        '0',
-        tbtcSupply,
-        UniswapHelpers.getDeadline(),
-        { from: accounts[0], value: ethSupply }
-      )
-    }
 
     beforeEach(async () => {
       deposit = testInstance
-
-      // Deploy Uniswap
-      const { deployUniswap } = require('../uniswap')
-      const { factory } = await deployUniswap(web3, accounts)
-
-      // Create tBTC exchange
-      const uniswapFactory = await IUniswapFactory.at(factory.options.address)
-      await uniswapFactory.createExchange(tbtcToken.address)
-      const tbtcExchangeAddr = await uniswapFactory.getExchange.call(tbtcToken.address)
-      uniswapExchange = await IUniswapExchange.at(tbtcExchangeAddr)
-
-      await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
 
       // Helpers
       assertBalance = new AssertBalanceHelpers(tbtcToken)
     })
 
     it('returns false if address(exchange) = 0x0', async () => {
-      await deployed.TBTCSystemStub.initialize('0x0000000000000000000000000000000000000000')
+      await deployed.TBTCSystemStub.reinitialize('0x0000000000000000000000000000000000000000')
 
       const retval = await deposit.attemptToLiquidateOnchain.call()
       expect(retval).to.be.false
@@ -584,12 +543,15 @@ contract('DepositLiquidation', (accounts) => {
 
     it('liquidates using Uniswap successfully', async () => {
       const ethAmount = web3.utils.toWei('0.2', 'ether') // 0.2 eth : 1 tBTC
-      const tbtcAmount = '100000000'
-      await addLiquidity(ethAmount, tbtcAmount)
+      const tbtcAmount = new BN('100000000').mul(new BN(10))
+      await uniswapExchange.addLiquidity(
+        ethAmount, tbtcAmount, '0',
+        { from: accounts[0], value: ethAmount }
+      )
 
       const minTbtcAmount = '100100000'
 
-      const expectedPrice = new BN('223138580092984811')
+      const expectedPrice = new BN('100000000')
 
       await assertBalance.eth(deposit.address, '0')
       await assertBalance.tbtc(deposit.address, '0')
@@ -609,10 +571,13 @@ contract('DepositLiquidation', (accounts) => {
 
     it('returns false if cannot buy up enough tBTC', async () => {
       const ethAmount = web3.utils.toWei('0.2', 'ether') // 0.2 eth : 1 tBTC
-      const tbtcAmount = '100000000'
-      await addLiquidity(ethAmount, tbtcAmount)
+      const tbtcAmount = new BN('100000000').mul(new BN(10))
+      await uniswapExchange.addLiquidity(
+        ethAmount, tbtcAmount, '0',
+        { from: accounts[0], value: ethAmount }
+      )
 
-      const expectedPrice = new BN('223138580092984811')
+      const expectedPrice = new BN('100000000')
       const depositEthFunding = expectedPrice.sub(new BN(100))
 
       await assertBalance.eth(deposit.address, '0')
@@ -627,7 +592,6 @@ contract('DepositLiquidation', (accounts) => {
 
   describe('liquidation flows', async () => {
     let assertBalance
-    let uniswapExchange
     let deposit
     let keep
 
@@ -640,12 +604,15 @@ contract('DepositLiquidation', (accounts) => {
       deposit = testInstance
       keep = deployed.KeepStub
 
-      const uniswapFactory = deployed.UniswapFactoryStub
-      uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
-      await uniswapFactory.setExchange(uniswapExchange.address)
-      await deployed.TBTCSystemStub.setExternalAddresses(uniswapFactory.address)
-
       await keep.send(keepBondAmount, { from: accounts[0] })
+
+      const supplyFactor = new BN(10)
+      const ethAmount = keepBondAmount
+      const tbtcAmount = new BN(lotSize).add(new BN(beneficiaryReward)).mul(supplyFactor)
+      await uniswapExchange.addLiquidity(
+        ethAmount, tbtcAmount, '0',
+        { from: accounts[0], value: ethAmount }
+      )
 
       // Helpers
       assertBalance = new AssertBalanceHelpers(tbtcToken)
