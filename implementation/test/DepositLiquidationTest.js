@@ -530,6 +530,15 @@ contract('DepositLiquidation', (accounts) => {
     beforeEach(async () => {
       deposit = testInstance
 
+      /* eslint-disable no-multi-spaces */
+      const ethSupply = web3.utils.toWei('0.2', 'ether')  // 0.2 ETH
+      const tbtcSupply = new BN('1000000000')             // 10 TBTC
+      /* eslint-enable */
+      await uniswapExchange.addLiquidity(
+        ethSupply, tbtcSupply, '0',
+        { from: accounts[0], value: ethSupply }
+      )
+
       // Helpers
       assertBalance = new AssertBalanceHelpers(tbtcToken)
     })
@@ -542,15 +551,7 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('liquidates using Uniswap successfully', async () => {
-      const ethAmount = web3.utils.toWei('0.2', 'ether') // 0.2 eth : 1 tBTC
-      const tbtcAmount = new BN('100000000').mul(new BN(10))
-      await uniswapExchange.addLiquidity(
-        ethAmount, tbtcAmount, '0',
-        { from: accounts[0], value: ethAmount }
-      )
-
       const minTbtcAmount = '100100000'
-
       const expectedPrice = new BN('100000000')
 
       await assertBalance.eth(deposit.address, '0')
@@ -570,13 +571,6 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('returns false if cannot buy up enough tBTC', async () => {
-      const ethAmount = web3.utils.toWei('0.2', 'ether') // 0.2 eth : 1 tBTC
-      const tbtcAmount = new BN('100000000').mul(new BN(10))
-      await uniswapExchange.addLiquidity(
-        ethAmount, tbtcAmount, '0',
-        { from: accounts[0], value: ethAmount }
-      )
-
       const expectedPrice = new BN('100000000')
       const depositEthFunding = expectedPrice.sub(new BN(100))
 
@@ -606,12 +600,13 @@ contract('DepositLiquidation', (accounts) => {
 
       await keep.send(keepBondAmount, { from: accounts[0] })
 
-      const supplyFactor = new BN(10)
-      const ethAmount = keepBondAmount
-      const tbtcAmount = new BN(lotSize).add(new BN(beneficiaryReward)).mul(supplyFactor)
+      /* eslint-disable no-multi-spaces */
+      const ethSupply = web3.utils.toWei('0.2', 'ether')  // 0.2 ETH
+      const tbtcSupply = new BN('1000000000')             // 10 TBTC
+      /* eslint-enable */
       await uniswapExchange.addLiquidity(
-        ethAmount, tbtcAmount, '0',
-        { from: accounts[0], value: ethAmount }
+        ethSupply, tbtcSupply, '0',
+        { from: accounts[0], value: ethSupply }
       )
 
       // Helpers
