@@ -1,24 +1,40 @@
 /* solium-disable function-order */
 pragma solidity ^0.5.10;
 
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
-
 import {IKeepRegistry} from "keep-tecdsa/solidity/contracts/api/IKeepRegistry.sol";
 import {IECDSAKeepVendor} from "keep-tecdsa/solidity/contracts/api/IECDSAKeepVendor.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {DepositLog} from "../DepositLog.sol";
 
-contract TBTCSystem is ITBTCSystem, ERC721, DepositLog {
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+
+contract TBTCSystem is Ownable, ITBTCSystem, ERC721, DepositLog {
+
+    bool _initialized = false;
+
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
 
-    address keepRegistry;
+    address public keepRegistry;
+    address public tbtcUniswapExchange;
 
-    //TODO: add: onlyOwner
-    function initialize(address _keepRegistry) public {
+    function initialize(
+        address _keepRegistry,
+        address _tbtcUniswapExchange
+    ) external onlyOwner {
+        require(!_initialized, "already initialized");
+
         keepRegistry = _keepRegistry;
+        tbtcUniswapExchange = _tbtcUniswapExchange;
+
+        _initialized = true;
+    }
+
+    function getTBTCUniswapExchange() external view returns (address) {
+        return tbtcUniswapExchange;
     }
 
     // Price Oracle

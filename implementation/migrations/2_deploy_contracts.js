@@ -25,7 +25,6 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 
 // keep
 const TBTCToken = artifacts.require('TBTCToken')
-const KeepRegistryAddress = '0x21dB9E2A9fFa5B5019D55D1a7e7DFD16c116a800' // KeepRegistry contract address
 
 // deposit factory
 const DepositFactory = artifacts.require('DepositFactory')
@@ -83,10 +82,9 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
 
     // system
-    await deployer.deploy(TBTCSystem).then((instance) => {
-      instance.initialize(KeepRegistryAddress)
-    })
+    await deployer.deploy(TBTCSystem)
 
+    // token
     await deployer.deploy(TBTCToken, TBTCSystem.address)
 
     // deposit factory

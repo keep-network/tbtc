@@ -1,19 +1,34 @@
+tBTC
+====
+
+Contains the on-chain smart contracts and tests.
 
 ### Setup
 
-```
+```sh
 npm install
+```
+
+#### Migrating externals
+
+tBTC interacts with external systems deployed on-chain, such as [Uniswap](https://uniswap.exchange). 
+
+During development, these must be deployed to your local blockchain (ie. Ganache).
+
+```sh
+cd scripts/
+./deploy_uniswap.sh
 ```
 
 ### Compilation
 
-```
+```sh
 npm run compile
 ```
 
-## Lint
+### Lint
 
-```
+```sh
 # Show issues
 npm run js:lint
 npm run sol:lint
