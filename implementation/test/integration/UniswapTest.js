@@ -10,6 +10,7 @@ import { UniswapFactoryAddress } from '../../migrations/externals'
 import utils from '../utils'
 import { UniswapHelpers } from '../helpers/uniswap'
 import { integration } from './helpers/integration'
+import expectThrow from '../helpers/expectThrow'
 
 const BN = require('bn.js')
 const chai = require('chai')
@@ -41,7 +42,7 @@ integration('Uniswap', (accounts) => {
   let deployed
 
   describe('deployment', async () => {
-    it('created the tBTC UniswapExchange', async () => {
+    it('created the TBTC UniswapExchange', async () => {
       const tbtcToken = await TBTCToken.deployed()
       expect(tbtcToken).to.not.be.empty
 
@@ -54,7 +55,7 @@ integration('Uniswap', (accounts) => {
     })
   })
 
-  describe('end-to-end trade with tBTC', () => {
+  describe('end-to-end trade with TBTC', () => {
     let tbtcToken
     let tbtcExchange
 
@@ -70,16 +71,12 @@ integration('Uniswap', (accounts) => {
     })
 
     it('has no liquidity by default', async () => {
-      try {
-        await tbtcExchange.getEthToTokenOutputPrice(1)
-        assert(false, 'Test call did not error as expected')
-      } catch (e) {
-        // See file header for an explanation
-        assert.include(e.message, 'invalid JUMP')
-      }
+      await expectThrow(
+        tbtcExchange.getEthToTokenOutputPrice(1)
+      )
     })
 
-    it('adds liquidity and trades ETH for tBTC', async () => {
+    it('adds liquidity and trades ETH for TBTC', async () => {
       const seller = accounts[0]
       const buyer = accounts[1]
 
@@ -120,7 +117,7 @@ integration('Uniswap', (accounts) => {
       // Where (x,y) are the reserves of two tokens respectively
       //     k = xy  (1)
       // (1) is the price invariant. When liquidity is first added, k is set.
-      // We added x=50 (tBTC) and y=1 (ETH) of liquidity.
+      // We added x=50 (TBTC) and y=1 (ETH) of liquidity.
       // k = xy = 50*1 = 50
       // Every trade includes a 0.3% Uniswap fee
       // x = 50

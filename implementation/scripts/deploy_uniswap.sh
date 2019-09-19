@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -ex
-
 SED="sed"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -37,4 +35,5 @@ FACTORY=$(echo "$UNISWAP_DEPLOYMENT" | sed -n /Factory/p | cut -d' ' -f2)
 $SED -i -e "/UniswapFactoryAddress/s/0x[a-fA-F0-9]\{0,40\}/$FACTORY/" ../../migrations/externals.js
 
 # Clean up
+cd ..
 rm -rf uniswap/
