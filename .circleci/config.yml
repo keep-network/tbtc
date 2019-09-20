@@ -36,7 +36,7 @@ jobs:
               set -ex
               npm install
               npm run sol:lint
-  test_solidity:
+  unit_test_contracts:
     executor: docker-node
     steps:
         - checkout
@@ -49,6 +49,23 @@ jobs:
             name: Run NPM tests
             working_directory: ~/project/implementation/contracts
             command: npm install && npm run test
+  integration_test_contracts:
+    executor: docker-node
+    steps:
+        - checkout
+        - run: sudo npm install -g ganache-cli@6.4.2
+        - run:
+            name: Running testrpc
+            command: ganache-cli
+            background: true
+        - run:
+            name: Deploy Uniswap
+            working_directory: ~/project/implementation/scripts
+            command: ./deploy_uniswap.sh
+        - run:
+            name: Run NPM tests
+            working_directory: ~/project/implementation/contracts
+            command: npm install && npm run integration-test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -213,9 +230,10 @@ workflows:
     jobs:
       - lint_js
       - lint_solidity
-  solidity:
+  test:
     jobs:
-      - test_solidity
+      - unit_test_contracts
+      - integration_test_contracts
   docs:
     jobs:
       - generate_pngs
