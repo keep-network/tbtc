@@ -74,9 +74,11 @@ contract('Deposit', (accounts) => {
 
   describe('purchaseSignerBondsAtAuction', async () => {
     let lotSize
+    let buyer
 
     before(async () => {
       lotSize = await deployed.TBTCConstants.getLotSize.call()
+      buyer = accounts[1]
     })
 
     beforeEach(async () => {
@@ -109,7 +111,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if TBTC balance is insufficient', async () => {
-      // burn 1 from caller to make balance insufficient
+      // burn 1 from buyer to make balance insufficient
       await tbtcToken.forceBurn(accounts[0], 1)
 
       await expectThrow(
@@ -119,26 +121,23 @@ contract('Deposit', (accounts) => {
     })
 
     it(`burns msg.sender's tokens`, async () => {
-      const caller = accounts[1]
-      const initialTokenBalance = await tbtcToken.balanceOf(caller)
+      const initialTokenBalance = await tbtcToken.balanceOf(buyer)
 
-      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
+      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
-      const finalTokenBalance = await tbtcToken.balanceOf(caller)
+      const finalTokenBalance = await tbtcToken.balanceOf(buyer)
       const tokenCheck = new BN(finalTokenBalance).add(new BN(lotSize))
       expect(tokenCheck, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
     })
 
     it('distributes beneficiary reward', async () => {
-      const caller = accounts[1]
-
       // Make sure Deposit has enough to cover beneficiary reward
       const beneficiaryReward = await deployed.TestDepositUtils.beneficiaryReward.call()
       await tbtcToken.forceMint(testInstance.address, beneficiaryReward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
 
-      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
+      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
       const tokenCheck = new BN(initialTokenBalance).add(new BN(beneficiaryReward))
@@ -146,26 +145,24 @@ contract('Deposit', (accounts) => {
       expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
     })
 
-    it('distributes value to the caller', async () => {
+    it('distributes value to the buyer', async () => {
       const value = 1000000000000
-      const caller = accounts[1]
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
-      const initialBalance = await web3.eth.getBalance(caller)
+      const initialBalance = await web3.eth.getBalance(buyer)
 
       await testInstance.send(value, { from: accounts[0] })
 
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
+      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
-      const finalBalance = await web3.eth.getBalance(caller)
+      const finalBalance = await web3.eth.getBalance(buyer)
 
-      expect(new BN(finalBalance), 'caller balance should increase').to.be.gte.BN(initialBalance)
+      expect(new BN(finalBalance), 'buyer balance should increase').to.be.gte.BN(initialBalance)
     })
 
     it('returns keep funds if not fraud', async () => {
       const value = 1000000000000
-      const caller = accounts[1]
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
       const initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -173,16 +170,15 @@ contract('Deposit', (accounts) => {
       await testInstance.send(value, { from: accounts[0] })
 
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
+      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
-      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'caller balance should increase')
+      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'buyer balance should increase')
     })
 
     it('burns if fraud', async () => {
       const value = 1000000000000
-      const caller = accounts[1]
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
       const initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
@@ -191,7 +187,7 @@ contract('Deposit', (accounts) => {
 
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      await testInstance.purchaseSignerBondsAtAuction({ from: caller })
+      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
 
