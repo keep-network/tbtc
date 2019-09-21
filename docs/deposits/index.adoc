@@ -116,70 +116,7 @@ systems and their security properties is included in the appendix.
 
 // TODO What is "sufficient"? Defined as a system property? Dynamic?
 
-==== Overpayment & Underpayment
-
-The system is designed to function with a predefined lot size for all _Deposits_
-which is given as a system parameter. **Depositors should send the exact lot
-amount of BTC in the funding transaction, or expect loss of funds.**
-Since it is not possible for the system to force users into sending any specific
-amount, the system must gracefully handle overpayment and underpayment. The
-primary  impact of overpayment and underpayment is on the `Deposit`'s collateralization
-ratio. We treat overpayment and underpayment as faulty depositor behavior,
-and pass on the associated costs to the depositor.
-
-### Underpayment
-
-Allowing underpayment on `Deposit` would result in over-bonded signers. To
-prevent this, the system will not accept funding proofs of less than the lot
-size (`1.0 BTC` initially). This implies that the a user that sends less than `1.0
-BTC` in the funding transaction does not receive any TBTC, and forfeits the BTC
-locked in the funding transactions to the Signers. The Signers can unlock and
-evenly split the funds in the transaction after the _Deposit_ is resolved on-chain (see
-<<Multiple UTXOs>> for a full discussion).
-
-### Overpayment
-
-Overpayment, in contrast, would result in under-bonded signers. When overfunding
-occurs, the system accepts the funding proof, but mints TBTC according to the
-regular lot size.
-
-In an efficient market, this _Deposit_ will be immediately redeemed,
-as the redeemer expects to take the overfunded amount as arbitrage.
-
-Example: A user providing a funding proof for `1.6 BTC` in a system
-with lot size of `1 BTC` mints only `1.0 TBTC`. Any user that burns `1.0 TBTC`
-is able to claim the `1.6 TBTC` _Deposit_.
-
-A depositor should notice this and immediately try to burn their TBTC to reclaim
-the amount. If not, the depositor effectively forfeits the overfunded value to
-other participants.
-
-==== Multiple UTXOs
-
-A faulty depositor may send multiple UTXOs to the signer group address. This
-may be the result of human or software error. Unfortunately, returning the
-funds to the depositor would impose require significant on-chain complexity and
-gas fees, as each UTXO would need to be proven via SPV, and a signature on it
-explicitly authorized. In addition, we would have to develop mechanisms to
-economically compel signers to sign each transaction despite the fact that the
-total value of the UTXOs is not known. As such, the system accepts only the
-first UTXO greater than the deposit lot size. All other BTC sent to the signing
-group is forfeit. Therefore it is imperative that depositors send only a single
-UTXO of an appropriate size.
-
-As a particularly damaging example, consider a naive human depositor. If she
-mistakenly sends half the lot size in one transaction and half in another, both
-UTXOs would be forfeit. **This represents a serious pitfall for depositors that
-must be carefully addressed by the user interface since significant loss of
-funds can occur.**
-
-The signers, while they may collude to move the BTC to other UTXOs, may not do
-so during the life of the _Deposit_ contract as the production of the required
-signature would constitute ECDSA fraud. As such, the most likely outcome is
-that the signers collectively wait to take personal possession of that BTC
-until the _Deposit_ concludes naturally. This allows the signers to make
-regular signing fees and keep the additional UTXOs without penalty.
-
+include::./mispayment.adoc[leveloffset=0]
 
 === Light Relays
 
