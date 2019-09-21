@@ -28,15 +28,12 @@ image::{root-prefix}img/generated/initiate-deposit.png[]
 
 == Deposit request
 
-The starting point for acquiring TBTC is generating a _deposit request_. This is
-a transaction to a smart contract on tBTC's host chain that informs the tBTC
-system that the sender account is interested in creating a TBTC deposit. The
-transaction is a signal that the sender is interested in a signing group to back
-a wallet that will receive bitcoin from a wallet the sender controls, in order
-to produce TBTC. Because signing groups are not free to create, deposit requests
-include a small bond in the host chain's native token to cover the creation of
-the signing group. The bond is refunded when a successful deposit is made to the
-generated wallet.
+The starting point for acquiring TBTC is generating a _deposit request_. This
+request is a transaction to a smart contraction on tBTC's host chain, and
+signals that the sender requires a signing group backed wallet Because signing
+groups are not free to create, deposit requests include a small bond in the host
+chain's native token to cover the creation of the signing group. The bond is
+refunded when a successful deposit is made to the generated wallet.
 
 === Signer selection
 
@@ -127,7 +124,7 @@ amount of BTC in the funding transaction, or expect loss of funds.**
 Since it is not possible for the system to force users into sending any specific
 amount, the system must gracefully handle overpayment and underpayment. The
 primary  impact of overpayment and underpayment is on the `Deposit`'s collateralization
-ratio. We treat overpayment and underpayment as faulty depositor behavior, 
+ratio. We treat overpayment and underpayment as faulty depositor behavior,
 and pass on the associated costs to the depositor.
 
 ### Underpayment
@@ -135,7 +132,7 @@ and pass on the associated costs to the depositor.
 Allowing underpayment on `Deposit` would result in over-bonded signers. To
 prevent this, the system will not accept funding proofs of less than the lot
 size (`1.0 BTC` initially). This implies that the a user that sends less than `1.0
-BTC` in the funding transaction does not receive any TBTC, and forfeits the BTC 
+BTC` in the funding transaction does not receive any TBTC, and forfeits the BTC
 locked in the funding transactions to the Signers. The Signers can unlock and
 evenly split the funds in the transaction after the _Deposit_ is resolved on-chain (see
 <<Multiple UTXOs>> for a full discussion).
@@ -143,11 +140,11 @@ evenly split the funds in the transaction after the _Deposit_ is resolved on-cha
 ### Overpayment
 
 Overpayment, in contrast, would result in under-bonded signers. When overfunding
-occurs, the system accepts the funding proof, but mints TBTC according to the 
-regular lot size. 
+occurs, the system accepts the funding proof, but mints TBTC according to the
+regular lot size.
 
 In an efficient market, this _Deposit_ will be immediately redeemed,
-as the redeemer expects to take the overfunded amount as arbitrage. 
+as the redeemer expects to take the overfunded amount as arbitrage.
 
 Example: A user providing a funding proof for `1.6 BTC` in a system
 with lot size of `1 BTC` mints only `1.0 TBTC`. Any user that burns `1.0 TBTC`
