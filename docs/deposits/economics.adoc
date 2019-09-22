@@ -1,4 +1,4 @@
-== Deposit Economics
+= Deposit Economics
 
 :signer-fee-withheld: 0.005 TBTC
 

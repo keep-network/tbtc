@@ -1,4 +1,4 @@
-=== Mispayment
+= Mispayment
 
 The system is designed to function with a predefined lot size for all _Deposits_
 which is given as a system parameter. **Depositors should send the exact lot
@@ -9,7 +9,7 @@ primary  impact of overpayment and underpayment is on the `Deposit`'s collateral
 ratio. We treat overpayment and underpayment as faulty depositor behavior,
 and pass on the associated costs to the depositor.
 
-==== Underpayment
+== Underpayment
 
 Allowing underpayment on `Deposit` would result in over-bonded signers. To
 prevent this, the system will not accept funding proofs of less than the lot
@@ -19,7 +19,7 @@ locked in the funding transactions to the Signers. The Signers can unlock and
 evenly split the funds in the transaction after the _Deposit_ is resolved on-chain (see
 <<Multiple UTXOs>> for a full discussion).
 
-==== Overpayment
+== Overpayment
 
 Overpayment, in contrast, would result in under-bonded signers. When overfunding
 occurs, the system accepts the funding proof, but mints TBTC according to the
@@ -36,7 +36,7 @@ A depositor should notice this and immediately try to burn their TBTC to reclaim
 the amount. If not, the depositor effectively forfeits the overfunded value to
 other participants.
 
-==== Multiple UTXOs
+== Multiple UTXOs
 
 A faulty depositor may send multiple UTXOs to the signer group address. This
 may be the result of human or software error. Unfortunately, returning the

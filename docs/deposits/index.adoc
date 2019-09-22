@@ -150,7 +150,7 @@ SPV proofs when used as an additional validation step, as even entities with
 significant mining resources have a greatly reduced chance of creating fake
 proofs.
 
-include::./mispayment.adoc[leveloffset=0]
+include::./mispayment.adoc[leveloffset=+2]
 
 == Lots
 
@@ -165,4 +165,4 @@ requests and fund multiple deposits. This allows each deposit to be backed by
 a different signing group, both simplifying the bonding of signing groups and
 improving the resilience of the system to signing group failure.
 
-include::./economics.adoc[leveloffset=0]
+include::./economics.adoc[leveloffset=+1]
