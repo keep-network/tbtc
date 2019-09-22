@@ -12,7 +12,7 @@ contract('TBTCSystem', (accounts) => {
     const keepRegistry = await KeepRegistryStub.new()
     await keepRegistry.setVendor(ecdsaKeepVendor.address)
 
-    tbtcSystem = await TBTCSystem.deployed()
+    tbtcSystem = await TBTCSystem.new()
     await tbtcSystem.initialize(
       keepRegistry.address,
       '0x0000000000000000000000000000000000000000' // TBTC Uniswap Exchange
