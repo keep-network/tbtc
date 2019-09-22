@@ -51,7 +51,7 @@ library DepositUtils {
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
 
-        /// @notice Map of timestamps for transaction's digest approved for signing
+        /// @notice Map of timestamps for transaction digests approved for signing
         /// @dev Holds a timestamp from the moment when the transaction digest
         /// was approved for signing
         mapping (bytes32 => uint256) approvedDigests;
