@@ -1,10 +1,10 @@
 pragma solidity ^0.5.10;
 
-import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
-import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
-import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
-import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
-import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
+import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
+import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
+import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
+import {CheckBitcoinSigs} from "@summa-tx/bitcoin-spv-sol/contracts/CheckBitcoinSigs.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {DepositStates} from "./DepositStates.sol";

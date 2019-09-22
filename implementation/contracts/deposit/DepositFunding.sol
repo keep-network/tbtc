@@ -1,8 +1,8 @@
 pragma solidity ^0.5.10;
 
-import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
-import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
-import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
+import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
+import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {IKeep} from "../interfaces/IKeep.sol";
 import {DepositUtils} from "./DepositUtils.sol";
