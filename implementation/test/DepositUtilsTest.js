@@ -88,22 +88,22 @@ contract('DepositUtils', (accounts) => {
   describe('currentBlockDifficulty()', async () => {
     it('calls out to the system', async () => {
       const blockDifficulty = await testUtilsInstance.currentBlockDifficulty.call()
-      assert(blockDifficulty.eq(new BN(1)))
+      expect(blockDifficulty).to.eq.BN(1)
 
       await deployed.TBTCSystemStub.setCurrentDiff(33)
       const newBlockDifficulty = await testUtilsInstance.currentBlockDifficulty.call()
-      assert(newBlockDifficulty.eq(new BN(33)))
+      expect(newBlockDifficulty).to.eq.BN(33)
     })
   })
 
   describe('previousBlockDifficulty()', async () => {
     it('calls out to the system', async () => {
       const blockDifficulty = await testUtilsInstance.previousBlockDifficulty.call()
-      assert(blockDifficulty.eq(new BN(1)))
+      expect(blockDifficulty).to.eq.BN(1)
 
       await deployed.TBTCSystemStub.setPreviousDiff(44)
       const newBlockDifficulty = await testUtilsInstance.previousBlockDifficulty.call()
-      assert(newBlockDifficulty.eq(new BN(44)))
+      expect(newBlockDifficulty).to.eq.BN(44)
     })
   })
 
@@ -332,14 +332,14 @@ contract('DepositUtils', (accounts) => {
   describe('signerFee()', async () => {
     it('returns a derived constant', async () => {
       const signerFee = await testUtilsInstance.signerFee.call()
-      assert(signerFee.eq(new BN(5000000000000000)))
+      expect(signerFee).to.eq.BN(5000000000000000)
     })
   })
 
   describe('beneficiaryReward()', async () => {
     it('returns a derived constant', async () => {
       const beneficiaryReward = await testUtilsInstance.beneficiaryReward.call()
-      assert(beneficiaryReward.eq(new BN(10 ** 5)))
+      expect(beneficiaryReward).to.eq.BN(10 ** 5)
     })
   })
 
@@ -387,44 +387,46 @@ contract('DepositUtils', (accounts) => {
   describe('utxoSize()', async () => {
     it('returns the state\'s utxoSizeBytes as an integer', async () => {
       const utxoSize = await testUtilsInstance.utxoSize.call()
-      assert(utxoSize.eq(new BN(0)))
+      expect(utxoSize).to.eq.BN(0)
 
       await testUtilsInstance.setUTXOInfo('0x11223344', 1, '0x')
       const newUtxoSize = await testUtilsInstance.utxoSize.call()
-      assert(newUtxoSize.eq(new BN('44332211', 16)))
+      expect(newUtxoSize).to.eq.BN(new BN('44332211', 16))
     })
   })
 
   describe('fetchOraclePrice()', async () => {
     it('calls out to the system', async () => {
       const oraclePrice = await testUtilsInstance.fetchOraclePrice.call()
-      assert(oraclePrice.eq(new BN('1000000000000', 10)))
+      expect(oraclePrice).to.eq.BN(1000000000000)
 
       await deployed.TBTCSystemStub.setOraclePrice(44)
       const newOraclePrice = await testUtilsInstance.fetchOraclePrice.call()
-      assert(newOraclePrice.eq(new BN(44)))
+      expect(newOraclePrice).to.eq.BN(44)
     })
   })
 
   describe('fetchBondAmount()', async () => {
     it('calls out to the keep system', async () => {
       const bondAmount = await testUtilsInstance.fetchBondAmount.call()
-      assert(bondAmount.eq(new BN(10000)))
+      expect(bondAmount).to.eq.BN(10000)
 
       await deployed.ECDSAKeepStub.setBondAmount(44)
       const newBondAmount = await testUtilsInstance.fetchBondAmount.call()
-      assert(newBondAmount.eq(new BN(44)))
+      expect(newBondAmount).to.eq.BN(44)
     })
   })
 
   describe('bytes8LEToUint()', async () => {
     it('interprets bytes as LE uints ', async () => {
       let res = await testUtilsInstance.bytes8LEToUint.call('0x' + '00'.repeat(8))
-      assert(res.eq(new BN(0)))
+      expect(res).to.eq.BN(0)
+
       res = await testUtilsInstance.bytes8LEToUint.call('0x11223344')
-      assert(res.eq(new BN('44332211', 16)))
+      expect(res).to.eq.BN(new BN('44332211', 16))
+
       res = await testUtilsInstance.bytes8LEToUint.call('0x1100229933884477')
-      assert(res.eq(new BN('7744883399220011', 16)))
+      expect(res).to.eq.BN(new BN('7744883399220011', 16))
     })
   })
 
@@ -435,7 +437,7 @@ contract('DepositUtils', (accounts) => {
 
       const approvalTime = await testUtilsInstance.wasDigestApprovedForSigning.call(digest)
 
-      assert(approvalTime.eq(expectedApprovalTime))
+      expect(approvalTime).to.eq.BN(expectedApprovalTime)
     })
 
     it('returns approval time for approved digest', async () => {
@@ -446,7 +448,7 @@ contract('DepositUtils', (accounts) => {
 
       const approvalTime = await testUtilsInstance.wasDigestApprovedForSigning.call(digest)
 
-      assert(approvalTime.eq(expectedApprovalTime))
+      expect(approvalTime).to.eq.BN(expectedApprovalTime)
     })
   })
 
@@ -472,9 +474,11 @@ contract('DepositUtils', (accounts) => {
     it('calls out to the keep system and returns the seized amount', async () => {
       const value = 5000
       await deployed.ECDSAKeepStub.send(value, { from: accounts[0] })
+
       const seized = await testUtilsInstance.seizeSignerBonds.call()
       await testUtilsInstance.seizeSignerBonds()
-      assert(seized.eq(new BN(value)))
+
+      expect(seized).to.eq.BN(value)
     })
 
     it('errors if no funds were seized', async () => {
