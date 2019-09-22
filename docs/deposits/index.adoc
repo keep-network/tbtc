@@ -60,7 +60,7 @@ key generation protocol that results in a public ECDSA key for the group, which
 is used to produce a wallet address that is then published to the host chain.
 This completes the signer selection phase.
 
-==== Bonding
+==== Signer bonding
 
 Before the selected members of a signing group can perform distributed key
 generation, they must agree to become members of the signing group by putting up
@@ -89,13 +89,13 @@ The distributed key generation protocol should result in three properties:
    signed version of a given transaction to be performed on behalf of the
    signing group.
 
-=== Proof of deposit
+== Making a deposit
 
 Once the tBTC system has a wallet address available for a given deposit request,
-the _depositor_ can issue a Bitcoin transaction sending BTC from a wallet they
-control to the wallet address for the signing group. Once the transaction has
-been sufficiently confirmed by the Bitcoin chain, the depositor has to issue a
-transaction to the host chain proving that the _Deposit_ has been funded.
+the _depositor_ can broadcast a Bitcoin transaction sending BTC from a wallet
+they control to the wallet address for the signing group. Once the transaction
+has been sufficiently confirmed by the Bitcoin chain, the depositor has to issue
+a transaction to the host chain proving that the _Deposit_ has been funded.
 
 The only link between the Bitcoin chain and the host chain is the tBTC system,
 which runs as a set of smart contracts on the host chain. As such, the Bitcoin
@@ -107,15 +107,15 @@ proof is not received within a given timeout window, the signing group will
 disband and the system will seize the bond's value, making it available to the
 signing group members to reclaim.
 
-To prove a deposit, the depositor submits proof the transaction has been
-confirmed and accumulated sufficient work on the Bitcoin chain. The proof is
-verified by an on-chain simple payment verification (SPV) contract on the host
-chain. A more complete discussion of cross-chain SPV systems and their security
-properties <<{root-prefix}/appendix/spv/index#,is included in the appendix>>.
-
 // TODO What is "sufficient"? Defined as a system property? Dynamic?
 
 === Light Relays
+
+To prove a deposit, the depositor submits proof the transaction has been
+confirmed and accumulated work on the Bitcoin chain. The proof is
+verified by an on-chain simple payment verification (SPV) contract on the host
+chain. A more complete overview of cross-chain SPV systems and their security
+properties <<{root-prefix}/appendix/spv/index#,is included in the appendix>>.
 
 Light relays are a new variant of on-chain SPV developed for tBTC. They seek to
 take advantage of the compact and efficient stateless SPV proofs while relaying
@@ -150,8 +150,6 @@ SPV proofs when used as an additional validation step, as even entities with
 significant mining resources have a greatly reduced chance of creating fake
 proofs.
 
-include::./mispayment.adoc[leveloffset=+2]
-
 == Lots
 
 :lot-size: 1.0
@@ -164,5 +162,9 @@ deposit more than the lot size, they will need to create multiple deposit
 requests and fund multiple deposits. This allows each deposit to be backed by
 a different signing group, both simplifying the bonding of signing groups and
 improving the resilience of the system to signing group failure.
+
+include::./mistakes.adoc[leveloffset=+2]
+
+include::./minting.adoc[leveloffset=+1]
 
 include::./economics.adoc[leveloffset=+1]

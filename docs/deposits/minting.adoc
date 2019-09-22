@@ -1,0 +1,75 @@
+= Minting
+
+:signer-fee-withheld: 0.005 TBTC
+:additional-depositor-redemption-rebate: 0.001 TBTC
+
+Minting is split into two distinct phases to balance system security and user
+experience.
+
+After a deposit has been requested and a signing group formed, a depositor may
+submit proof of their funding transaction. This initial proof has no work
+accumulation requirement -- a single qualified confirmation on the Bitcoin
+network will suffice
+
+Minting and distributing a liquid, fungible token from a single confirmation,
+however, would open up the peg to short reorg attacks. For this reason, the
+fungible token's minting is delayed. Instead, the depositor is granted a
+non-fungible token that's unique to the deposit.
+
+// TODO third-party proof flow in the appendix
+
+== Non-fungible deposit token
+
+The non-fungible deposit token grants the exclusive right to redeem its matching
+deposit. The owner of the transferrable token can request redemption, and after
+paying any outstanding fees, be guaranteed the smae UTXO backing the deposit, or
+recompense from the signing group's bonded collateral in case of fraud.
+
+// TODO link to the redemption process
+
+Before a particular Bitcoin deposit accumulates confirmations, a depositor is
+free to transfer their NFT, trading it or perhaps using it as collateral
+elsewhere. Anyone receiving a deposit NFT should verify they are comfortable
+with the state of the matching deposit.
+
+// TODO can a deposit be challenged if its proof is re-orged?
+
+== Fungible TBTC and the nonfungible deposit beneficiary token
+
+// TODO be specific with the deposit timeout
+
+If a proof showing enough accumulated work is submitted before a timeout, the
+deposit NFT becomes eligible for minting fungible TBTC. Minting TBTC is optional
+-- depositors can stick with their NFTs, which will be valid for the lifetime of
+a maintained deposit.
+
+// TODO NB if a deposit is liquidated, the NFT can stick around and be backed by
+// the liquid token
+
+The holder of a qualified deposit NFT may exchange that NFT for 1 newly minted
+TBTC, less a requisite {signer-fee-withheld} signing fee.
+
+If the deposit NFT holder would like to maintain the exclusive right to redeem
+the deposit, ensuring they maintain future access to the backing UTXO, they can
+pay the signing fees immediately. Their right will be exclusive for the term of
+the deposit, excepting any liquidation event due to fraud or price movements.
+
+If the deposit NFT holder instead opts to waive their right to exclusive
+redemption, they receive 1 TBTC less the requisite {signer-fee-withheld} due to
+signers, and take on the role of "deposit beneficiary". The deposit beneficiary
+role is designated by a different non-fungible token, granting the right to a
+fee rebate when a particulate deposit is redeemed, plus an additional reward of
+{additional-depositor-redemption-rebate}, paid by the redeemer of the deposit.
+
+This mechanism rewards depositors who cede their exclusive right to redeem a
+particular deposit (and thus backing UTXO) by moving the cost of the system to
+eventual redeemers.
+
+// TODO update the signer fee section
+
+== Burning TBTC to lock an unlocked deposit
+
+At any time, an anyone-redeemable deposit can be locked by paying the
+outstanding TBTC represented by the depoist, plus the requisite
+{signer-fee-withheld} to signers and the additional depositor redemption rebate
+of {additional-deposit-redemption-rebate}.

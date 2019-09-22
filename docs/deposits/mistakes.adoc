@@ -1,4 +1,4 @@
-= Mispayment
+= Mistakes making a deposit
 
 The system is designed to function with a predefined lot size for all _Deposits_
 which is given as a system parameter. **Depositors should send the exact lot
