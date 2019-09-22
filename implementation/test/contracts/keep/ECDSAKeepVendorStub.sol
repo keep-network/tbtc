@@ -6,7 +6,7 @@ import {IECDSAKeepVendor} from "keep-tecdsa/solidity/contracts/api/IECDSAKeepVen
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
 contract ECDSAKeepVendorStub is IECDSAKeepVendor {
      address public keepOwner;
-     address public keepAddress;
+     address public keepAddress = address(888);
 
     function openKeep(
         uint256 _groupSize,
@@ -14,7 +14,6 @@ contract ECDSAKeepVendorStub is IECDSAKeepVendor {
         address _owner
     ) external payable returns (address) {
         keepOwner = _owner;
-        keepAddress = address(888);
 
         return keepAddress;
     }
