@@ -61,5 +61,3 @@ signature would constitute ECDSA fraud. As such, the most likely outcome is
 that the signers collectively wait to take personal possession of that BTC
 until the _Deposit_ concludes naturally. This allows the signers to make
 regular signing fees and keep the additional UTXOs without penalty.
-
-
