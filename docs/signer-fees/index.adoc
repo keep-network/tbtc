@@ -24,7 +24,7 @@ decentralized approach to custodianship makes legal recourse more difficult,
 requiring additional bonded collateral to ensure recompense in case of failure.
 
 Applying this pricing model to tBTC's bonding, it's clear that a Signer would
-need to make a similar return at a minimum on the total capital it's locking up.
+need to make a similar return at a minimum on the total capital it's protecting.
 
 == Fee parameterization
 
@@ -63,6 +63,7 @@ This requires a `0.1` BTC value in capital cost for **each** Signer per
 `1.0 TBTC` minted.
 
 Taking into account the fees from centralized custodians (`0.0025-0.0075 BTC`),
-we choose to reward signers with a flat `0.005 TBTC` per `1.0 TBTC` minted,
-meaning the total signing revenue is `0.5%` of the market cap of the minted
-amount of `TBTC` each year.
+and considering signers are also risking additional bonds, in an initial
+parameterization we choose to reward signers with `0.009375 TBTC` per `1.0 BTC`
+deposited. As each depost has a fixed term of 6 months, that implies a total
+signing revenue of `1.875%` of the market cap of `TBTC` each year.
