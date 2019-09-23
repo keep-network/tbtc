@@ -1,0 +1,119 @@
+= Minting
+
+== Overview
+
+:signer-fee-withheld: 0.005 TBTC
+:additional-depositor-redemption-rebate: 0.001 TBTC
+
+The process of minting TBTC is distinct from the process of depositing Bitcoin.
+
+By splitting minting into two phases -- a single-confirmation SPV proof
+yielding a non-fungible token, and an additional proof enabling trade-in of the
+non-fungible token for fungible TBTC -- we can balance strong security against
+reorgs with a better user experience and more flexible use cases.
+
+// TODO insert diagram
+
+
+== Minting the non-fungible deposit owner token
+
+After a deposit has been requested and a signing group formed, a depositor may
+submit proof of their funding transaction. This initial proof has no work
+accumulation requirement -- a single qualified confirmation consistent with the
+host chain's view of the Bitcoin network network will suffice.
+
+The depositor is granted a non-fungible token unique to the deposit called
+the _deposit owner token_. The deposit owner token grants the exclusive right
+to redeem the deposit.
+
+The holder of the deposit owner token can request redemption, and after paying
+any outstanding fees, be guaranteed the same UTXO backing the deposit, or
+recompensastion from the signing group's bonded collateral in case of fraud.
+
+
+=== Implications
+
+There are a few non-obvious implications to a UTXO-specific non-fungible token.
+
+1. Any attacks against the deposit backing a deposit owner token should only
+   impact the token holder, rather than the entire supply-pegged currency.
+   Attacks against a particular deposit might include Bitcoin reorgs / double
+   spends, DoS attacks, malicious signers, or deposit undercollateralization.
+
+2. Any recipient of a deposit owner token will need to evaluate the risk of the
+   token themselves. Different tokens might represent different likelihoods of
+   reorgs. Deposit owners are free to transfer their ownership token, trading it
+   or perhaps using it as collateral elsewhere, caveat emptor.
+
+3. Deposit owner tokens are an ideal target for secret fixed-size "notes" or
+   other financial privacy improvements on the host chain.
+
+4. This construction allows delegation of accumulated work SPV proofs to third
+   parties. Depositors won't need to monitor the Bitcoin blockchain.
+
+// TODO incentivize this - we want maintainers to be submitting proofs when
+// depositors walk away
+// TODO third-party proof flow in the appendix
+// TODO link to the redemption process
+// TODO can a deposit be challenged if its proof is re-orged? it appears there's
+// no need, but the fungible TBTC vending machine will need to be smart with
+// deposits
+
+
+== Minting fungible TBTC
+
+Once a deposit has accumulated enough work, it's eligible to be traded for
+fungible TBTC. The process managing this is called the "vending machine".
+
+
+=== The TBTC vending machine
+
+The TBTC vending machine is a contract on the host chain that's responsible
+for minting TBTC.
+
+Any deposit owner token representing a qualified deposit can be exchanged.
+Qualified deposits are determined by the accumulated work of their proofs, where
+the required work is a function of the Bitcoin network's current difficulty and
+the volume of deposit tokens being exchanged via the vending machine. The latter
+requirement helps mitigate reorg attacks against many simultaneously opened
+deposits.
+
+// TODO link to more details in the appendix?
+// TODO be specific with the deposit timeout
+
+If a proof showing enough accumulated work is submitted before a timeout, the
+deposit NFT becomes eligible for minting fungible TBTC. Minting TBTC is optional
+-- depositors can stick with their NFTs, which will be valid for the lifetime of
+a maintained deposit.
+
+// TODO NB if a deposit is liquidated, the NFT can stick around and be backed by
+// the liquid token
+
+The holder of a qualified deposit NFT may exchange that NFT for 1 newly minted
+TBTC, less the requisite {signer-fee-withheld} signing fee. The signing fee is
+held in escrow by the deposit.
+
+If the deposit NFT holder opts to waive their right to exclusive redemption,
+they also receive a non-fungible "deposit beneficiary token". This token grants
+the right to a fee rebate when the deposit is redeemed, plus an additional
+reward of {additional-depositor-redemption-rebate}, paid by the eventual
+redeemer of the deposit.
+
+If the deposit NFT holder would like to maintain the exclusive right to redeem
+the deposit, ensuring they maintain future access to the backing UTXO, they
+receive no promise to a signing fee rebate.
+
+"Locked" deposits are riskier to signers, and add friction to easy redemption of
+TBTC. This mechanism rewards depositors who cede their exclusive right to redeem
+a particular deposit (and thus backing UTXO) by moving the cost of the system to
+eventual redeemers.
+
+// TODO update the signer fee section
+
+=== Trading TBTC for deposit owner tokens
+
+Any deposit owner token held by the vending machine can be obtained for 1 TBTC.
+The vending machine burns any TBTC it receives.
+
+This mechanic has the effect of allowing "unlocked" deposits to be "locked" for
+redemption in advance.
