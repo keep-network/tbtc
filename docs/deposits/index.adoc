@@ -163,6 +163,6 @@ requests and fund multiple deposits. This allows each deposit to be backed by
 a different signing group, both simplifying the bonding of signing groups and
 improving the resilience of the system to signing group failure.
 
-include::./mistakes.adoc[leveloffset=+2]
+include::./mistakes.adoc[leveloffset=+1]
 
 include::./economics.adoc[leveloffset=+1]
