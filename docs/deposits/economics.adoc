@@ -1,26 +1,25 @@
-= Deposit Economics
+= Deposit economics
 
-:signer-fee-withheld: 0.005 TBTC
+Signers aren't altruists -- they're paid for the service they provide.
 
-Once a deposit has been made and funded, the corresponding TBTC is minted.
-Minted TBTC is immediately issued to the funder, who is now the beneficiary of
-a funded _Deposit_. To prevent denial of service attacks {signer-fee-withheld}
-is withheld on minting. This will be returned to the beneficiary when the
-_Deposit_ is closed. This ensures that DoS attacks based on repeatedly creating
-signing groups (e.g. Attacker creates signing group, locks 1 BTC, creates 1
-TBTC via a Deposit, trades for 1 BTC in an exchange and repeats the Deposit
-process multiple times) have high economic cost.
+Signer fees should always be paid or escrowed up front. To achieve this, signer
+fees must be <<{root-prefix}/minting/index#,guaranteed by minting>>, and
+deposits must have predictable lifetimes.
 
-Beneficary status is transferable (in Ethereum this is implemented as an
-ERC721-compatible non-fungible token). When the _Deposit_ resolves, the
-withheld TBTC (or equivalent value) will be returned to the current beneficiary
-along with a small additional payment. In this way the beneficiary NFT
-functions as a zero-coupon bond issued by the signing group upon funding. If
-the signing group performs its obligations, the beneficiary will eventually
-receive the bond payout. It can be expected that there will be service providers
-willing to trade {signer-fee-witheld} TBTC for 1 TBTC-coupon-bond along with
-some fee, for providing liquidity to holders of the otherwise illiquid for the
-duration of a Deposit coupon.
+A detailed treatment of signer fees can be found in
+<<{root-prefix}/signer-fees/index#,their own section>>.
 
-Signer fees are described in more detail in
-<<../signer-fees/index#,their own section>>.
+
+== Terms
+
+:term-length: 6 months
+
+Fixed-term deposits mean signer fees can always be easily calculated per
+deposit. A standard term of {term-length} means depositors can budget for fees,
+and signers will know how long their bondis will be inaccessible.
+
+Depositors that don't need future access to their deposit might prefer to pass
+the costs of the system to eventual redeemers. These depositors can opt to
+receive a non-fungible deposit beneficiary token which pays a fee rebate at the
+deposit's redemption. The rebate mechanism is <<{root-prefix}/minting/index#,
+explained further in the discussion around minting>>.
