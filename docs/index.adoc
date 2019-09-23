@@ -255,7 +255,7 @@ include::price-oracle/index.adoc[leveloffset=+2]
 
 include::minting/index.adoc[leveloffset=+2]
 
-include::custodial-fees/index.adoc[leveloffset=+2]
+include::signer-fees/index.adoc[leveloffset=+2]
 
 include::signing/index.adoc[leveloffset=+2]
 

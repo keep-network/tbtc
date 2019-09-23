@@ -115,5 +115,5 @@ eventual redeemers.
 Any deposit owner token held by the vending machine can be obtained for 1 TBTC.
 The vending machine burns any TBTC it receives.
 
-This mechanic has the effect of allowing "unlocked" deposits to be "locked" for
-redemption in advance.
+This mechanic has the effect of allowing "unlocked" deposits to be "locked" in advance
+for later redemption.

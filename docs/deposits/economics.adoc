@@ -23,4 +23,4 @@ some fee, for providing liquidity to holders of the otherwise illiquid for the
 duration of a Deposit coupon.
 
 Signer fees are described in more detail in
-<<../custodial-fees/index#,their own section>>.
+<<../signer-fees/index#,their own section>>.
