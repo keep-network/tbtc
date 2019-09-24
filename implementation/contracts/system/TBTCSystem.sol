@@ -4,16 +4,22 @@ import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {DepositLog} from "../DepositLog.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./ERC721MinterAuthority.sol";
 
-contract TBTCSystem is Ownable, ITBTCSystem, ERC721, DepositLog {
+contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, DepositLog {
 
     bool _initialized = false;
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
     uint256 oraclePrice = 10 ** 12;
-
     address public tbtcUniswapExchange;
+
+    constructor(address _depositFactory)
+        ERC721MinterAuthority(_depositFactory)
+        public {
+            // solium-disable-previous-line no-empty-blocks
+    }
 
     function initialize(address _tbtcUniswapExchange) external onlyOwner {
         require(!_initialized, "already initialized");
@@ -45,13 +51,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, DepositLog {
         }
     }
 
-    // ERC721
-
-    /// @dev             Function to mint a new token.
-    ///                  Reverts if the given token ID already exists.
+    /// @notice          Function to mint a new token.
+    /// @dev             Reverts if the given token ID already exists.
+    ///                  This function can only be called by depositFactory
     /// @param _to       The address that will own the minted token
     /// @param _tokenId  uint256 ID of the token to be minted
-    function mint(address _to, uint256 _tokenId) public {
+    function mint(address _to, uint256 _tokenId) public onlyFactory {
         _mint(_to, _tokenId);
     }
 

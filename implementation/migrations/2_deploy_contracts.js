@@ -82,14 +82,15 @@ module.exports = (deployer, network, accounts) => {
     // price oracle
     await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
 
+    // deposit factory
+    await deployer.deploy(DepositFactory, Deposit.address)
+
     // system
-    await deployer.deploy(TBTCSystem)
+    await deployer.deploy(TBTCSystem, DepositFactory.address)
+
     await deployer.deploy(TBTCToken, TBTCSystem.address)
 
     // keep
     await deployer.deploy(KeepBridge)
-
-    // deposit factory
-    await deployer.deploy(DepositFactory, Deposit.address)
   })
 }
