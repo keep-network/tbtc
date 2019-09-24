@@ -41,8 +41,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
+  { name: 'KeepStub', contract: KeepStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -58,14 +57,16 @@ contract('Deposit', (accounts) => {
   let testInstance
   let beneficiary
   let tbtcToken
+  let tbtcSystemStub
 
   before(async () => {
-    beneficiary = accounts[2]
+    beneficiary = accounts[4]
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
+    tbtcToken = await TestToken.new(tbtcSystemStub.address)
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
-    deployed.TBTCSystemStub.mint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
+    testInstance.setExteroriorAddresses(tbtcSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
+    tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
   })
 
   beforeEach(async () => {
@@ -97,7 +98,7 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.LIQUIDATED)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('Liquidated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('Liquidated', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -202,9 +203,9 @@ contract('Deposit', (accounts) => {
     let undercollateralizedPercent
 
     before(async () => {
-      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
+      await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
-      oraclePrice = await deployed.TBTCSystemStub.fetchOraclePrice.call()
+      oraclePrice = await tbtcSystemStub.fetchOraclePrice.call()
       lotSize = await deployed.TBTCConstants.getLotSize.call()
       lotValue = lotSize.mul(oraclePrice)
 
@@ -234,7 +235,7 @@ contract('Deposit', (accounts) => {
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[1]).not.to.eq.BN(0)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -268,7 +269,7 @@ contract('Deposit', (accounts) => {
       const notifiedTime = blockTimestamp // not expired
       const fundedTime = blockTimestamp // not expired
       await deployed.KeepStub.setBondAmount(new BN('1000000000000000000000000', 10))
-      await deployed.TBTCSystemStub.setOraclePrice(new BN('1', 10))
+      await tbtcSystemStub.setOraclePrice(new BN('1', 10))
       await testInstance.setState(utils.states.COURTESY_CALL)
       await testInstance.setUTXOInfo('0x' + '00'.repeat(8), fundedTime, '0x' + '00'.repeat(36))
       await testInstance.setLiquidationAndCourtesyInitated(0, notifiedTime)
@@ -276,7 +277,7 @@ contract('Deposit', (accounts) => {
 
     afterEach(async () => {
       await deployed.KeepStub.setBondAmount(1000)
-      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
+      await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
     })
 
     it('transitions to active, and logs ExitedCourtesyCall', async () => {
@@ -287,7 +288,7 @@ contract('Deposit', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.ACTIVE)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('ExitedCourtesyCall', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('ExitedCourtesyCall', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -310,7 +311,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the deposit is still undercollateralized', async () => {
-      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
+      await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
       await deployed.KeepStub.setBondAmount(0)
 
       await expectThrow(
@@ -327,9 +328,9 @@ contract('Deposit', (accounts) => {
     let severelyUndercollateralizedPercent
 
     before(async () => {
-      await deployed.TBTCSystemStub.setOraclePrice(new BN('1000000000000', 10))
+      await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
-      oraclePrice = await deployed.TBTCSystemStub.fetchOraclePrice.call()
+      oraclePrice = await tbtcSystemStub.fetchOraclePrice.call()
       lotSize = await deployed.TBTCConstants.getLotSize.call()
       lotValue = lotSize.mul(oraclePrice)
 
@@ -464,7 +465,7 @@ contract('Deposit', (accounts) => {
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[1]).not.to.eq.BN(0)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
