@@ -14,7 +14,7 @@ contract('TBTCSystem', (accounts) => {
   describe('mint()', async () => {
     it('correctly mints 721 token with approved caller', async () => {
       const tokenId = 11111
-      const mintTo = accounts[0]
+      const mintTo = accounts[1]
 
       tbtcSystem.mint(mintTo, tokenId)
 
@@ -27,7 +27,7 @@ contract('TBTCSystem', (accounts) => {
 
     it('fails to mint 721 token with bad caller', async () => {
       const tokenId = 22222
-      const mintTo = accounts[0]
+      const mintTo = accounts[1]
 
       await expectThrow(
         tbtcSystem.mint(mintTo, tokenId, { from: accounts[1] }),
