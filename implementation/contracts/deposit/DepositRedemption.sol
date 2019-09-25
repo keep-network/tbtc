@@ -259,11 +259,12 @@ library DepositRedemption {
         bytes memory _txInputVector,
         bytes memory _txOutputVector
     ) public view returns (uint256) {
+        require(_txInputVector.validateVin(), "invalid input vector provided");
+        require(_txOutputVector.validateVout(), "invalid output vector provided");
+
         bytes memory _ins = _txInputVector.slice(1, _txInputVector.length-1);
         bytes memory _outs = _txOutputVector.slice(1, _txOutputVector.length-1);
 
-        require(_txInputVector.validateVin(), "invalid input vector provided");
-        require(_txOutputVector.validateVout(), "invalid output vector provided");
         require(
             keccak256(_ins.extractOutpoint()) == keccak256(_d.utxoOutpoint),
             "Tx spends the wrong UTXO"
