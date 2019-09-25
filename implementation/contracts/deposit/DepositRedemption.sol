@@ -213,10 +213,10 @@ library DepositRedemption {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideRedemptionProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         bytes memory _merkleProof,
         uint256 _index,
         bytes memory _bitcoinHeaders

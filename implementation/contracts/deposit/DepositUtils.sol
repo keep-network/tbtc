@@ -165,10 +165,10 @@ library DepositUtils {
     /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint
     function validateAndParseFundingSPVProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         uint8 _fundingOutputIndex,
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,

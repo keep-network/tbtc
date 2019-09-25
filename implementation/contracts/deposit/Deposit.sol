@@ -94,10 +94,10 @@ contract Deposit {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 True if successful, otherwise revert
     function provideRedemptionProof(
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         bytes memory _merkleProof,
         uint256 _index,
         bytes memory _bitcoinHeaders
@@ -190,10 +190,10 @@ contract Deposit {
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         uint8 _fundingOutputIndex,
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
@@ -225,10 +225,10 @@ contract Deposit {
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         uint8 _fundingOutputIndex,
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
@@ -277,10 +277,10 @@ contract Deposit {
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 True if successful, otherwise revert
     function provideSPVFraudProof(
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         bytes memory _merkleProof,
         uint256 _index,
         bytes memory _bitcoinHeaders

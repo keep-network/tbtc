@@ -44,10 +44,10 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function validateAndParseFundingSPVProof(
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         uint8 _fundingOutputIndex,
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
