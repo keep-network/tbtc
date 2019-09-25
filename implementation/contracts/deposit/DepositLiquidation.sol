@@ -2,6 +2,7 @@ pragma solidity ^0.5.10;
 
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
+import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
@@ -12,6 +13,7 @@ import {TBTCToken} from "../system/TBTCToken.sol";
 library DepositLiquidation {
 
     using BTCUtils for bytes;
+    using BytesLib for bytes;
     using SafeMath for uint256;
 
     using DepositUtils for DepositUtils.Deposit;
@@ -159,22 +161,21 @@ library DepositLiquidation {
     /// @notice                 Anyone may notify the deposit of fraud via an SPV proof
     /// @dev                    We strong prefer ECDSA fraud proofs
     /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contains the funding output
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideSPVFraudProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _bitcoinTx,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         bytes memory _merkleProof,
         uint256 _index,
         bytes memory _bitcoinHeaders
     ) public {
-        bytes memory _input;
-        bytes memory _output;
-        bool _inputConsumed;
         uint8 i;
-
+        bytes32 _txId;
         require(
             !_d.inFunding() && !_d.inFundingFailure(),
             "SPV Fraud proofs not valid before Active state."
@@ -184,29 +185,63 @@ library DepositLiquidation {
             "Signer liquidation already in progress"
         );
         require(!_d.inEndState(), "Contract has halted");
+        require(_txInputVector.validateVin(), "invalid input vector provided");
+        require(_txOutputVector.validateVout(), "invalid output vector provided");
 
-        _d.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
-        for (i = 0; i < _bitcoinTx.extractNumInputs(); i++) {
-            _input = _bitcoinTx.extractInputAtIndex(i);
+        // DRAFT comments:
+        // we can assume this TX is witness?
+
+        _txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+
+        _d.checkProofFromTxId(_txId, _merkleProof, _index, _bitcoinHeaders);
+
+        // Input integrity was checked via ValitadeVin, we can check specific inputs with no worries
+        require(inputSearch(_d, _txInputVector), "No input spending custodied UTXO found");
+        require(outputSearch(_d, _txOutputVector), "Output found as expected");
+
+        startSignerFraudLiquidation(_d);
+    }
+
+    function inputSearch(
+        DepositUtils.Deposit storage _d,
+        bytes memory _txInputVector
+    ) internal view returns (bool){
+        bytes memory _input;
+        uint256 _offset = 1;
+
+        uint8 _numInputs = uint8(_txInputVector.slice(0, 1)[0]);
+        for (uint8 i = 0; i < _numInputs; i++) {
+            _input = _txInputVector.slice(_offset, _txInputVector.length - _offset);
+            _offset += _input.determineInputLength();
             if (keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint)) {
-                _inputConsumed = true;
+                return true;
             }
         }
-        require(_inputConsumed, "No input spending custodied UTXO found");
-
+        return false;
+    }
+    
+    function outputSearch(
+        DepositUtils.Deposit storage _d,
+        bytes memory _txOutputVector
+    ) internal view returns (bool){
+        bytes memory _output;
+        uint256 _offset = 1;
         uint256 _permittedFeeBumps = 5;  /* TODO: can we refactor withdrawal flow to improve this? */
         uint256 _requiredOutputSize = _d.utxoSize().sub((_d.initialRedemptionFee * (1 + _permittedFeeBumps)));
-        for (i = 0; i < _bitcoinTx.extractNumOutputs(); i++) {
-            _output = _bitcoinTx.extractOutputAtIndex(i);
+
+        uint8 _numOuts = uint8(_txOutputVector.slice(0, 1)[0]);
+        for (uint8 i = 0; i < _numOuts; i++) {
+            _output = _txOutputVector.slice(_offset, _txOutputVector.length - _offset);
+            _offset += _output.determineOutputLength();
 
             if (_output.extractValue() >= _requiredOutputSize
                 && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
                 revert("Found an output paying the redeemer as requested");
             }
         }
-
-        startSignerFraudLiquidation(_d);
+        return true;
     }
+    
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud
     /// @dev        For interface, reading auctionValue will give a past value. the current is better
