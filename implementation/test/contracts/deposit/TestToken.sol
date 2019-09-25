@@ -37,7 +37,7 @@ contract TestToken is TBTCToken{
         _burn(_account, _amount);
     }
 
-    /// @dev                Uses exposed Token functions to reset caller's balance. 
+    /// @dev                Uses exposed Token functions to reset caller's balance.
     /// @param _newBalance  New balance to assign to caller
     function resetBalance(uint256 _newBalance) public {
         uint256 currentBalance = balanceOf(msg.sender);
