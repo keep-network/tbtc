@@ -208,13 +208,15 @@ library DepositRedemption {
     /// @notice                 Anyone may provide a withdrawal proof to prove redemption
     /// @dev                    The signers will be penalized if this is not called
     /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contain the redemption output
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideRedemptionProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _bitcoinTx,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         bytes memory _merkleProof,
         uint256 _index,
         bytes memory _bitcoinHeaders
@@ -223,7 +225,9 @@ library DepositRedemption {
         uint256 _fundingOutputValue;
 
         require(_d.inRedemption(), "Redemption proof only allowed from redemption flow");
-        (_txid, _fundingOutputValue) = redemptionTransactionChecks(_d, _bitcoinTx);
+
+        _fundingOutputValue = redemptionTransactionChecks(_d, _txInputVector, _txOutputVector);
+        _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
         _d.checkProofFromTxId(_txid, _merkleProof, _index, _bitcoinHeaders);
 
@@ -240,19 +244,17 @@ library DepositRedemption {
         _d.redemptionTeardown();
         _d.logRedeemed(_txid);
     }
-
+    
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
-        bytes memory _bitcoinTx
-    ) public view returns (bytes32, uint256) {
-        bytes memory _nIns;
-        bytes memory _ins;
-        bytes memory _nOuts;
-        bytes memory _outs;
-        bytes memory _locktime;
-        bytes32 _txid;
-        (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
-        require(_txid != bytes32(0), "Failed tx parsing");
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector
+    ) public view returns (uint256) {
+        bytes memory _ins = _txInputVector.slice(1, _txInputVector.length-1);
+        bytes memory _outs = _txOutputVector.slice(1, _txOutputVector.length-1);
+
+        require(_txInputVector.validateVin(), "invalid input vector provided");
+        require(_txOutputVector.validateVout(), "invalid output vector provided");
         require(
             keccak256(_ins.extractOutpoint()) == keccak256(_d.utxoOutpoint),
             "Tx spends the wrong UTXO"
@@ -261,8 +263,31 @@ library DepositRedemption {
             keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
             "Tx sends value to wrong pubkeyhash"
         );
-        return ( _txid, uint256(_outs.extractValue()));
+        return (uint256(_outs.extractValue()));
     }
+
+    // function redemptionTransactionChecks(
+    //     DepositUtils.Deposit storage _d,
+    //     bytes memory _bitcoinTx
+    // ) public view returns (bytes32, uint256) {
+    //     bytes memory _nIns;
+    //     bytes memory _ins;
+    //     bytes memory _nOuts;
+    //     bytes memory _outs;
+    //     bytes memory _locktime;
+    //     bytes32 _txid;
+    //     (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
+    //     require(_txid != bytes32(0), "Failed tx parsing");
+    //     require(
+    //         keccak256(_ins.extractOutpoint()) == keccak256(_d.utxoOutpoint),
+    //         "Tx spends the wrong UTXO"
+    //     );
+    //     require(
+    //         keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
+    //         "Tx sends value to wrong pubkeyhash"
+    //     );
+    //     return ( _txid, uint256(_outs.extractValue()));
+    // }
 
 
 
