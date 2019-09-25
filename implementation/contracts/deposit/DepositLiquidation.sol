@@ -219,7 +219,7 @@ library DepositLiquidation {
         }
         return false;
     }
-    
+
     function outputSearch(
         DepositUtils.Deposit storage _d,
         bytes memory _txOutputVector
@@ -241,7 +241,6 @@ library DepositLiquidation {
         }
         return true;
     }
-    
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud
     /// @dev        For interface, reading auctionValue will give a past value. the current is better

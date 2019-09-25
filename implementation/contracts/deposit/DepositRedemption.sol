@@ -244,7 +244,7 @@ library DepositRedemption {
         _d.redemptionTeardown();
         _d.logRedeemed(_txid);
     }
-    
+
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
         bytes memory _txInputVector,
