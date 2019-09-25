@@ -208,6 +208,10 @@ library DepositRedemption {
     /// @notice                 Anyone may provide a withdrawal proof to prove redemption
     /// @dev                    The signers will be penalized if this is not called
     /// @param  _d              deposit storage pointer
+    /// @param _txVersion       Transaction version number (4-byte LE)
+    /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime      Final 4 bytes of the transaction
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
@@ -245,6 +249,11 @@ library DepositRedemption {
         _d.logRedeemed(_txid);
     }
 
+    /// @notice                 Check the redemption transaction input and output vector to ensure the transaction spends 
+    ///                         the correct UTXO and sends value to the appropreate public key hash
+    /// @param  _d              deposit storage pointer
+    /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
         bytes memory _txInputVector,
@@ -265,31 +274,6 @@ library DepositRedemption {
         );
         return (uint256(_outs.extractValue()));
     }
-
-    // function redemptionTransactionChecks(
-    //     DepositUtils.Deposit storage _d,
-    //     bytes memory _bitcoinTx
-    // ) public view returns (bytes32, uint256) {
-    //     bytes memory _nIns;
-    //     bytes memory _ins;
-    //     bytes memory _nOuts;
-    //     bytes memory _outs;
-    //     bytes memory _locktime;
-    //     bytes32 _txid;
-    //     (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
-    //     require(_txid != bytes32(0), "Failed tx parsing");
-    //     require(
-    //         keccak256(_ins.extractOutpoint()) == keccak256(_d.utxoOutpoint),
-    //         "Tx spends the wrong UTXO"
-    //     );
-    //     require(
-    //         keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
-    //         "Tx sends value to wrong pubkeyhash"
-    //     );
-    //     return ( _txid, uint256(_outs.extractValue()));
-    // }
-
-
 
     /// @notice     Anyone may notify the contract that the signers have failed to produce a signature
     /// @dev        This is considered fraud, and is punished

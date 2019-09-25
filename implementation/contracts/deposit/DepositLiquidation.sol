@@ -161,6 +161,10 @@ library DepositLiquidation {
     /// @notice                 Anyone may notify the deposit of fraud via an SPV proof
     /// @dev                    We strong prefer ECDSA fraud proofs
     /// @param  _d              deposit storage pointer
+    /// @param _txVersion       Transaction version number (4-byte LE)
+    /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime      Final 4 bytes of the transaction
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
@@ -196,13 +200,17 @@ library DepositLiquidation {
         _d.checkProofFromTxId(_txId, _merkleProof, _index, _bitcoinHeaders);
 
         // Input integrity was checked via ValitadeVin, we can check specific inputs with no worries
-        require(inputSearch(_d, _txInputVector), "No input spending custodied UTXO found");
+        require(outpointSearch(_d, _txInputVector), "No input spending custodied UTXO found");
         require(outputSearch(_d, _txOutputVector), "Output found as expected");
 
         startSignerFraudLiquidation(_d);
     }
 
-    function inputSearch(
+    /// @notice                 Search _txInputVector for outpoint matching the one set during funding.
+    /// @param  _d              deposit storage pointer
+    /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @return                 True if current outpoint found, false otherwise
+    function outpointSearch(
         DepositUtils.Deposit storage _d,
         bytes memory _txInputVector
     ) internal view returns (bool){
@@ -220,6 +228,9 @@ library DepositLiquidation {
         return false;
     }
 
+    /// @notice                 Search _txOutputVector for output paying the requestor
+    /// @param  _d              deposit storage pointer
+    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
     function outputSearch(
         DepositUtils.Deposit storage _d,
         bytes memory _txOutputVector
