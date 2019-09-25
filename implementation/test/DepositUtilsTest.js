@@ -39,8 +39,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
+  { name: 'KeepStub', contract: KeepStub }]
 
 // real tx from mainnet bitcoin, interpreted as funding tx
 // tx source: https://www.blockchain.com/btc/tx/7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f
@@ -68,17 +67,19 @@ contract('DepositUtils', (accounts) => {
   let testUtilsInstance
   let beneficiary
   let tbtcToken
+  let tbtcSystemStub
 
   before(async () => {
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
-    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
+    tbtcToken = await TestToken.new(tbtcSystemStub.address)
     testUtilsInstance = deployed.TestDepositUtils
     beneficiary = accounts[2]
-    deployed.TBTCSystemStub.mint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
+    tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
 
 
     await testUtilsInstance.createNewDeposit(
-      deployed.TBTCSystemStub.address,
+      tbtcSystemStub.address,
       tbtcToken.address,
       deployed.KeepStub.address,
       1, // m
@@ -90,7 +91,7 @@ contract('DepositUtils', (accounts) => {
       const blockDifficulty = await testUtilsInstance.currentBlockDifficulty.call()
       assert(blockDifficulty.eq(new BN(1)))
 
-      await deployed.TBTCSystemStub.setCurrentDiff(33)
+      await tbtcSystemStub.setCurrentDiff(33)
       const newBlockDifficulty = await testUtilsInstance.currentBlockDifficulty.call()
       assert(newBlockDifficulty.eq(new BN(33)))
     })
@@ -101,7 +102,7 @@ contract('DepositUtils', (accounts) => {
       const blockDifficulty = await testUtilsInstance.previousBlockDifficulty.call()
       assert(blockDifficulty.eq(new BN(1)))
 
-      await deployed.TBTCSystemStub.setPreviousDiff(44)
+      await tbtcSystemStub.setPreviousDiff(44)
       const newBlockDifficulty = await testUtilsInstance.previousBlockDifficulty.call()
       assert(newBlockDifficulty.eq(new BN(44)))
     })
@@ -109,8 +110,8 @@ contract('DepositUtils', (accounts) => {
 
   describe('evaluateProofDifficulty()', async () => {
     it('reverts on unknown difficulty', async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(1)
-      await deployed.TBTCSystemStub.setPreviousDiff(1)
+      await tbtcSystemStub.setCurrentDiff(1)
+      await tbtcSystemStub.setPreviousDiff(1)
 
       await expectThrow(
         testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0]),
@@ -119,13 +120,13 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('evaluates a header proof with previous', async () => {
-      await deployed.TBTCSystemStub.setPreviousDiff(5646403851534)
+      await tbtcSystemStub.setPreviousDiff(5646403851534)
       await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
     it('evaluates a header proof with current', async () => {
-      await deployed.TBTCSystemStub.setPreviousDiff(1)
-      await deployed.TBTCSystemStub.setCurrentDiff(5646403851534)
+      await tbtcSystemStub.setPreviousDiff(1)
+      await tbtcSystemStub.setCurrentDiff(5646403851534)
       await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
@@ -138,7 +139,7 @@ contract('DepositUtils', (accounts) => {
 
     describe('reverts on a ValidateSPV errors', async () => {
       before(async () => {
-        await deployed.TBTCSystemStub.setCurrentDiff(5646403851534)
+        await tbtcSystemStub.setCurrentDiff(5646403851534)
       })
 
       it('bad headers chain length work', async () => {
@@ -178,7 +179,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('checkProofFromTxId()', async () => {
     before(async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(utils.TX.difficulty)
+      await tbtcSystemStub.setCurrentDiff(utils.TX.difficulty)
     })
 
     it('does not error', async () => {
@@ -193,7 +194,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails with bad difficulty', async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(1)
+      await tbtcSystemStub.setCurrentDiff(1)
 
       await expectThrow(
         testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0]),
@@ -226,7 +227,7 @@ contract('DepositUtils', (accounts) => {
   describe('validateAndParseFundingSPVProof()', async () => {
     before(async () => {
       await testUtilsInstance.setPubKey(_signerPubkeyX, _signerPubkeyY)
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
+      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
     })
 
     it('returns correct value and outpoint', async () => {
@@ -334,7 +335,7 @@ contract('DepositUtils', (accounts) => {
       const oraclePrice = await testUtilsInstance.fetchOraclePrice.call()
       assert(oraclePrice.eq(new BN('1000000000000', 10)))
 
-      await deployed.TBTCSystemStub.setOraclePrice(44)
+      await tbtcSystemStub.setOraclePrice(44)
       const newOraclePrice = await testUtilsInstance.fetchOraclePrice.call()
       assert(newOraclePrice.eq(new BN(44)))
     })
