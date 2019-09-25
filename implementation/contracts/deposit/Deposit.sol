@@ -89,18 +89,20 @@ contract Deposit {
 
     /// @notice                 Anyone may provide a withdrawal proof to prove redemption
     /// @dev                    The signers will be penalized if this is not called
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contain the redemption output
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 True if successful, otherwise revert
     function provideRedemptionProof(
-        bytes memory _bitcoinTx,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         bytes memory _merkleProof,
         uint256 _index,
         bytes memory _bitcoinHeaders
     ) public returns (bool) {
-        self.provideRedemptionProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        self.provideRedemptionProof(_txVersion, _txInputVector, _txOutputVector, _txLocktime, _merkleProof, _index, _bitcoinHeaders);
         return true;
     }
 
@@ -270,18 +272,20 @@ contract Deposit {
 
     /// @notice                 Anyone may notify the deposit of fraud via an SPV proof
     /// @dev                    We strong prefer ECDSA fraud proofs
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contains the funding output
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
     /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     /// @return                 True if successful, otherwise revert
     function provideSPVFraudProof(
-        bytes memory _bitcoinTx,
+        bytes memory _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes memory _txLocktime,
         bytes memory _merkleProof,
         uint256 _index,
         bytes memory _bitcoinHeaders
     ) public returns (bool) {
-        self.provideSPVFraudProof(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
+        self.provideSPVFraudProof(_txVersion, _txInputVector, _txOutputVector, _txLocktime, _merkleProof, _index, _bitcoinHeaders);
         return true;
     }
 
