@@ -2,12 +2,10 @@ const TBTCToken = artifacts.require('TBTCToken')
 const TestToken = artifacts.require('TestToken')
 const IUniswapFactory = artifacts.require('IUniswapFactory')
 const IUniswapExchange = artifacts.require('IUniswapExchange')
-const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCSystem = artifacts.require('TBTCSystem')
 
 import { UniswapFactoryAddress } from '../../migrations/externals'
 
-import utils from '../utils'
 import { UniswapHelpers } from './helpers/uniswap'
 import { integration } from './helpers/integration'
 import expectThrow from '../helpers/expectThrow'
@@ -17,10 +15,6 @@ const chai = require('chai')
 const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
-
-const TEST_DEPOSIT_DEPLOY = [
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub },
-]
 
 /**
  * Tests integration with the external Uniswap deployment.
@@ -39,8 +33,6 @@ const TEST_DEPOSIT_DEPLOY = [
  */
 
 integration('Uniswap', (accounts) => {
-  let deployed
-
   describe('deployment', async () => {
     it('created the TBTC UniswapExchange', async () => {
       const tbtcToken = await TBTCToken.deployed()
@@ -60,8 +52,8 @@ integration('Uniswap', (accounts) => {
     let tbtcExchange
 
     before(async () => {
-      deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-      tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
+      const tbtcSystem = await TBTCSystem.deployed()
+      tbtcToken = await TestToken.new(tbtcSystem.address)
 
       // create a uniswap exchange for our TestToken
       const uniswapFactory = await IUniswapFactory.at(UniswapFactoryAddress)
