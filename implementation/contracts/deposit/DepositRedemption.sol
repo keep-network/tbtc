@@ -249,7 +249,7 @@ library DepositRedemption {
         _d.logRedeemed(_txid);
     }
 
-    /// @notice                 Check the redemption transaction input and output vector to ensure the transaction spends 
+    /// @notice                 Check the redemption transaction input and output vector to ensure the transaction spends
     ///                         the correct UTXO and sends value to the appropreate public key hash
     /// @param  _d              deposit storage pointer
     /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
