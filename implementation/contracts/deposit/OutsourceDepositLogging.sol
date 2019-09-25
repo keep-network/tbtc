@@ -19,7 +19,7 @@ library OutsourceDepositLogging {
     /// @param  _requester      The ethereum address of the requester
     /// @param  _digest         The calculated sighash digest
     /// @param  _utxoSize       The size of the utxo in sat
-    /// @param  _requesterPKH   The requester's 20-byte bitcoin pkh
+    /// @param  _redeemerPKH   The requester's 20-byte bitcoin pkh
     /// @param  _requestedFee   The requester or bump-system specified fee
     /// @param  _outpoint       The 36 byte outpoint
     /// @return                 True if successful, else revert
@@ -28,7 +28,7 @@ library OutsourceDepositLogging {
         address _requester,
         bytes32 _digest,
         uint256 _utxoSize,
-        bytes20 _requesterPKH,
+        bytes20 _redeemerPKH,
         uint256 _requestedFee,
         bytes calldata _outpoint
     ) external {
@@ -37,7 +37,7 @@ library OutsourceDepositLogging {
             _requester,
             _digest,
             _utxoSize,
-            _requesterPKH,
+            _redeemerPKH,
             _requestedFee,
             _outpoint);
     }

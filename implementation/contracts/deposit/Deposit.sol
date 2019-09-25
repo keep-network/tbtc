@@ -50,13 +50,13 @@ contract Deposit {
     /// @notice                     Anyone can request redemption
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @return                     True if successful, otherwise revert
     function requestRedemption(
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH
+        bytes20 _redeemerPKH
     ) public returns (bool) {
-        self.requestRedemption(_outputValueBytes, _requesterPKH);
+        self.requestRedemption(_outputValueBytes, _redeemerPKH);
         return true;
     }
 

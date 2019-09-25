@@ -59,14 +59,14 @@ contract TestDeposit is Deposit {
     }
 
     function setRequestInfo(
-        address payable _requesterAddress,
-        bytes20 _requesterPKH,
+        address payable _redeemerAddress,
+        bytes20 _redeemerPKH,
         uint256 _initialRedemptionFee,
         uint256 _withdrawalRequestTime,
         bytes32 _lastRequestedDigest
     ) public {
-        self.requesterAddress = _requesterAddress;
-        self.requesterPKH = _requesterPKH;
+        self.redeemerAddress = _redeemerAddress;
+        self.redeemerPKH = _redeemerPKH;
         self.initialRedemptionFee = _initialRedemptionFee;
         self.withdrawalRequestTime = _withdrawalRequestTime;
         self.lastRequestedDigest = _lastRequestedDigest;
@@ -74,8 +74,8 @@ contract TestDeposit is Deposit {
 
     function getRequestInfo() public view returns (address, bytes20, uint256, uint256, bytes32) {
         return (
-            self.requesterAddress,
-            self.requesterPKH,
+            self.redeemerAddress,
+            self.redeemerPKH,
             self.initialRedemptionFee,
             self.withdrawalRequestTime,
             self.lastRequestedDigest);

@@ -625,9 +625,9 @@ contract('DepositLiquidation', (accounts) => {
         await assertBalance.eth(keep.address, '1000000') // TODO(liamz): replace w/ keep.checkBondAmount()
         await assertBalance.tbtc(deposit.address, '0')
 
-        const requestor = accounts[2]
+        const redeemer = accounts[2]
         await deposit.setRequestInfo(
-          requestor,
+          redeemer,
           '0x' + '11'.repeat(20),
           0, 0, DIGEST
         )
@@ -643,7 +643,7 @@ contract('DepositLiquidation', (accounts) => {
 
         // tbtc distributions
         await assertBalance.tbtc(deposit.address, '0')
-        await assertBalance.tbtc(requestor, lotSize)
+        await assertBalance.tbtc(redeemer, lotSize)
         await assertBalance.tbtc(beneficiary, beneficiaryReward)
       })
 

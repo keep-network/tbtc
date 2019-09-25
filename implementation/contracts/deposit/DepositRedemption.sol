@@ -64,11 +64,11 @@ library DepositRedemption {
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH
+        bytes20 _redeemerPKH
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
 
@@ -85,11 +85,11 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _outputValueBytes,
-            _requesterPKH);
+            _redeemerPKH);
 
         // write all request details
-        _d.requesterAddress = msg.sender;
-        _d.requesterPKH = _requesterPKH;
+        _d.redeemerAddress = msg.sender;
+        _d.redeemerPKH = _redeemerPKH;
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
@@ -100,7 +100,7 @@ library DepositRedemption {
             msg.sender,
             _sighash,
             _d.utxoSize(),
-            _requesterPKH,
+            _redeemerPKH,
             _requestedFee,
             _d.utxoOutpoint);
     }
@@ -163,7 +163,7 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _newOutputValueBytes,
-            _d.requesterPKH);
+            _d.redeemerPKH);
 
         // Ratchet the signature and redemption proof timeouts
         _d.withdrawalRequestTime = block.timestamp;
@@ -176,7 +176,7 @@ library DepositRedemption {
             msg.sender,
             _sighash,
             _d.utxoSize(),
-            _d.requesterPKH,
+            _d.redeemerPKH,
             _d.utxoSize().sub(_newOutputValue),
             _d.utxoOutpoint);
     }
@@ -198,7 +198,7 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _previousOutputValueBytes,
-            _d.requesterPKH);
+            _d.redeemerPKH);
         require(
             _d.wasDigestApprovedForSigning(_previousSighash) == _d.withdrawalRequestTime,
             "Provided previous value does not yield previous sighash"
@@ -258,7 +258,7 @@ library DepositRedemption {
             "Tx spends the wrong UTXO"
         );
         require(
-            keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
+            keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.redeemerPKH)),
             "Tx sends value to wrong pubkeyhash"
         );
         return ( _txid, uint256(_outs.extractValue()));

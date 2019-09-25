@@ -41,8 +41,8 @@ library DepositUtils {
         bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
-        address payable requesterAddress;  // The requester's address, used as fallback for fraud in redemption
-        bytes20 requesterPKH;  // The 20-byte requester PKH
+        address payable redeemerAddress;  // The redemer's address, used as fallback for fraud in redemption
+        bytes20 redeemerPKH;  // The 20-byte requester PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
@@ -289,7 +289,7 @@ library DepositUtils {
     /// @dev            This is the amount of TBTC needed to repay to redeem the Deposit
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        if (_d.requesterAddress == address(0)) {
+        if (_d.redeemerAddress == address(0)) {
             return TBTCConstants.getLotSize().add(signerFee()).add(beneficiaryReward());
         } else {
             return 0;
@@ -297,10 +297,10 @@ library DepositUtils {
     }
 
     /// @notice     Determines the amount of TBTC accepted in the auction
-    /// @dev        If requesterAddress is non-0, that means we came from redemption, and no auction should happen
+    /// @dev        If redeemerAddress is non-0, that means we came from redemption, and no auction should happen
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        if (_d.requesterAddress == address(0)) {
+        if (_d.redeemerAddress == address(0)) {
             return TBTCConstants.getLotSize();
         } else {
             return 0;
@@ -394,8 +394,8 @@ library DepositUtils {
     /// @notice     Deletes state after termination of redemption process
     /// @dev        We keep around the requester address so we can pay them out
     function redemptionTeardown(Deposit storage _d) public {
-        // don't 0 requesterAddress because we use it to calculate auctionTBTCAmount
-        _d.requesterPKH = bytes20(0);
+        // don't 0 redeemerAddress because we use it to calculate auctionTBTCAmount
+        _d.redeemerPKH = bytes20(0);
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);

@@ -141,7 +141,7 @@ library DepositLiquidation {
             _output = _bitcoinTx.extractOutputAtIndex(i);
 
             if (_output.extractValue() >= _requiredOutputSize
-                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
+                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.redeemerPKH))) {
                 revert("Found an output paying the redeemer as requested");
             }
         }
@@ -277,8 +277,8 @@ library DepositLiquidation {
 
             TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
-            if (_d.requesterAddress != address(0)) { // redemption
-                _tbtc.transferFrom(address(this), _d.requesterAddress, TBTCConstants.getLotSize());
+            if (_d.redeemerAddress != address(0)) {
+                _tbtc.transferFrom(address(this), _d.redeemerAddress, TBTCConstants.getLotSize());
             } else {
                 // maintain supply peg
                 _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
