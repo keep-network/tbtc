@@ -37,6 +37,8 @@ contract TestToken is TBTCToken{
         _burn(_account, _amount);
     }
 
+    /// @dev                Uses exposed Token functions to reset caller's balance. 
+    /// @param _newBalance  New balance to assign to caller
     function resetBalance(uint256 _newBalance) public {
         uint256 currentBalance = balanceOf(msg.sender);
         if(currentBalance > 0){ 
@@ -45,6 +47,10 @@ contract TestToken is TBTCToken{
         forceMint(msg.sender, _newBalance);
     }
 
+    /// @dev                   Uses exposed token functions to reset the allowance
+    ///                        of a given account.
+    /// @param _spender        The allowed account.
+    /// @param _newAllowance   New allowance to assign.
     function resetAllowance(address _spender, uint256 _newAllowance) public {
         uint256 currentAllowance = allowance(msg.sender, _spender);
         if (currentAllowance > 0){
