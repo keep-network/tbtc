@@ -65,5 +65,5 @@ This requires a `0.1` BTC value in capital cost for **each** Signer per
 Taking into account the fees from centralized custodians (`0.0025-0.0075 BTC`),
 and considering signers are also risking additional bonds, in an initial
 parameterization we choose to reward signers with `0.009375 TBTC` per `1.0 BTC`
-deposited. As each depost has a fixed term of 6 months, that implies a total
+deposited. As each deposit has a fixed term of 6 months, that implies a total
 signing revenue of `1.875%` of the market cap of `TBTC` each year.
