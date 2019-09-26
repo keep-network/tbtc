@@ -24,7 +24,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
 
     constructor(address _depositFactory)
         ERC721MinterAuthority(_depositFactory)
-        public 
+        public
     {
             // solium-disable-previous-line no-empty-blocks
     }
@@ -46,7 +46,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     }
 
     // Price Oracle
-    function fetchOraclePrice() external view returns (uint256) {return oraclePrice;}
+    function fetchOraclePrice() external view returns (uint256) {
+        return oraclePrice;
+    }
 
     // Difficulty Oracle
     // TODO: This is a workaround. It will be replaced by tbtc-difficulty-oracle.
@@ -69,7 +71,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     /// @param _m Minimum number of honest keep members required to sign.
     /// @param _n Number of members in the keep.
     /// @return Address of a new keep.
-    function requestNewKeep(uint256 _m, uint256 _n) external payable returns (address _keepAddress){
+    function requestNewKeep(uint256 _m, uint256 _n)
+        external
+        payable
+        returns (address _keepAddress)
+    {
         address keepVendorAddress = IKeepRegistry(keepRegistry)
             .getVendor("ECDSAKeep");
 
