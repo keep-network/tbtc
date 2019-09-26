@@ -296,9 +296,16 @@ library DepositUtils {
         }
     }
 
+    /// @notice     Determines the threshold amount of TBTC necessary to liquidate
+    /// @return     The amount of TBTC to buy during liquidation
+    function liquidationTBTCAmount(Deposit storage _d) public view returns (uint256) {
+        return TBTCConstants.getLotSize().add(beneficiaryReward());
+    }
+
     /// @notice     Determines the amount of TBTC accepted in the auction
     /// @dev        If redeemerAddress is non-0, that means we came from redemption, and no auction should happen
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
+    // TODO(liamz): consider if redundant
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.redeemerAddress == address(0)) {
             return TBTCConstants.getLotSize();

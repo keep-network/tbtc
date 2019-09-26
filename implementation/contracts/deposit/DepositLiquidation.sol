@@ -247,7 +247,9 @@ library DepositLiquidation {
             return false;
         }
 
-        uint tbtcAmount = TBTCConstants.getLotSize().add(DepositUtils.beneficiaryReward());
+        // Only liquidate if we can buy up enough TBTC to burn,
+        // otherwise to go 100% for the falling-price auction
+        uint tbtcAmount = _d.liquidationTBTCAmount();
         uint ethAmount = exchange.getEthToTokenOutputPrice(tbtcAmount);
 
         if(address(this).balance < ethAmount) {
@@ -265,10 +267,11 @@ library DepositLiquidation {
     /// @notice     Enacts common liquidation logic
     function startLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(true);
+
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
-
         _d.seizeSignerBonds();
+
         bool _liquidated = attemptToLiquidateOnchain(_d);
 
         if (_liquidated) {
@@ -277,15 +280,16 @@ library DepositLiquidation {
 
             TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
-            if (_d.redeemerAddress != address(0)) {
-                _tbtc.transferFrom(address(this), _d.redeemerAddress, TBTCConstants.getLotSize());
-            } else {
-                // maintain supply peg
-                _tbtc.burnFrom(address(this), TBTCConstants.getLotSize());
-            }
-
-            // TODO(liamz): should this occur first?
+            // distribute reward to beneficiary first
             _d.distributeBeneficiaryReward();
+
+            if (_d.redeemerAddress != address(0)) {
+                // we came from the redemption flow, refund redeemer in TBTC
+                _tbtc.transferFrom(address(this), _d.redeemerAddress, _tbtc.balanceOf(address(this)));
+            } else {
+                // burn to maintain supply peg
+                _tbtc.burnFrom(address(this), _tbtc.balanceOf(address(this)));
+            }
 
         } else if (!_liquidated) {
             _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction

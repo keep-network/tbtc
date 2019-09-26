@@ -668,7 +668,7 @@ contract('DepositLiquidation', (accounts) => {
 
         // expect TBTC to be burnt from deposit's account
         const evs = await tbtcToken.getPastEvents({ fromBlock: tx.receipt.blockNumber })
-        const ev = evs[1]
+        const ev = evs[2]
         expect(ev.event).to.equal('Transfer')
         expect(ev.returnValues.from).to.equal(deposit.address)
         expect(ev.returnValues.to).to.equal('0x0000000000000000000000000000000000000000')
