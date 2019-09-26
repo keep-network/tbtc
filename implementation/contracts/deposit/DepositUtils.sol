@@ -290,7 +290,7 @@ library DepositUtils {
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.redeemerAddress == address(0)) {
-            return TBTCConstants.getLotSize().add(signerFee()).add(beneficiaryReward());
+            return TBTCConstants.getLotSize().add(beneficiaryReward());
         } else {
             return 0;
         }
@@ -418,9 +418,7 @@ library DepositUtils {
     ///             whenever this is called we are shutting down.
     function distributeBeneficiaryReward(Deposit storage _d) public {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
-        /* solium-disable-next-line */
-        // TODO(liamz): change this to use beneficiaryReward() when TBTCConstants is overridable
-        require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))),"Transfer failed");
+        require(_tbtc.transfer(depositBeneficiary(_d), beneficiaryReward()), "Transfer failed");
     }
 
     /// @notice             pushes ether held by the deposit to the signer group

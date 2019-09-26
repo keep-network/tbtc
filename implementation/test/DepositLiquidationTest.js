@@ -80,18 +80,18 @@ contract('DepositLiquidation', (accounts) => {
   })
 
   before(async () => {
+    beneficiary = accounts[4]
+
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
     testInstance = deployed.TestDeposit
 
     testInstance.setExteroriorAddresses(tbtcSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
-    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
 
     uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
     await tbtcSystemStub.initialize(uniswapExchange.address)
-
-    beneficiary = accounts[4]
   })
 
   beforeEach(async () => {
@@ -154,31 +154,27 @@ contract('DepositLiquidation', (accounts) => {
 
     it(`burns msg.sender's tokens`, async () => {
       const caller = accounts[2]
+      const balance1 = await tbtcToken.balanceOf(caller)
 
       await tbtcToken.forceMint(caller, requiredBalance)
 
-      const lotSize = await deployed.TBTCConstants.getLotSize.call()
-      const initialTokenBalance = await tbtcToken.balanceOf(caller)
-
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
-      const finalTokenBalance = await tbtcToken.balanceOf(caller)
-      const tokenCheck = new BN(finalTokenBalance).add(new BN(lotSize))
-      expect(tokenCheck, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
+      const balance2 = await tbtcToken.balanceOf(caller)
+      expect(balance2, 'tokens not burned correctly').to.eq.BN(balance1)
     })
 
     it('distributes beneficiary reward', async () => {
+      const beneficiaryReward = await deployed.TestDepositUtils.beneficiaryReward()
       const caller = accounts[2]
-      const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
-      const returned = await tbtcToken.balanceOf.call(caller)
+      const balance1 = await tbtcToken.balanceOf(beneficiary)
 
       await tbtcToken.forceMint(caller, requiredBalance)
+
       await testInstance.purchaseSignerBondsAtAuction({ from: caller })
 
-      const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
-      const tokenCheck = new BN(initialTokenBalance).add(new BN(returned))
-
-      expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
+      const balance2 = await tbtcToken.balanceOf(beneficiary)
+      expect(balance2, 'tokens not burned correctly').to.eq.BN(balance1.add(beneficiaryReward))
     })
 
     it('distributes value to the caller', async () => {

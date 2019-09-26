@@ -161,15 +161,15 @@ library DepositLiquidation {
 
         // Burn the outstanding TBTC
         TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
-        require(_tbtcToken.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), "Not enough TBTC to cover outstanding debt");
+        require(_tbtcToken.balanceOf(msg.sender) >= _d.redemptionTBTCAmount(), "Not enough TBTC to cover outstanding debt");
         _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
+
+        // Send any TBTC left to the beneficiary
+        _tbtcToken.transferFrom(msg.sender, _d.depositBeneficiary(), DepositUtils.beneficiaryReward());
 
         // Distribute funds to auction buyer
         uint256 _valueToDistribute = _d.auctionValue();
         msg.sender.transfer(_valueToDistribute);
-
-        // Send any TBTC left to the beneficiary
-        _d.distributeBeneficiaryReward();
 
         // then if there are funds left, and it wasn't fraud, pay out the signers
         if (address(this).balance > 0) {
