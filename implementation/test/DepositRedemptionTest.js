@@ -41,8 +41,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -58,14 +57,20 @@ contract('DepositRedemption', (accounts) => {
   let testInstance
   let withdrawalRequestTime
   let tbtcToken
+  let tbtcSystemStub
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
-    testInstance = deployed.TestDeposit
-    testInstance.setExteriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address)
 
-    deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+
+    tbtcToken = await TestToken.new(tbtcSystemStub.address)
+
+    testInstance = deployed.TestDeposit
+
+    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+
+    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
   })
 
   beforeEach(async () => {
@@ -88,7 +93,6 @@ contract('DepositRedemption', (accounts) => {
     const keepPubkeyY = '0x' + '44'.repeat(32)
     const requesterPKH = '0x' + '33'.repeat(20)
     let requiredBalance
-    let callerBalance
 
     before(async () => {
       requiredBalance = await deployed.TestDepositUtils.redemptionTBTCAmount.call()
@@ -97,11 +101,10 @@ contract('DepositRedemption', (accounts) => {
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
-      // make sure to clear TBTC balance of caller
-      callerBalance = await tbtcToken.balanceOf(accounts[0])
-      await tbtcToken.forceBurn(accounts[0], callerBalance)
-      // mint the required balance to request redemption
-      await tbtcToken.forceMint(accounts[0], requiredBalance)
+
+      // make sure there is sufficient balance to request redemption. Then approve deposit
+      await tbtcToken.resetBalance(requiredBalance)
+      await tbtcToken.resetAllowance(testInstance.address, requiredBalance)
       await deployed.ECDSAKeepStub.setSuccess(true)
     })
 
@@ -119,7 +122,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(requestInfo[4], sighash)
 
       // fired an event
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
@@ -219,7 +222,7 @@ contract('DepositRedemption', (accounts) => {
       expect(state).to.eq.BN(utils.states.AWAITING_WITHDRAWAL_PROOF)
 
       // fired an event
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('GotRedemptionSignature', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('GotRedemptionSignature', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._r, r)
       assert.equal(eventList[0].returnValues._s, s)
     })
@@ -286,7 +289,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(requestInfo[4], nextSighash)
 
       // fired an event
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._digest, nextSighash)
     })
 
@@ -343,7 +346,7 @@ contract('DepositRedemption', (accounts) => {
     const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
+      await tbtcSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
@@ -362,7 +365,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(requestInfo[1], utils.address0)
       assert.equal(requestInfo[4], utils.bytes32zero)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._txid, txidLE)
     })
 

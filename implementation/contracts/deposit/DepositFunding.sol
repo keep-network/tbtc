@@ -58,7 +58,8 @@ library DepositFunding {
         // TODO: Whole value is forwarded to TBTC System, but should be partially
         // stored as funder's bond in the deposit https://github.com/keep-network/tbtc/issues/279.
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep.value(msg.value)(_m, _n);  // kinda gross but
+        _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep(_m, _n);  // kinda gross but
+
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();

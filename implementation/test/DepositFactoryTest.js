@@ -1,4 +1,3 @@
-const DepositFactory = artifacts.require('DepositFactory')
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TBTCToken = artifacts.require('TBTCToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
@@ -7,6 +6,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositUtils = artifacts.require('DepositUtils')
 const TestDeposit = artifacts.require('TestDeposit')
+const DepositFactory = artifacts.require('DepositFactory')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -16,7 +16,6 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub },
   { name: 'DepositFunding', contract: DepositFunding },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
@@ -25,16 +24,20 @@ const TEST_DEPOSIT_DEPLOY = [
 ]
 
 contract('DepositFactory', (accounts) => {
-  let deployed
   let factory
   let depositContract
   let tbtcToken
+  let tbtcSystemStub
 
   before(async () => {
-    deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-    tbtcToken = await TBTCToken.new(deployed.TBTCSystemStub.address)
+    const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+
     depositContract = deployed.TestDeposit
     factory = await DepositFactory.new(depositContract.address)
+
+    tbtcSystemStub = await TBTCSystemStub.new(factory.address)
+
+    tbtcToken = await TBTCToken.new(tbtcSystemStub.address)
   })
 
   describe('createDeposit()', async () => {
@@ -42,13 +45,13 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
-        deployed.TBTCSystemStub.address,
+        tbtcSystemStub.address,
         tbtcToken.address,
         1,
         1)
 
       await factory.createDeposit(
-        deployed.TBTCSystemStub.address,
+        tbtcSystemStub.address,
         tbtcToken.address,
         1,
         1)
@@ -64,18 +67,26 @@ contract('DepositFactory', (accounts) => {
     it('correctly forwards value to Deposit', async () => {
       const msgValue = 2000000000000
 
+      const blockNumber = await web3.eth.getBlockNumber()
+
       await factory.createDeposit(
-        deployed.TBTCSystemStub.address,
+        tbtcSystemStub.address,
         tbtcToken.address,
         1,
         1,
         { value: msgValue }
       )
 
-      // TODO: Currently value is forwarded to TBTC System due to a bug described
-      // in: https://github.com/keep-network/tbtc/issues/279.
-      const balance = await web3.eth.getBalance(deployed.TBTCSystemStub.address)
+      const eventList = await factory.getPastEvents(
+        'DepositCloneCreated',
+        {
+          fromBlock: blockNumber,
+          toBlock: 'latest',
+        })
 
+      const depositAddress = eventList[eventList.length - 1].returnValues.depositCloneAddress
+
+      const balance = await web3.eth.getBalance(depositAddress)
       assert.equal(balance, msgValue, 'Factory did not correctly forward value on Deposit creation')
     })
   })
@@ -89,13 +100,13 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
-        deployed.TBTCSystemStub.address,
+        tbtcSystemStub.address,
         tbtcToken.address,
         1,
         1)
 
       await factory.createDeposit(
-        deployed.TBTCSystemStub.address,
+        tbtcSystemStub.address,
         tbtcToken.address,
         1,
         1)
@@ -127,7 +138,7 @@ contract('DepositFactory', (accounts) => {
 
       await deposit1.retrieveSignerPubkey()
       await deposit2.retrieveSignerPubkey()
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
+      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
       await deposit2.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       // deposit1 should be AWAITING_BTC_FUNDING_PROOF (2)
@@ -143,7 +154,7 @@ contract('DepositFactory', (accounts) => {
       const keep = await ECDSAKeepStub.new()
 
       await depositContract.createNewDeposit(
-        deployed.TBTCSystemStub.address,
+        tbtcSystemStub.address,
         tbtcToken.address,
         1,
         1)
@@ -160,7 +171,7 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
-        deployed.TBTCSystemStub.address,
+        tbtcSystemStub.address,
         tbtcToken.address,
         1,
         1)

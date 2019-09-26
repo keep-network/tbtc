@@ -44,8 +44,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -80,18 +79,24 @@ contract('DepositFraud', (accounts) => {
   let fundingProofTimerStart
   let beneficiary
   let tbtcToken
+  let tbtcSystemStub
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
+
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+
+    tbtcToken = await TestToken.new(tbtcSystemStub.address)
+
     testInstance = deployed.TestDeposit
 
     await testInstance.setExteriorAddresses(
-      deployed.TBTCSystemStub.address,
+      tbtcSystemStub.address,
       tbtcToken.address
     )
 
-    deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+
     beneficiary = accounts[4]
   })
 
@@ -130,7 +135,7 @@ contract('DepositFraud', (accounts) => {
       const actualFundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
       assert(actualFundingProofTimerStart.gtn(fundingProofTimerStart), 'fundingProofTimerStart did not increase')
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -141,7 +146,7 @@ contract('DepositFraud', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.FAILED_SETUP)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -187,7 +192,7 @@ contract('DepositFraud', (accounts) => {
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       const finalBalance = await web3.eth.getBalance(beneficiary)
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       const balanceCheck = new BN(initialBalance).add(new BN(bond).add(new BN(signerBalance)))
 
       assert.equal(eventList.length, 1)
@@ -234,7 +239,7 @@ contract('DepositFraud', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.FAILED_SETUP)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -276,8 +281,7 @@ contract('DepositFraud', (accounts) => {
   describe('provideFraudBTCFundingProof', async () => {
     beforeEach(async () => {
       await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
+      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
       await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
@@ -303,7 +307,7 @@ contract('DepositFraud', (accounts) => {
       const depostState = await testInstance.getState.call()
       expect(depostState).to.eq.BN(utils.states.FAILED_SETUP)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('SetupFailed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
     })
 
@@ -403,7 +407,7 @@ contract('DepositFraud', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
+      await tbtcSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })

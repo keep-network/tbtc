@@ -6,7 +6,7 @@ import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
 import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
-import {IERC721} from "../interfaces/IERC721.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 
