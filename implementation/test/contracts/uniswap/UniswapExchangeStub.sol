@@ -44,7 +44,7 @@ contract UniswapExchangeStub is IUniswapExchange {
         deadline;
         require(msg.value == ethPrice, "incorrect eth sent");
         require(tbtc.balanceOf(address(this)) >= tokens_bought, "not enough TBTC liquidity mocked");
-        tbtc.transferFrom(address(this), msg.sender, tokens_bought);
+        tbtc.transfer(msg.sender, tokens_bought);
         return msg.value;
     }
 }
