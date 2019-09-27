@@ -270,12 +270,17 @@ contract Deposit {
         return true;
     }
 
-    /// @notice                 Anyone may notify the deposit of fraud via an SPV proof
-    /// @dev                    We strong prefer ECDSA fraud proofs
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
-    /// @return                 True if successful, otherwise revert
+    /// @notice                   Anyone may notify the deposit of fraud via an SPV proof
+    /// @dev                      We strong prefer ECDSA fraud proofs
+    /// @param  _txVersion        Transaction version number (4-byte LE)
+    /// @param  _txInputVector    All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param  _txOutputVector   All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param  _txLocktime       Final 4 bytes of the transaction
+    /// @param  _merkleProof      The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param  _index            The index of the tx in the Bitcoin block (1-indexed)
+    /// @param  _targetInputIndex Index of the input that spends the custodied UTXO
+    /// @param  _bitcoinHeaders   An array of tightly-packed bitcoin headers
+    /// @return                   True if successful, otherwise revert
     function provideSPVFraudProof(
         bytes4 _txVersion,
         bytes memory _txInputVector,
@@ -283,9 +288,10 @@ contract Deposit {
         bytes4 _txLocktime,
         bytes memory _merkleProof,
         uint256 _index,
+        uint8 _targetInputIndex,
         bytes memory _bitcoinHeaders
     ) public returns (bool) {
-        self.provideSPVFraudProof(_txVersion, _txInputVector, _txOutputVector, _txLocktime, _merkleProof, _index, _bitcoinHeaders);
+        self.provideSPVFraudProof(_txVersion, _txInputVector, _txOutputVector, _txLocktime, _merkleProof, _index, _targetInputIndex, _bitcoinHeaders);
         return true;
     }
 
