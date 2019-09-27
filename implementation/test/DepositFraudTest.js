@@ -20,7 +20,6 @@ const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
 const TestDepositUtils = artifacts.require('TestDepositUtils')
 
-const UniswapFactoryStub = artifacts.require('UniswapFactoryStub')
 const UniswapExchangeStub = artifacts.require('UniswapExchangeStub')
 
 const BN = require('bn.js')
@@ -46,8 +45,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub },
-  { name: 'UniswapFactoryStub', contract: UniswapFactoryStub }]
+  { name: 'KeepStub', contract: KeepStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
