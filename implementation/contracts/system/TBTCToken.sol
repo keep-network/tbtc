@@ -2,9 +2,10 @@ pragma solidity ^0.5.10;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "./ERC20MinterAuthority.sol";
 
-contract TBTCToken is ERC20Detailed, ERC20, ERC20MinterAuthority {
+contract TBTCToken is ERC20Detailed, ERC20, ERC20MinterAuthority, ERC20Burnable {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
     constructor(address _TBTCSystem)

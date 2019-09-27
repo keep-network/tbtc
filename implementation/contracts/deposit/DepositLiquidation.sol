@@ -285,10 +285,10 @@ library DepositLiquidation {
 
             if (_d.redeemerAddress != address(0)) {
                 // we came from the redemption flow, refund redeemer in TBTC
-                _tbtc.transferFrom(address(this), _d.redeemerAddress, _tbtc.balanceOf(address(this)));
+                _tbtc.transfer(_d.redeemerAddress, _tbtc.balanceOf(address(this)));
             } else {
                 // burn to maintain supply peg
-                _tbtc.burnFrom(address(this), _tbtc.balanceOf(address(this)));
+                _tbtc.burn(_tbtc.balanceOf(address(this)));
             }
 
         } else if (!_liquidated) {
