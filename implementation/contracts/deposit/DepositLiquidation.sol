@@ -174,8 +174,8 @@ library DepositLiquidation {
         // then if there are funds left, and it wasn't fraud, pay out the signers
         if (address(this).balance > 0) {
             if (_wasFraud) {
-                // Burn it
-                address(0).transfer(address(this).balance);
+                // send any remaining eth to maintainer
+                msg.sender.transfer(address(this).balance);
             } else {
                 // Send it back
                 _d.pushFundsToKeepGroup(address(this).balance);
