@@ -201,7 +201,7 @@ library DepositLiquidation {
 
         // Input integrity was checked via ValitadeVin, we can check specific inputs with no worries
         require(outpointSearch(_d, _txInputVector), "No input spending custodied UTXO found");
-        require(outputSearch(_d, _txOutputVector), "Output found as expected");
+        require(outputSearch(_d, _txOutputVector), "Found an output paying the redeemer as requested");
 
         startSignerFraudLiquidation(_d);
     }
@@ -247,7 +247,7 @@ library DepositLiquidation {
 
             if (_output.extractValue() >= _requiredOutputSize
                 && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
-                revert("Found an output paying the redeemer as requested");
+                return false;
             }
         }
         return true;
