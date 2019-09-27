@@ -158,16 +158,17 @@ library DepositLiquidation {
         startSignerFraudLiquidation(_d);
     }
 
-    /// @notice                 Anyone may notify the deposit of fraud via an SPV proof
-    /// @dev                    We strong prefer ECDSA fraud proofs
-    /// @param  _d              deposit storage pointer
-    /// @param  _txVersion      Transaction version number (4-byte LE)
-    /// @param  _txInputVector  All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
-    /// @param  _txOutputVector All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    /// @param  _txLocktime     Final 4 bytes of the transaction
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
+    /// @notice                   Anyone may notify the deposit of fraud via an SPV proof
+    /// @dev                      We strong prefer ECDSA fraud proofs
+    /// @param  _d                deposit storage pointer
+    /// @param  _txVersion        Transaction version number (4-byte LE)
+    /// @param  _txInputVector    All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param  _txOutputVector   All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param  _txLocktime       Final 4 bytes of the transaction
+    /// @param  _merkleProof      The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param  _txIndexInBlock   Transaction index in the block (1-indexed)
+    /// @param  _targetInputIndex Index of the input that spends the custodied UTXO
+    /// @param  _bitcoinHeaders   An array of tightly-packed bitcoin headers
     function provideSPVFraudProof(
         DepositUtils.Deposit storage _d,
         bytes4 _txVersion,
@@ -175,7 +176,8 @@ library DepositLiquidation {
         bytes memory _txOutputVector,
         bytes4 _txLocktime,
         bytes memory _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
+        uint8 _targetInputIndex,
         bytes memory _bitcoinHeaders
     ) public {
         uint8 i;
@@ -197,37 +199,17 @@ library DepositLiquidation {
 
         _txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
-        _d.checkProofFromTxId(_txId, _merkleProof, _index, _bitcoinHeaders);
+        _d.checkProofFromTxId(_txId, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
-        // Input integrity was checked via ValitadeVin, we can check specific inputs with no worries
-        require(outpointSearch(_d, _txInputVector), "No input spending custodied UTXO found");
+        require(
+            keccak256(_txInputVector.extractInputAtIndex(_targetInputIndex).extractOutpoint()) == keccak256(_d.utxoOutpoint),
+            "No input spending custodied UTXO found at given index"
+        );
         require(outputSearch(_d, _txOutputVector), "Found an output paying the redeemer as requested");
 
         startSignerFraudLiquidation(_d);
     }
-
-    /// @notice                 Search _txInputVector for outpoint matching the one set during funding.
-    /// @param  _d              deposit storage pointer
-    /// @param  _txInputVector  All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
-    /// @return                 True if current outpoint found, false otherwise
-    function outpointSearch(
-        DepositUtils.Deposit storage _d,
-        bytes memory _txInputVector
-    ) internal view returns (bool){
-        bytes memory _input;
-        uint256 _offset = 1;
-
-        uint8 _numInputs = uint8(_txInputVector.slice(0, 1)[0]);
-        for (uint8 i = 0; i < _numInputs; i++) {
-            _input = _txInputVector.slice(_offset, _txInputVector.length - _offset);
-            _offset += _input.determineInputLength();
-            if (keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
+ 
     /// @notice                 Search _txOutputVector for output paying the requestor
     /// @param  _d              deposit storage pointer
     /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
