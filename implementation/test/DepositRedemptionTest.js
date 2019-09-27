@@ -96,7 +96,6 @@ contract('Deposit', (accounts) => {
     const keepPubkeyY = '0x' + '44'.repeat(32)
     const redeemerPKH = '0x' + '33'.repeat(20)
     let requiredBalance
-    let callerBalance
 
     before(async () => {
       requiredBalance = await deployed.TestDepositUtils.redemptionTBTCAmount.call()
@@ -105,11 +104,10 @@ contract('Deposit', (accounts) => {
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
-      // make sure to clear TBTC balance of caller
-      callerBalance = await tbtcToken.balanceOf(accounts[0])
-      await tbtcToken.forceBurn(accounts[0], callerBalance)
-      // mint the required balance to request redemption
-      await tbtcToken.forceMint(accounts[0], requiredBalance)
+
+      // make sure there is sufficient balance to request redemption. Then approve deposit
+      await tbtcToken.resetBalance(requiredBalance)
+      await tbtcToken.resetAllowance(testInstance.address, requiredBalance)
       await deployed.KeepStub.setSuccess(true)
     })
 

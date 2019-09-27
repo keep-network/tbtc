@@ -20,7 +20,6 @@ contract TBTCToken is ERC20Detailed, ERC20, ERC20MinterAuthority {
     /// @param _amount   The amount of tokens that will be created.
     function mint(address _account, uint256 _amount) public onlyDeposit returns (bool){
         // NOTE: this is a public function with unchecked minting.
-        // TODO: enforce calling authority.
         _mint(_account, _amount);
         return true;
     }
@@ -31,22 +30,6 @@ contract TBTCToken is ERC20Detailed, ERC20, ERC20MinterAuthority {
     /// @param _account  The account whose tokens will be burnt.
     /// @param _amount   The amount of tokens that will be burnt.
     function burnFrom(address _account, uint256 _amount) public onlyDeposit {
-        // NOTE: this uses internal function _burn instead of _burnFrom.
-        // This will bypass allowance check for now.
-        // TODO: enforce calling authority.
-        _burn(_account, _amount);
-    }
-
-    /// @dev           Transfer tokens from one address to another
-    ///                Uses the internal _transfer function.
-    /// @param _from   The address to send tokens from
-    /// @param _to     The address to transfer tokens to
-    /// @param _value  The amount of tokens to be transferred
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        // NOTE: this overrides transferFrom in openZeppelin ERC20.sol
-        // in order to bypass allowance check for now.
-        // TODO: enforce calling authority.
-        _transfer(_from, _to, _value);
-        return true;
+        _burnFrom(_account, _amount);
     }
 }

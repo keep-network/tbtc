@@ -17,6 +17,12 @@ module.exports = async function(deployer) {
   await keepBridge.initialize(KeepRegistryAddress)
 
   // Uniswap
+  // Skip Uniswap initialization if external address isn't configured
+  // Temporary fix for https://github.com/keep-network/tbtc/issues/296
+  // TODO(liamz): remove when tbtc#296 is closed
+  if (UniswapFactoryAddress == '0x0000000000000000000000000000000000000000') {
+    return
+  }
   const tbtcToken = await TBTCToken.deployed()
   const uniswapFactory = await IUniswapFactory.at(UniswapFactoryAddress)
 
