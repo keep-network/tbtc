@@ -291,7 +291,16 @@ contract Deposit {
         uint8 _targetInputIndex,
         bytes memory _bitcoinHeaders
     ) public returns (bool) {
-        self.provideSPVFraudProof(_txVersion, _txInputVector, _txOutputVector, _txLocktime, _merkleProof, _index, _targetInputIndex, _bitcoinHeaders);
+        self.provideSPVFraudProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _merkleProof,
+            _index,
+            _targetInputIndex,
+            _bitcoinHeaders
+        );
         return true;
     }
 
