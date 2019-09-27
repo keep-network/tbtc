@@ -262,18 +262,18 @@ library DepositRedemption {
         require(_txInputVector.validateVin(), "invalid input vector provided");
         require(_txOutputVector.validateVout(), "invalid output vector provided");
 
-        bytes memory _ins = _txInputVector.slice(1, _txInputVector.length-1);
-        bytes memory _outs = _txOutputVector.slice(1, _txOutputVector.length-1);
+        bytes memory _input = _txInputVector.slice(1, _txInputVector.length-1);
+        bytes memory _output = _txOutputVector.slice(1, _txOutputVector.length-1);
 
         require(
-            keccak256(_ins.extractOutpoint()) == keccak256(_d.utxoOutpoint),
+            keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint),
             "Tx spends the wrong UTXO"
         );
         require(
-            keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
+            keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
             "Tx sends value to wrong pubkeyhash"
         );
-        return (uint256(_outs.extractValue()));
+        return (uint256(_output.extractValue()));
     }
 
     /// @notice     Anyone may notify the contract that the signers have failed to produce a signature
