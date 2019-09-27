@@ -477,16 +477,16 @@ contract('DepositUtils', (accounts) => {
 
   describe('distributeBeneficiaryReward()', async () => {
     it('checks that beneficiary is rewarded', async () => {
-      // min an arbitrary reward value to the funding contract
-      const reward = 100000000
-      await tbtcToken.forceMint(testUtilsInstance.address, reward)
+      const beneficiaryReward = await testUtilsInstance.beneficiaryReward.call()
+      const fundingAmount = new BN(beneficiaryReward).add(new BN(1))
+      await tbtcToken.forceMint(testUtilsInstance.address, fundingAmount)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
 
       await testUtilsInstance.distributeBeneficiaryReward()
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
-      const tokenCheck = new BN(initialTokenBalance).add(new BN(reward))
+      const tokenCheck = new BN(initialTokenBalance).add(new BN(beneficiaryReward))
       expect(finalTokenBalance, 'tokens not rewarded to beneficiary correctly').to.eq.BN(tokenCheck)
     })
   })
