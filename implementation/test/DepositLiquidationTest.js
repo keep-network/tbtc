@@ -101,19 +101,19 @@ contract('DepositLiquidation', (accounts) => {
   })
 
   describe('purchaseSignerBondsAtAuction', async () => {
-    let lotSize
+    let fundingAmount
     let buyer
 
     before(async () => {
-      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      fundingAmount = await deployed.TestDepositUtils.redemptionTBTCAmount()
       buyer = accounts[1]
     })
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
-      for (let i = 0; i < 2; i++) {
-        await tbtcToken.resetBalance(lotSize, { from: accounts[i] } )
-        await tbtcToken.resetAllowance(testInstance.address, lotSize, { from: accounts[i] })
+      for (let i = 0; i < 4; i++) {
+        await tbtcToken.resetBalance(fundingAmount, { from: accounts[i] } )
+        await tbtcToken.resetAllowance(testInstance.address, fundingAmount, { from: accounts[i] })
       }
     })
 
@@ -149,11 +149,9 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it(`burns msg.sender's tokens`, async () => {
-      const buyer = accounts[2]
       const balance1 = await tbtcToken.balanceOf(buyer)
 
-      await tbtcToken.forceMint(buyer, requiredBalance)
-
+      await tbtcToken.forceMint(buyer, fundingAmount)
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
       const balance2 = await tbtcToken.balanceOf(buyer)
@@ -162,10 +160,7 @@ contract('DepositLiquidation', (accounts) => {
 
     it('distributes beneficiary reward', async () => {
       const beneficiaryReward = await deployed.TestDepositUtils.beneficiaryReward()
-      const buyer = accounts[2]
       const balance1 = await tbtcToken.balanceOf(beneficiary)
-
-      await tbtcToken.forceMint(buyer, requiredBalance)
 
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
