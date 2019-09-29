@@ -18,54 +18,72 @@ jobs:
   lint_js:
     executor: docker-node
     steps:
-        - checkout
-        - run:
-            name: Lint JS
-            command: |
-              cd implementation/
-              npm install
-              npm run js:lint
+      - checkout
+      - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/implementation
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - run:
+          name: Lint JS
+          working_directory: ~/project/implementation
+          command: |
+            npm install
+            npm run js:lint
   lint_solidity:
     executor: docker-node
     steps:
-        - checkout
-        - run:
-            name: Lint Solidity
-            working_directory: ~/project/implementation
-            command: |
-              set -ex
-              npm install
-              npm run sol:lint
+      - checkout
+      - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/implementation
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - run:
+          name: Lint Solidity
+          working_directory: ~/project/implementation
+          command: |
+            set -ex
+            npm install
+            npm run sol:lint
   unit_test_contracts:
     executor: docker-node
     steps:
-        - checkout
-        - run: sudo npm install -g ganache-cli@6.4.2
-        - run:
-            name: Running testrpc
-            command: ganache-cli
-            background: true
-        - run:
-            name: Run NPM tests
-            working_directory: ~/project/implementation/contracts
-            command: npm install && npm run test
+      - checkout
+      - run: sudo npm install -g ganache-cli@6.4.2
+      - run:
+          name: Running testrpc
+          working_directory: ~/project/implementation
+          command: ganache-cli
+          background: true
+      - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/implementation
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - run:
+          name: Run NPM tests
+          working_directory: ~/project/implementation
+          command: npm install && npm run test
   integration_test_contracts:
     executor: docker-node
     steps:
-        - checkout
-        - run: sudo npm install -g ganache-cli@6.4.2
-        - run:
-            name: Running testrpc
-            command: ganache-cli
-            background: true
-        - run:
-            name: Deploy Uniswap
-            working_directory: ~/project/implementation/scripts
-            command: ./deploy_uniswap.sh
-        - run:
-            name: Run NPM tests
-            working_directory: ~/project/implementation/contracts
-            command: npm install && npm run integration-test
+      - checkout
+      - run: sudo npm install -g ganache-cli@6.4.2
+      - run:
+          name: Running testrpc
+          working_directory: ~/project/implementation
+          command: ganache-cli
+          background: true
+      - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/implementation
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - run:
+          name: Deploy Uniswap
+          working_directory: ~/project/implementation/scripts
+          command: ./deploy_uniswap.sh
+      - run:
+          name: Run NPM tests
+          working_directory: ~/project/implementation
+          command: npm install && npm run integration-test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -208,21 +226,21 @@ jobs:
           image: initcontainer-provision-tbtc-maintainers
           tag: latest
   publish_contract_data:
-      executor: gcp-cli/default
-      steps:
-        - attach_workspace:
-            at: /tmp/tbtc
-        - gcp-cli/install
-        - gcp-cli/initialize:
-            google-project-id: GOOGLE_PROJECT_ID
-            google-compute-zone: GOOGLE_COMPUTE_ZONE_A
-            # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
-            gcloud-service-key: GCLOUD_SERVICE_KEY
-        - run:
-            name: Upload contract data
-            command: |
-              cd /tmp/tbtc/contracts
-              gsutil -m cp * gs://keep-dev-contract-data/tbtc
+    executor: gcp-cli/default
+    steps:
+      - attach_workspace:
+          at: /tmp/tbtc
+      - gcp-cli/install
+      - gcp-cli/initialize:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - run:
+          name: Upload contract data
+          command: |
+            cd /tmp/tbtc/contracts
+            gsutil -m cp * gs://keep-dev-contract-data/tbtc
 
 workflows:
   version: 2
