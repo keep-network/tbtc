@@ -4,7 +4,7 @@ import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
 import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
 
-import {IECDSAKeep} from "keep-tecdsa/solidity/contracts/api/IECDSAKeep.sol";
+import {IECDSAKeep} from "@keep-network/keep-tecdsa/contracts/api/IECDSAKeep.sol";
 
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {TBTCSystem} from "../system/TBTCSystem.sol";

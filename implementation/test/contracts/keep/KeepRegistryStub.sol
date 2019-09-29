@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-import {IKeepRegistry} from "keep-tecdsa/solidity/contracts/api/IKeepRegistry.sol";
+import {IKeepRegistry} from "@keep-network/keep-tecdsa/contracts/api/IKeepRegistry.sol";
 
 /// @notice Implementation of KeepRegistry interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep

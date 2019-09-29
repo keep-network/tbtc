@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-import {IECDSAKeep} from "keep-tecdsa/solidity/contracts/api/IECDSAKeep.sol";
+import {IECDSAKeep} from "@keep-network/keep-tecdsa/contracts/api/IECDSAKeep.sol";
 import {IBondedECDSAKeep} from "../../../contracts/external/IBondedECDSAKeep.sol";
 
 /// @notice Implementation of ECDSAKeep interface used in tests only
