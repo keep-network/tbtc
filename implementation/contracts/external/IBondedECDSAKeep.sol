@@ -1,7 +1,7 @@
 pragma solidity ^0.5.10;
 
-// TODO: This is a contract holding functions which are required to be implemented
-// on keep side and added to IBondedECDSAKeep interface.
+// TODO: This is an interface holding functions which are required to be
+// implemented on keep side.
 interface IBondedECDSAKeep {
     // Expected behavior:
     // Error if not fraud

@@ -378,11 +378,11 @@ library DepositUtils {
         return abi.encodePacked(_b).reverseEndianness().bytesToUint();
     }
 
-    /// @notice Gets timestamp of digest approval for signing
-    /// @dev Identifies entry in the recorded approvals by keep ID and digest pair
-    /// @param _digest Digest to check approval for
-    /// @return Timestamp from the moment of recording the digest for signing.
-    /// Returns 0 if the digest was not approved for signing
+    /// @notice         Gets timestamp of digest approval for signing
+    /// @dev            Identifies entry in the recorded approvals by keep ID and digest pair
+    /// @param _digest  Digest to check approval for
+    /// @return         Timestamp from the moment of recording the digest for signing.
+    ///                 Returns 0 if the digest was not approved for signing
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
         return _d.approvedDigests[_digest];
     }
