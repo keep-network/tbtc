@@ -15,7 +15,7 @@ executors:
     docker:
       - image: thesisco/docker-buildpack:bionic
 jobs:
-  lint_js:
+  setup_github_package_registry:
     executor: docker-node
     steps:
       - checkout
@@ -23,6 +23,16 @@ jobs:
           name: Authenticate GitHub Package Registry
           working_directory: ~/project/implementation
           command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - persist_to_workspace:
+          root: implementation
+          paths:
+            - .npmrc
+  lint_js:
+    executor: docker-node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: implementation
       - run:
           name: Lint JS
           working_directory: ~/project/implementation
@@ -33,10 +43,8 @@ jobs:
     executor: docker-node
     steps:
       - checkout
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/implementation
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - attach_workspace:
+          at: implementation
       - run:
           name: Lint Solidity
           working_directory: ~/project/implementation
@@ -48,16 +56,14 @@ jobs:
     executor: docker-node
     steps:
       - checkout
+      - attach_workspace:
+          at: implementation
       - run: sudo npm install -g ganache-cli@6.4.2
       - run:
           name: Running testrpc
           working_directory: ~/project/implementation
           command: ganache-cli
           background: true
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/implementation
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - run:
           name: Run NPM tests
           working_directory: ~/project/implementation
@@ -66,16 +72,14 @@ jobs:
     executor: docker-node
     steps:
       - checkout
+      - attach_workspace:
+          at: implementation
       - run: sudo npm install -g ganache-cli@6.4.2
       - run:
           name: Running testrpc
           working_directory: ~/project/implementation
           command: ganache-cli
           background: true
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/implementation
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - run:
           name: Deploy Uniswap
           working_directory: ~/project/implementation/scripts
@@ -161,10 +165,8 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/implementation
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - attach_workspace:
+          at: implementation
       - run:
           name: Set Gcloud Auth
           command: |
@@ -250,12 +252,24 @@ workflows:
   version: 2
   lint:
     jobs:
-      - lint_js
-      - lint_solidity
+      - setup_github_package_registry:
+          context: github-package-registry
+      - lint_js:
+          requires:
+            - setup_github_package_registry
+      - lint_solidity:
+          requires:
+            - setup_github_package_registry
   test:
     jobs:
-      - unit_test_contracts
-      - integration_test_contracts
+      - setup_github_package_registry:
+          context: github-package-registry
+      - unit_test_contracts:
+          requires:
+            - setup_github_package_registry
+      - integration_test_contracts:
+          requires:
+            - setup_github_package_registry
   docs:
     jobs:
       - generate_pngs
@@ -270,11 +284,15 @@ workflows:
             - generate_docs_asciidoctor
   migrate-build-publish:
     jobs:
+      - setup_github_package_registry:
+          context: github-package-registry
       - migrate_contracts:
           filters:
             branches:
               only: master
           context: keep-dev
+          requires:
+            - setup_github_package_registry
       - build_initcontainer:
           filters:
             branches:
