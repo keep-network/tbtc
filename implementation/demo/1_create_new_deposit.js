@@ -24,7 +24,8 @@ module.exports = async function() {
       tbtcToken.address, // address _TBTCToken
       keepBridge.address, // address _KeepBridge
       5, // uint256 _m
-      10 // uint256 _n
+      10, // uint256 _n
+      { value: 100000 }
     ).catch((err) => {
       console.error(`call to factory failed: ${err}`)
       process.exit(1)
