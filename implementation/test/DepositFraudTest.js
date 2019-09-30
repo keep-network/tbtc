@@ -428,11 +428,25 @@ contract('Deposit', (accounts) => {
       )
     })
 
+    it('reverts with bad input vector', async () => {
+      await expectThrow(
+        testInstance.provideSPVFraudProof(_version, '0x00', _txOutputVector, _txLocktime, _proof, _index, _targetInputIndex, _headerChain),
+        'invalid input vector provided'
+      )
+    })
+
+    it('reverts with bad output vector', async () => {
+      await expectThrow(
+        testInstance.provideSPVFraudProof(_version, _txInputVector, '0x00', _txLocktime, _proof, _index, _targetInputIndex, _headerChain),
+        'invalid output vector provided'
+      )
+    })
+
     it('reverts if it can\'t verify the Deposit UTXO was consumed', async () => {
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '00'.repeat(36))
 
       await expectThrow(
-        testInstance.provideSPVFraudProof(_version, _txInputVector, _txOutputVector, _txLocktime, proof, index, _targetInputIndex, headerChain),
+        testInstance.provideSPVFraudProof(_version, _txInputVector, _txOutputVector, _txLocktime, _proof, _index, _targetInputIndex, _headerChain),
         'No input spending custodied UTXO found at given index'
       )
     })
@@ -452,7 +466,7 @@ contract('Deposit', (accounts) => {
       // value `490029088`.
       // Expect revert of the transaction.
       await expectThrow(
-        testInstance.provideSPVFraudProof(_version, _txInputVector, _txOutputVector, _txLocktime, proof, index, _targetInputIndex, headerChain),
+        testInstance.provideSPVFraudProof(_version, _txInputVector, _txOutputVector, _txLocktime, _proof, _index, _targetInputIndex, _headerChain),
         'Found an output paying the redeemer as requested'
       )
     })
