@@ -54,7 +54,8 @@ ssh utilitybox << EOF
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/implementation
 
-  
+
+npm install @keep-network/keep-tecdsa@0.1.1
 npm install git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0-high-err
 npm install bn-chai@1.0.1
 npm install bn.js@4.11.8
