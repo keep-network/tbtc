@@ -1,8 +1,8 @@
 /* solium-disable function-order */
 pragma solidity ^0.5.10;
 
-import {IKeepRegistry} from "@keep-network/keep-tecdsa/contracts/api/IKeepRegistry.sol";
-import {IECDSAKeepVendor} from "@keep-network/keep-tecdsa/contracts/api/IECDSAKeepVendor.sol";
+import {IKeepRegistry} from "@keep-network/keep-ecdsa/contracts/api/IKeepRegistry.sol";
+import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeepVendor.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {DepositLog} from "../DepositLog.sol";
