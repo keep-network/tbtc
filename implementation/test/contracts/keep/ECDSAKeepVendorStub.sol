@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-import {IECDSAKeepVendor} from "@keep-network/keep-tecdsa/contracts/api/IECDSAKeepVendor.sol";
+import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeepVendor.sol";
 
 /// @notice Implementation of ECDSAKeepVendor interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep

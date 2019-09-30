@@ -7,7 +7,7 @@ import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
 import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
-import {IECDSAKeep} from "@keep-network/keep-tecdsa/contracts/api/IECDSAKeep.sol";
+import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
