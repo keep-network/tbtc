@@ -176,7 +176,7 @@ library DepositUtils {
     ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
         require(_txInputVector.validateVin(), "invalid input vector provided");
         require(_txOutputVector.validateVout(), "invalid output vector provided");
-        
+
         bytes32 txID = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
         _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);

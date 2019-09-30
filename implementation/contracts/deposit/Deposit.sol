@@ -108,8 +108,8 @@ contract Deposit {
         self.provideRedemptionProof(
             _txVersion,
             _txInputVector,
-            _txOutputVector, 
-            _txLocktime, 
+            _txOutputVector,
+            _txLocktime,
             _merkleProof,
             _txIndexInBlock,
             _bitcoinHeaders
