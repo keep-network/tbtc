@@ -24,7 +24,6 @@ const TBTCConstants = artifacts.require('TBTCConstants')
 const TBTCSystem = artifacts.require('TBTCSystem')
 
 // keep
-const KeepBridge = artifacts.require('KeepBridge')
 const TBTCToken = artifacts.require('TBTCToken')
 
 // deposit factory
@@ -33,7 +32,7 @@ const DepositFactory = artifacts.require('DepositFactory')
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
   DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystem,
-  KeepBridge, PriceOracleV1]
+  PriceOracleV1]
 
 module.exports = (deployer, network, accounts) => {
   const PRICE_ORACLE_OPERATOR = accounts[0]
@@ -88,9 +87,7 @@ module.exports = (deployer, network, accounts) => {
     // system
     await deployer.deploy(TBTCSystem, DepositFactory.address)
 
+    // token
     await deployer.deploy(TBTCToken, TBTCSystem.address)
-
-    // keep
-    await deployer.deploy(KeepBridge)
   })
 }

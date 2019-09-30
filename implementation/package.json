@@ -21,11 +21,12 @@
   "author": "James Prestwich",
   "license": "UNLICENSED",
   "dependencies": {
+    "bitcoin-spv": "git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0-high-err",
     "bn-chai": "^1.0.1",
     "bn.js": "^4.11.8",
-    "bitcoin-spv": "git+https://github.com/summa-tx/bitcoin-spv.git#v1.1.0-high-err",
     "chai": "^4.2.0",
     "create-hash": "^1.2.0",
+    "@keep-network/keep-tecdsa": "^0.1.1",
     "openzeppelin-solidity": "2.3.0",
     "solc": "^0.5.10"
   },
