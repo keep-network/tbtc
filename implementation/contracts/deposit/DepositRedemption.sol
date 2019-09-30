@@ -208,12 +208,12 @@ library DepositRedemption {
     /// @notice                 Anyone may provide a withdrawal proof to prove redemption
     /// @dev                    The signers will be penalized if this is not called
     /// @param  _d              deposit storage pointer
-    /// @param _txVersion       Transaction version number (4-byte LE)
-    /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
-    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    /// @param _txLocktime      Final 4 bytes of the transaction
+    /// @param  _txVersion      Transaction version number (4-byte LE)
+    /// @param  _txInputVector  All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param  _txOutputVector All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param  _txLocktime     Final 4 bytes of the transaction
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
+    /// @param  _txIndexInBlock The index of the tx in the Bitcoin block (0-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideRedemptionProof(
         DepositUtils.Deposit storage _d,
@@ -222,7 +222,7 @@ library DepositRedemption {
         bytes memory _txOutputVector,
         bytes4 _txLocktime,
         bytes memory _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
     ) public {
         bytes32 _txid;
@@ -233,7 +233,7 @@ library DepositRedemption {
         _fundingOutputValue = redemptionTransactionChecks(_d, _txInputVector, _txOutputVector);
         _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
-        _d.checkProofFromTxId(_txid, _merkleProof, _index, _bitcoinHeaders);
+        _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
         require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, "Fee unexpectedly very high");
 

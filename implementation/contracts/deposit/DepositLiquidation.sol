@@ -166,7 +166,7 @@ library DepositLiquidation {
     /// @param  _txOutputVector   All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
     /// @param  _txLocktime       Final 4 bytes of the transaction
     /// @param  _merkleProof      The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _txIndexInBlock   Transaction index in the block (1-indexed)
+    /// @param  _txIndexInBlock   Transaction index in the block (0-indexed)
     /// @param  _targetInputIndex Index of the input that spends the custodied UTXO
     /// @param  _bitcoinHeaders   An array of tightly-packed bitcoin headers
     function provideSPVFraudProof(

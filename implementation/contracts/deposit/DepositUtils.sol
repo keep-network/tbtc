@@ -105,7 +105,7 @@ library DepositUtils {
     /// @param _d               Deposit storage pointer
     /// @param _txId            The bitcoin txid of the tx that is purportedly included in the header chain
     /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (1-indexed)
+    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (0-indexed)
     /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
     function checkProofFromTxId(
         Deposit storage _d,
@@ -160,7 +160,7 @@ library DepositUtils {
     /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block
-    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _txIndexInBlock      Transaction index in the block (0-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint
     function validateAndParseFundingSPVProof(

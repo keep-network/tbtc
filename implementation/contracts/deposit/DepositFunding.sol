@@ -247,7 +247,7 @@ library DepositFunding {
     /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block
-    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _txIndexInBlock      Transaction index in the block (0-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
@@ -297,7 +297,7 @@ library DepositFunding {
     /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block
-    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _txIndexInBlock      Transaction index in the block (0-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
