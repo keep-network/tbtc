@@ -172,6 +172,10 @@ jobs:
           command: |
             echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      - run: Provision Uniswap Contract Address
+          command: |
+            export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
+            implementation/scripts/circleci-provision-uniswap.sh
       - run:
           name: Migrate Contracts
           command: |
