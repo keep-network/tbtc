@@ -243,6 +243,13 @@ contract('DepositUtils', (accounts) => {
       )
     })
 
+    it('fails with bad _txOutputVector', async () => {
+      await expectThrow(
+        testUtilsInstance.validateAndParseFundingSPVProof.call(_version, _txInputVector, '0x' + '00'.repeat(32), _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders),
+        'invalid output vector provided'
+      )
+    })
+
     it('fails with bad _merkleProof', async () => {
       await expectThrow(
         testUtilsInstance.validateAndParseFundingSPVProof.call(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, '0x' + '00'.repeat(32), _txIndexInBlock, _bitcoinHeaders),
