@@ -81,6 +81,7 @@ contract('Deposit', (accounts) => {
   let fundingProofTimerStart
   let beneficiary
   let tbtcToken
+  const funderBondAmount = new BN('10').pow(new BN('5'))
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
@@ -106,7 +107,9 @@ contract('Deposit', (accounts) => {
         tbtcToken.address,
         deployed.KeepStub.address,
         1, // m
-        1)
+        1,
+        { value: funderBondAmount }
+      )
 
       // state updates
       const depositState = await testInstance.getState.call()
@@ -202,18 +205,16 @@ contract('Deposit', (accounts) => {
     })
 
     it('returns funder bond', async () => {
-      const bond = 1000000000000
-
-      await testInstance.send(bond, { from: beneficiary })
+      await testInstance.send(funderBondAmount, { from: beneficiary })
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
       await testInstance.setKeepInfo(ADDRESS_ZERO, fundingProofTimerStart, 0, utils.bytes32zero, utils.bytes32zero)
-      await deployed.KeepStub.setBondAmount(bond)
+      await deployed.KeepStub.setBondAmount(funderBondAmount)
       await testInstance.notifySignerSetupFailure()
 
       const balance = await web3.eth.getBalance(beneficiary)
-      const balanceCheck = new BN(initialBalance).add(new BN(bond))
+      const balanceCheck = new BN(initialBalance).add(funderBondAmount)
       expect(balance, 'bond not returned to funder').to.eq.BN(balanceCheck)
     })
   })
@@ -304,12 +305,11 @@ contract('Deposit', (accounts) => {
     })
 
     it('distributes the funder bond to the keep group', async () => {
-      const bond = 1000000
       await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
-      await testInstance.send(bond, { from: beneficiary })
+      await testInstance.send(funderBondAmount, { from: beneficiary })
       await testInstance.notifyFundingTimeout()
       const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
-      assert.equal(keepBalance, new BN(bond), 'funder bond not distributed properly')
+      assert.equal(keepBalance, new BN(funderBondAmount), 'funder bond not distributed properly')
     })
   })
 
@@ -360,15 +360,14 @@ contract('Deposit', (accounts) => {
     })
 
     it('returns funder bonds', async () => {
-      const signerBond = 10000000000
-      await testInstance.send(signerBond, { from: beneficiary })
+      await testInstance.send(funderBondAmount, { from: beneficiary })
 
       const initialBalance = await web3.eth.getBalance(beneficiary)
 
       await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       const actualBalance = await web3.eth.getBalance(beneficiary)
-      const expectedBalance = new BN(initialBalance).add(new BN(signerBond))
+      const expectedBalance = new BN(initialBalance).add(funderBondAmount)
 
       assert.equal(actualBalance, expectedBalance, 'funder bond not correctly returned')
     })

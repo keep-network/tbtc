@@ -63,11 +63,12 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract('DepositUtils', (accounts) => {
+contract.only('DepositUtils', (accounts) => {
   let deployed
   let testUtilsInstance
   let beneficiary
   let tbtcToken
+  const funderBondAmount = new BN('10').pow(new BN('5'))
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
@@ -76,13 +77,14 @@ contract('DepositUtils', (accounts) => {
     beneficiary = accounts[2]
     deployed.TBTCSystemStub.mint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
 
-
     await testUtilsInstance.createNewDeposit(
       deployed.TBTCSystemStub.address,
       tbtcToken.address,
       deployed.KeepStub.address,
       1, // m
-      1) // n
+      1, // n
+      { value: funderBondAmount }
+    )
   })
 
   describe('currentBlockDifficulty()', async () => {
