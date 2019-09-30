@@ -62,6 +62,8 @@ library DepositFunding {
         uint256 _n
     ) public returns (bool) {
         require(_d.inStart(), "Deposit setup already requested");
+        /* solium-disable-next-line value-in-payable */
+        require(msg.value == TBTCConstants.getFunderBondAmount(), "incorrect funder bond amount");
 
         IKeep _keep = IKeep(_d.KeepBridge);
 
