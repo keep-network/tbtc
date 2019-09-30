@@ -162,6 +162,10 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/implementation
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - run:
           name: Set Gcloud Auth
           command: |
             echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
