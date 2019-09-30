@@ -168,7 +168,7 @@ jobs:
       - attach_workspace:
           at: implementation
       - run:
-          name: Provision Uniswap Contract Address
+          name: Provision UniswapFactory Contract Address
           command: |
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
