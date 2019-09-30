@@ -65,8 +65,7 @@ library DepositFunding {
 
         IKeep _keep = IKeep(_d.KeepBridge);
 
-        /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _keep.requestNewKeep(_m, _n);  // kinda gross but
+        _d.keepAddress = _keep.requestNewKeep(_m, _n);
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
