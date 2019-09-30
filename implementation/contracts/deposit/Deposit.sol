@@ -298,7 +298,7 @@ contract Deposit {
         bytes memory _txOutputVector,
         bytes4 _txLocktime,
         bytes memory _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
         uint8 _targetInputIndex,
         bytes memory _bitcoinHeaders
     ) public returns (bool) {
@@ -308,7 +308,7 @@ contract Deposit {
             _txOutputVector,
             _txLocktime,
             _merkleProof,
-            _index,
+            _txIndexInBlock,
             _targetInputIndex,
             _bitcoinHeaders
         );
