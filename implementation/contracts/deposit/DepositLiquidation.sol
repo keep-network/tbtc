@@ -205,7 +205,7 @@ library DepositLiquidation {
             keccak256(_txInputVector.extractInputAtIndex(_targetInputIndex).extractOutpoint()) == keccak256(_d.utxoOutpoint),
             "No input spending custodied UTXO found at given index"
         );
-        require(outputSearch(_d, _txOutputVector), "Found an output paying the redeemer as requested");
+        require(validateRedeemerNotPaid(_d, _txOutputVector), "Found an output paying the redeemer as requested");
 
         startSignerFraudLiquidation(_d);
     }
@@ -213,7 +213,7 @@ library DepositLiquidation {
     /// @notice                 Search _txOutputVector for output paying the requestor
     /// @param  _d              deposit storage pointer
     /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    function outputSearch(
+    function validateRedeemerNotPaid(
         DepositUtils.Deposit storage _d,
         bytes memory _txOutputVector
     ) internal view returns (bool){
