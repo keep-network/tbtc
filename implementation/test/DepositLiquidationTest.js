@@ -111,7 +111,7 @@ contract('DepositLiquidation', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 2; i++) {
         await tbtcToken.resetBalance(fundingAmount, { from: accounts[i] } )
         await tbtcToken.resetAllowance(testInstance.address, fundingAmount, { from: accounts[i] })
       }
