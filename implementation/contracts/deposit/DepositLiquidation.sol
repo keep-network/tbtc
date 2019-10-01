@@ -142,7 +142,7 @@ library DepositLiquidation {
 
             if (_output.extractValue() >= _requiredOutputSize
                 && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
-                revert("Found an output paying the requester as requested");
+                revert("Found an output paying the redeemer as requested");
             }
         }
 

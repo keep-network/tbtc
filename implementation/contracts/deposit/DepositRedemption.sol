@@ -51,7 +51,7 @@ library DepositRedemption {
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
-        // Burn the requester's TBTC plus enough extra to cover outstanding debt
+        // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
         // Requires user to approve first
         /* TODO: implement such that it calls the system to burn TBTC? */
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
@@ -63,7 +63,7 @@ library DepositRedemption {
     }
 
     /// @notice                     Anyone can request redemption
-    /// @dev                        The requester specifies details about the Bitcoin redemption tx
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds

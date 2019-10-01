@@ -460,7 +460,7 @@ contract('DepositFraud', (accounts) => {
       )
     })
 
-    it('reverts if it finds an output paying the requester', async () => {
+    it('reverts if it finds an output paying the redeemer', async () => {
       // Set initialRedemptionFee to `2424` so the calculated requiredOutputSize
       // is `490043632 - (2424 * 6) = 490029088`.
       await testInstance.setRequestInfo(
@@ -471,12 +471,12 @@ contract('DepositFraud', (accounts) => {
         utils.bytes32zero
       )
 
-      // Provide proof of a transaction where output is sent to a requester, with
+      // Provide proof of a transaction where output is sent to a redeemer, with
       // value `490029088`.
       // Expect revert of the transaction.
       await expectThrow(
         testInstance.provideSPVFraudProof(tx, proof, index, headerChain),
-        'Found an output paying the requester as requested'
+        'Found an output paying the redeemer as requested'
       )
     })
   })

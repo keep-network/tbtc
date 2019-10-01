@@ -40,7 +40,7 @@ library DepositUtils {
         bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
-        address payable requesterAddress;  // The redemer's address, used as fallback for fraud in redemption
+        address payable requesterAddress;  // The requester's address, used as fallback for fraud in redemption
         bytes20 requesterPKH;  // The 20-byte requester PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
