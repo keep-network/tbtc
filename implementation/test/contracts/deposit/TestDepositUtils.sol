@@ -130,10 +130,6 @@ contract TestDepositUtils is TestDeposit {
         return DepositUtils.bytes8LEToUint(_b);
     }
 
-    function wasDigestApprovedForSigning(bytes32 _digest) public view returns (uint256) {
-        return self.wasDigestApprovedForSigning(_digest);
-    }
-
     function depositBeneficiary() public view returns (address payable) {
         return self.depositBeneficiary();
     }

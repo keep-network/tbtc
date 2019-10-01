@@ -12,7 +12,8 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
+const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -29,8 +30,6 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-const ADDRESS_ZERO = '0x' + '0'.repeat(40)
-
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },
@@ -45,7 +44,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub }]
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -56,7 +55,7 @@ const TEST_DEPOSIT_DEPLOY = [
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-contract('Deposit', (accounts) => {
+contract('DepositRedemption', (accounts) => {
   let deployed
   let testInstance
   let withdrawalRequestTime
@@ -64,19 +63,29 @@ contract('Deposit', (accounts) => {
   let tbtcSystemStub
 
   before(async () => {
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
+
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(tbtcSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
+
+    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+
     tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
+    const keepRegistry = await KeepRegistryStub.new()
     const uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
-    await tbtcSystemStub.initialize(uniswapExchange.address)
+    await tbtcSystemStub.initialize(
+      keepRegistry.address,
+      uniswapExchange.address
+    )
   })
 
   beforeEach(async () => {
     await testInstance.reset()
+    await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   describe('requestRedemption', async () => {
@@ -92,7 +101,7 @@ contract('Deposit', (accounts) => {
     const valueBytes = '0x1111111111111111'
     const keepPubkeyX = '0x' + '33'.repeat(32)
     const keepPubkeyY = '0x' + '44'.repeat(32)
-    const redeemerPKH = '0x' + '33'.repeat(20)
+    const requesterPKH = '0x' + '33'.repeat(20)
     let requiredBalance
 
     before(async () => {
@@ -106,18 +115,19 @@ contract('Deposit', (accounts) => {
       // make sure there is sufficient balance to request redemption. Then approve deposit
       await tbtcToken.resetBalance(requiredBalance)
       await tbtcToken.resetAllowance(testInstance.address, requiredBalance)
-      await deployed.KeepStub.setSuccess(true)
+      await deployed.ECDSAKeepStub.setSuccess(true)
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, keepPubkeyX, keepPubkeyY)
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', redeemerPKH)
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
 
       const requestInfo = await testInstance.getRequestInfo()
-      assert.equal(requestInfo[1], redeemerPKH)
+      assert.equal(requestInfo[1], requesterPKH)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
       assert.equal(requestInfo[4], sighash)
 
@@ -141,20 +151,57 @@ contract('Deposit', (accounts) => {
         'Fee is too low'
       )
     })
+  })
 
-    it('reverts if the keep returns false', async () => {
-      await deployed.KeepStub.setSuccess(false)
+  describe('approveDigest', async () => {
+    beforeEach(async () => {
+      await testInstance.setSigningGroupPublicKey('0x00', '0x00')
+    })
 
-      await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
-        'Keep returned false'
+    it('calls keep for signing', async () => {
+      const digest = '0x' + '08'.repeat(32)
+
+      await testInstance.approveDigest(digest)
+        .catch((err) => {
+          assert.fail(`cannot approve digest: ${err}`)
+        })
+
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      // Check if ECDSAKeep has been called and event emitted.
+      const eventList = await deployed.ECDSAKeepStub.getPastEvents(
+        'SignatureRequested',
+        { fromBlock: blockNumber, toBlock: 'latest' },
+      )
+
+      assert.equal(
+        eventList[0].returnValues.digest,
+        digest,
+        'incorrect digest in emitted event',
       )
     })
 
-    it('calls Keep to approve the digest', async () => {
-      // test relies on a side effect
-      const approved = await deployed.KeepStub.wasDigestApprovedForSigning.call(ADDRESS_ZERO, sighash)
-      assert(!approved.eqn(0), 'digest was not approved')
+    it('registers timestamp for digest approval', async () => {
+      const digest = '0x' + '02'.repeat(32)
+
+      const approvalTx = await testInstance.approveDigest(digest)
+        .catch((err) => {
+          assert.fail(`cannot approve digest: ${err}`)
+        })
+
+      const block = await web3.eth.getBlock(approvalTx.receipt.blockNumber)
+      const expectedTimestamp = block.timestamp
+
+      const timestamp = await testInstance.wasDigestApprovedForSigning(digest)
+        .catch((err) => {
+          assert.fail(`cannot check digest approval: ${err}`)
+        })
+
+      assert.equal(
+        timestamp,
+        expectedTimestamp,
+        'incorrect registered timestamp',
+      )
     })
   })
 
@@ -176,7 +223,7 @@ contract('Deposit', (accounts) => {
     it('updates the state and logs GotRedemptionSignature', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, pubkeyX, pubkeyY)
+      await testInstance.setSigningGroupPublicKey(pubkeyX, pubkeyY)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 0, 0, digest)
 
       await testInstance.provideRedemptionSignature(v, r, s)
@@ -225,7 +272,7 @@ contract('Deposit', (accounts) => {
     const newOutputBytes = '0x0100feffffffffff'
     const initialFee = 0xffff
     const outpoint = '0x' + '33'.repeat(36)
-    const redeemerPKH = '0x' + '33'.repeat(20)
+    const requesterPKH = '0x' + '33'.repeat(20)
     let feeIncreaseTimer
 
     before(async () => {
@@ -236,12 +283,12 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
-      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime)
+      await testInstance.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, keepPubkeyX, keepPubkeyY)
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testInstance.setRequestInfo(utils.address0, redeemerPKH, initialFee, withdrawalRequestTime, prevSighash)
-      await deployed.KeepStub.setSuccess(true)
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, prevSighash)
+      await deployed.ECDSAKeepStub.setSuccess(true)
     })
 
     it('approves a new digest for signing, updates the state, and logs RedemptionRequested', async () => {
@@ -267,7 +314,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if the increase fee timer has not elapsed', async () => {
       const block = await web3.eth.getBlock('latest')
-      await testInstance.setRequestInfo(utils.address0, redeemerPKH, initialFee, block.timestamp, prevSighash)
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, block.timestamp, prevSighash)
 
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
@@ -283,23 +330,14 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the previous sighash was not the latest approved', async () => {
-      await testInstance.setRequestInfo(utils.address0, redeemerPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
 
       // Previous sigHash is not approved for signing.
-      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, 0)
+      await testInstance.setDigestApprovedAtTime(prevSighash, 0)
 
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
         'Provided previous value does not yield previous sighash'
-      )
-    })
-
-    it('reverts if the keep returned false', async () => {
-      await deployed.KeepStub.setSuccess(false)
-
-      await expectThrow(
-        testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
-        'Keep returned false'
       )
     })
   })
@@ -315,13 +353,13 @@ contract('Deposit', (accounts) => {
     const headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000'
-    const redeemerPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
       await tbtcSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
-      await testInstance.setRequestInfo('0x' + '11'.repeat(20), redeemerPKH, 14544, 0, '0x' + '11' * 32)
+      await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
     })
 
     it('updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
@@ -365,11 +403,11 @@ contract('Deposit', (accounts) => {
     const outputValue = 490029088
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000'
-    const redeemerPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testInstance.setRequestInfo('0x' + '11'.repeat(20), redeemerPKH, 14544, 0, '0x' + '11' * 32)
+      await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
     })
 
     it('returns the little-endian txid and output value', async () => {
@@ -415,7 +453,7 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
-      await deployed.KeepStub.burnContractBalance()
+      await deployed.ECDSAKeepStub.burnContractBalance()
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_SIGNATURE)
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
     })
@@ -438,7 +476,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if no funds received as signer bond', async () => {
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
 
       await expectThrow(
@@ -448,10 +486,10 @@ contract('Deposit', (accounts) => {
     })
 
     it('starts abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifySignatureTimeout()
 
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
@@ -470,7 +508,7 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
-      await deployed.KeepStub.burnContractBalance()
+      await deployed.ECDSAKeepStub.burnContractBalance()
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
     })
@@ -495,7 +533,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if no funds recieved as signer bond', async () => {
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
 
       await expectThrow(
@@ -505,10 +543,10 @@ contract('Deposit', (accounts) => {
     })
 
     it('starts abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifyRedemptionProofTimeout()
 
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()

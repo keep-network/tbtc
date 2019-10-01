@@ -12,7 +12,8 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
+const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -47,7 +48,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub }]
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -80,16 +81,23 @@ contract('DepositLiquidation', (accounts) => {
   before(async () => {
     beneficiary = accounts[4]
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
+
     testInstance = deployed.TestDeposit
 
-    testInstance.setExteroriorAddresses(tbtcSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
+    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+
     tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
 
+    const keepRegistry = await KeepRegistryStub.new()
     uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
-    await tbtcSystemStub.initialize(uniswapExchange.address)
+    await tbtcSystemStub.initialize(
+      keepRegistry.address,
+      uniswapExchange.address
+    )
   })
 
   beforeEach(async () => {
@@ -98,6 +106,8 @@ contract('DepositLiquidation', (accounts) => {
 
   afterEach(async () => {
     await restoreSnapshot(snapshotId)
+    await testInstance.reset()
+    await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   describe('purchaseSignerBondsAtAuction', async () => {
@@ -112,7 +122,7 @@ contract('DepositLiquidation', (accounts) => {
     beforeEach(async () => {
       await testInstance.setState(utils.states.LIQUIDATION_IN_PROGRESS)
       for (let i = 0; i < 2; i++) {
-        await tbtcToken.resetBalance(fundingAmount, { from: accounts[i] } )
+        await tbtcToken.resetBalance(fundingAmount, { from: accounts[i] })
         await tbtcToken.resetAllowance(testInstance.address, fundingAmount, { from: accounts[i] })
       }
     })
@@ -185,17 +195,11 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('returns keep funds if not fraud', async () => {
-      const value = 1000000000000
-      const block = await web3.eth.getBlock('latest')
-      const notifiedTime = block.timestamp
-      const initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      const initialBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      await testInstance.send(value, { from: accounts[0] })
-
-      await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
-      const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      const finalBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
       assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'buyer balance should increase')
     })
@@ -204,7 +208,8 @@ contract('DepositLiquidation', (accounts) => {
       const value = 1000000000000
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
-      const initialBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+
+      const initialBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
       await testInstance.send(value, { from: accounts[0] })
 
@@ -212,7 +217,7 @@ contract('DepositLiquidation', (accounts) => {
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
-      const finalBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      const finalBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
       expect(new BN(finalBalance)).to.eq.BN(initialBalance)
     })
@@ -236,7 +241,7 @@ contract('DepositLiquidation', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
-      await deployed.KeepStub.setBondAmount(0)
+      await deployed.ECDSAKeepStub.setBondAmount(0)
     })
 
     it('sets courtesy call state, sets the timestamp, and logs CourtesyCalled', async () => {
@@ -247,7 +252,7 @@ contract('DepositLiquidation', (accounts) => {
       // Here we subtract `1` to test collateralization less than undercollateralized
       // threshold (140%).
       const bondValue = undercollateralizedPercent.mul(lotValue).div(new BN(100)).sub(new BN(1))
-      await deployed.KeepStub.setBondAmount(bondValue)
+      await deployed.ECDSAKeepStub.setBondAmount(bondValue)
 
       await testInstance.notifyCourtesyCall()
 
@@ -275,7 +280,7 @@ contract('DepositLiquidation', (accounts) => {
       // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
       // Here we test collateralization equal undercollateralized threshold (140%).
       const bondValue = undercollateralizedPercent.mul(lotValue).div(new BN(100))
-      await deployed.KeepStub.setBondAmount(bondValue)
+      await deployed.ECDSAKeepStub.setBondAmount(bondValue)
 
       await expectThrow(
         testInstance.notifyCourtesyCall(),
@@ -290,7 +295,7 @@ contract('DepositLiquidation', (accounts) => {
       const blockTimestamp = block.timestamp
       const notifiedTime = blockTimestamp // not expired
       const fundedTime = blockTimestamp // not expired
-      await deployed.KeepStub.setBondAmount(new BN('1000000000000000000000000', 10))
+      await deployed.ECDSAKeepStub.setBondAmount(new BN('1000000000000000000000000', 10))
       await tbtcSystemStub.setOraclePrice(new BN('1', 10))
       await testInstance.setState(utils.states.COURTESY_CALL)
       await testInstance.setUTXOInfo('0x' + '00'.repeat(8), fundedTime, '0x' + '00'.repeat(36))
@@ -298,7 +303,7 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     afterEach(async () => {
-      await deployed.KeepStub.setBondAmount(1000)
+      await deployed.ECDSAKeepStub.setBondAmount(1000)
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
     })
 
@@ -334,7 +339,7 @@ contract('DepositLiquidation', (accounts) => {
 
     it('reverts if the deposit is still undercollateralized', async () => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
-      await deployed.KeepStub.setBondAmount(0)
+      await deployed.ECDSAKeepStub.setBondAmount(0)
 
       await expectThrow(
         testInstance.exitCourtesyCall(),
@@ -361,8 +366,8 @@ contract('DepositLiquidation', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
-      await deployed.KeepStub.setBondAmount(0)
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.setBondAmount(0)
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('executes', async () => {
@@ -371,7 +376,7 @@ contract('DepositLiquidation', (accounts) => {
       // Here we test collateralization less than severely undercollateralized
       // threshold (120%).
       const bondValue = severelyUndercollateralizedPercent.mul(lotValue).div(new BN(100)).sub(new BN(1))
-      await deployed.KeepStub.setBondAmount(bondValue)
+      await deployed.ECDSAKeepStub.setBondAmount(bondValue)
 
       await testInstance.notifyUndercollateralizedLiquidation()
       // TODO: Add validations or cover with `reverts if the deposit is not
@@ -392,7 +397,7 @@ contract('DepositLiquidation', (accounts) => {
       // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
       // Here we test collateralization equal severely undercollateralized threshold (120%).
       const bondValue = severelyUndercollateralizedPercent.mul(lotValue).div(new BN(100))
-      await deployed.KeepStub.setBondAmount(bondValue)
+      await deployed.ECDSAKeepStub.setBondAmount(bondValue)
 
       await expectThrow(
         testInstance.notifyUndercollateralizedLiquidation(),
@@ -401,10 +406,10 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('assert starts signer abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifyUndercollateralizedLiquidation()
 
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
@@ -425,7 +430,7 @@ contract('DepositLiquidation', (accounts) => {
       courtesyTime = blockTimestamp - timer.toNumber() // has not expired
       await testInstance.setState(utils.states.COURTESY_CALL)
       await testInstance.setLiquidationAndCourtesyInitated(0, courtesyTime)
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('executes', async () => {
@@ -449,10 +454,10 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('assert starts signer abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifyCourtesyTimeout()
 
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
@@ -583,7 +588,7 @@ contract('DepositLiquidation', (accounts) => {
 
     beforeEach(async () => {
       deposit = testInstance
-      keep = deployed.KeepStub
+      keep = deployed.ECDSAKeepStub
 
       await keep.send(keepBondAmount, { from: accounts[0] })
 
@@ -609,9 +614,9 @@ contract('DepositLiquidation', (accounts) => {
         await assertBalance.eth(keep.address, '1000000') // TODO(liamz): replace w/ keep.checkBondAmount()
         await assertBalance.tbtc(deposit.address, '0')
 
-        const redeemer = accounts[2]
+        const requester = accounts[2]
         await deposit.setRequestInfo(
-          redeemer,
+          requester,
           '0x' + '11'.repeat(20),
           0, 0, DIGEST
         )
@@ -627,7 +632,7 @@ contract('DepositLiquidation', (accounts) => {
 
         // tbtc distributions
         await assertBalance.tbtc(deposit.address, '0')
-        await assertBalance.tbtc(redeemer, lotSize)
+        await assertBalance.tbtc(requester, lotSize)
         await assertBalance.tbtc(beneficiary, beneficiaryReward)
       })
 
@@ -684,7 +689,7 @@ contract('DepositLiquidation', (accounts) => {
       it('was liquidated', async () => {
         const remainingEthAfterLiquidation = new BN(10)
         const maintainerBalance1 = new BN(await web3.eth.getBalance(maintainer))
-        await deployed.KeepStub.send(remainingEthAfterLiquidation, { from: accounts[0] })
+        await keep.send(remainingEthAfterLiquidation, { from: accounts[0] })
         await uniswapExchange.setEthPrice(keepBondAmount)
 
         const res = await deposit.startSignerFraudLiquidation({ from: maintainer })

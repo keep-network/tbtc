@@ -6,7 +6,8 @@ import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
 import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
+import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
@@ -33,23 +34,24 @@ library DepositRedemption {
         address _tbtcTokenAddress = _d.TBTCToken;
         TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
-        _tbtcToken.approve(_d.KeepBridge, DepositUtils.signerFee());
+        _tbtcToken.approve(_d.keepAddress, DepositUtils.signerFee());
         _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcTokenAddress, DepositUtils.signerFee());
     }
 
-    /// @notice         approves a digest for signing by our keep group
-    /// @dev            calls out to the keep contract
-    /// @param  _digest the digest to approve
-    /// @return         true if approved, otherwise revert
-    function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
-        IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.approveDigest(_d.keepAddress, _digest);
+    /// @notice Approves digest for signing by a keep
+    /// @dev Calls given keep to sign the digest. Records a current timestamp
+    /// for given digest
+    /// @param _digest Digest to approve
+    function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) internal {
+        IECDSAKeep(_d.keepAddress).sign(_digest);
+
+        _d.approvedDigests[_digest] = block.timestamp;
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
-        // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
+        // Burn the requester's TBTC plus enough extra to cover outstanding debt
         // Requires user to approve first
         /* TODO: implement such that it calls the system to burn TBTC? */
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
@@ -61,14 +63,14 @@ library DepositRedemption {
     }
 
     /// @notice                     Anyone can request redemption
-    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
+    /// @dev                        The requester specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
-        bytes20 _redeemerPKH
+        bytes20 _requesterPKH
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
 
@@ -85,22 +87,23 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _outputValueBytes,
-            _redeemerPKH);
+            _requesterPKH);
 
         // write all request details
-        _d.redeemerAddress = msg.sender;
-        _d.redeemerPKH = _redeemerPKH;
+        _d.requesterAddress = msg.sender;
+        _d.requesterPKH = _requesterPKH;
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash), "Keep returned false");
+
+        approveDigest(_d, _sighash);
 
         _d.setAwaitingWithdrawalSignature();
         _d.logRedemptionRequested(
             msg.sender,
             _sighash,
             _d.utxoSize(),
-            _redeemerPKH,
+            _requesterPKH,
             _requestedFee,
             _d.utxoOutpoint);
     }
@@ -163,12 +166,13 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _newOutputValueBytes,
-            _d.redeemerPKH);
+            _d.requesterPKH);
 
         // Ratchet the signature and redemption proof timeouts
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash), "Keep returned false");
+
+        approveDigest(_d, _sighash);
 
         // Go back to waiting for a signature
         _d.setAwaitingWithdrawalSignature();
@@ -176,7 +180,7 @@ library DepositRedemption {
             msg.sender,
             _sighash,
             _d.utxoSize(),
-            _d.redeemerPKH,
+            _d.requesterPKH,
             _d.utxoSize().sub(_newOutputValue),
             _d.utxoOutpoint);
     }
@@ -198,7 +202,7 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _previousOutputValueBytes,
-            _d.redeemerPKH);
+            _d.requesterPKH);
         require(
             _d.wasDigestApprovedForSigning(_previousSighash) == _d.withdrawalRequestTime,
             "Provided previous value does not yield previous sighash"
@@ -258,7 +262,7 @@ library DepositRedemption {
             "Tx spends the wrong UTXO"
         );
         require(
-            keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.redeemerPKH)),
+            keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
             "Tx sends value to wrong pubkeyhash"
         );
         return ( _txid, uint256(_outs.extractValue()));

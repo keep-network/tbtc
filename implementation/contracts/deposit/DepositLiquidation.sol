@@ -5,7 +5,7 @@ import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {IUniswapFactory} from "../external/IUniswapFactory.sol";
@@ -38,7 +38,7 @@ library DepositLiquidation {
         bytes32 _signedDigest,
         bytes memory _preimage
     ) public returns (bool _isFraud) {
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.submitSignatureFraud(_d.keepAddress, _v, _r, _s, _signedDigest, _preimage);
     }
 
@@ -141,8 +141,8 @@ library DepositLiquidation {
             _output = _bitcoinTx.extractOutputAtIndex(i);
 
             if (_output.extractValue() >= _requiredOutputSize
-                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.redeemerPKH))) {
-                revert("Found an output paying the redeemer as requested");
+                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
+                revert("Found an output paying the requester as requested");
             }
         }
 
@@ -283,9 +283,9 @@ library DepositLiquidation {
             // distribute reward to beneficiary first
             _d.distributeBeneficiaryReward();
 
-            if (_d.redeemerAddress != address(0)) {
-                // we came from the redemption flow, refund redeemer in TBTC
-                _tbtc.transfer(_d.redeemerAddress, _tbtc.balanceOf(address(this)));
+            if (_d.requesterAddress != address(0)) {
+                // we came from the redemption flow, refund requester in TBTC
+                _tbtc.transfer(_d.requesterAddress, _tbtc.balanceOf(address(this)));
             } else {
                 // burn to maintain supply peg
                 _tbtc.burn(_tbtc.balanceOf(address(this)));

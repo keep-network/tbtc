@@ -7,7 +7,7 @@ import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositUtils {
@@ -24,7 +24,6 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
-        address KeepBridge;
         uint8 currentState;
 
         // SET ON FRAUD
@@ -41,8 +40,8 @@ library DepositUtils {
         bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
-        address payable redeemerAddress;  // The redemer's address, used as fallback for fraud in redemption
-        bytes20 redeemerPKH;  // The 20-byte requester PKH
+        address payable requesterAddress;  // The redemer's address, used as fallback for fraud in redemption
+        bytes20 requesterPKH;  // The 20-byte requester PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
@@ -51,6 +50,11 @@ library DepositUtils {
         bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
+
+        /// @notice Map of timestamps for transaction digests approved for signing
+        /// @dev Holds a timestamp from the moment when the transaction digest
+        /// was approved for signing
+        mapping (bytes32 => uint256) approvedDigests;
     }
 
     /// @notice         Gets the current block difficulty
@@ -289,7 +293,7 @@ library DepositUtils {
     /// @dev            This is the amount of TBTC needed to repay to redeem the Deposit
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        if (_d.redeemerAddress == address(0)) {
+        if (_d.requesterAddress == address(0)) {
             return TBTCConstants.getLotSize().add(beneficiaryReward());
         } else {
             return 0;
@@ -303,11 +307,11 @@ library DepositUtils {
     }
 
     /// @notice     Determines the amount of TBTC accepted in the auction
-    /// @dev        If redeemerAddress is non-0, that means we came from redemption, and no auction should happen
+    /// @dev        If requesterAddress is non-0, that means we came from redemption, and no auction should happen
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     // TODO(liamz): consider if redundant
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        if (_d.redeemerAddress == address(0)) {
+        if (_d.requesterAddress == address(0)) {
             return TBTCConstants.getLotSize();
         } else {
             return 0;
@@ -370,7 +374,7 @@ library DepositUtils {
     /// @dev        Calls the keep contract to do so
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.checkBondAmount(_d.keepAddress);
     }
 
@@ -381,13 +385,13 @@ library DepositUtils {
         return abi.encodePacked(_b).reverseEndianness().bytesToUint();
     }
 
-    /// @notice         determines whether a digest has been approved for our keep group
-    /// @dev            calls out to the keep contract, storing a 256bit int costs the same as a bool
-    /// @param  _digest the digest to check approval time for
-    /// @return         the time it was approved. 0 if unapproved
+    /// @notice         Gets timestamp of digest approval for signing
+    /// @dev            Identifies entry in the recorded approvals by keep ID and digest pair
+    /// @param _digest  Digest to check approval for
+    /// @return         Timestamp from the moment of recording the digest for signing.
+    ///                 Returns 0 if the digest was not approved for signing
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.wasDigestApprovedForSigning(_d.keepAddress, _digest);
+        return _d.approvedDigests[_digest];
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
@@ -401,8 +405,8 @@ library DepositUtils {
     /// @notice     Deletes state after termination of redemption process
     /// @dev        We keep around the requester address so we can pay them out
     function redemptionTeardown(Deposit storage _d) public {
-        // don't 0 redeemerAddress because we use it to calculate auctionTBTCAmount
-        _d.redeemerPKH = bytes20(0);
+        // don't 0 requesterAddress because we use it to calculate auctionTBTCAmount
+        _d.requesterPKH = bytes20(0);
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);
@@ -413,7 +417,7 @@ library DepositUtils {
     /// @return     the amount of ether seized
     function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.seizeSignerBonds(_d.keepAddress);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
@@ -434,7 +438,7 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepAddress);
     }
 }

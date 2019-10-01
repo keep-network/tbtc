@@ -11,7 +11,7 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -28,7 +28,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub }]
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 import { UniswapFactoryAddress } from '../../migrations/externals'
 import expectThrow from '../helpers/expectThrow'
@@ -196,7 +196,7 @@ integration('Uniswap', (accounts) => {
 
         await tbtcSystem.initialize(uniswapExchangeAddress)
 
-        deposit.setExteroriorAddresses(tbtcSystem.address, tbtcToken.address, deployed.KeepStub.address)
+        deposit.setExteroriorAddresses(tbtcSystem.address, tbtcToken.address, deployed.ECDSAKeepStub.address)
         tbtcSystem.forceMint(accounts[0], web3.utils.toBN(deposit.address))
 
         // Helpers

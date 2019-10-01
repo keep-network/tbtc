@@ -36,27 +36,25 @@ contract Deposit {
     function createNewDeposit(
         address _TBTCSystem,
         address _TBTCToken,
-        address _KeepBridge,
         uint256 _m,
         uint256 _n
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
-        self.KeepBridge = _KeepBridge;
         self.createNewDeposit(_m, _n);
         return true;
     }
 
     /// @notice                     Anyone can request redemption
-    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
+    /// @dev                        The requester specifies details about the Bitcoin redemption tx
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @return                     True if successful, otherwise revert
     function requestRedemption(
         bytes8 _outputValueBytes,
-        bytes20 _redeemerPKH
+        bytes20 _requesterPKH
     ) public returns (bool) {
-        self.requestRedemption(_outputValueBytes, _redeemerPKH);
+        self.requestRedemption(_outputValueBytes, _requesterPKH);
         return true;
     }
 
