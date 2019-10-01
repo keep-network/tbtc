@@ -393,7 +393,7 @@ contract('DepositFraud', (accounts) => {
   })
 
   // eslint-disable-next-line no-only-tests/no-only-tests
-  describe.only('validateRedeemerNotPaid', async () => {
+  describe('validateRedeemerNotPaid', async () => {
     const _txOutputVector = '0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6'
     const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
     const prevoutValueBytes = '0xf078351d00000000'
