@@ -2,7 +2,7 @@ pragma solidity 0.5.10;
 
 import {TBTCSystem} from "./TBTCSystem.sol";
 
-contract MinterAuthority {
+contract ERC20MinterAuthority {
 
     address internal _TBTCSystem;
 
