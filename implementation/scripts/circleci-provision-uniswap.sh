@@ -10,7 +10,7 @@ function fetch_uniswap_factory_address() {
 }
 
 function set_uniswap_factory_address() {
-  sed -i -e "/UniswapFactoryAddress/s/0x[a-fA-F0-9]\{0,40\}/$UNISWAP_FACTORY_ADDRESS/" ./implementation/migrations/externals.js
+  sed -i -e "/UniswapFactoryAddress/s/0x[a-fA-F0-9]\{0,40\}/${UNISWAP_FACTORY_ADDRESS}/" ./implementation/migrations/externals.js
 }
 
 fetch_uniswap_factory_address
