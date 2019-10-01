@@ -8,7 +8,7 @@
 // OUTPUT_VALUE - value to be redeemed into BTC
 // REQUESTER_PKH - public key hash of the user requesting redemption
 
-// truffle exec 0xc536685ca46654f0e8e250382132b583d25e7fdd2e 0x1111111100000000 0x3333333333333333333333333333333333333333
+// truffle exec 4_redemption.js 0xc536685ca46654f0e8e250382132b583d25e7fdd2e 0x1111111100000000 0x3333333333333333333333333333333333333333
 
 const Deposit = artifacts.require('./Deposit.sol')
 const TBTCSystem = artifacts.require('./TBTCSystem.sol')
@@ -27,11 +27,11 @@ module.exports = async function() {
 
   try {
     deposit = await Deposit.at(depositAddress)
-    depositLog = await TBTCSystem.deployed()
     tbtcSystem = await TBTCSystem.deployed()
     tbtcToken = await TBTCToken.deployed()
   } catch (err) {
-    throw new Error('contracts initialization failed', err)
+    console.error(`initialization failed: ${err}`)
+    process.exit(1)
   }
 
   await deposit.requestRedemption(
