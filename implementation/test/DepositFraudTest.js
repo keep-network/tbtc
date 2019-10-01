@@ -392,6 +392,32 @@ contract('DepositFraud', (accounts) => {
     it.skip('TODO: full test for startSignerFraudLiquidation', async () => { })
   })
 
+  // eslint-disable-next-line no-only-tests/no-only-tests
+  describe.only('validateRedeemerNotPaid', async () => {
+    const _txOutputVector = '0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6'
+    const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const prevoutValueBytes = '0xf078351d00000000'
+    const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
+
+    beforeEach(async () => {
+      await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
+    })
+
+    it('returns false if redeemer is payed', async () => {
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, 2424, 0, utils.bytes32zero)
+
+      const success = await testInstance.validateRedeemerNotPaid(_txOutputVector)
+      assert.equal(success, false)
+    })
+
+    it('returns true if redeemer is not payed', async () => {
+      await testInstance.setRequestInfo(utils.address0, '0x' + '0'.repeat(20), 2424, 0, utils.bytes32zero)
+
+      const success = await testInstance.validateRedeemerNotPaid(_txOutputVector)
+      assert.equal(success, true)
+    })
+  })
+
   describe('provideSPVFraudProof', async () => {
     // real tx from mainnet bitcoin
     const currentDiff = 6353030562983
