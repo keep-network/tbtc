@@ -73,6 +73,7 @@ library DepositRedemption {
         bytes20 _requesterPKH
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
+        require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 
         redemptionTBTCBurn(_d);
 
