@@ -199,17 +199,20 @@ library DepositLiquidation {
         _txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
         _d.checkProofFromTxId(_txId, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
+
         bytes memory _targetOutpoint = _txInputVector.extractInputAtIndex(_targetInputIndex).extractOutpoint();
         require(
             keccak256(_targetOutpoint) == keccak256(_d.utxoOutpoint),
             "No input spending custodied UTXO found at given index"
         );
+
         if (_d.requesterPKH != bytes20(0)) {
             require(
                 validateRedeemerNotPaid(_d, _txOutputVector),
                 "Found an output paying the redeemer as requested"
             );
         }
+        
         startSignerFraudLiquidation(_d);
     }
 
