@@ -212,7 +212,7 @@ library DepositLiquidation {
                 "Found an output paying the redeemer as requested"
             );
         }
-        
+
         startSignerFraudLiquidation(_d);
     }
 
@@ -226,14 +226,14 @@ library DepositLiquidation {
         bytes memory _output;
         uint256 _offset = 1;
         uint256 _permittedFeeBumps = 5;  /* TODO: can we refactor withdrawal flow to improve this? */
-        uint256 _requiredOutputSize = _d.utxoSize().sub((_d.initialRedemptionFee * (1 + _permittedFeeBumps)));
+        uint256 _requiredOutputValue = _d.utxoSize().sub((_d.initialRedemptionFee * (1 + _permittedFeeBumps)));
 
         uint8 _numOuts = uint8(_txOutputVector.slice(0, 1)[0]);
         for (uint8 i = 0; i < _numOuts; i++) {
             _output = _txOutputVector.slice(_offset, _txOutputVector.length - _offset);
             _offset += _output.determineOutputLength();
 
-            if (_output.extractValue() >= _requiredOutputSize
+            if (_output.extractValue() >= _requiredOutputValue
                 && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
                 return false;
             }
