@@ -204,8 +204,12 @@ library DepositLiquidation {
             keccak256(_targetOutpoint) == keccak256(_d.utxoOutpoint),
             "No input spending custodied UTXO found at given index"
         );
-        require(validateRedeemerNotPaid(_d, _txOutputVector), "Found an output paying the redeemer as requested");
-
+        if (_d.requesterPKH != bytes20(0)) {
+            require(
+                validateRedeemerNotPaid(_d, _txOutputVector),
+                "Found an output paying the redeemer as requested"
+            );
+        }
         startSignerFraudLiquidation(_d);
     }
 
