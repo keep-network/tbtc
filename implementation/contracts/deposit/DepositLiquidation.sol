@@ -180,7 +180,6 @@ library DepositLiquidation {
         uint8 _targetInputIndex,
         bytes memory _bitcoinHeaders
     ) public {
-        uint8 i;
         bytes32 _txId;
         require(
             !_d.inFunding() && !_d.inFundingFailure(),
