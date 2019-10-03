@@ -4,7 +4,7 @@
 % !include = _common.tikz
 % Underline that goes through descender.
 
-\global\pdfpageattr\expandafter{\the\pdfpageattr/Rotate 90}
+\global\pdfpageattr\expandafter{\the\pdfpageattr}
 
 \begin{tikzpicture}
   \begin{umlseqdiag}
