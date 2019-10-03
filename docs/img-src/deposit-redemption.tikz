@@ -2,7 +2,6 @@
 % !texpackages = rotating,tikz-uml,xstring,pgfopts
 % !tikzlibraries = arrows.meta,positioning
 % !include = _common.tikz
-% !figuretype = sidewaysfigure
 % Underline that goes through descender.
 
 \global\pdfpageattr\expandafter{\the\pdfpageattr/Rotate 90}
