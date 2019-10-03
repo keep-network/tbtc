@@ -235,7 +235,8 @@ library DepositLiquidation {
             _offset += _output.determineOutputLength();
 
             if (_output.extractValue() >= _requiredOutputValue
-                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
+                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))
+                && keccak256(_output.slice(8, 3)) == keccak256(hex"160014")) {
                 return false;
             }
         }
