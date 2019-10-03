@@ -12,7 +12,8 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
+
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -43,7 +44,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub }]
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -72,7 +73,7 @@ const _signerPubkeyY = '0xe8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33e
 const _merkleProof = '0x886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe049'
 
 
-contract('Deposit', (accounts) => {
+contract('DepositFraud', (accounts) => {
   let deployed
   let testInstance
   let fundingProofTimerStart
@@ -81,17 +82,27 @@ contract('Deposit', (accounts) => {
   let tbtcSystemStub
 
   before(async () => {
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
+
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(tbtcSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
+
+    await testInstance.setExteriorAddresses(
+      tbtcSystemStub.address,
+      tbtcToken.address
+    )
+
     tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+
     beneficiary = accounts[4]
   })
 
   beforeEach(async () => {
     await testInstance.reset()
+    await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   describe('provideFundingECDSAFraudProof', async () => {
@@ -105,22 +116,24 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1 // has elapsed
-      await deployed.KeepStub.setSuccess(true)
+      await deployed.ECDSAKeepStub.setSuccess(true)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates to awaiting fraud funding proof and logs FraudDuringSetup if the timer has not elapsed', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero) // timer has not elapsed
+
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart * 5) // timer has not elapsed
+
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
 
-      const keepState = await testInstance.getKeepInfo.call()
-      assert(keepState[2].gtn(fundingProofTimerStart), 'fundingProofTimerStart did not increase')
+      const actualFundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
+      assert(actualFundingProofTimerStart.gtn(fundingProofTimerStart), 'fundingProofTimerStart did not increase')
 
       const eventList = await tbtcSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList.length, 1)
@@ -153,7 +166,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the signature is not fraud', async () => {
-      await deployed.KeepStub.setSuccess(false)
+      await deployed.ECDSAKeepStub.setSuccess(false)
 
       await expectThrow(
         testInstance.provideFundingECDSAFraudProof(
@@ -172,10 +185,10 @@ contract('Deposit', (accounts) => {
       const blockNumber = await web3.eth.getBlock('latest').number
       await testInstance.send(bond, { from: beneficiary })
       const initialBalance = await web3.eth.getBalance(beneficiary)
-      const signerBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      const signerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      await deployed.KeepStub.setBondAmount(bond)
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 6, utils.bytes32zero, utils.bytes32zero)
+      await deployed.ECDSAKeepStub.setBondAmount(bond)
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart * 6)
       await testInstance.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
 
       const finalBalance = await web3.eth.getBalance(beneficiary)
@@ -198,9 +211,11 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1 // timer has elapsed
+
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart)
+
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates state to setup failed, logs SetupFailed, and deconstes state', async () => {
@@ -208,13 +223,18 @@ contract('Deposit', (accounts) => {
 
       await testInstance.notifyFraudFundingTimeout()
 
-      const keepState = await testInstance.getKeepInfo.call()
+      const keepAddress = await testInstance.getKeepAddress.call()
+      assert.equal(keepAddress, ADDRESS_ZERO, 'Keep address not deconsted')
 
-      assert.equal(keepState[0], ADDRESS_ZERO, 'Keep address not deconsted')
-      assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted')
-      assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted')
-      assert.equal(keepState[3], utils.bytes32zero) // pubkey X
-      assert.equal(keepState[4], utils.bytes32zero) // pubkey Y
+      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
+      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not deconsted')
+
+      const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
+      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not deconsted')
+
+      const signingGroupPublicKey = await testInstance.getSigningGroupPublicKey.call()
+      assert.equal(signingGroupPublicKey[0], utils.bytes32zero) // pubkey X
+      assert.equal(signingGroupPublicKey[1], utils.bytes32zero) // pubkey Y
 
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.FAILED_SETUP)
@@ -233,7 +253,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if the timer has not elapsed', async () => {
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart * 5, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart * 5)
 
       await expectThrow(
         testInstance.notifyFraudFundingTimeout(),
@@ -243,9 +263,10 @@ contract('Deposit', (accounts) => {
 
     it('asserts that it partially slashes signers', async () => {
       const initialBalance = await web3.eth.getBalance(beneficiary)
-      const toSeize = await web3.eth.getBalance(deployed.KeepStub.address)
+      const toSeize = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, fundingProofTimerStart, utils.bytes32zero, utils.bytes32zero)
+      await testInstance.setFundingProofTimerStart(fundingProofTimerStart)
+
       await testInstance.notifyFraudFundingTimeout()
 
       const divisor = await deployed.TBTCConstants.getFundingFraudPartialSlashDivisor.call()
@@ -259,10 +280,10 @@ contract('Deposit', (accounts) => {
 
   describe('provideFraudBTCFundingProof', async () => {
     beforeEach(async () => {
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, _signerPubkeyX, _signerPubkeyY)
+      await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
       await tbtcSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('updates to setup failed, logs SetupFailed, ', async () => {
@@ -270,12 +291,18 @@ contract('Deposit', (accounts) => {
 
       await testInstance.provideFraudBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
-      const keepState = await testInstance.getKeepInfo.call()
-      assert.equal(keepState[0], ADDRESS_ZERO, 'Keep address not deconsted')
-      assert(keepState[1].eqn(0), 'signingGroupRequestedAt not deconsted')
-      assert(keepState[2].eqn(0), 'fundingProofTimerStart not deconsted')
-      assert.equal(keepState[3], utils.bytes32zero) // pubkey X
-      assert.equal(keepState[4], utils.bytes32zero) // pubkey Y
+      const keepAddress = await testInstance.getKeepAddress.call()
+      assert.equal(keepAddress, ADDRESS_ZERO, 'Keep address not deconsted')
+
+      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
+      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not deconsted')
+
+      const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
+      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not deconsted')
+
+      const signingGroupPublicKey = await testInstance.getSigningGroupPublicKey.call()
+      assert.equal(signingGroupPublicKey[0], utils.bytes32zero) // pubkey X
+      assert.equal(signingGroupPublicKey[1], utils.bytes32zero) // pubkey Y
 
       const depostState = await testInstance.getState.call()
       expect(depostState).to.eq.BN(utils.states.FAILED_SETUP)
@@ -304,7 +331,7 @@ contract('Deposit', (accounts) => {
 
     it('assert distribute signer bonds to funder', async () => {
       const initialBalance = await web3.eth.getBalance(beneficiary)
-      const signerBond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const signerBond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
       await testInstance.provideFraudBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
@@ -319,7 +346,7 @@ contract('Deposit', (accounts) => {
   describe('provideECDSAFraudProof', async () => {
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('executes', async () => {
@@ -354,7 +381,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if signature is not fraud according to Keep', async () => {
-      await deployed.KeepStub.setSuccess(false)
+      await deployed.ECDSAKeepStub.setSuccess(false)
 
       await expectThrow(
         testInstance.provideECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00'),
@@ -386,7 +413,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setState(utils.states.ACTIVE)
       await tbtcSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it('executes', async () => {

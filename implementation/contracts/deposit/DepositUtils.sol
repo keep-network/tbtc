@@ -7,7 +7,7 @@ import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositUtils {
@@ -24,7 +24,6 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
-        address KeepBridge;
         uint8 currentState;
 
         // SET ON FRAUD
@@ -51,6 +50,11 @@ library DepositUtils {
         bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
+
+        /// @notice Map of timestamps for transaction digests approved for signing
+        /// @dev Holds a timestamp from the moment when the transaction digest
+        /// was approved for signing
+        mapping (bytes32 => uint256) approvedDigests;
     }
 
     /// @notice         Gets the current block difficulty
@@ -304,7 +308,7 @@ library DepositUtils {
     /// @dev        Calls the keep contract to do so
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.checkBondAmount(_d.keepAddress);
     }
 
@@ -315,13 +319,13 @@ library DepositUtils {
         return abi.encodePacked(_b).reverseEndianness().bytesToUint();
     }
 
-    /// @notice         determines whether a digest has been approved for our keep group
-    /// @dev            calls out to the keep contract, storing a 256bit int costs the same as a bool
-    /// @param  _digest the digest to check approval time for
-    /// @return         the time it was approved. 0 if unapproved
+    /// @notice         Gets timestamp of digest approval for signing
+    /// @dev            Identifies entry in the recorded approvals by keep ID and digest pair
+    /// @param _digest  Digest to check approval for
+    /// @return         Timestamp from the moment of recording the digest for signing.
+    ///                 Returns 0 if the digest was not approved for signing
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.wasDigestApprovedForSigning(_d.keepAddress, _digest);
+        return _d.approvedDigests[_digest];
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
@@ -347,7 +351,7 @@ library DepositUtils {
     /// @return     the amount of ether seized
     function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.seizeSignerBonds(_d.keepAddress);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
@@ -369,7 +373,7 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepAddress);
     }
 }

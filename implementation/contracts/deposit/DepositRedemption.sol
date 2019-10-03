@@ -6,7 +6,8 @@ import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 import {CheckBitcoinSigs} from "@summa-tx/bitcoin-spv-sol/contracts/CheckBitcoinSigs.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
+import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
@@ -33,19 +34,20 @@ library DepositRedemption {
         address _tbtcTokenAddress = _d.TBTCToken;
         TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
-        _tbtcToken.approve(_d.KeepBridge, DepositUtils.signerFee());
+        _tbtcToken.approve(_d.keepAddress, DepositUtils.signerFee());
         _keep.distributeERC20ToKeepGroup(_d.keepAddress, _tbtcTokenAddress, DepositUtils.signerFee());
     }
 
-    /// @notice         approves a digest for signing by our keep group
-    /// @dev            calls out to the keep contract
-    /// @param  _digest the digest to approve
-    /// @return         true if approved, otherwise revert
-    function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) public returns (bool) {
-        IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.approveDigest(_d.keepAddress, _digest);
+    /// @notice Approves digest for signing by a keep
+    /// @dev Calls given keep to sign the digest. Records a current timestamp
+    /// for given digest
+    /// @param _digest Digest to approve
+    function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) internal {
+        IECDSAKeep(_d.keepAddress).sign(_digest);
+
+        _d.approvedDigests[_digest] = block.timestamp;
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
@@ -93,7 +95,8 @@ library DepositRedemption {
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash), "Keep returned false");
+
+        approveDigest(_d, _sighash);
 
         _d.setAwaitingWithdrawalSignature();
         _d.logRedemptionRequested(
@@ -168,7 +171,8 @@ library DepositRedemption {
         // Ratchet the signature and redemption proof timeouts
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
-        require(approveDigest(_d, _sighash), "Keep returned false");
+
+        approveDigest(_d, _sighash);
 
         // Go back to waiting for a signature
         _d.setAwaitingWithdrawalSignature();

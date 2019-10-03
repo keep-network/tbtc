@@ -36,13 +36,11 @@ contract Deposit {
     function createNewDeposit(
         address _TBTCSystem,
         address _TBTCToken,
-        address _KeepBridge,
         uint256 _m,
         uint256 _n
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
-        self.KeepBridge = _KeepBridge;
         self.createNewDeposit(_m, _n);
         return true;
     }
