@@ -168,13 +168,17 @@ jobs:
       - attach_workspace:
           at: implementation
       - run:
-          name: Set Gcloud Auth
+          name: Provision UniswapFactory Contract Address
           command: |
-            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
+            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+            export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
+            implementation/scripts/circleci-provision-uniswap.sh
       - run:
           name: Migrate Contracts
           command: |
+            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
             mkdir -p /tmp/tbtc/contracts
