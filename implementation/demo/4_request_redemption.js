@@ -7,16 +7,18 @@
 // DEPOSIT_ADDRESS - Address of Deposit contract instance
 // OUTPUT_VALUE - value to be redeemed into BTC
 // REQUESTER_PKH - public key hash of the user requesting redemption
-// truffle exec 4_redemption.js 0xc536685ca46654f0e8e250382132b583d25e7fdd2e 0x1111111100000000 0x3333333333333333333333333333333333333333
+// truffle exec 4_redemption.js 0xc536685ca46654f0e8e250382132b583d25e7fdd2e 200 0x3333333333333333333333333333333333333333
 
 const Deposit = artifacts.require('./Deposit.sol')
 const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 const TBTCToken = artifacts.require('./TBTCToken.sol')
 
 module.exports = async function() {
+  // Parse arguments
   const depositAddress = process.argv[4]
+  const outputValue = process.argv[5]
+  const outputValueBytes = web3.utils.padLeft(web3.utils.numberToHex(outputValue), 16)
   const requesterPKH = process.argv[5]
-  const outputValue = process.argv[6]
 
   /* eslint-disable no-unused-vars */
   let deposit
@@ -34,8 +36,8 @@ module.exports = async function() {
   }
 
   await deposit.requestRedemption(
-    outputValue, // _outputValueBytes
-    requesterPKH, // _requesterPKH
+    outputValueBytes,
+    requesterPKH,
   ).catch((err) => {
     console.error(`requesting redemption failed: ${err}`)
     process.exit(1)
