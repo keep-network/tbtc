@@ -225,7 +225,7 @@ library DepositLiquidation {
     ) internal view returns (bool){
         bytes memory _output;
         uint256 _offset = 1;
-        uint256 _permittedFeeBumps = 5;  /* TODO: can we refactor withdrawal flow to improve this? */
+        uint256 _permittedFeeBumps = TBTCConstants.getPermittedFeeBumps();  /* TODO: can we refactor withdrawal flow to improve this? */
         uint256 _requiredOutputValue = _d.utxoSize().sub((_d.initialRedemptionFee * (1 + _permittedFeeBumps)));
 
         uint8 _numOuts = uint8(_txOutputVector.slice(0, 1)[0]);
