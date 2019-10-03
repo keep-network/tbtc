@@ -236,8 +236,8 @@ library DepositRedemption {
         require(_d.inRedemption(), "Redemption proof only allowed from redemption flow");
 
         _fundingOutputValue = redemptionTransactionChecks(_d, _txInputVector, _txOutputVector);
-        _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
+        _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
         _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
         require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, "Fee unexpectedly very high");
