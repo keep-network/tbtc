@@ -12,7 +12,7 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -39,8 +39,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // real tx from mainnet bitcoin, interpreted as funding tx
 // tx source: https://www.blockchain.com/btc/tx/7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f
@@ -68,49 +67,59 @@ contract('DepositUtils', (accounts) => {
   let testUtilsInstance
   let beneficiary
   let tbtcToken
+  const funderBondAmount = new BN('10').pow(new BN('5'))
+  let tbtcSystemStub
 
   before(async () => {
-    deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
-    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
-    testUtilsInstance = deployed.TestDepositUtils
     beneficiary = accounts[2]
-    deployed.TBTCSystemStub.mint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
 
+    deployed = await utils.deploySystem(TEST_DEPOSIT_UTILS_DEPLOY)
+
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+
+    tbtcToken = await TestToken.new(tbtcSystemStub.address)
+
+    testUtilsInstance = deployed.TestDepositUtils
+
+    tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
 
     await testUtilsInstance.createNewDeposit(
-      deployed.TBTCSystemStub.address,
+      tbtcSystemStub.address,
       tbtcToken.address,
-      deployed.KeepStub.address,
       1, // m
-      1) // n
+      1, // n
+      { value: funderBondAmount }
+    )
+
+    await testUtilsInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   describe('currentBlockDifficulty()', async () => {
     it('calls out to the system', async () => {
       const blockDifficulty = await testUtilsInstance.currentBlockDifficulty.call()
-      assert(blockDifficulty.eq(new BN(1)))
+      expect(blockDifficulty).to.eq.BN(1)
 
-      await deployed.TBTCSystemStub.setCurrentDiff(33)
+      await tbtcSystemStub.setCurrentDiff(33)
       const newBlockDifficulty = await testUtilsInstance.currentBlockDifficulty.call()
-      assert(newBlockDifficulty.eq(new BN(33)))
+      expect(newBlockDifficulty).to.eq.BN(33)
     })
   })
 
   describe('previousBlockDifficulty()', async () => {
     it('calls out to the system', async () => {
       const blockDifficulty = await testUtilsInstance.previousBlockDifficulty.call()
-      assert(blockDifficulty.eq(new BN(1)))
+      expect(blockDifficulty).to.eq.BN(1)
 
-      await deployed.TBTCSystemStub.setPreviousDiff(44)
+      await tbtcSystemStub.setPreviousDiff(44)
       const newBlockDifficulty = await testUtilsInstance.previousBlockDifficulty.call()
-      assert(newBlockDifficulty.eq(new BN(44)))
+      expect(newBlockDifficulty).to.eq.BN(44)
     })
   })
 
   describe('evaluateProofDifficulty()', async () => {
     it('reverts on unknown difficulty', async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(1)
-      await deployed.TBTCSystemStub.setPreviousDiff(1)
+      await tbtcSystemStub.setCurrentDiff(1)
+      await tbtcSystemStub.setPreviousDiff(1)
 
       await expectThrow(
         testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0]),
@@ -119,13 +128,13 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('evaluates a header proof with previous', async () => {
-      await deployed.TBTCSystemStub.setPreviousDiff(5646403851534)
+      await tbtcSystemStub.setPreviousDiff(5646403851534)
       await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
     it('evaluates a header proof with current', async () => {
-      await deployed.TBTCSystemStub.setPreviousDiff(1)
-      await deployed.TBTCSystemStub.setCurrentDiff(5646403851534)
+      await tbtcSystemStub.setPreviousDiff(1)
+      await tbtcSystemStub.setCurrentDiff(5646403851534)
       await testUtilsInstance.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
@@ -138,7 +147,7 @@ contract('DepositUtils', (accounts) => {
 
     describe('reverts on a ValidateSPV errors', async () => {
       before(async () => {
-        await deployed.TBTCSystemStub.setCurrentDiff(5646403851534)
+        await tbtcSystemStub.setCurrentDiff(5646403851534)
       })
 
       it('bad headers chain length work', async () => {
@@ -178,13 +187,13 @@ contract('DepositUtils', (accounts) => {
 
   describe('checkProofFromTx()', async () => {
     it('returns the correct _txid', async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
+      await tbtcSystemStub.setCurrentDiff(6379265451411)
       const res = await testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
       assert.equal(res, utils.TX.tx_id_le)
     })
 
     it('fails with a broken proof', async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
+      await tbtcSystemStub.setCurrentDiff(6379265451411)
 
       await expectThrow(
         testUtilsInstance.checkProofFromTx.call(utils.TX.tx, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0]),
@@ -193,7 +202,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails with a broken tx', async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(6379265451411)
+      await tbtcSystemStub.setCurrentDiff(6379265451411)
 
       await expectThrow(
         testUtilsInstance.checkProofFromTx.call('0x00', utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0]),
@@ -204,7 +213,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('checkProofFromTxId()', async () => {
     before(async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(utils.TX.difficulty)
+      await tbtcSystemStub.setCurrentDiff(utils.TX.difficulty)
     })
 
     it('does not error', async () => {
@@ -219,7 +228,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails with bad difficulty', async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(1)
+      await tbtcSystemStub.setCurrentDiff(1)
 
       await expectThrow(
         testUtilsInstance.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0]),
@@ -299,7 +308,7 @@ contract('DepositUtils', (accounts) => {
   describe('validateAndParseFundingSPVProof()', async () => {
     before(async () => {
       await testUtilsInstance.setPubKey(_signerPubkeyX, _signerPubkeyY)
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDifficulty)
+      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
     })
 
     it('returns correct value and outpoint', async () => {
@@ -332,14 +341,14 @@ contract('DepositUtils', (accounts) => {
   describe('signerFee()', async () => {
     it('returns a derived constant', async () => {
       const signerFee = await testUtilsInstance.signerFee.call()
-      assert(signerFee.eq(new BN(5000000000000000)))
+      expect(signerFee).to.eq.BN(5000000000000000)
     })
   })
 
   describe('beneficiaryReward()', async () => {
     it('returns a derived constant', async () => {
       const beneficiaryReward = await testUtilsInstance.beneficiaryReward.call()
-      assert(beneficiaryReward.eq(new BN(10 ** 5)))
+      expect(beneficiaryReward).to.eq.BN(10 ** 5)
     })
   })
 
@@ -387,55 +396,68 @@ contract('DepositUtils', (accounts) => {
   describe('utxoSize()', async () => {
     it('returns the state\'s utxoSizeBytes as an integer', async () => {
       const utxoSize = await testUtilsInstance.utxoSize.call()
-      assert(utxoSize.eq(new BN(0)))
+      expect(utxoSize).to.eq.BN(0)
 
       await testUtilsInstance.setUTXOInfo('0x11223344', 1, '0x')
       const newUtxoSize = await testUtilsInstance.utxoSize.call()
-      assert(newUtxoSize.eq(new BN('44332211', 16)))
+      expect(newUtxoSize).to.eq.BN(new BN('44332211', 16))
     })
   })
 
   describe('fetchOraclePrice()', async () => {
     it('calls out to the system', async () => {
       const oraclePrice = await testUtilsInstance.fetchOraclePrice.call()
-      assert(oraclePrice.eq(new BN('1000000000000', 10)))
+      expect(oraclePrice).to.eq.BN(1000000000000)
 
-      await deployed.TBTCSystemStub.setOraclePrice(44)
+      await tbtcSystemStub.setOraclePrice(44)
       const newOraclePrice = await testUtilsInstance.fetchOraclePrice.call()
-      assert(newOraclePrice.eq(new BN(44)))
+      expect(newOraclePrice).to.eq.BN(44)
     })
   })
 
   describe('fetchBondAmount()', async () => {
     it('calls out to the keep system', async () => {
       const bondAmount = await testUtilsInstance.fetchBondAmount.call()
-      assert(bondAmount.eq(new BN(10000)))
+      expect(bondAmount).to.eq.BN(10000)
 
-      await deployed.KeepStub.setBondAmount(44)
+      await deployed.ECDSAKeepStub.setBondAmount(44)
       const newBondAmount = await testUtilsInstance.fetchBondAmount.call()
-      assert(newBondAmount.eq(new BN(44)))
+      expect(newBondAmount).to.eq.BN(44)
     })
   })
 
   describe('bytes8LEToUint()', async () => {
     it('interprets bytes as LE uints ', async () => {
       let res = await testUtilsInstance.bytes8LEToUint.call('0x' + '00'.repeat(8))
-      assert(res.eq(new BN(0)))
+      expect(res).to.eq.BN(0)
+
       res = await testUtilsInstance.bytes8LEToUint.call('0x11223344')
-      assert(res.eq(new BN('44332211', 16)))
+      expect(res).to.eq.BN(new BN('44332211', 16))
+
       res = await testUtilsInstance.bytes8LEToUint.call('0x1100229933884477')
-      assert(res.eq(new BN('7744883399220011', 16)))
+      expect(res).to.eq.BN(new BN('7744883399220011', 16))
     })
   })
 
   describe('wasDigestApprovedForSigning()', async () => {
-    it('calls out to the keep system', async () => {
-      const approved = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
-      assert.equal(approved, false)
+    it('returns 0 when digest has not been approved', async () => {
+      const digest = '0x' + '71'.repeat(32)
+      const expectedApprovalTime = new BN(0)
 
-      await deployed.KeepStub.approveDigest('0x0000000000000000000000000000000000000007', '0x' + '00'.repeat(32))
-      const newApproved = await testUtilsInstance.wasDigestApprovedForSigning.call('0x' + '00'.repeat(32))
-      assert(newApproved.eq(new BN(100)))
+      const approvalTime = await testUtilsInstance.wasDigestApprovedForSigning.call(digest)
+
+      expect(approvalTime).to.eq.BN(expectedApprovalTime)
+    })
+
+    it('returns approval time for approved digest', async () => {
+      const digest = '0x' + '02'.repeat(32)
+      const expectedApprovalTime = new BN(100)
+
+      await testUtilsInstance.setDigestApprovedAtTime(digest, expectedApprovalTime)
+
+      const approvalTime = await testUtilsInstance.wasDigestApprovedForSigning.call(digest)
+
+      expect(approvalTime).to.eq.BN(expectedApprovalTime)
     })
   })
 
@@ -460,10 +482,12 @@ contract('DepositUtils', (accounts) => {
   describe('seizeSignerBonds()', async () => {
     it('calls out to the keep system and returns the seized amount', async () => {
       const value = 5000
-      await deployed.KeepStub.send(value, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(value, { from: accounts[0] })
+
       const seized = await testUtilsInstance.seizeSignerBonds.call()
       await testUtilsInstance.seizeSignerBonds()
-      assert(seized.eq(new BN(value)))
+
+      expect(seized).to.eq.BN(value)
     })
 
     it('errors if no funds were seized', async () => {
@@ -495,7 +519,7 @@ contract('DepositUtils', (accounts) => {
       const value = 10000
       await testUtilsInstance.send(value, { from: accounts[0] })
       await testUtilsInstance.pushFundsToKeepGroup(value)
-      const keepBalance = await web3.eth.getBalance(deployed.KeepStub.address)
+      const keepBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(keepBalance, value) // web3 balances are integers I guess
     })
 

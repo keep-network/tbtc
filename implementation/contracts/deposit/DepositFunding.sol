@@ -3,8 +3,11 @@ pragma solidity ^0.5.10;
 import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
 import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
 import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
+
+import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
+
 import {TBTCToken} from "../system/TBTCToken.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {TBTCSystem} from "../system/TBTCSystem.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositStates} from "./DepositStates.sol";
@@ -39,17 +42,6 @@ library DepositFunding {
         _d.signingGroupPubkeyY = bytes32(0);
     }
 
-    /// @notice         get the signer pubkey for our keep
-    /// @dev            calls out to the keep contract, should get 64 bytes back
-    /// @return         the 64 byte pubkey
-    function getKeepPubkeyResult(DepositUtils.Deposit storage _d) public view returns (bytes memory) {
-        IKeep _keep = IKeep(_d.KeepBridge);
-        bytes memory _pubkey = _keep.getKeepPubkey(_d.keepAddress);
-        /* solium-disable-next-line */
-        require(_pubkey.length == 64, "public key not set or not 64-bytes long");
-        return _pubkey;
-    }
-
     /// @notice         The system can spin up a new deposit
     /// @dev            This should be called by an approved contract, not a developer
     /// @param _d       deposit storage pointer
@@ -62,11 +54,13 @@ library DepositFunding {
         uint256 _n
     ) public returns (bool) {
         require(_d.inStart(), "Deposit setup already requested");
-
-        IKeep _keep = IKeep(_d.KeepBridge);
-
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _keep.requestNewKeep(_m, _n);  // kinda gross but
+        require(msg.value == TBTCConstants.getFunderBondAmount(), "incorrect funder bond amount");
+
+        // TODO: Whole value is stored as funder bond in the deposit, but part
+        // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
+        _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep(_m, _n);
+
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
@@ -150,10 +144,12 @@ library DepositFunding {
     /// @return             True if successful, otherwise revert
     function retrieveSignerPubkey(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not currently awaiting signer setup");
-        bytes memory _keepResult = getKeepPubkeyResult(_d);
 
-        _d.signingGroupPubkeyX = _keepResult.slice(0, 32).toBytes32();
-        _d.signingGroupPubkeyY = _keepResult.slice(32, 32).toBytes32();
+        bytes memory _publicKey = IECDSAKeep(_d.keepAddress).getPublicKey();
+        require(_publicKey.length == 64, "public key not set or not 64-bytes long");
+
+        _d.signingGroupPubkeyX = _publicKey.slice(0, 32).toBytes32();
+        _d.signingGroupPubkeyY = _publicKey.slice(32, 32).toBytes32();
         require(_d.signingGroupPubkeyY != bytes32(0) && _d.signingGroupPubkeyX != bytes32(0), "Keep returned bad pubkey");
         _d.fundingProofTimerStart = block.timestamp;
 

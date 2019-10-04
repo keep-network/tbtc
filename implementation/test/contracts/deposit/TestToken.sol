@@ -24,7 +24,7 @@ contract TestToken is TBTCToken{
         return true;
     }
 
-    /// @dev             We can't call TBTCToken burn function from deposit Test becuase of ACL. 
+    /// @dev             We can't call TBTCToken burn function from deposit Test becuase of ACL.
     ///                  This function bypasses ACL and can be called in Deposit tests.
     ///                  Burns an amount of the token of a given account
     ///                  deducting from the sender's allowance for said account.
@@ -35,5 +35,27 @@ contract TestToken is TBTCToken{
         // NOTE: this uses internal function _burn instead of _burnFrom.
         // This will bypass allowance check for now.
         _burn(_account, _amount);
+    }
+
+    /// @dev                Uses exposed token functions to reset caller's balance.
+    /// @param _newBalance  New balance to assign to caller
+    function resetBalance(uint256 _newBalance) public {
+        uint256 currentBalance = balanceOf(msg.sender);
+        if(currentBalance > 0){
+            forceBurn(msg.sender, currentBalance);
+        }
+        forceMint(msg.sender, _newBalance);
+    }
+
+    /// @dev                   Uses exposed token functions to reset the allowance
+    ///                        of a given account.
+    /// @param _spender        The allowed account.
+    /// @param _newAllowance   New allowance to assign.
+    function resetAllowance(address _spender, uint256 _newAllowance) public {
+        uint256 currentAllowance = allowance(msg.sender, _spender);
+        if (currentAllowance > 0){
+            decreaseAllowance(_spender, currentAllowance);
+        }
+        approve(_spender, _newAllowance);
     }
 }

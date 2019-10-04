@@ -32,14 +32,12 @@ contract DepositFactory is CloneFactory{
     ///                        Deposits created this way will never pass by state 0 (START)
     /// @param _TBTCSystem     Address of system contract
     /// @param _TBTCToken      Address of TBTC token contract
-    /// @param _KeepBridge     Address of Keep Bridge contract
     /// @param _keepThreshold  Minimum number of honest keep members
     /// @param _keepSize       Number of all members in a keep
     /// @return                True if successful, otherwise revert
     function createDeposit (
         address _TBTCSystem,
         address _TBTCToken,
-        address _KeepBridge,
         uint256 _keepThreshold,
         uint256 _keepSize
     ) public payable returns(address) {
@@ -48,7 +46,6 @@ contract DepositFactory is CloneFactory{
         Deposit(address(uint160(cloneAddress))).createNewDeposit.value(msg.value)(
             _TBTCSystem,
             _TBTCToken,
-            _KeepBridge,
             _keepThreshold,
             _keepSize);
 
