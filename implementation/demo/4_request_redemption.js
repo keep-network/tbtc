@@ -10,26 +10,18 @@
 // truffle exec 4_redemption.js 0xc536685ca46654f0e8e250382132b583d25e7fdd2e 200 0x3333333333333333333333333333333333333333
 
 const Deposit = artifacts.require('./Deposit.sol')
-const TBTCSystem = artifacts.require('./TBTCSystem.sol')
-const TBTCToken = artifacts.require('./TBTCToken.sol')
 
 module.exports = async function() {
   // Parse arguments
   const depositAddress = process.argv[4]
   const outputValue = process.argv[5]
   const outputValueBytes = web3.utils.padLeft(web3.utils.numberToHex(outputValue), 16)
-  const requesterPKH = process.argv[5]
+  const requesterPKH = process.argv[6]
 
-  /* eslint-disable no-unused-vars */
   let deposit
-  let tbtcSystem
-  let tbtcToken
-  /* eslint-enable no-unused-vars */
 
   try {
     deposit = await Deposit.at(depositAddress)
-    tbtcSystem = await TBTCSystem.deployed()
-    tbtcToken = await TBTCToken.deployed()
   } catch (err) {
     console.error(`initialization failed: ${err}`)
     process.exit(1)
