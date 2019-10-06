@@ -46,7 +46,7 @@ contract Deposit {
     }
 
     /// @notice                     Anyone can request redemption
-    /// @dev                        The requester specifies details about the Bitcoin redemption tx
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @return                     True if successful, otherwise revert
