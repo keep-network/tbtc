@@ -194,20 +194,13 @@ integration('Uniswap', (accounts) => {
         const uniswapExchangeAddress = await uniswapFactory.getExchange(tbtcToken.address)
         uniswapExchange = await IUniswapExchange.at(uniswapExchangeAddress)
 
-        await tbtcSystem.initialize(uniswapExchangeAddress)
+        await tbtcSystem.reinitialize(uniswapExchangeAddress)
 
         deposit.setExteroriorAddresses(tbtcSystem.address, tbtcToken.address, deployed.ECDSAKeepStub.address)
         tbtcSystem.forceMint(accounts[0], web3.utils.toBN(deposit.address))
 
         // Helpers
         assertBalance = new AssertBalanceHelpers(tbtcToken)
-      })
-
-      it('returns false if address(exchange) = 0x0', async () => {
-        await tbtcSystem.reinitialize('0x0000000000000000000000000000000000000000')
-
-        const retval = await deposit.attemptToLiquidateOnchain.call()
-        expect(retval).to.be.false
       })
 
       it('liquidates using Uniswap successfully', async () => {
