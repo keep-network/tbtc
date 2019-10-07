@@ -19,12 +19,12 @@ fetch_uniswap_factory_address
 set_uniswap_factory_address
 
 # KeepRegistryAddress: Migration from keep-network/keep-tecdsa
-# KEEP_TECDSA_CONTRACT_DATA is set in the CircleCI job config
+# KEEP_REGISTRY_CONTRACT_DATA is set in the CircleCI job config
 # ETH_NETWORK_ID is set in the CircleCI context for each deployed environment
 KEEP_REGISTRY_ADDRESS=""
 
 function fetch_keep_registry_address() {
-  gsutil -q cp gs://keep-dev-contract-data/keep-tecdsa/${KEEP_TECDSA_CONTRACT_DATA} ./
+  gsutil -q cp gs://keep-dev-contract-data/keep-tecdsa/${KEEP_REGISTRY_CONTRACT_DATA} ./
   KEEP_REGISTRY_ADDRESS=$(cat KeepRegistry.json | jq '.networks["${ETH_NETWORK_ID}"].address' | tr -d '"')
 }
 
