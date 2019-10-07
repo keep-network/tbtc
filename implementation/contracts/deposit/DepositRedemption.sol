@@ -256,7 +256,7 @@ library DepositRedemption {
 
     /// @notice                 Check the redemption transaction input and output vector to ensure the transaction spends
     ///                         the correct UTXO and sends value to the appropreate public key hash
-    /// @dev                    We only look at the first input and first output. Revert If we find the wrong UTXO or value recipient.
+    /// @dev                    We only look at the first input and first output. Revert if we find the wrong UTXO or value recipient.
     ///                         It's safe to look at only the first input/output as anything that breaks this can be considered fraud
     ///                         and can be caught by ECDSAFraudProof
     /// @param  _d              deposit storage pointer
