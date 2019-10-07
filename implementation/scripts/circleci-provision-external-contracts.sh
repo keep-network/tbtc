@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 
+
+# UniswapFactoryAddress: Migration from keep-network/uniswap
 UNISWAP_FACTORY_ADDRESS=""
 
 function fetch_uniswap_factory_address() {
@@ -14,3 +16,15 @@ function set_uniswap_factory_address() {
 
 fetch_uniswap_factory_address
 set_uniswap_factory_address
+
+# KeepRegistryAddress: Migration from keep-network/keep-tecdsa
+KEEP_REGISTRY_ADDRESS=""
+
+function fetch_keep_registry_address() {
+  gsutil -q cp gs://keep-dev-contract-data/keep-tecdsa/${KEEP_TECDSA_CONTRACT_DATA} ./
+  KEEP_REGISTRY_ADDRESS=$(cat KeepRegistry.json | jq '.networks["${ETH_NETWORK_ID}"].address' | tr -d '"')
+}
+
+function set_keep_registry_address() {
+  sed -i -e "/KeepRegistryAddress/s/0x[a-fA-F0-9]\{0,40\}/${KEEP_REGISTRY_ADDRESS}/" ./implementation/migrations/externals.js
+}
