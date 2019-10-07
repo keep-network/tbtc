@@ -402,21 +402,21 @@ contract('DepositFraud', (accounts) => {
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
     })
 
-    it('returns false if redeemer is payed and value is sufficient', async () => {
+    it('returns false if redeemer is paid and value is sufficient', async () => {
       await testInstance.setRequestInfo(utils.address0, requesterPKH, 2424, 0, utils.bytes32zero)
 
       const success = await testInstance.validateRedeemerNotPaid(_txOutputVector)
       assert.equal(success, false)
     })
 
-    it('returns false if redeemer is payed and value is sufficient (long output vector)', async () => {
+    it('returns false if redeemer is paid, value is sufficient and output is at 3rd position', async () => {
       await testInstance.setRequestInfo(utils.address0, requesterPKH, 2424, 0, utils.bytes32zero)
 
       const success = await testInstance.validateRedeemerNotPaid(_longTxOutputVector)
       assert.equal(success, false)
     })
 
-    it('returns true if redeemer is not payed', async () => {
+    it('returns true if redeemer is not paid', async () => {
       await testInstance.setRequestInfo(utils.address0, '0x' + '0'.repeat(20), 2424, 0, utils.bytes32zero)
 
       const success = await testInstance.validateRedeemerNotPaid(_txOutputVector)
