@@ -173,7 +173,8 @@ jobs:
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
-            implementation/scripts/circleci-provision-uniswap.sh
+            export KEEP_REGISTRY_CONTRACT_DATA="KeepRegistry.json"
+            implementation/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
           command: |
