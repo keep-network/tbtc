@@ -15,9 +15,6 @@ function set_uniswap_factory_address() {
   sed -i -e "/UniswapFactoryAddress/s/0x[a-fA-F0-9]\{0,40\}/${UNISWAP_FACTORY_ADDRESS}/" ./implementation/migrations/externals.js
 }
 
-fetch_uniswap_factory_address
-set_uniswap_factory_address
-
 # KeepRegistryAddress: Migration from keep-network/keep-tecdsa
 # KEEP_REGISTRY_CONTRACT_DATA is set in the CircleCI job config
 # ETH_NETWORK_ID is set in the CircleCI context for each deployed environment
@@ -31,3 +28,8 @@ function fetch_keep_registry_address() {
 function set_keep_registry_address() {
   sed -i -e "/KeepRegistryAddress/s/0x[a-fA-F0-9]\{0,40\}/${KEEP_REGISTRY_ADDRESS}/" ./implementation/migrations/externals.js
 }
+
+fetch_uniswap_factory_address
+set_uniswap_factory_address
+fetch_keep_registry_address
+set_keep_registry_address
