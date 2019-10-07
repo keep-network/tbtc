@@ -3,6 +3,7 @@ set -ex
 
 
 # UniswapFactoryAddress: Migration from keep-network/uniswap
+# UNISWAP_CONTRACT_DATA is set in the CircleCI job config
 UNISWAP_FACTORY_ADDRESS=""
 
 function fetch_uniswap_factory_address() {
@@ -18,6 +19,8 @@ fetch_uniswap_factory_address
 set_uniswap_factory_address
 
 # KeepRegistryAddress: Migration from keep-network/keep-tecdsa
+# KEEP_TECDSA_CONTRACT_DATA is set in the CircleCI job config
+# ETH_NETWORK_ID is set in the CircleCI context for each deployed environment
 KEEP_REGISTRY_ADDRESS=""
 
 function fetch_keep_registry_address() {
