@@ -22,7 +22,7 @@ KEEP_REGISTRY_ADDRESS=""
 
 function fetch_keep_registry_address() {
   gsutil -q cp gs://keep-dev-contract-data/keep-tecdsa/${KEEP_REGISTRY_CONTRACT_DATA} ./
-  KEEP_REGISTRY_ADDRESS=$(cat KeepRegistry.json | jq '.networks["${ETH_NETWORK_ID}"].address' | tr -d '"')
+  KEEP_REGISTRY_ADDRESS=$(cat ./${KEEP_REGISTRY_CONTRACT_DATA} | jq ".networks[\"${ETH_NETWORK_ID}\"].address" | tr -d '"')
 }
 
 function set_keep_registry_address() {
