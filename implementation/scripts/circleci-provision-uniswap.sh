@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ex
 
-UNISWAP_CONTRACT_DATA=""
 UNISWAP_FACTORY_ADDRESS=""
 
 function fetch_uniswap_factory_address() {
