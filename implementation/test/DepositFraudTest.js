@@ -400,18 +400,15 @@ contract('DepositFraud', (accounts) => {
 
     beforeEach(async () => {
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
+      await testInstance.setRequestInfo(utils.address0, requesterPKH, 2424, 0, utils.bytes32zero)
     })
 
     it('returns false if redeemer is paid and value is sufficient', async () => {
-      await testInstance.setRequestInfo(utils.address0, requesterPKH, 2424, 0, utils.bytes32zero)
-
       const success = await testInstance.validateRedeemerNotPaid(_txOutputVector)
       assert.equal(success, false)
     })
 
     it('returns false if redeemer is paid, value is sufficient and output is at 3rd position', async () => {
-      await testInstance.setRequestInfo(utils.address0, requesterPKH, 2424, 0, utils.bytes32zero)
-
       const success = await testInstance.validateRedeemerNotPaid(_longTxOutputVector)
       assert.equal(success, false)
     })
@@ -424,7 +421,6 @@ contract('DepositFraud', (accounts) => {
     })
 
     it('returns true if value is not sufficient', async () => {
-      await testInstance.setRequestInfo(utils.address0, requesterPKH, 2424, 0, utils.bytes32zero)
       await testInstance.setUTXOInfo('0xf078351d00000001', 0, outpoint)
 
       const success = await testInstance.validateRedeemerNotPaid(_txOutputVector)
