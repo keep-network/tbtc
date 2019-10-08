@@ -179,7 +179,7 @@ system is the signers' bonds. Therefore, the liquidation process seizes the
 signers bonds and attempts to use the bonded value to purchase and burn TBTC.
 
 First, the contract attempts to use on-chain liquidity sources, such as
-[Uniswap](https://hackmd.io/@477aQ9OrQTCbVR3fq1Qzxg/HJ9jLsfTz). 
+https://hackmd.io/@477aQ9OrQTCbVR3fq1Qzxg/HJ9jLsfTz[Uniswap]. 
 
 If the bond is sufficient to cover the outstanding TBTC value on these
 markets, it is immediately exchanged for TBTC.
