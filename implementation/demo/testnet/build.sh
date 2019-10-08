@@ -5,8 +5,6 @@
 set -ex
 
 
-# Setup sed for macOS environments
-# 
 
 SED="sed"
 
@@ -21,8 +19,15 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     SED="gsed"
 fi
 
+if ! [ -x "$(command -v jq)" ]; then
+  echo 'Error: jq is not installed.' >&2
+  exit 1
+fi
 
 
+# Get the network ID from Truffle
+# for later retrieving deployment details from Truffle artifacts
+NETWORK_ID=$(curl -X POST --data '{"jsonrpc":"2.0","method":"net_version","params":[],"id":67}' http://localhost:8545 | jq -r .result)
 
 cd $GOPATH
 
@@ -37,8 +42,8 @@ TECDSA_MIGRATION=$(truffle migrate --reset)
 # - Replacing KeepRegistry
 # it then matches a range until the next Deploying, or the end of the migration log
 # Then it's a simple extraction of the contract address
-KEEP_REGISTRY=$(echo "$TECDSA_MIGRATION" | $SED -n "/'KeepRegistry'/,/total cost/p" | $SED -n "/contract address:/p" | awk '{ print $4 }')
-ECDSA_KEEP_FACTORY=$(echo "$TECDSA_MIGRATION" | $SED -n "/'ECDSAKeepFactory'/,/total cost/p" | $SED -n "/contract address:/p" | awk '{ print $4 }')
+KEEP_REGISTRY=$(cat solidity/build/KeepRegistry.json | jq -r ".networks.\"$NETWORK_ID\".address")
+ECDSA_KEEP_FACTORY=$(cat solidity/build/ECDSAKeepFactory.json | jq -r ".networks.\"$NETWORK_ID\".address")
 $SED -i -e "/ECDSAKeepFactory = /s/0x[a-fA-F0-9]\{0,40\}/$ECDSA_KEEP_FACTORY/" configs/config.toml
 
 
@@ -53,11 +58,11 @@ cd $GOPATH/src/github.com/keep-network/tbtc/implementation
 # cd ..
 
 TBTC_MIGRATION=$(truffle migrate --reset)
-TBTC_SYSTEM=$(echo "$TBTC_MIGRATION" | $SED -n "/'TBTCSystem'/,/total cost/p" | $SED -n "/contract address:/p" | awk '{ print $4 }')
+TBTC_SYSTEM=$(cat build/contracts/TBTCSystem.json | jq -r ".networks.\"$NETWORK_ID\".address")
 
 
 # -------------------
 # 3. tBTC maintainers
 # -------------------
 cd $GOPATH/src/github.com/keep-network/tbtc-maintainers
-$SED -i -e "/TBTCSystem = /s/0x[a-fA-F0-9]\{0,40\}/$TBTC_SYSTEM/" configs/config.toml
+$SED -i -e "/TBTCSystem = /s/[0x][a-fA-F0-9]\{0,40\}/$TBTC_SYSTEM/" configs/config.toml
