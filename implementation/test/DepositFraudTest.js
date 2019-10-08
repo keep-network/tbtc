@@ -426,6 +426,17 @@ contract('DepositFraud', (accounts) => {
       const success = await testInstance.validateRedeemerNotPaid(_txOutputVector)
       assert.equal(success, true)
     })
+
+    it('returns true if there is no witness flag', async () => {
+      const _txOutputVectorNoWitness = '0x024897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211'
+      const newPKH = '0xa4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c18' // note length > 20
+
+      await testInstance.setRequestInfo(utils.address0, newPKH, 2424, 0, utils.bytes32zero)
+      await testInstance.setUTXOInfo('0xffff', 0, outpoint)
+
+      const success = await testInstance.validateRedeemerNotPaid(_txOutputVectorNoWitness)
+      assert.equal(success, true)
+    })
   })
 
   describe('provideSPVFraudProof', async () => {
