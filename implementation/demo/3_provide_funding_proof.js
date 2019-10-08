@@ -31,7 +31,8 @@ module.exports = async function() {
     tbtcSystem = await TBTCSystem.deployed()
     tbtcToken = await TBTCToken.deployed()
   } catch (err) {
-    throw new Error('contracts initialization failed', err)
+    console.error(`initialization failed: ${err}`)
+    process.exit(1)
   }
 
   async function provideFundingProof(fundingProof) {

@@ -67,6 +67,7 @@ contract('DepositUtils', (accounts) => {
   let testUtilsInstance
   let beneficiary
   let tbtcToken
+  const funderBondAmount = new BN('10').pow(new BN('5'))
   let tbtcSystemStub
 
   before(async () => {
@@ -86,7 +87,9 @@ contract('DepositUtils', (accounts) => {
       tbtcSystemStub.address,
       tbtcToken.address,
       1, // m
-      1) // n
+      1, // n
+      { value: funderBondAmount }
+    )
 
     await testUtilsInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })

@@ -27,6 +27,7 @@ contract('DepositFactory', (accounts) => {
   let factory
   let depositContract
   let tbtcToken
+  const funderBondAmount = new BN('10').pow(new BN('5'))
   let tbtcSystemStub
 
   before(async () => {
@@ -48,13 +49,17 @@ contract('DepositFactory', (accounts) => {
         tbtcSystemStub.address,
         tbtcToken.address,
         1,
-        1)
+        1,
+        { value: funderBondAmount }
+      )
 
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         1,
-        1)
+        1,
+        { value: funderBondAmount }
+      )
 
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
@@ -65,8 +70,6 @@ contract('DepositFactory', (accounts) => {
     })
 
     it('correctly forwards value to Deposit', async () => {
-      const msgValue = 2000000000000
-
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
@@ -74,7 +77,7 @@ contract('DepositFactory', (accounts) => {
         tbtcToken.address,
         1,
         1,
-        { value: msgValue }
+        { value: funderBondAmount }
       )
 
       const eventList = await factory.getPastEvents(
@@ -87,7 +90,7 @@ contract('DepositFactory', (accounts) => {
       const depositAddress = eventList[eventList.length - 1].returnValues.depositCloneAddress
 
       const balance = await web3.eth.getBalance(depositAddress)
-      assert.equal(balance, msgValue, 'Factory did not correctly forward value on Deposit creation')
+      assert.equal(balance, funderBondAmount, 'Factory did not correctly forward value on Deposit creation')
     })
   })
 
@@ -103,13 +106,17 @@ contract('DepositFactory', (accounts) => {
         tbtcSystemStub.address,
         tbtcToken.address,
         1,
-        1)
+        1,
+        { value: funderBondAmount }
+      )
 
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         1,
-        1)
+        1,
+        { value: funderBondAmount }
+      )
 
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
@@ -157,7 +164,9 @@ contract('DepositFactory', (accounts) => {
         tbtcSystemStub.address,
         tbtcToken.address,
         1,
-        1)
+        1,
+        { value: funderBondAmount }
+      )
 
       await depositContract.setKeepAddress(keep.address)
 
@@ -174,7 +183,9 @@ contract('DepositFactory', (accounts) => {
         tbtcSystemStub.address,
         tbtcToken.address,
         1,
-        1)
+        1,
+        { value: funderBondAmount }
+      )
 
       const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
       const cloneNew = eventList[0].returnValues.depositCloneAddress
