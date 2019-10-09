@@ -12,6 +12,11 @@ contract TBTCSystemStub is TBTCSystem {
     public {
         // solium-disable-previous-line no-empty-blocks
     }
+    
+    // override the ACL on TBTCSystem.initialize
+    function reinitialize(address _tbtcUniswapExchange) external {
+        tbtcUniswapExchange = _tbtcUniswapExchange;
+    }
 
     function setOraclePrice(uint256 _oraclePrice) external {
         oraclePrice = _oraclePrice;
@@ -44,4 +49,5 @@ contract TBTCSystemStub is TBTCSystem {
     function forceMint(address _to, uint256 _tokenId) public {
         _mint(_to, _tokenId);
     }
+
 }
