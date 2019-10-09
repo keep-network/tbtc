@@ -241,14 +241,14 @@ library DepositLiquidation {
     function attemptToLiquidateOnchain(
         DepositUtils.Deposit storage _d
     ) internal returns (bool) {
-        // Return early if there is no Uniswap TBTC Exchange
+        // Return early if there is no Uniswap TBTC Exchange.
         IUniswapExchange exchange = IUniswapExchange(ITBTCSystem(_d.TBTCSystem).getTBTCUniswapExchange());
         if(address(exchange) == address(0x0)) {
             return false;
         }
 
         // Only liquidate if we can buy up enough TBTC to burn,
-        // otherwise to go 100% for the falling-price auction
+        // otherwise go 100% for the falling-price auction
         uint tbtcAmount = _d.liquidationTBTCAmount();
         uint ethAmount = exchange.getEthToTokenOutputPrice(tbtcAmount);
 
@@ -256,8 +256,7 @@ library DepositLiquidation {
             return false;
         }
 
-        // `deadline` ensures that the order does not get withheld by miners and submitted later
-        // (commonly referred to as frontrunning)
+        // Leverage uniswap’s frontrunning mitigation functionality.
         uint deadline = block.timestamp;
         exchange.ethToTokenSwapOutput.value(ethAmount)(tbtcAmount, deadline);
 
