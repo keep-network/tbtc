@@ -217,7 +217,8 @@ library DepositLiquidation {
     }
 
     /// @notice                 Search _txOutputVector for output paying the requestor
-    /// @param  _d              deposit storage pointer
+    /// @dev                    Require that outputs checked are witness
+    /// @param  _d              Deposit storage pointer
     /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
     /// @return                 False if output paying redeemer was found, true otherwise
     function validateRedeemerNotPaid(
@@ -235,6 +236,7 @@ library DepositLiquidation {
             _offset += _output.determineOutputLength();
 
             if (_output.extractValue() >= _requiredOutputValue
+                // extract the output flag and check that it is witness
                 && keccak256(_output.slice(8, 3)) == keccak256(hex"160014")
                 && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
                 return false;
