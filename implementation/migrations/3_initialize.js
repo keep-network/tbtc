@@ -12,13 +12,6 @@ module.exports = async function(deployer) {
   if (process.env.NODE_ENV == 'test' && !process.env.INTEGRATION_TEST) return
 
   // Uniswap
-  // Skip Uniswap initialization if external address isn't configured
-  // Temporary fix for https://github.com/keep-network/tbtc/issues/296
-  // TODO(liamz): remove when tbtc#296 is closed
-  if (UniswapFactoryAddress == '0x0000000000000000000000000000000000000000') {
-    return
-  }
-
   const tbtcToken = await TBTCToken.deployed()
   const uniswapFactory = await IUniswapFactory.at(UniswapFactoryAddress)
 

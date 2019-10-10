@@ -168,12 +168,13 @@ jobs:
       - attach_workspace:
           at: implementation
       - run:
-          name: Provision UniswapFactory Contract Address
+          name: Provision External Contract Addresses
           command: |
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
-            implementation/scripts/circleci-provision-uniswap.sh
+            export KEEP_REGISTRY_CONTRACT_DATA="KeepRegistry.json"
+            implementation/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
           command: |
@@ -297,25 +298,25 @@ workflows:
           context: keep-dev
           requires:
             - setup_github_package_registry
-      - build_initcontainer:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - publish_images:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_initcontainer
-      - publish_contract_data:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
+#      - build_initcontainer:
+#          filters:
+#            branches:
+#              only: master
+#          context: keep-dev
+#          requires:
+#            - migrate_contracts
+#      - publish_images:
+#          filters:
+#            branches:
+#              only: master
+#          context: keep-dev
+#          requires:
+#            - migrate_contracts
+#            - build_initcontainer
+#      - publish_contract_data:
+#          filters:
+#            branches:
+#              only: master
+#          context: keep-dev
+#          requires:
+#            - migrate_contracts
