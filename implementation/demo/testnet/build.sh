@@ -34,7 +34,7 @@ cd $GOPATH
 # --------------
 # 1. Keep tECDSA
 # --------------
-cd $GOPATH/src/github.com/keep-network/keep-tecdsa
+cd $GOPATH/src/github.com/keep-network/keep-tecdsa/solidity
 TECDSA_MIGRATION=$(truffle migrate --reset)
 
 # The sed regex needs to match both:
@@ -42,8 +42,9 @@ TECDSA_MIGRATION=$(truffle migrate --reset)
 # - Replacing KeepRegistry
 # it then matches a range until the next Deploying, or the end of the migration log
 # Then it's a simple extraction of the contract address
-KEEP_REGISTRY=$(cat solidity/build/KeepRegistry.json | jq -r ".networks.\"$NETWORK_ID\".address")
-ECDSA_KEEP_FACTORY=$(cat solidity/build/ECDSAKeepFactory.json | jq -r ".networks.\"$NETWORK_ID\".address")
+KEEP_REGISTRY=$(cat build/contracts/KeepRegistry.json | jq -r ".networks.\"$NETWORK_ID\".address")
+ECDSA_KEEP_FACTORY=$(cat build/contracts/ECDSAKeepFactory.json | jq -r ".networks.\"$NETWORK_ID\".address")
+cd ..
 $SED -i -e "/ECDSAKeepFactory = /s/0x[a-fA-F0-9]\{0,40\}/$ECDSA_KEEP_FACTORY/" configs/config.toml
 
 
