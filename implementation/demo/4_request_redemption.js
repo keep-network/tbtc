@@ -5,35 +5,57 @@
 //
 // Arguments:
 // DEPOSIT_ADDRESS - Address of Deposit contract instance
-// OUTPUT_VALUE - value to be redeemed into BTC
+// OUTPUT_VALUE - value to be redeemed into BTC, in satoshis
 // REQUESTER_PKH - public key hash of the user requesting redemption
-// truffle exec 4_redemption.js 0xc536685ca46654f0e8e250382132b583d25e7fdd2e 200 0x3333333333333333333333333333333333333333
+// truffle exec demo/4_request_redemption.js 0x281447b37FFddEDE449B94edB212C49c9358D0AA 2 0x3333333333333333333333333333333333333333
 
 const Deposit = artifacts.require('./Deposit.sol')
+const TBTCToken = artifacts.require('./TBTCToken.sol')
+const BN = web3.utils.BN
+
+/**
+ * Converts a BigNumber to a little-endian hex string
+ * @param {BigNumber} bn the number
+ * @param {number} length the length of the hex string, in bytes
+ * @return {string} hex string, 0-padded to `length` bytes.
+ */
+function toLE(bn, length) {
+  const arr = bn.toArray('le', length)
+  return web3.utils.bytesToHex(arr)
+}
 
 module.exports = async function() {
   // Parse arguments
   const depositAddress = process.argv[4]
   const outputValue = process.argv[5]
-  const outputValueBytes = web3.utils.padLeft(web3.utils.numberToHex(outputValue), 16)
+  const outputValueBytes = toLE(new BN(outputValue), 8)
   const requesterPKH = process.argv[6]
 
+  console.log(outputValueBytes)
+
   let deposit
+  let tbtcToken
 
   try {
     deposit = await Deposit.at(depositAddress)
+    tbtcToken = await TBTCToken.deployed()
   } catch (err) {
     console.error(`initialization failed: ${err}`)
     process.exit(1)
   }
 
+  await tbtcToken.approve(deposit.address, new BN('20000000000000'))
+    .catch((err) => {
+      console.error(`TBTC approval failed: ${err}`)
+    })
+
   await deposit.requestRedemption(
     outputValueBytes,
-    requesterPKH,
+    requesterPKH
   ).catch((err) => {
     console.error(`requesting redemption failed: ${err}`)
     process.exit(1)
   })
 
-  process.exit()
+  console.log('Redemption requested!')
 }
