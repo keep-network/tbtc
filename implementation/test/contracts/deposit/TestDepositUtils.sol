@@ -19,15 +19,6 @@ contract TestDepositUtils is TestDeposit {
         return self.evaluateProofDifficulty(_bitcoinHeaders);
     }
 
-    function checkProofFromTx(
-        bytes memory _bitcoinTx,
-        bytes memory _merkleProof,
-        uint256 _index,
-        bytes memory _bitcoinHeaders
-    ) public view returns (bytes32) {
-        return self.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
-    }
-
     function checkProofFromTxId(
         bytes32 _bitcoinTxId,
         bytes memory _merkleProof,
@@ -52,15 +43,11 @@ contract TestDepositUtils is TestDeposit {
         return self.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
     }
 
-    function extractOutputAtIndex(bytes memory _txOutputVector, uint8 _fundingOutputIndex) public view returns (bytes memory) {
-        return DepositUtils.extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
-    }
-
     function validateAndParseFundingSPVProof(
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         uint8 _fundingOutputIndex,
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
