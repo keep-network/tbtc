@@ -1,7 +1,7 @@
 const bcoin = require('bcoin')
-const secp256k1 = require('bcrypto/lib/js/secp256k1')
-const Signature = require('bcrypto/lib/internal/signature')
 const BN = require('bcrypto/lib/BN')
+const Signature = require('bcrypto/lib/internal/signature')
+const secp256k1 = require('bcrypto/lib/js/secp256k1')
 
 export function oneInputOneOutputWitnessTX(
   inputPreviousOutpoint, // 36 byte UTXO id
@@ -18,6 +18,8 @@ export function oneInputOneOutputWitnessTX(
   })
 
   // Output
+  // TODO: When we want to give user a possibility to provide an address instead
+  // of a public key hash we need to change it to `fromAddress`.
   const outputScript = bcoin.Script.fromProgram(
     0, // Witness program version
     outputPKH
@@ -57,8 +59,6 @@ function bitcoinSignatureDER(r, s) {
 }
 
 export function addWitnessSignature(unsignedTransaction, inputIndex, r, s, publicKey) {
-  const signedTransaction = bcoin.TX.fromRaw(unsignedTransaction, 'hex').clone()
-
   // Signature
   const signatureDER = bitcoinSignatureDER(r, s)
 
@@ -68,7 +68,8 @@ export function addWitnessSignature(unsignedTransaction, inputIndex, r, s, publi
   // Public Key
   const compressedPublicKey = secp256k1.publicKeyImport(publicKey, true)
 
-
+  // Combine witness
+  const signedTransaction = bcoin.TX.fromRaw(unsignedTransaction, 'hex').clone()
   signedTransaction.inputs[inputIndex].witness.fromItems([sig, compressedPublicKey])
 
   return signedTransaction.toRaw().toString('hex')
