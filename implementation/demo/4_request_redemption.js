@@ -21,8 +21,6 @@ module.exports = async function() {
   const outputValueBytes = web3.utils.bytesToHex(new BN(outputValue).toArray('le', 8))
   const requesterPKH = process.argv[6]
 
-  console.log(outputValueBytes)
-
   let deposit
   let tbtcToken
 
@@ -48,4 +46,5 @@ module.exports = async function() {
   })
 
   console.log('Redemption requested!')
+  process.exit()
 }
