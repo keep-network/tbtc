@@ -35,6 +35,7 @@ module.exports = async function() {
   await tbtcToken.approve(deposit.address, new BN('20000000000000'))
     .catch((err) => {
       console.error(`TBTC approval failed: ${err}`)
+      process.exit(1)
     })
 
   await deposit.requestRedemption(
