@@ -1,7 +1,24 @@
-const Deposit = artifacts.require('./Deposit.sol')
-const TBTCSystem = artifacts.require('./TBTCSystem.sol')
+// The script prepares and submits redemption transaction to bitcoin chain.
+//
+// Format:
+// truffle exec demo/5_submit_redemption_transaction.js <DEPOSIT_ADDRESS>
+//
+// Arguments:
+// DEPOSIT_ADDRESS - Address of Deposit contract instance
+//
+//
+// TODO: This script requires too much cross project configuration. We should consider
+// moving all demo scripts to tbtc-dapp repository and removing them from tbtc repo.
 
-const txUtils = require('./tools/Transaction.js')
+// Configure path to electrum config in tbtc-dapp
+const ELECTRUM_CONFIG_PATH = '/Users/jakub/workspace/tbtc-dapp/src/config/config.json'
+// Configure path to electrum client
+const ElectrumClient = require('/Users/jakub/workspace/tbtc-dapp/lib/tbtc-helpers').ElectrumClient
+// Requires manually adding ECDSAKeep artifact to truffle build directory
+const ECDSAKeep = artifacts.require('ECDSAKeep.sol')
+
+const TBTCSystem = artifacts.require('./TBTCSystem.sol')
+const txUtils = require('./tools/BitcoinTransaction')
 const BN = require('bn.js')
 
 module.exports = async function() {
@@ -9,69 +26,59 @@ module.exports = async function() {
     // Parse arguments
     const depositAddress = process.argv[4]
 
-    let deposit
     let depositLog
-    let keepAddress
+    let ecdsaKeep
 
-    // try {
-    //   deposit = await Deposit.deployed()
-    //   depositLog = await TBTCSystem.deployed()
-    // } catch (err) {
-    //   console.error(`initialization failed: ${err}`)
-    //   process.exit(1)
-    // }
-
-    // try {
-    //   const depositCreatedEvents = await depositLog.getPastEvents('Created', {
-    //     fromBlock: 0,
-    //     toBlock: 'latest',
-    //     filter: { _depositContractAddress: depositAddress },
-    //   })
-    //   keepAddress = depositCreatedEvents[0].returnValues._keepAddress
-    // } catch (err) {
-    //   console.error(`failed to get keep address: ${err}`)
-    //   process.exit(1)
-    // }
-
-    // const events = await depositLog.getPastEvents(
-    //   'RedemptionRequested',
-    //   {
-    //     filter: { _depositContractAddress: depositAddress },
-    //     fromBlock: 0,
-    //     toBlock: 'latest',
-    //   }
-    // ).catch((err) => {
-    //   console.error(`failed to get past redemption requested events`)
-    //   process.exit(1)
-    // })
-
-    // let latestEvent
-    // if (events.length > 0) {
-    //   latestEvent = events[events.length - 1]
-    // } else {
-    //   console.error(`events list is empty`)
-    //   process.exit(1)
-    // }
-
-    // Sample values for testing
-    latestEvent = {
-      returnValues: {
-        _depositContractAddress: '0x582a29981e0691B2E8b8E78E009aA34b0713c282',
-        _requester: '0x4f76Eb125610290301a6F70F535Af9838F48DbC1',
-        _digest: '0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90',
-        _utxoSize: new BN('1229782938247303441', 10),
-        _requesterPKH: '0x3333333333333333333333333333333333333333',
-        _requestedFee: new BN('1229782937960972288', 10),
-        _outpoint: '0x333333333333333333333333333333333333333333333333333333333333333333333333',
-      },
+    try {
+      depositLog = await TBTCSystem.deployed()
+    } catch (err) {
+      console.error(`initialization failed: ${err}`)
+      process.exit(1)
     }
+
+    try {
+      const depositCreatedEvents = await depositLog.getPastEvents('Created', {
+        fromBlock: 0,
+        toBlock: 'latest',
+        filter: { _depositContractAddress: depositAddress },
+      })
+
+      const keepAddress = depositCreatedEvents[0].returnValues._keepAddress
+
+      ecdsaKeep = await ECDSAKeep.at(keepAddress)
+    } catch (err) {
+      console.error(`failed to get keep: ${err}`)
+      process.exit(1)
+    }
+    console.debug('keep address:', ecdsaKeep.address)
+
+    const redemptionEvents = await depositLog.getPastEvents(
+      'RedemptionRequested',
+      {
+        filter: { _depositContractAddress: depositAddress },
+        fromBlock: 0,
+        toBlock: 'latest',
+      }
+    ).catch((err) => {
+      console.error(`failed to get past redemption requested events`)
+      process.exit(1)
+    })
+
+    let latestRedemptionEvent
+    if (redemptionEvents.length > 0) {
+      latestRedemptionEvent = redemptionEvents[redemptionEvents.length - 1]
+    } else {
+      console.error(`redemption requested events list is empty`)
+      process.exit(1)
+    }
+    console.debug('latest redemption requested event:', latestRedemptionEvent)
 
     let unsignedTransaction
     try {
-      const utxoSize = new BN(latestEvent.returnValues._utxoSize)
-      const requesterPKH = Buffer.from(web3.utils.hexToBytes(latestEvent.returnValues._requesterPKH))
-      const requestedFee = new BN(latestEvent.returnValues._requestedFee)
-      const outpoint = Buffer.from(web3.utils.hexToBytes(latestEvent.returnValues._outpoint))
+      const utxoSize = new BN(latestRedemptionEvent.returnValues._utxoSize)
+      const requesterPKH = Buffer.from(web3.utils.hexToBytes(latestRedemptionEvent.returnValues._requesterPKH))
+      const requestedFee = new BN(latestRedemptionEvent.returnValues._requestedFee)
+      const outpoint = Buffer.from(web3.utils.hexToBytes(latestRedemptionEvent.returnValues._outpoint))
 
       const outputValue = utxoSize.sub(requestedFee)
 
@@ -85,25 +92,55 @@ module.exports = async function() {
       console.error(`failed to get transaction preimage: ${err}`)
       process.exit(1)
     }
-    console.log('Transaction preimage:\n', unsignedTransaction)
+
+    console.debug('transaction preimage:', unsignedTransaction)
 
     // Get keep public key
     let keepPublicKey
     try {
-      // TODO: Get public key from event
-      keepPublicKey = Buffer.from('657282135ed640b0f5a280874c7e7ade110b5c3db362e0552e6b7fff2cc8459328850039b734db7629c31567d7fc5677536b7fc504e967dc11f3f2289d3d4051', 'hex')
+      const publickKeyEvents = await depositLog.getPastEvents(
+        'RegisteredPubkey',
+        {
+          fromBlock: '0',
+          toBlock: 'latest',
+          filter: { _depositContractAddress: depositAddress },
+        }
+      )
+
+      const publicKeyX = web3.utils.hexToBytes(publickKeyEvents[0].returnValues._signingGroupPubkeyX)
+      const publicKeyY = web3.utils.hexToBytes(publickKeyEvents[0].returnValues._signingGroupPubkeyY)
+
+      keepPublicKey = Buffer.concat([Buffer.from(publicKeyX), Buffer.from(publicKeyY)])
     } catch (err) {
       console.error(`failed to get public key: ${err}`)
       process.exit(1)
     }
+    console.debug('keep public key:', keepPublicKey.toString('hex'))
 
     // Get signature calculated by keep
     let signatureR
     let signatureS
     try {
-      // TODO: get signature from event
-      signatureR = Buffer.from('9b32c3623b6a16e87b4d3a56cd67c666c9897751e24a51518136185403b1cba2', 'hex')
-      signatureS = Buffer.from('90838891021e1c7d0d1336613f24ecab703dee5ff1b6c8881bccc2c011606a35', 'hex')
+      const digest = Buffer.from(web3.utils.hexToBytes(latestRedemptionEvent.returnValues._digest))
+
+      const signatureEvents = await ecdsaKeep.getPastEvents(
+        'SignatureSubmitted',
+        {
+          fromBlock: '0',
+          toBlock: 'latest',
+          filter: { _digest: digest },
+        }
+      )
+
+      if (signatureEvents.length == 0) {
+        throw new Error('signatures list is empty')
+      }
+
+      signatureR = Buffer.from(web3.utils.hexToBytes(signatureEvents[0].returnValues.r))
+      signatureS = Buffer.from(web3.utils.hexToBytes(signatureEvents[0].returnValues.s))
+
+      console.debug('signature r:', signatureR.toString('hex'))
+      console.debug('signature s:', signatureS.toString('hex'))
     } catch (err) {
       console.error(`failed to get signature: ${err}`)
       process.exit(1)
@@ -123,11 +160,22 @@ module.exports = async function() {
       console.error(`failed to add witness to transaction: ${err}`)
       process.exit(1)
     }
-
-    console.log('Signed transaction:', signedTransaction)
+    console.debug('signed transaction:', signedTransaction)
 
     // Publish transaction to bitcoin chain
-    // TODO: Submit raw signer transaction to bitcoin via electrum
+    try {
+      const config = require(ELECTRUM_CONFIG_PATH)
+
+      const electrumClient = new ElectrumClient.Client(config.electrum.testnetWS)
+      await electrumClient.connect()
+
+      const txHash = await electrumClient.broadcastTransaction(signedTransaction)
+
+      console.log('redemption transaction submitted with hash:', txHash)
+    } catch (err) {
+      console.error(`failed to broadcast transaction: ${err}`)
+      process.exit(1)
+    }
   } catch (err) {
     console.error(err)
     process.exit(1)
