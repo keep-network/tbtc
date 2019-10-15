@@ -13,6 +13,11 @@ const Deposit = artifacts.require('./Deposit.sol')
 const TBTCToken = artifacts.require('./TBTCToken.sol')
 const BN = web3.utils.BN
 
+// We approve the Deposit contract to transfer the maximum number of tokens
+// from the user's balance.
+// Temporary solution until TBTC includes approveAndCall support.
+// TODO: remove after https://github.com/keep-network/tbtc/issues/273 is merged.
+const MAX_TOKEN_ALLOWANCE = (new BN(2)).pow(new BN(256)).sub(new BN(1))
 
 module.exports = async function() {
   // Parse arguments
@@ -32,7 +37,7 @@ module.exports = async function() {
     process.exit(1)
   }
 
-  await tbtcToken.approve(deposit.address, new BN('20000000000000'))
+  await tbtcToken.approve(deposit.address, MAX_TOKEN_ALLOWANCE)
     .catch((err) => {
       console.error(`TBTC approval failed: ${err}`)
       process.exit(1)
