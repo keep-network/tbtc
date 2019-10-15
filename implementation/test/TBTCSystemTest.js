@@ -11,6 +11,7 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositUtils = artifacts.require('DepositUtils')
+const TBTCConstants = artifacts.require('TBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
 const DepositFactory = artifacts.require('DepositFactory')
 
@@ -19,6 +20,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'TBTCConstants', contract: TBTCConstants },
   { name: 'TestDeposit', contract: TestDeposit },
 ]
 

@@ -1,11 +1,9 @@
 pragma solidity ^0.5.10;
 
-import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
-import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
-import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
-
+import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
+import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
-
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {TBTCSystem} from "../system/TBTCSystem.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -243,15 +241,15 @@ library DepositFunding {
     /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block
-    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _txIndexInBlock      Transaction index in the block (0-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     True if no errors are thrown
     function provideFraudBTCFundingProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         uint8 _fundingOutputIndex,
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
@@ -293,15 +291,15 @@ library DepositFunding {
     /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block
-    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _txIndexInBlock      Transaction index in the block (0-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     True if no errors are thrown
     function provideBTCFundingProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         uint8 _fundingOutputIndex,
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,

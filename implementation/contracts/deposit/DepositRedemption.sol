@@ -1,10 +1,10 @@
 pragma solidity ^0.5.10;
 
-import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
-import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
-import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
-import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
-import {CheckBitcoinSigs} from "bitcoin-spv/contracts/SigCheck.sol";
+import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
+import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
+import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
+import {CheckBitcoinSigs} from "@summa-tx/bitcoin-spv-sol/contracts/CheckBitcoinSigs.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
@@ -73,6 +73,7 @@ library DepositRedemption {
         bytes20 _requesterPKH
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
+        require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 
         redemptionTBTCBurn(_d);
 
@@ -212,24 +213,32 @@ library DepositRedemption {
     /// @notice                 Anyone may provide a withdrawal proof to prove redemption
     /// @dev                    The signers will be penalized if this is not called
     /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contain the redemption output
+    /// @param  _txVersion      Transaction version number (4-byte LE)
+    /// @param  _txInputVector  All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param  _txOutputVector All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param  _txLocktime     Final 4 bytes of the transaction
     /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
+    /// @param  _txIndexInBlock The index of the tx in the Bitcoin block (0-indexed)
     /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
     function provideRedemptionProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _bitcoinTx,
+        bytes4 _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes4 _txLocktime,
         bytes memory _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
     ) public {
         bytes32 _txid;
         uint256 _fundingOutputValue;
 
         require(_d.inRedemption(), "Redemption proof only allowed from redemption flow");
-        (_txid, _fundingOutputValue) = redemptionTransactionChecks(_d, _bitcoinTx);
 
-        _d.checkProofFromTxId(_txid, _merkleProof, _index, _bitcoinHeaders);
+        _fundingOutputValue = redemptionTransactionChecks(_d, _txInputVector, _txOutputVector);
+
+        _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+        _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
         require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, "Fee unexpectedly very high");
 
@@ -245,30 +254,36 @@ library DepositRedemption {
         _d.logRedeemed(_txid);
     }
 
+    /// @notice                 Check the redemption transaction input and output vector to ensure the transaction spends
+    ///                         the correct UTXO and sends value to the appropreate public key hash
+    /// @dev                    We only look at the first input and first output. Revert if we find the wrong UTXO or value recipient.
+    ///                         It's safe to look at only the first input/output as anything that breaks this can be considered fraud
+    ///                         and can be caught by ECDSAFraudProof
+    /// @param  _d              deposit storage pointer
+    /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @return                 The value sent to the requester's public key hash
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
-        bytes memory _bitcoinTx
-    ) public view returns (bytes32, uint256) {
-        bytes memory _nIns;
-        bytes memory _ins;
-        bytes memory _nOuts;
-        bytes memory _outs;
-        bytes memory _locktime;
-        bytes32 _txid;
-        (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
-        require(_txid != bytes32(0), "Failed tx parsing");
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector
+    ) public view returns (uint256) {
+        require(_txInputVector.validateVin(), "invalid input vector provided");
+        require(_txOutputVector.validateVout(), "invalid output vector provided");
+
+        bytes memory _input = _txInputVector.slice(1, _txInputVector.length-1);
+        bytes memory _output = _txOutputVector.slice(1, _txOutputVector.length-1);
+
         require(
-            keccak256(_ins.extractOutpoint()) == keccak256(_d.utxoOutpoint),
+            keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint),
             "Tx spends the wrong UTXO"
         );
         require(
-            keccak256(_outs.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
+            keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
             "Tx sends value to wrong pubkeyhash"
         );
-        return ( _txid, uint256(_outs.extractValue()));
+        return (uint256(_output.extractValue()));
     }
-
-
 
     /// @notice     Anyone may notify the contract that the signers have failed to produce a signature
     /// @dev        This is considered fraud, and is punished

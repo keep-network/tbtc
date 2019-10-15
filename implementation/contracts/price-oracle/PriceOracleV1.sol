@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
+import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import "../interfaces/IPriceOracle.sol";
 
 /// @title BTC-ETH Price Oracle V1
