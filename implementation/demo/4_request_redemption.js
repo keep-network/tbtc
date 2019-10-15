@@ -13,22 +13,12 @@ const Deposit = artifacts.require('./Deposit.sol')
 const TBTCToken = artifacts.require('./TBTCToken.sol')
 const BN = web3.utils.BN
 
-/**
- * Converts a BigNumber to a little-endian hex string
- * @param {BigNumber} bn the number
- * @param {number} length the length of the hex string, in bytes
- * @return {string} hex string, 0-padded to `length` bytes.
- */
-function toLE(bn, length) {
-  const arr = bn.toArray('le', length)
-  return web3.utils.bytesToHex(arr)
-}
 
 module.exports = async function() {
   // Parse arguments
   const depositAddress = process.argv[4]
   const outputValue = process.argv[5]
-  const outputValueBytes = toLE(new BN(outputValue), 8)
+  const outputValueBytes = web3.utils.bytesToHex(new BN(outputValue).toArray('le', 8))
   const requesterPKH = process.argv[6]
 
   console.log(outputValueBytes)
