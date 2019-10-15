@@ -1,6 +1,7 @@
 const bcoin = require('bcoin')
-const secp256k1 = require('bcrypto').secp256k1
+const secp256k1 = require('bcrypto/lib/js/secp256k1')
 const Signature = require('bcrypto/lib/internal/signature')
+const BN = require('bcrypto/lib/BN')
 
 export function oneInputOneOutputWitnessTX(
   inputPreviousOutpoint, // 36 byte UTXO id
@@ -36,13 +37,30 @@ export function oneInputOneOutputWitnessTX(
   return preimageTX.toRaw().toString('hex')
 }
 
+function bitcoinSignatureDER(r, s) {
+  const size = secp256k1.size
+  const signature = new Signature(size, r, s)
+
+  // Check if `s` is a high value. As per BIP-0062 signature's `s` value should
+  // be in a low half of curve's order. If it's a high value we convert it to `-s`.
+  // Reference: https://en.bitcoin.it/wiki/BIP_0062#Low_S_values_in_signatures
+  if (!secp256k1.isLowS(signature.encode(size))) {
+    const newS = BN.fromBuffer(signature.s, 'be')
+
+    newS.ineg().imod(secp256k1.curve.n)
+
+    signature.s = secp256k1.curve.encodeScalar(newS)
+    signature.param ^= 1
+  }
+
+  return signature.toDER(size)
+}
+
 export function addWitnessSignature(unsignedTransaction, inputIndex, r, s, publicKey) {
   const signedTransaction = bcoin.TX.fromRaw(unsignedTransaction, 'hex').clone()
 
   // Signature
-  const size = 32
-  const signature = new Signature(size, r, s)
-  const signatureDER = signature.toDER(size)
+  const signatureDER = bitcoinSignatureDER(r, s)
 
   const hashType = Buffer.from([bcoin.Script.hashType.ALL])
   const sig = Buffer.concat([signatureDER, hashType])
