@@ -11,7 +11,6 @@ export class UniswapHelpers {
 
   /*
    * Add TBTC and ETH liquidity to the Uniswap exchange.
-   * This helper abstracts away detail in test code.
    */
   static async addLiquidity(account, uniswapExchange, tbtcToken, ethAmount, tbtcAmount) {
     // Mint tBTC, mock liquidity

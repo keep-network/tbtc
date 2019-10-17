@@ -24,8 +24,8 @@ contract UniswapExchangeStub is IUniswapExchange {
     {
         require(msg.value > 0, "ETH missing from addLiquidity");
         tbtc.forceMint(address(this), max_tokens);
-        // Stub doesn't implement the internal Uniswap token, UNI
-        // So return 0 here for total minted UNI.
+        // Stub doesn't implement the internal Uniswap token (UNI),
+        // so return 0 here for total minted UNI.
         return 0;
     }
 

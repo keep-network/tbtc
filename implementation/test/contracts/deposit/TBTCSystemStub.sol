@@ -12,8 +12,9 @@ contract TBTCSystemStub is TBTCSystem {
     public {
         // solium-disable-previous-line no-empty-blocks
     }
-    
-    // override the ACL on TBTCSystem.initialize
+
+    // Bypasses the ACL on TBTCSystem.initialize
+    // and allows repeat initialization.
     function reinitialize(address _tbtcUniswapExchange) external {
         tbtcUniswapExchange = _tbtcUniswapExchange;
     }
