@@ -22,7 +22,9 @@ export class UniswapHelpers {
     await tbtcToken.forceMint(account, tbtcSupply, { from: account })
     await tbtcToken.approve(uniswapExchange.address, tbtcSupply, { from: account })
 
-    // Uniswap requires a minimum of 1000000000 wei for the initial addLiquidity call
+    // Uniswap requires a minimum of 1000000000 wei for the initial addLiquidity call.
+    // See https://github.com/Uniswap/contracts-vyper/blob/c10c08d81d6114f694baa8bd32f555a40f6264da/contracts/uniswap_exchange.vy#L65
+    // for more context on this undocumented constant.
     const UNISWAP_MINIMUM_INITIAL_LIQUIDITY_WEI = new BN('1000000000')
     const ethSupply = new BN(ethAmount).add(UNISWAP_MINIMUM_INITIAL_LIQUIDITY_WEI).mul(supplyFactor)
 
