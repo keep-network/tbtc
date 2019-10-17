@@ -20,9 +20,9 @@ export async function createSnapshot() {
 }
 
 /**
-   * Restores the chain to a snapshot
-   * @param {string} snapshotId the snapshot ID (hex)
-   */
+ * Restores the chain to a snapshot
+ * @param {string} snapshotId the snapshot ID (hex)
+ */
 export async function restoreSnapshot(snapshotId) {
   return await new Promise((res, rej) => {
     web3.currentProvider.send({

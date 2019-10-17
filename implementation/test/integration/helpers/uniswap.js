@@ -28,11 +28,13 @@ export class UniswapHelpers {
     const ethSupply = new BN(ethAmount).add(UNISWAP_MINIMUM_INITIAL_LIQUIDITY_WEI).mul(supplyFactor)
 
     const deadline = await this.getDeadline(web3)
+    /* eslint-disable no-multi-spaces */
     await uniswapExchange.addLiquidity(
-      '0', // min_liquidity
-      tbtcSupply, // max_tokens
-      deadline, // deadline
+      '0',           // min_liquidity
+      tbtcSupply,    // max_tokens
+      deadline,      // deadline
       { from: account, value: ethSupply }
     )
+    /* eslint-enable no-multi-spaces */
   }
 }
