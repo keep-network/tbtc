@@ -3,7 +3,7 @@ import {
   createSnapshot,
   restoreSnapshot,
 } from './helpers/snapshot'
-import { AssertBalanceHelpers } from './helpers/assertBalance'
+import { AssertBalance } from './helpers/assertBalance'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
@@ -532,7 +532,7 @@ contract('DepositLiquidation', (accounts) => {
       )
 
       // Helpers
-      assertBalance = new AssertBalanceHelpers(tbtcToken)
+      assertBalance = new AssertBalance(tbtcToken)
     })
 
     it('returns false if address(exchange) = 0x0', async () => {
