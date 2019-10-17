@@ -551,9 +551,6 @@ contract('DepositLiquidation', (accounts) => {
       await deposit.send(expectedPrice, { from: accounts[0] })
       await assertBalance.eth(deposit.address, expectedPrice.toString())
 
-      const price = await uniswapExchange.getEthToTokenOutputPrice.call(minTbtcAmount)
-      expect(price).to.eq.BN(expectedPrice)
-
       const retval = await deposit.attemptToLiquidateOnchain.call()
       expect(retval).to.be.true
       await deposit.attemptToLiquidateOnchain()
