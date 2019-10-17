@@ -35,7 +35,7 @@ import expectThrow from '../helpers/expectThrow'
 import utils from '../utils'
 import { integration } from './helpers/integration'
 import { UniswapHelpers } from './helpers/uniswap'
-import { AssertBalanceHelpers } from '../helpers/assertBalance'
+import { AssertBalance } from '../helpers/assertBalance'
 
 const BN = require('bn.js')
 const chai = require('chai')
@@ -200,7 +200,7 @@ integration('Uniswap', (accounts) => {
         tbtcSystem.forceMint(accounts[0], web3.utils.toBN(deposit.address))
 
         // Helpers
-        assertBalance = new AssertBalanceHelpers(tbtcToken)
+        assertBalance = new AssertBalance(tbtcToken)
       })
 
       it('liquidates using Uniswap successfully', async () => {

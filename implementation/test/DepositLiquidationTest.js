@@ -30,7 +30,7 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-import { AssertBalanceHelpers } from './helpers/assertBalance'
+import { AssertBalance } from './helpers/assertBalance'
 import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 import { getTxCost } from './helpers/txCost'
 
@@ -532,7 +532,7 @@ contract('DepositLiquidation', (accounts) => {
       )
 
       // Helpers
-      assertBalance = new AssertBalanceHelpers(tbtcToken)
+      assertBalance = new AssertBalance(tbtcToken)
     })
 
     it('returns false if address(exchange) = 0x0', async () => {
@@ -602,7 +602,7 @@ contract('DepositLiquidation', (accounts) => {
       )
 
       // Helpers
-      assertBalance = new AssertBalanceHelpers(tbtcToken)
+      assertBalance = new AssertBalance(tbtcToken)
     })
 
     describe('startLiquidation', async () => {
