@@ -143,4 +143,8 @@ contract TestDeposit is Deposit {
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
     }
+
+    function attemptToLiquidateOnchain() public returns (bool) {
+        return self.attemptToLiquidateOnchain();
+    }
 }
