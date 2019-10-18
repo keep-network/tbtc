@@ -165,17 +165,22 @@ contract('DepositLiquidation', (accounts) => {
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalTokenBalance = await tbtcToken.balanceOf(buyer)
-      expect(finalTokenBalance, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
+      const tokenCheck = new BN(finalTokenBalance).add(new BN(lotSize))
+      expect(tokenCheck, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
     })
 
     it('distributes beneficiary reward', async () => {
-      const beneficiaryReward = await deployed.TestDepositUtils.beneficiaryReward()
+      // Make sure Deposit has enough to cover beneficiary reward
+      const beneficiaryReward = await deployed.TestDepositUtils.beneficiaryReward.call()
+      await tbtcToken.forceMint(testInstance.address, beneficiaryReward)
+
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
 
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
-      expect(finalTokenBalance, 'tokens not burned correctly').to.eq.BN(initialTokenBalance.add(beneficiaryReward))
+      const tokenCheck = new BN(initialTokenBalance).add(new BN(beneficiaryReward))
+      expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
     })
 
     it('distributes value to the buyer', async () => {
