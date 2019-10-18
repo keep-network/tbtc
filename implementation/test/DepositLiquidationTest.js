@@ -67,14 +67,13 @@ contract('DepositLiquidation', (accounts) => {
   let tbtcToken
   let tbtcSystemStub
   let uniswapExchange
-  let snapshotId
 
   before(async () => {
-    snapshotId = await createSnapshot()
+    await createSnapshot()
   })
 
   after(async () => {
-    await restoreSnapshot(snapshotId)
+    await restoreSnapshot()
   })
 
   before(async () => {
@@ -104,11 +103,11 @@ contract('DepositLiquidation', (accounts) => {
   beforeEach(async () => {
     await testInstance.reset()
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
-    snapshotId = await createSnapshot()
+    await createSnapshot()
   })
 
   afterEach(async () => {
-    await restoreSnapshot(snapshotId)
+    await restoreSnapshot()
   })
 
   describe('purchaseSignerBondsAtAuction', async () => {
