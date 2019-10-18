@@ -32,7 +32,7 @@ library TBTCConstants {
     uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
     uint256 public constant AUCTION_DURATION = 24 * 60 * 60; // seconds
     uint256 public constant AUCTION_BASE_PERCENTAGE = 90; // percents
-
+    uint256 public constant PERMITTED_FEE_BUMPS = 5; // number of times the fee can be increased
 
     // Getters for easy access
     function getLotSize() public pure returns (uint256) { return LOT_SIZE; }
@@ -58,4 +58,5 @@ library TBTCConstants {
     function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
     function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
     function getAuctionBasePercentage() public pure returns (uint256) { return AUCTION_BASE_PERCENTAGE; }
+    function getPermittedFeeBumps() public pure returns (uint256) {return PERMITTED_FEE_BUMPS; }
 }

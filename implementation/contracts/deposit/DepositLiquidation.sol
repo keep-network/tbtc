@@ -1,7 +1,8 @@
 pragma solidity ^0.5.10;
 
-import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
-import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
+import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
+import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
+import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
@@ -14,6 +15,7 @@ import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 library DepositLiquidation {
 
     using BTCUtils for bytes;
+    using BytesLib for bytes;
     using SafeMath for uint256;
 
     using DepositUtils for DepositUtils.Deposit;
@@ -151,25 +153,29 @@ library DepositLiquidation {
         startSignerFraudLiquidation(_d);
     }
 
-    /// @notice                 Anyone may notify the deposit of fraud via an SPV proof
-    /// @dev                    We strong prefer ECDSA fraud proofs
-    /// @param  _d              deposit storage pointer
-    /// @param  _bitcoinTx      The bitcoin tx that purportedly contains the funding output
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _index          The index of the tx in the Bitcoin block (1-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
+    /// @notice                   Anyone may notify the deposit of fraud via an SPV proof
+    /// @dev                      We strong prefer ECDSA fraud proofs
+    /// @param  _d                deposit storage pointer
+    /// @param  _txVersion        Transaction version number (4-byte LE)
+    /// @param  _txInputVector    All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param  _txOutputVector   All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param  _txLocktime       Final 4 bytes of the transaction
+    /// @param  _merkleProof      The merkle proof of inclusion of the tx in the bitcoin block
+    /// @param  _txIndexInBlock   Transaction index in the block (0-indexed)
+    /// @param  _targetInputIndex Index of the input that spends the custodied UTXO
+    /// @param  _bitcoinHeaders   An array of tightly-packed bitcoin headers
     function provideSPVFraudProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _bitcoinTx,
+        bytes4 _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes4 _txLocktime,
         bytes memory _merkleProof,
-        uint256 _index,
+        uint256 _txIndexInBlock,
+        uint8 _targetInputIndex,
         bytes memory _bitcoinHeaders
     ) public {
-        bytes memory _input;
-        bytes memory _output;
-        bool _inputConsumed;
-        uint8 i;
-
+        bytes32 _txId;
         require(
             !_d.inFunding() && !_d.inFundingFailure(),
             "SPV Fraud proofs not valid before Active state."
@@ -179,28 +185,59 @@ library DepositLiquidation {
             "Signer liquidation already in progress"
         );
         require(!_d.inEndState(), "Contract has halted");
+        require(_txInputVector.validateVin(), "invalid input vector provided");
+        require(_txOutputVector.validateVout(), "invalid output vector provided");
 
-        _d.checkProofFromTx(_bitcoinTx, _merkleProof, _index, _bitcoinHeaders);
-        for (i = 0; i < _bitcoinTx.extractNumInputs(); i++) {
-            _input = _bitcoinTx.extractInputAtIndex(i);
-            if (keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint)) {
-                _inputConsumed = true;
-            }
-        }
-        require(_inputConsumed, "No input spending custodied UTXO found");
+        // DRAFT comments:
+        // we can assume this TX is witness?
 
-        uint256 _permittedFeeBumps = 5;  /* TODO: can we refactor withdrawal flow to improve this? */
-        uint256 _requiredOutputSize = _d.utxoSize().sub((_d.initialRedemptionFee * (1 + _permittedFeeBumps)));
-        for (i = 0; i < _bitcoinTx.extractNumOutputs(); i++) {
-            _output = _bitcoinTx.extractOutputAtIndex(i);
+        _txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
-            if (_output.extractValue() >= _requiredOutputSize
-                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
-                revert("Found an output paying the redeemer as requested");
-            }
+        _d.checkProofFromTxId(_txId, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
+
+        bytes memory _targetOutpoint = _txInputVector.extractInputAtIndex(_targetInputIndex).extractOutpoint();
+        require(
+            keccak256(_targetOutpoint) == keccak256(_d.utxoOutpoint),
+            "No input spending custodied UTXO found at given index"
+        );
+
+        if (_d.requesterPKH != bytes20(0)) {
+            require(
+                validateRedeemerNotPaid(_d, _txOutputVector),
+                "Found an output paying the redeemer as requested"
+            );
         }
 
         startSignerFraudLiquidation(_d);
+    }
+
+    /// @notice                 Search _txOutputVector for output paying the requestor
+    /// @dev                    Require that outputs checked are witness
+    /// @param  _d              Deposit storage pointer
+    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @return                 False if output paying redeemer was found, true otherwise
+    function validateRedeemerNotPaid(
+        DepositUtils.Deposit storage _d,
+        bytes memory _txOutputVector
+    ) internal view returns (bool){
+        bytes memory _output;
+        uint256 _offset = 1;
+        uint256 _permittedFeeBumps = TBTCConstants.getPermittedFeeBumps();  /* TODO: can we refactor withdrawal flow to improve this? */
+        uint256 _requiredOutputValue = _d.utxoSize().sub((_d.initialRedemptionFee * (1 + _permittedFeeBumps)));
+
+        uint8 _numOuts = uint8(_txOutputVector.slice(0, 1)[0]);
+        for (uint8 i = 0; i < _numOuts; i++) {
+            _output = _txOutputVector.slice(_offset, _txOutputVector.length - _offset);
+            _offset += _output.determineOutputLength();
+
+            if (_output.extractValue() >= _requiredOutputValue
+                // extract the output flag and check that it is witness
+                && keccak256(_output.slice(8, 3)) == keccak256(hex"160014")
+                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud
