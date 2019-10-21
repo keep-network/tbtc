@@ -314,8 +314,17 @@ contract('DepositRedemption', (accounts) => {
 
     it('reverts if the fee step is not linear', async () => {
       await expectThrow(
-        testInstance.increaseRedemptionFee(previousOutputBytes, '0x1101010101102201'),
+        // 0x0000feffffffffff = previousOutputBytes - (initialFee + 1)
+        testInstance.increaseRedemptionFee(previousOutputBytes, '0x0000feffffffffff'),
         'Not an allowed fee step'
+      )
+    })
+
+    it('reverts if the fee step is out of set bounds', async () => {
+      await expectThrow(
+        // 0x0400faffffffffff = prevoutValueBytes - ((6 * initialFee) + 1)
+        testInstance.increaseRedemptionFee(previousOutputBytes, '0x0400faffffffffff'),
+        'Fee increased out of permitted bounds'
       )
     })
 
