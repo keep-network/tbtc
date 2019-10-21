@@ -158,6 +158,11 @@ library DepositRedemption {
     ) public returns (bool) {
         require(_d.inAwaitingWithdrawalProof(), "Fee increase only available after signature provided");
         require(block.timestamp >= _d.withdrawalRequestTime + TBTCConstants.getIncreaseFeeTimer(), "Fee increase not yet permitted");
+        require(
+            DepositUtils.bytes8LEToUint(_newOutputValueBytes) >=
+            _d.utxoSize().sub((_d.initialRedemptionFee * (1 + TBTCConstants.getPermittedFeeBumps()))),
+            "Fee increased out of permitted bounds"
+        );
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
 
