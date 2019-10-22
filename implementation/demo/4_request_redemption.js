@@ -10,6 +10,7 @@
 // truffle exec demo/4_request_redemption.js 0x281447b37FFddEDE449B94edB212C49c9358D0AA 2 0x3333333333333333333333333333333333333333
 
 const Deposit = artifacts.require('./Deposit.sol')
+const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 const TBTCToken = artifacts.require('./TBTCToken.sol')
 const BN = web3.utils.BN
 
@@ -27,10 +28,12 @@ module.exports = async function() {
   const requesterPKH = process.argv[6]
 
   let deposit
+  let depositLog
   let tbtcToken
 
   try {
     deposit = await Deposit.at(depositAddress)
+    depositLog = await TBTCSystem.deployed()
     tbtcToken = await TBTCToken.deployed()
   } catch (err) {
     console.error(`initialization failed: ${err}`)
@@ -43,14 +46,43 @@ module.exports = async function() {
       process.exit(1)
     })
 
-  await deposit.requestRedemption(
-    outputValueBytes,
-    requesterPKH
-  ).catch((err) => {
-    console.error(`requesting redemption failed: ${err}`)
-    process.exit(1)
-  })
+  async function logEvents(startBlockNumber) {
+    const eventList = await depositLog.getPastEvents('RedemptionRequested', {
+      fromBlock: startBlockNumber,
+      toBlock: 'latest',
+    })
 
-  console.log('Redemption requested!')
+    const {
+      _depositContractAddress,
+      _requester,
+      _digest,
+      _utxoSize,
+      _requesterPKH,
+      _requestedFee,
+    } = eventList[0].returnValues
+
+    console.log(`Redemption requested for deposit: ${_depositContractAddress}`)
+    console.log(`Request details:`)
+    console.log(`\trequestor: ${_requester}`)
+    console.log(`\trequestor PKH: ${_requesterPKH}`)
+    console.log(`\tvalue: ${_utxoSize} satoshis`)
+    console.log(`\tfee: ${_requestedFee} satoshis`)
+    console.log(`Digest approved for signing: ${_digest}`)
+  }
+
+  const startBlockNumber = await web3.eth.getBlock('latest').number
+
+  await deposit.requestRedemption(outputValueBytes, requesterPKH)
+    .catch((err) => {
+      console.error(`requesting redemption failed: ${err}`)
+      process.exit(1)
+    })
+
+  await logEvents(startBlockNumber)
+    .catch((err) => {
+      console.error('getting events log failed\n', err)
+      process.exit(1)
+    })
+
   process.exit()
 }
