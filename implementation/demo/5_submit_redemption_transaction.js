@@ -16,6 +16,7 @@ const ELECTRUM_CONFIG_PATH = '/Users/jakub/workspace/tbtc-dapp/src/config/config
 const ElectrumClient = require('/Users/jakub/workspace/tbtc-dapp/lib/tbtc-helpers').ElectrumClient
 // Requires manually adding ECDSAKeep artifact to truffle build directory
 const ECDSAKeep = artifacts.require('ECDSAKeep.sol')
+const Deposit = artifacts.require('./Deposit.sol')
 
 const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 const txUtils = require('./tools/BitcoinTransaction')
@@ -26,10 +27,12 @@ module.exports = async function() {
     // Parse arguments
     const depositAddress = process.argv[4]
 
+    let deposit
     let depositLog
     let ecdsaKeep
 
     try {
+      deposit = await Deposit.at(depositAddress)
       depositLog = await TBTCSystem.deployed()
     } catch (err) {
       console.error(`initialization failed: ${err}`)
@@ -120,6 +123,7 @@ module.exports = async function() {
     // Get signature calculated by keep
     let signatureR
     let signatureS
+    let recoveryID
     try {
       const digest = Buffer.from(web3.utils.hexToBytes(latestRedemptionEvent.returnValues._digest))
 
@@ -138,6 +142,7 @@ module.exports = async function() {
 
       signatureR = Buffer.from(web3.utils.hexToBytes(signatureEvents[0].returnValues.r))
       signatureS = Buffer.from(web3.utils.hexToBytes(signatureEvents[0].returnValues.s))
+      recoveryID = web3.utils.toBN(signatureEvents[0].returnValues.recoveryID)
 
       console.debug('signature r:', signatureR.toString('hex'))
       console.debug('signature s:', signatureS.toString('hex'))
@@ -176,6 +181,57 @@ module.exports = async function() {
       console.error(`failed to broadcast transaction: ${err}`)
       process.exit(1)
     }
+
+    const startBlockNumber = await web3.eth.getBlock('latest').number
+
+    async function logEvents(startBlockNumber) {
+      const eventList = await depositLog.getPastEvents('GotRedemptionSignature', {
+        fromBlock: startBlockNumber,
+        toBlock: 'latest',
+        filter: { _depositContractAddress: depositAddress },
+      })
+
+      let ev = eventList[0]
+      if (eventList.length > 1) {
+        ev = eventList[eventList.length - 1]
+      }
+
+      const {
+        _timestamp,
+        _r,
+        _s,
+        _digest,
+      } = ev.returnValues
+
+      console.debug(`Deposit got redemption signature for digest: ${_digest}`)
+      console.debug(`r: ${_r}`)
+      console.debug(`s: ${_s}`)
+      console.debug(`timestamp: ${_timestamp}`)
+    }
+
+    try {
+      // A constant in the Ethereum ECDSA signature scheme, used for public key recovery [1]
+      // Value is inherited from Bitcoin's Electrum wallet [2]
+      // [1] https://bitcoin.stackexchange.com/questions/38351/ecdsa-v-r-s-what-is-v/38909#38909
+      // [2] https://github.com/ethereum/EIPs/issues/155#issuecomment-253810938
+      const ETHEREUM_ECDSA_RECOVERY_V = new BN(27)
+      const signatureV = recoveryID.add(ETHEREUM_ECDSA_RECOVERY_V)
+
+      await deposit.provideRedemptionSignature(
+        signatureV,
+        signatureR,
+        signatureS
+      )
+    } catch (err) {
+      console.error(`failed to provide redemption signature: ${err}`)
+      process.exit(1)
+    }
+
+    await logEvents(startBlockNumber)
+      .catch((err) => {
+        console.error('getting events log failed\n', err)
+        process.exit(1)
+      })
   } catch (err) {
     console.error(err)
     process.exit(1)
