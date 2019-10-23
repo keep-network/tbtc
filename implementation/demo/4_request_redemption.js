@@ -24,7 +24,7 @@ module.exports = async function() {
   // Parse arguments
   const depositAddress = process.argv[4]
   const outputValue = process.argv[5]
-  const outputValueBytes = web3.utils.bytesToHex(new BN(outputValue).toArray('le', 8))
+  const outputValueBytes = new BN(outputValue).toBuffer('le', 8)
   const requesterPKH = process.argv[6]
 
   let deposit
