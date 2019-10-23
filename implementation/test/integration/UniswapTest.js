@@ -4,11 +4,38 @@ const IUniswapFactory = artifacts.require('IUniswapFactory')
 const IUniswapExchange = artifacts.require('IUniswapExchange')
 const TBTCSystem = artifacts.require('TBTCSystem')
 
-import { UniswapFactoryAddress } from '../../migrations/externals'
+const OutsourceDepositLogging = artifacts.require('OutsourceDepositLogging')
+const DepositStates = artifacts.require('DepositStates')
+const DepositUtils = artifacts.require('DepositUtils')
+const DepositFunding = artifacts.require('DepositFunding')
+const DepositRedemption = artifacts.require('DepositRedemption')
+const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-import { UniswapHelpers } from './helpers/uniswap'
-import { integration } from './helpers/integration'
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
+const TBTCSystemStub = artifacts.require('TBTCSystemStub')
+
+const TestTBTCConstants = artifacts.require('TestTBTCConstants')
+const TestDeposit = artifacts.require('TestDeposit')
+const TestDepositUtils = artifacts.require('TestDepositUtils')
+
+const TEST_DEPOSIT_DEPLOY = [
+  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
+  { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
+  { name: 'DepositStates', contract: DepositStates },
+  { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositFunding', contract: DepositFunding },
+  { name: 'DepositRedemption', contract: DepositRedemption },
+  { name: 'DepositLiquidation', contract: DepositLiquidation },
+  { name: 'TestDeposit', contract: TestDeposit },
+  { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
+
+import { UniswapFactoryAddress } from '../../migrations/externals'
 import expectThrow from '../helpers/expectThrow'
+import utils from '../utils'
+import { integration } from './helpers/integration'
+import { UniswapHelpers } from './helpers/uniswap'
+import { AssertBalance } from '../helpers/assertBalance'
 
 const BN = require('bn.js')
 const chai = require('chai')
@@ -139,6 +166,85 @@ integration('Uniswap', (accounts) => {
 
       const balance = await tbtcToken.balanceOf(buyer)
       expect(balance).to.eq.BN(TBTC_BUY_AMOUNT)
+    })
+  })
+
+  describe('DepositLiquidation', async () => {
+    let deployed
+    let tbtcSystem
+
+    before(async () => {
+      deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    })
+
+    describe('#attemptToLiquidateOnchain', async () => {
+      let assertBalance
+      let deposit
+      let uniswapExchange
+      let tbtcToken
+
+      beforeEach(async () => {
+        deposit = deployed.TestDeposit
+        tbtcSystem = await TBTCSystemStub.new(utils.address0)
+        tbtcToken = await TestToken.new(tbtcSystem.address)
+
+        // create a uniswap exchange for our TestToken
+        const uniswapFactory = await IUniswapFactory.at(UniswapFactoryAddress)
+        await uniswapFactory.createExchange(tbtcToken.address)
+        const uniswapExchangeAddress = await uniswapFactory.getExchange(tbtcToken.address)
+        uniswapExchange = await IUniswapExchange.at(uniswapExchangeAddress)
+
+        await tbtcSystem.reinitialize(uniswapExchangeAddress)
+
+        deposit.setExteriorAddresses(tbtcSystem.address, tbtcToken.address)
+        tbtcSystem.forceMint(accounts[0], web3.utils.toBN(deposit.address))
+
+        // Helpers
+        assertBalance = new AssertBalance(tbtcToken)
+      })
+
+      it('liquidates using Uniswap successfully', async () => {
+        const ethAmount = web3.utils.toWei('0.2', 'ether')
+        const tbtcAmount = '100000000'
+        await UniswapHelpers.addLiquidity(accounts[0], uniswapExchange, tbtcToken, ethAmount, tbtcAmount)
+
+        const minTbtcAmount = '100100000'
+        // hard-coded from previous run
+        const expectedPrice = new BN('223138580092984811')
+
+        await assertBalance.eth(deposit.address, '0')
+        await assertBalance.tbtc(deposit.address, '0')
+        await deposit.send(expectedPrice, { from: accounts[0] })
+        await assertBalance.eth(deposit.address, expectedPrice.toString())
+
+        const price = await uniswapExchange.getEthToTokenOutputPrice.call(minTbtcAmount)
+        expect(price).to.eq.BN(expectedPrice)
+
+        const retval = await deposit.attemptToLiquidateOnchain.call()
+        expect(retval).to.be.true
+        await deposit.attemptToLiquidateOnchain()
+
+        await assertBalance.tbtc(deposit.address, minTbtcAmount)
+        await assertBalance.eth(deposit.address, '0')
+      })
+
+      it('returns false if cannot buy up enough TBTC', async () => {
+        const ethAmount = web3.utils.toWei('0.2', 'ether')
+        const tbtcAmount = '100000000'
+        await UniswapHelpers.addLiquidity(accounts[0], uniswapExchange, tbtcToken, ethAmount, tbtcAmount)
+
+        // hard-coded from previous run
+        const expectedPrice = new BN('223138580092984811')
+        const depositEthFunding = expectedPrice.sub(new BN(100))
+
+        await assertBalance.eth(deposit.address, '0')
+        await assertBalance.tbtc(deposit.address, '0')
+        await deposit.send(depositEthFunding, { from: accounts[0] })
+        await assertBalance.eth(deposit.address, depositEthFunding.toString())
+
+        const retval = await deposit.attemptToLiquidateOnchain.call()
+        expect(retval).to.be.false
+      })
     })
   })
 })
