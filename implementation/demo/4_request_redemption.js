@@ -61,13 +61,13 @@ module.exports = async function() {
       _requestedFee,
     } = eventList[0].returnValues
 
-    console.log(`Redemption requested for deposit: ${_depositContractAddress}`)
-    console.log(`Request details:`)
-    console.log(`\trequestor: ${_requester}`)
-    console.log(`\trequestor PKH: ${_requesterPKH}`)
-    console.log(`\tvalue: ${_utxoSize} satoshis`)
-    console.log(`\tfee: ${_requestedFee} satoshis`)
-    console.log(`Digest approved for signing: ${_digest}`)
+    console.debug(`Redemption requested for deposit: ${_depositContractAddress}`)
+    console.debug(`Request details:`)
+    console.debug(`\trequestor: ${_requester}`)
+    console.debug(`\trequestor PKH: ${_requesterPKH}`)
+    console.debug(`\tvalue: ${_utxoSize} satoshis`)
+    console.debug(`\tfee: ${_requestedFee} satoshis`)
+    console.debug(`Digest approved for signing: ${_digest}`)
   }
 
   const startBlockNumber = await web3.eth.getBlock('latest').number
