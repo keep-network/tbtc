@@ -56,9 +56,9 @@ async function run() {
   const fee = web3.utils.toBN(latestRedemptionRequest.returnValues._requestedFee)
   const uxtoSize = web3.utils.toBN(latestRedemptionRequest.returnValues._utxoSize)
 
-  const previousOutputValueBytes = uxtoSize.add(fee).toBuffer('le')
+  const previousOutputValueBytes = uxtoSize.sub(fee).toBuffer('le')
   const newFee = fee.mul(new BN(2))
-  const newOutputValueBytes = uxtoSize.add(newFee).toBuffer('le')
+  const newOutputValueBytes = uxtoSize.sub(newFee).toBuffer('le')
 
   console.log(`Current fee is ${fee.toString()} sats`)
   console.log(`Increasing fee to ${newFee.toString()} sats`)
