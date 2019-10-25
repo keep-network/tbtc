@@ -140,9 +140,12 @@ module.exports = async function() {
         throw new Error('signatures list is empty')
       }
 
-      signatureR = Buffer.from(web3.utils.hexToBytes(signatureEvents[0].returnValues.r))
-      signatureS = Buffer.from(web3.utils.hexToBytes(signatureEvents[0].returnValues.s))
-      recoveryID = web3.utils.toBN(signatureEvents[0].returnValues.recoveryID)
+      // A fee bump may have been requested, hence we get the latest signature there is.
+      const signatureEvent = signatureEvents[signatureEvents.length - 1]
+
+      signatureR = Buffer.from(web3.utils.hexToBytes(signatureEvent.returnValues.r))
+      signatureS = Buffer.from(web3.utils.hexToBytes(signatureEvent.returnValues.s))
+      recoveryID = web3.utils.toBN(signatureEvent.returnValues.recoveryID)
 
       console.debug('signature r:', signatureR.toString('hex'))
       console.debug('signature s:', signatureS.toString('hex'))
