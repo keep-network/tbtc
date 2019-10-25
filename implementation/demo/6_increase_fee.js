@@ -12,11 +12,6 @@ const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 
 const BN = web3.utils.BN
 
-// Thanks to https://stackoverflow.com/a/25898374/453438
-function reverseEndianness(hex) {
-  return hex.match(/.{2}/g).reverse().join('')
-}
-
 async function run() {
   // Parse arguments
   const depositAddress = process.argv[4]
@@ -58,8 +53,8 @@ async function run() {
     latestRedemptionRequest = redemptionEvents[0]
   }
 
-  const fee = web3.utils.toBN(reverseEndianness(latestRedemptionRequest.returnValues._requestedFee))
-  const uxtoSize = web3.utils.toBN(reverseEndianness(latestRedemptionRequest.returnValues._utxoSize))
+  const fee = web3.utils.toBN(latestRedemptionRequest.returnValues._requestedFee)
+  const uxtoSize = web3.utils.toBN(latestRedemptionRequest.returnValues._utxoSize)
 
   const previousOutputValueBytes = uxtoSize.add(fee).toBuffer('le')
   const newFee = fee.mul(new BN(2))
