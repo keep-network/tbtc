@@ -80,7 +80,7 @@ module.exports = async function() {
 
   await logEvents(startBlockNumber)
     .catch((err) => {
-      console.error('getting events log failed\n', err)
+      console.error(`getting events log failed: ${err}`)
       process.exit(1)
     })
 
