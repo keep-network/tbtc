@@ -20,7 +20,7 @@ library TBTCConstants {
     uint256 public constant REDEMPTION_SIGNATURE_TIMEOUT = 2 * 60 * 60;  // seconds
     uint256 public constant INCREASE_FEE_TIMER = 4 * 60 * 60;  // seconds
     uint256 public constant REDEMPTION_PROOF_TIMEOUT = 6 * 60 * 60;  // seconds
-    uint256 public constant MINIMUM_REDEMPTION_FEE = 2000; // satoshi
+    uint256 public constant MINIMUM_REDEMPTION_FEE = 150; // satoshi TODO: decreased for testing, set it back original value `2000`
 
     // Funding Flow
     uint256 public constant FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
