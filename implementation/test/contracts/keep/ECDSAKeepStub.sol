@@ -46,6 +46,15 @@ contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
           emit SignatureRequested(_digest);
     }
 
+    function distributeETHToMembers() external payable returns (bool){
+        return success;
+    }
+
+    function distributeERC20ToMembers(address _asset, uint256 _value) external returns (bool){
+        return success;
+    }
+
+
     // Functions implemented for IBondedECDSAKeep interface.
 
     function submitSignatureFraud(
@@ -57,14 +66,6 @@ contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
         bytes calldata _preimage
     ) external returns (bool){
        return success;
-    }
-
-    function distributeETHToMembers() external payable returns (bool){
-        return success;
-    }
-
-    function distributeERC20ToMembers(address _asset, uint256 _value) external returns (bool){
-        return success;
     }
 
     function checkBondAmount(address _keepAddress) external view returns (uint256){
