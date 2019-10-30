@@ -18,12 +18,12 @@ interface IBondedECDSAKeep {
 
     // Allow sending funds to a keep group
     // Expected: increment their existing ETH bond
-    function distributeEthToKeepGroup(address _keepAddress) external payable returns (bool);
+    function distributeETHToMembers() external payable returns (bool);
 
     // Allow sending tokens to a keep group
     // Useful for sending signers their TBTC
     // The Keep contract should call transferFrom on the token contract
-    function distributeERC20ToKeepGroup(address _keepAddress, address _asset, uint256 _value) external returns (bool);
+    function distributeERC20ToMembers(address _TBTCTokenAddress, uint256 _value) external returns (bool);
 
     // returns the amount of the keep's ETH bond in wei
     function checkBondAmount(address _keepAddress) external view returns (uint256);

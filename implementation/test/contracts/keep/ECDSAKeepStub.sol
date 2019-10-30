@@ -59,11 +59,11 @@ contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
        return success;
     }
 
-    function distributeEthToKeepGroup(address _keepAddress) external payable returns (bool){
+    function distributeETHToMembers() external payable returns (bool){
         return success;
     }
 
-    function distributeERC20ToKeepGroup(address _keepAddress, address _asset, uint256 _value) external returns (bool){
+    function distributeERC20ToMembers(address _asset, uint256 _value) external returns (bool){
         return success;
     }
 
