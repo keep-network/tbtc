@@ -381,6 +381,7 @@ library DepositUtils {
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
-        return _keep.distributeETHToMembers.value(_ethValue)();
+        _keep.distributeETHToMembers.value(_ethValue)();
+        return true;
     }
 }
