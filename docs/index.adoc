@@ -250,7 +250,7 @@ include::deposits/index.adoc[leveloffset=+2]
 
 include::bonding/index.adoc[leveloffset=+2]
 
-include::price-oracle/index.adoc[leveloffset=+2]
+include::price-feed/index.adoc[leveloffset=+2]
 
 include::custodial-fees/index.adoc[leveloffset=+2]
 

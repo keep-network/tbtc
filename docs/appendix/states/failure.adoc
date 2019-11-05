@@ -84,7 +84,7 @@ fraud-related state transitions in a single document.
 * *access controls*
 ** anyone
 * *reads*
-** ORACLE
+** PRICE_FEED
 * *writes*
 * *from*
 ** `ACTIVE`
@@ -195,7 +195,7 @@ fraud-related state transitions in a single document.
 * *access controls*
 ** anyone
 * *reads*
-** ORACLE
+** PRICE_FEED
 * *writes*
 ** `uint256 courtesyCallInitiated`
 *** timestamp when the call was initiated
@@ -232,7 +232,7 @@ fraud-related state transitions in a single document.
 ** `uint256 fundedAt`
 *** to check if the deposit is expiring
 ** `bool getCollateralizationPercentage() < TBTCConstants.getUndercollateralizedPercent()`
-*** Check the oracle to see if collateral is sufficient
+*** Check the price feed to see if collateral is sufficient
 * *from*
 ** `COURTESY_CALL`
 * *to*
