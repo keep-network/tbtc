@@ -55,7 +55,7 @@ ssh utilitybox << EOF
   cd /tmp/$BUILD_TAG/implementation
 
 # TODO: Migrations fail with truffle version specified in package.json file. That's why we install dependencies manually here, bug: https://github.com/keep-network/tbtc/issues/231
-npm install @keep-network/keep-ecdsa@0.1.1
+npm install @keep-network/keep-ecdsa@0.1.2
 npm install @summa-tx/bitcoin-spv-sol@2.1.0
 npm install bn-chai@1.0.1
 npm install bn.js@4.11.8
