@@ -12,16 +12,17 @@ endif::tbtc[]
 
 == Overview
 
-Deposits represents real Bitcoin unspent transaction outputs ("UTXOs") and are
+Deposits represent real Bitcoin unspent transaction outputs ("UTXOs") and are
 redeemable for the BTC held there. The tBTC redemption system aims to provide
-access to those BTC via a publicly-verifiable process. To support this goal,
-the redemption flow has been designed such that any actor may perform its
-critical actions (with the exception of producing signatures).
+access to those BTC via a publicly verifiable process.
 
-So long as the deposit is maintained in good standing, anyone may
-<<Redemption Requests,request redemption>>. To do so, the requester must repay
-outstanding TBTC (plus accrued custodial fees) and provide their Bitcoin
-payment details. At this point, the redemption process may not be cancelled.
+So long as a deposit is maintained in good standing, the holder of the
+<<{root-prefix}/deposit/minting#,non-fungible deposit token>> may
+<<Redemption Requests,request redemption>>, relinquishing their NFT and paying
+any outstanding signer fees associated with the deposit.
+
+At this point, the redemption process may not be cancelled.
+
 Once redemption has been requested, the signers must produce a valid Bitcoin
 signature sending the underlying BTC to the requested address. After a
 signature has been published, any actor may build and submit a
@@ -36,7 +37,8 @@ _redemption transaction_ to the Bitcoin blockchain using that signature.
 :min-redemption-feerate: ~20 satoshi/vbyte
 
 If the deposit is in good standing (has not been accused of fraud, or entered
-signer liquidation), anyone may request redemption. To do so that person makes
+signer liquidation), only the holder of the deposit owner token may request
+redemption. To do so that person makes
 a _redemption request_ transaction to the smart contract on the host chain. The
 _redemption request_ includes the following:
 
@@ -97,7 +99,7 @@ have a strong incentive to broadcast the transaction as early as possible,
 anyone may do so if the signers do not.
 
 
-== Redemption Proof
+== Redemption proof
 
 :redemption-proof-timeout: 12 hours
 
@@ -113,7 +115,7 @@ than or equal `UTXO Size - highest allowed fee` (see
 <<Allowing for Bitcoin Fee Adjustment>> for more details).
 
 
-== Validating a Signature
+== Validating a signature
 
 :signature-timeout: 3 hours
 
@@ -134,7 +136,7 @@ signature and that a signature on that digest was requested as part of a
 redemption process.
 
 
-== Allowing for Bitcoin Fee Adjustment
+== Allowing for Bitcoin fee adjustment
 
 :fee-increase-timer: 4 hours
 :fee-increase-timer-times-two:

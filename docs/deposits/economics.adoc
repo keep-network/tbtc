@@ -1,0 +1,25 @@
+= Deposit economics
+
+Signers aren't altruists -- they're paid for the service they provide.
+
+Signer fees should always be paid or escrowed up front. To achieve this, signer
+fees must be <<{root-prefix}/minting/index#,guaranteed by minting>>, and
+deposits must have predictable lifetimes.
+
+A detailed treatment of signer fees can be found in
+<<{root-prefix}/signer-fees/index#,their own section>>.
+
+
+== Terms
+
+:term-length: 6 months
+
+Fixed-term deposits mean signer fees can easily be calculated per deposit. A
+standard term of {term-length} means depositors can budget for fees, and
+signers will know how long their bonds will be inaccessible.
+
+Depositors that don't need future access to their deposit might prefer to pass
+the costs of the system to eventual redeemers. These depositors can opt to
+receive a non-fungible deposit beneficiary token which pays a fee rebate at the
+deposit's redemption. The rebate mechanism is <<{root-prefix}/minting/index#,
+explained further in the discussion around minting>>.

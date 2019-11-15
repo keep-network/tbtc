@@ -28,15 +28,12 @@ image::{root-prefix}img/generated/initiate-deposit.png[]
 
 == Deposit request
 
-The starting point for acquiring TBTC is generating a _deposit request_. This is
-a transaction to a smart contract on tBTC's host chain that informs the tBTC
-system that the sender account is interested in creating a TBTC deposit. The
-transaction is a signal that the sender is interested in a signing group to back
-a wallet that will receive bitcoin from a wallet the sender controls, in order
-to produce TBTC. Because signing groups are not free to create, deposit requests
-include a small bond in the host chain's native token to cover the creation of
-the signing group. The bond is refunded when a successful deposit is made to the
-generated wallet.
+The starting point for acquiring TBTC is generating a _deposit request_. This
+request is a transaction to a smart contract on tBTC's host chain.
+signals that the sender requires a signing group backed wallet Because signing
+groups are not free to create, deposit requests include a small bond in the host
+chain's native token to cover the creation of the signing group. The bond is
+refunded when a successful deposit is made to the generated wallet.
 
 === Signer selection
 
@@ -63,7 +60,7 @@ key generation protocol that results in a public ECDSA key for the group, which
 is used to produce a wallet address that is then published to the host chain.
 This completes the signer selection phase.
 
-==== Bonding
+==== Signer bonding
 
 Before the selected members of a signing group can perform distributed key
 generation, they must agree to become members of the signing group by putting up
@@ -92,13 +89,13 @@ The distributed key generation protocol should result in three properties:
    signed version of a given transaction to be performed on behalf of the
    signing group.
 
-=== Proof of deposit
+== Making a deposit
 
 Once the tBTC system has a wallet address available for a given deposit request,
-the _depositor_ can issue a Bitcoin transaction sending BTC from a wallet they
-control to the wallet address for the signing group. Once the transaction has
-been sufficiently confirmed by the Bitcoin chain, the depositor has to issue a
-transaction to the host chain proving that the _Deposit_ has been funded.
+the _depositor_ can broadcast a Bitcoin transaction sending BTC from a wallet
+they control to the wallet address for the signing group. Once the transaction
+has been sufficiently confirmed by the Bitcoin chain, the depositor has to issue
+a transaction to the host chain proving that the _Deposit_ has been funded.
 
 The only link between the Bitcoin chain and the host chain is the tBTC system,
 which runs as a set of smart contracts on the host chain. As such, the Bitcoin
@@ -110,83 +107,15 @@ proof is not received within a given timeout window, the signing group will
 disband and the system will seize the bond's value, making it available to the
 signing group members to reclaim.
 
-To prove deposit, the depositor constructs a transaction for the host chain
-that provides proof that the transaction was accepted on the Bitcoin chain
-and has had sufficient work built on top of the block that included the deposit
-transaction. These proofs are verified by an on-chain simple payment
-verification (SPV) system. A more complete discussion of cross-chain SPV
-systems and their security properties is included in the appendix.
-
 // TODO What is "sufficient"? Defined as a system property? Dynamic?
-
-==== Overpayment & Underpayment
-
-The system is designed to function with a predefined lot size for all _Deposits_
-which is given as a system parameter. **Depositors should send the exact lot
-amount of BTC in the funding transaction, or expect loss of funds.**
-Since it is not possible for the system to force users into sending any specific
-amount, the system must gracefully handle overpayment and underpayment. The
-primary  impact of overpayment and underpayment is on the `Deposit`'s collateralization
-ratio. We treat overpayment and underpayment as faulty depositor behavior, 
-and pass on the associated costs to the depositor.
-
-### Underpayment
-
-Allowing underpayment on `Deposit` would result in over-bonded signers. To
-prevent this, the system will not accept funding proofs of less than the lot
-size (`1.0 BTC` initially). This implies that the a user that sends less than `1.0
-BTC` in the funding transaction does not receive any TBTC, and forfeits the BTC 
-locked in the funding transactions to the Signers. The Signers can unlock and
-evenly split the funds in the transaction after the _Deposit_ is resolved on-chain (see
-<<Multiple UTXOs>> for a full discussion).
-
-### Overpayment
-
-Overpayment, in contrast, would result in under-bonded signers. When overfunding
-occurs, the system accepts the funding proof, but mints TBTC according to the 
-regular lot size. 
-
-In an efficient market, this _Deposit_ will be immediately redeemed,
-as the redeemer expects to take the overfunded amount as arbitrage. 
-
-Example: A user providing a funding proof for `1.6 BTC` in a system
-with lot size of `1 BTC` mints only `1.0 TBTC`. Any user that burns `1.0 TBTC`
-is able to claim the `1.6 TBTC` _Deposit_.
-
-A depositor should notice this and immediately try to burn their TBTC to reclaim
-the amount. If not, the depositor effectively forfeits the overfunded value to
-other participants.
-
-==== Multiple UTXOs
-
-A faulty depositor may send multiple UTXOs to the signer group address. This
-may be the result of human or software error. Unfortunately, returning the
-funds to the depositor would impose require significant on-chain complexity and
-gas fees, as each UTXO would need to be proven via SPV, and a signature on it
-explicitly authorized. In addition, we would have to develop mechanisms to
-economically compel signers to sign each transaction despite the fact that the
-total value of the UTXOs is not known. As such, the system accepts only the
-first UTXO greater than the deposit lot size. All other BTC sent to the signing
-group is forfeit. Therefore it is imperative that depositors send only a single
-UTXO of an appropriate size.
-
-As a particularly damaging example, consider a naive human depositor. If she
-mistakenly sends half the lot size in one transaction and half in another, both
-UTXOs would be forfeit. **This represents a serious pitfall for depositors that
-must be carefully addressed by the user interface since significant loss of
-funds can occur.**
-
-The signers, while they may collude to move the BTC to other UTXOs, may not do
-so during the life of the _Deposit_ contract as the production of the required
-signature would constitute ECDSA fraud. As such, the most likely outcome is
-that the signers collectively wait to take personal possession of that BTC
-until the _Deposit_ concludes naturally. This allows the signers to make
-regular signing fees and keep the additional UTXOs without penalty.
-
 
 === Light Relays
 
-// TODO: crosslink to appendix SPV section
+To prove a deposit, the depositor submits proof the transaction has been
+confirmed and accumulated work on the Bitcoin chain. The proof is
+verified by an on-chain simple payment verification (SPV) contract on the host
+chain. A more complete overview of cross-chain SPV systems and their security
+properties <<{root-prefix}/appendix/spv/index#,is included in the appendix>>.
 
 Light relays are a new variant of on-chain SPV developed for tBTC. They seek to
 take advantage of the compact and efficient stateless SPV proofs while relaying
@@ -234,29 +163,6 @@ requests and fund multiple deposits. This allows each deposit to be backed by
 a different signing group, both simplifying the bonding of signing groups and
 improving the resilience of the system to signing group failure.
 
-== Deposit Economics
+include::./mistakes.adoc[leveloffset=+1]
 
-:signer-fee-withheld: 0.005 TBTC
-
-Once a deposit has been made and funded, the corresponding TBTC is minted.
-Minted TBTC is immediately issued to the funder, who is now the beneficiary of
-a funded _Deposit_. To prevent denial of service attacks {signer-fee-withheld}
-is withheld on minting. This will be returned to the beneficiary when the
-_Deposit_ is closed. This ensures that DoS attacks based on repeatedly creating
-signing groups (e.g. Attacker creates signing group, locks 1 BTC, creates 1
-TBTC via a Deposit, trades for 1 BTC in an exchange and repeats the Deposit
-process multiple times) have high economic cost.
-
-Beneficary status is transferable (in Ethereum this is implemented as an
-ERC721-compatible non-fungible token). When the _Deposit_ resolves, the
-withheld TBTC (or equivalent value) will be returned to the current beneficiary
-along with a small additional payment. In this way the beneficiary NFT
-functions as a zero-coupon bond issued by the signing group upon funding. If
-the signing group performs its obligations, the beneficiary will eventually
-receive the bond payout. It can be expected that there will be service providers
-willing to trade {signer-fee-witheld} TBTC for 1 TBTC-coupon-bond along with
-some fee, for providing liquidity to holders of the otherwise illiquid for the
-duration of a Deposit coupon.
-
-Signer fees are described in more detail in
-<<../custodial-fees/index#,their own section>>.
+include::./economics.adoc[leveloffset=+1]
