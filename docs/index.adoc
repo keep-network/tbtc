@@ -241,6 +241,7 @@ The architecture is broken down into
 
 * Deposits and signer selection
 * Bonding and price feeds
+* Minting
 * Custodial fees
 * Signing
 * Wallet failure
@@ -252,7 +253,9 @@ include::bonding/index.adoc[leveloffset=+2]
 
 include::price-feed/index.adoc[leveloffset=+2]
 
-include::custodial-fees/index.adoc[leveloffset=+2]
+include::minting/index.adoc[leveloffset=+2]
+
+include::signer-fees/index.adoc[leveloffset=+2]
 
 include::signing/index.adoc[leveloffset=+2]
 

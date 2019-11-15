@@ -35,10 +35,10 @@
     \node[nested state,on chain=tbtc] (signing group request) at ($(tbtc label)-(0,2.5cm)$) {create signing group};
     \node[state,on chain=depositor] (deposit send)    {send deposit to signing group};
     \node[state,on chain=depositor,text width=2.8cm] (deposit proof) at ($(deposit send)+(0,1cm)$)   {prove deposit transaction block};
-    \node[state,on chain=tbtc]        (deposit confirmation) at ($(signing group request)-(0,2.5cm)$) {enable TBTC mint for deposit};
-
-    \node[state,on chain=depositor] (tbtc request) at ($(deposit proof)-(0,1cm)$)   {request TBTC};
-    \node[state,on chain=tbtc]      (tbtc minting)    {mint and assign TBTC};
+    \node[state,on chain=tbtc]        (assign deposit token) at ($(signing group request)-(0,2.5cm)$) {assign deposit owner NFT};
+    \node[state,on chain=depositor,text width=2.8cm] (additional deposit proof)   {prove additional confirmations};
+    \node[state,on chain=depositor] (tbtc request) at ($(additional deposit proof)+(0,1cm)$) {exchange the deposit owner NFT};
+    \node[state,on chain=tbtc] (tbtc minting) at ($(assign deposit token)-(0,3.5cm)$) {mint and assign TBTC};
 
 
     \path [->] (deposit request) edge [out=10,in=135] (ethereum block 1)
@@ -48,7 +48,9 @@
                (deposit send) edge [bend right=15] (bitcoin block 2)
                (bitcoin block 2) edge [bend right=15,dashed] (deposit proof)
                (deposit proof) edge [out=10,in=140] (ethereum block 3)
-               (ethereum block 3) edge [out=210,in=0,dashed] (deposit confirmation)
-               (tbtc request) edge (ethereum block 4)
-               (ethereum block 4) edge [bend left=15] (tbtc minting);
+               (additional deposit proof) edge [out=10,in=140] (ethereum block 4)
+               (ethereum block 3) edge [out=210,in=0,dashed] (assign deposit token)
+               (bitcoin block 3) edge [bend right=15,dashed] (additional deposit proof)
+               (tbtc request) edge [bend right=15] (ethereum block 5)
+               (ethereum block 5) edge [bend left=15, dashed] (tbtc minting);
 }
