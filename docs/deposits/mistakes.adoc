@@ -54,10 +54,3 @@ mistakenly sends half the lot size in one transaction and half in another, both
 UTXOs would be forfeit. **This represents a serious pitfall for depositors that
 must be carefully addressed by the user interface since significant loss of
 funds can occur.**
-
-The signers, while they may collude to move the BTC to other UTXOs, may not do
-so during the life of the _Deposit_ contract as the production of the required
-signature would constitute ECDSA fraud. As such, the most likely outcome is
-that the signers collectively wait to take personal possession of that BTC
-until the _Deposit_ concludes naturally. This allows the signers to make
-regular signing fees and keep the additional UTXOs without penalty.
