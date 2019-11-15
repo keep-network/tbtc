@@ -5,7 +5,7 @@ which is given as a system parameter. **Depositors should send the exact lot
 amount of BTC in the funding transaction, or expect loss of funds.**
 Since it is not possible for the system to force users into sending any specific
 amount, the system must gracefully handle overpayment and underpayment. The
-primary  impact of overpayment and underpayment is on the `Deposit`'s collateralization
+primary  impact of overpayment and underpayment is on the ``Deposit```'s collateralization
 ratio. We treat overpayment and underpayment as faulty depositor behavior,
 and pass on the associated costs to the depositor.
 
