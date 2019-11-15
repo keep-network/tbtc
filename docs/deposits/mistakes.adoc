@@ -30,7 +30,7 @@ as the redeemer expects to take the overfunded amount as arbitrage.
 
 Example: A user providing a funding proof for `1.6 BTC` in a system
 with lot size of `1 BTC` mints only `1.0 TBTC`. Any user that burns `1.0 TBTC`
-is able to claim the `1.6 TBTC` _Deposit_.
+is able to claim the `1.6 BTC` _Deposit_.
 
 A depositor should notice this and immediately try to burn their TBTC to reclaim
 the amount. If not, the depositor effectively forfeits the overfunded value to

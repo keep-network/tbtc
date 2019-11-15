@@ -29,7 +29,7 @@ image::{root-prefix}img/generated/initiate-deposit.png[]
 == Deposit request
 
 The starting point for acquiring TBTC is generating a _deposit request_. This
-request is a transaction to a smart contraction on tBTC's host chain, and
+request is a transaction to a smart contract on tBTC's host chain.
 signals that the sender requires a signing group backed wallet Because signing
 groups are not free to create, deposit requests include a small bond in the host
 chain's native token to cover the creation of the signing group. The bond is

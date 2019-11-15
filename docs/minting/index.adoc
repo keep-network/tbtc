@@ -20,7 +20,7 @@ reorgs with a better user experience and more flexible use cases.
 After a deposit has been requested and a signing group formed, a depositor may
 submit proof of their funding transaction. This initial proof has no work
 accumulation requirement -- a single qualified confirmation consistent with the
-host chain's view of the Bitcoin network network will suffice.
+host chain's view of the Bitcoin network will suffice.
 
 The depositor is granted a non-fungible token unique to the deposit called
 the _deposit owner token_. The deposit owner token grants the exclusive right
@@ -84,7 +84,9 @@ deposits.
 If a proof showing enough accumulated work is submitted before a timeout, the
 deposit NFT becomes eligible for minting fungible TBTC. Minting TBTC is optional
 -- depositors can stick with their NFTs, which will be valid for the lifetime of
-a maintained deposit.
+a maintained deposit. Note that if a holder of the NFT wants to make a
+transaction with a different value than the lot size, they must mint TBTC
+since the deposit ownership token is non fungible.
 
 // TODO NB if a deposit is liquidated, the NFT can stick around and be backed by
 // the liquid token
