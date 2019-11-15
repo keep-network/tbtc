@@ -26,12 +26,13 @@ library TestTBTCConstants {
     uint256 public constant FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FORMATION_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FRAUD_FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
-    uint256 public constant FUNDER_BOND_AMOUNT_WEI = 10 ** 22; // wei
+    uint256 public constant FUNDER_BOND_AMOUNT_WEI = 10 ** 5; // wei
 
     // Liquidation Flow
     uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
     uint256 public constant AUCTION_DURATION = 24 * 60 * 60; // seconds
     uint256 public constant AUCTION_BASE_PERCENTAGE = 90; // percents
+    uint256 public constant PERMITTED_FEE_BUMPS = 5; // number of times the fee can be increased 
 
     function getLotSize() public pure returns (uint256) { return MINIMUM_LOT_SIZE; }
     function getSignerFeeDivisor() public pure returns (uint256) { return SIGNER_FEE_DIVISOR; }
@@ -56,4 +57,5 @@ library TestTBTCConstants {
     function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
     function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
     function getAuctionBasePercentage() public pure returns (uint256) { return AUCTION_BASE_PERCENTAGE; }
+    function getPermittedFeeBumps() public pure returns (uint256) {return PERMITTED_FEE_BUMPS; }
 }

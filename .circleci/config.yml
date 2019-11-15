@@ -15,57 +15,79 @@ executors:
     docker:
       - image: thesisco/docker-buildpack:bionic
 jobs:
+  setup_github_package_registry:
+    executor: docker-node
+    steps:
+      - checkout
+      - run:
+          name: Authenticate GitHub Package Registry
+          working_directory: ~/project/implementation
+          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
+      - persist_to_workspace:
+          root: implementation
+          paths:
+            - .npmrc
   lint_js:
     executor: docker-node
     steps:
-        - checkout
-        - run:
-            name: Lint JS
-            command: |
-              cd implementation/
-              npm install
-              npm run js:lint
+      - checkout
+      - attach_workspace:
+          at: implementation
+      - run:
+          name: Lint JS
+          working_directory: ~/project/implementation
+          command: |
+            npm install
+            npm run js:lint
   lint_solidity:
     executor: docker-node
     steps:
-        - checkout
-        - run:
-            name: Lint Solidity
-            working_directory: ~/project/implementation
-            command: |
-              set -ex
-              npm install
-              npm run sol:lint
+      - checkout
+      - attach_workspace:
+          at: implementation
+      - run:
+          name: Lint Solidity
+          working_directory: ~/project/implementation
+          command: |
+            set -ex
+            npm install
+            npm run sol:lint
   unit_test_contracts:
     executor: docker-node
     steps:
-        - checkout
-        - run: sudo npm install -g ganache-cli@6.4.2
-        - run:
-            name: Running testrpc
-            command: ganache-cli
-            background: true
-        - run:
-            name: Run NPM tests
-            working_directory: ~/project/implementation/contracts
-            command: npm install && npm run test
+      - checkout
+      - attach_workspace:
+          at: implementation
+      - run: sudo npm install -g ganache-cli@6.4.2
+      - run:
+          name: Running testrpc
+          working_directory: ~/project/implementation
+          command: ganache-cli
+          background: true
+      - run:
+          name: Run NPM tests
+          working_directory: ~/project/implementation
+          command: npm install && npm run test
   integration_test_contracts:
     executor: docker-node
     steps:
-        - checkout
-        - run: sudo npm install -g ganache-cli@6.4.2
-        - run:
-            name: Running testrpc
-            command: ganache-cli
-            background: true
-        - run:
-            name: Deploy Uniswap
-            working_directory: ~/project/implementation/scripts
-            command: ./deploy_uniswap.sh
-        - run:
-            name: Run NPM tests
-            working_directory: ~/project/implementation/contracts
-            command: npm install && npm run integration-test
+      - checkout
+      - attach_workspace:
+          at: implementation
+      - run: sudo npm install -g ganache-cli@6.4.2
+      - run:
+          name: Running testrpc
+          working_directory: ~/project/implementation
+          command: ganache-cli
+          background: true
+      - run:
+          name: Deploy Uniswap
+          working_directory: ~/project/implementation/scripts
+          command: ./deploy_uniswap.sh
+      - run:
+          name: Run NPM tests
+          working_directory: ~/project/implementation
+          command: npm install && npm run integration-test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -143,14 +165,21 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
+      - attach_workspace:
+          at: implementation
       - run:
-          name: Set Gcloud Auth
+          name: Provision External Contract Addresses
           command: |
-            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
+            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+            export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
+            export KEEP_REGISTRY_CONTRACT_DATA="KeepRegistry.json"
+            implementation/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
           command: |
+            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
             mkdir -p /tmp/tbtc/contracts
@@ -208,32 +237,44 @@ jobs:
           image: initcontainer-provision-tbtc-maintainers
           tag: latest
   publish_contract_data:
-      executor: gcp-cli/default
-      steps:
-        - attach_workspace:
-            at: /tmp/tbtc
-        - gcp-cli/install
-        - gcp-cli/initialize:
-            google-project-id: GOOGLE_PROJECT_ID
-            google-compute-zone: GOOGLE_COMPUTE_ZONE_A
-            # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
-            gcloud-service-key: GCLOUD_SERVICE_KEY
-        - run:
-            name: Upload contract data
-            command: |
-              cd /tmp/tbtc/contracts
-              gsutil -m cp * gs://keep-dev-contract-data/tbtc
+    executor: gcp-cli/default
+    steps:
+      - attach_workspace:
+          at: /tmp/tbtc
+      - gcp-cli/install
+      - gcp-cli/initialize:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - run:
+          name: Upload contract data
+          command: |
+            cd /tmp/tbtc/contracts
+            gsutil -m cp * gs://keep-dev-contract-data/tbtc
 
 workflows:
   version: 2
   lint:
     jobs:
-      - lint_js
-      - lint_solidity
+      - setup_github_package_registry:
+          context: github-package-registry
+      - lint_js:
+          requires:
+            - setup_github_package_registry
+      - lint_solidity:
+          requires:
+            - setup_github_package_registry
   test:
     jobs:
-      - unit_test_contracts
-      - integration_test_contracts
+      - setup_github_package_registry:
+          context: github-package-registry
+      - unit_test_contracts:
+          requires:
+            - setup_github_package_registry
+      - integration_test_contracts:
+          requires:
+            - setup_github_package_registry
   docs:
     jobs:
       - generate_pngs
@@ -248,11 +289,15 @@ workflows:
             - generate_docs_asciidoctor
   migrate-build-publish:
     jobs:
+      - setup_github_package_registry:
+          context: github-package-registry
       - migrate_contracts:
           filters:
             branches:
               only: master
           context: keep-dev
+          requires:
+            - setup_github_package_registry
       - build_initcontainer:
           filters:
             branches:

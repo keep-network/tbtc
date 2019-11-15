@@ -1,13 +1,14 @@
 pragma solidity ^0.5.10;
 
-import {ValidateSPV} from "bitcoin-spv/contracts/ValidateSPV.sol";
-import {SafeMath} from "bitcoin-spv/contracts/SafeMath.sol";
-import {BTCUtils} from "bitcoin-spv/contracts/BTCUtils.sol";
-import {BytesLib} from "bitcoin-spv/contracts/BytesLib.sol";
+import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
+import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
+import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
+import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
-import {IERC721} from "../interfaces/IERC721.sol";
-import {IKeep} from "../interfaces/IKeep.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
+import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 
 library DepositUtils {
@@ -24,7 +25,6 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
-        address KeepBridge;
         uint8 currentState;
 
         // SET ON FRAUD
@@ -51,6 +51,11 @@ library DepositUtils {
         bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
+
+        /// @notice Map of timestamps for transaction digests approved for signing
+        /// @dev Holds a timestamp from the moment when the transaction digest
+        /// was approved for signing
+        mapping (bytes32 => uint256) approvedDigests;
     }
 
     /// @notice         Gets the current block difficulty
@@ -100,39 +105,12 @@ library DepositUtils {
         );
     }
 
-    /// @notice                 Syntactically check an SPV proof for a bitcoin tx
-    /// @dev                    Stateless SPV Proof verification documented elsewhere
-    /// @param _d               Deposit storage pointer
-    /// @param _bitcoinTx       The bitcoin tx that is purportedly included in the header chain
-    /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (1-indexed)
-    /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
-    /// @return                 The 32 byte transaction id (little-endian, not block-explorer)
-    function checkProofFromTx(
-        Deposit storage _d,
-        bytes memory _bitcoinTx,
-        bytes memory _merkleProof,
-        uint256 _txIndexInBlock,
-        bytes memory _bitcoinHeaders
-    ) public view returns (bytes32) {
-        bytes memory _nIns;
-        bytes memory _ins;
-        bytes memory _nOuts;
-        bytes memory _outs;
-        bytes memory _locktime;
-        bytes32 _txid;
-        (_nIns, _ins, _nOuts, _outs, _locktime, _txid) = _bitcoinTx.parseTransaction();
-        require(_txid != bytes32(0), "Failed tx parsing");
-        checkProofFromTxId(_d, _txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
-        return _txid;
-    }
-
     /// @notice                 Syntactically check an SPV proof for a bitcoin transaction with its hash (ID)
     /// @dev                    Stateless SPV Proof verification documented elsewhere (see github.com/summa-tx/bitcoin-spv)
     /// @param _d               Deposit storage pointer
     /// @param _txId            The bitcoin txid of the tx that is purportedly included in the header chain
     /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (1-indexed)
+    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (0-indexed)
     /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
     function checkProofFromTxId(
         Deposit storage _d,
@@ -168,50 +146,14 @@ library DepositUtils {
         bytes memory _output;
 
         // Find the output paying the signer PKH
-        _output = extractOutputAtIndex(_txOutputVector, _fundingOutputIndex);
+        _output = _txOutputVector.extractOutputAtIndex(_fundingOutputIndex);
+
         if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d)))) {
             _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
             return _valueBytes;
         }
         // If we don't return from inside the loop, we failed.
         revert("could not identify output funding the required public key hash");
-    }
-
-    /// @notice                     Extracts the output at a given index in _txOutputVector
-    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
-    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
-    /// @return                     The specified output
-    function extractOutputAtIndex(
-        bytes memory _txOutputVector,
-        uint8 _fundingOutputIndex
-    ) public view returns (bytes memory) {
-        // Transaction outputs vector consists of a number of outputs followed by a list of outputs:
-        //
-        // |                                  outputs vector                                  |
-        // | outputs number |            output 1            |          output 2...           |
-        // | outputs number | value | script length | script | value | script length | script |
-        //
-        // Each output contains value (8 bytes), script length (VarInt) and a script.
-
-        // extract output number to verify that it's not a varint.
-        uint256 _n = (_txOutputVector.slice(0, 1)).bytesToUint();
-        require(_n < 0xfd, "VarInts not supported, Number of outputs cannot exceed 252");
-
-        // Determine length of first output
-        // offset starts at 1 to skip output number varint
-        // skip the 8 byte output value to get to length
-        // next two bytes used to calculate length
-        uint _offset = 1 + 8;
-        uint _length = (_txOutputVector.slice(_offset, 2)).determineOutputLength();
-
-        // This loop moves forward, and then gets the len of the next one
-        for (uint i = 0; i < _fundingOutputIndex; i++) {
-            _offset = _offset + _length;
-            _length = (_txOutputVector.slice(_offset, 2)).determineOutputLength();
-        }
-
-        // We now have the length and offset of the one we want
-        return _txOutputVector.slice(_offset - 8, _length);
     }
 
     /// @notice                     Validates the funding tx and parses information from it
@@ -223,23 +165,27 @@ library DepositUtils {
     /// @param _txLocktime          Final 4 bytes of the transaction
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block
-    /// @param _txIndexInBlock      Transaction index in the block (1-indexed)
+    /// @param _txIndexInBlock      Transaction index in the block (0-indexed)
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
     /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint
     function validateAndParseFundingSPVProof(
         DepositUtils.Deposit storage _d,
-        bytes memory _txVersion,
+        bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
-        bytes memory _txLocktime,
+        bytes4 _txLocktime,
         uint8 _fundingOutputIndex,
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
     ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
+        require(_txInputVector.validateVin(), "invalid input vector provided");
+        require(_txOutputVector.validateVout(), "invalid output vector provided");
+
         bytes32 txID = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
 
         _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
+
         require(bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
 
         checkProofFromTxId(_d, txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
@@ -294,6 +240,12 @@ library DepositUtils {
         } else {
             return 0;
         }
+    }
+
+    /// @notice     Determines the threshold amount of TBTC necessary to liquidate
+    /// @return     The amount of TBTC to buy during liquidation
+    function liquidationTBTCAmount(Deposit storage _d) public view returns (uint256) {
+        return TBTCConstants.getLotSize().add(beneficiaryReward());
     }
 
     /// @notice     Determines the amount of TBTC accepted in the auction
@@ -363,7 +315,7 @@ library DepositUtils {
     /// @dev        Calls the keep contract to do so
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.checkBondAmount(_d.keepAddress);
     }
 
@@ -374,13 +326,13 @@ library DepositUtils {
         return abi.encodePacked(_b).reverseEndianness().bytesToUint();
     }
 
-    /// @notice         determines whether a digest has been approved for our keep group
-    /// @dev            calls out to the keep contract, storing a 256bit int costs the same as a bool
-    /// @param  _digest the digest to check approval time for
-    /// @return         the time it was approved. 0 if unapproved
+    /// @notice         Gets timestamp of digest approval for signing
+    /// @dev            Identifies entry in the recorded approvals by keep ID and digest pair
+    /// @param _digest  Digest to check approval for
+    /// @return         Timestamp from the moment of recording the digest for signing.
+    ///                 Returns 0 if the digest was not approved for signing
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
-        IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.wasDigestApprovedForSigning(_d.keepAddress, _digest);
+        return _d.approvedDigests[_digest];
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
@@ -406,7 +358,7 @@ library DepositUtils {
     /// @return     the amount of ether seized
     function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
-        IKeep _keep = IKeep(_d.KeepBridge);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.seizeSignerBonds(_d.keepAddress);
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
@@ -428,7 +380,8 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IKeep _keep = IKeep(_d.KeepBridge);
-        return _keep.distributeEthToKeepGroup.value(_ethValue)(_d.keepAddress);
+        IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
+        _keep.distributeETHToMembers.value(_ethValue)();
+        return true;
     }
 }

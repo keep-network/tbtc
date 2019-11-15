@@ -20,19 +20,19 @@ library TBTCConstants {
     uint256 public constant REDEMPTION_SIGNATURE_TIMEOUT = 2 * 60 * 60;  // seconds
     uint256 public constant INCREASE_FEE_TIMER = 4 * 60 * 60;  // seconds
     uint256 public constant REDEMPTION_PROOF_TIMEOUT = 6 * 60 * 60;  // seconds
-    uint256 public constant MINIMUM_REDEMPTION_FEE = 2000; // satoshi
+    uint256 public constant MINIMUM_REDEMPTION_FEE = 150; // satoshi TODO: decreased for testing, set it back original value `2000`
 
     // Funding Flow
     uint256 public constant FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FORMATION_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FRAUD_FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
-    uint256 public constant FUNDER_BOND_AMOUNT_WEI = 10 ** 22; // wei
+    uint256 public constant FUNDER_BOND_AMOUNT_WEI = 10 ** 5; // wei
 
     // Liquidation Flow
     uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
     uint256 public constant AUCTION_DURATION = 24 * 60 * 60; // seconds
     uint256 public constant AUCTION_BASE_PERCENTAGE = 90; // percents
-
+    uint256 public constant PERMITTED_FEE_BUMPS = 5; // number of times the fee can be increased
 
     // Getters for easy access
     function getLotSize() public pure returns (uint256) { return LOT_SIZE; }
@@ -58,4 +58,5 @@ library TBTCConstants {
     function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
     function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
     function getAuctionBasePercentage() public pure returns (uint256) { return AUCTION_BASE_PERCENTAGE; }
+    function getPermittedFeeBumps() public pure returns (uint256) {return PERMITTED_FEE_BUMPS; }
 }

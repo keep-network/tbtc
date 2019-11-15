@@ -4,22 +4,24 @@ import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
 contract TestDeposit is Deposit {
 
-    function setExteroriorAddresses(
+    function setExteriorAddresses(
         address _sys,
-        address _token,
-        address _k
+        address _token
     ) public {
         self.TBTCSystem = _sys;
-        self.KeepBridge = _k;
         self.TBTCToken = _token;
     }
 
     function reset() public {
         setState(0);
         setLiquidationAndCourtesyInitated(0, 0);
-        setKeepInfo(address(0), 0, 0, bytes32(0), bytes32(0));
         setRequestInfo(address(0), bytes20(0), 0, 0, bytes32(0));
         setUTXOInfo(bytes8(0), 0, '');
+
+        setKeepAddress(address(0));
+        setSigningGroupRequestedAt(0);
+        setFundingProofTimerStart(0);
+        setSigningGroupPublicKey(bytes32(0), bytes32(0));
     }
 
     function setState(uint8 _state) public {
@@ -40,22 +42,37 @@ contract TestDeposit is Deposit {
         return (self.liquidationInitiated, self.courtesyCallInitiated);
     }
 
-    function setKeepInfo(
-        address _keepAddress,
-        uint256 _signingGroupRequestedAt,
-        uint256 _fundingProofTimerStart,
-        bytes32 _signingGroupPubkeyX,
-        bytes32 _signingGroupPubkeyY
-    ) public {
+    function setKeepAddress(address _keepAddress) public {
         self.keepAddress = _keepAddress;
-        self.signingGroupRequestedAt = _signingGroupRequestedAt;
-        self.fundingProofTimerStart = _fundingProofTimerStart;
-        self.signingGroupPubkeyX = _signingGroupPubkeyX;
-        self.signingGroupPubkeyY = _signingGroupPubkeyY;
     }
 
-    function getKeepInfo() public view returns (address, uint256, uint256, bytes32, bytes32) {
-        return (self.keepAddress, self.signingGroupRequestedAt, self.fundingProofTimerStart, self.signingGroupPubkeyX, self.signingGroupPubkeyY);
+    function getKeepAddress() public view returns (address) {
+        return self.keepAddress;
+    }
+
+    function setSigningGroupRequestedAt(uint256 _signingGroupRequestedAt) public {
+        self.signingGroupRequestedAt = _signingGroupRequestedAt;
+    }
+
+    function getSigningGroupRequestedAt() public view returns (uint256) {
+        return self.signingGroupRequestedAt;
+    }
+
+    function setFundingProofTimerStart(uint256 _fundingProofTimerStart) public {
+        self.fundingProofTimerStart = _fundingProofTimerStart;
+    }
+
+    function getFundingProofTimerStart() public view returns (uint256) {
+        return self.fundingProofTimerStart;
+    }
+
+    function setSigningGroupPublicKey(bytes32 _x,bytes32 _y) public {
+        self.signingGroupPubkeyX = _x;
+        self.signingGroupPubkeyY = _y;
+    }
+
+    function getSigningGroupPublicKey() public returns (bytes32, bytes32){
+        return (self.signingGroupPubkeyX, self.signingGroupPubkeyY);
     }
 
     function setRequestInfo(
@@ -95,9 +112,28 @@ contract TestDeposit is Deposit {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
 
+    function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
+        self.approvedDigests[_digest] = _timestamp;
+    }
+
     // passthrough for direct testing
-    function redemptionTransactionChecks(bytes memory _bitcoinTx) public view returns (bytes32, uint256) {
-        return self.redemptionTransactionChecks(_bitcoinTx);
+    function approveDigest(bytes32 _digest) public {
+        return self.approveDigest(_digest);
+    }
+
+    function wasDigestApprovedForSigning(bytes32 _digest) public view returns (uint256) {
+        return self.wasDigestApprovedForSigning(_digest);
+    }
+
+     function redemptionTransactionChecks(
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector
+    ) public view returns (uint256) {
+        return self.redemptionTransactionChecks(_txInputVector, _txOutputVector);
+    }
+
+    function validateRedeemerNotPaid(bytes memory _txOutputVector) public view returns (bool){
+        return self.validateRedeemerNotPaid(_txOutputVector);
     }
 
     function getWithdrawalRequestTime() public view returns(uint256){
@@ -106,5 +142,9 @@ contract TestDeposit is Deposit {
 
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
+    }
+
+    function attemptToLiquidateOnchain() public returns (bool) {
+        return self.attemptToLiquidateOnchain();
     }
 }

@@ -12,7 +12,7 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
-const KeepStub = artifacts.require('KeepStub')
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -26,8 +26,6 @@ const chai = require('chai')
 const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
-
-const ADDRESS_ZERO = '0x' + '0'.repeat(40)
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'BytesLib', contract: BytesLib },
@@ -43,8 +41,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'KeepStub', contract: KeepStub },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub }]
+  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -55,22 +52,30 @@ const TEST_DEPOSIT_DEPLOY = [
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-contract('Deposit', (accounts) => {
+contract('DepositRedemption', (accounts) => {
   let deployed
   let testInstance
   let withdrawalRequestTime
   let tbtcToken
+  let tbtcSystemStub
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-    tbtcToken = await TestToken.new(deployed.TBTCSystemStub.address)
+
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+
+    tbtcToken = await TestToken.new(tbtcSystemStub.address)
+
     testInstance = deployed.TestDeposit
-    testInstance.setExteroriorAddresses(deployed.TBTCSystemStub.address, tbtcToken.address, deployed.KeepStub.address)
-    deployed.TBTCSystemStub.mint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+
+    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+
+    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
   })
 
   beforeEach(async () => {
     await testInstance.reset()
+    await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   describe('requestRedemption', async () => {
@@ -88,7 +93,6 @@ contract('Deposit', (accounts) => {
     const keepPubkeyY = '0x' + '44'.repeat(32)
     const requesterPKH = '0x' + '33'.repeat(20)
     let requiredBalance
-    let callerBalance
 
     before(async () => {
       requiredBalance = await deployed.TestDepositUtils.redemptionTBTCAmount.call()
@@ -97,17 +101,17 @@ contract('Deposit', (accounts) => {
     beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
-      // make sure to clear TBTC balance of caller
-      callerBalance = await tbtcToken.balanceOf(accounts[0])
-      await tbtcToken.forceBurn(accounts[0], callerBalance)
-      // mint the required balance to request redemption
-      await tbtcToken.forceMint(accounts[0], requiredBalance)
-      await deployed.KeepStub.setSuccess(true)
+
+      // make sure there is sufficient balance to request redemption. Then approve deposit
+      await tbtcToken.resetBalance(requiredBalance)
+      await tbtcToken.resetAllowance(testInstance.address, requiredBalance)
+      await deployed.ECDSAKeepStub.setSuccess(true)
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, keepPubkeyX, keepPubkeyY)
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
       await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
@@ -118,7 +122,7 @@ contract('Deposit', (accounts) => {
       assert.equal(requestInfo[4], sighash)
 
       // fired an event
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
@@ -137,20 +141,57 @@ contract('Deposit', (accounts) => {
         'Fee is too low'
       )
     })
+  })
 
-    it('reverts if the keep returns false', async () => {
-      await deployed.KeepStub.setSuccess(false)
+  describe('approveDigest', async () => {
+    beforeEach(async () => {
+      await testInstance.setSigningGroupPublicKey('0x00', '0x00')
+    })
 
-      await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
-        'Keep returned false'
+    it('calls keep for signing', async () => {
+      const digest = '0x' + '08'.repeat(32)
+
+      await testInstance.approveDigest(digest)
+        .catch((err) => {
+          assert.fail(`cannot approve digest: ${err}`)
+        })
+
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      // Check if ECDSAKeep has been called and event emitted.
+      const eventList = await deployed.ECDSAKeepStub.getPastEvents(
+        'SignatureRequested',
+        { fromBlock: blockNumber, toBlock: 'latest' },
+      )
+
+      assert.equal(
+        eventList[0].returnValues.digest,
+        digest,
+        'incorrect digest in emitted event',
       )
     })
 
-    it('calls Keep to approve the digest', async () => {
-      // test relies on a side effect
-      const approved = await deployed.KeepStub.wasDigestApprovedForSigning.call(ADDRESS_ZERO, sighash)
-      assert(!approved.eqn(0), 'digest was not approved')
+    it('registers timestamp for digest approval', async () => {
+      const digest = '0x' + '02'.repeat(32)
+
+      const approvalTx = await testInstance.approveDigest(digest)
+        .catch((err) => {
+          assert.fail(`cannot approve digest: ${err}`)
+        })
+
+      const block = await web3.eth.getBlock(approvalTx.receipt.blockNumber)
+      const expectedTimestamp = block.timestamp
+
+      const timestamp = await testInstance.wasDigestApprovedForSigning(digest)
+        .catch((err) => {
+          assert.fail(`cannot check digest approval: ${err}`)
+        })
+
+      assert.equal(
+        timestamp,
+        expectedTimestamp,
+        'incorrect registered timestamp',
+      )
     })
   })
 
@@ -172,7 +213,7 @@ contract('Deposit', (accounts) => {
     it('updates the state and logs GotRedemptionSignature', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, pubkeyX, pubkeyY)
+      await testInstance.setSigningGroupPublicKey(pubkeyX, pubkeyY)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 0, 0, digest)
 
       await testInstance.provideRedemptionSignature(v, r, s)
@@ -181,7 +222,7 @@ contract('Deposit', (accounts) => {
       expect(state).to.eq.BN(utils.states.AWAITING_WITHDRAWAL_PROOF)
 
       // fired an event
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('GotRedemptionSignature', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('GotRedemptionSignature', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._r, r)
       assert.equal(eventList[0].returnValues._s, s)
     })
@@ -232,12 +273,12 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
-      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime)
+      await testInstance.setDigestApprovedAtTime(prevSighash, withdrawalRequestTime)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
-      await testInstance.setKeepInfo(ADDRESS_ZERO, 0, 0, keepPubkeyX, keepPubkeyY)
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, prevSighash)
-      await deployed.KeepStub.setSuccess(true)
+      await deployed.ECDSAKeepStub.setSuccess(true)
     })
 
     it('approves a new digest for signing, updates the state, and logs RedemptionRequested', async () => {
@@ -248,7 +289,7 @@ contract('Deposit', (accounts) => {
       assert.equal(requestInfo[4], nextSighash)
 
       // fired an event
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._digest, nextSighash)
     })
 
@@ -282,20 +323,11 @@ contract('Deposit', (accounts) => {
       await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
 
       // Previous sigHash is not approved for signing.
-      await deployed.KeepStub.setDigestApprovedAtTime(prevSighash, 0)
+      await testInstance.setDigestApprovedAtTime(prevSighash, 0)
 
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
         'Provided previous value does not yield previous sighash'
-      )
-    })
-
-    it('reverts if the keep returned false', async () => {
-      await deployed.KeepStub.setSuccess(false)
-
-      await expectThrow(
-        testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
-        'Keep returned false'
       )
     })
   })
@@ -305,16 +337,19 @@ contract('Deposit', (accounts) => {
     const currentDiff = 6353030562983
     // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
     const txidLE = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
-    const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
-    const proof = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe04995ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b5095548'
-    const index = 130
+    const _version = '0x01000000'
+    const _txInputVector = `0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff`
+    const _txOutputVector = '0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6'
+    const _txLocktime = '0x4ec10800'
+    const proof = '0x886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe049'
+    const index = 129
     const headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000'
     const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
-      await deployed.TBTCSystemStub.setCurrentDiff(currentDiff)
+      await tbtcSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
@@ -323,7 +358,7 @@ contract('Deposit', (accounts) => {
     it('updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await testInstance.provideRedemptionProof(tx, proof, index, headerChain)
+      await testInstance.provideRedemptionProof(_version, _txInputVector, _txOutputVector, _txLocktime, proof, index, headerChain)
 
       const depositState = await testInstance.getState.call()
       assert(depositState.eq(utils.states.REDEEMED))
@@ -333,7 +368,7 @@ contract('Deposit', (accounts) => {
       assert.equal(requestInfo[1], utils.address0)
       assert.equal(requestInfo[4], utils.bytes32zero)
 
-      const eventList = await deployed.TBTCSystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await tbtcSystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._txid, txidLE)
     })
 
@@ -341,23 +376,22 @@ contract('Deposit', (accounts) => {
       await testInstance.setState(utils.states.START)
 
       await expectThrow(
-        testInstance.provideRedemptionProof(tx, proof, index, headerChain),
+        testInstance.provideRedemptionProof(_version, _txInputVector, _txOutputVector, _txLocktime, proof, index, headerChain),
         'Redemption proof only allowed from redemption flow'
       )
     })
 
     it('reverts if the merkle proof is not validated successfully', async () => {
       await expectThrow(
-        testInstance.provideRedemptionProof(tx, proof, 0, headerChain),
+        testInstance.provideRedemptionProof(_version, _txInputVector, _txOutputVector, _txLocktime, proof, 0, headerChain),
         'Tx merkle proof is not valid for provided header'
       )
     })
   })
 
   describe('redemptionTransactionChecks', async () => {
-    const txidLE = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c'
-    const tx = '0x01000000000101913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab602473044022046c3c852a2042ee01ffd7d8d252f297ccc67ae2aa1fac4170f50e8a90af5398802201585ffbbed6e812fb60c025d2f82ae115774279369610b0c76165b6c7132f2810121020c67643b5c862a1aa1afe0a77a28e51a21b08396a0acae69965b22d2a403fd1c4ec10800'
-    const badtx = '0x05' + tx.slice(4)
+    const _txInputVector = `0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff`
+    const _txOutputVector = '0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6'
     const outputValue = 490029088
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000'
@@ -368,16 +402,22 @@ contract('Deposit', (accounts) => {
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
     })
 
-    it('returns the little-endian txid and output value', async () => {
-      const redemptionChecks = await testInstance.redemptionTransactionChecks.call(tx)
-      assert.equal(redemptionChecks[0], txidLE)
-      expect(redemptionChecks[1]).to.eq.BN(outputValue)
+    it('returns the output value', async () => {
+      const redemptionChecks = await testInstance.redemptionTransactionChecks.call(_txInputVector, _txOutputVector)
+      assert.equal(redemptionChecks, outputValue)
     })
 
-    it('reverts if tx parsing fails', async () => {
+    it('reverts if bad input vector is provided', async () => {
       await expectThrow(
-        testInstance.redemptionTransactionChecks(badtx),
-        'Failed tx parsing'
+        testInstance.redemptionTransactionChecks('0x00', _txOutputVector),
+        'invalid input vector provided'
+      )
+    })
+
+    it('reverts if bad output vector is provided', async () => {
+      await expectThrow(
+        testInstance.redemptionTransactionChecks(_txInputVector, '0x00'),
+        'invalid output vector provided'
       )
     })
 
@@ -385,7 +425,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, '0x' + '33'.repeat(36))
 
       await expectThrow(
-        testInstance.redemptionTransactionChecks.call(tx),
+        testInstance.redemptionTransactionChecks.call(_txInputVector, _txOutputVector),
         'Tx spends the wrong UTXO'
       )
     })
@@ -394,7 +434,7 @@ contract('Deposit', (accounts) => {
       await testInstance.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 14544, 0, '0x' + '11' * 32)
 
       await expectThrow(
-        testInstance.redemptionTransactionChecks.call(tx),
+        testInstance.redemptionTransactionChecks.call(_txInputVector, _txOutputVector),
         'Tx sends value to wrong pubkeyhash'
       )
     })
@@ -411,7 +451,7 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
-      await deployed.KeepStub.burnContractBalance()
+      await deployed.ECDSAKeepStub.burnContractBalance()
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_SIGNATURE)
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
     })
@@ -434,7 +474,7 @@ contract('Deposit', (accounts) => {
     })
 
     it('reverts if no funds received as signer bond', async () => {
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
 
       await expectThrow(
@@ -444,10 +484,10 @@ contract('Deposit', (accounts) => {
     })
 
     it('starts abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifySignatureTimeout()
 
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()
@@ -466,7 +506,7 @@ contract('Deposit', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
-      await deployed.KeepStub.burnContractBalance()
+      await deployed.ECDSAKeepStub.burnContractBalance()
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
     })
@@ -491,7 +531,7 @@ contract('Deposit', (accounts) => {
 
     it('reverts if no funds recieved as signer bond', async () => {
       await testInstance.setRequestInfo(utils.address0, utils.address0, 0, withdrawalRequestTime, utils.bytes32zero)
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(0, bond, 'no bond should be sent')
 
       await expectThrow(
@@ -501,10 +541,10 @@ contract('Deposit', (accounts) => {
     })
 
     it('starts abort liquidation', async () => {
-      await deployed.KeepStub.send(1000000, { from: accounts[0] })
+      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
       await testInstance.notifyRedemptionProofTimeout()
 
-      const bond = await web3.eth.getBalance(deployed.KeepStub.address)
+      const bond = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
       assert.equal(bond, 0, 'Bond not seized as expected')
 
       const liquidationTime = await testInstance.getLiquidationAndCourtesyInitiated.call()

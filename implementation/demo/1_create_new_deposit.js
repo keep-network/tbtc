@@ -1,15 +1,12 @@
 const DepositFactory = artifacts.require('./DepositFactory.sol')
 const TBTCSystem = artifacts.require('./TBTCSystem.sol')
 const TBTCToken = artifacts.require('./TBTCToken.sol')
-const KeepBridge = artifacts.require('./KeepBridge.sol')
 
 module.exports = async function() {
   let tbtcSystem
   let tbtcToken
-  let keepBridge
 
   try {
-    keepBridge = await KeepBridge.deployed()
     tbtcToken = await TBTCToken.deployed()
     tbtcSystem = await TBTCSystem.deployed()
     depositFactory = await DepositFactory.deployed()
@@ -22,9 +19,9 @@ module.exports = async function() {
     result = await depositFactory.createDeposit(
       tbtcSystem.address, // address _TBTCSystem
       tbtcToken.address, // address _TBTCToken
-      keepBridge.address, // address _KeepBridge
       5, // uint256 _m
-      10 // uint256 _n
+      10, // uint256 _n
+      { value: 100000 }
     ).catch((err) => {
       console.error(`call to factory failed: ${err}`)
       process.exit(1)
