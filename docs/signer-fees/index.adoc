@@ -34,7 +34,7 @@ need to make a similar return at a minimum on the total capital it's protecting.
   assigned. It coordinates the creation and redemption of `LotSize * 1 TBTC`.
 - `LotSize`: The exact value of a `Deposit` denominated in `BTC`.
 - `OvercollateralizationFactor`: The additional amount which must be deposited
-   as collateral by the Signer
+   as collateral by the Signer.
 - `BondValue`: The amount a `Signer` must lock in a smart contract as
   collateral to mint `TBTC`. Initially this will be denominated in `ETH`.
   `Deposit = OverCollateralizationFactor * LotSize * (ETHBTC conversion rate)`.

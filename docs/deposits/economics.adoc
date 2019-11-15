@@ -14,9 +14,9 @@ A detailed treatment of signer fees can be found in
 
 :term-length: 6 months
 
-Fixed-term deposits mean signer fees can always be easily calculated per
-deposit. A standard term of {term-length} means depositors can budget for fees,
-and signers will know how long their bonds will be inaccessible.
+Fixed-term deposits mean signer fees can easily be calculated per deposit. A
+standard term of {term-length} means depositors can budget for fees, and
+signers will know how long their bonds will be inaccessible.
 
 Depositors that don't need future access to their deposit might prefer to pass
 the costs of the system to eventual redeemers. These depositors can opt to
