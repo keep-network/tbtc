@@ -28,7 +28,7 @@ Since signer bonds need to be denominated in a widely traded asset to avoid
 market manipulation, the next most obvious pick for bonding is the host chain's
 native token. For the initial release of tBTC, that means ETH. As the ecosystem
 matures, other bond collateral options might become feasible at the expense of a
-more complex price feed implementation.
+more complex implementation.
 
 == Measuring security
 
@@ -61,7 +61,7 @@ the two currencies fluctuate relative to each other, sometimes wildly.
 If the value of ETH drops precipitously relative to BTC, then the dollar value
 of the ETH bonded by the signers can be less than the dollar value of the BTC
 Deposit they have backed, meaning they have positive expected value if they try
-to steal the BTC. 
+to steal the BTC.
 
 In order to avoid that, we require that the bonds are overcollateralized. For
 each ETH they collateralize, they must put up an additional {extracollateral}, for a total of
@@ -88,25 +88,26 @@ the expense of opportunity cost to the Signers which should be compensated via f
 If the value of ETH crosses a security threshold, open _Deposit_ s will enter
 <<preliq, pre-liquidation>>, followed by <<liq, liquidation>> if they do not top
 up their collateral.
- 
+
 // TODO insert a little historical analysis for a decent starting number
- 
-=== BTC Price Drop relative to ETH
- 
+
+
+=== BTC price drop relative to ETH
+
 Since <<Custodial Fees>> are denominated per BTC in custody (with
 overcollateralization factored in), a BTC value drop against the
 bonded asset translates in lower fees for Signers. Note that this does not
 create any issue for tBTC reserves, but it makes the system less attractive to
 signers looking to earn interest via fees on their assets.
 
-Signers SHOULD buy TBTC from the markets in anticipation of such overly 
+Signers SHOULD buy TBTC from the markets in anticipation of such overly
 overcollateralized Deposits and they SHOULD use it to redeem these positions,
 thus reclaiming their ETH liquidity which can be used to back other Deposits. An
 alternative would be to provide Signers with the ability to safely rebalance their
 bonds back to {totalcollateral}, however that introduces implementation
 complexities and as a result is not the preferred solution for the initial
 deployment of the mechanism.
- 
+
 Example:
 Let 1 BTC be worth $10,000, and 1 ETH be worth $200. Signers have to put up 75
 ETH to back a deposit. Signers are expected to make a custodial fee of 5 basis
@@ -118,7 +119,7 @@ signer redeems the Deposit by paying 1 TBTC, reclaiming 1 BTC and unlocking the
 75 ETH which was locked by all Signers. All significantly overcollateralized Signers now
 have liquid ETH which they can use to back another deposit to mint new TBTC.
 
-== A resilient price oracle
+== A resilient price feed
 
 Unlike popular synthetic stablecoin schemes, the tBTC system design makes no
 effort to stabilize the value of TBTC relative to BTC -- TBTC will be priced by
@@ -126,11 +127,11 @@ the market. Instead, the goal is to ensure that the TBTC supply is strictly
 less than its backing BTC reserves.
 
 For this reason, the only price relationship the system needs to understand is
-between the signing bond collateral and BTC. 
+between the signing bond collateral and BTC.
 
 In concrete terms, that means the price of ETH to BTC. Due to only needing
-prices for a single pair of assets, tBTC will initially use a simple 
-<<price-oracle/index.adoc#price-oracle,price oracle>>.
+prices for a single pair of assets, tBTC will initially use a simple
+<<price-feed/index.adoc#price-feed,price feed>>.
 
 == Undercollateralization
 
@@ -151,7 +152,7 @@ liquidation will follow. This gives each signer an incentive to close the
 position before it becomes severely undercollateralized. Alternatively, if the
 ETHBTC ratio recovers such that the deposit becomes at least {first-threshold}
 collateralized during the {preliquidation-period} the Deposit is safe and is
-moved away from the pre-liquidation state. 
+moved away from the pre-liquidation state.
 
 In future versions of the system, more complex pre-liquidation mechanisms could
 be introduced. For the initial version it seems prudent to choose a simple
@@ -170,7 +171,7 @@ punishment via liquidation is necessary to prevent dishonest behavior from
 signers. Liquidation may occur because because signers didn't produce a valid
 signature  in response a redemption request, because the value of the signing
 bond dropped below the liquidation threshold, because they did not respond to the
-courtesy call, or because the signers produced a fraudulent signature. 
+courtesy call, or because the signers produced a fraudulent signature.
 // comment(Georgios): What does unauthorized signature mean here?
 
 The primary goal of the liquidation process is to bring the TBTC supply in line
@@ -179,7 +180,7 @@ system is the signers' bonds. Therefore, the liquidation process seizes the
 signers bonds and attempts to use the bonded value to purchase and burn TBTC.
 
 First, the contract attempts to use on-chain liquidity sources, such as
-https://hackmd.io/@477aQ9OrQTCbVR3fq1Qzxg/HJ9jLsfTz[Uniswap]. 
+https://uniswap.io[Uniswap].
 
 If the bond is sufficient to cover the outstanding TBTC value on these
 markets, it is immediately exchanged for TBTC.
@@ -200,7 +201,7 @@ What the unresponsive signers do with the BTC outside the tBTC system design is
 for them to decide-- it might be split up, stolen by a signing majority, or
 lost permanently.
 
-Example: 
+Example:
 1. Signers guard a deposit of 1 BTC, backed by 75 ETH at 0.02 BTC/ETH (1.5 BTC
 in ETH, 150% collateralization ratio).
 

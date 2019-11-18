@@ -5,7 +5,7 @@
 ifndef::tbtc[toc::[]]
 
 All of the aforementioned mechanisms require that there is a M-of-N
-multisignature wallet guarding each Deposit on Bitcoin. 
+multisignature wallet guarding each Deposit on Bitcoin.
 
 Bitcoin's consensus rules restrict script size to 520 bytes (10,000 bytes for Segwit
 outputs), limiting the maximum size of multisignature scripts to about 80
@@ -15,7 +15,7 @@ public keys], but this can be bypassed by using `OP_CHECKSIG ADD` and
 `<threshold> OP_GREATERTHAN` as shown by link:https://github.com/nomic-io/bitcoin-peg/blob/master/bitcoinPeg.md[Nomic Labs]). Future proposals such as
 link:https://github.com/bitcoin/bips/blob/master/bip-0114.mediawiki[MAST] would
 allow implementing larger multisigs, however the activation of new features on
-Bitcoin has historically been a procedure with unclear timelines. 
+Bitcoin has historically been a procedure with unclear timelines.
 
 Finally, large multisignature wallets in Ethereum and Bitcoin both have
 increasing verification costs as the number of participants increases. Building
@@ -23,10 +23,10 @@ multisigs on Ethereum is link:https://www.coindesk.com/30-million-ether-reported
 utilizing
 link:https://crypto.stanford.edu/~dabo/pubs/papers/aggreg.pdf[aggregate
 signatures with public key aggregation], we can remove all of the above complexities and
-replace them by a simple single signature verification. 
+replace them by a simple single signature verification.
 
 Intuitively, an aggregate public key is generated from all multisignature
-participants who communicate via an out of band protocol, a process also known 
+participants who communicate via an out of band protocol, a process also known
 as Distributed Key Generation (DKG). Each participant signs the intended message
 with their private key and contributes a "share" of the final aggregate
 signature. Assuming ECDSA, the aggregate signature can then be verified against the aggregate public key
@@ -40,16 +40,16 @@ after re-executing the DKG.
 == Threshold ECDSA
 
 For a private key `x`, a message `M`, a hash function `H`, and a uniformly
-chosen `k`, an ECDSA signature is the pair `(r, s)`, 
+chosen `k`, an ECDSA signature is the pair `(r, s)`,
 where `s = k (m + xr)`, `r = R_x`, `R = g^(k^-1)` and `m = H(m)`. Intuitively,
 this signature can be converted to a threshold signature if `k` and `x` are
 calculated via secret sharing between t of n protocol participants.
 link:https://eprint.iacr.org/2019/114.pdf[Gennaro and Goldfeder's paper]
-describes an efficient mechanism for performing this procedure. 
+describes an efficient mechanism for performing this procedure.
 Note that a similar mechanism was proposed by
 link:https://eprint.iacr.org/2018/987.pdf[Lindell at al] in the same year.
 
-Informally, 
+Informally,
 the participants perform the following actions to sign a message:
 
 1. Produce an additive share of `k * x`, where each participant `i` holds `k_i` and `x_i`.
@@ -59,7 +59,7 @@ trick, without any participant `i` revealing `k_i`, and set `r = R_x`.
 1. The threshold signature is the sum of all signatures `s_i`.
 
 A more in-depth description of the protocol can be found in Section 4.1  and 4.2
-of the paper. 
+of the paper.
 
 
 == Improved Fault Attribution
@@ -108,7 +108,7 @@ participating public keys.
 Building on the work from MuSig and BLS signatures, Boneh, Drijvers and Neven introduce an
 efficient variant of previous BLS signature constructions which requires only 2
 pairing operations for verification and is also secure against rogue key
-attacks. 
+attacks.
 
 This multisignature is shorter than MuSig since it is only 1
 group element instead of 2. MuSig also requires an additional round of

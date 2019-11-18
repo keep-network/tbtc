@@ -111,8 +111,8 @@ funder bond payment.
 ** `bytes _bitcoinHeaders`
 * *reads*
 ** `bytes requesterPKH`
-** `uint256 oracleDifficultyReq`
-*** from oracle contract
+** `uint256 difficultyReq`
+*** from difficulty relay contract
 ** `uint256 depositSize`
 ** `uint256 initialWithdrawalFee`
 * *writes*
