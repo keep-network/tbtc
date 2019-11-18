@@ -91,6 +91,7 @@ up their collateral.
 
 // TODO insert a little historical analysis for a decent starting number
 
+
 === BTC price drop relative to ETH
 
 Since <<Custodial Fees>> are denominated per BTC in custody (with
@@ -118,7 +119,7 @@ signer redeems the Deposit by paying 1 TBTC, reclaiming 1 BTC and unlocking the
 75 ETH which was locked by all Signers. All significantly overcollateralized Signers now
 have liquid ETH which they can use to back another deposit to mint new TBTC.
 
-== A resilient price oracle
+== A resilient price feed
 
 Unlike popular synthetic stablecoin schemes, the tBTC system design makes no
 effort to stabilize the value of TBTC relative to BTC -- TBTC will be priced by
@@ -130,7 +131,7 @@ between the signing bond collateral and BTC.
 
 In concrete terms, that means the price of ETH to BTC. Due to only needing
 prices for a single pair of assets, tBTC will initially use a simple
-<<price-oracle/index.adoc#price-oracle,price oracle>>.
+<<price-feed/index.adoc#price-feed,price feed>>.
 
 == Undercollateralization
 
