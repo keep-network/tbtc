@@ -15,7 +15,7 @@
     "sol:lint:fix": "solium -d contracts/ --fix"
   },
   "config": {
-    "eslintPaths": "test/ migrations/ demo/"
+    "eslintPaths": "test/ migrations/"
   },
   "precommit": "npm run lint",
   "author": "James Prestwich",
