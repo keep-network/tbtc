@@ -292,9 +292,9 @@ workflows:
       - setup_github_package_registry:
           context: github-package-registry
       - migrate_contracts:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - setup_github_package_registry
