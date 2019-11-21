@@ -98,7 +98,7 @@ library DepositUtils {
         require(_observedDiff != ValidateSPV.getErrInvalidChain(), "Invalid headers chain");
         require(_observedDiff != ValidateSPV.getErrLowWork(), "Insufficient work in a header");
 
-        /* TODO: Redo fir single proof */
+        /* TODO: Redo for single proof */
         require(
             _observedDiff >= _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),
             "Insufficient accumulated difficulty in header chain"
