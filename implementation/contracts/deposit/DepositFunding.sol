@@ -337,9 +337,7 @@ library DepositFunding {
         _d.setActive();
         _d.logFunded();
 
-        returnFunderBond(_d);
-
-        mintTBTC(_d);
+        // mint Dposit Owner NFT
 
         return true;
     }
