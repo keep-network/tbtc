@@ -251,7 +251,7 @@ jobs:
           name: Upload contract data
           command: |
             cd /tmp/tbtc/contracts
-            gsutil -m cp * gs://keep-dev-contract-data/tbtc
+            gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/tbtc
 
 workflows:
   version: 2
