@@ -30,9 +30,8 @@ contract Vending {
 	// DOTs controlled by Vending machine do not need to be marked as redeemed due to 
 	// the TBTC burning requirement enforced by getDepositOwnerNFT()
 	// this function can be separated into getTBTCLocked() and getTBTCUnlocked()
-	function GetTBTC(bool locked, uint256 tokenID, proofRequirements ) public {
-		require(isQualified(tokenId, proofRequirements))
-		require(within timeout) // expand on timeout in this context
+	function GetTBTC(bool locked, uint256 tokenID ) public {
+		require(isQualified(tokenId))
 		if(!locked){
 			// swap Deposit Owner NFT for TBTC
 			// supply Deposit beneficiary NFT
