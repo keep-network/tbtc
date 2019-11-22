@@ -71,6 +71,9 @@ library DepositRedemption {
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH
     ) public {
+        if(_d.isLocked()) {
+            require(msg.sender == _d.beneficiary());
+        }
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 

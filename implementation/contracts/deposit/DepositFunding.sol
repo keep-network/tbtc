@@ -23,6 +23,28 @@ library DepositFunding {
     using DepositLiquidation for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
 
+    function isLocked() returns (bool) {
+        return tbtcDrawn == 0;
+    }
+
+    function draw(uint amt) {
+        require(amt == 1 tbtc, "partial draw not permitted");
+        mintTbtc(msg.sender, amt);
+        drawn += amt;
+    }
+
+    function repay(uint amt) {
+        require(amt == 1 tbtc, "partial repay not permitted");
+        burnTbtc(msg.sender, amt);
+        drawn -= amt;
+    }
+
+    function setLocked(bool _locked) {
+        require(msg.sender == depositNft.ownerOf(this), "must be beneficiary");
+        require(drawn == 0, "deposit must be fully paid in tbtc");
+        locked = _locked;
+    }
+
     /// @notice     Deletes state after funding
     /// @dev        This is called when we go to ACTIVE or setup fails without fraud
     function fundingTeardown(DepositUtils.Deposit storage _d) public {

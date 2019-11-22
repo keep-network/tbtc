@@ -56,6 +56,9 @@ library DepositUtils {
         /// @dev Holds a timestamp from the moment when the transaction digest
         /// was approved for signing
         mapping (bytes32 => uint256) approvedDigests;
+
+        // Stateful locking mechanism
+        uint drawn; // amount of tbtc drawn from deposit
     }
 
     /// @notice         Gets the current block difficulty
