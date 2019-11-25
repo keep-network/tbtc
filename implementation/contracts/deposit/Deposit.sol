@@ -36,11 +36,14 @@ contract Deposit {
     function createNewDeposit(
         address _TBTCSystem,
         address _TBTCToken,
+        address _vendingMachine,
         uint256 _m,
         uint256 _n
     ) public payable returns (bool) {
+        // TODO: ACL this
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
+        self.vendingMachine = _vendingMachine;
         self.createNewDeposit(_m, _n);
         return true;
     }
@@ -158,6 +161,34 @@ contract Deposit {
         self.notifyFundingTimeout();
         return true;
     }
+    /// @notice Return the address of the ERC20 token contract used to mint TBTC.
+    /// @return The token contract address.
+    function getTokenAddress() public returns (address){
+        return self._TBTCToken;
+    }
+ 
+    /// @notice     Gets minting requirements for deposit and beneficiary
+    /// @dev        Minted value is based on a configured lot size. The lot size,
+    /// which is specified in satoshi is multiplied to match TBTC token unit.
+    /// Minted tokens are split between the beneficiary (99,5%) and the deposit
+    /// contract (0,5%).
+    function toMintTBTC() public returns (uint256, uint256) {
+        return self.toMintTBTC();
+    }
+
+    /// @notice         Determines the fees due to the signers for work performeds
+    /// @dev            Signers are paid based on the TBTC issued
+    /// @return         Accumulated fees in smallest TBTC unit (tsat)
+    function signerFee() public pure returns (uint256) {
+        return self.signerFee();
+    }
+
+    /// @notice     calculates the beneficiary reward based on the deposit size
+    /// @return     the amount of ether in wei to pay the beneficiary
+    function beneficiaryReward() public pure returns (uint256) {
+        return self.beneficiaryReward;
+    }
+
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud during funding
     /// @dev                    ECDSA is NOT SECURE unless you verify the digest
