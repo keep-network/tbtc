@@ -27,6 +27,12 @@ library DepositRedemption {
     using DepositLiquidation for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
 
+    /// @notice Function modifier ensures modified function caller address is the vending machine
+    modifier onlyVendingMachine(){
+        require(msg.sender == _d.vendingMachine , "caller must be the vending machine");
+        _;
+    }
+
     /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address
     /// @dev        Approves the keep contract, then expects it to call transferFrom
     function distributeSignerFee(DepositUtils.Deposit storage _d) public {
@@ -50,15 +56,15 @@ library DepositRedemption {
     }
 
     function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
-        // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
+        // Burn enough extra TBTC to cover outstanding debt
         // Requires user to approve first
         /* TODO: implement such that it calls the system to burn TBTC? */
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         uint256 _bal = _tbtc.balanceOf(msg.sender);
         uint256 _red = _d.redemptionTBTCAmount();
         require(_bal >= _red, "Not enough TBTC to cover outstanding debt");
-        _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
-        _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
+        _tbtc.burnFrom(msg.sender,  DepositUtils.signerFee());
+        _tbtc.transferFrom(msg.sender, address(this), DepositUtils.beneficiaryReward());
     }
 
     /// @notice                     Anyone can request redemption
@@ -70,7 +76,7 @@ library DepositRedemption {
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH
-    ) public {
+    ) public onlyVendingMachine {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 
