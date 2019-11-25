@@ -4,8 +4,10 @@ import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
-import {TBTCToken} from "../system/TBTCToken.sol";
 import {TBTCSystem} from "../system/TBTCSystem.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
+import {DepositOwnerToken} from "../system/DepositOwnerToken.sol";
+import {VendingMachineAuthority} from "../system/VendingMachineAuthority.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositStates} from "./DepositStates.sol";
@@ -22,6 +24,12 @@ library DepositFunding {
     using DepositStates for DepositUtils.Deposit;
     using DepositLiquidation for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
+
+    /// @notice Function modifier ensures modified function caller address is the vending machine
+    modifier onlyVendingMachine(){
+        require(msg.sender == _d.vendingMachine , "caller must be the vending machine");
+        _;
+    }
 
     /// @notice     Deletes state after funding
     /// @dev        This is called when we go to ACTIVE or setup fails without fraud
@@ -86,13 +94,13 @@ library DepositFunding {
             _d.depositBeneficiary().transfer(address(this).balance);
         }
     }
-
-    /// @notice     Mints TBTC tokens.
+ 
+    /// @notice     Gets minting requirements for deposit and beneficiary
     /// @dev        Minted value is based on a configured lot size. The lot size,
     /// which is specified in satoshi is multiplied to match TBTC token unit.
     /// Minted tokens are split between the beneficiary (99,5%) and the deposit
     /// contract (0,5%).
-    function mintTBTC(DepositUtils.Deposit storage _d) internal {
+    function toMintTBTC(DepositUtils.Deposit storage _d) public returns (uint256, uint256) {
         TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
 
         uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
@@ -100,8 +108,9 @@ library DepositFunding {
 
         uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
 
-        _tbtcToken.mint(_d.depositBeneficiary(), _totalValue.sub(_signerFee));
-        _tbtcToken.mint(address(this), _signerFee);
+        uint256 toBeneficiary = _totalValue.sub(_signerFee);
+        uint256 toDeposit = _signerFee;
+        return (toBeneficiary, toDeposit);
     }
 
     /// @notice     slashes the signers partially for committing fraud before funding occurs
@@ -283,6 +292,8 @@ library DepositFunding {
 
     /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit
     ///                             This is the happy-path of the funding flow. It means that we have succeeded
+    ///                             Thins function can be called with as few as 1 confimrations worth of proof in order to mint 
+    ///                             a deposit owner token. but the Deposit won't be active unless hte full proof requirement is met.
     /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
     /// @param  _d                  Deposit storage pointer
     /// @param _txVersion           Transaction version number (4-byte LE)
@@ -304,9 +315,10 @@ library DepositFunding {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public returns (bool) {
+    ) public onlyVendingMachine returns (bool) {
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
+        require(_bitcoinHeaders.length != 160, "2 headers reserved for single confirmation flow");
 
         // Design decision:
         // We COULD revoke the funder bond here if the funding proof timeout has elapsed
@@ -337,9 +349,50 @@ library DepositFunding {
         _d.setActive();
         _d.logFunded();
 
-        returnFunderBond(_d);
+        _d.returnFunderBond();
+        return true;
+    }
 
-        mintTBTC(_d);
+    /// @notice                     Provide work for 1 confimraiton to get a Deposit Owner Token. This does not qualify the deposit. 
+    ///                             Deposit remains in AWAITING_BTC_FUNDING_PROOF untill the full proof is satisfied.
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
+    /// @param  _d                  Deposit storage pointer
+    /// @param _txVersion           Transaction version number (4-byte LE)
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
+    /// @param _txLocktime          Final 4 bytes of the transaction
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
+    /// @param _txIndexInBlock      Transaction index in the block (0-indexed)
+    /// @param _bitcoinHeaders      Single bytestring of 2 80-byte bitcoin headers
+    /// @return                     True if no errors are thrown
+    function providePrequalificaticationWork(
+        DepositUtils.Deposit storage _d,
+        bytes4 _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes4 _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes memory _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes memory _bitcoinHeaders
+    ) public onlyVendingMachine returns (bool) {
+
+        require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
+        require(_bitcoinHeaders.length == 160, 
+            "must provide 2 block headers in order to facilitate proof for a single confirmation"
+        );
+
+        (_valueBytes, _utxoOutpoint) = _d.validateAndParseFundingSPVProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
 
         return true;
     }
