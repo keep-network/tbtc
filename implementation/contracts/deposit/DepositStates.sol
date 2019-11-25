@@ -17,7 +17,8 @@ library DepositStates {
         FAILED_SETUP,
 
         // ACTIVE
-        ACTIVE,  // includes courtesy call
+        ACTIVE_LOCKED,  // includes courtesy call
+        ACTIVE_UNLOCKED,
 
         // REDEMPTION FLOW
         AWAITING_WITHDRAWAL_SIGNATURE,
@@ -167,10 +168,13 @@ library DepositStates {
         _d.currentState = uint8(States.FAILED_SETUP);
     }
 
-    function setActive(DepositUtils.Deposit storage _d) external {
-        _d.currentState = uint8(States.ACTIVE);
+    function setActiveLocked(DepositUtils.Deposit storage _d) external {
+        _d.currentState = uint8(States.ACTIVE_LOCKED);
     }
 
+    function setActiveUnlocked(DepositUtils.Deposit storage _d) external {
+        _d.currentState = uint8(States.ACTIVE_UNLOCKED);
+    }
     function setAwaitingWithdrawalSignature(DepositUtils.Deposit storage _d) external {
         _d.currentState = uint8(States.AWAITING_WITHDRAWAL_SIGNATURE);
     }
