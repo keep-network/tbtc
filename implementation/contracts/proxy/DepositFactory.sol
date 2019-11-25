@@ -15,14 +15,19 @@ contract DepositFactory is CloneFactory{
     // Holds the address of the deposit contract
     // which will be used as a master contract for cloning.
     address public masterDepositAddress;
+    address public vendingMachine;
+
+    mapping(uint256 => address) TokenOwnership;
 
     event DepositCloneCreated(address depositCloneAddress);
 
     /// @dev                          Set the master deposit contract address
     ///                               on contract initialization
     /// @param _masterDepositAddress  The address of the master deposit contract
-    constructor(address _masterDepositAddress) public {
+    constructor(address _masterDepositAddress, address _vendingMachine) public {
         masterDepositAddress = _masterDepositAddress;
+        vendingMachine = _vendingMachine;
+
     }
 
     /// @notice                Creates a new deposit instance
@@ -38,6 +43,7 @@ contract DepositFactory is CloneFactory{
     function createDeposit (
         address _TBTCSystem,
         address _TBTCToken,
+        address _vendingMachine,
         uint256 _keepThreshold,
         uint256 _keepSize
     ) public payable returns(address) {
@@ -46,11 +52,12 @@ contract DepositFactory is CloneFactory{
         Deposit(address(uint160(cloneAddress))).createNewDeposit.value(msg.value)(
             _TBTCSystem,
             _TBTCToken,
+            _vendingMachine,
             _keepThreshold,
             _keepSize);
-
+        tokenOwnership[uint256(clonseAddress)] == msg.sender;
         TBTCSystem _system = TBTCSystem(_TBTCSystem);
-        _system.mint(msg.sender, uint256(cloneAddress));
+        _system.mint(vendingMachine, uint256(cloneAddress));
 
         emit DepositCloneCreated(cloneAddress);
 
