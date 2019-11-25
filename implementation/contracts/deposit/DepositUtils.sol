@@ -10,6 +10,7 @@ import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol"
 import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
 import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
+import {Vending} from "../system/Vending.sol";
 
 library DepositUtils {
 
@@ -25,6 +26,7 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
+        address vendingMachine;
         uint8 currentState;
 
         // SET ON FRAUD
@@ -99,10 +101,18 @@ library DepositUtils {
         require(_observedDiff != ValidateSPV.getErrLowWork(), "Insufficient work in a header");
 
         /* TODO: make this better than 6 */
-        require(
-            _observedDiff >= _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),
-            "Insufficient accumulated difficulty in header chain"
-        );
+        if(_bitcoinHeaders.length == 160){
+            require(
+                _observedDiff >= _reqDiff,
+                "Insufficient accumulated difficulty in header chain"
+            );
+        }
+        else{
+            require(
+                _observedDiff >= _reqDiff.mul(Vending.getQualificationRequirements()),
+                "Insufficient accumulated difficulty in header chain"
+            );
+        }
     }
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin transaction with its hash (ID)
@@ -218,7 +228,7 @@ library DepositUtils {
     /// @notice         Determines the fees due to the signers for work performeds
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
-    function signerFee() public pure returns (uint256) {
+    function signerFee(Deposit storage _d) public pure returns (uint256) {
         return TBTCConstants.getLotSize()
             .mul(TBTCConstants.getSatoshiMultiplier())
             .div(TBTCConstants.getSignerFeeDivisor());
@@ -227,7 +237,7 @@ library DepositUtils {
     /// @notice     calculates the beneficiary reward based on the deposit size
     /// @dev        the amount of extra ether to pay the beneficiary at closing time
     /// @return     the amount of ether in wei to pay the beneficiary
-    function beneficiaryReward() public pure returns (uint256) {
+    function beneficiaryReward(Deposit storage _d) public pure returns (uint256) {
         return TBTCConstants.getLotSize().div(TBTCConstants.getBeneficiaryRewardDivisor());
     }
 
@@ -236,7 +246,7 @@ library DepositUtils {
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSize().add(signerFee()).add(beneficiaryReward());
+            return TBTCConstants.getLotSize().add(_d.signerFee()).add(beneficiaryReward());
         } else {
             return 0;
         }
