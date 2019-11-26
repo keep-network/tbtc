@@ -9,9 +9,7 @@ contract VendingMachine {
         depositOwnerToken = _depositOwnerToken;
     }
 
-    /**
-     * Qualifies a deposit for minting TBTC.
-     */
+    /// @notice Qualifies a deposit for minting TBTC.
     function qualifyDeposit(
         uint256 _depositId,
         bytes4 _txVersion,
@@ -27,9 +25,7 @@ contract VendingMachine {
         // TODO
     }
 
-    /**
-     * Determines whether a deposit is qualified for minting TBTC.
-     */
+    /// @notice Determines whether a deposit is qualified for minting TBTC.
     function isQualified(uint256 _depositId) public returns (bool) {
         // TODO
         // This is stubbed out for prototyping, separate to the actual qualification logic.
@@ -37,16 +33,12 @@ contract VendingMachine {
         return true;
     }
 
-    /**
-     * Pay back the deposit's TBTC and receive the Deposit Owner Token.
-     */
+    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
     function tbtcToDot(uint256 _depositId) public {
         require(isQualified(_depositId), "Deposit must be qualified");
     }
 
-    /**
-     * Trade in the Deposit Owner Token and mint TBTC.
-     */
+    /// @notice Trade in the Deposit Owner Token and mint TBTC.
     function dotToTbtc(uint256 _dotId) public {
         require(isQualified(_dotId), "Deposit must be qualified");
         // TODO
