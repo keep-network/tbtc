@@ -6,7 +6,7 @@ contract VendingMachine {
     constructor(
         address _depositOwnerToken
     ) public {
-		depositOwnerToken = _depositOwnerToken;
+        depositOwnerToken = _depositOwnerToken;
     }
 
     /**
@@ -14,7 +14,6 @@ contract VendingMachine {
      */
     function qualifyDeposit(
         uint256 _depositId,
-		uint256 tokenID,
         bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
@@ -48,8 +47,8 @@ contract VendingMachine {
     /**
      * Trade in the Deposit Owner Token and mint TBTC.
      */
-    function dotToTbtc(uint256 _depositId) public {
-        require(isQualified(_depositId), "Deposit must be qualified");
+    function dotToTbtc(uint256 _dotId) public {
+        require(isQualified(_dotId), "Deposit must be qualified");
         // TODO
     }
 }
