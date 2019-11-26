@@ -2,10 +2,13 @@ pragma solidity ^0.5.10;
 
 contract VendingMachine {
     address depositOwnerToken;
+    address tbtcToken;
 
     constructor(
+        address _tbtcToken,
         address _depositOwnerToken
     ) public {
+        tbtcToken = _tbtcToken;
         depositOwnerToken = _depositOwnerToken;
     }
 
