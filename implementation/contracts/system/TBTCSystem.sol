@@ -7,11 +7,11 @@ import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKee
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {DepositLog} from "../DepositLog.sol";
 
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
+import "./DepositOwnerToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ERC721MinterAuthority.sol";
 
-contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, DepositLog {
+contract TBTCSystem is Ownable, ITBTCSystem, DepositOwnerToken, ERC721MinterAuthority, DepositLog {
 
     bool _initialized = false;
 
