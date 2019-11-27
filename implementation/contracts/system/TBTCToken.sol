@@ -2,14 +2,15 @@ pragma solidity ^0.5.10;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
-import "./VendingMachineAuthority.sol";
+import "./ERC20MinterAuthority.sol";
 
-contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
+contract TBTCToken is ERC20Detailed, ERC20, ERC20MinterAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
-    constructor(address _VendingMachine)
+    constructor(address _TBTCSystem)
         ERC20Detailed("Trustless bitcoin", "TBTC", 18)
-        VendingMachineAuthority(_VendingMachine)
+        ERC20MinterAuthority(_TBTCSystem)
+
     public {
         // solium-disable-previous-line no-empty-blocks
     }
@@ -18,7 +19,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     ///                  Uses the internal _mint function
     /// @param _account  The account that will receive the created tokens.
     /// @param _amount   The amount of tokens that will be created.
-    function mint(address _account, uint256 _amount) public onlyVendingMachine returns (bool) {
+    function mint(address _account, uint256 _amount) public  returns (bool) {
         // NOTE: this is a public function with unchecked minting.
         _mint(_account, _amount);
         return true;
@@ -29,7 +30,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     ///                  Uses the internal _burn function.
     /// @param _account  The account whose tokens will be burnt.
     /// @param _amount   The amount of tokens that will be burnt.
-    function burnFrom(address _account, uint256 _amount) public onlyVendingMachine {
+    function burnFrom(address _account, uint256 _amount) public  {
         _burnFrom(_account, _amount);
     }
 }
