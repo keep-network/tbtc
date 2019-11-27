@@ -53,8 +53,8 @@ contract VendingMachine {
         tbtcToken.burnFrom(msg.sender, getDepositValueLessSignerFee());
 
         // TODO do we need the owner check below? transferFrom can be approved for a user, which might be an interesting use case.
-        require(depositOwnerToken.ownerOf(_depositId) == address(this), "Deposit is locked");
-        depositOwnerToken.transferFrom(address(this), msg.sender, _depositId);
+        require(depositOwnerToken.ownerOf(_dotId) == address(this), "Deposit is locked");
+        depositOwnerToken.transferFrom(address(this), msg.sender, _dotId);
     }
 
     /// @notice Trade in the Deposit Owner Token and mint TBTC.
