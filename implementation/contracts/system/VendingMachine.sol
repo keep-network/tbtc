@@ -46,6 +46,7 @@ contract VendingMachine {
     }
 
     /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
+    /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
         require(isQualified(_dotId), "Deposit must be qualified");
 
@@ -58,6 +59,7 @@ contract VendingMachine {
     }
 
     /// @notice Trade in the Deposit Owner Token and mint TBTC.
+    /// @param _dotId ID of Deposit Owner Token to sell
     function dotToTbtc(uint256 _dotId) public {
         require(isQualified(_dotId), "Deposit must be qualified");
 
