@@ -37,6 +37,7 @@ contract VendingMachine {
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
+    /// @param _depositAddress the address of the deposit
     function isQualified(address _depositAddress) public returns (bool) {
         // TODO
         // This is stubbed out for prototyping, separate to the actual qualification logic.
@@ -45,6 +46,7 @@ contract VendingMachine {
     }
 
     /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
+    /// @dev    Burns TBTC, transfers DOT from vending machine to caller
     /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
         require(isQualified(address(_dotId)), "Deposit must be qualified");
@@ -58,6 +60,7 @@ contract VendingMachine {
     }
 
     /// @notice Trade in the Deposit Owner Token and mint TBTC.
+    /// @dev    Transfers DOT from caller to vending machine, and mints TBTC to caller
     /// @param _dotId ID of Deposit Owner Token to sell
     function dotToTbtc(uint256 _dotId) public {
         require(isQualified(address(_dotId)), "Deposit must be qualified");
