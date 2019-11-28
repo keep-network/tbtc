@@ -23,7 +23,7 @@ contract VendingMachine {
 
     /// @notice Qualifies a deposit for minting TBTC.
     function qualifyDeposit(
-        address _depositAddress,
+        address payable _depositAddress,
         bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
@@ -34,7 +34,6 @@ contract VendingMachine {
         bytes memory _bitcoinHeaders
     ) public {
         Deposit _d = Deposit(_depositAddress);
-        require(_d.getCurrentState() == 2, "Deposit must be in AWAITING_FUNDING_PROOF state");
         _d.provideBTCFundingProof(
             _txVersion,
             _txInputVector,
@@ -51,15 +50,15 @@ contract VendingMachine {
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
     /// @param _depositAddress the address of the deposit
-    function isQualified(address _depositAddress) public returns (bool) {
-        Deposit(_depositAddress).getCurrentState() == 5;
+    function isQualified(address payable _depositAddress) public returns (bool) {
+        return Deposit(_depositAddress).getCurrentState() == 5;
     }
 
     /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
     /// @dev    Burns TBTC, transfers DOT from vending machine to caller
     /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
-        require(isQualified(address(_dotId)), "Deposit must be qualified");
+        require(isQualified(address(uint160(address(_dotId)))), "Deposit must be qualified");
 
         require(tbtcToken.balanceOf(msg.sender) >= getDepositValueLessSignerFee(), "Not enough TBTC for DOT exchange");
         tbtcToken.burnFrom(msg.sender, getDepositValueLessSignerFee());
@@ -73,7 +72,7 @@ contract VendingMachine {
     /// @dev    Transfers DOT from caller to vending machine, and mints TBTC to caller
     /// @param _dotId ID of Deposit Owner Token to sell
     function dotToTbtc(uint256 _dotId) public {
-        require(isQualified(address(_dotId)), "Deposit must be qualified");
+        require(isQualified(address(uint160(address(_dotId)))), "Deposit must be qualified");
 
         depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
         tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
