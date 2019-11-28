@@ -4,6 +4,7 @@ import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {DepositOwnerToken} from "./DepositOwnerToken.sol";
 import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
+import {Deposit} from "../deposit/Deposit.sol";
 import {DepositUtils} from "../deposit/DepositUtils.sol";
 
 contract VendingMachine {
@@ -21,8 +22,9 @@ contract VendingMachine {
     }
 
     /// @notice Qualifies a deposit for minting TBTC.
+    /// @dev Calls out to Deposit to verify funding proof, mints the TBTC signer fee.
     function qualifyDeposit(
-        address _depositAddress,
+        address payable _depositAddress,
         bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
@@ -33,7 +35,22 @@ contract VendingMachine {
         bytes memory _bitcoinHeaders
     ) public {
         // require(!isQualified(_depositId), "Deposit already qualified");
-        // TODO
+        require(
+            Deposit(_depositAddress).provideBTCFundingProof(
+                _txVersion,
+                _txInputVector,
+                _txOutputVector,
+                _txLocktime,
+                _fundingOutputIndex,
+                _merkleProof,
+                _txIndexInBlock,
+                _bitcoinHeaders
+            ),
+            "failed to provide funding proof");
+
+        tbtcToken.mint(_depositAddress, DepositUtils.signerFee());
+
+        // TODO mark deposit as qualified
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
