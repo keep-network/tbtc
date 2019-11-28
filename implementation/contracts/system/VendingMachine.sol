@@ -5,6 +5,7 @@ import {DepositOwnerToken} from "./DepositOwnerToken.sol";
 import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
 import {DepositUtils} from "../deposit/DepositUtils.sol";
+import "../deposit/Deposit.sol";
 
 contract VendingMachine {
     using SafeMath for uint256;
@@ -32,17 +33,26 @@ contract VendingMachine {
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
     ) public {
-        // require(!isQualified(_depositId), "Deposit already qualified");
-        // TODO
+        Deposit _d = Deposit(_depositAddress);
+        require(_d.getCurrentState() == 2, "Deposit must be in AWAITING_FUNDING_PROOF state");
+        _d.provideBTCFundingProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
+        // mint the signer fee to the Deposit
+        tbtcToken.mint(_depositAddress, DepositUtils.signerFee());
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
     /// @param _depositAddress the address of the deposit
     function isQualified(address _depositAddress) public returns (bool) {
-        // TODO
-        // This is stubbed out for prototyping, separate to the actual qualification logic.
-        // However we might remove it later.
-        return true;
+        Deposit(_depositAddress).getCurrentState() == 5;
     }
 
     /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
