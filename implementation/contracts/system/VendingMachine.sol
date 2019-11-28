@@ -34,7 +34,6 @@ contract VendingMachine {
     ) public {
         // require(!isQualified(_depositId), "Deposit already qualified");
         // TODO
-        // TODO mint the signer fee to the Deposit contract here.
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
@@ -48,7 +47,7 @@ contract VendingMachine {
     /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
     /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
-        require(isQualified(_dotId), "Deposit must be qualified");
+        require(isQualified(address(_dotId)), "Deposit must be qualified");
 
         require(tbtcToken.balanceOf(msg.sender) >= getDepositValueLessSignerFee(), "Not enough TBTC for DOT exchange");
         tbtcToken.burnFrom(msg.sender, getDepositValueLessSignerFee());
@@ -61,7 +60,7 @@ contract VendingMachine {
     /// @notice Trade in the Deposit Owner Token and mint TBTC.
     /// @param _dotId ID of Deposit Owner Token to sell
     function dotToTbtc(uint256 _dotId) public {
-        require(isQualified(_dotId), "Deposit must be qualified");
+        require(isQualified(address(_dotId)), "Deposit must be qualified");
 
         depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
         tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
