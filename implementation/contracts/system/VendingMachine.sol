@@ -70,7 +70,8 @@ contract VendingMachine {
     }
 
     // TODO temporary helper function
-    /// @notice Gets the lot size less signer fees
+    /// @notice Gets the Deposit lot size less signer fees
+    /// @return amount in TBTC
     function getDepositValueLessSignerFee() internal returns (uint) {
         uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
         uint256 _signerFee = DepositUtils.signerFee();
