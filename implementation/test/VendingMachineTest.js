@@ -34,7 +34,7 @@ contract('VendingMachine', (accounts) => {
   const dotId = '1'
 
   // For lack of a better design, this is the amount of TBTC exchanged for DOT's.
-  const depositValueLessSignerFee = '995000000000000000'
+  const depositValueLessSignerFee = '999999950000000000'
 
   before(async () => {
     // VendingMachine relies on linked libraries, hence we use deploySystem for consistency.
@@ -119,7 +119,7 @@ contract('VendingMachine', (accounts) => {
     it(`fails if caller hasn't got enough TBTC`, async () => {
       await depositOwnerToken.forceMint(vendingMachine.address, dotId)
 
-      await expectThrow(
+    
         vendingMachine.tbtcToDot(dotId),
         'Not enough TBTC for DOT exchange.'
       )
