@@ -87,23 +87,6 @@ library DepositFunding {
         }
     }
 
-    /// @notice     Mints TBTC tokens.
-    /// @dev        Minted value is based on a configured lot size. The lot size,
-    /// which is specified in satoshi is multiplied to match TBTC token unit.
-    /// Minted tokens are split between the beneficiary (99,5%) and the deposit
-    /// contract (0,5%).
-    function mintTBTC(DepositUtils.Deposit storage _d) internal {
-        TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
-
-        uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
-        uint256 _signerFee = DepositUtils.signerFee();
-
-        uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
-
-        _tbtcToken.mint(_d.depositBeneficiary(), _totalValue.sub(_signerFee));
-        _tbtcToken.mint(address(this), _signerFee);
-    }
-
     /// @notice     slashes the signers partially for committing fraud before funding occurs
     /// @dev        called only by notifyFraudFundingTimeout
     function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) public {
@@ -338,8 +321,6 @@ library DepositFunding {
         _d.logFunded();
 
         returnFunderBond(_d);
-
-        mintTBTC(_d);
 
         return true;
     }

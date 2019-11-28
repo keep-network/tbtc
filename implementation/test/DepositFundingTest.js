@@ -394,33 +394,5 @@ contract('DepositFunding', (accounts) => {
 
       assert.equal(actualBalance, expectedBalance, 'funder bond not correctly returned')
     })
-
-    it('mints tokens', async () => {
-      const initialTokenBalanceTotal = await tbtcToken.totalSupply()
-      const initialTokenBalanceBeneficiary = await tbtcToken.balanceOf(beneficiary)
-      const initialTokenBalanceDeposit = await tbtcToken.balanceOf(testInstance.address)
-
-      await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-
-      const lotSize = await deployed.TBTCConstants.getLotSize.call()
-      const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
-      const signerFee = await deployed.TestDepositUtils.signerFee()
-
-      const expectedMintedTokenTotal = lotSize.mul(new BN(satoshiMultiplier))
-      const expectedMintedTokenBeneficiary = expectedMintedTokenTotal.sub(new BN(signerFee))
-      const expectedMintedTokenDeposit = new BN(signerFee)
-
-      const expectedTokenBalanceTotal = initialTokenBalanceTotal.add(expectedMintedTokenTotal)
-      const expectedTokenBalanceBeneficiary = initialTokenBalanceBeneficiary.add(expectedMintedTokenBeneficiary)
-      const expectedTokenBalanceDeposit = initialTokenBalanceDeposit.add(expectedMintedTokenDeposit)
-
-      const actualTokenBalanceTotal = await tbtcToken.totalSupply()
-      const actualTokenBalanceBeneficiary = await tbtcToken.balanceOf(beneficiary)
-      const actualTokenBalanceDeposit = await tbtcToken.balanceOf(testInstance.address)
-
-      expect(actualTokenBalanceTotal, 'incorrect total amount minted').to.eq.BN(expectedTokenBalanceTotal)
-      expect(actualTokenBalanceBeneficiary, 'incorrect amount minted for beneficiary').to.eq.BN(expectedTokenBalanceBeneficiary)
-      expect(actualTokenBalanceDeposit, 'incorrect amount minted for deposit').to.eq.BN(expectedTokenBalanceDeposit)
-    })
   })
 })
