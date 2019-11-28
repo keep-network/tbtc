@@ -140,7 +140,7 @@ contract('VendingMachine', (accounts) => {
       const initialBalance = await tbtcToken.balanceOf(testInstance.address)
 
       await vendingMachine.qualifyDeposit(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-      
+
       const signerFee = await deployed.TestDepositUtils.signerFee()
 
       const finalBalance = await tbtcToken.balanceOf(testInstance.address)
@@ -242,7 +242,7 @@ contract('VendingMachine', (accounts) => {
         await depositOwnerToken.ownerOf(dotId)
       ).to.equal(accounts[0])
     })
-    
+
     it('fails if deposit not qualified', async () => {
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await expectThrow(

@@ -9,7 +9,7 @@ import "../deposit/Deposit.sol";
 
 contract VendingMachine {
     using SafeMath for uint256;
-    
+
     TBTCToken tbtcToken;
     DepositOwnerToken depositOwnerToken;
 
