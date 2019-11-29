@@ -12,6 +12,7 @@ import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
+import {DepositOwnerToken} from "../system/DepositOwnerToken.sol";
 
 library DepositRedemption {
 
@@ -73,6 +74,10 @@ library DepositRedemption {
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
+        require(
+            msg.sender == DepositOwnerToken(_d.DepositOwnerToken).ownerOf(uint256(address(this))),
+            "redemption can only be called by deposit owner"
+        );
 
         redemptionTBTCBurn(_d);
 

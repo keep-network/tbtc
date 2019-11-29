@@ -25,6 +25,7 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
+        address DepositOwnerToken;
         uint8 currentState;
 
         // SET ON FRAUD

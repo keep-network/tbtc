@@ -38,6 +38,7 @@ contract DepositFactory is CloneFactory{
     function createDeposit (
         address _TBTCSystem,
         address _TBTCToken,
+        address __DepositOwnerToken,
         uint256 _keepThreshold,
         uint256 _keepSize
     ) public payable returns(address) {
@@ -46,6 +47,7 @@ contract DepositFactory is CloneFactory{
         Deposit(address(uint160(cloneAddress))).createNewDeposit.value(msg.value)(
             _TBTCSystem,
             _TBTCToken,
+            __DepositOwnerToken,
             _keepThreshold,
             _keepSize);
 
