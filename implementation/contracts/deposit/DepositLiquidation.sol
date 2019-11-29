@@ -88,6 +88,7 @@ library DepositLiquidation {
         }
 
         bool _liquidated = attemptToLiquidateOnchain(_d);
+        // TODO burn down the TBTC
 
         if (_liquidated) {
             _d.distributeBeneficiaryReward();
@@ -111,6 +112,7 @@ library DepositLiquidation {
         _d.seizeSignerBonds();
 
         bool _liquidated = attemptToLiquidateOnchain(_d);
+        // TODO burn down the TBTC
 
         if (_liquidated) {
             _d.distributeBeneficiaryReward();
@@ -253,6 +255,10 @@ library DepositLiquidation {
         // Burn the outstanding TBTC
         TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
         require(_tbtcToken.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), "Not enough TBTC to cover outstanding debt");
+        // Currently we're planning to setup an ACL on TBTCToken that only permits VendingMachine.
+        // But moving all the burning logic to vending machine is more complex than the current control flow.
+        //
+        // It might make more sense to enable burnFrom for Deposit too.
         _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
 
         // Distribute funds to auction buyer
