@@ -60,6 +60,7 @@ contract VendingMachine {
     /// @dev    Burns TBTC, transfers DOT from vending machine to caller
     /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
+        require(depositOwnerToken.exists(_dotId), "Token does not exist");
         require(isQualified(address(_dotId)), "Deposit must be qualified");
 
         require(tbtcToken.balanceOf(msg.sender) >= getDepositValueLessSignerFee(), "Not enough TBTC for DOT exchange");
@@ -74,6 +75,7 @@ contract VendingMachine {
     /// @dev    Transfers DOT from caller to vending machine, and mints TBTC to caller
     /// @param _dotId ID of Deposit Owner Token to sell
     function dotToTbtc(uint256 _dotId) public {
+        require(depositOwnerToken.exists(_dotId), "Token does not exist");
         require(isQualified(address(_dotId)), "Deposit must be qualified");
 
         depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
