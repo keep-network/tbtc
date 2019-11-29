@@ -53,7 +53,7 @@ contract VendingMachine {
     /// @notice Determines whether a deposit is qualified for minting TBTC.
     /// @param _depositAddress the address of the deposit
     function isQualified(address payable _depositAddress) public returns (bool) {
-        return Deposit(_depositAddress).isQualified();
+        return Deposit(_depositAddress).inActive();
     }
 
     /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.

@@ -4,6 +4,7 @@ import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositFunding} from "./DepositFunding.sol";
 import {DepositRedemption} from "./DepositRedemption.sol";
+import {DepositStates} from "./DepositStates.sol";
 
 contract Deposit {
 
@@ -11,6 +12,7 @@ contract Deposit {
     using DepositFunding for DepositUtils.Deposit;
     using DepositLiquidation for DepositUtils.Deposit;
     using DepositUtils for DepositUtils.Deposit;
+    using DepositStates for DepositUtils.Deposit;
 
     DepositUtils.Deposit self;
 
@@ -29,8 +31,8 @@ contract Deposit {
 
     /// @notice     Check if the Deposit is in ACTIVE state.
     /// @return     True if state is ACTIVE, fale otherwise. 
-    function isQualified() public view returns (bool){
-        return self.currentState == 5;
+    function inActive() public view returns (bool){
+        return self.inActive();
     }
     // THIS IS THE INIT FUNCTION
     /// @notice         The system can spin up a new deposit
