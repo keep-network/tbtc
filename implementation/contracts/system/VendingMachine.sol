@@ -5,10 +5,11 @@ import {DepositOwnerToken} from "./DepositOwnerToken.sol";
 import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
 import {DepositUtils} from "../deposit/DepositUtils.sol";
+import "../deposit/Deposit.sol";
 
 contract VendingMachine {
     using SafeMath for uint256;
-    
+
     TBTCToken tbtcToken;
     DepositOwnerToken depositOwnerToken;
 
@@ -22,7 +23,7 @@ contract VendingMachine {
 
     /// @notice Qualifies a deposit for minting TBTC.
     function qualifyDeposit(
-        address _depositAddress,
+        address payable _depositAddress,
         bytes4 _txVersion,
         bytes memory _txInputVector,
         bytes memory _txOutputVector,
@@ -32,23 +33,34 @@ contract VendingMachine {
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
     ) public {
-        // require(!isQualified(_depositId), "Deposit already qualified");
-        // TODO
+        Deposit _d = Deposit(_depositAddress);
+        require(
+            _d.provideBTCFundingProof(
+                _txVersion,
+                _txInputVector,
+                _txOutputVector,
+                _txLocktime,
+                _fundingOutputIndex,
+                _merkleProof,
+                _txIndexInBlock,
+                _bitcoinHeaders
+            ),
+            "failed to provide funding proof");
+        // mint the signer fee to the Deposit
+        tbtcToken.mint(_depositAddress, DepositUtils.signerFee());
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
     /// @param _depositAddress the address of the deposit
-    function isQualified(address _depositAddress) public returns (bool) {
-        // TODO
-        // This is stubbed out for prototyping, separate to the actual qualification logic.
-        // However we might remove it later.
-        return true;
+    function isQualified(address payable _depositAddress) public returns (bool) {
+        return Deposit(_depositAddress).inActive();
     }
 
     /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
     /// @dev    Burns TBTC, transfers DOT from vending machine to caller
     /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
+        require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
         require(isQualified(address(_dotId)), "Deposit must be qualified");
 
         require(tbtcToken.balanceOf(msg.sender) >= getDepositValueLessSignerFee(), "Not enough TBTC for DOT exchange");
@@ -63,6 +75,7 @@ contract VendingMachine {
     /// @dev    Transfers DOT from caller to vending machine, and mints TBTC to caller
     /// @param _dotId ID of Deposit Owner Token to sell
     function dotToTbtc(uint256 _dotId) public {
+        require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
         require(isQualified(address(_dotId)), "Deposit must be qualified");
 
         depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);

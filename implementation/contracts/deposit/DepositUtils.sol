@@ -126,7 +126,7 @@ library DepositUtils {
                 _txIndexInBlock
             ),
             "Tx merkle proof is not valid for provided header and txId");
-
+        // TODO: Update for variable confirmation requirements via Vending Machine.
         evaluateProofDifficulty(_d, _bitcoinHeaders);
     }
 
