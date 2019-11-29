@@ -34,16 +34,18 @@ contract VendingMachine {
         bytes memory _bitcoinHeaders
     ) public {
         Deposit _d = Deposit(_depositAddress);
-        _d.provideBTCFundingProof(
-            _txVersion,
-            _txInputVector,
-            _txOutputVector,
-            _txLocktime,
-            _fundingOutputIndex,
-            _merkleProof,
-            _txIndexInBlock,
-            _bitcoinHeaders
-        );
+        require(
+            _d.provideBTCFundingProof(
+                _txVersion,
+                _txInputVector,
+                _txOutputVector,
+                _txLocktime,
+                _fundingOutputIndex,
+                _merkleProof,
+                _txIndexInBlock,
+                _bitcoinHeaders
+            ),
+            "failed to provide funding proof");
         // mint the signer fee to the Deposit
         tbtcToken.mint(_depositAddress, DepositUtils.signerFee());
     }
