@@ -64,7 +64,7 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract.only('VendingMachine', (accounts) => {
+contract('VendingMachine', (accounts) => {
   let vendingMachine
   let depositOwnerToken
   let tbtcToken
