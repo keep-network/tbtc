@@ -122,10 +122,10 @@ contract('VendingMachine', (accounts) => {
       assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
 
       const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
-      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not deconsted')
+      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not updated')
 
       const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
-      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not deconsted')
+      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not updated')
 
       const depositState = await testInstance.getState.call()
       expect(depositState).to.eq.BN(utils.states.ACTIVE)
@@ -197,7 +197,7 @@ contract('VendingMachine', (accounts) => {
     it(`fails if DOT doesn't exist`, async () => {
       await expectThrow(
         vendingMachine.dotToTbtc(new BN(123345)),
-        'Token does not exist'
+        'Deposit Owner Token does not exist'
       )
     })
 
@@ -265,7 +265,7 @@ contract('VendingMachine', (accounts) => {
     it(`fails if DOT doesn't exist`, async () => {
       await expectThrow(
         vendingMachine.dotToTbtc(new BN(123345)),
-        'Token does not exist'
+        'Deposit Owner Token does not exist'
       )
     })
 
