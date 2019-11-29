@@ -31,7 +31,7 @@ contract Deposit {
 
     /// @notice     Check if the Deposit is in ACTIVE state.
     /// @return     True if state is ACTIVE, fale otherwise. 
-    function inActive() public view returns (bool){
+    function inActive() public view returns (bool) {
         return self.inActive();
     }
     // THIS IS THE INIT FUNCTION
