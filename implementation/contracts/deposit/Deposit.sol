@@ -27,6 +27,11 @@ contract Deposit {
         return uint256(self.currentState);
     }
 
+    /// @notice     Check if the Deposit is in ACTIVE state.
+    /// @return     True if state is ACTIVE, fale otherwise. 
+    function isQualified() public view returns (bool){
+        return self.currentState == 5;
+    }
     // THIS IS THE INIT FUNCTION
     /// @notice         The system can spin up a new deposit
     /// @dev            This should be called by an approved contract, not a developer
