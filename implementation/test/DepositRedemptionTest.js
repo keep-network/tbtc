@@ -1,4 +1,5 @@
 import expectThrow from './helpers/expectThrow'
+import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
@@ -61,6 +62,8 @@ contract('DepositRedemption', (accounts) => {
   let tbtcSystemStub
   let depositOwnerToken
 
+  let dotId
+
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
@@ -71,9 +74,10 @@ contract('DepositRedemption', (accounts) => {
 
     testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
 
-    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
-    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    dotId = await web3.utils.toBN(testInstance.address)
+    await depositOwnerToken.forceMint(accounts[0], dotId)
   })
 
   beforeEach(async () => {
@@ -102,6 +106,10 @@ contract('DepositRedemption', (accounts) => {
     })
 
     beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
 
@@ -109,6 +117,10 @@ contract('DepositRedemption', (accounts) => {
       await tbtcToken.resetBalance(requiredBalance)
       await tbtcToken.resetAllowance(testInstance.address, requiredBalance)
       await deployed.ECDSAKeepStub.setSuccess(true)
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
@@ -144,6 +156,17 @@ contract('DepositRedemption', (accounts) => {
         'Fee is too low'
       )
     })
+
+    it('reverts if the caller is not the deposit owner', async () => {
+      await depositOwnerToken.transferFrom(accounts[0], accounts[4], dotId)
+
+      await expectThrow(
+        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
+        'redemption can only be called by deposit owner'
+      )
+    })
+
+    it.skip('TODO: pays the deposit beneficiary reward', async () => {})
   })
 
   describe('approveDigest', async () => {
