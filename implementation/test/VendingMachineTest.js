@@ -64,7 +64,7 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract('VendingMachine', (accounts) => {
+contract.only('VendingMachine', (accounts) => {
   let vendingMachine
   let depositOwnerToken
   let tbtcToken
@@ -94,7 +94,6 @@ contract('VendingMachine', (accounts) => {
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
 
     tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
-    beneficiary = accounts[4]
     dotId = await web3.utils.toBN(testInstance.address)
   })
 
@@ -103,7 +102,6 @@ contract('VendingMachine', (accounts) => {
       await tbtcSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-      await deployed.ECDSAKeepStub.send(1000000, { from: accounts[0] })
     })
 
     beforeEach(async () => {
