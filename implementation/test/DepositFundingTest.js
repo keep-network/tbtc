@@ -112,6 +112,7 @@ contract('DepositFunding', (accounts) => {
       await testInstance.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1, // m
         1,
         { value: funderBondAmount }
@@ -142,6 +143,7 @@ contract('DepositFunding', (accounts) => {
         testInstance.createNewDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
+          utils.address0,
           1, // m
           1),
         'Deposit setup already requested'
