@@ -65,10 +65,10 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 const _outValueBytes = '0x2040351d00000000'
 
 contract('VendingMachine', (accounts) => {
+  let deployed
   let vendingMachine
   let depositOwnerToken
   let tbtcToken
-  let deployed
   let tbtcSystemStub
   let testInstance
 
