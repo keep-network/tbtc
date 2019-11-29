@@ -186,6 +186,8 @@ contract('VendingMachine', (accounts) => {
 
     it('fails if deposit not qualified', async () => {
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await depositOwnerToken.forceMint(vendingMachine.address, dotId)
+
       await expectThrow(
         vendingMachine.dotToTbtc(dotId),
         'Deposit must be qualified'
@@ -195,7 +197,7 @@ contract('VendingMachine', (accounts) => {
     it(`fails if DOT doesn't exist`, async () => {
       await expectThrow(
         vendingMachine.dotToTbtc(new BN(123345)),
-        'revert'
+        'Token does not exist'
       )
     })
 
@@ -243,6 +245,8 @@ contract('VendingMachine', (accounts) => {
 
     it('fails if deposit not qualified', async () => {
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await depositOwnerToken.forceMint(vendingMachine.address, dotId)
+
       await expectThrow(
         vendingMachine.tbtcToDot(dotId),
         'Deposit must be qualified'
@@ -255,6 +259,13 @@ contract('VendingMachine', (accounts) => {
       await expectThrow(
         vendingMachine.tbtcToDot(dotId),
         'Not enough TBTC for DOT exchange.'
+      )
+    })
+
+    it(`fails if DOT doesn't exist`, async () => {
+      await expectThrow(
+        vendingMachine.dotToTbtc(new BN(123345)),
+        'Token does not exist'
       )
     })
 
