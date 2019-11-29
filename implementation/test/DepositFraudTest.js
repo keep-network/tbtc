@@ -92,7 +92,8 @@ contract('DepositFraud', (accounts) => {
 
     await testInstance.setExteriorAddresses(
       tbtcSystemStub.address,
-      tbtcToken.address
+      tbtcToken.address,
+      utils.address0
     )
 
     tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
