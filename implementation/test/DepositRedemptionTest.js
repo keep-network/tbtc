@@ -14,6 +14,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
+const TestDepositOwnerToken = artifacts.require('TestDepositOwnerToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -58,15 +59,17 @@ contract('DepositRedemption', (accounts) => {
   let withdrawalRequestTime
   let tbtcToken
   let tbtcSystemStub
+  let depositOwnerToken
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
-
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
-
     testInstance = deployed.TestDeposit
+    depositOwnerToken = await TestDepositOwnerToken.new()
+
+    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
 
     testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
 

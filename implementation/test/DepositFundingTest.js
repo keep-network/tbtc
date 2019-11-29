@@ -91,7 +91,7 @@ contract('DepositFunding', (accounts) => {
 
     testInstance = deployed.TestDeposit
 
-    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, utils.address0)
 
     tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
