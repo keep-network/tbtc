@@ -67,8 +67,11 @@ library DepositRedemption {
             "redemption can only be called by deposit owner"
         );
 
-        // TODO if the caller is the beneficiary, then it doesn't make sense to charge them for the beneficiaryReward
-        TBTCToken(_d.TBTCToken).transferFrom(msg.sender, address(this), DepositUtils.beneficiaryReward());
+        // Transfer the deposit beneficiary reward from `msg.sender`,
+        // unless it's the beneficiary who is requesting redemption.
+        if(_d.depositBeneficiary() != msg.sender){
+            TBTCToken(_d.TBTCToken).transferFrom(msg.sender, address(this), DepositUtils.beneficiaryReward());
+        }
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
