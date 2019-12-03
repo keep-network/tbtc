@@ -295,6 +295,7 @@ library DepositRedemption {
     function notifySignatureTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalSignature(), "Not currently awaiting a signature");
         require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getSignatureTimeout(), "Signature timer has not elapsed");
+        floodgate.ungate(TBTCConstants.getLotSize());
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 
@@ -304,6 +305,7 @@ library DepositRedemption {
     function notifyRedemptionProofTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
         require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout(), "Proof timer has not elapsed");
+        floodgate.ungate(TBTCConstants.getLotSize());
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 }

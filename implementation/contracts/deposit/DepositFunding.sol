@@ -154,6 +154,8 @@ library DepositFunding {
         _d.setFailedSetup();
         _d.logSetupFailed();
 
+        floodgate.ungate(TBTCConstants.getLotSize());
+
         revokeFunderBond(_d);
         fundingTeardown(_d);
     }
@@ -185,6 +187,8 @@ library DepositFunding {
         _d.seizeSignerBonds();
         _d.logFraudDuringSetup();
 
+        floodgate.ungate(TBTCConstants.getLotSize());
+
         // If the funding timeout has elapsed, punish the funder too!
         if (block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFundingTimeout()) {
             address(0).transfer(address(this).balance);  // Burn it all down (fire emoji)
@@ -211,6 +215,8 @@ library DepositFunding {
         );
         _d.setFailedSetup();
         _d.logSetupFailed();
+
+        floodgate.ungate(TBTCConstants.getLotSize());
 
         partiallySlashForFraudInFunding(_d);
         fundingFraudTeardown(_d);
@@ -241,6 +247,8 @@ library DepositFunding {
         bytes memory _bitcoinHeaders
     ) public returns (bool) {
         require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
+
+        floodgate.ungate(TBTCConstants.getLotSize());
 
         bytes8 _valueBytes;
         bytes memory  _utxoOutpoint;

@@ -1,3 +1,5 @@
+pragma solidity ^0.5.10;
+
 /**
  * The floodgate mitigates the risk of reorg attacks, by gating the volume of Bitcoin transferred through the system.
  */
@@ -17,13 +19,22 @@ contract BitcoinFloodgate {
     function release(uint _amount, bytes memory _numConfirmations) public {
         uint minConfirmations = BLOCK_REWARD / (gatedVolume + 1);
         require(_numConfirmations >= minConfirmations, "bitcoin not released: not enough confirmations");
+        ungate(_amount);
+    }
+
+    /**
+     * Ungates some previously gated bitcoin
+     * @param _amount The amount of bitcoin
+     */
+    function ungate(uint _amount) public {
+        gatedVolume -= _amount;
     }
     
     /**
-     * Increases the volume of Bitcoin gated for release
+     * Increases the volume of bitcoin gated for release
      * @param _amount Amount of bitcoin gated for release
      */
-    function gate(uint _amount) {
+    function gate(uint _amount) public {
         gatedVolume += _amount;
     }
 }
