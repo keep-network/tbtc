@@ -74,6 +74,8 @@ library DepositRedemption {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 
+        floodgate.gate(TBTCConstants.getLotSize());
+
         redemptionTBTCBurn(_d);
 
         // Convert the 8-byte LE ints to uint256
@@ -233,6 +235,9 @@ library DepositRedemption {
         uint256 _fundingOutputValue;
 
         require(_d.inRedemption(), "Redemption proof only allowed from redemption flow");
+        
+        uint numConfirmations = extractNumConfirmationsFromHeaders(_bitcoinHeaders);
+        floodgate.release(TBTCConstants.getLotSize(), numConfirmations);
 
         _fundingOutputValue = redemptionTransactionChecks(_d, _txInputVector, _txOutputVector);
 

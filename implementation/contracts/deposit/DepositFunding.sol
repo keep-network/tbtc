@@ -134,6 +134,8 @@ library DepositFunding {
         require(_d.signingGroupPubkeyY != bytes32(0) && _d.signingGroupPubkeyX != bytes32(0), "Keep returned bad pubkey");
         _d.fundingProofTimerStart = block.timestamp;
 
+        floodgate.gate(TBTCConstants.getLotSize());
+
         _d.setAwaitingBTCFundingProof();
         _d.logRegisteredPubkey(
             _d.signingGroupPubkeyX,
@@ -290,6 +292,9 @@ library DepositFunding {
     ) public returns (bool) { //TODO Implement ACL for Vending Machine
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
+
+        uint numConfirmations = extractNumConfirmationsFromHeaders(_bitcoinHeaders);
+        floodgate.release(TBTCConstants.getLotSize(), numConfirmations);
 
         // Design decision:
         // We COULD revoke the funder bond here if the funding proof timeout has elapsed
