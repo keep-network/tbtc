@@ -97,55 +97,6 @@ contract.only('VendingMachine', (accounts) => {
     dotId = await web3.utils.toBN(testInstance.address)
   })
 
-  describe('#qualifyDepositTbtcWrapper', async () => {
-    before(async () => {
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
-      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
-    it('qualifies a Deposit', async () => {
-      await depositOwnerToken.forceMint(accounts[0], dotId)
-      await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
-      const blockNumber = await web3.eth.getBlock('latest').number
-
-      await vendingMachine.qualifyDepositTbtcWrapper(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-
-      const UTXOInfo = await testInstance.getUTXOInfo.call()
-      assert.equal(UTXOInfo[0], _outValueBytes)
-      assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
-
-      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
-      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not updated')
-
-      const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
-      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not updated')
-
-      const depositState = await testInstance.getState.call()
-      expect(depositState).to.eq.BN(utils.states.ACTIVE)
-
-      const eventList = await tbtcSystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
-      assert.equal(eventList.length, 1)
-    })
-
-    it('mints TBTC to the DOT owner', async () => {
-      await depositOwnerToken.forceMint(accounts[0], dotId)
-      await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
-
-      await vendingMachine.qualifyDepositTbtcWrapper(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-
-      await assertBalance.tbtc(accounts[0], depositValue)
-    })
-  })
-
   describe('#isQualified', async () => {
     it('returns true if deposit is in ACTIVE State', async () => {
       await testInstance.setState(utils.states.ACTIVE)
@@ -278,6 +229,55 @@ contract.only('VendingMachine', (accounts) => {
         vendingMachine.tbtcToDot(dotId),
         'Deposit is locked.'
       )
+    })
+  })
+
+  describe('#qualifyDepositTbtcWrapper', async () => {
+    before(async () => {
+      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('qualifies a Deposit', async () => {
+      await depositOwnerToken.forceMint(accounts[0], dotId)
+      await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await vendingMachine.qualifyDepositTbtcWrapper(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+
+      const UTXOInfo = await testInstance.getUTXOInfo.call()
+      assert.equal(UTXOInfo[0], _outValueBytes)
+      assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
+
+      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
+      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not updated')
+
+      const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
+      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not updated')
+
+      const depositState = await testInstance.getState.call()
+      expect(depositState).to.eq.BN(utils.states.ACTIVE)
+
+      const eventList = await tbtcSystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('mints TBTC to the DOT owner', async () => {
+      await depositOwnerToken.forceMint(accounts[0], dotId)
+      await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
+
+      await vendingMachine.qualifyDepositTbtcWrapper(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+
+      await assertBalance.tbtc(accounts[0], depositValue)
     })
   })
 })
