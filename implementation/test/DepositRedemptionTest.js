@@ -167,6 +167,8 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it.skip('TODO: pays the deposit beneficiary reward', async () => {})
+
+    it.skip('TODO: reverts if the msg.sender != deposit owner', async () => {})
   })
 
   describe('approveDigest', async () => {
