@@ -287,7 +287,7 @@ library DepositFunding {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public returns (bool) { //TODO Implement ACL for Vending Machine
+    ) public returns (bool) {
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
