@@ -47,7 +47,7 @@ contract VendingMachine {
                 _bitcoinHeaders
             ),
             "failed to provide funding proof");
-        // mint the signer fee to the Deposit
+
         dotToTbtc(uint256(_depositAddress));
     }
 
