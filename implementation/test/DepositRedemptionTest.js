@@ -107,9 +107,6 @@ contract('DepositRedemption', (accounts) => {
 
     beforeEach(async () => {
       await createSnapshot()
-    })
-
-    beforeEach(async () => {
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
 
