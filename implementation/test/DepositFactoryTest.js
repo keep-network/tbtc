@@ -2,6 +2,7 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TBTCToken = artifacts.require('TBTCToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
+const DepositStates = artifacts.require('DepositStates')
 const DepositFunding = artifacts.require('DepositFunding')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const DepositRedemption = artifacts.require('DepositRedemption')
@@ -21,6 +22,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
   { name: 'TestDeposit', contract: TestDeposit },
 ]
