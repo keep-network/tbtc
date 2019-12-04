@@ -141,6 +141,21 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
+    it('transfers the deposit beneficiary reward to deposit', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is ~12,297,829,380 BTC
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: blockNumber, toBlock: 'latest' })
+      const event = events[0]
+      expect(event.returnValues.from).to.equal(accounts[0])
+      expect(event.returnValues.to).to.equal(testInstance.address)
+      expect(event.returnValues.value).to.equal('100000')
+    })
+
     it('reverts if not in Active or Courtesy', async () => {
       await testInstance.setState(utils.states.LIQUIDATED)
 
@@ -166,9 +181,9 @@ contract('DepositRedemption', (accounts) => {
       )
     })
 
-    it.skip('TODO: pays the deposit beneficiary reward', async () => {})
+    it.skip('TODO: pays the deposit beneficiary reward', async () => {
 
-    it.skip('TODO: reverts if the msg.sender != deposit owner', async () => {})
+    })
   })
 
   describe('approveDigest', async () => {
