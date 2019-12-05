@@ -68,9 +68,9 @@ contract('DepositRedemption', (accounts) => {
 
     testInstance = deployed.TestDeposit
 
-    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
 
-    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    await tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
   })
 
   beforeEach(async () => {
