@@ -85,9 +85,9 @@ contract('DepositLiquidation', (accounts) => {
 
     testInstance = deployed.TestDeposit
 
-    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
 
-    tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
+    await tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
 
 
     const keepRegistry = await KeepRegistryStub.new()
