@@ -20,7 +20,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     uint256 oraclePrice = 10 ** 12;
 
     address public keepRegistry;
-    address public tbtcUniswapExchange;
 
     constructor(address _depositFactory)
         ERC721MinterAuthority(_depositFactory)
@@ -30,19 +29,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     }
 
     function initialize(
-        address _keepRegistry,
-        address _tbtcUniswapExchange
+        address _keepRegistry
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
         keepRegistry = _keepRegistry;
-        tbtcUniswapExchange = _tbtcUniswapExchange;
-
         _initialized = true;
-    }
-
-    function getTBTCUniswapExchange() external view returns (address) {
-        return tbtcUniswapExchange;
     }
 
     // Price Oracle
