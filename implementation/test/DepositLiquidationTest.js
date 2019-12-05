@@ -3,7 +3,6 @@ import {
   createSnapshot,
   restoreSnapshot,
 } from './helpers/snapshot'
-import { AssertBalance } from './helpers/assertBalance'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
