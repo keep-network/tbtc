@@ -76,7 +76,8 @@ contract('VendingMachine', (accounts) => {
   let dotId
 
   // this is the amount of TBTC exchanged for a DOT.
-  const depositValue = '1000000000000000000'
+  let depositValue
+  let signerFee
 
   before(async () => {
     // VendingMachine relies on linked libraries, hence we use deploySystem for consistency.
@@ -95,6 +96,11 @@ contract('VendingMachine', (accounts) => {
 
     tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
     dotId = await web3.utils.toBN(testInstance.address)
+
+    const lotSize = await deployed.TBTCConstants.getLotSize()
+    const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
+    signerFee = await deployed.TestDepositUtils.signerFee.call()
+    depositValue = lotSize.mul(satoshiMultiplier).sub(signerFee)
   })
 
   describe('#isQualified', async () => {
@@ -185,7 +191,7 @@ contract('VendingMachine', (accounts) => {
       const tbtcBurntEvent = events[0]
       expect(tbtcBurntEvent.returnValues.from).to.equal(accounts[0])
       expect(tbtcBurntEvent.returnValues.to).to.equal(utils.address0)
-      expect(tbtcBurntEvent.returnValues.value).to.equal(depositValue)
+      expect(tbtcBurntEvent.returnValues.value).to.equal(depositValue.toString())
 
       expect(
         await depositOwnerToken.ownerOf(dotId)
@@ -232,7 +238,7 @@ contract('VendingMachine', (accounts) => {
     })
   })
 
-  describe('#qualifyDepositTbtcWrapper', async () => {
+  describe('#unqualifiedDepositToTbtc', async () => {
     before(async () => {
       await tbtcSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
@@ -252,7 +258,7 @@ contract('VendingMachine', (accounts) => {
       await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await vendingMachine.qualifyDepositTbtcWrapper(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+      await vendingMachine.unqualifiedDepositToTbtc(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       const UTXOInfo = await testInstance.getUTXOInfo.call()
       assert.equal(UTXOInfo[0], _outValueBytes)
@@ -271,13 +277,14 @@ contract('VendingMachine', (accounts) => {
       assert.equal(eventList.length, 1)
     })
 
-    it('mints TBTC to the DOT owner', async () => {
+    it('mints TBTC to the DOT owner and siger fee to Deposit', async () => {
       await depositOwnerToken.forceMint(accounts[0], dotId)
       await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
 
-      await vendingMachine.qualifyDepositTbtcWrapper(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+      await vendingMachine.unqualifiedDepositToTbtc(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       await assertBalance.tbtc(accounts[0], depositValue)
+      await assertBalance.tbtc(testInstance.address, signerFee)
     })
   })
 })
