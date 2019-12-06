@@ -34,9 +34,9 @@ contract VendingMachine {
         require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
         require(isQualified(address(_dotId)), "Deposit must be qualified");
 
-        uint256 depositValueLessSignerFee = getDepositValueLessSignerFee();
-        require(tbtcToken.balanceOf(msg.sender) >= depositValueLessSignerFee, "Not enough TBTC for DOT exchange");
-        tbtcToken.burnFrom(msg.sender, depositValueLessSignerFee);
+        uint256 getDepositValue = getDepositValue();
+        require(tbtcToken.balanceOf(msg.sender) >= getDepositValue, "Not enough TBTC for DOT exchange");
+        tbtcToken.burnFrom(msg.sender, getDepositValue);
 
         // TODO do we need the owner check below? transferFrom can be approved for a user, which might be an interesting use case.
         require(depositOwnerToken.ownerOf(_dotId) == address(this), "Deposit is locked");
@@ -51,8 +51,15 @@ contract VendingMachine {
         require(isQualified(address(_dotId)), "Deposit must be qualified");
 
         depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
-        tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
-        tbtcToken.mint(address(_dotId), DepositUtils.signerFee());
+
+        // If the backing Deposit does not have a signer fee in escrow, mint it. 
+        if(tbtcToken.balanceOf(address(_dotId)) < DepositUtils.signerFee()){
+            tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
+            tbtcToken.mint(address(_dotId), DepositUtils.signerFee());
+        }
+        else{
+            tbtcToken.mint(msg.sender, getDepositValue());
+        }
     }
 
     // WRAPPERS
