@@ -12,6 +12,7 @@ import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
+import {DepositOwnerToken} from "../system/DepositOwnerToken.sol";
 
 library DepositRedemption {
 
@@ -49,18 +50,6 @@ library DepositRedemption {
         _d.approvedDigests[_digest] = block.timestamp;
     }
 
-    function redemptionTBTCBurn(DepositUtils.Deposit storage _d) private {
-        // Burn the redeemer's TBTC plus enough extra to cover outstanding debt
-        // Requires user to approve first
-        /* TODO: implement such that it calls the system to burn TBTC? */
-        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
-        uint256 _bal = _tbtc.balanceOf(msg.sender);
-        uint256 _red = _d.redemptionTBTCAmount();
-        require(_bal >= _red, "Not enough TBTC to cover outstanding debt");
-        _tbtc.burnFrom(msg.sender, TBTCConstants.getLotSize());
-        _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee().add(DepositUtils.beneficiaryReward()));
-    }
-
     /// @notice                     Anyone can request redemption
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
@@ -73,8 +62,16 @@ library DepositRedemption {
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
+        require(
+            msg.sender == DepositOwnerToken(_d.DepositOwnerToken).ownerOf(uint256(address(this))),
+            "redemption can only be called by deposit owner"
+        );
 
-        redemptionTBTCBurn(_d);
+        // Transfer the deposit beneficiary reward from `msg.sender`,
+        // unless it's the beneficiary who is requesting redemption.
+        if(_d.depositBeneficiary() != msg.sender){
+            TBTCToken(_d.TBTCToken).transferFrom(msg.sender, address(this), DepositUtils.beneficiaryReward());
+        }
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();

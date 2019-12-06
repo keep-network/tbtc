@@ -86,6 +86,7 @@ contract('DepositUtils', (accounts) => {
     await testUtilsInstance.createNewDeposit(
       tbtcSystemStub.address,
       tbtcToken.address,
+      utils.address0,
       1, // m
       1, // n
       { value: funderBondAmount }

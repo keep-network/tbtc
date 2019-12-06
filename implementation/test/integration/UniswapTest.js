@@ -196,7 +196,7 @@ integration('Uniswap', (accounts) => {
 
         await tbtcSystem.reinitialize(uniswapExchangeAddress)
 
-        await deposit.setExteriorAddresses(tbtcSystem.address, tbtcToken.address)
+        await deposit.setExteriorAddresses(tbtcSystem.address, tbtcToken.address, utils.address0)
         await tbtcSystem.forceMint(accounts[0], web3.utils.toBN(deposit.address))
 
         // Helpers

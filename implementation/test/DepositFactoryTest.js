@@ -52,6 +52,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -60,6 +61,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -79,6 +81,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -109,6 +112,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -117,6 +121,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -167,6 +172,7 @@ contract('DepositFactory', (accounts) => {
       await depositContract.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -186,6 +192,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }

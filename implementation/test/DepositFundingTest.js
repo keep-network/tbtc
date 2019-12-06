@@ -91,7 +91,7 @@ contract('DepositFunding', (accounts) => {
 
     testInstance = deployed.TestDeposit
 
-    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, utils.address0)
 
     await tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
@@ -112,6 +112,7 @@ contract('DepositFunding', (accounts) => {
       await testInstance.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1, // m
         1,
         { value: funderBondAmount }
@@ -142,6 +143,7 @@ contract('DepositFunding', (accounts) => {
         testInstance.createNewDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
+          utils.address0,
           1, // m
           1),
         'Deposit setup already requested'

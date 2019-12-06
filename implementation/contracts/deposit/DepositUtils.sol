@@ -25,6 +25,7 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
+        address DepositOwnerToken;
         uint8 currentState;
 
         // SET ON FRAUD
@@ -370,6 +371,10 @@ library DepositUtils {
     ///             whenever this is called we are shutting down.
     function distributeBeneficiaryReward(Deposit storage _d) public {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+
+        // If the beneficiary requested redemption, they didn't have to pay the reward.
+        if(_d.requesterAddress == depositBeneficiary(_d)) return;
+
         /* solium-disable-next-line */
         require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))),"Transfer failed");
     }
