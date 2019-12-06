@@ -9,7 +9,6 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
-import {IUniswapExchange} from "../external/IUniswapExchange.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 
 library DepositLiquidation {
@@ -87,18 +86,8 @@ library DepositLiquidation {
             return;
         }
 
-        bool _liquidated = attemptToLiquidateOnchain(_d);
-
-        if (_liquidated) {
-            _d.distributeBeneficiaryReward();
-            _d.setLiquidated();
-            _d.logLiquidated();
-            address(0).transfer(address(this).balance);  // burn it down
-        }
-        if (!_liquidated) {
-            _d.setFraudLiquidationInProgress();
-            _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
-        }
+        _d.setFraudLiquidationInProgress();
+        _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
     }
 
     /// @notice         Starts signer liquidation due to abort or undercollateralization
@@ -110,18 +99,8 @@ library DepositLiquidation {
         _d.redemptionTeardown();
         _d.seizeSignerBonds();
 
-        bool _liquidated = attemptToLiquidateOnchain(_d);
-
-        if (_liquidated) {
-            _d.distributeBeneficiaryReward();
-            _d.pushFundsToKeepGroup(address(this).balance);
-            _d.setLiquidated();
-            _d.logLiquidated();
-        }
-        if (!_liquidated) {
-            _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
-            _d.setFraudLiquidationInProgress();
-        }
+        _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+        _d.setFraudLiquidationInProgress();
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud
@@ -323,34 +302,5 @@ library DepositLiquidation {
         _d.setCourtesyCall();
         _d.logCourtesyCalled();
         _d.courtesyCallInitiated = block.timestamp;
-    }
-
-    /// @notice     Tries to liquidate the position on-chain using the signer bond
-    /// @dev        Calls out to other contracts, watch for re-entrance
-    /// @return     True if Liquidated, False otherwise
-    // TODO(liamz): check for re-entry
-    function attemptToLiquidateOnchain(
-        DepositUtils.Deposit storage _d
-    ) internal returns (bool) {
-        // Return early if there is no Uniswap TBTC Exchange.
-        IUniswapExchange exchange = IUniswapExchange(ITBTCSystem(_d.TBTCSystem).getTBTCUniswapExchange());
-        if(address(exchange) == address(0x0)) {
-            return false;
-        }
-
-        // Only liquidate if we can buy up enough TBTC to burn,
-        // otherwise go 100% for the falling-price auction
-        uint tbtcAmount = _d.liquidationTBTCAmount();
-        uint ethAmount = exchange.getEthToTokenOutputPrice(tbtcAmount);
-
-        if(address(this).balance < ethAmount) {
-            return false;
-        }
-
-        // Leverage uniswap’s frontrunning mitigation functionality.
-        uint deadline = block.timestamp;
-        exchange.ethToTokenSwapOutput.value(ethAmount)(tbtcAmount, deadline);
-
-        return true;
     }
 }
