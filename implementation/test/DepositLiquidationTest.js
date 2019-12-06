@@ -84,7 +84,7 @@ contract('DepositLiquidation', (accounts) => {
 
     testInstance = deployed.TestDeposit
 
-    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, utils.address0)
 
     await tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
 

@@ -1,4 +1,5 @@
 import expectThrow from './helpers/expectThrow'
+import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
@@ -14,6 +15,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
+const TestDepositOwnerToken = artifacts.require('TestDepositOwnerToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -58,19 +60,24 @@ contract('DepositRedemption', (accounts) => {
   let withdrawalRequestTime
   let tbtcToken
   let tbtcSystemStub
+  let depositOwnerToken
+
+  let dotId
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
-
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
-
     testInstance = deployed.TestDeposit
+    depositOwnerToken = await TestDepositOwnerToken.new()
 
-    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
 
     await tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+
+    dotId = await web3.utils.toBN(testInstance.address)
+    await depositOwnerToken.forceMint(accounts[0], dotId)
   })
 
   beforeEach(async () => {
@@ -99,6 +106,7 @@ contract('DepositRedemption', (accounts) => {
     })
 
     beforeEach(async () => {
+      await createSnapshot()
       await testInstance.setState(utils.states.ACTIVE)
       await testInstance.setUTXOInfo(valueBytes, 0, outpoint)
 
@@ -106,6 +114,10 @@ contract('DepositRedemption', (accounts) => {
       await tbtcToken.resetBalance(requiredBalance)
       await tbtcToken.resetAllowance(testInstance.address, requiredBalance)
       await deployed.ECDSAKeepStub.setSuccess(true)
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it('updates state successfully and fires a RedemptionRequested event', async () => {
@@ -126,6 +138,21 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
+    it('transfers the deposit beneficiary reward to deposit', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is ~12,297,829,380 BTC
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: blockNumber, toBlock: 'latest' })
+      const event = events[0]
+      expect(event.returnValues.from).to.equal(accounts[0])
+      expect(event.returnValues.to).to.equal(testInstance.address)
+      expect(event.returnValues.value).to.equal('100000')
+    })
+
     it('reverts if not in Active or Courtesy', async () => {
       await testInstance.setState(utils.states.LIQUIDATED)
 
@@ -140,6 +167,19 @@ contract('DepositRedemption', (accounts) => {
         testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
         'Fee is too low'
       )
+    })
+
+    it('reverts if the caller is not the deposit owner', async () => {
+      await depositOwnerToken.transferFrom(accounts[0], accounts[4], dotId)
+
+      await expectThrow(
+        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
+        'redemption can only be called by deposit owner'
+      )
+    })
+
+    it.skip('TODO: pays the deposit beneficiary reward', async () => {
+
     })
   })
 
