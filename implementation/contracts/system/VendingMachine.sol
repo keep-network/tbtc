@@ -23,7 +23,7 @@ contract VendingMachine {
 
     /// @notice Qualifies a deposit and mints TBTC.
     /// @dev User must allow VendingManchine to transfer DOT
-    function qualifyDepositTbtcWrapper(
+    function unqualifiedDepositToTbtc(
         address payable _depositAddress,
         bytes4 _txVersion,
         bytes memory _txInputVector,
@@ -64,7 +64,7 @@ contract VendingMachine {
         require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
         require(isQualified(address(_dotId)), "Deposit must be qualified");
 
-        uint256 depositValueLessSignerFee = depositValueLessSignerFee();
+        uint256 depositValueLessSignerFee = getDepositValueLessSignerFee();
         require(tbtcToken.balanceOf(msg.sender) >= depositValueLessSignerFee, "Not enough TBTC for DOT exchange");
         tbtcToken.burnFrom(msg.sender, depositValueLessSignerFee);
 
