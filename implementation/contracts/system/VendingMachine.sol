@@ -21,36 +21,6 @@ contract VendingMachine {
         depositOwnerToken = DepositOwnerToken(_depositOwnerToken);
     }
 
-    /// @notice Qualifies a deposit and mints TBTC.
-    /// @dev User must allow VendingManchine to transfer DOT
-    function unqualifiedDepositToTbtc(
-        address payable _depositAddress,
-        bytes4 _txVersion,
-        bytes memory _txInputVector,
-        bytes memory _txOutputVector,
-        bytes4 _txLocktime,
-        uint8 _fundingOutputIndex,
-        bytes memory _merkleProof,
-        uint256 _txIndexInBlock,
-        bytes memory _bitcoinHeaders
-    ) public {
-        Deposit _d = Deposit(_depositAddress);
-        require(
-            _d.provideBTCFundingProof(
-                _txVersion,
-                _txInputVector,
-                _txOutputVector,
-                _txLocktime,
-                _fundingOutputIndex,
-                _merkleProof,
-                _txIndexInBlock,
-                _bitcoinHeaders
-            ),
-            "failed to provide funding proof");
-
-        dotToTbtc(uint256(_depositAddress));
-    }
-
     /// @notice Determines whether a deposit is qualified for minting TBTC.
     /// @param _depositAddress the address of the deposit
     function isQualified(address payable _depositAddress) public returns (bool) {
@@ -84,6 +54,40 @@ contract VendingMachine {
         tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
         tbtcToken.mint(address(_dotId), DepositUtils.signerFee());
     }
+
+    // WRAPPERS
+
+    /// @notice Qualifies a deposit and mints TBTC.
+    /// @dev User must allow VendingManchine to transfer DOT
+    function unqualifiedDepositToTbtc(
+        address payable _depositAddress,
+        bytes4 _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes4 _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes memory _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes memory _bitcoinHeaders
+    ) public {
+        Deposit _d = Deposit(_depositAddress);
+        require(
+            _d.provideBTCFundingProof(
+                _txVersion,
+                _txInputVector,
+                _txOutputVector,
+                _txLocktime,
+                _fundingOutputIndex,
+                _merkleProof,
+                _txIndexInBlock,
+                _bitcoinHeaders
+            ),
+            "failed to provide funding proof");
+
+        dotToTbtc(uint256(_depositAddress));
+    }
+
+    // HELPERS
 
     // TODO temporary helper function
     /// @notice Gets the Deposit lot size less signer fees
