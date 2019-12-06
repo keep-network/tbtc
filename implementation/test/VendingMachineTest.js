@@ -100,7 +100,7 @@ contract('VendingMachine', (accounts) => {
     const lotSize = await deployed.TBTCConstants.getLotSize()
     const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
     signerFee = await deployed.TestDepositUtils.signerFee.call()
-    depositValue = lotSize.mul(satoshiMultiplier).sub(signerFee)
+    depositValue = lotSize.mul(satoshiMultiplier)
   })
 
   describe('#isQualified', async () => {
@@ -131,6 +131,17 @@ contract('VendingMachine', (accounts) => {
     })
 
     it('converts DOT to TBTC', async () => {
+      await depositOwnerToken.forceMint(accounts[0], dotId)
+      await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
+
+      await vendingMachine.dotToTbtc(dotId)
+
+      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
+    })
+
+    it('mints full lot size if backing deposit has signer fee escrowed', async () => {
+      await tbtcToken.forceMint(testInstance.address, signerFee)
+
       await depositOwnerToken.forceMint(accounts[0], dotId)
       await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
 
@@ -283,7 +294,7 @@ contract('VendingMachine', (accounts) => {
 
       await vendingMachine.unqualifiedDepositToTbtc(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
-      await assertBalance.tbtc(accounts[0], depositValue)
+      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
       await assertBalance.tbtc(testInstance.address, signerFee)
     })
   })
