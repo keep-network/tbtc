@@ -21,8 +21,52 @@ contract VendingMachine {
         depositOwnerToken = DepositOwnerToken(_depositOwnerToken);
     }
 
-    /// @notice Qualifies a deposit for minting TBTC.
-    function qualifyDeposit(
+    /// @notice Determines whether a deposit is qualified for minting TBTC.
+    /// @param _depositAddress the address of the deposit
+    function isQualified(address payable _depositAddress) public returns (bool) {
+        return Deposit(_depositAddress).inActive();
+    }
+
+    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
+    /// @dev    Burns TBTC, transfers DOT from vending machine to caller
+    /// @param _dotId ID of Deposit Owner Token to buy
+    function tbtcToDot(uint256 _dotId) public {
+        require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
+        require(isQualified(address(_dotId)), "Deposit must be qualified");
+
+        uint256 getDepositValue = getDepositValue();
+        require(tbtcToken.balanceOf(msg.sender) >= getDepositValue, "Not enough TBTC for DOT exchange");
+        tbtcToken.burnFrom(msg.sender, getDepositValue);
+
+        // TODO do we need the owner check below? transferFrom can be approved for a user, which might be an interesting use case.
+        require(depositOwnerToken.ownerOf(_dotId) == address(this), "Deposit is locked");
+        depositOwnerToken.transferFrom(address(this), msg.sender, _dotId);
+    }
+
+    /// @notice Trade in the Deposit Owner Token and mint TBTC.
+    /// @dev    Transfers DOT from caller to vending machine, and mints TBTC to caller
+    /// @param _dotId ID of Deposit Owner Token to sell
+    function dotToTbtc(uint256 _dotId) public {
+        require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
+        require(isQualified(address(_dotId)), "Deposit must be qualified");
+
+        depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
+
+        // If the backing Deposit does not have a signer fee in escrow, mint it. 
+        if(tbtcToken.balanceOf(address(_dotId)) < DepositUtils.signerFee()){
+            tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
+            tbtcToken.mint(address(_dotId), DepositUtils.signerFee());
+        }
+        else{
+            tbtcToken.mint(msg.sender, getDepositValue());
+        }
+    }
+
+    // WRAPPERS
+
+    /// @notice Qualifies a deposit and mints TBTC.
+    /// @dev User must allow VendingManchine to transfer DOT
+    function unqualifiedDepositToTbtc(
         address payable _depositAddress,
         bytes4 _txVersion,
         bytes memory _txInputVector,
@@ -46,49 +90,27 @@ contract VendingMachine {
                 _bitcoinHeaders
             ),
             "failed to provide funding proof");
-        // mint the signer fee to the Deposit
-        tbtcToken.mint(_depositAddress, DepositUtils.signerFee());
+
+        dotToTbtc(uint256(_depositAddress));
     }
 
-    /// @notice Determines whether a deposit is qualified for minting TBTC.
-    /// @param _depositAddress the address of the deposit
-    function isQualified(address payable _depositAddress) public returns (bool) {
-        return Deposit(_depositAddress).inActive();
-    }
-
-    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
-    /// @dev    Burns TBTC, transfers DOT from vending machine to caller
-    /// @param _dotId ID of Deposit Owner Token to buy
-    function tbtcToDot(uint256 _dotId) public {
-        require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
-        require(isQualified(address(_dotId)), "Deposit must be qualified");
-
-        require(tbtcToken.balanceOf(msg.sender) >= getDepositValueLessSignerFee(), "Not enough TBTC for DOT exchange");
-        tbtcToken.burnFrom(msg.sender, getDepositValueLessSignerFee());
-
-        // TODO do we need the owner check below? transferFrom can be approved for a user, which might be an interesting use case.
-        require(depositOwnerToken.ownerOf(_dotId) == address(this), "Deposit is locked");
-        depositOwnerToken.transferFrom(address(this), msg.sender, _dotId);
-    }
-
-    /// @notice Trade in the Deposit Owner Token and mint TBTC.
-    /// @dev    Transfers DOT from caller to vending machine, and mints TBTC to caller
-    /// @param _dotId ID of Deposit Owner Token to sell
-    function dotToTbtc(uint256 _dotId) public {
-        require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
-        require(isQualified(address(_dotId)), "Deposit must be qualified");
-
-        depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
-        tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
-    }
+    // HELPERS
 
     // TODO temporary helper function
     /// @notice Gets the Deposit lot size less signer fees
     /// @return amount in TBTC
-    function getDepositValueLessSignerFee() internal returns (uint) {
+    function getDepositValue() internal returns (uint) {
         uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
-        uint256 _signerFee = DepositUtils.signerFee();
         uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
+        return _totalValue;
+    }
+
+    // TODO temporary helper function
+    /// @notice Gets the Deposit lot size
+    /// @return amount in TBTC
+    function getDepositValueLessSignerFee() internal returns (uint) {
+        uint256 _signerFee = DepositUtils.signerFee();
+        uint256 _totalValue = getDepositValue();
         return _totalValue.sub(_signerFee);
     }
 }

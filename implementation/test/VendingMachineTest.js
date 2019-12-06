@@ -75,8 +75,9 @@ contract('VendingMachine', (accounts) => {
   let assertBalance
   let dotId
 
-  // For lack of a better design, this is the amount of TBTC exchanged for DOT's.
-  const depositValueLessSignerFee = '995000000000000000'
+  // this is the amount of TBTC exchanged for a DOT.
+  let depositValue
+  let signerFee
 
   before(async () => {
     // VendingMachine relies on linked libraries, hence we use deploySystem for consistency.
@@ -95,57 +96,11 @@ contract('VendingMachine', (accounts) => {
 
     tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
     dotId = await web3.utils.toBN(testInstance.address)
-  })
 
-  describe('#qualifyDeposit', async () => {
-    before(async () => {
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
-      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
-    it('qualifies a Deposit', async () => {
-      const blockNumber = await web3.eth.getBlock('latest').number
-
-      await vendingMachine.qualifyDeposit(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-
-      const UTXOInfo = await testInstance.getUTXOInfo.call()
-      assert.equal(UTXOInfo[0], _outValueBytes)
-      assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
-
-      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
-      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not updated')
-
-      const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
-      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not updated')
-
-      const depositState = await testInstance.getState.call()
-      expect(depositState).to.eq.BN(utils.states.ACTIVE)
-
-      const eventList = await tbtcSystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
-      assert.equal(eventList.length, 1)
-    })
-
-    it('mints signer fee to the deposit', async () => {
-      const initialBalance = await tbtcToken.balanceOf(testInstance.address)
-
-      await vendingMachine.qualifyDeposit(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-
-      const signerFee = await deployed.TestDepositUtils.signerFee()
-
-      const finalBalance = await tbtcToken.balanceOf(testInstance.address)
-      const expectedBalance = new BN(initialBalance).add(new BN(signerFee))
-
-      expect(finalBalance).to.eq.BN(expectedBalance)
-    })
+    const lotSize = await deployed.TBTCConstants.getLotSize()
+    const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
+    signerFee = await deployed.TestDepositUtils.signerFee.call()
+    depositValue = lotSize.mul(satoshiMultiplier)
   })
 
   describe('#isQualified', async () => {
@@ -181,7 +136,18 @@ contract('VendingMachine', (accounts) => {
 
       await vendingMachine.dotToTbtc(dotId)
 
-      await assertBalance.tbtc(accounts[0], depositValueLessSignerFee)
+      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
+    })
+
+    it('mints full lot size if backing deposit has signer fee escrowed', async () => {
+      await tbtcToken.forceMint(testInstance.address, signerFee)
+
+      await depositOwnerToken.forceMint(accounts[0], dotId)
+      await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
+
+      await vendingMachine.dotToTbtc(dotId)
+
+      await assertBalance.tbtc(accounts[0], depositValue)
     })
 
     it('fails if deposit not qualified', async () => {
@@ -226,8 +192,8 @@ contract('VendingMachine', (accounts) => {
 
     it('converts TBTC to DOT', async () => {
       await depositOwnerToken.forceMint(vendingMachine.address, dotId)
-      await tbtcToken.forceMint(accounts[0], depositValueLessSignerFee)
-      await tbtcToken.approve(vendingMachine.address, depositValueLessSignerFee, { from: accounts[0] })
+      await tbtcToken.forceMint(accounts[0], depositValue)
+      await tbtcToken.approve(vendingMachine.address, depositValue, { from: accounts[0] })
 
       const fromBlock = await web3.eth.getBlockNumber()
       await vendingMachine.tbtcToDot(dotId)
@@ -236,7 +202,7 @@ contract('VendingMachine', (accounts) => {
       const tbtcBurntEvent = events[0]
       expect(tbtcBurntEvent.returnValues.from).to.equal(accounts[0])
       expect(tbtcBurntEvent.returnValues.to).to.equal(utils.address0)
-      expect(tbtcBurntEvent.returnValues.value).to.equal(depositValueLessSignerFee)
+      expect(tbtcBurntEvent.returnValues.value).to.equal(depositValue.toString())
 
       expect(
         await depositOwnerToken.ownerOf(dotId)
@@ -273,13 +239,63 @@ contract('VendingMachine', (accounts) => {
       // Deposit is locked if the Deposit Owner Token is not owned by the vending machine
       const depositOwner = accounts[1]
       await depositOwnerToken.forceMint(depositOwner, dotId)
-      await tbtcToken.forceMint(accounts[0], depositValueLessSignerFee)
-      await tbtcToken.approve(vendingMachine.address, depositValueLessSignerFee, { from: accounts[0] })
+      await tbtcToken.forceMint(accounts[0], depositValue)
+      await tbtcToken.approve(vendingMachine.address, depositValue, { from: accounts[0] })
 
       await expectThrow(
         vendingMachine.tbtcToDot(dotId),
         'Deposit is locked.'
       )
+    })
+  })
+
+  describe('#unqualifiedDepositToTbtc', async () => {
+    before(async () => {
+      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('qualifies a Deposit', async () => {
+      await depositOwnerToken.forceMint(accounts[0], dotId)
+      await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await vendingMachine.unqualifiedDepositToTbtc(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+
+      const UTXOInfo = await testInstance.getUTXOInfo.call()
+      assert.equal(UTXOInfo[0], _outValueBytes)
+      assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
+
+      const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
+      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not updated')
+
+      const fundingProofTimerStart = await testInstance.getFundingProofTimerStart.call()
+      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not updated')
+
+      const depositState = await testInstance.getState.call()
+      expect(depositState).to.eq.BN(utils.states.ACTIVE)
+
+      const eventList = await tbtcSystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+    })
+
+    it('mints TBTC to the DOT owner and siger fee to Deposit', async () => {
+      await depositOwnerToken.forceMint(accounts[0], dotId)
+      await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
+
+      await vendingMachine.unqualifiedDepositToTbtc(testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+
+      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
+      await assertBalance.tbtc(testInstance.address, signerFee)
     })
   })
 })
