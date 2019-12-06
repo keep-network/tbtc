@@ -89,7 +89,7 @@ contract('VendingMachine', (accounts) => {
 
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     testInstance = deployed.TestDeposit
-    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
 
     await vendingMachine.setExteriorAddresses(tbtcToken.address, depositOwnerToken.address)
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
