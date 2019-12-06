@@ -35,7 +35,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
         _burnFrom(_account, _amount);
     }
 
-    /// @dev Destoys `amount` tokens from `msg.sender`, reducing the
+    /// @dev Destroys `amount` tokens from `msg.sender`, reducing the
     /// total supply.
     /// @param _amount   The amount of tokens that will be burnt.
     function burn(uint256 _amount) public {
