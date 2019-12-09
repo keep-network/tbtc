@@ -81,9 +81,9 @@ library DepositFunding {
     /// @dev        Returns the balance if insufficient. Always call this before distributing signer payments
     function returnFunderBond(DepositUtils.Deposit storage _d) public {
         if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
-            _d.depositBeneficiary().transfer(TBTCConstants.getFunderBondAmount());
+            _d.depositOwner().transfer(TBTCConstants.getFunderBondAmount());
         } else if (address(this).balance > 0) {
-            _d.depositBeneficiary().transfer(address(this).balance);
+            _d.depositOwner().transfer(address(this).balance);
         }
     }
 
