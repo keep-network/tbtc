@@ -21,6 +21,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
 
     address public keepRegistry;
 
+    // Governed parameters by the TBTCSystem owner
+    bool private allowNewDeposits = true;
+
     constructor(address _depositFactory)
         ERC721MinterAuthority(_depositFactory)
         public
@@ -36,6 +39,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
         keepRegistry = _keepRegistry;
         _initialized = true;
     }
+
+    function setAllowNewDeposits(bool _allowNewDeposits)
+        external onlyOwner
+    {
+        allowNewDeposits = _allowNewDeposits;
+    }
+
+    function getAllowNewDeposits() public view returns (bool) { return allowNewDeposits; }
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {

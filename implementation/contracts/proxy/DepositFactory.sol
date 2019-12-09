@@ -42,6 +42,9 @@ contract DepositFactory is CloneFactory{
         uint256 _keepThreshold,
         uint256 _keepSize
     ) public payable returns(address) {
+        TBTCSystem _system = TBTCSystem(_TBTCSystem);
+        require(_system.getAllowNewDeposits(), "opening new deposits is disabled");
+
         address cloneAddress = createClone(masterDepositAddress);
 
         Deposit(address(uint160(cloneAddress))).createNewDeposit.value(msg.value)(
@@ -51,7 +54,6 @@ contract DepositFactory is CloneFactory{
             _keepThreshold,
             _keepSize);
 
-        TBTCSystem _system = TBTCSystem(_TBTCSystem);
         _system.mint(msg.sender, uint256(cloneAddress));
 
         emit DepositCloneCreated(cloneAddress);
