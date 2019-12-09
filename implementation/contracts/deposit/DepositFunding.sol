@@ -93,14 +93,14 @@ library DepositFunding {
         uint256 _seized = _d.seizeSignerBonds();
         uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
         _d.pushFundsToKeepGroup(_seized.sub(_slash));
-        _d.depositBeneficiary().transfer(_slash);
+        _d.depositOwner().transfer(_slash);
     }
 
     /// @notice     Seizes signer bonds and distributes them to the funder
     /// @dev        This is only called as part of funding fraud flow
     function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) public {
         uint256 _seized = _d.seizeSignerBonds();
-        _d.depositBeneficiary().transfer(_seized);  // Transfer whole amount
+        _d.depositOwner().transfer(_seized);  // Transfer whole amount
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out
