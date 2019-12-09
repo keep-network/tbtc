@@ -21,6 +21,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
 
     address public keepRegistry;
 
+    // Governed parameters by the TBTCSystem owner
+    uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
+
     constructor(address _depositFactory)
         ERC721MinterAuthority(_depositFactory)
         public
@@ -36,6 +39,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
         keepRegistry = _keepRegistry;
         _initialized = true;
     }
+
+
+    function setSignerFeeDivisor(uint256 _signerFeeDivisor)
+        external onlyOwner
+    {
+        signerFeeDivisor = _signerFeeDivisor;
+    }
+
+    function getSignerFeeDivisor() public view returns (uint256) { return signerFeeDivisor; }
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {

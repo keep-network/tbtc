@@ -34,6 +34,11 @@ contract Deposit {
     function inActive() public view returns (bool) {
         return self.inActive();
     }
+
+    function getSignerFee() public view returns (uint256) {
+        return self.signerFee();
+    }
+
     // THIS IS THE INIT FUNCTION
     /// @notice         The system can spin up a new deposit
     /// @dev            This should be called by an approved contract, not a developer
