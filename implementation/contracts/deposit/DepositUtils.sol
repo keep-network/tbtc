@@ -344,6 +344,14 @@ library DepositUtils {
         return address(uint160(_systemContract.ownerOf(uint256(address(this)))));
     }
 
+    /// @notice         Looks up the deposit beneficiary by calling the tBTC system
+    /// @dev            We cast the address to a uint256 to match the 721 standard
+    /// @return         The current deposit beneficiary
+    function depositOwner(Deposit storage _d) public view returns (address payable) {
+        IERC721 _dpositOwnerToken = IERC721(_d.TBTCSystem);
+        return address(uint160(_dpositOwnerToken.ownerOf(uint256(address(this)))));
+    }
+
     /// @notice     Deletes state after termination of redemption process
     /// @dev        We keep around the requester address so we can pay them out
     function redemptionTeardown(Deposit storage _d) public {
