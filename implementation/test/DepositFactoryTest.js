@@ -114,7 +114,7 @@ contract('DepositFactory', (accounts) => {
           1,
           { value: funderBondAmount }
         ),
-        'opening new deposits is disabled'
+        'Opening new deposits is currently disabled.'
       )
 
       await tbtcSystemStub.setAllowNewDeposits(true)

@@ -43,7 +43,7 @@ contract DepositFactory is CloneFactory{
         uint256 _keepSize
     ) public payable returns(address) {
         TBTCSystem _system = TBTCSystem(_TBTCSystem);
-        require(_system.getAllowNewDeposits(), "opening new deposits is disabled");
+        require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
 
         address cloneAddress = createClone(masterDepositAddress);
 
