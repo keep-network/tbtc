@@ -239,7 +239,7 @@ library DepositLiquidation {
         msg.sender.transfer(_valueToDistribute);
 
         // Send any TBTC left to the beneficiary
-        _d.distributeBeneficiaryReward();
+        _d.distributeFeeRebate();
 
         // then if there are funds left, and it wasn't fraud, pay out the signers
         if (address(this).balance > 0) {
