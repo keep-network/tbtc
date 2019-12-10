@@ -340,9 +340,9 @@ library DepositUtils {
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
-    function depositBeneficiary(Deposit storage _d) public view returns (address payable) {
-        IERC721 _systemContract = IERC721(_d.TBTCSystem);
-        return address(uint160(_systemContract.ownerOf(uint256(address(this)))));
+    function feeRebateTokenHolder(Deposit storage _d) public view returns (address payable) {
+        IERC721 _feeRebateToken = IERC721(_d.FeeRebateToken);
+        return address(uint160(_feeRebateToken.ownerOf(uint256(address(this)))));
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
@@ -378,14 +378,16 @@ library DepositUtils {
     /// @notice     Distributes the beneficiary reward to the beneficiary
     /// @dev        We distribute the whole TBTC balance as a convenience,
     ///             whenever this is called we are shutting down.
-    function distributeBeneficiaryReward(Deposit storage _d) public {
+    function distributeFeeRebate(Deposit storage _d) public {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
+        address rebateTokenHolder = feeRebateTokenHolder(_d);
+
         // If the beneficiary requested redemption, they didn't have to pay the reward.
-        if(_d.requesterAddress == depositBeneficiary(_d)) return;
+        if(_d.requesterAddress == rebateTokenHolder) return;
 
         /* solium-disable-next-line */
-        require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))),"Transfer failed");
+        require(_tbtc.transfer(rebateTokenHolder, _tbtc.balanceOf(address(this))),"Transfer failed");
     }
 
     /// @notice             pushes ether held by the deposit to the signer group
