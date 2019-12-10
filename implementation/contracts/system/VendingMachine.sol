@@ -2,7 +2,7 @@ pragma solidity ^0.5.10;
 
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {DepositOwnerToken} from "./DepositOwnerToken.sol";
-import {FeeRebateToken} from "./DepositOwnerToken.sol";
+import {FeeRebateToken} from "./FeeRebateToken.sol";
 import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
 import {DepositUtils} from "../deposit/DepositUtils.sol";
