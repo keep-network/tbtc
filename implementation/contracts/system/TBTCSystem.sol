@@ -46,6 +46,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     function setSignerFeeDivisor(uint256 _signerFeeDivisor)
         external onlyOwner
     {
+        require(_signerFeeDivisor > 1, "Signer fee must be lower than 100%");
         signerFeeDivisor = _signerFeeDivisor;
     }
 
