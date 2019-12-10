@@ -253,6 +253,9 @@ library DepositRedemption {
         distributeSignerFee(_d);
 
         // Transfer withheld amount to beneficiary
+        // NOTE: ALWAYS call distributeSignerFee() before distributeBeneficiaryReward()
+        // distributeBeneficiaryReward() distributes the entire balance as a convenience. It is meant to be 
+        // the final economiclly significatn function called before contract halt. 
         _d.distributeBeneficiaryReward();
 
         // We're done yey!
