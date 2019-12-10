@@ -85,7 +85,7 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(DepositFactory, Deposit.address)
 
     // system
-    await deployer.deploy(TBTCSystem, DepositFactory.address)
+    await deployer.deploy(TBTCSystem)
 
     // token
     await deployer.deploy(TBTCToken, TBTCSystem.address)
