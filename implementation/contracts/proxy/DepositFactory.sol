@@ -40,6 +40,7 @@ contract DepositFactory is CloneFactory{
         address _TBTCSystem,
         address _TBTCToken,
         address _DepositOwnerToken,
+        address _FeeRebateToken,
         uint256 _keepThreshold,
         uint256 _keepSize
     ) public payable returns(address) {
@@ -49,6 +50,7 @@ contract DepositFactory is CloneFactory{
             _TBTCSystem,
             _TBTCToken,
             _DepositOwnerToken,
+            _FeeRebateToken,
             _keepThreshold,
             _keepSize);
 
