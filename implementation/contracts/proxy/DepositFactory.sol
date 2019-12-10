@@ -54,7 +54,7 @@ contract DepositFactory is CloneFactory{
             _keepThreshold,
             _keepSize);
 
-        DepositOwnerToken(_depositOwnerToken).mint(msg.sender, uint256(cloneAddress));
+        DepositOwnerToken(_DepositOwnerToken).mint(msg.sender, uint256(cloneAddress));
 
         emit DepositCloneCreated(cloneAddress);
 
