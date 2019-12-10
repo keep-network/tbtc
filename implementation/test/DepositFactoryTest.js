@@ -17,8 +17,6 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-import expectThrow from './helpers/expectThrow'
-
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositFunding', contract: DepositFunding },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
@@ -100,24 +98,6 @@ contract('DepositFactory', (accounts) => {
 
       const balance = await web3.eth.getBalance(depositAddress)
       assert.equal(balance, funderBondAmount, 'Factory did not correctly forward value on Deposit creation')
-    })
-
-    it('fails if new deposits are disabled', async () => {
-      await tbtcSystemStub.setAllowNewDeposits(false)
-
-      await expectThrow(
-        factory.createDeposit(
-          tbtcSystemStub.address,
-          tbtcToken.address,
-          utils.address0,
-          1,
-          1,
-          { value: funderBondAmount }
-        ),
-        'Opening new deposits is currently disabled.'
-      )
-
-      await tbtcSystemStub.setAllowNewDeposits(true)
     })
   })
 

@@ -150,6 +150,23 @@ contract('DepositFunding', (accounts) => {
       )
     })
 
+    it('fails if new deposits are disabled', async () => {
+      await tbtcSystemStub.setAllowNewDeposits(false)
+
+      await expectThrow(
+        testInstance.createNewDeposit.call(
+          tbtcSystemStub.address,
+          tbtcToken.address,
+          utils.address0,
+          1, // m
+          1
+        ),
+        'Opening new deposits is currently disabled.'
+      )
+
+      await tbtcSystemStub.setAllowNewDeposits(true)
+    })
+
     it.skip('stores payment value as funder\'s bond', async () => {
     })
   })
