@@ -12,7 +12,7 @@ import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
-import {DepositOwnerToken} from "../system/DepositOwnerToken.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 
 library DepositRedemption {
 
@@ -49,6 +49,25 @@ library DepositRedemption {
 
         _d.approvedDigests[_digest] = block.timestamp;
     }
+    function redemptionTBTCHandler(DepositUtils.Deposit storage _d) private {
+        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+
+        address depositOwnerTokenHolder = IERC721(_d.DepositOwnerToken).ownerOf(uint256(address(this)));
+        address feeRebateTokenHolder = IERC721(_d.FeeRebateToken).ownerOf(uint256(address(this)));
+
+        uint256 tbtcOwed = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+
+        // If deposit has life left and the caller is the Deposit owner but not Fee Rebate Token holder, transfer 
+        // extra fees equal to the signer fee to the Fee Rebate Token holder. 
+        if(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm()){
+            require(depositOwnerTokenHolder == msg.sender, "redemption can only be called by deposit owner");
+            if(feeRebateTokenHolder != msg.sender){
+                _tbtc.transferFrom(msg.sender, feeRebateTokenHolder, DepositUtils.signerFee());
+            }
+        }
+        // always burn 1TBTC for redeption. 
+        _tbtc.burnFrom(msg.sender, tbtcOwed);
+    }
 
     /// @notice                     Anyone can request redemption
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
@@ -62,16 +81,8 @@ library DepositRedemption {
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
-        require(
-            msg.sender == DepositOwnerToken(_d.DepositOwnerToken).ownerOf(uint256(address(this))),
-            "redemption can only be called by deposit owner"
-        );
 
-        // Transfer the deposit beneficiary reward from `msg.sender`,
-        // unless it's the beneficiary who is requesting redemption.
-        if(_d.depositBeneficiary() != msg.sender){
-            TBTCToken(_d.TBTCToken).transferFrom(msg.sender, address(this), DepositUtils.beneficiaryReward());
-        }
+        redemptionTBTCHandler(_d);
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
