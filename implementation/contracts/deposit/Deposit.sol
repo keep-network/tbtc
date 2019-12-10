@@ -30,11 +30,13 @@ contract Deposit {
     }
 
     /// @notice     Check if the Deposit is in ACTIVE state.
-    /// @return     True if state is ACTIVE, fale otherwise. 
+    /// @return     True if state is ACTIVE, fale otherwise.
     function inActive() public view returns (bool) {
         return self.inActive();
     }
 
+    /// @notice     Get the signer fee for the Deposit.
+    /// @return     Fee amount in TBTC
     function getSignerFee() public view returns (uint256) {
         return self.signerFee();
     }
