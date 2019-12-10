@@ -26,6 +26,7 @@ library DepositUtils {
         address TBTCSystem;
         address TBTCToken;
         address DepositOwnerToken;
+        address FeeRebateToken;
         uint8 currentState;
 
         // SET ON FRAUD
