@@ -44,12 +44,14 @@ contract Deposit {
         address _TBTCSystem,
         address _TBTCToken,
         address _DepositOwnerToken,
+        address _FeeRebateToken,
         uint256 _m,
         uint256 _n
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.DepositOwnerToken = _DepositOwnerToken;
+        self.FeeRebateToken = _FeeRebateToken;
         self.createNewDeposit(_m, _n);
         return true;
     }
