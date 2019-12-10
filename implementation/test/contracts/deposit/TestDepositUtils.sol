@@ -117,8 +117,8 @@ contract TestDepositUtils is TestDeposit {
         return DepositUtils.bytes8LEToUint(_b);
     }
 
-    function depositBeneficiary() public view returns (address payable) {
-        return self.depositBeneficiary();
+    function feeRebateTokenHolder() public view returns (address payable) {
+        return self.feeRebateTokenHolder();
     }
 
     function redemptionTeardown() public {
@@ -129,8 +129,8 @@ contract TestDepositUtils is TestDeposit {
         return self.seizeSignerBonds();
     }
 
-    function distributeBeneficiaryReward() public {
-        return self.distributeBeneficiaryReward();
+    function distributeFeeRebate() public {
+        return self.distributeFeeRebate();
     }
 
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {

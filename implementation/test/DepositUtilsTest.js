@@ -403,9 +403,9 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('depositBeneficiary()', async () => {
+  describe('feeRebateTokenHolder()', async () => {
     it('calls out to the system', async () => {
-      const res = await testUtilsInstance.depositBeneficiary.call()
+      const res = await testUtilsInstance.feeRebateTokenHolder.call()
       assert.equal(res, accounts[2])
     })
   })
@@ -440,7 +440,7 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('distributeBeneficiaryReward()', async () => {
+  describe('distributeFeeRebate()', async () => {
     it('checks that beneficiary is rewarded', async () => {
       // min an arbitrary reward value to the funding contract
       const reward = 100000000
@@ -448,7 +448,7 @@ contract('DepositUtils', (accounts) => {
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
 
-      await testUtilsInstance.distributeBeneficiaryReward()
+      await testUtilsInstance.distributeFeeRebate()
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
       const tokenCheck = new BN(initialTokenBalance).add(new BN(reward))
