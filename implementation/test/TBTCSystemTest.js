@@ -40,7 +40,7 @@ contract('TBTCSystem', (accounts) => {
       await keepRegistry.setVendor(ecdsaKeepVendor.address)
 
       const depositFactory = await DepositFactory.new(deployed.TestDeposit.address)
-      tbtcSystem = await TBTCSystem.new(depositFactory.address)
+      tbtcSystem = await TBTCSystem.new()
 
       await tbtcSystem.initialize(
         keepRegistry.address
@@ -62,37 +62,6 @@ contract('TBTCSystem', (accounts) => {
       const result = await tbtcSystem.requestNewKeep.call(5, 10)
 
       assert.equal(expectedKeepAddress, result, 'incorrect keep address')
-    })
-  })
-
-  describe('mint()', async () => {
-    before(async () => {
-      // Create new TBTCSystem instance where only accounts[0] can mint ERC721 tokens
-      // accounts[0] is taking the place of deposit factory address
-      tbtcSystem = await TBTCSystem.new(accounts[0])
-    })
-
-    it('correctly mints 721 token with approved caller', async () => {
-      const tokenId = 11111
-      const mintTo = accounts[1]
-
-      tbtcSystem.mint(mintTo, tokenId)
-
-      const tokenOwner = await tbtcSystem.ownerOf(tokenId).catch((err) => {
-        assert.fail(`Token not minted properly: ${err}`)
-      })
-
-      assert.equal(mintTo, tokenOwner, 'Token not minted to correct address')
-    })
-
-    it('fails to mint 721 token with bad caller', async () => {
-      const tokenId = 22222
-      const mintTo = accounts[1]
-
-      await expectThrow(
-        tbtcSystem.mint(mintTo, tokenId, { from: accounts[1] }),
-        'Caller must be depositFactory contract'
-      )
     })
   })
 })
