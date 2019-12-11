@@ -31,8 +31,10 @@ contract BTCETHPriceFeed is Ownable {
     function getPrice()
         external view returns (uint256)
     {
-        uint256 btcUsd = btcPriceFeed.read();
-        uint256 ethUsd = ethPriceFeed.read();
+        // We typecast down to uint128, because the first 128 bits of
+        // the medianizer oracle value is unrelated to the price.
+        uint256 btcUsd = uint256(uint128(btcPriceFeed.read()));
+        uint256 ethUsd = uint256(uint128(ethPriceFeed.read()));
         return btcUsd.div(ethUsd);
     }
 }
