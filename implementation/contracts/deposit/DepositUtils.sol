@@ -349,7 +349,7 @@ library DepositUtils {
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
     function depositOwner(Deposit storage _d) public view returns (address payable) {
-        IERC721 _dpositOwnerToken = IERC721(_d.TBTCSystem);
+        IERC721 _dpositOwnerToken = IERC721(_d.DepositOwnerToken);
         return address(uint160(_dpositOwnerToken.ownerOf(uint256(address(this)))));
     }
 
