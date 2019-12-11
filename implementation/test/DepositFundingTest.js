@@ -16,6 +16,7 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
+const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
@@ -42,6 +43,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
@@ -81,19 +83,26 @@ contract('DepositFunding', (accounts) => {
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
   let tbtcSystemStub
+  let depositOwnerToken
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+    tbtcSystemStub = await TBTCSystemStub.new()
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
+    depositOwnerToken = deployed.DepositOwnerToken
 
     testInstance = deployed.TestDeposit
 
-    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, utils.address0)
+    await testInstance.setExteriorAddresses(
+      tbtcSystemStub.address,
+      tbtcToken.address,
+      depositOwnerToken.address,
+      utils.address0
+    )
 
-    await tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    await depositOwnerToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     beneficiary = accounts[4]
   })
@@ -112,6 +121,7 @@ contract('DepositFunding', (accounts) => {
       await testInstance.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        depositOwnerToken.address,
         utils.address0,
         1, // m
         1,
@@ -143,6 +153,7 @@ contract('DepositFunding', (accounts) => {
         testInstance.createNewDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
+          depositOwnerToken.address,
           utils.address0,
           1, // m
           1),
