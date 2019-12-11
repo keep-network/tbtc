@@ -15,7 +15,8 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
-const TestDepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -43,6 +44,8 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
@@ -61,23 +64,37 @@ contract('DepositRedemption', (accounts) => {
   let tbtcToken
   let tbtcSystemStub
   let depositOwnerToken
-
+  let feeRebateToken
+  let depositValue
+  let signerFee
   let dotId
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+    tbtcSystemStub = await TBTCSystemStub.new()
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
     testInstance = deployed.TestDeposit
-    depositOwnerToken = await TestDepositOwnerToken.new()
+    depositOwnerToken = deployed.DepositOwnerToken
+    feeRebateToken = deployed.FeeRebateToken
 
-    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
+    await testInstance.setExteriorAddresses(
+      tbtcSystemStub.address,
+      tbtcToken.address,
+      depositOwnerToken.address,
+      feeRebateToken.address
+    )
 
-    await tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    await feeRebateToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     dotId = await web3.utils.toBN(testInstance.address)
     await depositOwnerToken.forceMint(accounts[0], dotId)
+
+
+    const lotSize = await deployed.TBTCConstants.getLotSize()
+    const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
+    signerFee = await deployed.TestDepositUtils.signerFee.call()
+    depositValue = lotSize.mul(satoshiMultiplier)
   })
 
   beforeEach(async () => {
@@ -102,7 +119,7 @@ contract('DepositRedemption', (accounts) => {
     let requiredBalance
 
     before(async () => {
-      requiredBalance = await deployed.TestDepositUtils.redemptionTBTCAmount.call()
+      requiredBalance = signerFee.add(depositValue)
     })
 
     beforeEach(async () => {
@@ -139,18 +156,20 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('transfers the deposit beneficiary reward to deposit', async () => {
-      const blockNumber = await web3.eth.getBlock('latest').number
+      // await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
+      const block = await web3.eth.getBlock('latest')
 
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+      await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
       // the fee is ~12,297,829,380 BTC
       await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
 
-      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: blockNumber, toBlock: 'latest' })
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
       const event = events[0]
       expect(event.returnValues.from).to.equal(accounts[0])
       expect(event.returnValues.to).to.equal(testInstance.address)
-      expect(event.returnValues.value).to.equal('100000')
+      expect(event.returnValues.value.toString()).to.equal(signerFee.toString())
     })
 
     it('reverts if not in Active or Courtesy', async () => {
@@ -170,16 +189,15 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('reverts if the caller is not the deposit owner', async () => {
+      const block = await web3.eth.getBlock('latest')
+      await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+
       await depositOwnerToken.transferFrom(accounts[0], accounts[4], dotId)
 
       await expectThrow(
-        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
         'redemption can only be called by deposit owner'
       )
-    })
-
-    it.skip('TODO: pays the deposit beneficiary reward', async () => {
-
     })
   })
 
