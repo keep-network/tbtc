@@ -62,7 +62,7 @@ library DepositRedemption {
         if(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm()){
             require(depositOwnerTokenHolder == msg.sender, "redemption can only be called by deposit owner");
             if(feeRebateTokenHolder != msg.sender){
-                _tbtc.transferFrom(msg.sender, feeRebateTokenHolder, DepositUtils.signerFee());
+                _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee());
             }
         }
         // always burn 1TBTC for redeption. 
