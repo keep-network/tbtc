@@ -54,7 +54,7 @@ contract VendingMachine {
 
         // If the backing Deposit does not have a signer fee in escrow, mint it.
         Deposit deposit = Deposit(address(uint160(_dotId)));
-        uint256 signerFee = deposit.getSignerFee();
+        uint256 signerFee = deposit.signerFee();
         uint256 depositValue = getDepositValue();
 
         if(tbtcToken.balanceOf(address(_dotId)) < signerFee){

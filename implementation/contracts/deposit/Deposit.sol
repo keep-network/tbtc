@@ -37,7 +37,7 @@ contract Deposit {
 
     /// @notice     Get the signer fee for the Deposit.
     /// @return     Fee amount in TBTC
-    function getSignerFee() public view returns (uint256) {
+    function signerFee() public view returns (uint256) {
         return self.signerFee();
     }
 
