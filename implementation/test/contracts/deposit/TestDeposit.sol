@@ -7,11 +7,13 @@ contract TestDeposit is Deposit {
     function setExteriorAddresses(
         address _sys,
         address _token,
-        address _depositOwnerToken
+        address _depositOwnerToken,
+        address _feeRebateToken
     ) public {
         self.TBTCSystem = _sys;
         self.TBTCToken = _token;
         self.DepositOwnerToken = _depositOwnerToken;
+        self.FeeRebateToken = _feeRebateToken;
     }
 
     function reset() public {
