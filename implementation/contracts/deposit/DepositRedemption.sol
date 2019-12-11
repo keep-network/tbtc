@@ -57,15 +57,15 @@ library DepositRedemption {
 
         uint256 tbtcOwed = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
 
-        // If deposit has life left and the caller is the Deposit owner but not Fee Rebate Token holder, transfer 
-        // extra fees equal to the signer fee to the Fee Rebate Token holder. 
+        // If deposit has life left and the caller is the Deposit owner but not Fee Rebate Token holder, transfer
+        // extra fees equal to the signer fee to the Fee Rebate Token holder.
         if(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm()){
             require(depositOwnerTokenHolder == msg.sender, "redemption can only be called by deposit owner");
             if(feeRebateTokenHolder != msg.sender){
                 _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee());
             }
         }
-        // always burn 1TBTC for redeption. 
+        // always burn 1TBTC for redeption.
         _tbtc.burnFrom(msg.sender, tbtcOwed);
     }
 
@@ -254,8 +254,8 @@ library DepositRedemption {
 
         // Transfer withheld amount to beneficiary
         // NOTE: ALWAYS call distributeSignerFee() before distributeFeeRebate()
-        // distributeFeeRebate() distributes the entire balance as a convenience. It is meant to be 
-        // the final economiclly significatn function called before contract halt. 
+        // distributeFeeRebate() distributes the entire balance as a convenience. It is meant to be
+        // the final economiclly significatn function called before contract halt.
         _d.distributeFeeRebate();
 
         // We're done yey!

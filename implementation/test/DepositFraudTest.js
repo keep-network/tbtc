@@ -115,7 +115,7 @@ contract('DepositFraud', (accounts) => {
     let timer
 
     before(async () => {
-      timer = await deployed.TBTCConstants.getFundingTimeout.call() 
+      timer = await deployed.TBTCConstants.getFundingTimeout.call()
     })
 
     beforeEach(async () => {

@@ -56,7 +56,7 @@ contract VendingMachine {
 
         depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
 
-        // If the backing Deposit does not have a signer fee in escrow, mint it. 
+        // If the backing Deposit does not have a signer fee in escrow, mint it.
         if(tbtcToken.balanceOf(address(_dotId)) < DepositUtils.signerFee()){
             tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
             tbtcToken.mint(address(_dotId), DepositUtils.signerFee());

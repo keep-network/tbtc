@@ -1,5 +1,3 @@
-import expectThrow from './helpers/expectThrow'
-
 const utils = require('./utils')
 
 const TBTCSystem = artifacts.require('TBTCSystem')
@@ -14,7 +12,6 @@ const DepositUtils = artifacts.require('DepositUtils')
 const DepositStates = artifacts.require('DepositStates')
 const TBTCConstants = artifacts.require('TBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
-const DepositFactory = artifacts.require('DepositFactory')
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositFunding', contract: DepositFunding },
@@ -32,14 +29,13 @@ contract('TBTCSystem', (accounts) => {
 
   describe('requestNewKeep()', async () => {
     before(async () => {
-      const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+      await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
       ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
 
       const keepRegistry = await KeepRegistryStub.new()
       await keepRegistry.setVendor(ecdsaKeepVendor.address)
 
-      const depositFactory = await DepositFactory.new(deployed.TestDeposit.address)
       tbtcSystem = await TBTCSystem.new()
 
       await tbtcSystem.initialize(
