@@ -42,7 +42,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
 
 
     /// @notice Set the system signer fee divisor.
-    /// @param _signerFeeDivisor The signer fee divisor, denominated in TBTC.
+    /// @param _signerFeeDivisor The signer fee divisor.
     function setSignerFeeDivisor(uint256 _signerFeeDivisor)
         external onlyOwner
     {
@@ -51,7 +51,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     }
 
     /// @notice Gets the system signer fee divisor.
-    /// @return The signer fee divisor, denominated in TBTC.
+    /// @return The signer fee divisor.
     function getSignerFeeDivisor() public view returns (uint256) { return signerFeeDivisor; }
 
     // Price Oracle
