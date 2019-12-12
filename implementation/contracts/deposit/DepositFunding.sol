@@ -51,6 +51,7 @@ library DepositFunding {
         uint256 _m,
         uint256 _n
     ) public returns (bool) {
+        require(TBTCSystem(_d.TBTCSystem).getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
         /* solium-disable-next-line value-in-payable */
         require(msg.value == TBTCConstants.getFunderBondAmount(), "incorrect funder bond amount");

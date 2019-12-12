@@ -116,4 +116,20 @@ contract('TBTCSystem', (accounts) => {
       )
     })
   })
+
+  describe('setAllowNewDeposits', async () => {
+    it('sets allowNewDeposits', async () => {
+      await tbtcSystem.setAllowNewDeposits(false)
+
+      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(false)
+    })
+
+    it('reverts if msg.sender != owner', async () => {
+      await expectThrow(
+        tbtcSystem.setAllowNewDeposits(false, { from: accounts[1] }),
+        ''
+      )
+    })
+  })
 })
