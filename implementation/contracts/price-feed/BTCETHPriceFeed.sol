@@ -4,6 +4,8 @@ import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../external/IMedianizer.sol";
 
+/// @notice Bitcoin-Ether price feed.
+/// @dev Based on the ratio of two medianizer price feeds, BTC/USD and ETH/USD.
 contract BTCETHPriceFeed is Ownable {
     using SafeMath for uint256;
 
@@ -15,6 +17,9 @@ contract BTCETHPriceFeed is Ownable {
     constructor() public {
     }
 
+    /// @notice Initialises the addresses of the BTC/USD and ETH/USD price feeds.
+    /// @param _BTCUSDPriceFeed The BTC/USD price feed address.
+    /// @param _ETHUSDPriceFeed The ETH/USD price feed address.
     function initialize(
         address _BTCUSDPriceFeed,
         address _ETHUSDPriceFeed
@@ -28,6 +33,8 @@ contract BTCETHPriceFeed is Ownable {
         _initialized = true;
     }
 
+    /// @notice Get the current price of bitcoin in ether.
+    /// @return The price in wei.
     function getPrice()
         external view returns (uint256)
     {
