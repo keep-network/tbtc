@@ -2,7 +2,7 @@ pragma solidity ^0.5.10;
 
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "../interfaces/IMedianizer.sol";
+import "../external/IMedianizer.sol";
 
 contract BTCETHPriceFeed is Ownable {
     using SafeMath for uint256;
