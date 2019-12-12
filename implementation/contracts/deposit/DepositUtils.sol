@@ -375,8 +375,7 @@ library DepositUtils {
         return _postCallBalance.sub(_preCallBalance);
     }
 
-    /// @notice     Distributes the beneficiary reward to the beneficiary
-    /// @dev        We distribute the whole TBTC balance as a convenience,
+    /// @notice     Distributes the fee rebate reward to the Fee Rebate Token owner
     ///             whenever this is called we are shutting down.
     function distributeFeeRebate(Deposit storage _d) public {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
@@ -387,7 +386,7 @@ library DepositUtils {
         if(_d.requesterAddress == rebateTokenHolder) return;
 
         /* solium-disable-next-line */
-        require(_tbtc.transfer(rebateTokenHolder, _tbtc.balanceOf(address(this))),"Transfer failed");
+        require(_tbtc.transfer(rebateTokenHolder, signerFee()),"Transfer failed");
     }
 
     /// @notice             pushes ether held by the deposit to the signer group
