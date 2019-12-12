@@ -22,6 +22,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     address public keepRegistry;
 
     // Governed parameters by the TBTCSystem owner
+    bool private allowNewDeposits = true;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
 
     constructor(address _depositFactory)
@@ -40,6 +41,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
         _initialized = true;
     }
 
+    /// @notice Enables/disables new deposits from being created.
+    /// @param _allowNewDeposits Whether to allow new deposits.
+    function setAllowNewDeposits(bool _allowNewDeposits)
+        external onlyOwner
+    {
+        allowNewDeposits = _allowNewDeposits;
+    }
+
+    /// @notice Gets whether new deposits are allowed.
+    function getAllowNewDeposits() public view returns (bool) { return allowNewDeposits; }
 
     /// @notice Set the system signer fee divisor.
     /// @param _signerFeeDivisor The signer fee divisor.
