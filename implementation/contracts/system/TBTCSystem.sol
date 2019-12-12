@@ -41,12 +41,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
         _initialized = true;
     }
 
+    /// @notice Enables/disables new deposits from being created.
+    /// @param _allowNewDeposits Whether to allow new deposits.
     function setAllowNewDeposits(bool _allowNewDeposits)
         external onlyOwner
     {
         allowNewDeposits = _allowNewDeposits;
     }
 
+    /// @notice Gets whether new deposits are allowed.
     function getAllowNewDeposits() public view returns (bool) { return allowNewDeposits; }
 
     /// @notice Set the system signer fee divisor.
