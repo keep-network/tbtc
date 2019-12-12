@@ -17,5 +17,9 @@ module.exports = async function(deployer, network) {
 
   // price feed
   const btcEthPriceFeed = await BTCETHPriceFeed.deployed()
-  await btcEthPriceFeed.initialize(BTCUSDPriceFeed, ETHUSDPriceFeed)
+  if (network === 'mainnet') {
+    await btcEthPriceFeed.initialize(BTCUSDPriceFeed, ETHUSDPriceFeed)
+  } else {
+    // TODO: initialize with our mock price feeds.
+  }
 }
