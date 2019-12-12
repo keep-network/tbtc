@@ -122,6 +122,10 @@ contract('DepositFunding', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
 
+      const systemSignerFeeDivisor = await tbtcSystemStub.getSignerFeeDivisor()
+      const signerFeeDivisor = await testInstance.getSignerFeeDivisor.call()
+      expect(signerFeeDivisor).to.eq.BN(systemSignerFeeDivisor)
+
       const keepAddress = await testInstance.getKeepAddress.call()
       expect(keepAddress, 'keepAddress not as expected').to.equal(expectedKeepAddress)
 

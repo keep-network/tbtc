@@ -1,6 +1,11 @@
 import expectThrow from './helpers/expectThrow'
 
+const BN = require('bn.js')
 const utils = require('./utils')
+const chai = require('chai')
+const expect = chai.expect
+const bnChai = require('bn-chai')
+chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
 
@@ -92,6 +97,22 @@ contract('TBTCSystem', (accounts) => {
       await expectThrow(
         tbtcSystem.mint(mintTo, tokenId, { from: accounts[1] }),
         'Caller must be depositFactory contract'
+      )
+    })
+  })
+
+  describe('setSignerFeeDivisor', async () => {
+    it('sets the signer fee', async () => {
+      await tbtcSystem.setSignerFeeDivisor(new BN('201'))
+
+      const signerFeeDivisor = await tbtcSystem.getSignerFeeDivisor()
+      expect(signerFeeDivisor).to.eq.BN(new BN('201'))
+    })
+
+    it('reverts if msg.sender != owner', async () => {
+      await expectThrow(
+        tbtcSystem.setSignerFeeDivisor(new BN('201'), { from: accounts[1] }),
+        ''
       )
     })
   })

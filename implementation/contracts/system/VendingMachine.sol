@@ -52,13 +52,17 @@ contract VendingMachine {
 
         depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
 
-        // If the backing Deposit does not have a signer fee in escrow, mint it. 
-        if(tbtcToken.balanceOf(address(_dotId)) < DepositUtils.signerFee()){
-            tbtcToken.mint(msg.sender, getDepositValueLessSignerFee());
-            tbtcToken.mint(address(_dotId), DepositUtils.signerFee());
+        // If the backing Deposit does not have a signer fee in escrow, mint it.
+        Deposit deposit = Deposit(address(uint160(_dotId)));
+        uint256 signerFee = deposit.signerFee();
+        uint256 depositValue = getDepositValue();
+
+        if(tbtcToken.balanceOf(address(_dotId)) < signerFee){
+            tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
+            tbtcToken.mint(address(_dotId), signerFee);
         }
         else{
-            tbtcToken.mint(msg.sender, getDepositValue());
+            tbtcToken.mint(msg.sender, depositValue);
         }
     }
 
@@ -103,14 +107,5 @@ contract VendingMachine {
         uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
         uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
         return _totalValue;
-    }
-
-    // TODO temporary helper function
-    /// @notice Gets the Deposit lot size
-    /// @return amount in TBTC
-    function getDepositValueLessSignerFee() internal returns (uint) {
-        uint256 _signerFee = DepositUtils.signerFee();
-        uint256 _totalValue = getDepositValue();
-        return _totalValue.sub(_signerFee);
     }
 }
