@@ -73,6 +73,7 @@ contract('DepositRedemption', (accounts) => {
     depositOwnerToken = await TestDepositOwnerToken.new()
 
     await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
+    await testInstance.setSignerFeeDivisor(new BN('200'))
 
     await tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
@@ -99,11 +100,7 @@ contract('DepositRedemption', (accounts) => {
     const keepPubkeyX = '0x' + '33'.repeat(32)
     const keepPubkeyY = '0x' + '44'.repeat(32)
     const requesterPKH = '0x' + '33'.repeat(20)
-    let requiredBalance
-
-    before(async () => {
-      requiredBalance = await deployed.TestDepositUtils.redemptionTBTCAmount.call()
-    })
+    const requiredBalance = new BN('100500000')
 
     beforeEach(async () => {
       await createSnapshot()
