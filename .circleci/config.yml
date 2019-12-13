@@ -100,6 +100,28 @@ jobs:
           root: /tmp/docs
           paths:
             - ./*.pdf
+  generate_docs_solidity:
+    executor: docker-node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: implementation
+      - run:
+          name: Generate solidity docs
+          command: |
+            cd implementation && npm install
+            node_modules/.bin/truffle build
+
+            cd docs
+            mkdir -p output
+            node generate-api-docs.js > output/index.adoc
+
+            mkdir -p /tmp/docs
+            cp -r output /tmp/docs/solidity
+      - persist_to_workspace:
+          root: /tmp/docs
+          paths:
+            - solidity/*
   generate_docs_asciidoctor:
     docker:
       - image: asciidoctor/docker-asciidoctor
@@ -254,16 +276,23 @@ workflows:
             - setup_github_package_registry
   docs:
     jobs:
+      - setup_github_package_registry:
+          context: github-package-registry
       - generate_pngs
       - generate_docs_tex
+      - generate_docs_solidity:
+          requires:
+            - setup_github_package_registry
       - generate_docs_asciidoctor:
           requires:
+            - generate_docs_solidity
             - generate_pngs
       - upload_docs:
           context: keep-docs
           requires:
             - generate_docs_tex
             - generate_docs_asciidoctor
+            - generate_docs_solidity
   migrate-build-publish:
     jobs:
       - setup_github_package_registry:
