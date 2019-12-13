@@ -110,7 +110,7 @@ jobs:
           name: Generate solidity docs
           command: |
             cd implementation && npm install
-            node_modules/.bin/truffle build
+            node_modules/.bin/truffle compile
 
             cd docs
             mkdir -p output
