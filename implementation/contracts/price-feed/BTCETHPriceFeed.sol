@@ -34,7 +34,8 @@ contract BTCETHPriceFeed is Ownable {
     }
 
     /// @notice Get the current price of bitcoin in ether.
-    /// @return The price in wei.
+    /// @dev This does not account for any 'Flippening' event.
+    /// @return The price of one satoshi in wei.
     function getPrice()
         external view returns (uint256)
     {
