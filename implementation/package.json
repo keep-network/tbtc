@@ -7,7 +7,6 @@
     "clean": "rm -rf build/",
     "compile": "truffle compile",
     "test": "NODE_ENV=test truffle test",
-    "integration-test": "NODE_ENV=test INTEGRATION_TEST=true truffle test",
     "test:debug": "NODE_ENV=test node --inspect node_modules/.bin/truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",

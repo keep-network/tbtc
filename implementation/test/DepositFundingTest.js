@@ -91,9 +91,9 @@ contract('DepositFunding', (accounts) => {
 
     testInstance = deployed.TestDeposit
 
-    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, utils.address0)
 
-    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    await tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     beneficiary = accounts[4]
   })
@@ -112,6 +112,7 @@ contract('DepositFunding', (accounts) => {
       await testInstance.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1, // m
         1,
         { value: funderBondAmount }
@@ -120,6 +121,10 @@ contract('DepositFunding', (accounts) => {
       // state updates
       const depositState = await testInstance.getState.call()
       expect(depositState, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
+
+      const systemSignerFeeDivisor = await tbtcSystemStub.getSignerFeeDivisor()
+      const signerFeeDivisor = await testInstance.getSignerFeeDivisor.call()
+      expect(signerFeeDivisor).to.eq.BN(systemSignerFeeDivisor)
 
       const keepAddress = await testInstance.getKeepAddress.call()
       expect(keepAddress, 'keepAddress not as expected').to.equal(expectedKeepAddress)
@@ -142,10 +147,28 @@ contract('DepositFunding', (accounts) => {
         testInstance.createNewDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
+          utils.address0,
           1, // m
           1),
         'Deposit setup already requested'
       )
+    })
+
+    it('fails if new deposits are disabled', async () => {
+      await tbtcSystemStub.setAllowNewDeposits(false)
+
+      await expectThrow(
+        testInstance.createNewDeposit.call(
+          tbtcSystemStub.address,
+          tbtcToken.address,
+          utils.address0,
+          1, // m
+          1
+        ),
+        'Opening new deposits is currently disabled.'
+      )
+
+      await tbtcSystemStub.setAllowNewDeposits(true)
     })
 
     it.skip('stores payment value as funder\'s bond', async () => {
@@ -393,34 +416,6 @@ contract('DepositFunding', (accounts) => {
       const expectedBalance = new BN(initialBalance).add(funderBondAmount)
 
       assert.equal(actualBalance, expectedBalance, 'funder bond not correctly returned')
-    })
-
-    it('mints tokens', async () => {
-      const initialTokenBalanceTotal = await tbtcToken.totalSupply()
-      const initialTokenBalanceBeneficiary = await tbtcToken.balanceOf(beneficiary)
-      const initialTokenBalanceDeposit = await tbtcToken.balanceOf(testInstance.address)
-
-      await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-
-      const lotSize = await deployed.TBTCConstants.getLotSize.call()
-      const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
-      const signerFee = await deployed.TestDepositUtils.signerFee()
-
-      const expectedMintedTokenTotal = lotSize.mul(new BN(satoshiMultiplier))
-      const expectedMintedTokenBeneficiary = expectedMintedTokenTotal.sub(new BN(signerFee))
-      const expectedMintedTokenDeposit = new BN(signerFee)
-
-      const expectedTokenBalanceTotal = initialTokenBalanceTotal.add(expectedMintedTokenTotal)
-      const expectedTokenBalanceBeneficiary = initialTokenBalanceBeneficiary.add(expectedMintedTokenBeneficiary)
-      const expectedTokenBalanceDeposit = initialTokenBalanceDeposit.add(expectedMintedTokenDeposit)
-
-      const actualTokenBalanceTotal = await tbtcToken.totalSupply()
-      const actualTokenBalanceBeneficiary = await tbtcToken.balanceOf(beneficiary)
-      const actualTokenBalanceDeposit = await tbtcToken.balanceOf(testInstance.address)
-
-      expect(actualTokenBalanceTotal, 'incorrect total amount minted').to.eq.BN(expectedTokenBalanceTotal)
-      expect(actualTokenBalanceBeneficiary, 'incorrect amount minted for beneficiary').to.eq.BN(expectedTokenBalanceBeneficiary)
-      expect(actualTokenBalanceDeposit, 'incorrect amount minted for deposit').to.eq.BN(expectedTokenBalanceDeposit)
     })
   })
 })

@@ -1,6 +1,11 @@
 import expectThrow from './helpers/expectThrow'
 
+const BN = require('bn.js')
 const utils = require('./utils')
+const chai = require('chai')
+const expect = chai.expect
+const bnChai = require('bn-chai')
+chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
 
@@ -11,6 +16,7 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositUtils = artifacts.require('DepositUtils')
+const DepositStates = artifacts.require('DepositStates')
 const TBTCConstants = artifacts.require('TBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
 const DepositFactory = artifacts.require('DepositFactory')
@@ -20,6 +26,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TBTCConstants },
   { name: 'TestDeposit', contract: TestDeposit },
 ]
@@ -41,8 +48,7 @@ contract('TBTCSystem', (accounts) => {
       tbtcSystem = await TBTCSystem.new(depositFactory.address)
 
       await tbtcSystem.initialize(
-        keepRegistry.address,
-        '0x0000000000000000000000000000000000000000' // TBTC Uniswap Exchange
+        keepRegistry.address
       )
     })
 
@@ -91,6 +97,38 @@ contract('TBTCSystem', (accounts) => {
       await expectThrow(
         tbtcSystem.mint(mintTo, tokenId, { from: accounts[1] }),
         'Caller must be depositFactory contract'
+      )
+    })
+  })
+
+  describe('setSignerFeeDivisor', async () => {
+    it('sets the signer fee', async () => {
+      await tbtcSystem.setSignerFeeDivisor(new BN('201'))
+
+      const signerFeeDivisor = await tbtcSystem.getSignerFeeDivisor()
+      expect(signerFeeDivisor).to.eq.BN(new BN('201'))
+    })
+
+    it('reverts if msg.sender != owner', async () => {
+      await expectThrow(
+        tbtcSystem.setSignerFeeDivisor(new BN('201'), { from: accounts[1] }),
+        ''
+      )
+    })
+  })
+
+  describe('setAllowNewDeposits', async () => {
+    it('sets allowNewDeposits', async () => {
+      await tbtcSystem.setAllowNewDeposits(false)
+
+      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(false)
+    })
+
+    it('reverts if msg.sender != owner', async () => {
+      await expectThrow(
+        tbtcSystem.setAllowNewDeposits(false, { from: accounts[1] }),
+        ''
       )
     })
   })

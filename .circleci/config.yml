@@ -68,26 +68,6 @@ jobs:
           name: Run NPM tests
           working_directory: ~/project/implementation
           command: npm install && npm run test
-  integration_test_contracts:
-    executor: docker-node
-    steps:
-      - checkout
-      - attach_workspace:
-          at: implementation
-      - run: sudo npm install -g ganache-cli@6.4.2
-      - run:
-          name: Running testrpc
-          working_directory: ~/project/implementation
-          command: ganache-cli
-          background: true
-      - run:
-          name: Deploy Uniswap
-          working_directory: ~/project/implementation/scripts
-          command: ./deploy_uniswap.sh
-      - run:
-          name: Run NPM tests
-          working_directory: ~/project/implementation
-          command: npm install && npm run integration-test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -270,9 +250,6 @@ workflows:
       - setup_github_package_registry:
           context: github-package-registry
       - unit_test_contracts:
-          requires:
-            - setup_github_package_registry
-      - integration_test_contracts:
           requires:
             - setup_github_package_registry
   docs:

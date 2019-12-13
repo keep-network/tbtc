@@ -20,7 +20,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     uint256 oraclePrice = 10 ** 12;
 
     address public keepRegistry;
-    address public tbtcUniswapExchange;
+
+    // Governed parameters by the TBTCSystem owner
+    bool private allowNewDeposits = true;
+    uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
 
     constructor(address _depositFactory)
         ERC721MinterAuthority(_depositFactory)
@@ -30,20 +33,37 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     }
 
     function initialize(
-        address _keepRegistry,
-        address _tbtcUniswapExchange
+        address _keepRegistry
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
         keepRegistry = _keepRegistry;
-        tbtcUniswapExchange = _tbtcUniswapExchange;
-
         _initialized = true;
     }
 
-    function getTBTCUniswapExchange() external view returns (address) {
-        return tbtcUniswapExchange;
+    /// @notice Enables/disables new deposits from being created.
+    /// @param _allowNewDeposits Whether to allow new deposits.
+    function setAllowNewDeposits(bool _allowNewDeposits)
+        external onlyOwner
+    {
+        allowNewDeposits = _allowNewDeposits;
     }
+
+    /// @notice Gets whether new deposits are allowed.
+    function getAllowNewDeposits() public view returns (bool) { return allowNewDeposits; }
+
+    /// @notice Set the system signer fee divisor.
+    /// @param _signerFeeDivisor The signer fee divisor.
+    function setSignerFeeDivisor(uint256 _signerFeeDivisor)
+        external onlyOwner
+    {
+        require(_signerFeeDivisor > 1, "Signer fee must be lower than 100%");
+        signerFeeDivisor = _signerFeeDivisor;
+    }
+
+    /// @notice Gets the system signer fee divisor.
+    /// @return The signer fee divisor.
+    function getSignerFeeDivisor() public view returns (uint256) { return signerFeeDivisor; }
 
     // Price Oracle
     function fetchOraclePrice() external view returns (uint256) {

@@ -51,6 +51,7 @@ library DepositFunding {
         uint256 _m,
         uint256 _n
     ) public returns (bool) {
+        require(TBTCSystem(_d.TBTCSystem).getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
         /* solium-disable-next-line value-in-payable */
         require(msg.value == TBTCConstants.getFunderBondAmount(), "incorrect funder bond amount");
@@ -58,7 +59,7 @@ library DepositFunding {
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
         _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep(_m, _n);
-
+        _d.signerFeeDivisor = TBTCSystem(_d.TBTCSystem).getSignerFeeDivisor();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
@@ -85,23 +86,6 @@ library DepositFunding {
         } else if (address(this).balance > 0) {
             _d.depositBeneficiary().transfer(address(this).balance);
         }
-    }
-
-    /// @notice     Mints TBTC tokens.
-    /// @dev        Minted value is based on a configured lot size. The lot size,
-    /// which is specified in satoshi is multiplied to match TBTC token unit.
-    /// Minted tokens are split between the beneficiary (99,5%) and the deposit
-    /// contract (0,5%).
-    function mintTBTC(DepositUtils.Deposit storage _d) internal {
-        TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
-
-        uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
-        uint256 _signerFee = DepositUtils.signerFee();
-
-        uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
-
-        _tbtcToken.mint(_d.depositBeneficiary(), _totalValue.sub(_signerFee));
-        _tbtcToken.mint(address(this), _signerFee);
     }
 
     /// @notice     slashes the signers partially for committing fraud before funding occurs
@@ -338,8 +322,6 @@ library DepositFunding {
         _d.logFunded();
 
         returnFunderBond(_d);
-
-        mintTBTC(_d);
 
         return true;
     }
