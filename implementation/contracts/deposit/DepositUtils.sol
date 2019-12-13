@@ -10,6 +10,7 @@ import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol"
 import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
 import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
+import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 
 library DepositUtils {
 
@@ -339,10 +340,15 @@ library DepositUtils {
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
     /// @dev            We cast the address to a uint256 to match the 721 standard
-    /// @return         The current deposit beneficiary
+    /// @return         The current deposit beneficiary if the Token exists.
+    ///                 address(0) if the token does not exist.
     function feeRebateTokenHolder(Deposit storage _d) public view returns (address payable) {
-        IERC721 _feeRebateToken = IERC721(_d.FeeRebateToken);
-        return address(uint160(_feeRebateToken.ownerOf(uint256(address(this)))));
+        FeeRebateToken _feeRebateToken = FeeRebateToken(_d.FeeRebateToken);
+        address tokenHolder;
+        if(_feeRebateToken.exists(uint256(address(this)))){
+            tokenHolder = address(uint160(_feeRebateToken.ownerOf(uint256(address(this)))));
+        }
+        return address(uint160(tokenHolder));
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
