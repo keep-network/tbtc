@@ -8,12 +8,14 @@ contract TestDeposit is Deposit {
         address _sys,
         address _token,
         address _depositOwnerToken,
-        address _feeRebateToken
+        address _feeRebateToken,
+        address _vendingMachine
     ) public {
         self.TBTCSystem = _sys;
         self.TBTCToken = _token;
         self.DepositOwnerToken = _depositOwnerToken;
         self.FeeRebateToken = _feeRebateToken;
+        self.VendingMachine = _vendingMachine;
     }
 
     function reset() public {
