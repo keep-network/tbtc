@@ -45,6 +45,7 @@ contract Deposit {
         address _TBTCToken,
         address _DepositOwnerToken,
         address _FeeRebateToken,
+        address _VendingMachine,
         uint256 _m,
         uint256 _n
     ) public payable returns (bool) {
@@ -52,6 +53,7 @@ contract Deposit {
         self.TBTCToken = _TBTCToken;
         self.DepositOwnerToken = _DepositOwnerToken;
         self.FeeRebateToken = _FeeRebateToken;
+        self.VendingMachine = _VendingMachine;
         self.createNewDeposit(_m, _n);
         return true;
     }
