@@ -120,15 +120,11 @@ contract('DepositRedemption', (accounts) => {
     const keepPubkeyX = '0x' + '33'.repeat(32)
     const keepPubkeyY = '0x' + '44'.repeat(32)
     const requesterPKH = '0x' + '33'.repeat(20)
-<<<<<<< HEAD
     let requiredBalance
 
     before(async () => {
       requiredBalance = signerFee.add(depositValue)
     })
-=======
-    const requiredBalance = new BN('100500000')
->>>>>>> 9f17d861fbdb90c02235e49a4ba63320d433bcc5
 
     beforeEach(async () => {
       await createSnapshot()
