@@ -34,8 +34,13 @@ jsonFiles.forEach(file => {
 
         let subsection = "=== `" + signature + "`\n\n"
 
+        let userDocs = json.userdoc.methods[signature]
         let devDocs = json.devdoc.methods[signature]
+
         if (devDocs) {
+            if (userDocs.notice) {
+                subsection += `${userDocs.notice}\n\n`
+            }
             if (devDocs.details) {
                 subsection += `${devDocs.details}\n\n`
             }
