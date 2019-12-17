@@ -106,6 +106,11 @@ library DepositRedemption {
             _d.utxoOutpoint);
     }
 
+    /// @notice View function for access to TBTC required by redemption.
+    /// @return The amount in TBTC needed to redeem the deposit.
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d) public view returns(uint256){       
+        return 0; // TODO implement
+    }
     /// @notice     Anyone may provide a withdrawal signature if it was requested
     /// @dev        The signers will be penalized if this (or provideRedemptionProof) is not called
     /// @param  _d  deposit storage pointer
