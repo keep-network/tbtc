@@ -49,24 +49,37 @@ library DepositRedemption {
 
         _d.approvedDigests[_digest] = block.timestamp;
     }
+
     function redemptionTBTCHandler(DepositUtils.Deposit storage _d) private {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+        address feeRebateTokenHolder = _d.feeRebateTokenHolder();
+        address depositOwnerTokenHolder = _d.depositOwner();
+        address vendingMachine = _d.VendingMachine;
 
-        address depositOwnerTokenHolder = IERC721(_d.DepositOwnerToken).ownerOf(uint256(address(this)));
-        address feeRebateTokenHolder = IERC721(_d.FeeRebateToken).ownerOf(uint256(address(this)));
+        uint256 fullTbtc = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+        uint256 signerFee = DepositUtils.signerFee();
 
-        uint256 tbtcOwed = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
-
-        // If deposit has life left and the caller is the Deposit owner but not Fee Rebate Token holder, transfer
-        // extra fees equal to the signer fee to the Fee Rebate Token holder.
+        // Deposit pre-term, check if we owe a Signer fee or not
         if(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm()){
             require(depositOwnerTokenHolder == msg.sender, "redemption can only be called by deposit owner");
+            // Only situation where nothing is owed for pre-term redemption is when
+            // Deposit has corresponding rebate token belonging to mg.sender
             if(feeRebateTokenHolder != msg.sender){
-                _tbtc.transferFrom(msg.sender, address(this), DepositUtils.signerFee());
+                _tbtc.transferFrom(msg.sender, address(this), signerFee);
             }
+            return;
         }
-        // always burn 1TBTC for redeption.
-        _tbtc.burnFrom(msg.sender, tbtcOwed);
+        if(_tbtc.balanceOf(address(this)) < signerFee){
+            _tbtc.transferFrom(msg.sender, address(this), signerFee);
+            _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc.sub(signerFee));
+            return;
+        }
+        if(depositOwnerTokenHolder == vendingMachine){
+            _tbtc.burnFrom(msg.sender, fullTbtc);
+        }
+        else{
+            _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc);
+        }
     }
 
     /// @notice                     Anyone can request redemption
@@ -252,10 +265,6 @@ library DepositRedemption {
         // Transfer TBTC to signers
         distributeSignerFee(_d);
 
-        // Transfer withheld amount to beneficiary
-        // NOTE: ALWAYS call distributeSignerFee() before distributeFeeRebate()
-        // distributeFeeRebate() distributes the entire balance as a convenience. It is meant to be
-        // the final economiclly significatn function called before contract halt.
         _d.distributeFeeRebate();
 
         // We're done yey!
