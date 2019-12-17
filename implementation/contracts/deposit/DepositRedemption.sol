@@ -50,6 +50,20 @@ library DepositRedemption {
         _d.approvedDigests[_digest] = block.timestamp;
     }
 
+    /// @notice View function for access to TBTC required by redemption.
+    /// @dev    Will revert if redemption is not possible by msg.sender.
+    /// @return The amount in TBTC needed to redeem the deposit.
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d) public view returns(uint256){       
+        if(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm()){
+            require(_d.depositOwner() == msg.sender, "redemption can only be called by deposit owner");
+            if(_d.feeRebateTokenHolder() != msg.sender) return _d.signerFee();
+            return 0;
+        }
+        return TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+    }
+
+    /// @notice Handles TBTC requirements for redemption
+    /// @dev Burns or transfers depending on term and supply-peg impact
     function redemptionTBTCHandler(DepositUtils.Deposit storage _d) private {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         address feeRebateTokenHolder = _d.feeRebateTokenHolder();
@@ -59,26 +73,29 @@ library DepositRedemption {
         uint256 fullTbtc = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
         uint256 signerFee = _d.signerFee();
 
-        // Deposit pre-term, check if we owe a Signer fee or not
-        if(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm()){
-            require(depositOwnerTokenHolder == msg.sender, "redemption can only be called by deposit owner");
-            // Only situation where nothing is owed for pre-term redemption is when
-            // Deposit has corresponding rebate token belonging to mg.sender
-            if(feeRebateTokenHolder != msg.sender){
-                _tbtc.transferFrom(msg.sender, address(this), signerFee);
-            }
-            return;
-        }
-        if(_tbtc.balanceOf(address(this)) < signerFee){
+        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d);
+        // if we owe 0 TBTC, Deposit is pre-term, msg.sender is DOT owner and FRT holder.
+        if(tbtcOwed == 0){return;}
+        // if we owe signerfee, Deposit is pre-term, msg.sender is DOT owner but not FRT holder.
+        if(tbtcOwed == signerFee){
             _tbtc.transferFrom(msg.sender, address(this), signerFee);
-            _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc.sub(signerFee));
-            return;
         }
-        if(depositOwnerTokenHolder == vendingMachine){
-            _tbtc.burnFrom(msg.sender, fullTbtc);
-        }
-        else{
-            _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc);
+        // Redemmer always ows a full TBTC for at-term redemption.
+        if(tbtcOwed == fullTbtc){
+            // if signer fee is not escrowed, escrow and it here and send the rest to DOT owner
+            if(_tbtc.balanceOf(address(this)) < signerFee){
+                _tbtc.transferFrom(msg.sender, address(this), signerFee);
+                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc.sub(signerFee));
+                return;
+            }
+            // Vending Macnine-owned DOTs have been used to mint TBTC, always burn TBTC to maintain supply peg
+            if(depositOwnerTokenHolder == vendingMachine){
+                _tbtc.burnFrom(msg.sender, fullTbtc);
+            }
+            // tansfer a full TBTC to DOT owner if signerFee is escrowed
+            else{
+                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc);
+            }
         }
     }
 
