@@ -16,8 +16,8 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const Deposit = artifacts.require('Deposit')
 
-// price oracle
-const PriceOracleV1 = artifacts.require('PriceOracleV1')
+// price feed
+const BTCETHPriceFeed = artifacts.require('BTCETHPriceFeed')
 
 // system
 const TBTCConstants = artifacts.require('TBTCConstants')
@@ -32,12 +32,9 @@ const DepositFactory = artifacts.require('DepositFactory')
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
   DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystem,
-  PriceOracleV1]
+  BTCETHPriceFeed]
 
 module.exports = (deployer, network, accounts) => {
-  const PRICE_ORACLE_OPERATOR = accounts[0]
-  const PRICE_ORACLE_DEFAULT_PRICE = '323200000000'
-
   deployer.then(async () => {
     // bitcoin-spv
     await deployer.deploy(BytesLib)
@@ -79,7 +76,7 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(Deposit)
 
     // price oracle
-    await deployer.deploy(PriceOracleV1, PRICE_ORACLE_OPERATOR, PRICE_ORACLE_DEFAULT_PRICE)
+    await deployer.deploy(BTCETHPriceFeed)
 
     // deposit factory
     await deployer.deploy(DepositFactory, Deposit.address)
