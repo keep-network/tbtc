@@ -30,6 +30,7 @@ library DepositUtils {
         address FeeRebateToken;
         address VendingMachine;
         uint8 currentState;
+        uint256 signerFeeDivisor;
 
         // SET ON FRAUD
         uint256 liquidationInitiated;  // Timestamp of when liquidation starts
@@ -222,10 +223,10 @@ library DepositUtils {
     /// @notice         Determines the fees due to the signers for work performeds
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
-    function signerFee() public pure returns (uint256) {
+    function signerFee(Deposit storage _d) public view returns (uint256) {
         return TBTCConstants.getLotSize()
             .mul(TBTCConstants.getSatoshiMultiplier())
-            .div(TBTCConstants.getSignerFeeDivisor());
+            .div(_d.signerFeeDivisor);
     }
 
     /// @notice     calculates the beneficiary reward based on the deposit size
@@ -240,7 +241,7 @@ library DepositUtils {
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSize().add(signerFee()).add(beneficiaryReward());
+            return TBTCConstants.getLotSize().add(signerFee(_d)).add(beneficiaryReward());
         } else {
             return 0;
         }

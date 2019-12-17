@@ -51,6 +51,7 @@ library DepositFunding {
         uint256 _m,
         uint256 _n
     ) public returns (bool) {
+        require(TBTCSystem(_d.TBTCSystem).getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
         /* solium-disable-next-line value-in-payable */
         require(msg.value == TBTCConstants.getFunderBondAmount(), "incorrect funder bond amount");
@@ -58,7 +59,7 @@ library DepositFunding {
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
         _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep(_m, _n);
-
+        _d.signerFeeDivisor = TBTCSystem(_d.TBTCSystem).getSignerFeeDivisor();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();

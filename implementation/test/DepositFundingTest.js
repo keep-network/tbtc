@@ -134,6 +134,10 @@ contract('DepositFunding', (accounts) => {
       const depositState = await testInstance.getState.call()
       expect(depositState, 'state not as expected').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
 
+      const systemSignerFeeDivisor = await tbtcSystemStub.getSignerFeeDivisor()
+      const signerFeeDivisor = await testInstance.getSignerFeeDivisor.call()
+      expect(signerFeeDivisor).to.eq.BN(systemSignerFeeDivisor)
+
       const keepAddress = await testInstance.getKeepAddress.call()
       expect(keepAddress, 'keepAddress not as expected').to.equal(expectedKeepAddress)
 
@@ -162,6 +166,23 @@ contract('DepositFunding', (accounts) => {
           1),
         'Deposit setup already requested'
       )
+    })
+
+    it('fails if new deposits are disabled', async () => {
+      await tbtcSystemStub.setAllowNewDeposits(false)
+
+      await expectThrow(
+        testInstance.createNewDeposit.call(
+          tbtcSystemStub.address,
+          tbtcToken.address,
+          utils.address0,
+          1, // m
+          1
+        ),
+        'Opening new deposits is currently disabled.'
+      )
+
+      await tbtcSystemStub.setAllowNewDeposits(true)
     })
 
     it.skip('stores payment value as funder\'s bond', async () => {

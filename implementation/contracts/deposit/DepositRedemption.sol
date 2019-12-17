@@ -36,8 +36,8 @@ library DepositRedemption {
 
         IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
 
-        _tbtcToken.approve(_d.keepAddress, DepositUtils.signerFee());
-        _keep.distributeERC20ToMembers(_tbtcTokenAddress, DepositUtils.signerFee());
+        _tbtcToken.approve(_d.keepAddress, _d.signerFee());
+        _keep.distributeERC20ToMembers(_tbtcTokenAddress, _d.signerFee());
     }
 
     /// @notice Approves digest for signing by a keep

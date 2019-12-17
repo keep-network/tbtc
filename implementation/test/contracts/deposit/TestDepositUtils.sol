@@ -69,8 +69,8 @@ contract TestDepositUtils is TestDeposit {
         return self.auctionValue();
     }
 
-    function signerFee() public pure returns (uint256) {
-        return DepositUtils.signerFee();
+    function signerFee() public view returns (uint256) {
+        return self.signerFee();
     }
 
     function beneficiaryReward() public pure returns (uint256) {

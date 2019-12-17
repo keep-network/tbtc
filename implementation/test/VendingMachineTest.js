@@ -81,6 +81,7 @@ contract('VendingMachine', (accounts) => {
   // this is the amount of TBTC exchanged for a DOT.
   let depositValue
   let signerFee
+  const signerFeeDivisor = new BN('200')
 
   before(async () => {
     // VendingMachine relies on linked libraries, hence we use deploySystem for consistency.
@@ -103,6 +104,7 @@ contract('VendingMachine', (accounts) => {
       feeRebateToken.address,
       vendingMachine.address
     )
+    await testInstance.setSignerFeeDivisor(signerFeeDivisor)
 
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
 
@@ -116,7 +118,7 @@ contract('VendingMachine', (accounts) => {
 
     const lotSize = await deployed.TBTCConstants.getLotSize()
     const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
-    signerFee = await deployed.TestDepositUtils.signerFee.call()
+    signerFee = lotSize.mul(satoshiMultiplier).div(signerFeeDivisor)
     depositValue = lotSize.mul(satoshiMultiplier)
   })
 

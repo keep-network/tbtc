@@ -36,6 +36,12 @@ contract TestDeposit is Deposit {
 
     function getState() public view returns (uint8) { return self.currentState; }
 
+    function setSignerFeeDivisor(uint256 _signerFeeDivisor) public {
+        self.signerFeeDivisor = _signerFeeDivisor;
+    }
+
+    function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
+
     function setLiquidationAndCourtesyInitated(
         uint256 _liquidation,
         uint256 _courtesy
