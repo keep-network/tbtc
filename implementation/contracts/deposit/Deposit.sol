@@ -80,6 +80,7 @@ contract Deposit {
     function getRedemptionTbtcRequirement() public view returns(uint256){       
         return self.getRedemptionTbtcRequirement();
     }
+
     /// @notice     Anyone may provide a withdrawal signature if it was requested
     /// @dev        The signers will be penalized if this (or provideRedemptionProof) is not called
     /// @param  _v  Signature recovery value

@@ -55,11 +55,14 @@ library DepositRedemption {
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _requesterAddress   The address of the requestor. This is set as a variable to make calls by external contracts easier
+    ///                             and avoid the need for implemeiting logic to redistribute singner bonds in case of fraud in
+    ///                             redemption flow.
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH,
-        address payable _requestorAddress
+        address payable _requesterAddress
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
@@ -88,7 +91,7 @@ library DepositRedemption {
             _requesterPKH);
 
         // write all request details
-        _d.requesterAddress = _requestorAddress;
+        _d.requesterAddress = _requesterAddress;
         _d.requesterPKH = _requesterPKH;
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;

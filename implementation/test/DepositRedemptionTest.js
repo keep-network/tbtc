@@ -123,7 +123,7 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
 
       const requestInfo = await testInstance.getRequestInfo()
       assert.equal(requestInfo[1], requesterPKH)
@@ -141,7 +141,7 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: blockNumber, toBlock: 'latest' })
       const event = events[0]
@@ -154,14 +154,14 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setState(utils.states.LIQUIDATED)
 
       await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
         'Redemption only available from Active or Courtesy state'
       )
     })
 
     it('reverts if the fee is low', async () => {
       await expectThrow(
-        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
+        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20), accounts[0]),
         'Fee is too low'
       )
     })
@@ -170,7 +170,7 @@ contract('DepositRedemption', (accounts) => {
       await depositOwnerToken.transferFrom(accounts[0], accounts[4], dotId)
 
       await expectThrow(
-        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
+        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20), accounts[0]),
         'redemption can only be called by deposit owner'
       )
     })
