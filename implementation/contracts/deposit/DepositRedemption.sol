@@ -58,7 +58,8 @@ library DepositRedemption {
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH
+        bytes20 _requesterPKH,
+        address payable _requestorAddress
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
@@ -87,7 +88,7 @@ library DepositRedemption {
             _requesterPKH);
 
         // write all request details
-        _d.requesterAddress = msg.sender;
+        _d.requesterAddress = _requestorAddress;
         _d.requesterPKH = _requesterPKH;
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
