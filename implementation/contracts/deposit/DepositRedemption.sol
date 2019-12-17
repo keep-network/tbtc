@@ -57,7 +57,7 @@ library DepositRedemption {
         address vendingMachine = _d.VendingMachine;
 
         uint256 fullTbtc = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
-        uint256 signerFee = DepositUtils.signerFee();
+        uint256 signerFee = _d.signerFee();
 
         // Deposit pre-term, check if we owe a Signer fee or not
         if(block.timestamp < _d.fundedAt + TBTCConstants.getDepositTerm()){

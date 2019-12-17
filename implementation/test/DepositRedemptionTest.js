@@ -97,7 +97,7 @@ contract('DepositRedemption', (accounts) => {
 
     const lotSize = await deployed.TBTCConstants.getLotSize()
     const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
-    signerFee = await deployed.TestDepositUtils.signerFee.call()
+    signerFee = await testInstance.signerFee.call()
     depositValue = lotSize.mul(satoshiMultiplier)
   })
 

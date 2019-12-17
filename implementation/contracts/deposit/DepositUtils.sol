@@ -394,8 +394,8 @@ library DepositUtils {
         if(_d.requesterAddress == rebateTokenHolder) return;
 
         // pay out the rebate if it is available
-        if(_tbtc.balanceOf(address(this)) >= signerFee()){
-            _tbtc.transfer(rebateTokenHolder, signerFee());
+        if(_tbtc.balanceOf(address(this)) >= signerFee(_d)){
+            _tbtc.transfer(rebateTokenHolder, signerFee(_d));
         }
     }
 

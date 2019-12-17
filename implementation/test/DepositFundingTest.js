@@ -175,6 +175,8 @@ contract('DepositFunding', (accounts) => {
         testInstance.createNewDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
+          depositOwnerToken.address,
+          utils.address0,
           utils.address0,
           1, // m
           1

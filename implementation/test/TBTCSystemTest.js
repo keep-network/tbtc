@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-=======
 import expectThrow from './helpers/expectThrow'
 
 const BN = require('bn.js')
->>>>>>> 9f17d861fbdb90c02235e49a4ba63320d433bcc5
 const utils = require('./utils')
 const chai = require('chai')
 const expect = chai.expect
