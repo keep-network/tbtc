@@ -65,7 +65,7 @@ contract VendingMachine {
             tbtcToken.mint(msg.sender, getDepositValue());
         }
 
-        // owner of the DOT durin first TBTC mint receives the FRT
+        // owner of the DOT during first TBTC mint receives the FRT
         if(!feeRebateToken.exists(_dotId)){
             feeRebateToken.mint(msg.sender, _dotId);
         }
