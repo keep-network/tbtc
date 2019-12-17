@@ -3,10 +3,11 @@ pragma solidity ^0.5.10;
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../external/IMedianizer.sol";
+import "../interfaces/IBTCETHPriceFeed.sol";
 
 /// @notice Bitcoin-Ether price feed.
 /// @dev Based on the ratio of two medianizer price feeds, BTC/USD and ETH/USD.
-contract BTCETHPriceFeed is Ownable {
+contract BTCETHPriceFeed is Ownable, IBTCETHPriceFeed {
     using SafeMath for uint256;
 
     bool private _initialized = false;
