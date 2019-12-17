@@ -98,6 +98,7 @@ contract('DepositFraud', (accounts) => {
       tbtcSystemStub.address,
       tbtcToken.address,
       depositOwnerToken.address,
+      utils.address0,
       utils.address0
     )
 

@@ -99,6 +99,7 @@ contract('DepositFunding', (accounts) => {
       tbtcSystemStub.address,
       tbtcToken.address,
       depositOwnerToken.address,
+      utils.address0,
       utils.address0
     )
 
@@ -122,6 +123,7 @@ contract('DepositFunding', (accounts) => {
         tbtcSystemStub.address,
         tbtcToken.address,
         depositOwnerToken.address,
+        utils.address0,
         utils.address0,
         1, // m
         1,
@@ -154,6 +156,7 @@ contract('DepositFunding', (accounts) => {
           tbtcSystemStub.address,
           tbtcToken.address,
           depositOwnerToken.address,
+          utils.address0,
           utils.address0,
           1, // m
           1),

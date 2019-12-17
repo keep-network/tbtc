@@ -23,7 +23,8 @@ const DepositStates = artifacts.require('DepositStates')
 
 const TestVendingMachine = artifacts.require('TestVendingMachine')
 const TestToken = artifacts.require('TestToken')
-const TestDepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -47,6 +48,8 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 const currentDifficulty = 6353030562983
@@ -67,14 +70,14 @@ const _outValueBytes = '0x2040351d00000000'
 contract('VendingMachine', (accounts) => {
   let deployed
   let vendingMachine
-  let depositOwnerToken
   let tbtcToken
   let tbtcSystemStub
   let testInstance
 
   let assertBalance
+  let depositOwnerToken
+  let feeRebateToken
   let dotId
-
   // this is the amount of TBTC exchanged for a DOT.
   let depositValue
   let signerFee
@@ -84,17 +87,31 @@ contract('VendingMachine', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     vendingMachine = deployed.TestVendingMachine
     tbtcToken = await TestToken.new(vendingMachine.address)
-    depositOwnerToken = await TestDepositOwnerToken.new()
+
+    depositOwnerToken = deployed.DepositOwnerToken
+    feeRebateToken = deployed.FeeRebateToken
+
     assertBalance = new AssertBalance(tbtcToken)
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+    tbtcSystemStub = await TBTCSystemStub.new()
     testInstance = deployed.TestDeposit
-    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
 
-    await vendingMachine.setExteriorAddresses(tbtcToken.address, depositOwnerToken.address)
+    await testInstance.setExteriorAddresses(
+      tbtcSystemStub.address,
+      tbtcToken.address,
+      depositOwnerToken.address,
+      feeRebateToken.address,
+      vendingMachine.address
+    )
+
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
 
-    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    await vendingMachine.setExteriorAddresses(
+      tbtcToken.address,
+      depositOwnerToken.address,
+      feeRebateToken.address
+    )
+
     dotId = await web3.utils.toBN(testInstance.address)
 
     const lotSize = await deployed.TBTCConstants.getLotSize()

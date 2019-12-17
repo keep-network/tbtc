@@ -68,6 +68,7 @@ contract('DepositRedemption', (accounts) => {
   let depositValue
   let signerFee
   let dotId
+  let vendingMachine
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
@@ -77,12 +78,14 @@ contract('DepositRedemption', (accounts) => {
     testInstance = deployed.TestDeposit
     depositOwnerToken = deployed.DepositOwnerToken
     feeRebateToken = deployed.FeeRebateToken
+    vendingMachine = '0x' + '11'.repeat(20),
 
     await testInstance.setExteriorAddresses(
       tbtcSystemStub.address,
       tbtcToken.address,
       depositOwnerToken.address,
-      feeRebateToken.address
+      feeRebateToken.address,
+      vendingMachine
     )
 
     await feeRebateToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))

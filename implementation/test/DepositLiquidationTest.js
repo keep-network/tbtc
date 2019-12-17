@@ -96,7 +96,8 @@ contract('DepositLiquidation', (accounts) => {
       tbtcSystemStub.address,
       tbtcToken.address,
       depositOwnerToken.address,
-      feeRebateToken.address
+      feeRebateToken.address,
+      utils.address0
     )
 
     await depositOwnerToken.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
@@ -178,7 +179,9 @@ contract('DepositLiquidation', (accounts) => {
 
     it('distributes beneficiary reward', async () => {
       // Make sure Deposit has enough to cover beneficiary reward
-      const beneficiaryReward = await deployed.TestDepositUtils.beneficiaryReward.call()
+      // const beneficiaryReward = await deployed.TestDepositUtils.beneficiaryReward.call() // CHANGE TO SIGNER FEE ()
+      const beneficiaryReward = await deployed.TestDepositUtils.signerFee.call()
+
       await tbtcToken.forceMint(testInstance.address, beneficiaryReward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)

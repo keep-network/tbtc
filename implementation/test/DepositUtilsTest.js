@@ -97,6 +97,7 @@ contract('DepositUtils', (accounts) => {
       tbtcToken.address,
       depositOwnerToken.address,
       feeRebateToken.address,
+      utils.address0,
       1, // m
       1, // n
       { value: funderBondAmount }
@@ -453,7 +454,7 @@ contract('DepositUtils', (accounts) => {
   describe('distributeFeeRebate()', async () => {
     it('checks that beneficiary is rewarded', async () => {
       // min an arbitrary reward value to the funding contract
-      const reward = 100000000
+      const reward = await testUtilsInstance.signerFee.call()
       await tbtcToken.forceMint(testUtilsInstance.address, reward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
