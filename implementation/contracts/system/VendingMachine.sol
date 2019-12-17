@@ -103,7 +103,7 @@ contract VendingMachine {
     /// @param  _depositAddress     The address of the Deposit to redeem.
     /// @param  _outputValueBytes   The 8-byte LE output size.
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds.
-    function TbtcToBtc(
+    function tbtcToBtc(
         address payable _depositAddress,
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH
