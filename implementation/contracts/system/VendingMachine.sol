@@ -98,6 +98,34 @@ contract VendingMachine {
         dotToTbtc(uint256(_depositAddress));
     }
 
+    /// @notice Redeems a Deposit by purchasing a DOT with TBTC, and using the DOT to redeem correspoinding Deposit.
+    /// @dev Vending Machine transfers TBTC allowance to Deposit.
+    /// @param  _depositAddress     The address of the Deposit to redeem.
+    /// @param  _outputValueBytes   The 8-byte LE output size.
+    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds.
+    function TbtcToBtc(
+        address payable _depositAddress,
+        bytes8 _outputValueBytes,
+        bytes20 _requesterPKH
+    ) public{
+        Deposit _d = Deposit(_depositAddress);
+
+        tbtcToDot(uint256(_depositAddress));
+
+        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement();
+
+        if(tbtcOwed != 0){
+            tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
+            tbtcToken.approve(_depositAddress, tbtcOwed);
+        }
+
+        _d.requestRedemption(
+            _outputValueBytes,
+            _requesterPKH,
+            msg.sender
+        );
+    }
+
     // HELPERS
 
     // TODO temporary helper function
