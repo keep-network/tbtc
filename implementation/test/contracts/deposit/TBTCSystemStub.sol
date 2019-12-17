@@ -4,17 +4,23 @@ import {TBTCSystem} from '../../../contracts/system/TBTCSystem.sol';
 
 contract TBTCSystemStub is TBTCSystem {
     address keepAddress = address(7);
+    uint256 oraclePrice = 10 ** 12;
 
-    constructor(address _depositFactory)
+    constructor(address _depositFactory, address _priceFeed)
         // Set expected factory address to 0-address.
         // Address is irelevant as test use forceMint function to bypass ACL
-        TBTCSystem(_depositFactory)
+        TBTCSystem(_depositFactory, _priceFeed)
     public {
         // solium-disable-previous-line no-empty-blocks
     }
 
     function setOraclePrice(uint256 _oraclePrice) external {
         oraclePrice = _oraclePrice;
+    }
+
+    /// @dev Override TBTCSystem.fetchOraclePrice, don't call out to the price oracle.
+    function fetchOraclePrice() external view returns (uint256) {
+        return oraclePrice;
     }
 
     function setCurrentDiff(uint256 _currentDifficulty) external {

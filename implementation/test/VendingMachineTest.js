@@ -88,7 +88,7 @@ contract('VendingMachine', (accounts) => {
     depositOwnerToken = await TestDepositOwnerToken.new()
     assertBalance = new AssertBalance(tbtcToken)
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0, utils.address0)
     testInstance = deployed.TestDeposit
     await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
     await testInstance.setSignerFeeDivisor(signerFeeDivisor)

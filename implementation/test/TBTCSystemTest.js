@@ -37,7 +37,7 @@ contract('TBTCSystem', (accounts) => {
 
   describe('requestNewKeep()', async () => {
     before(async () => {
-      const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+      const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY, utils.address0)
 
       ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
 
@@ -45,7 +45,7 @@ contract('TBTCSystem', (accounts) => {
       await keepRegistry.setVendor(ecdsaKeepVendor.address)
 
       const depositFactory = await DepositFactory.new(deployed.TestDeposit.address)
-      tbtcSystem = await TBTCSystem.new(depositFactory.address)
+      tbtcSystem = await TBTCSystem.new(depositFactory.address, utils.address0)
 
       await tbtcSystem.initialize(
         keepRegistry.address
@@ -74,7 +74,7 @@ contract('TBTCSystem', (accounts) => {
     before(async () => {
       // Create new TBTCSystem instance where only accounts[0] can mint ERC721 tokens
       // accounts[0] is taking the place of deposit factory address
-      tbtcSystem = await TBTCSystem.new(accounts[0])
+      tbtcSystem = await TBTCSystem.new(accounts[0], utils.address0)
     })
 
     it('correctly mints 721 token with approved caller', async () => {
