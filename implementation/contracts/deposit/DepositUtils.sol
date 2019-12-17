@@ -392,8 +392,10 @@ library DepositUtils {
         // If the beneficiary requested redemption, they didn't have to pay the reward.
         if(_d.requesterAddress == rebateTokenHolder) return;
 
-        /* solium-disable-next-line */
-        require(_tbtc.transfer(rebateTokenHolder, signerFee()),"Transfer failed");
+        // pay out the rebate if it is available
+        if(_tbtc.balanceOf(address(this)) >= signerFee()){
+            _tbtc.transfer(rebateTokenHolder, signerFee());
+        }
     }
 
     /// @notice             pushes ether held by the deposit to the signer group
