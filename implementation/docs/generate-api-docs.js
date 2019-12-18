@@ -37,15 +37,16 @@ jsonFiles.forEach(file => {
         let userDocs = json.userdoc.methods[signature]
         let devDocs = json.devdoc.methods[signature]
 
+        if (userDocs.notice) {
+            subsection += `${userDocs.notice}\n\n`
+        }
+
         if (devDocs) {
-            if (userDocs.notice) {
-                subsection += `${userDocs.notice}\n\n`
-            }
+            subsection += "==== Developers\n\n"
+            
             if (devDocs.details) {
                 subsection += `${devDocs.details}\n\n`
             }
-
-            subsection += "==== Developers\n\n"
 
             if (devDocs.params) {
                 for (const paramName in devDocs.params) {
