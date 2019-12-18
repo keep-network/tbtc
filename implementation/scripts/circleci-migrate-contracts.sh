@@ -53,25 +53,7 @@ ssh utilitybox << EOF
 
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/implementation
-
-# TODO: Migrations fail with truffle version specified in package.json file. That's why we install dependencies manually here, bug: https://github.com/keep-network/tbtc/issues/231
-npm install @keep-network/keep-ecdsa@0.1.2
-npm install @summa-tx/bitcoin-spv-sol@2.1.0
-npm install bn-chai@1.0.1
-npm install bn.js@4.11.8
-npm install chai@4.2.0
-npm install create-hash@1.2.0
-npm install openzeppelin-solidity@2.3.0
-npm install solc@0.5.10
-npm install babel-polyfill@6.26.0
-npm install babel-preset-es2015@6.18.0
-npm install babel-preset-stage-2@6.18.0
-npm install babel-preset-stage-3@6.17.0
-npm install babel-register@6.26.0
-npm install eth-gas-reporter@0.1.12
-npm install ganache-cli@6.4.3
-npm install truffle@5.0.7
-
+  npm install 
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 EOF
