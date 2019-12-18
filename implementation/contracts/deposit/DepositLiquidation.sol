@@ -49,17 +49,17 @@ library DepositLiquidation {
     function getCollateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
 
         // Determine value of the lot in wei
-        uint256 _oraclePrice = _d.fetchOraclePrice();
-        if (_oraclePrice == 0 || _oraclePrice > 10 ** 18) {
+        uint256 _price = _d.fetchBitcoinPrice();
+        if (_price == 0 || _price > 10 ** 18) {
             /*
               This is if a sat is worth 0 wei, or is worth 1 ether
               TODO: what should this behavior be?
             */
-            revert("Oracle returned a bad price");
+            revert("System returned a bad price");
         }
 
         uint256 _lotSize = TBTCConstants.getLotSize();
-        uint256 _lotValue = _lotSize * _oraclePrice;
+        uint256 _lotValue = _lotSize * _price;
 
         // Amount of wei the signers have
         uint256 _bondValue = _d.fetchBondAmount();

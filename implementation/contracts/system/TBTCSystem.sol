@@ -5,6 +5,7 @@ import {IKeepRegistry} from "@keep-network/keep-ecdsa/contracts/api/IKeepRegistr
 import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeepVendor.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
+import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
@@ -17,19 +18,23 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
-    uint256 oraclePrice = 10 ** 12;
 
     address public keepRegistry;
+    address public priceFeed;
 
     // Governed parameters by the TBTCSystem owner
     bool private allowNewDeposits = true;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
 
-    constructor(address _depositFactory)
+
+    constructor(
+        address _depositFactory,
+        address _priceFeed
+    )
         ERC721MinterAuthority(_depositFactory)
         public
     {
-            // solium-disable-previous-line no-empty-blocks
+        priceFeed = _priceFeed;
     }
 
     function initialize(
@@ -65,9 +70,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     /// @return The signer fee divisor.
     function getSignerFeeDivisor() public view returns (uint256) { return signerFeeDivisor; }
 
-    // Price Oracle
-    function fetchOraclePrice() external view returns (uint256) {
-        return oraclePrice;
+    // Price Feed
+    function fetchBitcoinPrice() external view returns (uint256) {
+        return IBTCETHPriceFeed(priceFeed).getPrice();
     }
 
     // Difficulty Oracle

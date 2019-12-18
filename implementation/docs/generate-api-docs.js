@@ -20,7 +20,7 @@ let jsonFiles = [
     "../../implementation/build/contracts/DepositFunding.json",
     "../../implementation/build/contracts/DepositRedemption.json",
     "../../implementation/build/contracts/DepositLiquidation.json",
-    "../../implementation/build/contracts/BTCETHPriceFeed.json",
+    "../../implementation/build/contracts/IBTCETHPriceFeed.json",
     "../../implementation/build/contracts/IBondedECDSAKeep.json",
 ]
 
