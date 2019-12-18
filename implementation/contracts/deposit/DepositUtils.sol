@@ -367,8 +367,8 @@ library DepositUtils {
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
     function depositOwner(Deposit storage _d) public view returns (address payable) {
-        IERC721 _dpositOwnerToken = IERC721(_d.DepositOwnerToken);
-        return address(uint160(_dpositOwnerToken.ownerOf(uint256(address(this)))));
+        IERC721 _depositOwnerToken = IERC721(_d.DepositOwnerToken);
+        return address(uint160(_depositOwnerToken.ownerOf(uint256(address(this)))));
     }
 
     /// @notice     Deletes state after termination of redemption process
@@ -393,14 +393,14 @@ library DepositUtils {
         return _postCallBalance.sub(_preCallBalance);
     }
 
-    /// @notice     Distributes the fee rebate reward to the Fee Rebate Token owner
+    /// @notice     Distributes the fee rebate to the Fee Rebate Token owner
     ///             whenever this is called we are shutting down.
     function distributeFeeRebate(Deposit storage _d) public {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
         address rebateTokenHolder = feeRebateTokenHolder(_d);
 
-        // If the beneficiary requested redemption, they didn't have to pay the reward.
+        // Don't escrow a rebate if the requestor is also the Fee Rebate Token holder
         if(_d.requesterAddress == rebateTokenHolder) return;
 
         // pay out the rebate if it is available
