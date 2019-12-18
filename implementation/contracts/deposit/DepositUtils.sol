@@ -201,6 +201,17 @@ library DepositUtils {
         _utxoOutpoint = abi.encodePacked(txID, _fundingOutputIndex, hex"000000");
     }
 
+    /// @notice View function to retreive the remaining term of the deposit
+    /// @dev    The value is not guaranteed since block.timestmap can be lightly manipulated by miners.
+    /// @return The remaining term of the deposit in seconds. 0 if already at term
+    function remainingTerm(DepositUtils.Deposit storage _d) public view returns(uint256){
+        uint256 term = _d.fundedAt + TBTCConstants.getDepositTerm();
+        if(block.timestamp < term ){
+            return term - block.timestamp;
+        }
+        return 0;
+    }
+
     /// @notice     Calculates the amount of value at auction right now
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
     /// @param _d   deposit storage pointer
@@ -341,7 +352,6 @@ library DepositUtils {
     }
 
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
-    /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary if the Token exists.
     ///                 address(0) if the token does not exist.
     function feeRebateTokenHolder(Deposit storage _d) public view returns (address payable) {
