@@ -329,9 +329,9 @@ contract Deposit {
         return true;
     }
 
-    ///
-    /// LIQUIDATION
-    ///
+    //
+    // LIQUIDATION
+    //
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud
     /// @dev        For interface, reading auctionValue will give a past value. the current is better

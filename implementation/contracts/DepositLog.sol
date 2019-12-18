@@ -82,9 +82,9 @@ contract DepositLog {
         uint256 _timestamp
     );
 
-    ///
-    /// AUTH
-    ///
+    //
+    // AUTH
+    //
 
     /// @notice             Checks if an address is an allowed logger
     /// @dev                Calls the system to check if the caller is a Deposit
@@ -98,9 +98,9 @@ contract DepositLog {
         return true;
     }
 
-    ///
-    /// Logging
-    ///
+    //
+    // Logging
+    //
 
     /// @notice               Fires a Created event
     /// @dev                  We append the sender, which is the deposit contract that called
