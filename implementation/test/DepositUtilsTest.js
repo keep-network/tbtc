@@ -346,13 +346,13 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('fetchOraclePrice()', async () => {
+  describe('fetchBitcoinPrice()', async () => {
     it('calls out to the system', async () => {
-      const oraclePrice = await testUtilsInstance.fetchOraclePrice.call()
+      const oraclePrice = await testUtilsInstance.fetchBitcoinPrice.call()
       expect(oraclePrice).to.eq.BN(1000000000000)
 
       await tbtcSystemStub.setOraclePrice(44)
-      const newOraclePrice = await testUtilsInstance.fetchOraclePrice.call()
+      const newOraclePrice = await testUtilsInstance.fetchBitcoinPrice.call()
       expect(newOraclePrice).to.eq.BN(44)
     })
   })

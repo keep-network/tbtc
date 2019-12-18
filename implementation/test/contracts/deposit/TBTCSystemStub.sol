@@ -18,8 +18,8 @@ contract TBTCSystemStub is TBTCSystem {
         oraclePrice = _oraclePrice;
     }
 
-    /// @dev Override TBTCSystem.fetchOraclePrice, don't call out to the price oracle.
-    function fetchOraclePrice() external view returns (uint256) {
+    /// @dev Override TBTCSystem.fetchBitcoinPrice, don't call out to the price feed.
+    function fetchBitcoinPrice() external view returns (uint256) {
         return oraclePrice;
     }
 

@@ -70,8 +70,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     /// @return The signer fee divisor.
     function getSignerFeeDivisor() public view returns (uint256) { return signerFeeDivisor; }
 
-    // Price Oracle
-    function fetchOraclePrice() external view returns (uint256) {
+    // Price Feed
+    function fetchBitcoinPrice() external view returns (uint256) {
         return IBTCETHPriceFeed(priceFeed).getPrice();
     }
 
