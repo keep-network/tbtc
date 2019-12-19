@@ -28,6 +28,7 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 
 // keep
 const TBTCToken = artifacts.require('TBTCToken')
+const DepositOwnerToken = artifacts.require('DepositOwnerToken')
 
 // deposit factory
 const DepositFactory = artifacts.require('DepositFactory')
@@ -105,5 +106,6 @@ module.exports = (deployer, network, accounts) => {
 
     // token
     await deployer.deploy(TBTCToken, TBTCSystem.address)
+    await deployer.deploy(DepositOwnerToken)
   })
 }
