@@ -205,9 +205,9 @@ library DepositUtils {
     /// @dev    The value is not guaranteed since block.timestmap can be lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at term
     function remainingTerm(DepositUtils.Deposit storage _d) public view returns(uint256){
-        uint256 term = _d.fundedAt + TBTCConstants.getDepositTerm();
-        if(block.timestamp < term ){
-            return term - block.timestamp;
+        uint256 endOfTerm = _d.fundedAt + TBTCConstants.getDepositTerm();
+        if(block.timestamp < endOfTerm ) {
+            return endOfTerm - block.timestamp;
         }
         return 0;
     }
@@ -351,8 +351,8 @@ library DepositUtils {
         return _d.approvedDigests[_digest];
     }
 
-    /// @notice         Looks up the deposit beneficiary by calling the tBTC system
-    /// @return         The current deposit beneficiary if the Token exists.
+    /// @notice         Looks up the Fee Rebate Token holder.
+    /// @return         The current token holder if the Token exists.
     ///                 address(0) if the token does not exist.
     function feeRebateTokenHolder(Deposit storage _d) public view returns (address payable) {
         FeeRebateToken _feeRebateToken = FeeRebateToken(_d.FeeRebateToken);
@@ -404,7 +404,7 @@ library DepositUtils {
         if(_d.requesterAddress == rebateTokenHolder) return;
 
         // pay out the rebate if it is available
-        if(_tbtc.balanceOf(address(this)) >= signerFee(_d)){
+        if(_tbtc.balanceOf(address(this)) >= signerFee(_d)) {
             _tbtc.transfer(rebateTokenHolder, signerFee(_d));
         }
     }

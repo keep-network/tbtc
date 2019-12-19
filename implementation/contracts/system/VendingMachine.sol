@@ -61,7 +61,7 @@ contract VendingMachine {
         uint256 signerFee = deposit.signerFee();
         uint256 depositValue = getDepositValue();
 
-        if(tbtcToken.balanceOf(address(_dotId)) < signerFee){
+        if(tbtcToken.balanceOf(address(_dotId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
             tbtcToken.mint(address(_dotId), signerFee);
         }
