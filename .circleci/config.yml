@@ -332,8 +332,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
       - setup_github_package_registry:
           context: github-package-registry
           requires:
@@ -342,8 +342,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           context: keep-test
           requires:
             - setup_github_package_registry
@@ -351,8 +351,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           context: keep-test
           requires:
             - migrate_contracts
@@ -360,8 +360,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           context: keep-test
           requires:
             - migrate_contracts
@@ -370,8 +370,8 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-#            branches:
-#              ignore: /.*/
+            branches:
+              ignore: /.*/
           context: keep-test
           requires:
             - migrate_contracts
