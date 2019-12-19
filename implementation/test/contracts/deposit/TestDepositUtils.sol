@@ -69,8 +69,8 @@ contract TestDepositUtils is TestDeposit {
         return self.auctionValue();
     }
 
-    function signerFee() public pure returns (uint256) {
-        return DepositUtils.signerFee();
+    function signerFee() public view returns (uint256) {
+        return self.signerFee();
     }
 
     function beneficiaryReward() public pure returns (uint256) {
@@ -105,8 +105,8 @@ contract TestDepositUtils is TestDeposit {
         return self.utxoSize();
     }
 
-    function fetchOraclePrice() public view returns (uint256) {
-        return self.fetchOraclePrice();
+    function fetchBitcoinPrice() public view returns (uint256) {
+        return self.fetchBitcoinPrice();
     }
 
     function fetchBondAmount() public view returns (uint256) {

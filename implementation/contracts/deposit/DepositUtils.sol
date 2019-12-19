@@ -25,7 +25,9 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
+        address DepositOwnerToken;
         uint8 currentState;
+        uint256 signerFeeDivisor;
 
         // SET ON FRAUD
         uint256 liquidationInitiated;  // Timestamp of when liquidation starts
@@ -126,7 +128,7 @@ library DepositUtils {
                 _txIndexInBlock
             ),
             "Tx merkle proof is not valid for provided header and txId");
-
+        // TODO: Update for variable confirmation requirements via Vending Machine.
         evaluateProofDifficulty(_d, _bitcoinHeaders);
     }
 
@@ -218,10 +220,10 @@ library DepositUtils {
     /// @notice         Determines the fees due to the signers for work performeds
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
-    function signerFee() public pure returns (uint256) {
+    function signerFee(Deposit storage _d) public view returns (uint256) {
         return TBTCConstants.getLotSize()
             .mul(TBTCConstants.getSatoshiMultiplier())
-            .div(TBTCConstants.getSignerFeeDivisor());
+            .div(_d.signerFeeDivisor);
     }
 
     /// @notice     calculates the beneficiary reward based on the deposit size
@@ -236,7 +238,7 @@ library DepositUtils {
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSize().add(signerFee()).add(beneficiaryReward());
+            return TBTCConstants.getLotSize().add(signerFee(_d)).add(beneficiaryReward());
         } else {
             return 0;
         }
@@ -303,12 +305,12 @@ library DepositUtils {
         return bytes8LEToUint(_d.utxoSizeBytes);
     }
 
-    /// @notice     Gets the current oracle price of Bitcoin in Ether
-    /// @dev        Polls the oracle via the system contract
+    /// @notice     Gets the current price of Bitcoin in Ether
+    /// @dev        Polls the price feed via the system contract
     /// @return     The current price of 1 sat in wei
-    function fetchOraclePrice(Deposit storage _d) public view returns (uint256) {
+    function fetchBitcoinPrice(Deposit storage _d) public view returns (uint256) {
         ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
-        return _sys.fetchOraclePrice();
+        return _sys.fetchBitcoinPrice();
     }
 
     /// @notice     Fetches the Keep's bond amount in wei
@@ -370,6 +372,10 @@ library DepositUtils {
     ///             whenever this is called we are shutting down.
     function distributeBeneficiaryReward(Deposit storage _d) public {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
+
+        // If the beneficiary requested redemption, they didn't have to pay the reward.
+        if(_d.requesterAddress == depositBeneficiary(_d)) return;
+
         /* solium-disable-next-line */
         require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))),"Transfer failed");
     }

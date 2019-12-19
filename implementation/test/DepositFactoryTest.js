@@ -2,6 +2,7 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TBTCToken = artifacts.require('TBTCToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
+const DepositStates = artifacts.require('DepositStates')
 const DepositFunding = artifacts.require('DepositFunding')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const DepositRedemption = artifacts.require('DepositRedemption')
@@ -21,6 +22,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
   { name: 'TestDeposit', contract: TestDeposit },
 ]
@@ -38,7 +40,7 @@ contract('DepositFactory', (accounts) => {
     depositContract = deployed.TestDeposit
     factory = await DepositFactory.new(depositContract.address)
 
-    tbtcSystemStub = await TBTCSystemStub.new(factory.address)
+    tbtcSystemStub = await TBTCSystemStub.new(factory.address, utils.address0)
 
     tbtcToken = await TBTCToken.new(tbtcSystemStub.address)
   })
@@ -50,6 +52,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -58,6 +61,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -77,6 +81,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -107,6 +112,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -115,6 +121,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -165,6 +172,7 @@ contract('DepositFactory', (accounts) => {
       await depositContract.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }
@@ -184,6 +192,7 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        utils.address0,
         1,
         1,
         { value: funderBondAmount }

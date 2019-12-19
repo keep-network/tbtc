@@ -6,10 +6,12 @@ contract TestDeposit is Deposit {
 
     function setExteriorAddresses(
         address _sys,
-        address _token
+        address _token,
+        address _depositOwnerToken
     ) public {
         self.TBTCSystem = _sys;
         self.TBTCToken = _token;
+        self.DepositOwnerToken = _depositOwnerToken;
     }
 
     function reset() public {
@@ -29,6 +31,12 @@ contract TestDeposit is Deposit {
     }
 
     function getState() public view returns (uint8) { return self.currentState; }
+
+    function setSignerFeeDivisor(uint256 _signerFeeDivisor) public {
+        self.signerFeeDivisor = _signerFeeDivisor;
+    }
+
+    function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
 
     function setLiquidationAndCourtesyInitated(
         uint256 _liquidation,
@@ -142,9 +150,5 @@ contract TestDeposit is Deposit {
 
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
-    }
-
-    function attemptToLiquidateOnchain() public returns (bool) {
-        return self.attemptToLiquidateOnchain();
     }
 }

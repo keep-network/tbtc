@@ -1,7 +1,6 @@
 #!/bin/bash
 set -ex
 
-
 # UniswapFactoryAddress: Migration from keep-network/uniswap
 # UNISWAP_CONTRACT_DATA is set in the CircleCI job config
 UNISWAP_FACTORY_ADDRESS=""
@@ -31,5 +30,6 @@ function set_keep_registry_address() {
 
 fetch_uniswap_factory_address
 set_uniswap_factory_address
+
 fetch_keep_registry_address
 set_keep_registry_address

@@ -27,6 +27,10 @@ require('babel-polyfill');
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+
+const mnemonic = 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -64,6 +68,12 @@ module.exports = {
       network_id: "*",
       from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB",
     },
+    mainnet: {
+      provider: function() {
+        return new HDWalletProvider(mnemonic, "https://mainnet.infura.io/")
+      },
+      network_id: 1
+    }
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port

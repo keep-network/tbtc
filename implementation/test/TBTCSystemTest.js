@@ -1,6 +1,11 @@
 import expectThrow from './helpers/expectThrow'
 
+const BN = require('bn.js')
 const utils = require('./utils')
+const chai = require('chai')
+const expect = chai.expect
+const bnChai = require('bn-chai')
+chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
 
@@ -11,6 +16,7 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositUtils = artifacts.require('DepositUtils')
+const DepositStates = artifacts.require('DepositStates')
 const TBTCConstants = artifacts.require('TBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
 const DepositFactory = artifacts.require('DepositFactory')
@@ -20,6 +26,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TBTCConstants },
   { name: 'TestDeposit', contract: TestDeposit },
 ]
@@ -30,7 +37,7 @@ contract('TBTCSystem', (accounts) => {
 
   describe('requestNewKeep()', async () => {
     before(async () => {
-      const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+      const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY, utils.address0)
 
       ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
 
@@ -38,11 +45,10 @@ contract('TBTCSystem', (accounts) => {
       await keepRegistry.setVendor(ecdsaKeepVendor.address)
 
       const depositFactory = await DepositFactory.new(deployed.TestDeposit.address)
-      tbtcSystem = await TBTCSystem.new(depositFactory.address)
+      tbtcSystem = await TBTCSystem.new(depositFactory.address, utils.address0)
 
       await tbtcSystem.initialize(
-        keepRegistry.address,
-        '0x0000000000000000000000000000000000000000' // TBTC Uniswap Exchange
+        keepRegistry.address
       )
     })
 
@@ -68,7 +74,7 @@ contract('TBTCSystem', (accounts) => {
     before(async () => {
       // Create new TBTCSystem instance where only accounts[0] can mint ERC721 tokens
       // accounts[0] is taking the place of deposit factory address
-      tbtcSystem = await TBTCSystem.new(accounts[0])
+      tbtcSystem = await TBTCSystem.new(accounts[0], utils.address0)
     })
 
     it('correctly mints 721 token with approved caller', async () => {
@@ -91,6 +97,38 @@ contract('TBTCSystem', (accounts) => {
       await expectThrow(
         tbtcSystem.mint(mintTo, tokenId, { from: accounts[1] }),
         'Caller must be depositFactory contract'
+      )
+    })
+  })
+
+  describe('setSignerFeeDivisor', async () => {
+    it('sets the signer fee', async () => {
+      await tbtcSystem.setSignerFeeDivisor(new BN('201'))
+
+      const signerFeeDivisor = await tbtcSystem.getSignerFeeDivisor()
+      expect(signerFeeDivisor).to.eq.BN(new BN('201'))
+    })
+
+    it('reverts if msg.sender != owner', async () => {
+      await expectThrow(
+        tbtcSystem.setSignerFeeDivisor(new BN('201'), { from: accounts[1] }),
+        ''
+      )
+    })
+  })
+
+  describe('setAllowNewDeposits', async () => {
+    it('sets allowNewDeposits', async () => {
+      await tbtcSystem.setAllowNewDeposits(false)
+
+      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(false)
+    })
+
+    it('reverts if msg.sender != owner', async () => {
+      await expectThrow(
+        tbtcSystem.setAllowNewDeposits(false, { from: accounts[1] }),
+        ''
       )
     })
   })

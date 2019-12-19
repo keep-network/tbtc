@@ -3,7 +3,6 @@ import {
   createSnapshot,
   restoreSnapshot,
 } from './helpers/snapshot'
-import { AssertBalance } from './helpers/assertBalance'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
@@ -26,7 +25,6 @@ const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
 const TestDepositUtils = artifacts.require('TestDepositUtils')
 
-const UniswapExchangeStub = artifacts.require('UniswapExchangeStub')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -66,7 +64,6 @@ contract('DepositLiquidation', (accounts) => {
   let beneficiary
   let tbtcToken
   let tbtcSystemStub
-  let uniswapExchange
 
   before(async () => {
     await createSnapshot()
@@ -81,22 +78,20 @@ contract('DepositLiquidation', (accounts) => {
 
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0, utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
 
     testInstance = deployed.TestDeposit
 
-    testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address)
+    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, utils.address0)
 
-    tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
+    await tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
 
 
     const keepRegistry = await KeepRegistryStub.new()
-    uniswapExchange = await UniswapExchangeStub.new(tbtcToken.address)
     await tbtcSystemStub.initialize(
-      keepRegistry.address,
-      uniswapExchange.address
+      keepRegistry.address
     )
   })
 
@@ -236,7 +231,7 @@ contract('DepositLiquidation', (accounts) => {
     before(async () => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
-      oraclePrice = await tbtcSystemStub.fetchOraclePrice.call()
+      oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
       lotSize = await deployed.TBTCConstants.getLotSize.call()
       lotValue = lotSize.mul(oraclePrice)
 
@@ -361,7 +356,7 @@ contract('DepositLiquidation', (accounts) => {
     before(async () => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
-      oraclePrice = await tbtcSystemStub.fetchOraclePrice.call()
+      oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
       lotSize = await deployed.TBTCConstants.getLotSize.call()
       lotValue = lotSize.mul(oraclePrice)
 
@@ -516,64 +511,6 @@ contract('DepositLiquidation', (accounts) => {
         testInstance.notifyDepositExpiryCourtesyCall(),
         'Deposit term not elapsed'
       )
-    })
-  })
-
-  describe('#attemptToLiquidateOnchain', async () => {
-    let assertBalance
-    let deposit
-
-    beforeEach(async () => {
-      deposit = testInstance
-
-      /* eslint-disable no-multi-spaces */
-      const ethSupply = web3.utils.toWei('0.2', 'ether')  // 0.2 ETH
-      const tbtcSupply = new BN('1000000000')             // 10 TBTC
-      /* eslint-enable */
-      await uniswapExchange.addLiquidity(
-        ethSupply, tbtcSupply, '0',
-        { from: accounts[0], value: ethSupply }
-      )
-
-      // Helpers
-      assertBalance = new AssertBalance(tbtcToken)
-    })
-
-    it('returns false if address(exchange) = 0x0', async () => {
-      await tbtcSystemStub.reinitialize('0x0000000000000000000000000000000000000000')
-
-      const retval = await deposit.attemptToLiquidateOnchain.call()
-      expect(retval).to.be.false
-    })
-
-    it('liquidates using Uniswap successfully', async () => {
-      const minTbtcAmount = '100100000'
-      const expectedPrice = new BN('100000000')
-
-      await assertBalance.eth(deposit.address, '0')
-      await assertBalance.tbtc(deposit.address, '0')
-      await deposit.send(expectedPrice, { from: accounts[0] })
-      await assertBalance.eth(deposit.address, expectedPrice.toString())
-
-      const retval = await deposit.attemptToLiquidateOnchain.call()
-      expect(retval).to.be.true
-      await deposit.attemptToLiquidateOnchain()
-
-      await assertBalance.tbtc(deposit.address, minTbtcAmount)
-      await assertBalance.eth(deposit.address, '0')
-    })
-
-    it('returns false if cannot buy up enough tBTC', async () => {
-      const expectedPrice = new BN('100000000')
-      const depositEthFunding = expectedPrice.sub(new BN(100))
-
-      await assertBalance.eth(deposit.address, '0')
-      await assertBalance.tbtc(deposit.address, '0')
-      await deposit.send(depositEthFunding, { from: accounts[0] })
-      await assertBalance.eth(deposit.address, depositEthFunding.toString())
-
-      const retval = await deposit.attemptToLiquidateOnchain.call()
-      expect(retval).to.be.false
     })
   })
 })

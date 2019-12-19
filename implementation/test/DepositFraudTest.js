@@ -84,7 +84,7 @@ contract('DepositFraud', (accounts) => {
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0, utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
 
@@ -92,7 +92,8 @@ contract('DepositFraud', (accounts) => {
 
     await testInstance.setExteriorAddresses(
       tbtcSystemStub.address,
-      tbtcToken.address
+      tbtcToken.address,
+      utils.address0
     )
 
     tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
