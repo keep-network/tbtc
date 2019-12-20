@@ -79,13 +79,16 @@ library DepositRedemption {
         uint256 signerFee = _d.signerFee();
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d);
+
         // if we owe 0 TBTC, Deposit is pre-term, msg.sender is DOT owner and FRT holder.
-        if(tbtcOwed == 0){return;}
+        if(tbtcOwed == 0){
+            return;
+        }
         // if we owe signerfee, Deposit is pre-term, msg.sender is DOT owner but not FRT holder.
         if(tbtcOwed == signerFee){
             _tbtc.transferFrom(msg.sender, address(this), signerFee);
         }
-        // Redemmer always ows a full TBTC for at-term redemption.
+        // Redemmer always owes a full TBTC for at-term redemption.
         if(tbtcOwed == fullTbtc){
             // if signer fee is not escrowed, escrow and it here and send the rest to DOT owner
             if(_tbtc.balanceOf(address(this)) < signerFee){
@@ -93,7 +96,7 @@ library DepositRedemption {
                 _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc.sub(signerFee));
                 return;
             }
-            // Vending Macnine-owned DOTs have been used to mint TBTC, always burn TBTC to maintain supply peg
+            // Vending Macnine-owned DOTs have been used to mint TBTC, always burn a full TBTC.
             if(depositOwnerTokenHolder == vendingMachine){
                 _tbtc.burnFrom(msg.sender, fullTbtc);
             }
@@ -102,6 +105,7 @@ library DepositRedemption {
                 _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc);
             }
         }
+        revert("tbtcOwed value must be 0, SingerFee, or a full TBTC");
     }
 
     /// @notice                     Anyone can request redemption
