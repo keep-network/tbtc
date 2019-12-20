@@ -69,7 +69,7 @@ library DepositRedemption {
 
     /// @notice Handles TBTC requirements for redemption
     /// @dev Burns or transfers depending on term and supply-peg impact
-    function redemptionTBTCHandler(DepositUtils.Deposit storage _d) private {
+    function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) private {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         address feeRebateTokenHolder = _d.feeRebateTokenHolder();
         address depositOwnerTokenHolder = _d.depositOwner();
@@ -121,7 +121,7 @@ library DepositRedemption {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 
-        redemptionTBTCHandler(_d);
+        performRedemptionTBTCTransfers(_d);
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
