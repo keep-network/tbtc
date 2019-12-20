@@ -122,6 +122,10 @@ contract TestDeposit is Deposit {
 
     function getUTXOInfo() public view returns (bytes8, uint256, bytes memory) {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
+    } 
+
+    function getRedemptionTbtcRequirement() public view returns (uint256) {
+        return self.getRedemptionTbtcRequirement();
     }
 
     function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
