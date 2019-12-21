@@ -1,6 +1,5 @@
 import expectThrow from './helpers/expectThrow'
 import increaseTime from './helpers/increaseTime'
-import latestTime from './helpers/latestTime'
 import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 
 const BytesLib = artifacts.require('BytesLib')
