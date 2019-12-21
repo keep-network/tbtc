@@ -69,7 +69,7 @@ library DepositRedemption {
 
     /// @notice Handles TBTC requirements for redemption
     /// @dev Burns or transfers depending on term and supply-peg impact
-    function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) private {
+    function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         address feeRebateTokenHolder = _d.feeRebateTokenHolder();
         address depositOwnerTokenHolder = _d.depositOwner();
@@ -87,23 +87,24 @@ library DepositRedemption {
         // if we owe signerfee, Deposit is pre-term, msg.sender is DOT owner but not FRT holder.
         if(tbtcOwed == signerFee){
             _tbtc.transferFrom(msg.sender, address(this), signerFee);
+            return;
         }
         // Redemmer always owes a full TBTC for at-term redemption.
         if(tbtcOwed == fullTbtc){
-            // if signer fee is not escrowed, escrow and it here and send the rest to DOT owner
-            if(_tbtc.balanceOf(address(this)) < signerFee){
-                _tbtc.transferFrom(msg.sender, address(this), signerFee);
-                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc.sub(signerFee));
-                return;
-            }
             // Vending Macnine-owned DOTs have been used to mint TBTC, always burn a full TBTC.
             if(depositOwnerTokenHolder == vendingMachine){
                 _tbtc.burnFrom(msg.sender, fullTbtc);
+            }
+            // if signer fee is not escrowed, escrow and it here and send the rest to DOT owner
+            else if(_tbtc.balanceOf(address(this)) < signerFee){
+                _tbtc.transferFrom(msg.sender, address(this), signerFee);
+                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc.sub(signerFee));
             }
             // tansfer a full TBTC to DOT owner if signerFee is escrowed
             else{
                 _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc);
             }
+            return;
         }
         revert("tbtcOwed value must be 0, SingerFee, or a full TBTC");
     }
