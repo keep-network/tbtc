@@ -75,7 +75,7 @@ contract('DepositRedemption', (accounts) => {
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
-    tbtcSystemStub = await TBTCSystemStub.new()
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
     testInstance = deployed.TestDeposit
     depositOwnerToken = deployed.DepositOwnerToken

@@ -36,6 +36,7 @@ contract('TBTCSystem', (accounts) => {
 
   describe('requestNewKeep()', async () => {
     before(async () => {
+      // deploy with address0 after testDeploy
       await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
       ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
@@ -43,7 +44,7 @@ contract('TBTCSystem', (accounts) => {
       const keepRegistry = await KeepRegistryStub.new()
       await keepRegistry.setVendor(ecdsaKeepVendor.address)
 
-      tbtcSystem = await TBTCSystem.new()
+      tbtcSystem = await TBTCSystem.new(utils.address0)
 
       await tbtcSystem.initialize(
         keepRegistry.address

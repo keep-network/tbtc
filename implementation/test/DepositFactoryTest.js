@@ -43,7 +43,7 @@ contract('DepositFactory', (accounts) => {
     depositContract = deployed.TestDeposit
     factory = await DepositFactory.new(depositContract.address)
 
-    tbtcSystemStub = await TBTCSystemStub.new()
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TBTCToken.new(tbtcSystemStub.address)
     depositOwnerToken = deployed.DepositOwnerToken

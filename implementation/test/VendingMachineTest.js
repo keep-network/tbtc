@@ -94,7 +94,7 @@ contract('VendingMachine', (accounts) => {
 
     assertBalance = new AssertBalance(tbtcToken)
 
-    tbtcSystemStub = await TBTCSystemStub.new()
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     testInstance = deployed.TestDeposit
 
     await testInstance.setExteriorAddresses(

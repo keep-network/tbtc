@@ -84,7 +84,7 @@ contract('DepositLiquidation', (accounts) => {
 
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
-    tbtcSystemStub = await TBTCSystemStub.new()
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
     depositOwnerToken = deployed.DepositOwnerToken
@@ -247,7 +247,7 @@ contract('DepositLiquidation', (accounts) => {
     before(async () => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
-      oraclePrice = await tbtcSystemStub.fetchOraclePrice.call()
+      oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
       lotSize = await deployed.TBTCConstants.getLotSize.call()
       lotValue = lotSize.mul(oraclePrice)
 
@@ -372,7 +372,7 @@ contract('DepositLiquidation', (accounts) => {
     before(async () => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
-      oraclePrice = await tbtcSystemStub.fetchOraclePrice.call()
+      oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
       lotSize = await deployed.TBTCConstants.getLotSize.call()
       lotValue = lotSize.mul(oraclePrice)
 

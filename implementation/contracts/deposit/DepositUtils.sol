@@ -319,12 +319,12 @@ library DepositUtils {
         return bytes8LEToUint(_d.utxoSizeBytes);
     }
 
-    /// @notice     Gets the current oracle price of Bitcoin in Ether
-    /// @dev        Polls the oracle via the system contract
+    /// @notice     Gets the current price of Bitcoin in Ether
+    /// @dev        Polls the price feed via the system contract
     /// @return     The current price of 1 sat in wei
-    function fetchOraclePrice(Deposit storage _d) public view returns (uint256) {
+    function fetchBitcoinPrice(Deposit storage _d) public view returns (uint256) {
         ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
-        return _sys.fetchOraclePrice();
+        return _sys.fetchBitcoinPrice();
     }
 
     /// @notice     Fetches the Keep's bond amount in wei

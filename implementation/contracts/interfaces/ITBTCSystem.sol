@@ -9,7 +9,7 @@ interface ITBTCSystem {
     // expected behavior:
     // return the price of 1 sat in wei
     // these are the native units of the deposit contract
-    function fetchOraclePrice() external view returns (uint256);
+    function fetchBitcoinPrice() external view returns (uint256);
 
     // passthrough requests for the oracle
     function fetchRelayCurrentDifficulty() external view returns (uint256);

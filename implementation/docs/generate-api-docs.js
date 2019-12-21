@@ -20,7 +20,7 @@ let jsonFiles = [
     "../../implementation/build/contracts/DepositFunding.json",
     "../../implementation/build/contracts/DepositRedemption.json",
     "../../implementation/build/contracts/DepositLiquidation.json",
-    "../../implementation/build/contracts/BTCETHPriceFeed.json",
+    "../../implementation/build/contracts/IBTCETHPriceFeed.json",
     "../../implementation/build/contracts/IBondedECDSAKeep.json",
 ]
 
@@ -34,13 +34,19 @@ jsonFiles.forEach(file => {
 
         let subsection = "=== `" + signature + "`\n\n"
 
+        let userDocs = json.userdoc.methods[signature]
         let devDocs = json.devdoc.methods[signature]
+
+        if (userDocs.notice) {
+            subsection += `${userDocs.notice}\n\n`
+        }
+
         if (devDocs) {
+            subsection += "==== Developers\n\n"
+            
             if (devDocs.details) {
                 subsection += `${devDocs.details}\n\n`
             }
-
-            subsection += "==== Developers\n\n"
 
             if (devDocs.params) {
                 for (const paramName in devDocs.params) {

@@ -105,8 +105,8 @@ contract TestDepositUtils is TestDeposit {
         return self.utxoSize();
     }
 
-    function fetchOraclePrice() public view returns (uint256) {
-        return self.fetchOraclePrice();
+    function fetchBitcoinPrice() public view returns (uint256) {
+        return self.fetchBitcoinPrice();
     }
 
     function fetchBondAmount() public view returns (uint256) {
