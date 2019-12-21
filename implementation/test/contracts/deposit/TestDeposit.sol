@@ -128,6 +128,10 @@ contract TestDeposit is Deposit {
         return self.getRedemptionTbtcRequirement();
     }
 
+     function performRedemptionTBTCTransfers() public {
+        self.performRedemptionTBTCTransfers();
+    }
+
     function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
         self.approvedDigests[_digest] = _timestamp;
     }
