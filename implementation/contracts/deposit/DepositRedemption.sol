@@ -106,7 +106,7 @@ library DepositRedemption {
             }
             return;
         }
-        revert("tbtcOwed value must be 0, SingerFee, or a full TBTC");
+        revert("tbtcOwed value must be 0, SignerFee, or a full TBTC");
     }
 
     /// @notice                     Anyone can request redemption
