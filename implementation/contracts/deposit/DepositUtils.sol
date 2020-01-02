@@ -201,7 +201,7 @@ library DepositUtils {
         _utxoOutpoint = abi.encodePacked(txID, _fundingOutputIndex, hex"000000");
     }
 
-    /// @notice View function to retreive the remaining term of the deposit
+    /// @notice Retreive the remaining term of the deposit
     /// @dev    The value is not guaranteed since block.timestmap can be lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at term
     function remainingTerm(DepositUtils.Deposit storage _d) public view returns(uint256){
@@ -400,7 +400,7 @@ library DepositUtils {
 
         address rebateTokenHolder = feeRebateTokenHolder(_d);
 
-        // Don't escrow a rebate if the requestor is also the Fee Rebate Token holder
+        // We didn't escrow a rebate if the requestor is also the Fee Rebate Token holder
         if(_d.requesterAddress == rebateTokenHolder) return;
 
         // pay out the rebate if it is available

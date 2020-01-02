@@ -50,7 +50,7 @@ library DepositRedemption {
         _d.approvedDigests[_digest] = block.timestamp;
     }
 
-    /// @notice View function for access to TBTC required by redemption.
+    /// @notice Get TBTC required by redemption.
     /// @dev    Will revert if redemption is not possible by msg.sender.
     /// @return The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d) public view returns(uint256){       

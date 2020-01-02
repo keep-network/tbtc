@@ -35,7 +35,7 @@ contract Deposit {
         return self.inActive();
     }
 
-    /// @notice View function to retreive the remaining term of the deposit in seconds.
+    /// @notice Retreive the remaining term of the deposit in seconds.
     /// @dev    The value is not guaranteed since block.timestmap can be lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at term
     function remainingTerm() public view returns(uint256){
