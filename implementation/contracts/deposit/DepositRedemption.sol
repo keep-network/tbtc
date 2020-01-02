@@ -75,7 +75,7 @@ library DepositRedemption {
         address depositOwnerTokenHolder = _d.depositOwner();
         address vendingMachine = _d.VendingMachine;
 
-        uint256 fullTbtc = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+        uint256 tbtcLot = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
         uint256 signerFee = _d.signerFee();
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d);
@@ -90,19 +90,19 @@ library DepositRedemption {
             return;
         }
         // Redemmer always owes a full TBTC for at-term redemption.
-        if(tbtcOwed == fullTbtc){
+        if(tbtcOwed == tbtcLot){
             // Vending Macnine-owned DOTs have been used to mint TBTC, always burn a full TBTC.
             if(depositOwnerTokenHolder == vendingMachine){
-                _tbtc.burnFrom(msg.sender, fullTbtc);
+                _tbtc.burnFrom(msg.sender, tbtcLot);
             }
             // if signer fee is not escrowed, escrow and it here and send the rest to DOT owner
             else if(_tbtc.balanceOf(address(this)) < signerFee){
                 _tbtc.transferFrom(msg.sender, address(this), signerFee);
-                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc.sub(signerFee));
+                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, tbtcLot.sub(signerFee));
             }
             // tansfer a full TBTC to DOT owner if signerFee is escrowed
             else{
-                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, fullTbtc);
+                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, tbtcLot);
             }
             return;
         }
