@@ -67,14 +67,14 @@ library DepositRedemption {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
         require(
-            msg.sender == DepositOwnerToken(_d.DepositOwnerToken).ownerOf(uint256(address(this))),
+            _requesterAddress == DepositOwnerToken(_d.DepositOwnerToken).ownerOf(uint256(address(this))),
             "redemption can only be called by deposit owner"
         );
 
         // Transfer the deposit beneficiary reward from `msg.sender`,
         // unless it's the beneficiary who is requesting redemption.
-        if(_d.depositBeneficiary() != msg.sender){
-            TBTCToken(_d.TBTCToken).transferFrom(msg.sender, address(this), DepositUtils.beneficiaryReward());
+        if(_d.depositBeneficiary() != _requesterAddress){
+            TBTCToken(_d.TBTCToken).transferFrom(_requesterAddress, address(this), DepositUtils.beneficiaryReward());
         }
 
         // Convert the 8-byte LE ints to uint256
@@ -101,7 +101,7 @@ library DepositRedemption {
 
         _d.setAwaitingWithdrawalSignature();
         _d.logRedemptionRequested(
-            msg.sender,
+            _requesterAddress,
             _sighash,
             _d.utxoSize(),
             _requesterPKH,

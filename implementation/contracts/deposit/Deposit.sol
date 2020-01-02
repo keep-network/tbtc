@@ -21,6 +21,20 @@ contract Deposit {
     constructor () public {}
 
     function () external payable {}
+    
+    /// @notice Receives approval for a token call.
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes calldata _extraData
+    ) external {
+        require(_token == self.TBTCToken, "approveAndCall implemented for TBTC only.");
+        // TODO check selector as below:
+        // require(selector == this.requestRedemption.selector, "Invalid selector for receiveApproval. Only requestRedemption is supported.");
+        (bool success, ) = address(this).call(_extraData);
+        require(success, "requestRedemption call failed");
+    }
 
     /// @notice     Get the integer representing the current state
     /// @dev        We implement this because contracts don't handle foreign enums well

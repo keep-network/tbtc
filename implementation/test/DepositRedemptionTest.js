@@ -117,6 +117,32 @@ contract('DepositRedemption', (accounts) => {
       await restoreSnapshot()
     })
 
+    it('approveAndCall', async () => {
+      await tbtcToken.resetBalance(requiredBalance)
+      await tbtcToken.resetAllowance(testInstance.address, '0')
+
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      const requestRedemptionABI = TestDeposit.abi.filter((x) => x.name == 'requestRedemption')[0]
+      const res = await tbtcToken.approveAndCall(
+        testInstance.address,
+        requiredBalance,
+        web3.eth.abi.encodeFunctionCall(requestRedemptionABI, ['0x1111111100000000', requesterPKH, accounts[0]])
+      )
+      assert(res)
+
+      const requestInfo = await testInstance.getRequestInfo()
+      assert.equal(requestInfo[1], requesterPKH)
+      assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
+      assert.equal(requestInfo[4], sighash)
+
+      // fired an event
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList[0].returnValues._digest, sighash)
+    })
+
     it('updates state successfully and fires a RedemptionRequested event', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
