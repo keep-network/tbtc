@@ -64,7 +64,7 @@ library DepositRedemption {
             }
             return 0;
         }
-        return TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+        return TBTCConstants.getLotSizeTbtc();
     }
 
     /// @notice Handles TBTC requirements for redemption
@@ -75,7 +75,7 @@ library DepositRedemption {
         address depositOwnerTokenHolder = _d.depositOwner();
         address vendingMachine = _d.VendingMachine;
 
-        uint256 fullTbtc = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+        uint256 fullTbtc = TBTCConstants.getLotSizeTbtc();
         uint256 signerFee = _d.signerFee();
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d);
