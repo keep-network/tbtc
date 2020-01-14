@@ -91,7 +91,11 @@ library DepositRedemption {
         }
         // Redemmer always owes a full TBTC for at-term redemption.
         if(tbtcOwed == tbtcLot){
-            // Vending Macnine-owned DOTs have been used to mint TBTC, always burn a full TBTC.
+            // the TDT holder has exclusive redemption rights to a UXTO up until the deposit’s term.
+            // At that point, we open it up so anyone may redeem it. 
+            // As compensation, the DOT owner is reimbursed in TBTC
+            // Vending Machine-owned DOTs have been used to mint TBTC, 
+            // and we should always burn a full TBTC to redeem the deposit.
             if(depositOwnerTokenHolder == vendingMachine){
                 _tbtc.burnFrom(msg.sender, tbtcLot);
             }
