@@ -97,10 +97,8 @@ contract('DepositRedemption', (accounts) => {
     await depositOwnerToken.forceMint(accounts[0], dotId)
 
 
-    const lotSize = await deployed.TBTCConstants.getLotSize()
-    const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
+    depositValue = await deployed.TBTCConstants.getLotSizeTbtc()
     signerFee = await testInstance.signerFee.call()
-    depositValue = lotSize.mul(satoshiMultiplier)
     depositTerm = await deployed.TBTCConstants.getDepositTerm.call()
   })
 
