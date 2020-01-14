@@ -184,7 +184,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(events.length, 0)
     })
 
-    it('Transfers signerFee if deposit is pre-term and msg.sender is not FRT holder', async () => {
+    it('transfers signerFee if deposit is pre-term and msg.sender is not FRT holder', async () => {
       await tbtcToken.resetBalance(signerFee)
       await tbtcToken.resetAllowance(testInstance.address, signerFee)
       block = await web3.eth.getBlock('latest')
