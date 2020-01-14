@@ -230,7 +230,7 @@ contract('DepositRedemption', (accounts) => {
       expect(events[0].returnValues.value.toString()).to.equal(depositValue.toString())
     })
 
-    it('correctly splits TBTC if Deposit is at-term and fee is not escrowed', async () => {
+    it('escrows fee and sends correct TBTC if Deposit is at-term and fee is not escrowed', async () => {
       await increaseTime(depositTerm.toNumber())
       await depositOwnerToken.transferFrom(accounts[0], accounts[1], dotId)
       await tbtcToken.resetBalance(depositValue)
@@ -304,8 +304,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
-    it('transfers the fee rebate reward to the fee rebate token holder', async () => {
-      // await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
+    it('escrows the fee rebate reward for the fee rebate token holder', async () => {
       const block = await web3.eth.getBlock('latest')
 
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)

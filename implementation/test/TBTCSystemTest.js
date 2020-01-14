@@ -36,7 +36,6 @@ contract('TBTCSystem', (accounts) => {
 
   describe('requestNewKeep()', async () => {
     before(async () => {
-      // deploy with address0 after testDeploy
       await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
       ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
