@@ -58,7 +58,7 @@ library DepositLiquidation {
             revert("System returned a bad price");
         }
 
-        uint256 _lotSize = TBTCConstants.getLotSize();
+        uint256 _lotSize = TBTCConstants.getLotSizeBtc();
         uint256 _lotValue = _lotSize * _price;
 
         // Amount of wei the signers have
@@ -71,7 +71,7 @@ library DepositLiquidation {
     /// @notice         Starts signer liquidation due to fraud
     /// @dev            We first attempt to liquidate on chain, then by auction
     /// @param  _d      deposit storage pointer
-    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) public {
+    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(true);
 
         // Reclaim used state for gas savings
@@ -86,20 +86,24 @@ library DepositLiquidation {
             return;
         }
 
-        _d.setFraudLiquidationInProgress();
+        _d.liquidationInitiator = msg.sender;
         _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+
+        _d.setFraudLiquidationInProgress();
+        
     }
 
     /// @notice         Starts signer liquidation due to abort or undercollateralization
     /// @dev            We first attempt to liquidate on chain, then by auction
     /// @param  _d      deposit storage pointer
-    function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) public {
+    function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(false);
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
         _d.seizeSignerBonds();
 
         _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+        _d.liquidationInitiator = msg.sender;
         _d.setFraudLiquidationInProgress();
     }
 
@@ -231,8 +235,8 @@ library DepositLiquidation {
 
         // Burn the outstanding TBTC
         TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
-        require(_tbtcToken.balanceOf(msg.sender) >= TBTCConstants.getLotSize(), "Not enough TBTC to cover outstanding debt");
-        _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSize());  // burn minimal amount to cover size
+        require(_tbtcToken.balanceOf(msg.sender) >= TBTCConstants.getLotSizeTbtc(), "Not enough TBTC to cover outstanding debt");
+        _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSizeTbtc());  // burn minimal amount to cover size
 
         // Distribute funds to auction buyer
         uint256 _valueToDistribute = _d.auctionValue();
@@ -242,13 +246,17 @@ library DepositLiquidation {
         _d.distributeFeeRebate();
 
         // then if there are funds left, and it wasn't fraud, pay out the signers
-        if (address(this).balance > 0) {
+        uint256 contractEthBalance = address(this).balance;
+        if (contractEthBalance > 1) {
             if (_wasFraud) {
-                // Burn it
-                address(0).transfer(address(this).balance);
+                // Transfer remaining funds to the liquidation triggerer
+                _d.liquidationInitiator.transfer(contractEthBalance);
             } else {
-                // Send it back
-                _d.pushFundsToKeepGroup(address(this).balance);
+                // Split half between the triggerer and the signers.
+                // There will always be a liquidation initiator.
+                uint256 split = contractEthBalance.div(2);
+                _d.pushFundsToKeepGroup(split);
+                _d.liquidationInitiator.transfer(split);
             }
         }
     }
