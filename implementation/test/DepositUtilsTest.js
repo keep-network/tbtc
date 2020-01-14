@@ -298,13 +298,6 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('beneficiaryReward()', async () => {
-    it('returns a derived constant', async () => {
-      const beneficiaryReward = await testUtilsInstance.beneficiaryReward.call()
-      expect(beneficiaryReward).to.eq.BN(10 ** 5)
-    })
-  })
-
   describe('determineCompressionPrefix()', async () => {
     it('selects 2 for even', async () => {
       const res = await testUtilsInstance.determineCompressionPrefix.call('0x' + '00'.repeat(32))
