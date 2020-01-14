@@ -172,7 +172,7 @@ contract('DepositRedemption', (accounts) => {
       await restoreSnapshot()
     })
 
-    it('Does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
+    it('does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
 
       block = await web3.eth.getBlock('latest')
@@ -182,7 +182,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(events.length, 0)
     })
 
-    it('Transfers signerFee if deposit is pre-term and msg.sender is not FRT holder', async () => {
+    it('transfers signerFee if deposit is pre-term and msg.sender is not FRT holder', async () => {
       await tbtcToken.resetBalance(signerFee)
       await tbtcToken.resetAllowance(testInstance.address, signerFee)
       block = await web3.eth.getBlock('latest')
@@ -192,7 +192,7 @@ contract('DepositRedemption', (accounts) => {
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
       expect(events[0].returnValues.from).to.equal(accounts[0])
       expect(events[0].returnValues.to).to.equal(testInstance.address)
-      expect(events[0].returnValues.value.toString()).to.equal(signerFee.toString())
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
 
     it('burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine', async () => {
@@ -208,7 +208,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(events.length, 1)
       expect(events[0].returnValues.from).to.equal(accounts[0])
       expect(events[0].returnValues.to).to.equal(utils.address0)
-      expect(events[0].returnValues.value.toString()).to.equal(depositValue.toString())
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
     })
 
     it('sends 1 TBTC to Deposit Token owner if deposit is at-term and fee is escrowed', async () => {
@@ -225,10 +225,10 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(events.length, 1)
       expect(events[0].returnValues.from).to.equal(accounts[0])
       expect(events[0].returnValues.to).to.equal(accounts[1])
-      expect(events[0].returnValues.value.toString()).to.equal(depositValue.toString())
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
     })
 
-    it('correctly splits TBTC if Deposit is at-term and fee is not escrowed', async () => {
+    it('escrows fee and sends correct TBTC if Deposit is at-term and fee is not escrowed', async () => {
       await increaseTime(depositTerm.toNumber())
       await depositOwnerToken.transferFrom(accounts[0], accounts[1], dotId)
       await tbtcToken.resetBalance(depositValue)
@@ -241,10 +241,10 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(events.length, 2)
       expect(events[0].returnValues.from).to.equal(accounts[0])
       expect(events[0].returnValues.to).to.equal(testInstance.address)
-      expect(events[0].returnValues.value.toString()).to.equal(signerFee.toString())
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
       expect(events[1].returnValues.from).to.equal(accounts[0])
       expect(events[1].returnValues.to).to.equal(accounts[1])
-      expect(events[1].returnValues.value.toString()).to.equal(depositValue.sub(signerFee).toString())
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
     })
   })
 
@@ -302,8 +302,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
-    it('transfers the fee rebate reward to the fee rebate token holder', async () => {
-      // await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
+    it('escrows the fee rebate reward for the fee rebate token holder', async () => {
       const block = await web3.eth.getBlock('latest')
 
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
@@ -316,7 +315,7 @@ contract('DepositRedemption', (accounts) => {
       const event = events[0]
       expect(event.returnValues.from).to.equal(accounts[0])
       expect(event.returnValues.to).to.equal(testInstance.address)
-      expect(event.returnValues.value.toString()).to.equal(signerFee.toString())
+      expect(event.returnValues.value).to.eq.BN(signerFee)
     })
 
     it('reverts if not in Active or Courtesy', async () => {

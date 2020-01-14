@@ -178,7 +178,7 @@ contract('DepositLiquidation', (accounts) => {
       expect(tokenCheck, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
     })
 
-    it('distributes beneficiary reward', async () => {
+    it('distributes reward to FRT holder', async () => {
       // Make sure Deposit has enough to cover beneficiary reward
       const beneficiaryReward = await testInstance.signerFee.call()
 
