@@ -209,32 +209,43 @@ contract('DepositLiquidation', (accounts) => {
       expect(new BN(finalBalance), 'buyer balance should increase').to.be.gte.BN(initialBalance)
     })
 
-    it('returns keep funds if not fraud', async () => {
-      const initialBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
-
-      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
-
-      const finalBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
-
-      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'buyer balance should increase')
-    })
-
-    it('burns if fraud', async () => {
-      const value = 1000000000000
+    it('Splits funds between liquidation triggerer and signers if not fraud', async () => {
+      const liquidationInitiator = accounts[2]
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
 
-      const initialBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+      const initialBalance = await web3.eth.getBalance(liquidationInitiator)
+      const initalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      await testInstance.send(value, { from: accounts[0] })
-
-      await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
+      await testInstance.setLiquidationInitiator(liquidationInitiator)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
-      const finalBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+      const finalBalance = await web3.eth.getBalance(liquidationInitiator)
+      const finalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      expect(new BN(finalBalance)).to.eq.BN(initialBalance)
+      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'liquidation triggerer balance should increase')
+      assert(new BN(finalSignerBalance).gtn(new BN(initalSignerBalance)), 'liquidation triggerer balance should increase')
+    })
+
+    it('Transfers full ETH balance to liquidation triggerer if fraud', async () => {
+      const block = await web3.eth.getBlock('latest')
+      const notifiedTime = block.timestamp
+      const liquidationInitiator = accounts[2]
+
+      const initialBalance = await web3.eth.getBalance(liquidationInitiator)
+      const initalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+
+      await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
+      await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+      await testInstance.setLiquidationInitiator(liquidationInitiator)
+      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
+
+      const finalBalance = await web3.eth.getBalance(liquidationInitiator)
+      const finalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+
+      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'liquidation triggerer balance should increase')
+      assert.equal(initalSignerBalance, finalSignerBalance, 'No value should be distributed to signers')
     })
   })
 

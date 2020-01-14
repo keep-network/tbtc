@@ -49,6 +49,9 @@ contract TestDeposit is Deposit {
         self.liquidationInitiated = _liquidation;
         self.courtesyCallInitiated = _courtesy;
     }
+    function setLiquidationInitiator(address payable _initiator) public {
+        self.liquidationInitiator = _initiator;
+    }
 
     function getLiquidationAndCourtesyInitiated() public view returns (uint256, uint256) {
         return (self.liquidationInitiated, self.courtesyCallInitiated);
