@@ -239,30 +239,6 @@ library DepositUtils {
         return TBTCConstants.getLotSizeTbtc().div(_d.signerFeeDivisor);
     }
 
-    /// @notice     calculates the beneficiary reward based on the deposit size
-    /// @dev        the amount of extra ether to pay the beneficiary at closing time
-    /// @return     the amount of ether in wei to pay the beneficiary
-    function beneficiaryReward() public pure returns (uint256) {
-        return TBTCConstants.getLotSizeTbtc().div(TBTCConstants.getBeneficiaryRewardDivisor());
-    }
-
-    /// @notice         Determines the amount of TBTC paid to redeem the deposit
-    /// @dev            This is the amount of TBTC needed to repay to redeem the Deposit
-    /// @return         Outstanding debt in smallest TBTC unit (tsat)
-    function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSizeTbtc().add(signerFee(_d)).add(beneficiaryReward());
-        } else {
-            return 0;
-        }
-    }
-
-    /// @notice     Determines the threshold amount of TBTC necessary to liquidate
-    /// @return     The amount of TBTC to buy during liquidation
-    function liquidationTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        return TBTCConstants.getLotSizeTbtc().add(beneficiaryReward());
-    }
-
     /// @notice     Determines the amount of TBTC accepted in the auction
     /// @dev        If requesterAddress is non-0, that means we came from redemption, and no auction should happen
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
