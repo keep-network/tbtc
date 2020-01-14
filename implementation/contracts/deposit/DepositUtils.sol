@@ -35,6 +35,7 @@ library DepositUtils {
         // SET ON FRAUD
         uint256 liquidationInitiated;  // Timestamp of when liquidation starts
         uint256 courtesyCallInitiated; // When the courtesy call is issued
+        address payable liquidationInitiator;
 
         // written when we request a keep
         address keepAddress;  // The address of our keep contract
@@ -191,7 +192,7 @@ library DepositUtils {
 
         _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
 
-        require(bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
+        require(bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSizeBtc(), "Deposit too small");
 
         checkProofFromTxId(_d, txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
@@ -235,16 +236,14 @@ library DepositUtils {
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee(Deposit storage _d) public view returns (uint256) {
-        return TBTCConstants.getLotSize()
-            .mul(TBTCConstants.getSatoshiMultiplier())
-            .div(_d.signerFeeDivisor);
+        return TBTCConstants.getLotSizeTbtc().div(_d.signerFeeDivisor);
     }
 
     /// @notice     calculates the beneficiary reward based on the deposit size
     /// @dev        the amount of extra ether to pay the beneficiary at closing time
     /// @return     the amount of ether in wei to pay the beneficiary
     function beneficiaryReward() public pure returns (uint256) {
-        return TBTCConstants.getLotSize().div(TBTCConstants.getBeneficiaryRewardDivisor());
+        return TBTCConstants.getLotSizeTbtc().div(TBTCConstants.getBeneficiaryRewardDivisor());
     }
 
     /// @notice         Determines the amount of TBTC paid to redeem the deposit
@@ -252,7 +251,7 @@ library DepositUtils {
     /// @return         Outstanding debt in smallest TBTC unit (tsat)
     function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSize().add(signerFee(_d)).add(beneficiaryReward());
+            return TBTCConstants.getLotSizeTbtc().add(signerFee(_d)).add(beneficiaryReward());
         } else {
             return 0;
         }
@@ -261,7 +260,7 @@ library DepositUtils {
     /// @notice     Determines the threshold amount of TBTC necessary to liquidate
     /// @return     The amount of TBTC to buy during liquidation
     function liquidationTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        return TBTCConstants.getLotSize().add(beneficiaryReward());
+        return TBTCConstants.getLotSizeTbtc().add(beneficiaryReward());
     }
 
     /// @notice     Determines the amount of TBTC accepted in the auction
@@ -269,7 +268,7 @@ library DepositUtils {
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSize();
+            return TBTCConstants.getLotSizeTbtc();
         } else {
             return 0;
         }
