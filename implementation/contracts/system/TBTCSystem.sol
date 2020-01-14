@@ -8,11 +8,9 @@ import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./ERC721MinterAuthority.sol";
 
-contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, DepositLog {
+contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     bool _initialized = false;
 
@@ -27,13 +25,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
 
 
-    constructor(
-        address _depositFactory,
-        address _priceFeed
-    )
-        ERC721MinterAuthority(_depositFactory)
-        public
-    {
+    constructor(address _priceFeed) public {
         priceFeed = _priceFeed;
     }
 
@@ -106,22 +98,5 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
 
         _keepAddress = IECDSAKeepVendor(keepVendorAddress)
             .openKeep(_n,_m, msg.sender);
-    }
-
-    /// @notice          Function to mint a new token.
-    /// @dev             Reverts if the given token ID already exists.
-    ///                  This function can only be called by depositFactory
-    /// @param _to       The address that will own the minted token
-    /// @param _tokenId  uint256 ID of the token to be minted
-    function mint(address _to, uint256 _tokenId) public onlyFactory {
-        _mint(_to, _tokenId);
-    }
-
-    /// @notice  Checks if an address is a deposit.
-    /// @dev     Verifies if Deposit ERC721 token with given address exists.
-    /// @param _depositAddress  The address to check
-    /// @return  True if deposit with given value exists, false otherwise.
-    function isDeposit(address _depositAddress) public returns (bool){
-        return _exists(uint256(_depositAddress));
     }
 }

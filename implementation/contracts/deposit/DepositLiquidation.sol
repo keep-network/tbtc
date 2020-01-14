@@ -238,8 +238,8 @@ library DepositLiquidation {
         uint256 _valueToDistribute = _d.auctionValue();
         msg.sender.transfer(_valueToDistribute);
 
-        // Send any TBTC left to the beneficiary
-        _d.distributeBeneficiaryReward();
+        // Send any TBTC left to the Fee Rebate Token holder
+        _d.distributeFeeRebate();
 
         // then if there are funds left, and it wasn't fraud, pay out the signers
         if (address(this).balance > 0) {
