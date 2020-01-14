@@ -125,7 +125,7 @@ contract('DepositLiquidation', (accounts) => {
     let buyer
 
     before(async () => {
-      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      lotSize = await deployed.TBTCConstants.getLotSizeTbtc.call()
       buyer = accounts[1]
     })
 
@@ -248,7 +248,7 @@ contract('DepositLiquidation', (accounts) => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
       oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
-      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      lotSize = await deployed.TBTCConstants.getLotSizeBtc.call()
       lotValue = lotSize.mul(oraclePrice)
 
       undercollateralizedPercent = await deployed.TBTCConstants.getUndercollateralizedPercent.call()
@@ -373,7 +373,7 @@ contract('DepositLiquidation', (accounts) => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
       oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
-      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      lotSize = await deployed.TBTCConstants.getLotSizeBtc.call()
       lotValue = lotSize.mul(oraclePrice)
 
       severelyUndercollateralizedPercent = await deployed.TBTCConstants.getSeverelyUndercollateralizedPercent.call()
