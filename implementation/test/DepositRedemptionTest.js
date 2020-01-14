@@ -174,7 +174,7 @@ contract('DepositRedemption', (accounts) => {
       await restoreSnapshot()
     })
 
-    it('Does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
+    it('does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
 
       block = await web3.eth.getBlock('latest')
