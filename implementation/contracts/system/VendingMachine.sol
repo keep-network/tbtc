@@ -113,8 +113,7 @@ contract VendingMachine {
     /// @notice Gets the Deposit lot size less signer fees
     /// @return amount in TBTC
     function getDepositValue() internal returns (uint) {
-        uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
-        uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
+        uint256 _totalValue = TBTCConstants.getLotSizeTbtc();
         return _totalValue;
     }
 }
