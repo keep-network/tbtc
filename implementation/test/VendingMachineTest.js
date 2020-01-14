@@ -116,10 +116,8 @@ contract('VendingMachine', (accounts) => {
 
     dotId = await web3.utils.toBN(testInstance.address)
 
-    const lotSize = await deployed.TBTCConstants.getLotSize()
-    const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
-    signerFee = lotSize.mul(satoshiMultiplier).div(signerFeeDivisor)
-    depositValue = lotSize.mul(satoshiMultiplier)
+    depositValue = await deployed.TBTCConstants.getLotSizeTbtc()
+    signerFee = depositValue.div(signerFeeDivisor)
   })
 
   describe('#isQualified', async () => {
