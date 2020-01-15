@@ -50,7 +50,9 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @notice           Set allowance for other address and notify.
     ///                   Allows `_spender` to spend no more than `_value` tokens
     ///                   on your behalf and then ping the contract about it.
-    /// @param _spender   The address authorized to spend.
+    /// @dev              The `_spender` should implement the `tokenRecipient` interface above
+    ///                   to receive approval notifications.
+    /// @param _spender   Address of contract authorized to spend.
     /// @param _value     The max amount they can spend.
     /// @param _extraData Extra information to send to the approved contract.
     function approveAndCall(address _spender, uint256 _value, bytes memory _extraData) public returns (bool success) {
