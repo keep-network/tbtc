@@ -47,7 +47,7 @@ library TestTBTCConstants {
 
     function getSignatureTimeout() public pure returns (uint256) { return REDEMPTION_SIGNATURE_TIMEOUT; }
     function getIncreaseFeeTimer() public pure returns (uint256) { return INCREASE_FEE_TIMER; }
-    function getRedepmtionProofTimeout() public pure returns (uint256) { return REDEMPTION_PROOF_TIMEOUT; }
+    function getRedemptionProofTimeout() public pure returns (uint256) { return REDEMPTION_PROOF_TIMEOUT; }
     function getMinimumRedemptionFee() public pure returns (uint256) { return MINIMUM_REDEMPTION_FEE; }
 
     function getFundingTimeout() public pure returns (uint256) { return FUNDING_PROOF_TIMEOUT; }

@@ -703,7 +703,7 @@ contract('DepositRedemption', (accounts) => {
     let timer
 
     before(async () => {
-      timer = await deployed.TBTCConstants.getRedepmtionProofTimeout.call()
+      timer = await deployed.TBTCConstants.getRedemptionProofTimeout.call()
     })
 
     beforeEach(async () => {

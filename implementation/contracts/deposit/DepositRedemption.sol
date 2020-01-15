@@ -349,7 +349,7 @@ library DepositRedemption {
     /// @param  _d  deposit storage pointer
     function notifyRedemptionProofTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout(), "Proof timer has not elapsed");
+        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedemptionProofTimeout(), "Proof timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 }
