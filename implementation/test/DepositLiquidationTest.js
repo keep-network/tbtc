@@ -210,42 +210,61 @@ contract('DepositLiquidation', (accounts) => {
     })
 
     it('splits funds between liquidation triggerer and signers if not fraud', async () => {
-      const liquidationInitiator = accounts[2]
+      const liquidationInitiator = accounts[4]
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
+      const value = 1000000000000
+      const basePercentage = await deployed.TBTCConstants.getAuctionBasePercentage.call()
 
-      const initialBalance = await web3.eth.getBalance(liquidationInitiator)
-      const initalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+      await testInstance.send(value)
+      const initialInitiatorBalance = await web3.eth.getBalance(liquidationInitiator)
+      const initialSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
       await testInstance.setLiquidationInitiator(liquidationInitiator)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+      // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
-      const finalBalance = await web3.eth.getBalance(liquidationInitiator)
+      const finalInitiatorBalance = await web3.eth.getBalance(liquidationInitiator)
       const finalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'liquidation triggerer balance should increase')
-      assert(new BN(finalSignerBalance).gtn(new BN(initalSignerBalance)), 'Signer balance should increase')
+      const initiatorBalanceDiff = new BN(finalInitiatorBalance).sub(new BN(initialInitiatorBalance))
+      const signerBalanceDiff = new BN(finalSignerBalance).sub(new BN(initialSignerBalance))
+
+      const totalReward = value * (100 - basePercentage) / 100
+      const split = totalReward / 2
+
+      expect(new BN(split)).to.eq.BN(initiatorBalanceDiff)
+      expect(new BN(split)).to.eq.BN(signerBalanceDiff)
     })
 
     it('transfers full ETH balance to liquidation triggerer if fraud', async () => {
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
       const liquidationInitiator = accounts[2]
+      const value = 1000000000000
+      const basePercentage = await deployed.TBTCConstants.getAuctionBasePercentage.call()
 
-      const initialBalance = await web3.eth.getBalance(liquidationInitiator)
-      const initalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+      await testInstance.send(value)
+      const initialInitiatorBalance = await web3.eth.getBalance(liquidationInitiator)
+      const initialSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testInstance.setLiquidationInitiator(liquidationInitiator)
+      // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
-      const finalBalance = await web3.eth.getBalance(liquidationInitiator)
+      const finalInitiatorBalance = await web3.eth.getBalance(liquidationInitiator)
       const finalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'liquidation triggerer balance should increase')
-      assert.equal(initalSignerBalance, finalSignerBalance, 'No value should be distributed to signers')
+      const initiatorBalanceDiff = new BN(finalInitiatorBalance).sub(new BN(initialInitiatorBalance))
+      const signerBalanceDiff = new BN(finalSignerBalance).sub(new BN(initialSignerBalance))
+
+      const totalReward = value * (100 - basePercentage) / 100
+
+      expect(new BN(signerBalanceDiff)).to.eq.BN(0)
+      expect(new BN(initiatorBalanceDiff)).to.eq.BN(totalReward)
     })
   })
 
