@@ -209,7 +209,7 @@ contract('DepositLiquidation', (accounts) => {
       expect(new BN(finalBalance), 'buyer balance should increase').to.be.gte.BN(initialBalance)
     })
 
-    it('Splits funds between liquidation triggerer and signers if not fraud', async () => {
+    it('splits funds between liquidation triggerer and signers if not fraud', async () => {
       const liquidationInitiator = accounts[2]
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
@@ -228,7 +228,7 @@ contract('DepositLiquidation', (accounts) => {
       assert(new BN(finalSignerBalance).gtn(new BN(initalSignerBalance)), 'liquidation triggerer balance should increase')
     })
 
-    it('Transfers full ETH balance to liquidation triggerer if fraud', async () => {
+    it('sransfers full ETH balance to liquidation triggerer if fraud', async () => {
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
       const liquidationInitiator = accounts[2]
