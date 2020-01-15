@@ -225,10 +225,10 @@ contract('DepositLiquidation', (accounts) => {
       const finalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
       assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'liquidation triggerer balance should increase')
-      assert(new BN(finalSignerBalance).gtn(new BN(initalSignerBalance)), 'liquidation triggerer balance should increase')
+      assert(new BN(finalSignerBalance).gtn(new BN(initalSignerBalance)), 'Signer balance should increase')
     })
 
-    it('sransfers full ETH balance to liquidation triggerer if fraud', async () => {
+    it('transfers full ETH balance to liquidation triggerer if fraud', async () => {
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
       const liquidationInitiator = accounts[2]
