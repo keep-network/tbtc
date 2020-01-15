@@ -249,10 +249,8 @@ library DepositLiquidation {
         uint256 contractEthBalance = address(this).balance;
         if (contractEthBalance > 1) {
             if (_wasFraud) {
-                // Transfer remaining funds to the liquidation triggerer
                 _d.liquidationInitiator.transfer(contractEthBalance);
             } else {
-                // Split half between the triggerer and the signers.
                 // There will always be a liquidation initiator.
                 uint256 split = contractEthBalance.div(2);
                 _d.pushFundsToKeepGroup(split);
