@@ -245,7 +245,8 @@ library DepositLiquidation {
         // Send any TBTC left to the Fee Rebate Token holder
         _d.distributeFeeRebate();
 
-        // then if there are funds left, and it wasn't fraud, pay out the signers
+        // then if there are funds left, and it wasn't fraud, pay out liquidation initiator and signers.
+        // If it was fraud, pay just the liquidation initiator
         uint256 contractEthBalance = address(this).balance;
         if (contractEthBalance > 1) {
             if (_wasFraud) {
