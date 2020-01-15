@@ -7,7 +7,6 @@ library TestTBTCConstants {
 
     // System Parameters
     uint256 public constant LOT_SIZE_BTC = 10 ** 8; // satoshi
-    uint256 public constant LOT_SIZE_TBTC = LOT_SIZE_BTC * 10 ** 10; // TBTC
     uint256 public constant BENEFICIARY_FEE_DIVISOR = 1000;  // 1/1000 = 10 bps = 0.1% = 0.001
     uint256 public constant FUNDING_FRAUD_PARTIAL_SLASH_DIVISOR = 2;  // 1/2 = 5000bps = 50% = 0.5
     uint256 public constant DEPOSIT_TERM_LENGTH = 180 * 24 * 60 * 60; // 180 days in seconds
@@ -36,7 +35,7 @@ library TestTBTCConstants {
 
     
     function getLotSizeBtc() public pure returns (uint256) { return LOT_SIZE_BTC; }
-    function getLotSizeTbtc() public pure returns (uint256) { return LOT_SIZE_TBTC; }
+    function getLotSizeTbtc() public pure returns (uint256) { return LOT_SIZE_BTC * 10 ** 10; }
     function getBeneficiaryRewardDivisor() public pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
     function getFundingFraudPartialSlashDivisor() public pure returns (uint256) { return FUNDING_FRAUD_PARTIAL_SLASH_DIVISOR; }
     function getDepositTerm() public pure returns (uint256) { return DEPOSIT_TERM_LENGTH; }
