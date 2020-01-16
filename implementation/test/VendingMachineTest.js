@@ -318,7 +318,6 @@ contract.only('VendingMachine', (accounts) => {
     })
   })
 
-  // eslint-disable-next-line no-only-tests/no-only-tests
   describe('#tbtcToBtc', async () => {
     const sighash = '0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90'
     const outpoint = '0x' + '33'.repeat(36)
@@ -330,14 +329,16 @@ contract.only('VendingMachine', (accounts) => {
     let multiplier
     let requiredBalance
     let block
+    let signerFee
 
     before(async () => {
       lotSize = await deployed.TBTCConstants.getLotSize.call()
       multiplier = await deployed.TBTCConstants.getSatoshiMultiplier.call()
-      requiredBalance = lotSize.mul(multiplier)
+      signerFee = lotSize.mul(multiplier).div(signerFeeDivisor)
+      requiredBalance = lotSize.mul(multiplier).add(signerFee)
+
       block = await web3.eth.getBlock('latest')
       await depositOwnerToken.forceMint(vendingMachine.address, dotId)
-      //await depositOwnerToken.approve(vendingMachine.address, dotId, { from: accounts[0] })
       await tbtcToken.resetBalance(requiredBalance)
       await tbtcToken.resetAllowance(vendingMachine.address, requiredBalance)
       await deployed.ECDSAKeepStub.setSuccess(true)
@@ -359,6 +360,7 @@ contract.only('VendingMachine', (accounts) => {
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
+      await feeRebateToken.forceMint(accounts[0], dotId)
       await vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH)
       const requestInfo = await testInstance.getRequestInfo()
       assert.equal(requestInfo[1], requesterPKH)
