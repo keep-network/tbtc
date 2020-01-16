@@ -15,6 +15,8 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
+const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDepositUtils = artifacts.require('TestDepositUtils')
@@ -39,6 +41,8 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // real tx from mainnet bitcoin, interpreted as funding tx
@@ -69,6 +73,8 @@ contract('DepositUtils', (accounts) => {
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
   let tbtcSystemStub
+  let depositOwnerToken
+  let feeRebateToken
 
   before(async () => {
     beneficiary = accounts[2]
@@ -81,11 +87,16 @@ contract('DepositUtils', (accounts) => {
 
     testUtilsInstance = deployed.TestDepositUtils
 
-    tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
+    depositOwnerToken = deployed.DepositOwnerToken
+    feeRebateToken = deployed.FeeRebateToken
+
+    feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
 
     await testUtilsInstance.createNewDeposit(
       tbtcSystemStub.address,
       tbtcToken.address,
+      depositOwnerToken.address,
+      feeRebateToken.address,
       utils.address0,
       1, // m
       1, // n
@@ -346,13 +357,13 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('fetchOraclePrice()', async () => {
+  describe('fetchBitcoinPrice()', async () => {
     it('calls out to the system', async () => {
-      const oraclePrice = await testUtilsInstance.fetchOraclePrice.call()
+      const oraclePrice = await testUtilsInstance.fetchBitcoinPrice.call()
       expect(oraclePrice).to.eq.BN(1000000000000)
 
       await tbtcSystemStub.setOraclePrice(44)
-      const newOraclePrice = await testUtilsInstance.fetchOraclePrice.call()
+      const newOraclePrice = await testUtilsInstance.fetchBitcoinPrice.call()
       expect(newOraclePrice).to.eq.BN(44)
     })
   })
@@ -403,9 +414,9 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('depositBeneficiary()', async () => {
+  describe('feeRebateTokenHolder()', async () => {
     it('calls out to the system', async () => {
-      const res = await testUtilsInstance.depositBeneficiary.call()
+      const res = await testUtilsInstance.feeRebateTokenHolder.call()
       assert.equal(res, accounts[2])
     })
   })
@@ -440,15 +451,15 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('distributeBeneficiaryReward()', async () => {
+  describe('distributeFeeRebate()', async () => {
     it('checks that beneficiary is rewarded', async () => {
       // min an arbitrary reward value to the funding contract
-      const reward = 100000000
+      const reward = await testUtilsInstance.signerFee.call()
       await tbtcToken.forceMint(testUtilsInstance.address, reward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
 
-      await testUtilsInstance.distributeBeneficiaryReward()
+      await testUtilsInstance.distributeFeeRebate()
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
       const tokenCheck = new BN(initialTokenBalance).add(new BN(reward))

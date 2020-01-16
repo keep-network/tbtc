@@ -1,5 +1,6 @@
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TBTCToken = artifacts.require('TBTCToken')
+const DepositOwnerToken = artifacts.require('DepositOwnerToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const DepositStates = artifacts.require('DepositStates')
@@ -25,12 +26,14 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
   { name: 'TestDeposit', contract: TestDeposit },
+  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
 ]
 
 contract('DepositFactory', (accounts) => {
   let factory
   let depositContract
   let tbtcToken
+  let depositOwnerToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
   let tbtcSystemStub
 
@@ -40,9 +43,10 @@ contract('DepositFactory', (accounts) => {
     depositContract = deployed.TestDeposit
     factory = await DepositFactory.new(depositContract.address)
 
-    tbtcSystemStub = await TBTCSystemStub.new(factory.address)
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TBTCToken.new(tbtcSystemStub.address)
+    depositOwnerToken = deployed.DepositOwnerToken
   })
 
   describe('createDeposit()', async () => {
@@ -52,6 +56,8 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        depositOwnerToken.address,
+        utils.address0,
         utils.address0,
         1,
         1,
@@ -61,6 +67,8 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        depositOwnerToken.address,
+        utils.address0,
         utils.address0,
         1,
         1,
@@ -81,6 +89,8 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        depositOwnerToken.address,
+        utils.address0,
         utils.address0,
         1,
         1,
@@ -112,6 +122,8 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        depositOwnerToken.address,
+        utils.address0,
         utils.address0,
         1,
         1,
@@ -121,6 +133,8 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        depositOwnerToken.address,
+        utils.address0,
         utils.address0,
         1,
         1,
@@ -172,6 +186,8 @@ contract('DepositFactory', (accounts) => {
       await depositContract.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        depositOwnerToken.address,
+        utils.address0,
         utils.address0,
         1,
         1,
@@ -192,6 +208,8 @@ contract('DepositFactory', (accounts) => {
       await factory.createDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
+        depositOwnerToken.address,
+        utils.address0,
         utils.address0,
         1,
         1,

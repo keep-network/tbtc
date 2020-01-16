@@ -16,6 +16,7 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
+const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
@@ -44,6 +45,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
@@ -79,6 +81,7 @@ contract('DepositFraud', (accounts) => {
   let fundingProofTimerStart
   let beneficiary
   let tbtcToken
+  let depositOwnerToken
   let tbtcSystemStub
 
   before(async () => {
@@ -87,16 +90,19 @@ contract('DepositFraud', (accounts) => {
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
+    depositOwnerToken = deployed.DepositOwnerToken
 
     testInstance = deployed.TestDeposit
 
     await testInstance.setExteriorAddresses(
       tbtcSystemStub.address,
       tbtcToken.address,
+      depositOwnerToken.address,
+      utils.address0,
       utils.address0
     )
 
-    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    depositOwnerToken.forceMint(accounts[4], web3.utils.toBN(testInstance.address))
 
     beneficiary = accounts[4]
   })
