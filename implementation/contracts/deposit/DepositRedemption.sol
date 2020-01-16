@@ -53,11 +53,17 @@ library DepositRedemption {
     /// @notice Get TBTC amount required by redemption.
     /// @dev    Will revert if redemption is not possible by msg.sender.
     /// @return The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d) public view returns(uint256){       
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d) public view returns(uint256){
         if(_d.remainingTerm() > 0){
+            if(msg.sender == _d.VendingMachine){
+                if(_d.requesterAddress != _d.feeRebateTokenHolder()){
+                    return _d.signerFee();
+                }
+                return 0;
+            }
             require(
                 _d.depositOwner() == msg.sender,
-                "redemption can only be called by deposit owner until deposit reaches term"
+                "redemption can only be called by deposit owner or vending machine until deposit reaches term"
             );
             if(_d.feeRebateTokenHolder() != msg.sender) {
                 return _d.signerFee();
@@ -76,6 +82,7 @@ library DepositRedemption {
         address vendingMachine = _d.VendingMachine;
 
         uint256 tbtcLot = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+
         uint256 signerFee = _d.signerFee();
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d);
@@ -128,6 +135,9 @@ library DepositRedemption {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 
+        // set requesterAddress early to enable direct access by other functions
+        _d.requesterAddress = _requesterAddress;
+
         performRedemptionTBTCTransfers(_d);
 
         // Convert the 8-byte LE ints to uint256
@@ -144,7 +154,6 @@ library DepositRedemption {
             _requesterPKH);
 
         // write all request details
-        _d.requesterAddress = _requesterAddress;
         _d.requesterPKH = _requesterPKH;
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
