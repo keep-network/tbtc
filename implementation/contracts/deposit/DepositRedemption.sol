@@ -63,7 +63,7 @@ library DepositRedemption {
             }
             require(
                 _d.depositOwner() == msg.sender,
-                "redemption can only be called by deposit owner or vending machine until deposit reaches term"
+                "redemption can only be called by deposit owner until deposit reaches term"
             );
             if(_d.feeRebateTokenHolder() != msg.sender) {
                 return _d.signerFee();
