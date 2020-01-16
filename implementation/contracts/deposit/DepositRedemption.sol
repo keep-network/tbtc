@@ -55,9 +55,7 @@ library DepositRedemption {
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
-    /// @param  _requesterAddress   The address of the requestor. This is set as a variable to make calls by external contracts easier
-    ///                             and avoid the need for implemeiting logic to redistribute singner bonds in case of fraud in
-    ///                             redemption flow.
+    /// @param  _requesterAddress   The address of the requestor.
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
