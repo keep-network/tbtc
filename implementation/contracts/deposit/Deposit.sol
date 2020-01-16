@@ -35,6 +35,13 @@ contract Deposit {
         return self.inActive();
     }
 
+    /// @notice Retrieve the remaining term of the deposit in seconds.
+    /// @dev    The value is not guaranteed since block.timestmap can be lightly manipulated by miners.
+    /// @return The remaining term of the deposit in seconds. 0 if already at term
+    function remainingTerm() public view returns(uint256){
+        return self.remainingTerm();
+    }
+
     /// @notice     Get the signer fee for the Deposit.
     /// @return     Fee amount in TBTC
     function signerFee() public view returns (uint256) {
@@ -51,12 +58,16 @@ contract Deposit {
         address _TBTCSystem,
         address _TBTCToken,
         address _DepositOwnerToken,
+        address _FeeRebateToken,
+        address _VendingMachine,
         uint256 _m,
         uint256 _n
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.DepositOwnerToken = _DepositOwnerToken;
+        self.FeeRebateToken = _FeeRebateToken;
+        self.VendingMachine = _VendingMachine;
         self.createNewDeposit(_m, _n);
         return true;
     }

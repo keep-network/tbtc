@@ -20,6 +20,8 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
+const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
@@ -47,6 +49,8 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
@@ -64,6 +68,8 @@ contract('DepositLiquidation', (accounts) => {
   let beneficiary
   let tbtcToken
   let tbtcSystemStub
+  let depositOwnerToken
+  let feeRebateToken
 
   before(async () => {
     await createSnapshot()
@@ -78,16 +84,25 @@ contract('DepositLiquidation', (accounts) => {
 
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0, utils.address0)
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
+    depositOwnerToken = deployed.DepositOwnerToken
+    feeRebateToken = deployed.FeeRebateToken
 
     testInstance = deployed.TestDeposit
 
-    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, utils.address0)
+    await testInstance.setExteriorAddresses(
+      tbtcSystemStub.address,
+      tbtcToken.address,
+      depositOwnerToken.address,
+      feeRebateToken.address,
+      utils.address0
+    )
+    await testInstance.setSignerFeeDivisor(new BN('200'))
 
-    await tbtcSystemStub.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
-
+    await depositOwnerToken.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
+    await feeRebateToken.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
 
     const keepRegistry = await KeepRegistryStub.new()
     await tbtcSystemStub.initialize(
@@ -163,9 +178,10 @@ contract('DepositLiquidation', (accounts) => {
       expect(tokenCheck, 'tokens not burned correctly').to.eq.BN(initialTokenBalance)
     })
 
-    it('distributes beneficiary reward', async () => {
+    it('distributes reward to FRT holder', async () => {
       // Make sure Deposit has enough to cover beneficiary reward
-      const beneficiaryReward = await deployed.TestDepositUtils.beneficiaryReward.call()
+      const beneficiaryReward = await testInstance.signerFee.call()
+
       await tbtcToken.forceMint(testInstance.address, beneficiaryReward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)

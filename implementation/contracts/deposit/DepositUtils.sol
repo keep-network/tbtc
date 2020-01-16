@@ -10,6 +10,7 @@ import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol"
 import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
 import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
+import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 
 library DepositUtils {
 
@@ -26,6 +27,8 @@ library DepositUtils {
         address TBTCSystem;
         address TBTCToken;
         address DepositOwnerToken;
+        address FeeRebateToken;
+        address VendingMachine;
         uint8 currentState;
         uint256 signerFeeDivisor;
 
@@ -198,6 +201,17 @@ library DepositUtils {
         _utxoOutpoint = abi.encodePacked(txID, _fundingOutputIndex, hex"000000");
     }
 
+    /// @notice Retreive the remaining term of the deposit
+    /// @dev    The value is not guaranteed since block.timestmap can be lightly manipulated by miners.
+    /// @return The remaining term of the deposit in seconds. 0 if already at term
+    function remainingTerm(DepositUtils.Deposit storage _d) public view returns(uint256){
+        uint256 endOfTerm = _d.fundedAt + TBTCConstants.getDepositTerm();
+        if(block.timestamp < endOfTerm ) {
+            return endOfTerm - block.timestamp;
+        }
+        return 0;
+    }
+
     /// @notice     Calculates the amount of value at auction right now
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
     /// @param _d   deposit storage pointer
@@ -337,12 +351,24 @@ library DepositUtils {
         return _d.approvedDigests[_digest];
     }
 
+    /// @notice         Looks up the Fee Rebate Token holder.
+    /// @return         The current token holder if the Token exists.
+    ///                 address(0) if the token does not exist.
+    function feeRebateTokenHolder(Deposit storage _d) public view returns (address payable) {
+        FeeRebateToken _feeRebateToken = FeeRebateToken(_d.FeeRebateToken);
+        address tokenHolder;
+        if(_feeRebateToken.exists(uint256(address(this)))){
+            tokenHolder = address(uint160(_feeRebateToken.ownerOf(uint256(address(this)))));
+        }
+        return address(uint160(tokenHolder));
+    }
+
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
-    function depositBeneficiary(Deposit storage _d) public view returns (address payable) {
-        IERC721 _systemContract = IERC721(_d.TBTCSystem);
-        return address(uint160(_systemContract.ownerOf(uint256(address(this)))));
+    function depositOwner(Deposit storage _d) public view returns (address payable) {
+        IERC721 _depositOwnerToken = IERC721(_d.DepositOwnerToken);
+        return address(uint160(_depositOwnerToken.ownerOf(uint256(address(this)))));
     }
 
     /// @notice     Deletes state after termination of redemption process
@@ -367,17 +393,20 @@ library DepositUtils {
         return _postCallBalance.sub(_preCallBalance);
     }
 
-    /// @notice     Distributes the beneficiary reward to the beneficiary
-    /// @dev        We distribute the whole TBTC balance as a convenience,
+    /// @notice     Distributes the fee rebate to the Fee Rebate Token owner
     ///             whenever this is called we are shutting down.
-    function distributeBeneficiaryReward(Deposit storage _d) public {
+    function distributeFeeRebate(Deposit storage _d) public {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
-        // If the beneficiary requested redemption, they didn't have to pay the reward.
-        if(_d.requesterAddress == depositBeneficiary(_d)) return;
+        address rebateTokenHolder = feeRebateTokenHolder(_d);
 
-        /* solium-disable-next-line */
-        require(_tbtc.transfer(depositBeneficiary(_d), _tbtc.balanceOf(address(this))),"Transfer failed");
+        // We didn't escrow a rebate if the requestor is also the Fee Rebate Token holder
+        if(_d.requesterAddress == rebateTokenHolder) return;
+
+        // pay out the rebate if it is available
+        if(_tbtc.balanceOf(address(this)) >= signerFee(_d)) {
+            _tbtc.transfer(rebateTokenHolder, signerFee(_d));
+        }
     }
 
     /// @notice             pushes ether held by the deposit to the signer group
