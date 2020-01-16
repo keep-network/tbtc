@@ -27,7 +27,8 @@ contract VendingMachine {
         return Deposit(_depositAddress).inActive();
     }
 
-    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
+    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token as long as
+    ///         it is qualified.
     /// @dev    Burns TBTC, transfers DOT from vending machine to caller
     /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
@@ -98,7 +99,8 @@ contract VendingMachine {
         dotToTbtc(uint256(_depositAddress));
     }
 
-    /// @notice Redeems a Deposit by purchasing a DOT with TBTC, and using the DOT to redeem correspoinding Deposit.
+    /// @notice Redeems a Deposit by purchasing a DOT with TBTC, and using the DOT to redeem corresponding Deposit.
+    ///         This function will revert if the Deposit is not in ACTIVE state.
     /// @dev Vending Machine transfers TBTC allowance to Deposit.
     /// @param  _depositAddress     The address of the Deposit to redeem.
     /// @param  _outputValueBytes   The 8-byte LE output size.
