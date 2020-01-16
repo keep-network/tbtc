@@ -181,7 +181,6 @@ contract('DepositLiquidation', (accounts) => {
     it('distributes reward to FRT holder', async () => {
       // Make sure Deposit has enough to cover beneficiary reward
       const beneficiaryReward = await testInstance.signerFee.call()
-
       await tbtcToken.forceMint(testInstance.address, beneficiaryReward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
@@ -189,7 +188,7 @@ contract('DepositLiquidation', (accounts) => {
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
-      const tokenCheck = new BN(initialTokenBalance).add(new BN(beneficiaryReward))
+      const tokenCheck = new BN(initialTokenBalance).add(new BN(beneficiaryReward).add(lotSize))
       expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
     })
 
