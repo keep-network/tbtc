@@ -44,6 +44,13 @@ contract BTCETHPriceFeed is Ownable, IBTCETHPriceFeed {
         // the medianizer oracle value is unrelated to the price.
         uint256 btcUsd = uint256(uint128(btcPriceFeed.read()));
         uint256 ethUsd = uint256(uint128(ethPriceFeed.read()));
-        return btcUsd.div(ethUsd);
+        // The price is a ratio of bitcoin to ether is expressed as:
+        //  x btc : y eth
+        // Bitcoin has 10 decimal places, ether has 18. Normalising the units, we have:
+        //  x * 10^8 : y * 10^18
+        // Simplfying down, we can express it as:
+        //  x : y * 10^10
+        // Due to order-of-ops, we can move the multiplication to get some more precision.
+        return btcUsd.mul(10**10).div(ethUsd);
     }
 }
