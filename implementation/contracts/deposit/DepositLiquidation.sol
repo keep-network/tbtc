@@ -233,10 +233,18 @@ library DepositLiquidation {
         _d.setLiquidated();
         _d.logLiquidated();
 
-        // Burn the outstanding TBTC
+        // send the TBTC to the TDT holder. If the TDT holder is the Vending Machine, burn it to maintain the peg.
+        address depositOwnerTokenHolder = _d.depositOwner();
+
         TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
         require(_tbtcToken.balanceOf(msg.sender) >= TBTCConstants.getLotSizeTbtc(), "Not enough TBTC to cover outstanding debt");
-        _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSizeTbtc());  // burn minimal amount to cover size
+
+        if(depositOwnerTokenHolder == _d.VendingMachine){
+            _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSizeTbtc());  // burn minimal amount to cover size
+        }
+        else{
+            _tbtcToken.transferFrom(msg.sender, depositOwnerTokenHolder, TBTCConstants.getLotSizeTbtc()); // burn minimal amount to cover size
+        }
 
         // Distribute funds to auction buyer
         uint256 _valueToDistribute = _d.auctionValue();
@@ -245,9 +253,15 @@ library DepositLiquidation {
         // Send any TBTC left to the Fee Rebate Token holder
         _d.distributeFeeRebate();
 
-        // then if there are funds left, and it wasn't fraud, pay out liquidation initiator and signers.
-        // If it was fraud, pay just the liquidation initiator
+        // For fraud, pay remainder to the liquidation initiator.
+        // For non-fraud, split 50-50 between initiator and signers. if the transfer amount is 1, 
+        // division will yield a 0 value which causes a revert; instead, 
+        // we simply ignore such a tiny amount and leave some wei dust in escrow
         uint256 contractEthBalance = address(this).balance;
+        address initiator = _d.liquidationInitiator;
+        if (initiator == address(0)){
+            _d.liquidationInitiator = address(0xdead);
+        }
         if (contractEthBalance > 1) {
             if (_wasFraud) {
                 _d.liquidationInitiator.transfer(contractEthBalance);
