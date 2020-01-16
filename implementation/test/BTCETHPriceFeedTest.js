@@ -26,11 +26,18 @@ contract('BTCETHPriceFeed', (accounts) => {
     afterEach(restoreSnapshot)
 
     it('computes a ratio of the two medianizers', async () => {
-      await btc.setValue('200')
-      await eth.setValue('100')
+      const btcUsd = '7152.55'
+      const ethUsd = '142.28'
+
+      await btc.setValue(web3.utils.toWei(btcUsd))
+      await eth.setValue(web3.utils.toWei(ethUsd))
 
       const price = await btcEthPriceFeed.getPrice()
-      expect(price).to.eq.BN('2')
+
+      // 7152.55 / 142.28 = 50.2709446162
+      // 50.2709446162 * 10^10
+      // 502,709,446,162 wei
+      expect(price).to.eq.BN('502709446162')
     })
 
     it('casts down each medianizer price to lower 128 bits', async () => {
@@ -41,7 +48,7 @@ contract('BTCETHPriceFeed', (accounts) => {
       await eth.setValue(ethPrice)
 
       const price = await btcEthPriceFeed.getPrice()
-      expect(price).to.eq.BN('2')
+      expect(price).to.eq.BN('20000000000')
     })
   })
 })
