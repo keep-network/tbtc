@@ -123,7 +123,7 @@ contract VendingMachine {
 
         tbtcToDot(uint256(_depositAddress));
 
-        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement();
+        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(msg.sender);
 
         if(tbtcOwed != 0){
             tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);

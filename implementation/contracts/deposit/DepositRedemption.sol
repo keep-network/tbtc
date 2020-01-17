@@ -53,10 +53,10 @@ library DepositRedemption {
     /// @notice Get TBTC amount required by redemption.
     /// @dev    Will revert if redemption is not possible by msg.sender.
     /// @return The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d) public view returns(uint256){
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _requester) public view returns(uint256){
         if(_d.remainingTerm() > 0){
             if(msg.sender == _d.VendingMachine){
-                if(_d.requesterAddress != _d.feeRebateTokenHolder()){
+                if(_requester != _d.feeRebateTokenHolder()){
                     return _d.signerFee();
                 }
                 return 0;
@@ -85,7 +85,7 @@ library DepositRedemption {
 
         uint256 signerFee = _d.signerFee();
 
-        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d);
+        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
 
         // if we owe 0 TBTC, Deposit is pre-term, msg.sender is DOT owner and FRT holder.
         if(tbtcOwed == 0){
@@ -125,7 +125,7 @@ library DepositRedemption {
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
-    /// @param  _requesterAddress   The address of the requestor.
+    /// @param  _requesterAddress   The address of the requester.
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
