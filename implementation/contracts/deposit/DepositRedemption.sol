@@ -54,7 +54,7 @@ library DepositRedemption {
     /// @dev    Will revert if redemption is not possible by msg.sender.
     /// @return The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _requester) public view returns(uint256){
-        if(_d.remainingTerm() > 0 && !_d.inCourtesyCall()){
+        if(_d.remainingTerm() > 0){
             if(msg.sender == _d.VendingMachine){
                 if(_requester != _d.feeRebateTokenHolder()){
                     return _d.signerFee();
