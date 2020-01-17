@@ -140,6 +140,13 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(tbtcOwed, 0)
     })
 
+    it('returns full TBTC if we are pre term and we are at courtesy_call', async () => {
+      await testInstance.setState(utils.states.COURTESY_CALL)
+
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
+      assert.equal(tbtcOwed.toString(), depositValue.toString())
+    })
+
     it('reverts if deposit is pre-term and msg.sender is not Deposit owner', async () => {
       await expectThrow(
         testInstance.getRedemptionTbtcRequirement.call(accounts[0], { from: accounts[2] }),
