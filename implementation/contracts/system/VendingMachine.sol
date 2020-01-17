@@ -112,7 +112,7 @@ contract VendingMachine {
     ///         This function will revert if the Deposit is not in ACTIVE state.
     /// @dev Vending Machine transfers TBTC allowance to Deposit.
     /// @param  _depositAddress     The address of the Deposit to redeem.
-    /// @param  _outputValueBytes   The 8-byte LE output size.
+    /// @param  _outputValueBytes   The 8-byte Bitcoin transaction output size in Little Endian.
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds.
     function tbtcToBtc(
         address payable _depositAddress,
