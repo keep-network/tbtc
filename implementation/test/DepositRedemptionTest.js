@@ -109,7 +109,8 @@ contract('DepositRedemption', (accounts) => {
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
-  describe('getRedemptionTbtcRequirement', async () => {
+  // eslint-disable-next-line no-only-tests/no-only-tests
+  describe.only('getRedemptionTbtcRequirement', async () => {
     let outpoint
     let valueBytes
     let block
@@ -129,20 +130,20 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('returns signerFee if we are pre term and FRT holder is not msg.sender', async () => {
-      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call()
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed.toString(), signerFee.toString())
     })
 
     it('returns zero if deposit is pre-term and msg.sender is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
 
-      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call()
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed, 0)
     })
 
     it('reverts if deposit is pre-term and msg.sender is not Deposit owner', async () => {
       await expectThrow(
-        testInstance.getRedemptionTbtcRequirement.call({ from: accounts[2] }),
+        testInstance.getRedemptionTbtcRequirement.call(accounts[0], { from: accounts[2] }),
         'redemption can only be called by deposit owner until deposit reaches term'
       )
     })
@@ -150,7 +151,7 @@ contract('DepositRedemption', (accounts) => {
     it('returns full TBTC if we are at-term', async () => {
       await increaseTime(depositTerm.toNumber())
 
-      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call()
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed.toString(), depositValue.toString())
     })
   })
