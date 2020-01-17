@@ -197,6 +197,58 @@ contract('DepositRedemption', (accounts) => {
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
 
+    it('burns 1 TBTC if deposit is in courtesy_call and TDT owner is the Vending Machine', async () => {
+      await tbtcToken.resetBalance(depositValue)
+      await tbtcToken.resetAllowance(testInstance.address, depositValue)
+      await depositOwnerToken.transferFrom(accounts[0], vendingMachine, dotId)
+
+      block = await web3.eth.getBlock('latest')
+      await testInstance.setState(utils.states.COURTESY_CALL)
+
+      await testInstance.performRedemptionTBTCTransfers()
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(utils.address0)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+    })
+
+    it('escrows fee and sends correct TBTC if Deposit is in courtesy_call and fee is not escrowed', async () => {
+      await tbtcToken.resetBalance(depositValue)
+      await tbtcToken.resetAllowance(testInstance.address, depositValue)
+
+      block = await web3.eth.getBlock('latest')
+      await testInstance.setState(utils.states.COURTESY_CALL)
+
+      await testInstance.performRedemptionTBTCTransfers()
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(testInstance.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
+      expect(events[1].returnValues.from).to.equal(accounts[0])
+      expect(events[1].returnValues.to).to.equal(accounts[0])
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+
+    it('transfers 1 TBTC to TDT owner if deposit is in courtesy_call and fee is escrowed', async () => {
+      await tbtcToken.resetBalance(depositValue)
+      await tbtcToken.resetAllowance(testInstance.address, depositValue)
+      await tbtcToken.forceMint(testInstance.address, signerFee)
+
+      await testInstance.setState(utils.states.COURTESY_CALL)
+      block = await web3.eth.getBlock('latest')
+
+      await testInstance.performRedemptionTBTCTransfers()
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(accounts[0])
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+    })
+
     it('burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine', async () => {
       await increaseTime(depositTerm.toNumber())
       await depositOwnerToken.transferFrom(accounts[0], vendingMachine, dotId)
@@ -250,7 +302,6 @@ contract('DepositRedemption', (accounts) => {
     })
   })
 
-  // eslint-disable-next-line no-only-tests/no-only-tests
   describe('requestRedemption', async () => {
     // the TX produced will be:
     // 01000000000101333333333333333333333333333333333333333333333333333333333333333333333333000000000001111111110000000016001433333333333333333333333333333333333333330000000000
@@ -304,6 +355,25 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
+    it('updates state successfully and fires a RedemptionRequested event from courtesy_call state', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+      await testInstance.setState(utils.states.COURTESY_CALL)
+
+      // the fee is ~12,297,829,380 BTC
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
+
+      const requestInfo = await testInstance.getRequestInfo()
+      assert.equal(requestInfo[1], requesterPKH)
+      assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
+      assert.equal(requestInfo[4], sighash)
+
+      // fired an event
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList[0].returnValues._digest, sighash)
+    })
+
     it('escrows the fee rebate reward for the fee rebate token holder', async () => {
       const block = await web3.eth.getBlock('latest')
 
@@ -343,7 +413,7 @@ contract('DepositRedemption', (accounts) => {
       await depositOwnerToken.transferFrom(accounts[0], accounts[4], dotId)
 
       await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
         'redemption can only be called by deposit owner until deposit reaches term'
       )
     })
