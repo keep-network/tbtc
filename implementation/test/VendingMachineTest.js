@@ -329,13 +329,11 @@ contract.only('VendingMachine', (accounts) => {
     let multiplier
     let requiredBalance
     let block
-    let signerFee
 
     before(async () => {
       lotSize = await deployed.TBTCConstants.getLotSize.call()
       multiplier = await deployed.TBTCConstants.getSatoshiMultiplier.call()
-      signerFee = lotSize.mul(multiplier).div(signerFeeDivisor)
-      requiredBalance = lotSize.mul(multiplier).add(signerFee)
+      requiredBalance = lotSize.mul(multiplier)
 
       block = await web3.eth.getBlock('latest')
       await depositOwnerToken.forceMint(vendingMachine.address, dotId)
@@ -370,6 +368,19 @@ contract.only('VendingMachine', (accounts) => {
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
       assert.equal(eventList[0].returnValues._digest, sighash)
+    })
+
+    it('fails to redeem with insufficient balance', async () => {
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is ~12,297,829,380 BTC
+      // requester does not own the FRT, and therefore owes an additional SignerFee
+      await feeRebateToken.forceMint(accounts[1], dotId)
+
+      await expectThrow(
+        vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH),
+        'SafeMath: subtraction overflow.'
+      )
     })
   })
 })
