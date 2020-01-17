@@ -355,6 +355,25 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
+    it('updates state successfully and fires a RedemptionRequested event from courtesy_call state', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+      await testInstance.setState(utils.states.COURTESY_CALL)
+
+      // the fee is ~12,297,829,380 BTC
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
+
+      const requestInfo = await testInstance.getRequestInfo()
+      assert.equal(requestInfo[1], requesterPKH)
+      assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
+      assert.equal(requestInfo[4], sighash)
+
+      // fired an event
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList[0].returnValues._digest, sighash)
+    })
+
     it('escrows the fee rebate reward for the fee rebate token holder', async () => {
       const block = await web3.eth.getBlock('latest')
 
