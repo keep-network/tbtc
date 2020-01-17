@@ -109,8 +109,7 @@ contract('DepositRedemption', (accounts) => {
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
-  // eslint-disable-next-line no-only-tests/no-only-tests
-  describe.only('getRedemptionTbtcRequirement', async () => {
+  describe('getRedemptionTbtcRequirement', async () => {
     let outpoint
     let valueBytes
     let block
