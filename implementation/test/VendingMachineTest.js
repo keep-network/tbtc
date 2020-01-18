@@ -358,8 +358,34 @@ contract('VendingMachine', (accounts) => {
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      await feeRebateToken.forceMint(accounts[0], dotId)
+      await feeRebateToken.forceMint(vendingMachine.address, dotId)
       await vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH)
+      const requestInfo = await testInstance.getRequestInfo()
+      assert.equal(requestInfo[1], requesterPKH)
+      assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
+      assert.equal(requestInfo[4], sighash)
+
+      // fired an event
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList[0].returnValues._digest, sighash)
+    })
+
+    it('successfully redeems when VendingMachine does not own FRT', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is ~12,297,829,380 BTC
+      // When Redeemer is the FRT holder, but does not send the FRTT to the VendingMachine,
+      // redemption should cost the same.
+      const signerFee = lotSize.mul(multiplier).div(signerFeeDivisor)
+
+      await feeRebateToken.forceMint(accounts[0], dotId)
+      await tbtcToken.resetBalance(requiredBalance.add(signerFee))
+      await tbtcToken.resetAllowance(vendingMachine.address, requiredBalance.add(signerFee))
+
+      await vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH)
+
       const requestInfo = await testInstance.getRequestInfo()
       assert.equal(requestInfo[1], requesterPKH)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
@@ -374,8 +400,8 @@ contract('VendingMachine', (accounts) => {
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      // requester does not own the FRT, and therefore owes an additional SignerFee
-      await feeRebateToken.forceMint(accounts[1], dotId)
+      // vendingMachine does not own the FRT, and therefore owes an additional SignerFee
+      await feeRebateToken.forceMint(accounts[0], dotId)
 
       await expectThrow(
         vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH),
