@@ -53,14 +53,8 @@ library DepositRedemption {
     /// @notice Get TBTC amount required by redemption.
     /// @dev    Will revert if redemption is not possible by msg.sender.
     /// @return The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _requester) public view returns(uint256){
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d) public view returns(uint256){
         if(_d.remainingTerm() > 0){
-            if(msg.sender == _d.VendingMachine){
-                if(_requester != _d.feeRebateTokenHolder()){
-                    return _d.signerFee();
-                }
-                return 0;
-            }
             require(
                 _d.depositOwner() == msg.sender,
                 "redemption can only be called by deposit owner until deposit reaches term"
@@ -85,7 +79,7 @@ library DepositRedemption {
 
         uint256 signerFee = _d.signerFee();
 
-        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
+        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d);
 
         // if we owe 0 TBTC, Deposit is pre-term, msg.sender is DOT owner and FRT holder.
         if(tbtcOwed == 0){

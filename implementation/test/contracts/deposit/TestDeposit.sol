@@ -124,8 +124,8 @@ contract TestDeposit is Deposit {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     } 
 
-    function getRedemptionTbtcRequirement(address _requester) public view returns (uint256) {
-        return self.getRedemptionTbtcRequirement(_requester);
+    function getRedemptionTbtcRequirement() public view returns (uint256) {
+        return self.getRedemptionTbtcRequirement();
     }
 
      function performRedemptionTBTCTransfers() public {

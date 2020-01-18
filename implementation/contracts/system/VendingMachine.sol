@@ -121,9 +121,13 @@ contract VendingMachine {
     ) public{
         Deposit _d = Deposit(_depositAddress);
 
-        tbtcToDot(uint256(_depositAddress));
+        require(depositOwnerToken.exists(uint256(_depositAddress)), "Deposit Owner Token does not exist");
+        require(isQualified(_depositAddress), "Deposit must be qualified");
 
-        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(msg.sender);
+        // balance supply ped by burning 1 TBTC
+        tbtcToken.burnFrom(msg.sender,  getDepositValue());
+
+        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement();
 
         if(tbtcOwed != 0){
             tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
