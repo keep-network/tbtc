@@ -80,9 +80,9 @@ contract Deposit {
     function requestRedemption(
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH,
-        address payable _requestorAddress
+        address payable _requesterAddress
     ) public returns (bool) {
-        self.requestRedemption(_outputValueBytes, _requesterPKH, _requestorAddress);
+        self.requestRedemption(_outputValueBytes, _requesterPKH, _requesterAddress);
         return true;
     }
 

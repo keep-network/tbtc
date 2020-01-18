@@ -400,7 +400,7 @@ library DepositUtils {
 
         address rebateTokenHolder = feeRebateTokenHolder(_d);
 
-        // We didn't escrow a rebate if the requestor is also the Fee Rebate Token holder
+        // We didn't escrow a rebate if the requester is also the Fee Rebate Token holder
         if(_d.requesterAddress == rebateTokenHolder) return;
 
         // pay out the rebate if it is available
