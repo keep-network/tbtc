@@ -243,7 +243,7 @@ library DepositLiquidation {
             _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSizeTbtc());  // burn minimal amount to cover size
         }
         else{
-            _tbtcToken.transferFrom(msg.sender, depositOwnerTokenHolder, TBTCConstants.getLotSizeTbtc()); // burn minimal amount to cover size
+            _tbtcToken.transferFrom(msg.sender, depositOwnerTokenHolder, TBTCConstants.getLotSizeTbtc());
         }
 
         // Distribute funds to auction buyer
