@@ -152,50 +152,6 @@ redeemer, and deposit state. <<deposit-payment-flow>> lists the various
 combinations that are possible, and the corresponding repayment amounts owed
 by the redeemer, assuming three possible parties, A, B, and C:
 
-// TODO Move to appendix.
-[#deposit-payment-flow,%header,cols="1,1,1,1,1,1a"]
-.Deposit payment flow
-|===
-| Deposit state | TDT holder | FRT holder | Redeemer | Repayment Amount | Disbursal Amounts
-
-| Pre-term      | A          | -          | A        | {custodial-fee}
-| A:: BTC lot
-  signers:: {custodial-fee}
-| Pre-term      | A          | -          | B        | _N/A_{pre-term-redemption-footnote} | _N/A_
-| Pre-term      | A          | A          | A        | 0
-| A:: BTC lot
-  signers:: {custodial-fee}
-| Pre-term      | A          | B          | A        | {custodial-fee}
-| A:: BTC lot
-  signers:: {custodial-fee}
-  B:: {custodial-fee} (escrowed)
-| Pre-term      | A          | B          | C        | _N/A_ | _N/A_
-
-| At-term       | A          | -          | A        | {custodial-fee}
-| A:: BTC lot
-  signers:: {custodial-fee}
-| At-term       | A          | -          | B        | {lot-size}
-| B:: BTC lot
-  signers:: {custodial-fee}
-  A:: {lot-size} - {custodial-fee}
-| At-term       | A          | A          | A        | 0
-| A:: BTC lot
-  signers:: {custodial-fee} (escrowed)
-| At-term       | A          | B          | A        | 0
-| A:: BTC lot
-  signers:: {custodial-fee} (escrowed)
-  B:: 0
-| At-term       | A          | A          | B        | {lot-size}
-| B:: BTC lot
-  signers:: {custodial-fee} (escrowed)
-  A:: {lot-size} - {custodial-fee}
-| At-term       | A          | B          | C        | {lot-size}
-| C:: BTC lot
-  signers:: {custodial-fee} (escrowed)
-  B:: 0
-  A:: {lot-size}
-|===
-
 == Validating a signature
 
 :signature-timeout: 3 hours

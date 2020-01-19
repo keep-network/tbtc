@@ -1,0 +1,70 @@
+ifndef::tbtc[]
+:root-prefix: ../../
+endif::tbtc[]
+
+:lot-size: 1 TBTC
+:btc-lot-size: 1 BTC
+:custodial-fee: 0.005 TBTC (50 basis points)
+
+= Redemption Payment and Disbursal Scenarios
+
+:pre-term-redemption-footnote: footnote:pre-term-redemption[Pre-term deposits \
+can only be redeemed by the TDT owner.]
+
+For a BTC lot size of {btc-lot-size} corresponding to {lot-size} and signer
+fee of {custodial-fee}, the following table describes the amounts disbursed
+to each party at redemption time for pre- and at-term deposits, depending on
+who holds the TDT and FRT, and who initiates redemption. Three possible
+parties exist in the table—A, B, and C—and the listed scenarios cover
+situations where the same party holds the two tokens and initiates
+redemption, different parties have each role, and possibilities in between.
+
+[#deposit-payment-flow,%header,cols="1,1,1,1,1,1a"]
+.Deposit payment flow
+|===
+| Deposit state | TDT holder | FRT holder | Redeemer | Repayment Amount | Disbursal Amounts
+
+| Pre-term      | A          | -          | A        | {custodial-fee}
+| A:: BTC lot
+  signers:: {custodial-fee}
+| Pre-term      | A          | -          | B        | _N/A_{pre-term-redemption-footnote} | _N/A_
+| Pre-term      | A          | A          | A        | 0
+| A:: BTC lot
+  signers:: {custodial-fee}
+| Pre-term      | A          | B          | A        | {custodial-fee}
+| A:: BTC lot
+  signers:: {custodial-fee}
+  B:: {custodial-fee} (escrowed)
+| Pre-term      | A          | B          | C        | _N/A_ | _N/A_
+
+| At-term       | A          | -          | A        | {custodial-fee}
+| A:: BTC lot
+  signers:: {custodial-fee}
+| At-term       | A          | -          | B        | {lot-size}
+| B:: BTC lot
+  signers:: {custodial-fee}
+  A:: {lot-size} - {custodial-fee}
+| At-term       | A          | A          | A        | 0
+| A:: BTC lot
+  signers:: {custodial-fee} (escrowed)
+| At-term       | A          | B          | A        | 0
+| A:: BTC lot
+  signers:: {custodial-fee} (escrowed)
+  B:: 0
+| At-term       | A          | A          | B        | {lot-size}
+| B:: BTC lot
+  signers:: {custodial-fee} (escrowed)
+  A:: {lot-size} - {custodial-fee}
+| At-term       | A          | B          | C        | {lot-size}
+| C:: BTC lot
+  signers:: {custodial-fee} (escrowed)
+  B:: 0
+  A:: {lot-size}
+|===
+
+Note that all of these scenarios can be conceptualized as the TDT holder
+always receiving the 1 TBTC used to redeem the deposit; when the TDT holder
+redeems their own deposit, the TBTC they receive would be from themselves, so
+they simply owe less. Similarly, the FRT holder always receives escrow back
+when redeeming pre-term, so in cases where the redeemer holds the FRT, the
+redeemer simply does not owe the signer fee at redemption time.
