@@ -97,7 +97,7 @@ at the expense of opportunity cost to the Signers which should be compensated
 via fees.
 
 If the value of ETH crosses a security threshold, open _Deposit_ s will enter
-<<preliq, pre-liquidation>>, followed by <<liq, liquidation>> if they do not top
+<<preliquidation, pre-liquidation>>, followed by <<liquidation, liquidation>> if they do not top
 up their collateral.
 
 // TODO insert a little historical analysis for a decent starting number
@@ -149,8 +149,8 @@ for a single pair of assets, tBTC will initially use a simple
 == Undercollateralization
 
 // TODO explain the undercollateralization curve
+[[preliquidation]]
 === Pre-liquidation: a courtesy call
-[[preliq]]
 
 :preliquidation-period: 6 hours
 :first-threshold: 125%
@@ -173,8 +173,9 @@ simple mechanism with large penalties for ongoing undercollateralization. In
 addition, by incentivizing redemption of undercollateralized or significantly
 overcollateralized positions, Signers are protected from being long ETH for
 long periods of time.
+
+[[liquidation]]
 === Liquidation
-[[liq]]
 
 :auction-start-percent: 80%
 

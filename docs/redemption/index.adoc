@@ -18,7 +18,7 @@ access to those BTC via a publicly verifiable process.
 
 So long as a deposit is maintained in good standing, the holder of the
 <<{root-prefix}/deposit/minting#,non-fungible deposit token>> may
-<<Redemption Requests,request redemption>>, relinquishing their NFT and paying
+<<requests,request redemption>>, relinquishing their NFT and paying
 any outstanding signer fees associated with the deposit.
 
 At this point, the redemption process may not be cancelled.
@@ -30,6 +30,8 @@ _redemption transaction_ to the Bitcoin blockchain using that signature.
 
 // TODO: document future upgrade where signers sign singleACP?
 
+
+[[requests]]
 == Redemption Requests
 
 // TODO: fill in real numbers for all of these

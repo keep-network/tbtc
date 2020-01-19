@@ -66,6 +66,7 @@ Once a deposit has accumulated enough work, it's eligible to be traded for
 fungible TBTC. The process managing this is called the "vending machine".
 
 
+[[vending-machine]]
 === The TBTC vending machine
 
 The TBTC vending machine is a contract on the host chain that's responsible

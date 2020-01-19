@@ -2,8 +2,13 @@
 
 = Handling Failure
 
-ifndef::tbtc[toc::[]]
+ifndef::tbtc[]
+toc::[]
 
+:root-prefix: ../
+endif::tbtc[]
+
+[[abort]]
 == Aborts / Liveness
 
 The system requires that critical actions like funding and redemption occur

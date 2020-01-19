@@ -27,6 +27,7 @@ sections.
 
 image::{root-prefix}img/generated/initiate-deposit.png[]
 
+[[request]]
 == Deposit request
 
 The starting point for acquiring TBTC is generating a _deposit request_. This

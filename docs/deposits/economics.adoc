@@ -10,6 +10,7 @@ A detailed treatment of signer fees can be found in
 <<{root-prefix}/signer-fees/index#,their own section>>.
 
 
+[[term]]
 == Terms
 
 :term-length: 6 months
