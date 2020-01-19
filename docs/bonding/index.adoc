@@ -88,7 +88,7 @@ deposit.
 $200. Signers have to put up 75 ETH (150% of 50) to back a deposit. Due to
 market conditions, ETH drops 25% to $150, while BTC maintains its value. The
 75 ETH is worth $11250, which is above the dollar value of BTC meaning the
-Signers will maintain honest behavior since they have more to lose.
+Signers should maintain honest behavior since they have more to lose.
 
 In general, total overcollateralization of {total-collateral} (`3/2 * 100%`)
 keeps Signer incentives aligned with the well-being of the system up to a 33%
