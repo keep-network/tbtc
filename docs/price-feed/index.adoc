@@ -24,13 +24,6 @@ interface PriceFeed {
 
 It is principally used for calculating the value of Bitcoin lot deposits, priced in Ether.
 
-== Mechanisms of price feed updates
-
-Price has a built-in expiration of 6 hours. In the unlikely event that the feed is not updated in a timely manner due to miner censorship or other attacks, calls to `getPrice` will revert transactions.
-
-The price feed accepts updates that differ by at least 1% to the previously submitted price.
-This mitigates unnecessary recomputations by maintainers for price changes below the threshold. If the price is expiring within 1 hour, this check is ignored.
-
 == Price encoding
 
 A bitcoin has 8 decimal places, the smallest unit being a satoshi, meaning 100 000 000 satoshis = 1 bitcoin.
