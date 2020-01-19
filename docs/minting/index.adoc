@@ -32,9 +32,9 @@ and, after paying any outstanding signing fees, be guaranteed the same UTXO
 backing the deposit. The holder of the TDT is also guaranteed compensation
 in TBTC via the signing group's bonded collateral in case of fraud or
 collateralization issues (see <<{root-prefix}/bonding/index#Liquidation>>),
-and recompensation in TBTC (minus signer fees) if the deposit is redeemed by
-another account after it reachs term (see
-the section on <<{root-prefix}/redemption/index#at-term, at-term redemption>>).
+and compensation in TBTC (minus signer fees) if the deposit is redeemed by
+another account after it reachs term (see the section on
+<<{root-prefix}/redemption/index#at-term, at-term redemption>>).
 
 === Implications
 
