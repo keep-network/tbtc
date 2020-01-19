@@ -183,10 +183,10 @@ deposits 1 BTC into the new BTC address, and provides proof to
 
 Withdrawals happen in reverse- any participant can send 1 `PBTC` to
 `PeggedBitcoinReserve` with a Bitcoin address. `Signer` pays that Bitcoin
-address 1 BTC minus any transaction fees, and provides proof of payment to
-`PeggedBitcoinReserve`, which burns the remaining 1 `PBTC`, maintaining a 1:1
-backing of `PBTC`. `Signer` is now free to withdraw the corresponding
-collateral from `PeggedBitcoinReserve`.
+address 1 BTC minus any Bitcoin transaction fees, and provides proof of
+payment to `PeggedBitcoinReserve`, which burns the remaining 1 `PBTC`,
+maintaining a 1:1 backing of `PBTC`. `Signer` is now free to withdraw the
+corresponding collateral from `PeggedBitcoinReserve`.
 
 ===  Flaws
 

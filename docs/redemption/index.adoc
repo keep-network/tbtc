@@ -44,11 +44,11 @@ redemption. To do so that person makes a _redemption request_ transaction to
 the smart contract on the host chain. The _redemption request_ includes the
 following:
 
-1. A fee amount
+1. A Bitcoin transaction fee amount
   - must be >={min-redemption-fee} ({min-redemption-feerate})
 2. A public key hash (PKH) for BTC delivery
   - the 20-byte hash160 of a public key belonging to the requester
-  - for security and privacy, this should be a new keypair
+  - for security and privacy, this SHOULD be a new keypair
 3. _Deposit_ size plus fees (see <<Repayment Amount>>)
 
 Upon receipt of the _redemption request_, the smart contract burns TBTC equal
