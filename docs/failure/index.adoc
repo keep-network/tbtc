@@ -2,8 +2,13 @@
 
 = Handling Failure
 
-ifndef::tbtc[toc::[]]
+ifndef::tbtc[]
+toc::[]
 
+:root-prefix: ../
+endif::tbtc[]
+
+[[abort]]
 == Aborts / Liveness
 
 The system requires that critical actions like funding and redemption occur
@@ -72,7 +77,7 @@ The signers custody a single Bitcoin UTXO. If that UTXO moves, except at the
 direction of the system then the signers have failed to perform their duties.
 SPV Proofs of Bitcoin inclusion (as documented here) suffice to prove signer
 fault. If the coins move, and its movement was not specifically requested by
-the system, then the signers have failed in their custodial duties. Compared to
+the system, then the signers have failed in their signing duties. Compared to
 ECDSA Fraud proofs, SPV Fraud Proofs are more expensive to verify and have a
 weaker security model. The system expects SPV Fraud Proofs only rarely, and
 subjects them to much higher work requirements than SPV funding and redemption
