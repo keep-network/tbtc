@@ -49,11 +49,11 @@ case, 3 of the signers can be malicious and try to steal the deposit, which
 would net them each 1/3 BTC. As a result, all 5 Signers must bond 0.33 BTC
 each, denominated in ETH.
 
-NOTE: For tBTC v1, attributatility limitations in the signing protocol mean the
+NOTE: For tBTC v1, attributability limitations in the signing protocol mean the
 signer group is 3-of-3. As a result, the required per-signer bond will be 50%
 of {lot-size} per signer, for a total 150% bond (see the following section on
 <<overcollateralization>>). With attributability in several of the possible
-sigining faults, bonds will be able to be decreased.
+signing faults, bonds will be able to be decreased.
 
 == Pricing currency fluctuations
 
