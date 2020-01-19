@@ -3,7 +3,12 @@
 [#bonding]
 = Bonding
 
-ifndef::tbtc[toc::[]]
+ifndef::tbtc[]
+toc::[]
+
+:root-prefix: ../
+include::../constants.adoc[]
+endif::tbtc[]
 
 Because signers are able to collude to censor withdrawals or abscond with funds,
 a bond is required per deposit from each backing signer.
@@ -32,15 +37,13 @@ complex implementation.
 
 == Measuring security
 
-:lot-size: 1 BTC
-
 Clearly, security concerns require signing bonds that are proportional to the
 size of a _Deposit_. To maintain a negative expected value from signers
-colluding, the amount forfeited by misbehaving signers must be strictly greater
-than the amount they have to gain. Assuming a lot size of {lot-size}, constant
-exchange rate between BTC and the bonded asset, and a
-M-of-N group of signers backing a _Deposit_, the minimum collateral for each
-signer is `({lot-size})/M`, denominated in the asset being bonded, ETH in the base
+colluding, the amount forfeited by misbehaving signers must be strictly
+greater than the amount they have to gain. Assuming a lot size of {btc-lot-size},
+constant exchange rate between BTC and the bonded asset, and a M-of-N group
+of signers backing a _Deposit_, the minimum collateral for each signer is
+`({btc-lot-size})/M`, denominated in the asset being bonded, ETH in the base
 case.
 
 [example]
@@ -49,11 +52,12 @@ case, 3 of the signers can be malicious and try to steal the deposit, which
 would net them each 1/3 BTC. As a result, all 5 Signers must bond 0.33 BTC
 each, denominated in ETH.
 
-NOTE: For tBTC v1, attributability limitations in the signing protocol mean the
-signer group is 3-of-3. As a result, the required per-signer bond will be 50%
-of {lot-size} per signer, for a total 150% bond (see the following section on
-<<overcollateralization>>). With attributability in several of the possible
-signing faults, bonds will be able to be decreased.
+NOTE: For tBTC v1, attributability limitations in the signing protocol mean
+the signer group is 3-of-3. As a result, the required per-signer bond will be
+{extra-collateral} of {btc-lot-size} per signer, for a total
+{total-collateral} bond (see the following section on
+<<overcollateralization>>). With attributability in later versions, bonds
+will be able to be decreased.
 
 == Pricing currency fluctuations
 
@@ -63,9 +67,6 @@ the two currencies fluctuate relative to each other, sometimes wildly.
 [[overcollateralization]]
 === ETH Price Drop relative to BTC
 
-:extracollateral: 50%
-:totalcollateral: 150%
-
 If the value of ETH drops precipitously relative to BTC, then the dollar value
 of the ETH bonded by the signers can be less than the dollar value of the BTC
 deposit they have backed, meaning they have positive expected value if they try
@@ -73,7 +74,7 @@ to steal the BTC.
 
 In order to avoid that, we require that the bonds are overcollateralized. For
 each ETH they collateralize, they must put up an additional
-{extracollateral}, for a total of {totalcollateral} collateralization rate.
+{extra-collateral}, for a total of {total-collateral} collateralization rate.
 
 [example]
 **Without overcollateralization:** Let 1 BTC be worth $10000, and 1 ETH be
@@ -89,7 +90,7 @@ market conditions, ETH drops 25% to $150, while BTC maintains its value. The
 75 ETH is worth $11250, which is above the dollar value of BTC meaning the
 Signers will maintain honest behavior since they have more to lose.
 
-In general, total overcollateralization of {totalcollateral} (`3/2 * 100%`)
+In general, total overcollateralization of {total-collateral} (`3/2 * 100%`)
 keeps Signer incentives aligned with the well-being of the system up to a 33%
 drop (`(1 - 2/3) * 100%`) in price of the bonded asset against the deposit's
 asset. Increasing this percentage can increase the robustness of the system,
@@ -115,7 +116,7 @@ Signers SHOULD buy TBTC from the markets in anticipation of such overly
 overcollateralized Deposits and they SHOULD use it to redeem these positions,
 thus reclaiming their ETH liquidity which can be used to back other Deposits. An
 alternative would be to provide Signers with the ability to safely rebalance their
-bonds back to {totalcollateral}, however that introduces implementation
+bonds back to {total-collateral}, however that introduces implementation
 complexities and as a result is not the preferred solution for the initial
 deployment of the mechanism.
 
@@ -152,19 +153,15 @@ for a single pair of assets, tBTC will initially use a simple
 [[preliquidation]]
 === Pre-liquidation: a courtesy call
 
-:preliquidation-period: 6 hours
-:first-threshold: 125%
-:second-threshold: 110%
-
-At the first threshold of {first-threshold}, a _Deposit_ enters
+At the first threshold of {pre-liquidation-threshold}, a _Deposit_ enters
 pre-liquidation. Pre-liquidation indicates that the signers should close the
 _Deposit_ or face forced liquidation after a pre-liquidation period. If the
-_Deposit_ is not closed within {preliquidation-period}, or if the _Deposit_
-collateral falls below {second-threshold} collateralization, liquidation will
+_Deposit_ is not closed within {pre-liquidation-period}, or if the _Deposit_
+collateral falls below {liquidation-threshold} collateralization, liquidation will
 follow. This gives each signer an incentive to close the position before it
 becomes severely undercollateralized. Alternatively, if the ETHBTC ratio
-recovers such that the deposit becomes at least {first-threshold}
-collateralized during the {preliquidation-period}, the _Deposit_ is safe and
+recovers such that the deposit becomes at least {pre-liquidation-threshold}
+collateralized during the {pre-liquidation-period}, the _Deposit_ is safe and
 is moved away from the pre-liquidation state.
 
 In future versions of the system, more complex pre-liquidation mechanisms
@@ -176,8 +173,6 @@ long periods of time.
 
 [[liquidation]]
 === Liquidation
-
-:auction-start-percent: 80%
 
 :fraudulent-signature: footnote:[Fraudulent signatures are signatures not \
 explicitly authorized by the tBTC system. The system only authorizes redemption \

@@ -6,6 +6,7 @@ ifndef::tbtc[]
 toc::[]
 
 :root-prefix: ../
+include::../constants.adoc[]
 endif::tbtc[]
 
 // TODO backrefs to signing
@@ -53,10 +54,6 @@ not during at-term redemptions.
 [[requests]]
 == Redemption Requests
 
-// TODO: fill in real numbers for all of these
-:min-redemption-fee: 2345 satoshi
-:min-redemption-feerate: ~20 satoshi/vbyte
-
 If the deposit is in good standing (has not been accused of fraud, or entered
 signer liquidation), only the holder of the deposit owner token may request
 redemption. To do so that person makes a _redemption request_ transaction to
@@ -64,7 +61,7 @@ the smart contract on the host chain. The _redemption request_ includes the
 following:
 
 1. A Bitcoin transaction fee amount
-  - must be >={min-redemption-fee} ({min-redemption-feerate})
+  - must be >={min-redemption-btc-fee} ({min-redemption-btc-feerate})
 2. A public key hash (PKH) for BTC delivery
   - the 20-byte hash160 of a public key belonging to the requester
   - for security and privacy, this SHOULD be a new keypair
@@ -84,17 +81,15 @@ contract because it no longer has a record of the redemption request.
 
 == Repayment Amount
 
-:lot-size: 1 TBTC
-:signer-fee: 0.005 TBTC (50 basis points)
-:beneficiary-bond-payment: 0.0005 TBTC
 :pre-term-redemption-footnote: footnote:pre-term-redemption[Pre-term deposits \
 can only be redeemed by the TDT owner.]
 
 Conceptually, the repayment amount is the _Deposit_ size plus the signer fee
-of {signer-fee}.  This ensures that the signers are paid upon providing a
-signature, that the owner can be compensated for the redeemed deposit (in
-at-term redemptions by parties other than the owner), and that the Fee Rebate
-Token holder can receive their fee rebate (in pre-term redemptions).
+of {signer-fee} ({signer-fee-basis-points} basis points). This ensures that
+the signers are paid upon providing a signature, that the owner can be
+compensated for the redeemed deposit (in at-term redemptions by parties other
+than the owner), and that the Fee Rebate Token holder can receive their fee
+rebate (in pre-term redemptions).
 
 After all the math shakes out, the repayment amount can vary depending on the
 redeeming party, the TDT holder, the FRT holder, and the deposit's term
@@ -130,8 +125,6 @@ anyone may do so if the signers do not.
 
 == Redemption proof
 
-:redemption-proof-timeout: 12 hours
-
 // TODO: Link SPV proof breakdown
 
 A _redemption proof_ is an SPV proof that a _redemption transaction_ was
@@ -139,7 +132,7 @@ confirmed by the Bitcoin blockchain. Once a request to redeem is confirmed,
 the deposit smart contract expects a _redemption proof_ within
 {redemption-proof-timeout}. To validate a _redemption proof_, the smart
 contract performs normal SPV proof verification, and additionally verifies
-that the recipient matches the requester's pulic key hash, and the value is
+that the recipient matches the requester's public key hash, and the value is
 greater than or equal `UTXO Size - highest allowed fee` (see <<Allowing for
 Bitcoin Fee Adjustment>> for more details).
 
@@ -153,8 +146,6 @@ combinations that are possible, and the corresponding repayment amounts owed
 by the redeemer, assuming three possible parties, A, B, and C:
 
 == Validating a signature
-
-:signature-timeout: 3 hours
 
 After the redemption request is sufficiently confirmed, the signers MUST
 produce a signature on the _redemption transaction_ signature hash as
@@ -174,9 +165,6 @@ redemption process.
 
 
 == Allowing for Bitcoin fee adjustment
-
-:fee-increase-timer: 4 hours
-:fee-increase-timer-times-two: 8 hours
 
 // TODO: link ECDSA fraud proofs
 

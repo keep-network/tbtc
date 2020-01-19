@@ -1,4 +1,14 @@
+:toc: macro
+
 = Deposit economics
+
+ifndef::tbtc[]
+toc::[]
+
+:root-prefix: ../
+include::../constants.adoc[]
+endif::tbtc[]
+
 
 Signers aren't altruists—they are paid for the service they provide.
 
@@ -12,8 +22,6 @@ A detailed treatment of signer fees can be found in
 
 [[term]]
 == Terms
-
-:term-length: 6 months
 
 Fixed-term deposits mean signer fees can easily be calculated per deposit. A
 standard term of {term-length} means depositors can budget for fees, and

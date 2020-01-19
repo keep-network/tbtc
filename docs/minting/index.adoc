@@ -4,12 +4,10 @@ ifndef::tbtc[]
 toc::[]
 
 :root-prefix: ../
+include::../constants.adoc[]
 endif::tbtc[]
 
 == Overview
-
-:signer-fee-withheld: 0.005 TBTC
-:additional-depositor-redemption-rebate: 0.001 TBTC
 
 The process of minting TBTC is distinct from the process of depositing Bitcoin.
 
@@ -96,11 +94,11 @@ size, they must mint TBTC, since the tBTC Deposit Token itself is non fungible.
 // TODO NB if a deposit is liquidated, the NFT can stick around and be backed by
 // the liquid token
 
-The holder of a qualified TDT may exchange that TDT for 1 newly minted TBTC,
-less the requisite {signer-fee-withheld} signing fee. To reflect the reduced
-guarantee of the TDT holder's interest in redeeming the specific deposit, the
-signing fee is sent to the deposit to be held in escrow at the time of TBTC
-minting.
+The holder of a qualified TDT may exchange that TDT for a newly minted
+{tbtc-lot-size}, less the requisite {signer-fee} signing fee. To reflect the
+reduced guarantee of the TDT holder's interest in redeeming the specific
+deposit, the signing fee is sent to the deposit to be held in escrow at the
+time of TBTC minting.
 
 By exchanging and escrowing, the TDT holder waives their right to exclusive
 redemption. As such, they also receive a non-fungible _Fee Rebate Token_, or

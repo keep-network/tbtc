@@ -6,6 +6,8 @@
 // Blank root prefix since this is the root doc.
 :root-prefix:
 
+include::constants.adoc[]
+
 = tBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
 
 ifndef::release[]

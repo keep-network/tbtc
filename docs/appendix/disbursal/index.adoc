@@ -1,17 +1,14 @@
 ifndef::tbtc[]
 :root-prefix: ../../
+include::../../constants.adoc[]
 endif::tbtc[]
-
-:lot-size: 1 TBTC
-:btc-lot-size: 1 BTC
-:signer-fee: 0.005 TBTC (50 basis points)
 
 = Redemption Payment and Disbursal Scenarios
 
 :pre-term-redemption-footnote: footnote:pre-term-redemption[Pre-term deposits \
 can only be redeemed by the TDT owner.]
 
-For a BTC lot size of {btc-lot-size} corresponding to {lot-size} and signer
+For a BTC lot size of {btc-lot-size} corresponding to {tbtc-lot-size} and signer
 fee of {signer-fee} ({signer-fee-basis-points} basis points), the following
 table describes the amounts disbursed to each party at redemption time for
 pre- and at-term deposits, depending on who holds the TDT and FRT, and who
@@ -41,10 +38,10 @@ possibilities in between.
 | At-term       | A          | -          | A        | {signer-fee}
 | A:: BTC lot
   signers:: {signer-fee}
-| At-term       | A          | -          | B        | {lot-size}
+| At-term       | A          | -          | B        | {tbtc-lot-size}
 | B:: BTC lot
   signers:: {signer-fee}
-  A:: {lot-size} - {signer-fee}
+  A:: {tbtc-lot-size} - {signer-fee}
 | At-term       | A          | A          | A        | 0
 | A:: BTC lot
   signers:: {signer-fee} (escrowed)
@@ -52,15 +49,15 @@ possibilities in between.
 | A:: BTC lot
   signers:: {signer-fee} (escrowed)
   B:: 0
-| At-term       | A          | A          | B        | {lot-size}
+| At-term       | A          | A          | B        | {tbtc-lot-size}
 | B:: BTC lot
   signers:: {signer-fee} (escrowed)
-  A:: {lot-size} - {signer-fee}
-| At-term       | A          | B          | C        | {lot-size}
+  A:: {tbtc-lot-size} - {signer-fee}
+| At-term       | A          | B          | C        | {tbtc-lot-size}
 | C:: BTC lot
   signers:: {signer-fee} (escrowed)
   B:: 0
-  A:: {lot-size}
+  A:: {tbtc-lot-size}
 |===
 
 Note that all of these scenarios can be conceptualized as the TDT holder
