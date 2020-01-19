@@ -23,41 +23,41 @@ possibilities in between.
 | Deposit state | TDT holder | FRT holder | Redeemer | Repayment Amount | Disbursal Amounts
 
 | Pre-term      | A          | -          | A        | {signer-fee}
-| A:: BTC lot
-  signers:: {signer-fee}
+  | A:: {btc-lot-size}
+    signers:: {signer-fee}
 | Pre-term      | A          | -          | B        | _N/A_{pre-term-redemption-footnote} | _N/A_
 | Pre-term      | A          | A          | A        | 0
-| A:: BTC lot
-  signers:: {signer-fee}
+  | A:: {btc-lot-size}
+    signers:: {signer-fee}
 | Pre-term      | A          | B          | A        | {signer-fee}
-| A:: BTC lot
-  signers:: {signer-fee}
-  B:: {signer-fee} (escrowed)
+  | A:: {btc-lot-size}
+    signers:: {signer-fee}
+    B:: {signer-fee} (escrowed)
 | Pre-term      | A          | B          | C        | _N/A_ | _N/A_
 
 | At-term       | A          | -          | A        | {signer-fee}
-| A:: BTC lot
-  signers:: {signer-fee}
+  | A:: {btc-lot-size}
+    signers:: {signer-fee}
 | At-term       | A          | -          | B        | {tbtc-lot-size}
-| B:: BTC lot
-  signers:: {signer-fee}
-  A:: {tbtc-lot-size} - {signer-fee}
+  | B:: {btc-lot-size}
+    signers:: {signer-fee}
+    A:: {tbtc-lot-size-less-signer-fee}
 | At-term       | A          | A          | A        | 0
-| A:: BTC lot
-  signers:: {signer-fee} (escrowed)
+  | A:: {btc-lot-size}
+    signers:: {signer-fee} (escrowed)
 | At-term       | A          | B          | A        | 0
-| A:: BTC lot
-  signers:: {signer-fee} (escrowed)
-  B:: 0
+  | A:: {btc-lot-size}
+    signers:: {signer-fee} (escrowed)
+    B:: 0
 | At-term       | A          | A          | B        | {tbtc-lot-size}
-| B:: BTC lot
-  signers:: {signer-fee} (escrowed)
-  A:: {tbtc-lot-size} - {signer-fee}
+  | B:: {btc-lot-size}
+    signers:: {signer-fee} (escrowed)
+    A:: {tbtc-lot-size-less-signer-fee}
 | At-term       | A          | B          | C        | {tbtc-lot-size}
-| C:: BTC lot
-  signers:: {signer-fee} (escrowed)
-  B:: 0
-  A:: {tbtc-lot-size}
+  | C:: {btc-lot-size}
+    signers:: {signer-fee} (escrowed)
+    B:: 0
+    A:: {tbtc-lot-size}
 |===
 
 Note that all of these scenarios can be conceptualized as the TDT holder

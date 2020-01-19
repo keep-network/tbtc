@@ -19,6 +19,7 @@
 :btc-lot-size: 1 BTC
 :signer-fee: 0.005 TBTC
 :signer-fee-basis-points: 50
+:tbtc-lot-size-less-signer-fee: 0.995 TBTC
 :beneficiary-bond-payment: 0.0005 TBTC
 
 // Redemption and BTC fees and fee increases.
