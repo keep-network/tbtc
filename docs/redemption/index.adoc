@@ -18,7 +18,7 @@ redeemable for the BTC held there. The tBTC redemption system aims to provide
 access to those BTC via a publicly verifiable process.
 
 So long as a deposit is maintained in good standing, the holder of the
-<<{root-prefix}/minting#,non-fungible tBTC Deposit Token>> may
+<<{root-prefix}/minting/index#,non-fungible tBTC Deposit Token>> may
 <<requests,request redemption>>, relinquishing their NFT and paying
 any outstanding signer fees associated with the deposit.
 
@@ -34,15 +34,16 @@ _redemption transaction_ to the Bitcoin blockchain using that signature.
 [[at-term]]
 === Deposit Terms and Redemption
 
-As noted in the section on <<deposit terms,{root-prefix}/deposits/economics#term>>,
-a deposit has a fixed term. After that term expires, the deposit becomes
-unlocked from the deposit owner, so that it can be redeemed by any account
-(including, notably, the deposit owner account). At this point, redemption costs
-exactly 1 TBTC, with no signer fee due. If the deposit has had the signer fee
-<<escrowed during TBTC minting,{root-prefix}/minting#vending-machine>>, the
-signer fee is paid from escrow and the deposit owner is sent the full 1 TBTC. If
-the deposit has no escrowed fee, the owner is sent the 1 TBTC used to redeem,
-less the signer fee, which is distributed to the signers.
+As noted in the section on
+<<{root-prefix}/deposits/economics/index#term,deposit terms>>, a deposit has
+a fixed term. After that term expires, the deposit becomes unlocked from the
+deposit owner, so that it can be redeemed by any account (including, notably,
+the deposit owner account). At this point, redemption costs exactly 1 TBTC,
+with no signer fee due. If the deposit has had the signer fee
+<<{root-prefix}/minting/index#vending-machine,escrowed during TBTC minting>>,
+the signer fee is paid from escrow and the deposit owner is sent the full 1
+TBTC. If the deposit has no escrowed fee, the owner is sent the 1 TBTC used
+to redeem, less the signer fee, which is distributed to the signers.
 
 NOTE: For the deposit owner, at term, redemption is free if there are escrowed
 fees, or costs the signer fee if there are not. This is subtly different from
@@ -93,10 +94,10 @@ rebate (in pre-term redemptions).
 
 After all the math shakes out, the repayment amount can vary depending on the
 redeeming party, the TDT holder, the FRT holder, and the deposit's term
-state. <<deposit-payment-flow>> lists the various combinations that are
-possible, and the corresponding repayment amounts owed by the redeemer,
-assuming three possible parties, A, B, and C. It also lists out the relevant
-disbursals upon redemption proof.
+state. <<{root-prefix}appendix/disbursal/index#deposit-payment-flow>> lists
+the various combinations that are possible, and the corresponding repayment
+amounts owed by the redeemer, assuming three possible parties, A, B, and C.
+It also lists out the relevant disbursal upon redemption proof.
 
 == Redemption Transaction Format
 
@@ -114,7 +115,7 @@ redemption output). It does not have change outputs, or additional inputs, as
 none are needed. It simply transfers the underlying BTC to the sole custody of
 the requester. Its timelock and sequence numbers are set to 0 and its version
 is set to 1. Full documentation of the format and the construction of its
-sighash can be found in the <<{root-prefix}/appendix/sighash,appendix>>.
+sighash can be found in the <<{root-prefix}appendix/sighash,appendix>>.
 
 Because the format is simple and canonical, any observer may use publicly
 available information to build it. Once a signature has been published, it is
@@ -141,9 +142,10 @@ receives their escrowed funds (if the deposit was redeemed pre-term), and the
 TDT holder receives the remainder of the repayment amount. As with the
 repayment amount, the amount each of the parties receives in case of a
 successful redemption varies depending on the TDT holder, FRT holder,
-redeemer, and deposit state. <<deposit-payment-flow>> lists the various
-combinations that are possible, and the corresponding repayment amounts owed
-by the redeemer, assuming three possible parties, A, B, and C:
+redeemer, and deposit state.
+<<{root-prefix}appendix/disbursal/index#deposit-payment-flow>> lists the
+various combinations that are possible, and the corresponding repayment
+amounts owed by the redeemer, assuming three possible parties, A, B, and C:
 
 == Validating a signature
 

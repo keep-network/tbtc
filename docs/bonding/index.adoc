@@ -229,10 +229,11 @@ design is for them to decide—it might be split up, stolen by a signing
 majority, or lost permanently.
 
 NOTE: If a Fee Rebate Token (FRT) has been given out to mint TBTC for a
-deposit that is liquidated (see <<{root-prefix}/minting, the Minting
-section>>), the FRT owner is _not_ refunded during liquidation. The fees that
-were escrowed in exchange for the FRT are instead used to compensate the
-signers, and the FRT is no longer eligible for compensation.
+deposit that is liquidated (see <<{root-prefix}/minting/index,the Minting
+section>>), the FRT owner is _not_ refunded
+during liquidation. The fees that were escrowed in exchange for the FRT are
+instead used to compensate the signers, and the FRT is no longer eligible for
+compensation.
 
 [example]
 --
