@@ -30,6 +30,25 @@ _redemption transaction_ to the Bitcoin blockchain using that signature.
 
 // TODO: document future upgrade where signers sign singleACP?
 
+[[at-term]]
+=== Deposit Terms and Redemption
+
+As noted in the section on <<deposit terms,{root-prefix}/deposits/economics#term>>,
+a deposit has a fixed term. After that term expires, the deposit becomes
+unlocked from the deposit owner, so that it can be redeemed by any account
+(including, notably, the deposit owner account). At this point, redemption costs
+exactly 1 TBTC, with no signer fee due. If the deposit has had the signer fee
+<<escrowed during TBTC minting,{root-prefix}/minting#vending-machine>>, the
+signer fee is paid from escrow and the deposit owner is sent the full 1 TBTC. If
+the deposit has no escrowed fee, the owner is sent the 1 TBTC used to redeem,
+less the signer fee, which is distributed to the signers.
+
+NOTE: For the deposit owner, at term, redemption is free if there are escrowed
+fees, or costs the signer fee if there are not. This is subtly different from
+pre-term redemption, where the deposit owner must pay the signer fee _even if 
+there are escrowed fees_. The additional difference is to the Fee Rebate
+Token holder, who is rebated the signer fee during pre-term redemptions, but
+not during at-term redemptions.
 
 [[requests]]
 == Redemption Requests
@@ -49,12 +68,11 @@ following:
 2. A public key hash (PKH) for BTC delivery
   - the 20-byte hash160 of a public key belonging to the requester
   - for security and privacy, this SHOULD be a new keypair
-3. _Deposit_ size plus fees (see <<Repayment Amount>>)
+3. The deposit's <<repayment amount,Repayment Amount>> in TBTC
 
-Upon receipt of the _redemption request_, the smart contract burns TBTC equal
-to the _Deposit_ size, distributes signer fees and the beneficiary bond, and
-records the receipt of the request, and notifies the signers that a signature
-is required.
+Upon receipt of the _redemption request_, the smart contract escrows the
+repayment amount, which includes the signer fee, records the receipt of the
+request, and notifies the signers that a signature is required.
 
 Once notified of the redemption request, the signers must wait for confirmation
 on the host chain. If they do not wait for confirmation, the redemption request
@@ -66,15 +84,24 @@ contract because it no longer has a record of the redemption request.
 
 == Repayment Amount
 
-// TODO
+:lot-size: 1 TBTC
 :custodial-fee: 0.005 TBTC (50 basis points)
 :beneficiary-bond-payment: 0.0005 TBTC
+:pre-term-redemption-footnote: footnote:pre-term-redemption[Pre-term deposits \
+can only be redeemed by the TDT owner.]
 
-The repayment amount is the _Deposit_ size plus the custodial fee of
-{custodial-fee} and a payment of {beneficiary-bond-payment} to the deposit
-beneficiary. This ensures that the signers are paid upon providing a signature
-and that the beneficiary is compensated for opening the deposit.
+Conceptually, the repayment amount is the _Deposit_ size plus the custodial fee
+of {custodial-fee}.  This ensures that the signers are paid upon providing a
+signature, that the owner can be compensated for the redeemed deposit (in
+at-term redemptions by parties other than the owner), and that the Fee Rebate
+Token holder can receive their fee rebate (in pre-term redemptions).
 
+After all the math shakes out, the repayment amount can vary depending on the
+redeeming party, the TDT holder, the FRT holder, and the deposit's term
+state. <<deposit-payment-flow>> lists the various combinations that are
+possible, and the corresponding repayment amounts owed by the redeemer,
+assuming three possible parties, A, B, and C. It also lists out the relevant
+disbursals upon redemption proof.
 
 == Redemption Transaction Format
 
@@ -111,11 +138,63 @@ A _redemption proof_ is an SPV proof that a _redemption transaction_ was
 confirmed by the Bitcoin blockchain. Once a request to redeem is confirmed,
 the deposit smart contract expects a _redemption proof_ within
 {redemption-proof-timeout}. To validate a _redemption proof_, the smart
-contract performs normal SPV proof verification, and additionally verifies that
-the recipient matches the requester's pulic key hash, and the value is greater
-than or equal `UTXO Size - highest allowed fee` (see
-<<Allowing for Bitcoin Fee Adjustment>> for more details).
+contract performs normal SPV proof verification, and additionally verifies
+that the recipient matches the requester's pulic key hash, and the value is
+greater than or equal `UTXO Size - highest allowed fee` (see <<Allowing for
+Bitcoin Fee Adjustment>> for more details).
 
+Once redemption proof is confirmed, the signing fee is paid, the FRT holder
+receives their escrowed funds (if the deposit was redeemed pre-term), and the
+TDT holder receives the remainder of the repayment amount. As with the
+repayment amount, the amount each of the parties receives in case of a
+successful redemption varies depending on the TDT holder, FRT holder,
+redeemer, and deposit state. <<deposit-payment-flow>> lists the various
+combinations that are possible, and the corresponding repayment amounts owed
+by the redeemer, assuming three possible parties, A, B, and C:
+
+// TODO Move to appendix.
+[#deposit-payment-flow,%header,cols="1,1,1,1,1,1a"]
+.Deposit payment flow
+|===
+| Deposit state | TDT holder | FRT holder | Redeemer | Repayment Amount | Disbursal Amounts
+
+| Pre-term      | A          | -          | A        | {custodial-fee}
+| A:: BTC lot
+  signers:: {custodial-fee}
+| Pre-term      | A          | -          | B        | _N/A_{pre-term-redemption-footnote} | _N/A_
+| Pre-term      | A          | A          | A        | 0
+| A:: BTC lot
+  signers:: {custodial-fee}
+| Pre-term      | A          | B          | A        | {custodial-fee}
+| A:: BTC lot
+  signers:: {custodial-fee}
+  B:: {custodial-fee} (escrowed)
+| Pre-term      | A          | B          | C        | _N/A_ | _N/A_
+
+| At-term       | A          | -          | A        | {custodial-fee}
+| A:: BTC lot
+  signers:: {custodial-fee}
+| At-term       | A          | -          | B        | {lot-size}
+| B:: BTC lot
+  signers:: {custodial-fee}
+  A:: {lot-size} - {custodial-fee}
+| At-term       | A          | A          | A        | 0
+| A:: BTC lot
+  signers:: {custodial-fee} (escrowed)
+| At-term       | A          | B          | A        | 0
+| A:: BTC lot
+  signers:: {custodial-fee} (escrowed)
+  B:: 0
+| At-term       | A          | A          | B        | {lot-size}
+| B:: BTC lot
+  signers:: {custodial-fee} (escrowed)
+  A:: {lot-size} - {custodial-fee}
+| At-term       | A          | B          | C        | {lot-size}
+| C:: BTC lot
+  signers:: {custodial-fee} (escrowed)
+  B:: 0
+  A:: {lot-size}
+|===
 
 == Validating a signature
 

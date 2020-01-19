@@ -19,8 +19,15 @@ Fixed-term deposits mean signer fees can easily be calculated per deposit. A
 standard term of {term-length} means depositors can budget for fees, and
 signers will know how long their bonds will be inaccessible.
 
-Depositors that don't need future access to their deposit might prefer to pass
-the costs of the system to eventual redeemers. These depositors can opt to
-receive a non-fungible deposit beneficiary token which pays a fee rebate at the
-deposit's redemption. The rebate mechanism is <<{root-prefix}/minting/index#,
-explained further in the discussion around minting>>.
+Depositors that don't need future access to their deposit might prefer to
+pass the costs of the system to eventual redeemers and/or want denomination
+beyond the BTC lot size or fungibility. These depositors can opt to receive a
+non-fungible Fee Rebate Token which pays a fee rebate at the deposit's
+redemption by another user. The rebate mechanism is
+<<{root-prefix}/minting/index#, explained further in the discussion around
+minting>>.
+
+At the end of the deposit term, the deposit can be redeemed by anyone including
+the signers themselves, with signer fees owed by the deposit owner. This
+mechanism is discussed in more detail in
+<<{root-prefix}/redemption/index#at-term,the section on redemption>>.
