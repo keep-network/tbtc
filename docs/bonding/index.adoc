@@ -43,9 +43,10 @@ M-of-N group of signers backing a _Deposit_, the minimum collateral for each
 signer is `({lot-size})/M`, denominated in the asset being bonded, ETH in the base
 case.
 
-Example: Consider a 1 BTC _Deposit_ backed by a 3-of-5 group of Signers. In the
-worse case, 3 of the signers can be malicious and try to steal the Deposit,
-which would net them each 1/3 BTC. As a result, all 5 Signers must bond 0.33 BTC
+[example]
+Consider a 1 BTC _Deposit_ backed by a 3-of-5 group of Signers. In the worse
+case, 3 of the signers can be malicious and try to steal the deposit, which
+would net them each 1/3 BTC. As a result, all 5 Signers must bond 0.33 BTC
 each, denominated in ETH.
 
 NOTE: For tBTC v1, attributatility limitations in the signing protocol mean the
@@ -74,16 +75,19 @@ In order to avoid that, we require that the bonds are overcollateralized. For
 each ETH they collateralize, they must put up an additional {extracollateral}, for a total of
 {totalcollateral} collateralization rate.
 
-**Without overcollateralization:** Let 1 BTC be worth $10000, and 1 ETH be worth $200. Signers have to put up 50 ETH
-to back a deposit. Due to market conditions, ETH drops 25% to $150, while
-BTC maintains its value. The 50 ETH is worth $7500, meaning the Signers can make
-a $2500 profit by stealing the Deposit.
+[example]
+**Without overcollateralization:** Let 1 BTC be worth $10000, and 1 ETH be
+worth $200. Signers have to put up 50 ETH to back a deposit. Due to market
+conditions, ETH drops 25% to $150, while BTC maintains its value. The 50 ETH
+is worth $7500, meaning the Signers can make a $2500 profit by stealing the
+deposit.
 
+[example]
 **With overcollateralization:** Let 1 BTC be worth $10,000, and 1 ETH be worth
-$200. Signers have to put up 75 ETH (150% of 50) to back a deposit. Due to market conditions,
-ETH drops 25% to $150, while
-BTC maintains its value. The 75 ETH is worth $11250, which is above the dollar
-value of BTC meaning the Signers will maintain honest behavior since they have
+$200. Signers have to put up 75 ETH (150% of 50) to back a deposit. Due to
+market conditions, ETH drops 25% to $150, while BTC maintains its value. The
+75 ETH is worth $11250, which is above the dollar value of BTC meaning the
+Signers will maintain honest behavior since they have more to lose.
 more to lose.
 
 In general, total overcollateralization of {totalcollateral} (`3/2 * 100%`) keeps Signer
@@ -115,16 +119,18 @@ bonds back to {totalcollateral}, however that introduces implementation
 complexities and as a result is not the preferred solution for the initial
 deployment of the mechanism.
 
-Example:
+[example]
 Let 1 BTC be worth $10,000, and 1 ETH be worth $200. Signers have to put up 75
 ETH to back a deposit. Signers are expected to make a custodial fee of 5 basis
-points for $15,000 (150% of $10,000): $7.5. Due to market conditions, ETH soars
-25% to $250, while BTC maintains its value. The Signers still get $7.5 per BTC
-under custody, however the 75 ETH is worth $18750 (hence 187.5%
-overcollateralized), meaning 5 basis points for its custody would be $9.375. A
-signer redeems the Deposit by paying 1 TBTC, reclaiming 1 BTC and unlocking the
-75 ETH which was locked by all Signers. All significantly overcollateralized Signers now
-have liquid ETH which they can use to back another deposit to mint new TBTC.
+points on a $10,000 deposit for $15,000 of collateral (150% of $10,000): $5.
+Due to market conditions, ETH soars 25% to $250, while BTC maintains its
+value. The Signers still get $5 per BTC under custody, however the 75 ETH is
+worth $18750 (hence 187.5% overcollateralized), meaning 5 basis points for
+its custody would be $9.375. A signer redeems the Deposit by paying 1.0005 TBTC,
+reclaiming 1 BTC and unlocking the 75 ETH which was locked by all Signers.
+All significantly overcollateralized Signers now have liquid ETH which they
+can use to back another deposit to mint new TBTC, now with a lower collateral
+requirement in ETH.
 
 == A resilient price feed
 
@@ -208,7 +214,8 @@ What the unresponsive signers do with the BTC outside the tBTC system design is
 for them to decide-- it might be split up, stolen by a signing majority, or
 lost permanently.
 
-Example:
+[example]
+--
 1. Signers guard a deposit of 1 BTC, backed by 75 ETH at 0.02 BTC/ETH (1.5 BTC
 in ETH, 150% collateralization ratio).
 
@@ -234,3 +241,4 @@ fraud it'd be burned), and 0.1 ETH is given to the account which called the
 liquidation function on the Ethereum smart contract.
 
 1. The N signers coordinate and agree on how they will distribute the 1 BTC deposit.
+--

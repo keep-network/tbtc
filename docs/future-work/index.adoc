@@ -25,8 +25,8 @@ maintaining the supply peg. Initially, the TBTC supply will be bootstrapped by
 using ETH as bonds, and the system will get more capital efficient as TBTC is
 used to back further TBTC minting.
 
-Example:
-
+[example]
+=====
 Consider 10 BTC under custody, 10 TBTC supply, and 9.95 TBTC in circulation (due to fees),
 backed by 15 BTC worth of ETH.
 
@@ -54,13 +54,15 @@ liquidity improves at the expense of capital efficiency.
 
 // full data: https://docs.google.com/spreadsheets/d/1rG9XS6xJbulltwKBMfszfkHeqG5Bl6JboIpIjO1Qn3Q/edit#gid=0
 image::tbtc_bonds.png[]
+=====
 
 Note that each deposit yields fees based on the lot size, and **not based on the collateral's
 size**. Due to overcollateralization, from a fees perspective, an ETH backed
 deposit yields less fees per locked up BTC value in ETH, compared to a TBTC backed deposit.
 
-Example:
 
+[example]
+====
 1 TBTC is minted by backing a Deposit with 75 ETH (1.5 BTC value in ETH). Per
 annum, 0.005 TBTC is paid as fees to the signers, resulting in only `0.005/1.5 = 0.003
 TBTC` revenue per locked BTC value in ETH. If TBTC were used as the backing asset, the
@@ -70,7 +72,7 @@ locked BTC value in TBTC, which is superior to the ETH case.
 In the next section, we explore potential approaches towards
 maximizing the fee revenue of signers by leveraging decentralized finance
 lending  and market making protocols.
-
+====
 
 == Optimize returns on Signers' bonds
 
