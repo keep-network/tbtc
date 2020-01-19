@@ -220,7 +220,7 @@ redemption process.
 == Allowing for Bitcoin fee adjustment
 
 :fee-increase-timer: 4 hours
-:fee-increase-timer-times-two:
+:fee-increase-timer-times-two: 8 hours
 
 // TODO: link ECDSA fraud proofs
 
