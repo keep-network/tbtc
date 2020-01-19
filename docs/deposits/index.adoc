@@ -11,9 +11,10 @@ endif::tbtc[]
 == Overview
 
 tBTC provides a mechanism for creating a token, TBTC, on a non-Bitcoin _host
-chain_, that is 1-to-1 backed by bitcoin. Parties interested in minting TBTC
-<<Deposit Request,request>> that the tBTC system provide them with a Bitcoin
-wallet address. The system selects a set of _signers_, which are tasked with
+chain_ (in tBTC v1, this host chain is Ethereum), that is 1-to-1 backed by
+bitcoin. Parties interested in minting TBTC <<request,request>> that
+the tBTC system provide them with a Bitcoin wallet address. The system
+<<signer-selection,selects a set of _signers_>>, which are tasked with
 generating a private/public keypair and furnishing it to the system. The
 interested party then becomes a _depositor_ by sending bitcoin to the wallet
 (the amount of required bitcoin is discussed separately in the section on
@@ -35,6 +36,7 @@ groups are not free to create, deposit requests include a small bond in the host
 chain's native token to cover the creation of the signing group. The bond is
 refunded when a successful deposit is made to the generated wallet.
 
+[[signer-selection]]
 === Signer selection
 
 Once the deposit request is received, the signing group is created by randomly

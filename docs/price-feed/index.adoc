@@ -6,7 +6,11 @@
 
 ifndef::tbtc[toc::[]]
 
-The price feed is an integral part of the system, ensuring sufficient collateral backs all tBTC signers. We model the feed after the https://developer.makerdao.com/feeds/[USD price feeds from MakerDAO], operated initially by a single trusted actor and later governed by the ecosystem.
+The price feed is an integral part of the system, ensuring sufficient
+collateral backs all tBTC signers. For tBTC v1, the feed will be built on the
+https://developer.makerdao.com/feeds/[USD price feeds from MakerDAO], currently
+operated by MakerDAO. MakerDAO has both ETHUSD and BTCUSD feeds; these are
+combined to make a single ETHBTC price.
 
 The minimal price feed design is specified completely by the interface below:
 
@@ -44,7 +48,7 @@ we leave this as a future exercise for governance.
 
 == Future design
 
-The price feed is integral to tBTC's security and in the future, will be principally governed by
-the tBTC ecosystem. The first upgrades will focus on incorporating a medianizer model from MakerDAO, where
-multiple price feeds are voted in and the median price is calculated from their reports. Other on-chain price signals like
-decentralized exchanges (DEX's) and liquidity pools (Uniswap) are being considered.
+The price feed is integral to tBTC's security and in the future, will be
+principally governed by the tBTC ecosystem. The first upgrades will focus on
+incorporating a novel price feed mechanism based on reverse auction challenges
+that has been dubbed the "priceless feed".
