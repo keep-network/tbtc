@@ -98,8 +98,7 @@ at the expense of opportunity cost to the Signers which should be compensated
 via fees.
 
 If the value of ETH crosses a security threshold, open _Deposit_ s will enter
-<<preliquidation, pre-liquidation>>, followed by <<liquidation, liquidation>> if they do not top
-up their collateral.
+<<pre-liquidation, pre-liquidation>>, followed by <<liquidation, liquidation>>.
 
 // TODO insert a little historical analysis for a decent starting number
 
@@ -150,7 +149,7 @@ for a single pair of assets, tBTC will initially use a simple
 == Undercollateralization
 
 // TODO explain the undercollateralization curve
-[[preliquidation]]
+[[pre-liquidation]]
 === Pre-liquidation: a courtesy call
 
 At the first threshold of {pre-liquidation-threshold}, a _Deposit_ enters
