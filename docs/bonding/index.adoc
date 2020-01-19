@@ -65,7 +65,7 @@ The above assumes a constant exchange rate between BTC and ETH, but in truth
 the two currencies fluctuate relative to each other, sometimes wildly.
 
 [[overcollateralization]]
-=== ETH Price Drop relative to BTC
+=== ETH price drop relative to BTC
 
 If the value of ETH drops precipitously relative to BTC, then the dollar value
 of the ETH bonded by the signers can be less than the dollar value of the BTC
