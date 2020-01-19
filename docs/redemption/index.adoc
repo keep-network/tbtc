@@ -119,7 +119,7 @@ redemption output). It does not have change outputs, or additional inputs, as
 none are needed. It simply transfers the underlying BTC to the sole custody of
 the requester. Its timelock and sequence numbers are set to 0 and its version
 is set to 1. Full documentation of the format and the construction of its
-sighash can be found in the appendix
+sighash can be found in the <<{root-prefix}/appendix/sighash,appendix>>.
 
 Because the format is simple and canonical, any observer may use publicly
 available information to build it. Once a signature has been published, it is

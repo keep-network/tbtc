@@ -235,7 +235,8 @@ and will be assumed. In particular, we assume the existence of
 * an efficient distributed key generation protocol on the secp256k1 curve
 * an efficient multi-party threshold ECDSA protocol on the secp256k1 curve
 
-all of which are implemented by the Keep network.
+all of which are implemented by the https://keep.network[Keep network]. The
+importance of these is described in the following sections.
 
 The architecture is broken down into:
 
