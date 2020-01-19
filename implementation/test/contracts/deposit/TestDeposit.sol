@@ -42,6 +42,20 @@ contract TestDeposit is Deposit {
 
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
 
+    function setUndercollateralizedThresholdPercent(uint256 _undercollateralizedThresholdPercent) public {
+        self.undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
+    }
+
+    function getUndercollateralizedThresholdPercent() public view returns (uint256) { return self.undercollateralizedThresholdPercent; }
+
+    function setSeverelyUndercollateralizedThresholdPercent(uint256 _severelyUndercollateralizedThresholdPercent) public {
+        self.severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
+    }
+
+    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint256) {
+        return self.severelyUndercollateralizedThresholdPercent;
+    }
+
     function setLiquidationAndCourtesyInitated(
         uint256 _liquidation,
         uint256 _courtesy
@@ -122,7 +136,7 @@ contract TestDeposit is Deposit {
 
     function getUTXOInfo() public view returns (bytes8, uint256, bytes memory) {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
-    } 
+    }
 
     function getRedemptionTbtcRequirement() public view returns (uint256) {
         return self.getRedemptionTbtcRequirement();

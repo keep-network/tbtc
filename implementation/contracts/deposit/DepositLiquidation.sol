@@ -258,7 +258,7 @@ library DepositLiquidation {
     /// @param  _d  deposit storage pointer
     function notifyCourtesyCall(DepositUtils.Deposit storage _d) public  {
         require(_d.inActive(), "Can only courtesy call from active state");
-        require(getCollateralizationPercentage(_d) < TBTCConstants.getUndercollateralizedPercent(), "Signers have sufficient collateral");
+        require(getCollateralizationPercentage(_d) < _d.undercollateralizedThresholdPercent, "Signers have sufficient collateral");
         _d.courtesyCallInitiated = block.timestamp;
         _d.setCourtesyCall();
         _d.logCourtesyCalled();
@@ -270,7 +270,7 @@ library DepositLiquidation {
     function exitCourtesyCall(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not currently in courtesy call");
         require(block.timestamp <= _d.fundedAt + TBTCConstants.getDepositTerm(), "Deposit is expiring");
-        require(getCollateralizationPercentage(_d) >= TBTCConstants.getUndercollateralizedPercent(), "Deposit is still undercollateralized");
+        require(getCollateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
         _d.setActive();
         _d.logExitedCourtesyCall();
     }
@@ -280,7 +280,7 @@ library DepositLiquidation {
     /// @param  _d  deposit storage pointer
     function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
         require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
-        require(getCollateralizationPercentage(_d) < TBTCConstants.getSeverelyUndercollateralizedPercent(), "Deposit has sufficient collateral");
+        require(getCollateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
         startSignerAbortLiquidation(_d);
     }
 

@@ -31,6 +31,8 @@ library DepositUtils {
         address VendingMachine;
         uint8 currentState;
         uint256 signerFeeDivisor;
+        uint256 undercollateralizedThresholdPercent;
+        uint256 severelyUndercollateralizedThresholdPercent;
 
         // SET ON FRAUD
         uint256 liquidationInitiated;  // Timestamp of when liquidation starts
@@ -231,7 +233,7 @@ library DepositUtils {
         return _available.mul(_percentage).div(100);
     }
 
-    /// @notice         Determines the fees due to the signers for work performeds
+    /// @notice         Determines the fees due to the signers for work performed
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee(Deposit storage _d) public view returns (uint256) {
