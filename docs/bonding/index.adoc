@@ -179,67 +179,88 @@ long periods of time.
 
 :auction-start-percent: 80%
 
-Forced liquidation should be rare, as rational signers will redeem _Deposits_
+:fraudulent-signature: footnote:[Fraudulent signatures are signatures not \
+explicitly authorized by the tBTC system. The system only authorizes redemption \
+signatures when a redemption is in progress.]
+
+:vm-deposit-owner: footnote:[Note that, for deposits that have been used to back \
+TBTC via the vending machine, the deposit owner is the vending machine itself, \
+so by making the deposit owner whole, the system ensures the TBTC supply is in \
+line with BTC custodied by TBTC-backing deposits.]
+
+Forced liquidation should be rare, as rational signers will redeem deposits
 before liquidation becomes necessary. However, the possibility of extreme
 punishment via liquidation is necessary to prevent dishonest behavior from
-signers. Liquidation may occur because because signers didn't produce a valid
-signature  in response a redemption request, because the value of the signing
-bond dropped below the liquidation threshold, because they did not respond to the
-courtesy call, or because the signers produced a fraudulent signature.
-// comment(Georgios): What does unauthorized signature mean here?
+signers. Liquidation may occur because because signers
+<<{root-prefix}/failure/index#abort, didn't produce a valid signature in
+response to a redemption request>>, because the value of the signing
+bond dropped below the liquidation threshold, because they did not respond to
+the courtesy call, or because the signers <<{root-prefix}/failure/index#Fraud,
+produced a fraudulent signature>>{fraudulent-signature}.
 
-The primary goal of the liquidation process is to bring the TBTC supply in line
-with the BTC custodied by _Deposits_. The most valuable asset held by the
-system is the signers' bonds. Therefore, the liquidation process seizes the
-signers bonds and attempts to use the bonded value to purchase and burn TBTC.
+The primary goal of the liquidation process is to make the deposit owner
+whole in the face of incorrect signer behavior or external dynamics that
+compromise deposit safety.{vm-deposit-owner} The secondary goal is to punish
+signers maximally for incorrect behavior, when such behavior can be proven.
 
-First, the contract attempts to use on-chain liquidity sources, such as
-https://uniswap.io[Uniswap].
+The most valuable asset held by the system is the signer bond. Therefore, the
+liquidation process seizes the signer bond and attempts to use the bonded
+value to purchase and compensate the deposit owner. Any signer bond left over
+after the deposit owner is compensated is distributed to the account
+responsible for reporting the misbehavior (for fraud) or between the signers and
+the account that triggered liquidation (for collateralization issues).
 
-If the bond is sufficient to cover the outstanding TBTC value on these
-markets, it is immediately exchanged for TBTC.
+To compensate the deposit owner, the contract starts a falling-price auction
+with the seized signer bond. It offers {auction-start-percent} of the signer
+bond in exchange for the outstanding TBTC amount. The amount of bond on sale
+increases over time until someone chooses to purchase it, or the auction
+reaches 100% of the bond. The auction will remain open until a buyer is
+found.
 
-Second, the contract starts a falling-price auction. It offers
-{auction-start-percent} of the signer bond for sale for the outstanding TBTC
-amount. The amount of bond on sale increases over time until someone chooses
-to purchase it, or the auction reaches 100% of the bond. The auction will
-remain open until a buyer is found.
+TBTC received during this process is sent to the deposit owner; if the owner is
+the vending machine, the vending machine MUST burn the TBTC to maintain the
+supply peg. If any bond value is left after liquidation, one of two things
+occurs:
 
-TBTC received during this process is burned to maintain the supply peg. If any
-bond value is left after liquidation, a small fee is distributed to the account
-which triggered the liquidation. After that, any remaining value is either
-distributed to the signers (in case of liquidation due to
-undercollateralization) or burned (in case of liquidation due to fraud).
+* In case of liquidation due to **undercollateralization or abort**, the
+  remaining bond value is split 50-50 between the account which triggered the
+  liquidation and the signers.
+* In case of liquidation due to **fraud**, the remaining bond value in full goes
+  to the account which triggered the liquidation by proving fraud.
 
-What the unresponsive signers do with the BTC outside the tBTC system design is
-for them to decide-- it might be split up, stolen by a signing majority, or
-lost permanently.
+At the end of liquidation, unresponsive or misbehaving signers have control of
+the deposited BTC. What those signers do with the BTC outside the tBTC system
+design is for them to decide—it might be split up, stolen by a signing
+majority, or lost permanently.
+
+NOTE: If a Fee Rebate Token (FRT) has been given out to mint TBTC for a
+deposit that is liquidated (see <<{root-prefix}/minting, the Minting
+section>>), the FRT owner is _not_ refunded during liquidation. The fees that
+were escrowed in exchange for the FRT are instead used to compensate the
+signers, and the FRT is no longer eligible for compensation.
 
 [example]
 --
 1. Signers guard a deposit of 1 BTC, backed by 75 ETH at 0.02 BTC/ETH (1.5 BTC
 in ETH, 150% collateralization ratio).
 
-1. ETH price drops to 0.01333 BTC/ETH. 75 ETH now only collateralizes 100% of
+2. ETH price drops to 0.01333 BTC/ETH. 75 ETH now only collateralizes 100% of
 the Deposit (1 BTC / 75 ETH)
 
-1. Liquidation is triggered and the 75 ETH is seized to buy back TBTC.
+3. Liquidation is triggered and the 75 ETH is seized to buy back TBTC.
 
-1. Assuming Uniswap has only 0.8 TBTC available in its reserves, that amount is
-bought, at market price, for 60 ETH (`0.8 BTC / (1/75) = 60`) and is
-subsequently burned. Note that there may be slippage here so the contract SHOULD
-check that it does not purchase TBTC at non-favorable rates
+4. The _Deposit_ must use the 75 ETH to purchase 1 TBTC. In an attempt to get a
+discount, it auctions {auction-start-percent} of its ETH reserves.
 
-1. The Deposit is left with 15 ETH which must be used to purchase 0.2 TBTC. In
-an attempt to get a discount, it auctions {auction-start-percent} of its ETH
-reserves.
+5. An arbitrageur burns 1 TBTC at 90% of the auction and obtains 67.5 ETH. The
+liquidation of the _Deposit_ is now over.
 
-1. An arbitrageur burns 0.2 TBTC at 90% of the auction and obtains 13.5 ETH. The
-liquidation of the Deposit is now over.
+6. Half of the remaining 7.5 ETH is distributed to the signers (if they had
+committed fraud this would be 0), and the remainder is given to the account
+which started the liquidation process on the Ethereum smart contract. At this
+point, the _Deposit_ is marked as closed. Note that the FRT holder is not
+refunded during liquidation..
 
-1. The remaining 1.4 ETH is distributed to the signers (if they had committed
-fraud it'd be burned), and 0.1 ETH is given to the account which called the
-liquidation function on the Ethereum smart contract.
-
-1. The N signers coordinate and agree on how they will distribute the 1 BTC deposit.
+7. Optionally, the N signers coordinate and agree on how they will distribute
+the 1 BTC deposit.
 --
