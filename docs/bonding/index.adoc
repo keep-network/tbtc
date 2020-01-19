@@ -68,12 +68,12 @@ the two currencies fluctuate relative to each other, sometimes wildly.
 
 If the value of ETH drops precipitously relative to BTC, then the dollar value
 of the ETH bonded by the signers can be less than the dollar value of the BTC
-Deposit they have backed, meaning they have positive expected value if they try
+deposit they have backed, meaning they have positive expected value if they try
 to steal the BTC.
 
 In order to avoid that, we require that the bonds are overcollateralized. For
-each ETH they collateralize, they must put up an additional {extracollateral}, for a total of
-{totalcollateral} collateralization rate.
+each ETH they collateralize, they must put up an additional
+{extracollateral}, for a total of {totalcollateral} collateralization rate.
 
 [example]
 **Without overcollateralization:** Let 1 BTC be worth $10000, and 1 ETH be
@@ -88,13 +88,13 @@ $200. Signers have to put up 75 ETH (150% of 50) to back a deposit. Due to
 market conditions, ETH drops 25% to $150, while BTC maintains its value. The
 75 ETH is worth $11250, which is above the dollar value of BTC meaning the
 Signers will maintain honest behavior since they have more to lose.
-more to lose.
 
-In general, total overcollateralization of {totalcollateral} (`3/2 * 100%`) keeps Signer
-incentives aligned with the well-being of the system up to a 33% drop (`(1 -
-2/3) * 100%`) in price of the bonded asset against the Deposit's asset.
-Increasing this percentage can increase the robustness of the system, at
-the expense of opportunity cost to the Signers which should be compensated via fees.
+In general, total overcollateralization of {totalcollateral} (`3/2 * 100%`)
+keeps Signer incentives aligned with the well-being of the system up to a 33%
+drop (`(1 - 2/3) * 100%`) in price of the bonded asset against the deposit's
+asset. Increasing this percentage can increase the robustness of the system,
+at the expense of opportunity cost to the Signers which should be compensated
+via fees.
 
 If the value of ETH crosses a security threshold, open _Deposit_ s will enter
 <<preliq, pre-liquidation>>, followed by <<liq, liquidation>> if they do not top
@@ -156,23 +156,23 @@ for a single pair of assets, tBTC will initially use a simple
 :first-threshold: 125%
 :second-threshold: 110%
 
-At the first threshold of  {first-threshold}, a _Deposit_ enters
-pre-liquidation.
-Pre-liquidation indicates that the signers should close the _Deposit__ or face forced
-liquidation after a pre-liquidation period. If the _Deposit_ is not closed within {preliquidation-period}, or
-if the _Deposit_ collateral falls below {second-threshold} collateralization,
-liquidation will follow. This gives each signer an incentive to close the
-position before it becomes severely undercollateralized. Alternatively, if the
-ETHBTC ratio recovers such that the deposit becomes at least {first-threshold}
-collateralized during the {preliquidation-period} the Deposit is safe and is
-moved away from the pre-liquidation state.
+At the first threshold of {first-threshold}, a _Deposit_ enters
+pre-liquidation. Pre-liquidation indicates that the signers should close the
+_Deposit_ or face forced liquidation after a pre-liquidation period. If the
+_Deposit_ is not closed within {preliquidation-period}, or if the _Deposit_
+collateral falls below {second-threshold} collateralization, liquidation will
+follow. This gives each signer an incentive to close the position before it
+becomes severely undercollateralized. Alternatively, if the ETHBTC ratio
+recovers such that the deposit becomes at least {first-threshold}
+collateralized during the {preliquidation-period}, the _Deposit_ is safe and
+is moved away from the pre-liquidation state.
 
-In future versions of the system, more complex pre-liquidation mechanisms could
-be introduced. For the initial version it seems prudent to choose a simple
-mechanism with large penalties for ongoing undercollateralization. In addition,
-by incentivizing redemption of undercollateralized or significantly overcollateralized
-positions, Signers are protected from being long ETH for long periods of time.
-
+In future versions of the system, more complex pre-liquidation mechanisms
+could be introduced. For the initial version it seems prudent to choose a
+simple mechanism with large penalties for ongoing undercollateralization. In
+addition, by incentivizing redemption of undercollateralized or significantly
+overcollateralized positions, Signers are protected from being long ETH for
+long periods of time.
 === Liquidation
 [[liq]]
 

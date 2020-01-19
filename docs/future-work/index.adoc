@@ -56,10 +56,10 @@ liquidity improves at the expense of capital efficiency.
 image::tbtc_bonds.png[]
 =====
 
-Note that each deposit yields fees based on the lot size, and **not based on the collateral's
-size**. Due to overcollateralization, from a fees perspective, an ETH backed
-deposit yields less fees per locked up BTC value in ETH, compared to a TBTC backed deposit.
-
+Note that each deposit yields fees based on the lot size, and **not based on
+the collateral's size**. Due to overcollateralization, from a fees
+perspective, an ETH backed deposit yields less fees per locked up BTC value
+in ETH, compared to a TBTC backed deposit.
 
 [example]
 ====
