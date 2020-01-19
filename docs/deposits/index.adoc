@@ -120,7 +120,7 @@ The only link between the Bitcoin chain and the host chain is the tBTC system,
 which runs as a set of smart contracts on the host chain. As such, the Bitcoin
 transaction issued by the depositor has to be proven to the tBTC system before
 the tBTC system allows the depositor to behave as if they have successfully
-deposited their BTC into the custodial wallet. When a deposit proof is accepted
+deposited their BTC into the signer wallet. When a deposit proof is accepted
 by the system, the deposit bond is refunded to the depositor. If a deposit
 proof is not received within a given timeout window, the signing group will
 disband and the system will seize the bond's value, making it available to the

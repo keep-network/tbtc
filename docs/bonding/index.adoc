@@ -105,7 +105,7 @@ up their collateral.
 
 === BTC price drop relative to ETH
 
-Since <<Custodial Fees>> are denominated per BTC in custody (with
+Since <<Signer Fees>> are denominated per BTC in custody (with
 overcollateralization factored in), a BTC value drop against the
 bonded asset translates in lower fees for Signers. Note that this does not
 create any issue for TBTC reserves, but it makes the system less attractive to
@@ -121,7 +121,7 @@ deployment of the mechanism.
 
 [example]
 Let 1 BTC be worth $10,000, and 1 ETH be worth $200. Signers have to put up 75
-ETH to back a deposit. Signers are expected to make a custodial fee of 5 basis
+ETH to back a deposit. Signers are expected to make a signer fee of 5 basis
 points on a $10,000 deposit for $15,000 of collateral (150% of $10,000): $5.
 Due to market conditions, ETH soars 25% to $250, while BTC maintains its
 value. The Signers still get $5 per BTC under custody, however the 75 ETH is

@@ -85,13 +85,13 @@ contract because it no longer has a record of the redemption request.
 == Repayment Amount
 
 :lot-size: 1 TBTC
-:custodial-fee: 0.005 TBTC (50 basis points)
+:signer-fee: 0.005 TBTC (50 basis points)
 :beneficiary-bond-payment: 0.0005 TBTC
 :pre-term-redemption-footnote: footnote:pre-term-redemption[Pre-term deposits \
 can only be redeemed by the TDT owner.]
 
-Conceptually, the repayment amount is the _Deposit_ size plus the custodial fee
-of {custodial-fee}.  This ensures that the signers are paid upon providing a
+Conceptually, the repayment amount is the _Deposit_ size plus the signer fee
+of {signer-fee}.  This ensures that the signers are paid upon providing a
 signature, that the owner can be compensated for the redeemed deposit (in
 at-term redemptions by parties other than the owner), and that the Fee Rebate
 Token holder can receive their fee rebate (in pre-term redemptions).

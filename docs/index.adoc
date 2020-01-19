@@ -243,7 +243,7 @@ The architecture is broken down into:
 * Deposits and signer selection
 * Bonding and price feeds
 * Minting
-* Custodial fees
+* Signer fees
 * Signing
 * Wallet failure
 * Redemption
