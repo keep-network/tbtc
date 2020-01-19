@@ -20,9 +20,9 @@ forfeits their bond, and risks their work token stake.
 
 == Acceptable collateral
 
-Two tokens present themselves as obvious choices for signing bond collateral--
-TBTC and the underlying work token. During the bootstrap phase of the network,
-neither is an appropriate candidate due to low liquidity.
+Two tokens present themselves as obvious choices for signing bond
+collateral—TBTC and the underlying work token. During the bootstrap phase of
+the network, neither is an appropriate candidate due to low liquidity.
 
 Since signer bonds need to be denominated in a widely traded asset to avoid
 market manipulation, the next most obvious pick for bonding is the host chain's
@@ -97,7 +97,7 @@ up their collateral.
 Since <<Custodial Fees>> are denominated per BTC in custody (with
 overcollateralization factored in), a BTC value drop against the
 bonded asset translates in lower fees for Signers. Note that this does not
-create any issue for tBTC reserves, but it makes the system less attractive to
+create any issue for TBTC reserves, but it makes the system less attractive to
 signers looking to earn interest via fees on their assets.
 
 Signers SHOULD buy TBTC from the markets in anticipation of such overly
@@ -122,7 +122,7 @@ have liquid ETH which they can use to back another deposit to mint new TBTC.
 == A resilient price feed
 
 Unlike popular synthetic stablecoin schemes, the tBTC system design makes no
-effort to stabilize the value of TBTC relative to BTC -- TBTC will be priced by
+effort to stabilize the value of TBTC relative to BTC: TBTC will be priced by
 the market. Instead, the goal is to ensure that the TBTC supply is strictly
 less than its backing BTC reserves.
 

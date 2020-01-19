@@ -167,8 +167,8 @@ To understand how we might develop a protocol and token that satisfies those
 requirements, it's useful to consider a simple, under-specified variant that
 could theoretically do the job.
 
-Imagine an off-chain actor, which we'll call `Signer`, an Ethereum smart
-contract that implements the ERC-20 interface, `PeggedBitcoin`, with ticker
+Imagine an off-chain actor, which we'll call `Signer`; an Ethereum smart
+contract that implements the ERC-20 interface, `PeggedBitcoin`; with ticker
 `PBTC`, and another contract with the permission to mint and burn
 `PBTC` called `PeggedBitcoinReserve`.
 
@@ -191,7 +191,7 @@ collateral from `PeggedBitcoinReserve`.
 ===  Flaws
 
 While this simple design is attractive, it's skipped over some of the more
-difficult issues- efficient Bitcoin proof of payment validation on the EVM and
+difficult issues—efficient Bitcoin proof of payment validation on the EVM and
 a reliable price feed implementation, for example.
 
 It's also based on a deeply insecure custody solution.
@@ -237,7 +237,7 @@ and will be assumed. In particular, we assume the existence of
 
 all of which are implemented by the Keep network.
 
-The architecture is broken down into
+The architecture is broken down into:
 
 * Deposits and signer selection
 * Bonding and price feeds

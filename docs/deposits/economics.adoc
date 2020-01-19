@@ -1,6 +1,6 @@
 = Deposit economics
 
-Signers aren't altruists -- they're paid for the service they provide.
+Signers aren't altruists—they are paid for the service they provide.
 
 Signer fees should always be paid or escrowed up front. To achieve this, signer
 fees must be <<{root-prefix}/minting/index#,guaranteed by minting>>, and

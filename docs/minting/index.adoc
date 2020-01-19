@@ -7,10 +7,10 @@
 
 The process of minting TBTC is distinct from the process of depositing Bitcoin.
 
-By splitting minting into two phases -- a single-confirmation SPV proof
-yielding a non-fungible token, and an additional proof enabling trade-in of the
-non-fungible token for fungible TBTC -- we can balance strong security against
-reorgs with a better user experience and more flexible use cases.
+By splitting minting into two phases—a zero-confirmation deposit creation
+yielding a non-fungible token, and an additional proof enabling trade-in of
+the non-fungible token for fungible TBTC—we can balance strong security
+against reorgs with a better user experience and more flexible use cases.
 
 // TODO insert diagram
 
