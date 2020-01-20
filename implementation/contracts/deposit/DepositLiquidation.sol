@@ -190,7 +190,7 @@ library DepositLiquidation {
         startSignerFraudLiquidation(_d);
     }
 
-    /// @notice                 Search _txOutputVector for output paying the requestor
+    /// @notice                 Search _txOutputVector for output paying the requester
     /// @dev                    Require that outputs checked are witness
     /// @param  _d              Deposit storage pointer
     /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs

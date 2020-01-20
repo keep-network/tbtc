@@ -532,7 +532,7 @@ contract('DepositFraud', (accounts) => {
         utils.bytes32zero
       )
 
-      // Provide proof of a transaction where output is sent to a requestor, with
+      // Provide proof of a transaction where output is sent to a requester, with
       // value `490029088`.
       // Expect revert of the transaction.
       await expectThrow(

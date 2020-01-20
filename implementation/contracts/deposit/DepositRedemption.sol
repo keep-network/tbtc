@@ -53,8 +53,14 @@ library DepositRedemption {
     /// @notice Get TBTC amount required by redemption.
     /// @dev    Will revert if redemption is not possible by msg.sender.
     /// @return The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d) public view returns(uint256){       
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _requester) public view returns(uint256){
         if(_d.remainingTerm() > 0){
+            if(msg.sender == _d.VendingMachine){
+                if(_requester != _d.feeRebateTokenHolder()){
+                    return _d.signerFee();
+                }
+                return 0;
+            }
             require(
                 _d.depositOwner() == msg.sender,
                 "redemption can only be called by deposit owner until deposit reaches term"
@@ -76,9 +82,10 @@ library DepositRedemption {
         address vendingMachine = _d.VendingMachine;
 
         uint256 tbtcLot = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+
         uint256 signerFee = _d.signerFee();
 
-        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d);
+        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
 
         // if we owe 0 TBTC, Deposit is pre-term, msg.sender is DOT owner and FRT holder.
         if(tbtcOwed == 0){
@@ -118,13 +125,18 @@ library DepositRedemption {
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _requesterAddress   The address of the requester.
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH
+        bytes20 _requesterPKH,
+        address payable _requesterAddress
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
+
+        // set requesterAddress early to enable direct access by other functions
+        _d.requesterAddress = _requesterAddress;
 
         performRedemptionTBTCTransfers(_d);
 
@@ -142,7 +154,6 @@ library DepositRedemption {
             _requesterPKH);
 
         // write all request details
-        _d.requesterAddress = msg.sender;
         _d.requesterPKH = _requesterPKH;
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;

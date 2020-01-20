@@ -129,20 +129,20 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('returns signerFee if we are pre term and FRT holder is not msg.sender', async () => {
-      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call()
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed.toString(), signerFee.toString())
     })
 
     it('returns zero if deposit is pre-term and msg.sender is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
 
-      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call()
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed, 0)
     })
 
     it('reverts if deposit is pre-term and msg.sender is not Deposit owner', async () => {
       await expectThrow(
-        testInstance.getRedemptionTbtcRequirement.call({ from: accounts[2] }),
+        testInstance.getRedemptionTbtcRequirement.call(accounts[0], { from: accounts[2] }),
         'redemption can only be called by deposit owner until deposit reaches term'
       )
     })
@@ -150,7 +150,7 @@ contract('DepositRedemption', (accounts) => {
     it('returns full TBTC if we are at-term', async () => {
       await increaseTime(depositTerm.toNumber())
 
-      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call()
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed.toString(), depositValue.toString())
     })
   })
@@ -250,7 +250,6 @@ contract('DepositRedemption', (accounts) => {
     })
   })
 
-  // eslint-disable-next-line no-only-tests/no-only-tests
   describe('requestRedemption', async () => {
     // the TX produced will be:
     // 01000000000101333333333333333333333333333333333333333333333333333333333333333333333333000000000001111111110000000016001433333333333333333333333333333333333333330000000000
@@ -292,7 +291,7 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
 
       const requestInfo = await testInstance.getRequestInfo()
       assert.equal(requestInfo[1], requesterPKH)
@@ -311,7 +310,7 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
       const event = events[0]
@@ -324,14 +323,14 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setState(utils.states.LIQUIDATED)
 
       await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
         'Redemption only available from Active or Courtesy state'
       )
     })
 
     it('reverts if the fee is low', async () => {
       await expectThrow(
-        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
+        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20), accounts[0]),
         'Fee is too low'
       )
     })
@@ -343,7 +342,7 @@ contract('DepositRedemption', (accounts) => {
       await depositOwnerToken.transferFrom(accounts[0], accounts[4], dotId)
 
       await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
         'redemption can only be called by deposit owner until deposit reaches term'
       )
     })
