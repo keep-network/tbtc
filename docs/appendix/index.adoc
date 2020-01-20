@@ -6,6 +6,8 @@ ifndef::tbtc[]
 toc::[]
 endif::tbtc[]
 
+include::./disbursal/index.adoc[leveloffset=+1]
+
 include::./states/index.adoc[leveloffset=+1]
 
 include::./spv/index.adoc[leveloffset=+2]

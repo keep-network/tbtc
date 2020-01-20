@@ -7,7 +7,7 @@ ifndef::tbtc[toc::[]]
 
 == Overview
 
-Fraud and abort  processes handle custody failures. This includes punishing
+Fraud and abort  processes handle signer failures. This includes punishing
 signers and starting the bond liquidation process. These transitions can be
 invoked from almost any _Deposit_ state, as faults may occur during any other
 flow. Once fault has been proven, the bonds are put up for auction to the

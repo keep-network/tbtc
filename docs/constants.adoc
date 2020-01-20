@@ -1,0 +1,32 @@
+// Constants used throughout the spec. Generally (though not always) correspond
+// to tBTC system constants.
+
+// Overcollateralization constants.
+:extra-collateral: 50%
+:total-collateral: 150%
+
+// Liquidation constants.
+:pre-liquidation-period: 6 hours
+:pre-liquidation-threshold: 125%
+:liquidation-threshold: 110%
+:liquidation-auction-start-percent: 80%
+
+// Deposit terms.
+:term-length: 6 months
+
+// Lots and signer fees.
+:tbtc-lot-size: 1 TBTC
+:btc-lot-size: 1 BTC
+:signer-fee: 0.005 TBTC
+:signer-fee-basis-points: 50
+:tbtc-lot-size-less-signer-fee: 0.995 TBTC
+:beneficiary-bond-payment: 0.0005 TBTC
+
+// Redemption and BTC fees and fee increases.
+:redemption-proof-timeout: 12 hours
+:signature-timeout: 3 hours
+// TODO: fill in real numbers for these two
+:min-redemption-btc-fee: 2345 satoshi
+:min-redemption-btc-feerate: ~20 satoshi/vbyte
+:fee-increase-timer: 4 hours
+:fee-increase-timer-times-two: 8 hours
