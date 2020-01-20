@@ -78,12 +78,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
     }
 
-    // @notice Get the system undercollateralization level for new deposits
+    /// @notice Get the system undercollateralization level for new deposits
     function getUndercollateralizedThresholdPercent() external view returns (uint256) {
         return undercollateralizedThresholdPercent;
     }
 
-    // @notice Get the system severe undercollateralization level for new deposits
+    /// @notice Get the system severe undercollateralization level for new deposits
     function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint256) {
         return severelyUndercollateralizedThresholdPercent;
     }
