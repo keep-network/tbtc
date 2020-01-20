@@ -20,5 +20,5 @@ Signing bond:: The bond signers put up before a deposit is funded. This bond
 ensures signers will be punished for fraud or poor uptime.
 
 Reserved TBTC:: The amount of TBTC that can't be drawn from a new deposit.
-Reserving TBTC on deposit funding sets aside funds to pay signers' custodial
-fees through the deposit term.
+Reserving TBTC on deposit funding sets aside funds to pay signing fee through
+the deposit term.

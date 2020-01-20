@@ -2,12 +2,12 @@
 
 # Connection details of a Electrum Server.
 [electrum]
-  ServerHost  = "electrumx-server.tbtc.svc.cluster.local"
+  ServerHost  = "tbtc-electrumx-server.tbtc.svc.cluster.local"
   ServerPort  = "50002"
   Protocol    = "SSL" # TCP or SSL
 
 # TLS configuration for a SSL connection to a Electrum Server.
-[electrum.TLSConfig] 
+[electrum.TLSConfig]
   # Skip server certificates verification - a temporary solution for development.
   InsecureSkipVerify = true
 

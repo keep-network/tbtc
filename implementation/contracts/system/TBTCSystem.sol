@@ -5,31 +5,28 @@ import {IKeepRegistry} from "@keep-network/keep-ecdsa/contracts/api/IKeepRegistr
 import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeepVendor.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
+import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./ERC721MinterAuthority.sol";
 
-contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, DepositLog {
+contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     bool _initialized = false;
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
-    uint256 oraclePrice = 10 ** 12;
 
     address public keepRegistry;
+    address public priceFeed;
 
     // Governed parameters by the TBTCSystem owner
     bool private allowNewDeposits = true;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
 
-    constructor(address _depositFactory)
-        ERC721MinterAuthority(_depositFactory)
-        public
-    {
-            // solium-disable-previous-line no-empty-blocks
+
+    constructor(address _priceFeed) public {
+        priceFeed = _priceFeed;
     }
 
     function initialize(
@@ -65,9 +62,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
     /// @return The signer fee divisor.
     function getSignerFeeDivisor() public view returns (uint256) { return signerFeeDivisor; }
 
-    // Price Oracle
-    function fetchOraclePrice() external view returns (uint256) {
-        return oraclePrice;
+    // Price Feed
+    function fetchBitcoinPrice() external view returns (uint256) {
+        return IBTCETHPriceFeed(priceFeed).getPrice();
     }
 
     // Difficulty Oracle
@@ -101,22 +98,5 @@ contract TBTCSystem is Ownable, ITBTCSystem, ERC721, ERC721MinterAuthority, Depo
 
         _keepAddress = IECDSAKeepVendor(keepVendorAddress)
             .openKeep(_n,_m, msg.sender);
-    }
-
-    /// @notice          Function to mint a new token.
-    /// @dev             Reverts if the given token ID already exists.
-    ///                  This function can only be called by depositFactory
-    /// @param _to       The address that will own the minted token
-    /// @param _tokenId  uint256 ID of the token to be minted
-    function mint(address _to, uint256 _tokenId) public onlyFactory {
-        _mint(_to, _tokenId);
-    }
-
-    /// @notice  Checks if an address is a deposit.
-    /// @dev     Verifies if Deposit ERC721 token with given address exists.
-    /// @param _depositAddress  The address to check
-    /// @return  True if deposit with given value exists, false otherwise.
-    function isDeposit(address _depositAddress) public returns (bool){
-        return _exists(uint256(_depositAddress));
     }
 }

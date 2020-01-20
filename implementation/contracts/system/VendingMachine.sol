@@ -2,6 +2,7 @@ pragma solidity ^0.5.10;
 
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {DepositOwnerToken} from "./DepositOwnerToken.sol";
+import {FeeRebateToken} from "./FeeRebateToken.sol";
 import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
 import {DepositUtils} from "../deposit/DepositUtils.sol";
@@ -12,13 +13,16 @@ contract VendingMachine {
 
     TBTCToken tbtcToken;
     DepositOwnerToken depositOwnerToken;
+    FeeRebateToken feeRebateToken;
 
     constructor(
         address _tbtcToken,
-        address _depositOwnerToken
+        address _depositOwnerToken,
+        address _feeRebateToken
     ) public {
         tbtcToken = TBTCToken(_tbtcToken);
         depositOwnerToken = DepositOwnerToken(_depositOwnerToken);
+        feeRebateToken = FeeRebateToken(_feeRebateToken);
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
@@ -27,7 +31,8 @@ contract VendingMachine {
         return Deposit(_depositAddress).inActive();
     }
 
-    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
+    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token as long as
+    ///         it is qualified.
     /// @dev    Burns TBTC, transfers DOT from vending machine to caller
     /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
@@ -57,12 +62,17 @@ contract VendingMachine {
         uint256 signerFee = deposit.signerFee();
         uint256 depositValue = getDepositValue();
 
-        if(tbtcToken.balanceOf(address(_dotId)) < signerFee){
+        if(tbtcToken.balanceOf(address(_dotId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
             tbtcToken.mint(address(_dotId), signerFee);
         }
         else{
             tbtcToken.mint(msg.sender, depositValue);
+        }
+
+        // owner of the DOT during first TBTC mint receives the FRT
+        if(!feeRebateToken.exists(_dotId)){
+            feeRebateToken.mint(msg.sender, _dotId);
         }
     }
 
@@ -98,10 +108,11 @@ contract VendingMachine {
         dotToTbtc(uint256(_depositAddress));
     }
 
-    /// @notice Redeems a Deposit by purchasing a DOT with TBTC, and using the DOT to redeem correspoinding Deposit.
+    /// @notice Redeems a Deposit by purchasing a DOT with TBTC, and using the DOT to redeem corresponding Deposit.
+    ///         This function will revert if the Deposit is not in ACTIVE state.
     /// @dev Vending Machine transfers TBTC allowance to Deposit.
     /// @param  _depositAddress     The address of the Deposit to redeem.
-    /// @param  _outputValueBytes   The 8-byte LE output size.
+    /// @param  _outputValueBytes   The 8-byte Bitcoin transaction output size in Little Endian.
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds.
     function tbtcToBtc(
         address payable _depositAddress,
@@ -112,7 +123,7 @@ contract VendingMachine {
 
         tbtcToDot(uint256(_depositAddress));
 
-        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement();
+        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(msg.sender);
 
         if(tbtcOwed != 0){
             tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);

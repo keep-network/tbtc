@@ -23,7 +23,8 @@ const DepositStates = artifacts.require('DepositStates')
 
 const TestVendingMachine = artifacts.require('TestVendingMachine')
 const TestToken = artifacts.require('TestToken')
-const TestDepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -47,6 +48,8 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 const currentDifficulty = 6353030562983
@@ -67,14 +70,14 @@ const _outValueBytes = '0x2040351d00000000'
 contract('VendingMachine', (accounts) => {
   let deployed
   let vendingMachine
-  let depositOwnerToken
   let tbtcToken
   let tbtcSystemStub
   let testInstance
 
   let assertBalance
+  let depositOwnerToken
+  let feeRebateToken
   let dotId
-
   // this is the amount of TBTC exchanged for a DOT.
   let depositValue
   let signerFee
@@ -82,21 +85,35 @@ contract('VendingMachine', (accounts) => {
 
   before(async () => {
     // VendingMachine relies on linked libraries, hence we use deploySystem for consistency.
+    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
     vendingMachine = deployed.TestVendingMachine
     tbtcToken = await TestToken.new(vendingMachine.address)
-    depositOwnerToken = await TestDepositOwnerToken.new()
+
+    depositOwnerToken = deployed.DepositOwnerToken
+    feeRebateToken = deployed.FeeRebateToken
+
     assertBalance = new AssertBalance(tbtcToken)
 
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     testInstance = deployed.TestDeposit
-    await testInstance.setExteriorAddresses(tbtcSystemStub.address, tbtcToken.address, depositOwnerToken.address)
+
+    await testInstance.setExteriorAddresses(
+      tbtcSystemStub.address,
+      tbtcToken.address,
+      depositOwnerToken.address,
+      feeRebateToken.address,
+      vendingMachine.address
+    )
     await testInstance.setSignerFeeDivisor(signerFeeDivisor)
 
-    await vendingMachine.setExteriorAddresses(tbtcToken.address, depositOwnerToken.address)
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
 
-    tbtcSystemStub.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    await vendingMachine.setExteriorAddresses(
+      tbtcToken.address,
+      depositOwnerToken.address,
+      feeRebateToken.address
+    )
+
     dotId = await web3.utils.toBN(testInstance.address)
 
     const lotSize = await deployed.TBTCConstants.getLotSize()
@@ -298,6 +315,72 @@ contract('VendingMachine', (accounts) => {
 
       await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
       await assertBalance.tbtc(testInstance.address, signerFee)
+    })
+  })
+
+  describe('#tbtcToBtc', async () => {
+    const sighash = '0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90'
+    const outpoint = '0x' + '33'.repeat(36)
+    const valueBytes = '0x1111111111111111'
+    const keepPubkeyX = '0x' + '33'.repeat(32)
+    const keepPubkeyY = '0x' + '44'.repeat(32)
+    const requesterPKH = '0x' + '33'.repeat(20)
+    let lotSize
+    let multiplier
+    let requiredBalance
+    let block
+
+    before(async () => {
+      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      multiplier = await deployed.TBTCConstants.getSatoshiMultiplier.call()
+      requiredBalance = lotSize.mul(multiplier)
+
+      block = await web3.eth.getBlock('latest')
+      await depositOwnerToken.forceMint(vendingMachine.address, dotId)
+      await tbtcToken.resetBalance(requiredBalance)
+      await tbtcToken.resetAllowance(vendingMachine.address, requiredBalance)
+      await deployed.ECDSAKeepStub.setSuccess(true)
+      await testInstance.setState(utils.states.ACTIVE)
+      await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('successfully redeems via wrapper', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is ~12,297,829,380 BTC
+      await feeRebateToken.forceMint(accounts[0], dotId)
+      await vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH)
+      const requestInfo = await testInstance.getRequestInfo()
+      assert.equal(requestInfo[1], requesterPKH)
+      assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
+      assert.equal(requestInfo[4], sighash)
+
+      // fired an event
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList[0].returnValues._digest, sighash)
+    })
+
+    it('fails to redeem with insufficient balance', async () => {
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is ~12,297,829,380 BTC
+      // requester does not own the FRT, and therefore owes an additional SignerFee
+      await feeRebateToken.forceMint(accounts[1], dotId)
+
+      await expectThrow(
+        vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH),
+        'SafeMath: subtraction overflow.'
+      )
     })
   })
 })

@@ -3,10 +3,11 @@ pragma solidity ^0.5.10;
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../external/IMedianizer.sol";
+import "../interfaces/IBTCETHPriceFeed.sol";
 
 /// @notice Bitcoin-Ether price feed.
 /// @dev Based on the ratio of two medianizer price feeds, BTC/USD and ETH/USD.
-contract BTCETHPriceFeed is Ownable {
+contract BTCETHPriceFeed is Ownable, IBTCETHPriceFeed {
     using SafeMath for uint256;
 
     bool private _initialized = false;
@@ -43,6 +44,13 @@ contract BTCETHPriceFeed is Ownable {
         // the medianizer oracle value is unrelated to the price.
         uint256 btcUsd = uint256(uint128(btcPriceFeed.read()));
         uint256 ethUsd = uint256(uint128(ethPriceFeed.read()));
-        return btcUsd.div(ethUsd);
+        // The price is a ratio of bitcoin to ether is expressed as:
+        //  x btc : y eth
+        // Bitcoin has 10 decimal places, ether has 18. Normalising the units, we have:
+        //  x * 10^8 : y * 10^18
+        // Simplfying down, we can express it as:
+        //  x : y * 10^10
+        // Due to order-of-ops, we can move the multiplication to get some more precision.
+        return btcUsd.mul(10**10).div(ethUsd);
     }
 }

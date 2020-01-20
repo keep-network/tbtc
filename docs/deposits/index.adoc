@@ -6,26 +6,31 @@ ifndef::tbtc[]
 toc::[]
 
 :root-prefix: ../
+include::../constants.adoc[]
 endif::tbtc[]
 
 == Overview
 
 tBTC provides a mechanism for creating a token, TBTC, on a non-Bitcoin _host
-chain_, that is 1-to-1 backed by bitcoin. Parties interested in minting TBTC
-<<Deposit Request,request>> that the tBTC system provide them with a Bitcoin
-wallet address. The system selects a set of _signers_, which are tasked with
+chain_ (in tBTC v1, this host chain is Ethereum), that is 1-to-1 backed by
+bitcoin. Parties interested in minting TBTC <<request,request>> that
+the tBTC system provide them with a Bitcoin wallet address. The system
+<<signer-selection,selects a set of _signers_>>, which are tasked with
 generating a private/public keypair and furnishing it to the system. The
 interested party then becomes a _depositor_ by sending bitcoin to the wallet
 (the amount of required bitcoin is discussed separately in the section on
-<<Lots,lots>>). The bitcoin that is sent to the wallet is in two parts: one is
-eligible for 1-to-1 minting into TBTC, while the other is reserved as incentive
-and collateral for the wallet signers.
+<<Lots,lots>>). The deposit cannot be maintained for free, as deposits require
+signers to put up an ETH bond to guarantee good behavior (see the section on
+<<Deposit economics>>). To cover these costs, the deposit is paid for by
+signing fees that cover a set _term_ of deposit redemption exclusivity for
+the deposit owner, discussed separately in the section on <<term,terms>>.
 
 Each of these steps is shown in the diagram below and discussed in subsequent
 sections.
 
 image::{root-prefix}img/generated/initiate-deposit.png[]
 
+[[request]]
 == Deposit request
 
 The starting point for acquiring TBTC is generating a _deposit request_. This
@@ -35,6 +40,7 @@ groups are not free to create, deposit requests include a small bond in the host
 chain's native token to cover the creation of the signing group. The bond is
 refunded when a successful deposit is made to the generated wallet.
 
+[[signer-selection]]
 === Signer selection
 
 Once the deposit request is received, the signing group is created by randomly
@@ -64,17 +70,25 @@ This completes the signer selection phase.
 
 Before the selected members of a signing group can perform distributed key
 generation, they must agree to become members of the signing group by putting up
-a bond in the native token of the host chain. This bond is used to penalize the
-members of the signing group if an unauthorized piece of data is signed by the
-signing group once distributed key generation is complete; it is also used to
-penalize a given member if the distributed key generation fails due to an
-attributed misbehavior of that member.
+a bond (the _signer bond_) in the native token of the host chain. This bond
+is used to penalize the members of the signing group if an unauthorized piece
+of data is signed by the signing group once distributed key generation is
+complete; it is also used to penalize a given member if the distributed key
+generation fails due to an attributed misbehavior of that member, if the signing
+group fails to produce a signature for the system when requested, and to
+bring the system into balance in cases of undercollateralization.
 
 Bonding is described in more detail in
 <<{root-prefix}bonding/index#bonding,its own section>>.
 
 ==== Distributed key generation
 
+:threshold-signature: footnote:[Threshold signatures allow a group of N \
+signers to generate a public key and a set of private key shares, with which \
+a subset M of the signers can create signatures on behalf of the group. For \
+tBTC v1, signing groups are 3-of-3, meaning they are groups of 3 signers that \
+require all 3 signers to collaborate to create signatures on behalf of the \
+group.]
 Some small notes about the distributed key generation a signing group undergoes.
 The distributed key generation protocol should result in three properties:
 
@@ -82,8 +96,9 @@ The distributed key generation protocol should result in three properties:
    shared on the host chain and will correspond to the Bitcoin wallet
    owned by that signing group.
 2. Each member of the signing group should have a _threshold ECDSA secret key
-   share_, which can be used to create a _threshold ECDSA signature share_ for
-   any transactions involving the signing group's wallet.
+   share_{threshold-signature}, which can be used to create a
+   _threshold ECDSA signature share_ for any transactions involving the
+   signing group's wallet.
 3. Each member of the signing group should be able to combine a threshold number
    of signature shares from itself and other members of the group to produce a
    signed version of a given transaction to be performed on behalf of the
@@ -91,23 +106,26 @@ The distributed key generation protocol should result in three properties:
 
 == Making a deposit
 
+:sufficient-confirmations: footnote:[For tBTC v1, sufficient confirmations means 6 confirmations. Confirmation numbers \
+that are variable, particularly in response to volume of deposits that are \
+opened, are part of the discussion for tBTC v2.]
+
 Once the tBTC system has a wallet address available for a given deposit request,
 the _depositor_ can broadcast a Bitcoin transaction sending BTC from a wallet
 they control to the wallet address for the signing group. Once the transaction
-has been sufficiently confirmed by the Bitcoin chain, the depositor has to issue
-a transaction to the host chain proving that the _Deposit_ has been funded.
+has been sufficiently confirmed{sufficient-confirmations} by the Bitcoin
+chain, the depositor has to issue a transaction to the host chain proving
+that the _Deposit_ has been funded.
 
 The only link between the Bitcoin chain and the host chain is the tBTC system,
 which runs as a set of smart contracts on the host chain. As such, the Bitcoin
 transaction issued by the depositor has to be proven to the tBTC system before
 the tBTC system allows the depositor to behave as if they have successfully
-deposited their BTC into the custodial wallet. When a deposit proof is accepted
+deposited their BTC into the signer wallet. When a deposit proof is accepted
 by the system, the deposit bond is refunded to the depositor. If a deposit
 proof is not received within a given timeout window, the signing group will
 disband and the system will seize the bond's value, making it available to the
 signing group members to reclaim.
-
-// TODO What is "sufficient"? Defined as a system property? Dynamic?
 
 === Light Relays
 
@@ -123,7 +141,7 @@ enough information to provide each stateless proof with some recency guarantee.
 We achieve this by taking advantage of the difficulty adjustment feature of
 Bitcoin's protocol. Bitcoin adjusts difficulty every 2016 blocks, based on
 timestamps of the first and last block in that period (due to an off-by-one
-error in the Satoshi client, one interblock period is exlcuded from the
+error in the Satoshi client, one interblock period is excluded from the
 difficulty calculation). The change is deterministic and within some tolerance
 may be set by the miner of the last block.
 
@@ -152,16 +170,14 @@ proofs.
 
 == Lots
 
-:lot-size: 1.0
-
 Deposits will be managed in fixed-size _lots_. Each deposit therefore will
-have to be of the same amount: {lot-size} BTC. Thus, a depositor submitting
+have to be of the same amount: {btc-lot-size}. Thus, a depositor submitting
 their <<Proof of deposit,proof of deposit>> must prove that they deposited
-{lot-size} into the deposit's signing group wallet. If a depositor wants to
+{btc-lot-size} into the deposit's signing group wallet. If a depositor wants to
 deposit more than the lot size, they will need to create multiple deposit
 requests and fund multiple deposits. This allows each deposit to be backed by
 a different signing group, both simplifying the bonding of signing groups and
-improving the resilience of the system to signing group failure.
+improving the resilience of the system to signing group failure, malicious or not.
 
 include::./mistakes.adoc[leveloffset=+1]
 
