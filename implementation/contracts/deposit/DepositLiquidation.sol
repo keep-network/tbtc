@@ -265,7 +265,7 @@ library DepositLiquidation {
         }
         if (contractEthBalance > 1) {
             if (_wasFraud) {
-               initiator.transfer(contractEthBalance);
+                initiator.transfer(contractEthBalance);
             } else {
                 // There will always be a liquidation initiator.
                 uint256 split = contractEthBalance.div(2);
