@@ -93,11 +93,11 @@ library DepositRedemption {
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
 
-        // if we owe 0 TBTC, Deposit is pre-term, msg.sender is DOT owner and FRT holder.
+        // if we owe 0 TBTC, msg.sender is DOT owner and FRT holder.
         if(tbtcOwed == 0){
             return;
         }
-        // if we owe signerfee, Deposit is pre-term, msg.sender is DOT owner but not FRT holder.
+        // if we owe signerfee, msg.sender is DOT owner but not FRT holder.
         if(tbtcOwed == signerFee){
             _tbtc.transferFrom(msg.sender, address(this), signerFee);
             return;
