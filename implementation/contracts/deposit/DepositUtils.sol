@@ -31,8 +31,8 @@ library DepositUtils {
         address VendingMachine;
         uint8 currentState;
         uint256 signerFeeDivisor;
-        uint256 undercollateralizedThresholdPercent;
-        uint256 severelyUndercollateralizedThresholdPercent;
+        uint128 undercollateralizedThresholdPercent;
+        uint128 severelyUndercollateralizedThresholdPercent;
 
         // SET ON FRAUD
         uint256 liquidationInitiated;  // Timestamp of when liquidation starts

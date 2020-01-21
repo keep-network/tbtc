@@ -23,8 +23,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = true;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
-    uint256 private undercollateralizedThresholdPercent = 140;  // percent
-    uint256 private severelyUndercollateralizedThresholdPercent = 120; // percent
+    uint128 private undercollateralizedThresholdPercent = 140;  // percent
+    uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
 
     constructor(address _priceFeed) public {
         priceFeed = _priceFeed;
@@ -67,8 +67,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _undercollateralizedThresholdPercent first undercollateralization trigger
     /// @param _severelyUndercollateralizedThresholdPercent second undercollateralization trigger
     function setCollateralizationThresholds(
-        uint256 _undercollateralizedThresholdPercent,
-        uint256 _severelyUndercollateralizedThresholdPercent
+        uint128 _undercollateralizedThresholdPercent,
+        uint128 _severelyUndercollateralizedThresholdPercent
     ) external onlyOwner {
         require(
             _undercollateralizedThresholdPercent > _severelyUndercollateralizedThresholdPercent,
@@ -79,12 +79,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Get the system undercollateralization level for new deposits
-    function getUndercollateralizedThresholdPercent() external view returns (uint256) {
+    function getUndercollateralizedThresholdPercent() external view returns (uint128) {
         return undercollateralizedThresholdPercent;
     }
 
     /// @notice Get the system severe undercollateralization level for new deposits
-    function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint256) {
+    function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint128) {
         return severelyUndercollateralizedThresholdPercent;
     }
 

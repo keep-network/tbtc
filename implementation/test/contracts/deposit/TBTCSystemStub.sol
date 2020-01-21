@@ -41,7 +41,7 @@ contract TBTCSystemStub is TBTCSystem {
         return keepAddress;
     }
 
-    function getUndercollateralizedThresholdPercent() external view returns (uint256) { return 140; }
+    function getUndercollateralizedThresholdPercent() external view returns (uint128) { return 140; }
 
-    function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint256) { return 120; }
+    function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint128) { return 120; }
 }
