@@ -258,18 +258,19 @@ library DepositLiquidation {
         // division will yield a 0 value which causes a revert; instead, 
         // we simply ignore such a tiny amount and leave some wei dust in escrow
         uint256 contractEthBalance = address(this).balance;
-        address initiator = _d.liquidationInitiator;
+        address payable initiator = _d.liquidationInitiator;
+
         if (initiator == address(0)){
-            _d.liquidationInitiator = address(0xdead);
+            initiator = address(0xdead);
         }
         if (contractEthBalance > 1) {
             if (_wasFraud) {
-                _d.liquidationInitiator.transfer(contractEthBalance);
+               initiator.transfer(contractEthBalance);
             } else {
                 // There will always be a liquidation initiator.
                 uint256 split = contractEthBalance.div(2);
                 _d.pushFundsToKeepGroup(split);
-                _d.liquidationInitiator.transfer(split);
+                initiator.transfer(split);
             }
         }
     }
