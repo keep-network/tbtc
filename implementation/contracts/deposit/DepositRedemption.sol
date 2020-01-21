@@ -70,6 +70,12 @@ library DepositRedemption {
             }
             return 0;
         }
+        if(_d.depositOwner() == msg.sender){
+            if(_d.feeRebateTokenHolder() != msg.sender) {
+                return _d.signerFee();
+            }
+            return 0;
+        }
         return TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
     }
 
