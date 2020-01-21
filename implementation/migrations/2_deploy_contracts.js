@@ -15,6 +15,7 @@ const DepositFunding = artifacts.require('DepositFunding')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 const Deposit = artifacts.require('Deposit')
+const VendingMachine = artifacts.require('VendingMachine')
 
 // price feed
 const BTCETHPriceFeed = artifacts.require('BTCETHPriceFeed')
@@ -26,9 +27,10 @@ const prices = require('./prices')
 const TBTCConstants = artifacts.require('TBTCConstants')
 const TBTCSystem = artifacts.require('TBTCSystem')
 
-// keep
+// tokens
 const TBTCToken = artifacts.require('TBTCToken')
 const DepositOwnerToken = artifacts.require('DepositOwnerToken')
+const FeeRebateToken = artifacts.require('FeeRebateToken')
 
 // deposit factory
 const DepositFactory = artifacts.require('DepositFactory')
@@ -36,7 +38,7 @@ const DepositFactory = artifacts.require('DepositFactory')
 const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
   OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
   DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystem,
-  BTCETHPriceFeed]
+  BTCETHPriceFeed, VendingMachine, FeeRebateToken]
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
@@ -107,5 +109,9 @@ module.exports = (deployer, network, accounts) => {
     // token
     await deployer.deploy(TBTCToken, TBTCSystem.address)
     await deployer.deploy(DepositOwnerToken)
+    await deployer.deploy(FeeRebateToken)
+
+    // vending machine
+    await deployer.deploy(VendingMachine, TBTCToken.address, DepositOwnerToken.address, FeeRebateToken.address)
   })
 }

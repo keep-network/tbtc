@@ -31,7 +31,8 @@ contract VendingMachine {
         return Deposit(_depositAddress).inActive();
     }
 
-    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
+    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token as long as
+    ///         it is qualified.
     /// @dev    Burns TBTC, transfers DOT from vending machine to caller
     /// @param _dotId ID of Deposit Owner Token to buy
     function tbtcToDot(uint256 _dotId) public {
@@ -105,5 +106,45 @@ contract VendingMachine {
             "failed to provide funding proof");
 
         dotToTbtc(uint256(_depositAddress));
+    }
+
+    /// @notice Redeems a Deposit by purchasing a DOT with TBTC, and using the DOT to redeem corresponding Deposit.
+    ///         This function will revert if the Deposit is not in ACTIVE state.
+    /// @dev Vending Machine transfers TBTC allowance to Deposit.
+    /// @param  _depositAddress     The address of the Deposit to redeem.
+    /// @param  _outputValueBytes   The 8-byte Bitcoin transaction output size in Little Endian.
+    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds.
+    function tbtcToBtc(
+        address payable _depositAddress,
+        bytes8 _outputValueBytes,
+        bytes20 _requesterPKH
+    ) public{
+        Deposit _d = Deposit(_depositAddress);
+
+        tbtcToDot(uint256(_depositAddress));
+
+        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(msg.sender);
+
+        if(tbtcOwed != 0){
+            tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
+            tbtcToken.approve(_depositAddress, tbtcOwed);
+        }
+
+        _d.requestRedemption(
+            _outputValueBytes,
+            _requesterPKH,
+            msg.sender
+        );
+    }
+
+    // HELPERS
+
+    // TODO temporary helper function
+    /// @notice Gets the Deposit lot size less signer fees
+    /// @return amount in TBTC
+    function getDepositValue() internal returns (uint) {
+        uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
+        uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
+        return _totalValue;
     }
 }
