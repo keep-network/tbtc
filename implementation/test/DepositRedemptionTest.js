@@ -16,7 +16,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
-const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 
@@ -45,7 +45,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
   { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
@@ -64,7 +64,7 @@ contract('DepositRedemption', (accounts) => {
   let withdrawalRequestTime
   let tbtcToken
   let tbtcSystemStub
-  let depositOwnerToken
+  let tbtcDepositToken
   let feeRebateToken
   let depositValue
   let signerFee
@@ -78,14 +78,14 @@ contract('DepositRedemption', (accounts) => {
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
     testInstance = deployed.TestDeposit
-    depositOwnerToken = deployed.DepositOwnerToken
+    tbtcDepositToken = deployed.TBTCDepositToken
     feeRebateToken = deployed.FeeRebateToken
     vendingMachine = '0x' + '11'.repeat(20),
 
     await testInstance.setExteriorAddresses(
       tbtcSystemStub.address,
       tbtcToken.address,
-      depositOwnerToken.address,
+      tbtcDepositToken.address,
       feeRebateToken.address,
       vendingMachine
     )
@@ -94,7 +94,7 @@ contract('DepositRedemption', (accounts) => {
     await feeRebateToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     dotId = await web3.utils.toBN(testInstance.address)
-    await depositOwnerToken.forceMint(accounts[0], dotId)
+    await tbtcDepositToken.forceMint(accounts[0], dotId)
 
 
     depositValue = await deployed.TBTCConstants.getLotSizeTbtc()
@@ -147,7 +147,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('returns full TBTC if we are at-term and caller is not TDT owner', async () => {
       await increaseTime(depositTerm.toNumber())
-      await depositOwnerToken.transferFrom(accounts[0], accounts[1], dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], dotId)
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed.toString(), depositValue.toString())
@@ -213,7 +213,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine', async () => {
       await increaseTime(depositTerm.toNumber())
-      await depositOwnerToken.transferFrom(accounts[0], vendingMachine, dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], vendingMachine, dotId)
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testInstance.address, depositValue)
       block = await web3.eth.getBlock('latest')
@@ -229,7 +229,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('sends 1 TBTC to Deposit Token owner if deposit is at-term and fee is escrowed', async () => {
       await increaseTime(depositTerm.toNumber())
-      await depositOwnerToken.transferFrom(accounts[0], accounts[1], dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], dotId)
       await tbtcToken.forceMint(testInstance.address, signerFee)
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testInstance.address, depositValue)
@@ -246,7 +246,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('escrows fee and sends correct TBTC if Deposit is at-term and fee is not escrowed', async () => {
       await increaseTime(depositTerm.toNumber())
-      await depositOwnerToken.transferFrom(accounts[0], accounts[1], dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], dotId)
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testInstance.address, depositValue)
       block = await web3.eth.getBlock('latest')
@@ -353,7 +353,7 @@ contract('DepositRedemption', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
-      await depositOwnerToken.transferFrom(accounts[0], accounts[4], dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], accounts[4], dotId)
 
       await expectThrow(
         testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),

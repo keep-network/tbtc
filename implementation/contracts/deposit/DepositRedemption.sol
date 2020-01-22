@@ -86,7 +86,7 @@ library DepositRedemption {
     function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         address feeRebateTokenHolder = _d.feeRebateTokenHolder();
-        address depositOwnerTokenHolder = _d.depositOwner();
+        address tdtHolder = _d.depositOwner();
         address vendingMachine = _d.VendingMachine;
 
         uint256 tbtcLot = TBTCConstants.getLotSizeTbtc();
@@ -94,11 +94,11 @@ library DepositRedemption {
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
 
-        // if we owe 0 TBTC, msg.sender is DOT owner and FRT holder.
+        // if we owe 0 TBTC, msg.sender is TDT owner and FRT holder.
         if(tbtcOwed == 0){
             return;
         }
-        // if we owe signerfee, msg.sender is DOT owner but not FRT holder.
+        // if we owe signerfee, msg.sender is TDT owner but not FRT holder.
         if(tbtcOwed == signerFee){
             _tbtc.transferFrom(msg.sender, address(this), signerFee);
             return;
@@ -106,21 +106,21 @@ library DepositRedemption {
         // Redemmer always owes a full TBTC for at-term redemption.
         if(tbtcOwed == tbtcLot){
             // the TDT holder has exclusive redemption rights to a UXTO up until the deposit’s term.
-            // At that point, we open it up so anyone may redeem it. 
-            // As compensation, the DOT owner is reimbursed in TBTC
-            // Vending Machine-owned DOTs have been used to mint TBTC, 
+            // At that point, we open it up so anyone may redeem it.
+            // As compensation, the TDT owner is reimbursed in TBTC
+            // Vending Machine-owned TDTs have been used to mint TBTC,
             // and we should always burn a full TBTC to redeem the deposit.
-            if(depositOwnerTokenHolder == vendingMachine){
+            if(tdtHolder == vendingMachine){
                 _tbtc.burnFrom(msg.sender, tbtcLot);
             }
-            // if signer fee is not escrowed, escrow and it here and send the rest to DOT owner
+            // if signer fee is not escrowed, escrow and it here and send the rest to TDT owner
             else if(_tbtc.balanceOf(address(this)) < signerFee){
                 _tbtc.transferFrom(msg.sender, address(this), signerFee);
-                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, tbtcLot.sub(signerFee));
+                _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
             }
-            // tansfer a full TBTC to DOT owner if signerFee is escrowed
+            // tansfer a full TBTC to TDT owner if signerFee is escrowed
             else{
-                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, tbtcLot);
+                _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot);
             }
             return;
         }
