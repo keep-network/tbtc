@@ -18,7 +18,7 @@ against reorgs with a better user experience and more flexible use cases.
 
 // TODO insert diagram
 
-== Minting the non-fungible deposit owner token
+== Minting the non-fungible tBTC Deposit Token
 
 After a deposit has been requested and a signing group formed, a depositor
 immediately receives a non-fungible token unique to the deposit called the _tBTC
