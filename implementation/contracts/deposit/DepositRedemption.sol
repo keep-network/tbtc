@@ -72,7 +72,7 @@ library DepositRedemption {
         }
         if(_d.depositOwner() == msg.sender){
             uint256 signerFee = _d.signerFee();
-            if(address(this).balance < signerFee) {
+            if(TBTCToken(_d.TBTCToken).balanceOf(address(this)) < signerFee) {
                 return signerFee;
             }
             return 0;
