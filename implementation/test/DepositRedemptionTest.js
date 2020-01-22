@@ -69,7 +69,7 @@ contract('DepositRedemption', (accounts) => {
   let depositValue
   let signerFee
   let depositTerm
-  let dotId
+  let tdtId
   let vendingMachine
 
   before(async () => {
@@ -93,8 +93,8 @@ contract('DepositRedemption', (accounts) => {
 
     await feeRebateToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
-    dotId = await web3.utils.toBN(testInstance.address)
-    await tbtcDepositToken.forceMint(accounts[0], dotId)
+    tdtId = await web3.utils.toBN(testInstance.address)
+    await tbtcDepositToken.forceMint(accounts[0], tdtId)
 
 
     depositValue = await deployed.TBTCConstants.getLotSizeTbtc()
@@ -132,7 +132,7 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('returns zero if deposit is pre-term and msg.sender is FRT holder', async () => {
-      await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed, 0)
@@ -147,7 +147,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('returns full TBTC if we are at-term and caller is not TDT owner', async () => {
       await increaseTime(depositTerm.toNumber())
-      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], tdtId)
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed.toString(), depositValue.toString())
@@ -189,7 +189,7 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
-      await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
 
       block = await web3.eth.getBlock('latest')
       await testInstance.performRedemptionTBTCTransfers()
@@ -213,7 +213,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine', async () => {
       await increaseTime(depositTerm.toNumber())
-      await tbtcDepositToken.transferFrom(accounts[0], vendingMachine, dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], vendingMachine, tdtId)
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testInstance.address, depositValue)
       block = await web3.eth.getBlock('latest')
@@ -229,7 +229,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('sends 1 TBTC to Deposit Token owner if deposit is at-term and fee is escrowed', async () => {
       await increaseTime(depositTerm.toNumber())
-      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], tdtId)
       await tbtcToken.forceMint(testInstance.address, signerFee)
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testInstance.address, depositValue)
@@ -246,7 +246,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('escrows fee and sends correct TBTC if Deposit is at-term and fee is not escrowed', async () => {
       await increaseTime(depositTerm.toNumber())
-      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], accounts[1], tdtId)
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testInstance.address, depositValue)
       block = await web3.eth.getBlock('latest')
@@ -353,7 +353,7 @@ contract('DepositRedemption', (accounts) => {
       const block = await web3.eth.getBlock('latest')
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
-      await tbtcDepositToken.transferFrom(accounts[0], accounts[4], dotId)
+      await tbtcDepositToken.transferFrom(accounts[0], accounts[4], tdtId)
 
       await expectThrow(
         testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
