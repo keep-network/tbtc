@@ -175,6 +175,8 @@ contract('DepositRedemption', (accounts) => {
       await createSnapshot()
       block = await web3.eth.getBlock('latest')
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await tbtcToken.resetBalance(depositValue)
+      await tbtcToken.resetAllowance(testInstance.address, depositValue)
     })
 
     afterEach(async () => {
@@ -183,7 +185,6 @@ contract('DepositRedemption', (accounts) => {
 
     it('does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
-
       block = await web3.eth.getBlock('latest')
       await testInstance.performRedemptionTBTCTransfers()
 
@@ -192,10 +193,7 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('burns 1 TBTC if deposit is in COURTESY_CALL and TDT owner is the Vending Machine', async () => {
-      await tbtcToken.resetBalance(depositValue)
-      await tbtcToken.resetAllowance(testInstance.address, depositValue)
       await depositOwnerToken.transferFrom(accounts[0], vendingMachine, dotId)
-
       block = await web3.eth.getBlock('latest')
       await testInstance.setState(utils.states.COURTESY_CALL)
 
@@ -208,12 +206,8 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('escrows fee and sends correct TBTC if Deposit is in courtesy_call and fee is not escrowed', async () => {
-      await tbtcToken.resetBalance(depositValue)
-      await tbtcToken.resetAllowance(testInstance.address, depositValue)
-
       block = await web3.eth.getBlock('latest')
       await testInstance.setState(utils.states.COURTESY_CALL)
-
       await testInstance.performRedemptionTBTCTransfers()
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
@@ -227,10 +221,7 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('transfers 1 TBTC to TDT owner if deposit is in courtesy_call and fee is escrowed', async () => {
-      await tbtcToken.resetBalance(depositValue)
-      await tbtcToken.resetAllowance(testInstance.address, depositValue)
       await tbtcToken.forceMint(testInstance.address, signerFee)
-
       await testInstance.setState(utils.states.COURTESY_CALL)
       block = await web3.eth.getBlock('latest')
 
@@ -244,8 +235,6 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('transfers signerFee if deposit is pre-term and msg.sender is not FRT holder', async () => {
-      await tbtcToken.resetBalance(signerFee)
-      await tbtcToken.resetAllowance(testInstance.address, signerFee)
       block = await web3.eth.getBlock('latest')
 
       await testInstance.performRedemptionTBTCTransfers()
@@ -259,8 +248,6 @@ contract('DepositRedemption', (accounts) => {
     it('burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine', async () => {
       await increaseTime(depositTerm.toNumber())
       await depositOwnerToken.transferFrom(accounts[0], vendingMachine, dotId)
-      await tbtcToken.resetBalance(depositValue)
-      await tbtcToken.resetAllowance(testInstance.address, depositValue)
       block = await web3.eth.getBlock('latest')
 
       await testInstance.performRedemptionTBTCTransfers()
@@ -273,11 +260,9 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('sends 1 TBTC to Deposit Token owner if deposit is at-term and fee is escrowed', async () => {
-      await increaseTime(depositTerm.toNumber())
       await depositOwnerToken.transferFrom(accounts[0], accounts[1], dotId)
       await tbtcToken.forceMint(testInstance.address, signerFee)
-      await tbtcToken.resetBalance(depositValue)
-      await tbtcToken.resetAllowance(testInstance.address, depositValue)
+      await increaseTime(depositTerm.toNumber())
       block = await web3.eth.getBlock('latest')
 
       await testInstance.performRedemptionTBTCTransfers()
@@ -292,8 +277,6 @@ contract('DepositRedemption', (accounts) => {
     it('escrows fee and sends correct TBTC if Deposit is at-term and fee is not escrowed', async () => {
       await increaseTime(depositTerm.toNumber())
       await depositOwnerToken.transferFrom(accounts[0], accounts[1], dotId)
-      await tbtcToken.resetBalance(depositValue)
-      await tbtcToken.resetAllowance(testInstance.address, depositValue)
       block = await web3.eth.getBlock('latest')
 
       await testInstance.performRedemptionTBTCTransfers()
