@@ -15,7 +15,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
-const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -41,7 +41,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
   { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
@@ -73,7 +73,7 @@ contract('DepositUtils', (accounts) => {
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
   let tbtcSystemStub
-  let depositOwnerToken
+  let tbtcDepositToken
   let feeRebateToken
 
   before(async () => {
@@ -87,7 +87,7 @@ contract('DepositUtils', (accounts) => {
 
     testUtilsInstance = deployed.TestDepositUtils
 
-    depositOwnerToken = deployed.DepositOwnerToken
+    tbtcDepositToken = deployed.TBTCDepositToken
     feeRebateToken = deployed.FeeRebateToken
 
     feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
@@ -95,7 +95,7 @@ contract('DepositUtils', (accounts) => {
     await testUtilsInstance.createNewDeposit(
       tbtcSystemStub.address,
       tbtcToken.address,
-      depositOwnerToken.address,
+      tbtcDepositToken.address,
       feeRebateToken.address,
       utils.address0,
       1, // m

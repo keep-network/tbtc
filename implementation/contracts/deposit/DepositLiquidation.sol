@@ -234,16 +234,16 @@ library DepositLiquidation {
         _d.logLiquidated();
 
         // send the TBTC to the TDT holder. If the TDT holder is the Vending Machine, burn it to maintain the peg.
-        address depositOwnerTokenHolder = _d.depositOwner();
+        address tdtHolder = _d.depositOwner();
 
         TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
         require(_tbtcToken.balanceOf(msg.sender) >= TBTCConstants.getLotSizeTbtc(), "Not enough TBTC to cover outstanding debt");
 
-        if(depositOwnerTokenHolder == _d.VendingMachine){
+        if(tdtHolder == _d.VendingMachine){
             _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSizeTbtc());  // burn minimal amount to cover size
         }
         else{
-            _tbtcToken.transferFrom(msg.sender, depositOwnerTokenHolder, TBTCConstants.getLotSizeTbtc());
+            _tbtcToken.transferFrom(msg.sender, tdtHolder, TBTCConstants.getLotSizeTbtc());
         }
 
         // Distribute funds to auction buyer

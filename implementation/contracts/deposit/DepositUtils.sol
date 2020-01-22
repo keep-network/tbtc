@@ -26,7 +26,7 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
-        address DepositOwnerToken;
+        address TBTCDepositToken;
         address FeeRebateToken;
         address VendingMachine;
         uint8 currentState;
@@ -342,8 +342,8 @@ library DepositUtils {
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
     function depositOwner(Deposit storage _d) public view returns (address payable) {
-        IERC721 _depositOwnerToken = IERC721(_d.DepositOwnerToken);
-        return address(uint160(_depositOwnerToken.ownerOf(uint256(address(this)))));
+        IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
+        return address(uint160(_tbtcDepositToken.ownerOf(uint256(address(this)))));
     }
 
     /// @notice     Deletes state after termination of redemption process

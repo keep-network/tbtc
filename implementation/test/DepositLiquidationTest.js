@@ -20,7 +20,7 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
-const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -49,7 +49,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
   { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
@@ -68,7 +68,7 @@ contract('DepositLiquidation', (accounts) => {
   let beneficiary
   let tbtcToken
   let tbtcSystemStub
-  let depositOwnerToken
+  let tbtcDepositToken
   let feeRebateToken
 
   before(async () => {
@@ -87,7 +87,7 @@ contract('DepositLiquidation', (accounts) => {
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
-    depositOwnerToken = deployed.DepositOwnerToken
+    tbtcDepositToken = deployed.TBTCDepositToken
     feeRebateToken = deployed.FeeRebateToken
 
     testInstance = deployed.TestDeposit
@@ -95,13 +95,13 @@ contract('DepositLiquidation', (accounts) => {
     await testInstance.setExteriorAddresses(
       tbtcSystemStub.address,
       tbtcToken.address,
-      depositOwnerToken.address,
+      tbtcDepositToken.address,
       feeRebateToken.address,
       utils.address0
     )
     await testInstance.setSignerFeeDivisor(new BN('200'))
 
-    await depositOwnerToken.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
+    await tbtcDepositToken.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
     await feeRebateToken.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
 
     const keepRegistry = await KeepRegistryStub.new()

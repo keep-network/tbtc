@@ -7,13 +7,13 @@ contract TestDeposit is Deposit {
     function setExteriorAddresses(
         address _sys,
         address _token,
-        address _depositOwnerToken,
+        address _tbtcDepositToken,
         address _feeRebateToken,
         address _vendingMachine
     ) public {
         self.TBTCSystem = _sys;
         self.TBTCToken = _token;
-        self.DepositOwnerToken = _depositOwnerToken;
+        self.TBTCDepositToken = _tbtcDepositToken;
         self.FeeRebateToken = _feeRebateToken;
         self.VendingMachine = _vendingMachine;
     }
@@ -125,7 +125,7 @@ contract TestDeposit is Deposit {
 
     function getUTXOInfo() public view returns (bytes8, uint256, bytes memory) {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
-    } 
+    }
 
     function getRedemptionTbtcRequirement(address _requester) public view returns (uint256) {
         return self.getRedemptionTbtcRequirement(_requester);
