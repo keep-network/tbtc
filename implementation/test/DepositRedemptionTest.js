@@ -155,16 +155,15 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(tbtcOwed.toString(), depositValue.toString())
     })
 
-    it('returns SignerFee if we are at-term, caller is TDT owner, and not FRT owner', async () => {
+    it('returns SignerFee if we are at-term, caller is TDT owner, and fee is not escrowed', async () => {
       await increaseTime(depositTerm.toNumber())
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed.toString(), signerFee.toString())
     })
 
-    it('returns zero if we are at-term, caller is TDT and FRT owner', async () => {
-      await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
-
+    it('returns zero if we are at-term, caller is TDT owner and signer fee is escrowed', async () => {
+      await tbtcToken.forceMint(testInstance.address, signerFee)
       await increaseTime(depositTerm.toNumber())
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
