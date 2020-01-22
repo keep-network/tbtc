@@ -385,9 +385,11 @@ contract('DepositFunding', (accounts) => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+      const expectedFundedAt = (await web3.eth.getBlock('latest')).timestamp
 
       const UTXOInfo = await testInstance.getUTXOInfo.call()
       assert.equal(UTXOInfo[0], _outValueBytes)
+      assert.equal(UTXOInfo[1], expectedFundedAt)
       assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
 
       const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()
