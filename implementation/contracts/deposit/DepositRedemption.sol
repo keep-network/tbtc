@@ -71,8 +71,9 @@ library DepositRedemption {
             return 0;
         }
         if(_d.depositOwner() == msg.sender){
-            if(_d.feeRebateTokenHolder() != msg.sender) {
-                return _d.signerFee();
+            uint256 signerFee = _d.signerFee();
+            if(address(this).balance < signerFee) {
+                return signerFee;
             }
             return 0;
         }
