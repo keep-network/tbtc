@@ -26,6 +26,8 @@ const TestToken = artifacts.require('TestToken')
 const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
+const FundingScript = artifacts.require('FundingScript')
+
 const BN = require('bn.js')
 const utils = require('./utils')
 const chai = require('chai')
@@ -380,6 +382,60 @@ contract('VendingMachine', (accounts) => {
       await expectThrow(
         vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH),
         'SafeMath: subtraction overflow.'
+      )
+    })
+  })
+
+  describe('FundingScript', async () => {
+    let fundingScript
+
+    before(async () => {
+      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
+
+      await depositOwnerToken.forceMint(accounts[0], dotId)
+      fundingScript = await FundingScript.new(vendingMachine.address, tbtcToken.address, depositOwnerToken.address, feeRebateToken.address)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('calls unqualifiedDepositToTbtcABI', async () => {
+      const unqualifiedDepositToTbtcABI = TestVendingMachine.abi.filter((x) => x.name == 'unqualifiedDepositToTbtc')[0]
+      await depositOwnerToken.approveAndCall(
+        fundingScript.address,
+        dotId,
+        web3.eth.abi.encodeFunctionCall(
+          unqualifiedDepositToTbtcABI,
+          [testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders]
+        )
+      )
+
+      const UTXOInfo = await testInstance.getUTXOInfo.call()
+      assert.equal(UTXOInfo[0], _outValueBytes)
+      assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
+
+      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
+      expect(await depositOwnerToken.ownerOf(dotId)).to.equal(vendingMachine.address)
+      expect(await feeRebateToken.ownerOf(dotId)).to.equal(accounts[0])
+    })
+
+    it('reverts for unknown function calls encoded in _extraData', async () => {
+      const unknownFunctionSignature = '0xCAFEBABE'
+
+      await expectThrow(
+        depositOwnerToken.approveAndCall(
+          fundingScript.address,
+          dotId,
+          unknownFunctionSignature
+        ),
+        'Invalid method signature encoded in _extraData.'
       )
     })
   })
