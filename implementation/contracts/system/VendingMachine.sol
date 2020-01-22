@@ -39,9 +39,9 @@ contract VendingMachine {
         require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
         require(isQualified(address(_dotId)), "Deposit must be qualified");
 
-        uint256 getDepositValue = getDepositValue();
-        require(tbtcToken.balanceOf(msg.sender) >= getDepositValue, "Not enough TBTC for DOT exchange");
-        tbtcToken.burnFrom(msg.sender, getDepositValue);
+        uint256 depositValue =  TBTCConstants.getLotSizeTbtc();
+        require(tbtcToken.balanceOf(msg.sender) >= depositValue, "Not enough TBTC for DOT exchange");
+        tbtcToken.burnFrom(msg.sender, depositValue);
 
         // TODO do we need the owner check below? transferFrom can be approved for a user, which might be an interesting use case.
         require(depositOwnerToken.ownerOf(_dotId) == address(this), "Deposit is locked");
@@ -60,7 +60,7 @@ contract VendingMachine {
         // If the backing Deposit does not have a signer fee in escrow, mint it.
         Deposit deposit = Deposit(address(uint160(_dotId)));
         uint256 signerFee = deposit.signerFee();
-        uint256 depositValue = getDepositValue();
+        uint256 depositValue = TBTCConstants.getLotSizeTbtc();
 
         if(tbtcToken.balanceOf(address(_dotId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
@@ -135,16 +135,5 @@ contract VendingMachine {
             _requesterPKH,
             msg.sender
         );
-    }
-
-    // HELPERS
-
-    // TODO temporary helper function
-    /// @notice Gets the Deposit lot size less signer fees
-    /// @return amount in TBTC
-    function getDepositValue() internal returns (uint) {
-        uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
-        uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
-        return _totalValue;
     }
 }

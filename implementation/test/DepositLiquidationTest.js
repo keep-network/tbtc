@@ -125,7 +125,7 @@ contract('DepositLiquidation', (accounts) => {
     let buyer
 
     before(async () => {
-      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      lotSize = await deployed.TBTCConstants.getLotSizeTbtc.call()
       buyer = accounts[1]
     })
 
@@ -181,7 +181,6 @@ contract('DepositLiquidation', (accounts) => {
     it('distributes reward to FRT holder', async () => {
       // Make sure Deposit has enough to cover beneficiary reward
       const beneficiaryReward = await testInstance.signerFee.call()
-
       await tbtcToken.forceMint(testInstance.address, beneficiaryReward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
@@ -189,7 +188,7 @@ contract('DepositLiquidation', (accounts) => {
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
-      const tokenCheck = new BN(initialTokenBalance).add(new BN(beneficiaryReward))
+      const tokenCheck = new BN(initialTokenBalance).add(new BN(beneficiaryReward).add(lotSize))
       expect(finalTokenBalance, 'tokens not returned to beneficiary correctly').to.eq.BN(tokenCheck)
     })
 
@@ -209,32 +208,62 @@ contract('DepositLiquidation', (accounts) => {
       expect(new BN(finalBalance), 'buyer balance should increase').to.be.gte.BN(initialBalance)
     })
 
-    it('returns keep funds if not fraud', async () => {
-      const initialBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
-
-      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
-
-      const finalBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
-
-      assert(new BN(finalBalance).gtn(new BN(initialBalance)), 'buyer balance should increase')
-    })
-
-    it('burns if fraud', async () => {
-      const value = 1000000000000
+    it('splits funds between liquidation triggerer and signers if not fraud', async () => {
+      const liquidationInitiator = accounts[4]
       const block = await web3.eth.getBlock('latest')
       const notifiedTime = block.timestamp
+      const value = 1000000000000
+      const basePercentage = await deployed.TBTCConstants.getAuctionBasePercentage.call()
 
-      const initialBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+      await testInstance.send(value)
+      const initialInitiatorBalance = await web3.eth.getBalance(liquidationInitiator)
+      const initialSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      await testInstance.send(value, { from: accounts[0] })
+      await testInstance.setLiquidationInitiator(liquidationInitiator)
+      await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+      // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
+      await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
+
+      const finalInitiatorBalance = await web3.eth.getBalance(liquidationInitiator)
+      const finalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+
+      const initiatorBalanceDiff = new BN(finalInitiatorBalance).sub(new BN(initialInitiatorBalance))
+      const signerBalanceDiff = new BN(finalSignerBalance).sub(new BN(initialSignerBalance))
+
+      const totalReward = value * (100 - basePercentage) / 100
+      const split = totalReward / 2
+
+      expect(new BN(split)).to.eq.BN(initiatorBalanceDiff)
+      expect(new BN(split)).to.eq.BN(signerBalanceDiff)
+    })
+
+    it('transfers full ETH balance to liquidation triggerer if fraud', async () => {
+      const block = await web3.eth.getBlock('latest')
+      const notifiedTime = block.timestamp
+      const liquidationInitiator = accounts[2]
+      const value = 1000000000000
+      const basePercentage = await deployed.TBTCConstants.getAuctionBasePercentage.call()
+
+      await testInstance.send(value)
+      const initialInitiatorBalance = await web3.eth.getBalance(liquidationInitiator)
+      const initialSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
       await testInstance.setState(utils.states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testInstance.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+      await testInstance.setLiquidationInitiator(liquidationInitiator)
+      // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
       await testInstance.purchaseSignerBondsAtAuction({ from: buyer })
 
-      const finalBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
+      const finalInitiatorBalance = await web3.eth.getBalance(liquidationInitiator)
+      const finalSignerBalance = await web3.eth.getBalance(deployed.ECDSAKeepStub.address)
 
-      expect(new BN(finalBalance)).to.eq.BN(initialBalance)
+      const initiatorBalanceDiff = new BN(finalInitiatorBalance).sub(new BN(initialInitiatorBalance))
+      const signerBalanceDiff = new BN(finalSignerBalance).sub(new BN(initialSignerBalance))
+
+      const totalReward = value * (100 - basePercentage) / 100
+
+      expect(new BN(signerBalanceDiff)).to.eq.BN(0)
+      expect(new BN(initiatorBalanceDiff)).to.eq.BN(totalReward)
     })
   })
 
@@ -248,7 +277,7 @@ contract('DepositLiquidation', (accounts) => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
       oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
-      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      lotSize = await deployed.TBTCConstants.getLotSizeBtc.call()
       lotValue = lotSize.mul(oraclePrice)
 
       undercollateralizedPercent = await deployed.TBTCConstants.getUndercollateralizedPercent.call()
@@ -373,7 +402,7 @@ contract('DepositLiquidation', (accounts) => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
       oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
-      lotSize = await deployed.TBTCConstants.getLotSize.call()
+      lotSize = await deployed.TBTCConstants.getLotSizeBtc.call()
       lotValue = lotSize.mul(oraclePrice)
 
       severelyUndercollateralizedPercent = await deployed.TBTCConstants.getSeverelyUndercollateralizedPercent.call()

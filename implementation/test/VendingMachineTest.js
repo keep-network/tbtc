@@ -116,10 +116,8 @@ contract('VendingMachine', (accounts) => {
 
     dotId = await web3.utils.toBN(testInstance.address)
 
-    const lotSize = await deployed.TBTCConstants.getLotSize()
-    const satoshiMultiplier = await deployed.TBTCConstants.getSatoshiMultiplier()
-    signerFee = lotSize.mul(satoshiMultiplier).div(signerFeeDivisor)
-    depositValue = lotSize.mul(satoshiMultiplier)
+    depositValue = await deployed.TBTCConstants.getLotSizeTbtc()
+    signerFee = depositValue.div(signerFeeDivisor)
   })
 
   describe('#isQualified', async () => {
@@ -325,15 +323,11 @@ contract('VendingMachine', (accounts) => {
     const keepPubkeyX = '0x' + '33'.repeat(32)
     const keepPubkeyY = '0x' + '44'.repeat(32)
     const requesterPKH = '0x' + '33'.repeat(20)
-    let lotSize
-    let multiplier
     let requiredBalance
     let block
 
     before(async () => {
-      lotSize = await deployed.TBTCConstants.getLotSize.call()
-      multiplier = await deployed.TBTCConstants.getSatoshiMultiplier.call()
-      requiredBalance = lotSize.mul(multiplier)
+      requiredBalance = await deployed.TBTCConstants.getLotSizeTbtc.call()
 
       block = await web3.eth.getBlock('latest')
       await depositOwnerToken.forceMint(vendingMachine.address, dotId)

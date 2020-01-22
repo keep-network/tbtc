@@ -70,6 +70,7 @@ library DepositRedemption {
             }
             return 0;
         }
+
         if(_d.depositOwner() == msg.sender){
             uint256 signerFee = _d.signerFee();
             if(TBTCToken(_d.TBTCToken).balanceOf(address(this)) < signerFee) {
@@ -77,7 +78,7 @@ library DepositRedemption {
             }
             return 0;
         }
-        return TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+        return TBTCConstants.getLotSizeTbtc();
     }
 
     /// @notice Handles TBTC requirements for redemption
@@ -88,8 +89,7 @@ library DepositRedemption {
         address depositOwnerTokenHolder = _d.depositOwner();
         address vendingMachine = _d.VendingMachine;
 
-        uint256 tbtcLot = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
-
+        uint256 tbtcLot = TBTCConstants.getLotSizeTbtc();
         uint256 signerFee = _d.signerFee();
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
@@ -367,7 +367,7 @@ library DepositRedemption {
     /// @param  _d  deposit storage pointer
     function notifyRedemptionProofTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout(), "Proof timer has not elapsed");
+        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedemptionProofTimeout(), "Proof timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 }
