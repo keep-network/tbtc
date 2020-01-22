@@ -191,7 +191,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(events.length, 0)
     })
 
-    it('burns 1 TBTC if deposit is in courtesy_call and TDT owner is the Vending Machine', async () => {
+    it('burns 1 TBTC if deposit is in COURTESY_CALL and TDT owner is the Vending Machine', async () => {
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testInstance.address, depositValue)
       await depositOwnerToken.transferFrom(accounts[0], vendingMachine, dotId)
