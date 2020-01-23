@@ -188,8 +188,10 @@ contract('DepositRedemption', (accounts) => {
       await restoreSnapshot()
     })
 
-    it('does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
-      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+    it('does nothing if deposit is pre-term and requester is FRT holder', async () => {
+      const requesterAddress = accounts[0]
+      await testInstance.setRequestInfo(requesterAddress, '0x' + '11'.repeat(20), 0, 0, '0x' + '22'.repeat(32))
+      await feeRebateToken.transferFrom(accounts[4], requesterAddress, tdtId, { from: accounts[4] })
 
       block = await web3.eth.getBlock('latest')
       await testInstance.performRedemptionTBTCTransfers()

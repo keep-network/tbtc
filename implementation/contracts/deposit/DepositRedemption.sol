@@ -55,17 +55,11 @@ library DepositRedemption {
     /// @return The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _requester) public view returns(uint256){
         if(_d.remainingTerm() > 0){
-            if(msg.sender == _d.VendingMachine){
-                if(_requester != _d.feeRebateTokenHolder()){
-                    return _d.signerFee();
-                }
-                return 0;
-            }
             require(
                 _d.depositOwner() == msg.sender,
                 "redemption can only be called by deposit owner until deposit reaches term"
             );
-            if(_d.feeRebateTokenHolder() != msg.sender) {
+            if(_d.feeRebateTokenHolder() != _requester) {
                 return _d.signerFee();
             }
             return 0;
