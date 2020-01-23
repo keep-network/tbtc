@@ -16,7 +16,7 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
-const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
@@ -43,7 +43,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
@@ -83,7 +83,7 @@ contract('DepositFunding', (accounts) => {
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
   let tbtcSystemStub
-  let depositOwnerToken
+  let tbtcDepositToken
 
   before(async () => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
@@ -91,19 +91,19 @@ contract('DepositFunding', (accounts) => {
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
-    depositOwnerToken = deployed.DepositOwnerToken
+    tbtcDepositToken = deployed.TBTCDepositToken
 
     testInstance = deployed.TestDeposit
 
     await testInstance.setExteriorAddresses(
       tbtcSystemStub.address,
       tbtcToken.address,
-      depositOwnerToken.address,
+      tbtcDepositToken.address,
       utils.address0,
       utils.address0
     )
 
-    await depositOwnerToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
+    await tbtcDepositToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     beneficiary = accounts[4]
   })
@@ -122,7 +122,7 @@ contract('DepositFunding', (accounts) => {
       await testInstance.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
-        depositOwnerToken.address,
+        tbtcDepositToken.address,
         utils.address0,
         utils.address0,
         1, // m
@@ -159,7 +159,7 @@ contract('DepositFunding', (accounts) => {
         testInstance.createNewDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
-          depositOwnerToken.address,
+          tbtcDepositToken.address,
           utils.address0,
           utils.address0,
           1, // m
@@ -175,7 +175,7 @@ contract('DepositFunding', (accounts) => {
         testInstance.createNewDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
-          depositOwnerToken.address,
+          tbtcDepositToken.address,
           utils.address0,
           utils.address0,
           1, // m

@@ -1,7 +1,7 @@
 pragma solidity ^0.5.10;
 
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
-import {DepositOwnerToken} from "./DepositOwnerToken.sol";
+import {TBTCDepositToken} from "./TBTCDepositToken.sol";
 import {FeeRebateToken} from "./FeeRebateToken.sol";
 import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
@@ -12,16 +12,16 @@ contract VendingMachine {
     using SafeMath for uint256;
 
     TBTCToken tbtcToken;
-    DepositOwnerToken depositOwnerToken;
+    TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
     constructor(
         address _tbtcToken,
-        address _depositOwnerToken,
+        address _tbtcDepositToken,
         address _feeRebateToken
     ) public {
         tbtcToken = TBTCToken(_tbtcToken);
-        depositOwnerToken = DepositOwnerToken(_depositOwnerToken);
+        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         feeRebateToken = FeeRebateToken(_feeRebateToken);
     }
 
@@ -31,54 +31,55 @@ contract VendingMachine {
         return Deposit(_depositAddress).inActive();
     }
 
-    /// @notice Pay back the deposit's TBTC and receive the Deposit Owner Token.
-    /// @dev    Burns TBTC, transfers DOT from vending machine to caller
-    /// @param _dotId ID of Deposit Owner Token to buy
-    function tbtcToDot(uint256 _dotId) public {
-        require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
-        require(isQualified(address(_dotId)), "Deposit must be qualified");
+    /// @notice Pay back the deposit's TBTC and receive the tBTC Deposit Token
+    ///         as long as it is qualified.
+    /// @dev    Burns TBTC, transfers TDT from vending machine to caller
+    /// @param _tdtId ID of tBTC Deposit Token to buy
+    function tbtcToTdt(uint256 _tdtId) public {
+        require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
+        require(isQualified(address(_tdtId)), "Deposit must be qualified");
 
-        uint256 getDepositValue = getDepositValue();
-        require(tbtcToken.balanceOf(msg.sender) >= getDepositValue, "Not enough TBTC for DOT exchange");
-        tbtcToken.burnFrom(msg.sender, getDepositValue);
+        uint256 depositValue = TBTCConstants.getLotSizeTbtc();
+        require(tbtcToken.balanceOf(msg.sender) >= depositValue, "Not enough TBTC for TDT exchange");
+        tbtcToken.burnFrom(msg.sender, depositValue);
 
         // TODO do we need the owner check below? transferFrom can be approved for a user, which might be an interesting use case.
-        require(depositOwnerToken.ownerOf(_dotId) == address(this), "Deposit is locked");
-        depositOwnerToken.transferFrom(address(this), msg.sender, _dotId);
+        require(tbtcDepositToken.ownerOf(_tdtId) == address(this), "Deposit is locked");
+        tbtcDepositToken.transferFrom(address(this), msg.sender, _tdtId);
     }
 
-    /// @notice Trade in the Deposit Owner Token and mint TBTC.
-    /// @dev    Transfers DOT from caller to vending machine, and mints TBTC to caller
-    /// @param _dotId ID of Deposit Owner Token to sell
-    function dotToTbtc(uint256 _dotId) public {
-        require(depositOwnerToken.exists(_dotId), "Deposit Owner Token does not exist");
-        require(isQualified(address(_dotId)), "Deposit must be qualified");
+    /// @notice Trade in the tBTC Deposit Token and mint TBTC.
+    /// @dev    Transfers TDT from caller to vending machine, and mints TBTC to caller
+    /// @param _tdtId ID of tBTC Deposit Token to sell
+    function tdtToTbtc(uint256 _tdtId) public {
+        require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
+        require(isQualified(address(_tdtId)), "Deposit must be qualified");
 
-        depositOwnerToken.transferFrom(msg.sender, address(this), _dotId);
+        tbtcDepositToken.transferFrom(msg.sender, address(this), _tdtId);
 
         // If the backing Deposit does not have a signer fee in escrow, mint it.
-        Deposit deposit = Deposit(address(uint160(_dotId)));
+        Deposit deposit = Deposit(address(uint160(_tdtId)));
         uint256 signerFee = deposit.signerFee();
-        uint256 depositValue = getDepositValue();
+        uint256 depositValue = TBTCConstants.getLotSizeTbtc();
 
-        if(tbtcToken.balanceOf(address(_dotId)) < signerFee) {
+        if(tbtcToken.balanceOf(address(_tdtId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
-            tbtcToken.mint(address(_dotId), signerFee);
+            tbtcToken.mint(address(_tdtId), signerFee);
         }
         else{
             tbtcToken.mint(msg.sender, depositValue);
         }
 
-        // owner of the DOT during first TBTC mint receives the FRT
-        if(!feeRebateToken.exists(_dotId)){
-            feeRebateToken.mint(msg.sender, _dotId);
+        // owner of the TDT during first TBTC mint receives the FRT
+        if(!feeRebateToken.exists(_tdtId)){
+            feeRebateToken.mint(msg.sender, _tdtId);
         }
     }
 
     // WRAPPERS
 
     /// @notice Qualifies a deposit and mints TBTC.
-    /// @dev User must allow VendingManchine to transfer DOT
+    /// @dev User must allow VendingManchine to transfer TDT
     function unqualifiedDepositToTbtc(
         address payable _depositAddress,
         bytes4 _txVersion,
@@ -104,17 +105,35 @@ contract VendingMachine {
             ),
             "failed to provide funding proof");
 
-        dotToTbtc(uint256(_depositAddress));
+        tdtToTbtc(uint256(_depositAddress));
     }
 
-    // HELPERS
+    /// @notice Redeems a Deposit by purchasing a TDT with TBTC, and using the TDT to redeem corresponding Deposit.
+    ///         This function will revert if the Deposit is not in ACTIVE state.
+    /// @dev Vending Machine transfers TBTC allowance to Deposit.
+    /// @param  _depositAddress     The address of the Deposit to redeem.
+    /// @param  _outputValueBytes   The 8-byte Bitcoin transaction output size in Little Endian.
+    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds.
+    function tbtcToBtc(
+        address payable _depositAddress,
+        bytes8 _outputValueBytes,
+        bytes20 _requesterPKH
+    ) public{
+        Deposit _d = Deposit(_depositAddress);
 
-    // TODO temporary helper function
-    /// @notice Gets the Deposit lot size less signer fees
-    /// @return amount in TBTC
-    function getDepositValue() internal returns (uint) {
-        uint256 _multiplier = TBTCConstants.getSatoshiMultiplier();
-        uint256 _totalValue = TBTCConstants.getLotSize().mul(_multiplier);
-        return _totalValue;
+        tbtcToTdt(uint256(_depositAddress));
+
+        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(msg.sender);
+
+        if(tbtcOwed != 0){
+            tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
+            tbtcToken.approve(_depositAddress, tbtcOwed);
+        }
+
+        _d.requestRedemption(
+            _outputValueBytes,
+            _requesterPKH,
+            msg.sender
+        );
     }
 }

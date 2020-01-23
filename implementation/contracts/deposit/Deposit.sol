@@ -57,7 +57,7 @@ contract Deposit {
     function createNewDeposit(
         address _TBTCSystem,
         address _TBTCToken,
-        address _DepositOwnerToken,
+        address _TBTCDepositToken,
         address _FeeRebateToken,
         address _VendingMachine,
         uint256 _m,
@@ -65,7 +65,7 @@ contract Deposit {
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
-        self.DepositOwnerToken = _DepositOwnerToken;
+        self.TBTCDepositToken = _TBTCDepositToken;
         self.FeeRebateToken = _FeeRebateToken;
         self.VendingMachine = _VendingMachine;
         self.createNewDeposit(_m, _n);
@@ -79,10 +79,17 @@ contract Deposit {
     /// @return                     True if successful, otherwise revert
     function requestRedemption(
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH
+        bytes20 _requesterPKH,
+        address payable _requesterAddress
     ) public returns (bool) {
-        self.requestRedemption(_outputValueBytes, _requesterPKH);
+        self.requestRedemption(_outputValueBytes, _requesterPKH, _requesterAddress);
         return true;
+    }
+
+    /// @notice View function for access to TBTC required by redemption.
+    /// @return The amount in TBTC needed to redeem the deposit.
+    function getRedemptionTbtcRequirement(address _requester) public view returns(uint256){       
+        return self.getRedemptionTbtcRequirement(_requester);
     }
 
     /// @notice     Anyone may provide a withdrawal signature if it was requested

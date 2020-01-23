@@ -7,13 +7,13 @@ contract TestDeposit is Deposit {
     function setExteriorAddresses(
         address _sys,
         address _token,
-        address _depositOwnerToken,
+        address _tbtcDepositToken,
         address _feeRebateToken,
         address _vendingMachine
     ) public {
         self.TBTCSystem = _sys;
         self.TBTCToken = _token;
-        self.DepositOwnerToken = _depositOwnerToken;
+        self.TBTCDepositToken = _tbtcDepositToken;
         self.FeeRebateToken = _feeRebateToken;
         self.VendingMachine = _vendingMachine;
     }
@@ -62,6 +62,9 @@ contract TestDeposit is Deposit {
     ) public {
         self.liquidationInitiated = _liquidation;
         self.courtesyCallInitiated = _courtesy;
+    }
+    function setLiquidationInitiator(address payable _initiator) public {
+        self.liquidationInitiator = _initiator;
     }
 
     function getLiquidationAndCourtesyInitiated() public view returns (uint256, uint256) {
@@ -138,8 +141,8 @@ contract TestDeposit is Deposit {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
 
-    function getRedemptionTbtcRequirement() public view returns (uint256) {
-        return self.getRedemptionTbtcRequirement();
+    function getRedemptionTbtcRequirement(address _requester) public view returns (uint256) {
+        return self.getRedemptionTbtcRequirement(_requester);
     }
 
      function performRedemptionTBTCTransfers() public {

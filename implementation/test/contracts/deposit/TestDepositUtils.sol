@@ -73,14 +73,6 @@ contract TestDepositUtils is TestDeposit {
         return self.signerFee();
     }
 
-    function beneficiaryReward() public pure returns (uint256) {
-        return DepositUtils.beneficiaryReward();
-    }
-
-    function redemptionTBTCAmount() public view returns (uint256) {
-        return self.redemptionTBTCAmount();
-    }
-
     function auctionTBTCAmount() public view returns (uint256) {
         return self.auctionTBTCAmount();
     }
