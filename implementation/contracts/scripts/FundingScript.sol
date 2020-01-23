@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-import {DepositOwnerToken} from "../system/DepositOwnerToken.sol";
+import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 import {VendingMachine} from "../system/VendingMachine.sol";
@@ -10,18 +10,18 @@ import {VendingMachine} from "../system/VendingMachine.sol";
 contract FundingScript {
     TBTCToken tbtcToken;
     VendingMachine vendingMachine;
-    DepositOwnerToken depositOwnerToken;
+    TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
     constructor(
         address _VendingMachine,
         address _TBTCToken,
-        address _DepositOwnerToken,
+        address _TBTCDepositToken,
         address _FeeRebateToken
     ) public {
         vendingMachine = VendingMachine(_VendingMachine);
         tbtcToken = TBTCToken(_TBTCToken);
-        depositOwnerToken = DepositOwnerToken(_DepositOwnerToken);
+        tbtcDepositToken = TBTCDepositToken(_TBTCDepositToken);
         feeRebateToken = FeeRebateToken(_FeeRebateToken);
     }
 
@@ -32,8 +32,8 @@ contract FundingScript {
     /// @param _token Token contract address.
     /// @param _extraData Encoded function call to `VendingMachine.unqualifiedDepositToTbtc`.
     function receiveApproval(address _from, uint256 _tokenId, address _token, bytes memory _extraData) public {
-        depositOwnerToken.transferFrom(_from, address(this), _tokenId);
-        depositOwnerToken.approve(address(vendingMachine), _tokenId);
+        tbtcDepositToken.transferFrom(_from, address(this), _tokenId);
+        tbtcDepositToken.approve(address(vendingMachine), _tokenId);
 
         // Verify _extraData is a call to unqualifiedDepositToTbtc.
         bytes4 sig;
