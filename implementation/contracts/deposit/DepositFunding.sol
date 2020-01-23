@@ -25,14 +25,14 @@ library DepositFunding {
 
     /// @notice     Deletes state after funding
     /// @dev        This is called when we go to ACTIVE or setup fails without fraud
-    function fundingTeardown(DepositUtils.Deposit storage _d) public {
+    function fundingTeardown(DepositUtils.Deposit storage _d) internal {
         _d.signingGroupRequestedAt = 0;
         _d.fundingProofTimerStart = 0;
     }
 
     /// @notice     Deletes state after the funding ECDSA fraud process
     /// @dev        This is only called as we transition to setup failed
-    function fundingFraudTeardown(DepositUtils.Deposit storage _d) public {
+    function fundingFraudTeardown(DepositUtils.Deposit storage _d) internal {
         _d.keepAddress = address(0);
         _d.signingGroupRequestedAt = 0;
         _d.fundingProofTimerStart = 0;
@@ -70,7 +70,7 @@ library DepositFunding {
 
     /// @notice     Transfers the funders bond to the signers if the funder never funds
     /// @dev        Called only by notifyFundingTimeout
-    function revokeFunderBond(DepositUtils.Deposit storage _d) public {
+    function revokeFunderBond(DepositUtils.Deposit storage _d) internal {
         if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
             _d.pushFundsToKeepGroup(TBTCConstants.getFunderBondAmount());
         } else if (address(this).balance > 0) {
@@ -80,7 +80,7 @@ library DepositFunding {
 
     /// @notice     Returns the funder's bond plus a payment at contract teardown
     /// @dev        Returns the balance if insufficient. Always call this before distributing signer payments
-    function returnFunderBond(DepositUtils.Deposit storage _d) public {
+    function returnFunderBond(DepositUtils.Deposit storage _d) internal {
         if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
             _d.depositOwner().transfer(TBTCConstants.getFunderBondAmount());
         } else if (address(this).balance > 0) {
@@ -90,7 +90,7 @@ library DepositFunding {
 
     /// @notice     slashes the signers partially for committing fraud before funding occurs
     /// @dev        called only by notifyFraudFundingTimeout
-    function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) public {
+    function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) internal {
         uint256 _seized = _d.seizeSignerBonds();
         uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
         _d.pushFundsToKeepGroup(_seized.sub(_slash));
