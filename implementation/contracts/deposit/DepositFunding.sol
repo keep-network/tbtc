@@ -99,7 +99,7 @@ library DepositFunding {
 
     /// @notice     Seizes signer bonds and distributes them to the funder
     /// @dev        This is only called as part of funding fraud flow
-    function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) public {
+    function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) internal {
         uint256 _seized = _d.seizeSignerBonds();
         _d.depositOwner().transfer(_seized);  // Transfer whole amount
     }
