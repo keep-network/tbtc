@@ -316,6 +316,7 @@ library DepositFunding {
         // Write down the UTXO info and set to active. Congratulations :)
         _d.utxoSizeBytes = _valueBytes;
         _d.utxoOutpoint = _utxoOutpoint;
+        _d.fundedAt = block.timestamp;
 
         fundingTeardown(_d);
         _d.setActive();
