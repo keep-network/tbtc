@@ -494,15 +494,15 @@ contract('DepositUtils', (accounts) => {
 
     before(async () => {
       depositTerm = await deployed.TBTCConstants.getDepositTerm.call()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
 
       // Set Deposit.fundedAt to current block.
       const block = await web3.eth.getBlock('latest')
       fundedAt = block.timestamp
       await testUtilsInstance.setUTXOInfo(prevoutValueBytes, fundedAt, outpoint)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
     })
 
     afterEach(async () => {
