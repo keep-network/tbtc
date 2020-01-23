@@ -181,7 +181,6 @@ library DepositFunding {
 
         bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         require(_isFraud, "Signature is not fraudulent");
-        _d.seizeSignerBonds();
         _d.logFraudDuringSetup();
 
         // If the funding timeout has elapsed, punish the funder too!
