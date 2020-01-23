@@ -27,6 +27,7 @@ const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
 const FundingScript = artifacts.require('FundingScript')
+const RedemptionScript = artifacts.require('RedemptionScript')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -345,7 +346,7 @@ contract('VendingMachine', (accounts) => {
     })
 
     afterEach(async () => {
-      await restoreSnapshot()
+      // await restoreSnapshot()
     })
 
     it('successfully redeems via wrapper', async () => {
@@ -377,6 +378,55 @@ contract('VendingMachine', (accounts) => {
         vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH),
         'SafeMath: subtraction overflow.'
       )
+    })
+
+    describe('RedemptionScript', async () => {
+      let redemptionScript
+
+      before(async () => {
+        redemptionScript = await RedemptionScript.new(vendingMachine.address, tbtcToken.address, feeRebateToken.address)
+      })
+
+      beforeEach(async () => {
+        await createSnapshot()
+      })
+
+      afterEach(async () => {
+        // await restoreSnapshot()
+      })
+
+      it('calls tbtcToBtc', async () => {
+        const blockNumber = await web3.eth.getBlock('latest').number
+        await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+        await feeRebateToken.forceMint(accounts[0], tdtId)
+        await feeRebateToken.transferFrom(accounts[0], redemptionScript.address, tdtId)
+
+        const tbtcToBtc = RedemptionScript.abi.filter((x) => x.name == 'tbtcToBtc')[0]
+        const calldata = web3.eth.abi.encodeFunctionCall(
+          tbtcToBtc,
+          [accounts[0], testInstance.address, '0x1111111100000000', requesterPKH]
+        )
+
+        try {
+          await tbtcToken.approveAndCall(
+            redemptionScript.address,
+            requiredBalance,
+            calldata
+          )
+        } catch (ex) {
+          // WORKAROUND: Truffle has an issue with transactions that emit events with the same name [1].
+          // In this case, it's an ERC20 and an ERC721, the TBTC and TDT contracts, which both emit
+          // `Transfer` events.
+          //
+          // [1]: https://github.com/trufflesuite/truffle/issues/1729
+
+          // TypeError: Cannot read property \'toString\' of null
+        }
+
+        // fired an event
+        const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+        assert.equal(eventList[0].returnValues._digest, sighash)
+      })
     })
   })
 
