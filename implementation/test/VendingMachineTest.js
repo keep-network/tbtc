@@ -346,7 +346,7 @@ contract('VendingMachine', (accounts) => {
     })
 
     afterEach(async () => {
-      // await restoreSnapshot()
+      await restoreSnapshot()
     })
 
     it('successfully redeems via wrapper', async () => {
@@ -392,14 +392,13 @@ contract('VendingMachine', (accounts) => {
       })
 
       afterEach(async () => {
-        // await restoreSnapshot()
+        await restoreSnapshot()
       })
 
-      it('calls tbtcToBtc', async () => {
+      it('successfully requests redemption', async () => {
         const blockNumber = await web3.eth.getBlock('latest').number
         await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
         await feeRebateToken.forceMint(accounts[0], tdtId)
-        await feeRebateToken.transferFrom(accounts[0], redemptionScript.address, tdtId)
 
         const tbtcToBtc = RedemptionScript.abi.filter((x) => x.name == 'tbtcToBtc')[0]
         const calldata = web3.eth.abi.encodeFunctionCall(
