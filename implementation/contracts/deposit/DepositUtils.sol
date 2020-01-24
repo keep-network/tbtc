@@ -29,6 +29,7 @@ library DepositUtils {
         address TBTCDepositToken;
         address FeeRebateToken;
         address VendingMachine;
+        address RedemptionScript;
         uint8 currentState;
         uint256 signerFeeDivisor;
 

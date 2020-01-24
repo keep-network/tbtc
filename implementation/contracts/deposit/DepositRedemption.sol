@@ -136,8 +136,13 @@ library DepositRedemption {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 
-        // set requesterAddress early to enable direct access by other functions
-        _d.requesterAddress = _requesterAddress;
+        if (msg.sender == _d.RedemptionScript) {
+            // We trust the RedemptionScript to proxy the original `msg.sender`
+            // into requesterAddress.
+            _d.requesterAddress = _requesterAddress;
+        } else {
+            _d.requesterAddress = msg.sender;
+        }
 
         performRedemptionTBTCTransfers(_d);
 
