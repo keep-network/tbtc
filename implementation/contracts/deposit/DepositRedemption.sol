@@ -72,11 +72,7 @@ library DepositRedemption {
             return 0;
         }
 
-        if(inCourtesy) {
-            return TBTCConstants.getLotSizeTbtc();
-        }
-
-        if(_d.depositOwner() == msg.sender){
+        if(_d.depositOwner() == msg.sender && !inCourtesy){
             uint256 signerFee = _d.signerFee();
             if(TBTCToken(_d.TBTCToken).balanceOf(address(this)) < signerFee) {
                 return signerFee;
