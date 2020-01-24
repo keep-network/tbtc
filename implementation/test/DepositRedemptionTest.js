@@ -130,21 +130,21 @@ contract('DepositRedemption', (accounts) => {
 
     it('returns signerFee if we are pre term and FRT holder is not msg.sender', async () => {
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed.toString(), signerFee.toString())
+      expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
     it('returns zero if deposit is pre-term and msg.sender is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], dotId, { from: accounts[4] })
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed, 0)
+      expect(tbtcOwed).to.eq.BN(new BN(0))
     })
 
     it('returns full TBTC if we are pre term and we are at courtesy_call', async () => {
       await testInstance.setState(utils.states.COURTESY_CALL)
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed.toString(), depositValue.toString())
+      expect(tbtcOwed).to.eq.BN(depositValue)
     })
 
     it('reverts if deposit is pre-term and msg.sender is not Deposit owner', async () => {
@@ -158,7 +158,7 @@ contract('DepositRedemption', (accounts) => {
       await increaseTime(depositTerm.toNumber())
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed.toString(), depositValue.toString())
+      expect(tbtcOwed).to.eq.BN(depositValue)
     })
   })
 
@@ -205,7 +205,7 @@ contract('DepositRedemption', (accounts) => {
       expect(events[0].returnValues.value).to.eq.BN(depositValue)
     })
 
-    it('escrows fee and sends correct TBTC if Deposit is in courtesy_call and fee is not escrowed', async () => {
+    it('escrows fee and sends correct TBTC if Deposit is in COURTESY_CALL and fee is not escrowed', async () => {
       block = await web3.eth.getBlock('latest')
       await testInstance.setState(utils.states.COURTESY_CALL)
       await testInstance.performRedemptionTBTCTransfers()
@@ -220,7 +220,7 @@ contract('DepositRedemption', (accounts) => {
       expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
     })
 
-    it('transfers 1 TBTC to TDT owner if deposit is in courtesy_call and fee is escrowed', async () => {
+    it('transfers 1 TBTC to TDT owner if deposit is in COURTESY_CALL and fee is escrowed', async () => {
       await tbtcToken.forceMint(testInstance.address, signerFee)
       await testInstance.setState(utils.states.COURTESY_CALL)
       block = await web3.eth.getBlock('latest')
