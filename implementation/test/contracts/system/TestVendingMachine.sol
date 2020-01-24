@@ -11,11 +11,11 @@ contract TestVendingMachine is VendingMachine {
 
     function setExteriorAddresses(
         address _tbtcToken,
-        address _depositOwnerToken,
+        address _tbtcDepositToken,
         address _feeRebateToken
     ) external {
         tbtcToken = TBTCToken(_tbtcToken);
-        depositOwnerToken = DepositOwnerToken(_depositOwnerToken);
+        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         feeRebateToken = FeeRebateToken(_feeRebateToken);
     }
 }

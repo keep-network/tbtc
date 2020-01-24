@@ -57,7 +57,7 @@ contract Deposit {
     function createNewDeposit(
         address _TBTCSystem,
         address _TBTCToken,
-        address _DepositOwnerToken,
+        address _TBTCDepositToken,
         address _FeeRebateToken,
         address _VendingMachine,
         uint256 _m,
@@ -65,7 +65,7 @@ contract Deposit {
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
-        self.DepositOwnerToken = _DepositOwnerToken;
+        self.TBTCDepositToken = _TBTCDepositToken;
         self.FeeRebateToken = _FeeRebateToken;
         self.VendingMachine = _VendingMachine;
         self.createNewDeposit(_m, _n);
@@ -80,9 +80,9 @@ contract Deposit {
     function requestRedemption(
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH,
-        address payable _requestorAddress
+        address payable _requesterAddress
     ) public returns (bool) {
-        self.requestRedemption(_outputValueBytes, _requesterPKH, _requestorAddress);
+        self.requestRedemption(_outputValueBytes, _requesterPKH, _requesterAddress);
         return true;
     }
 

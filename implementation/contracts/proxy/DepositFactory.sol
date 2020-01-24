@@ -3,7 +3,7 @@ pragma solidity ^0.5.10;
 import "./CloneFactory.sol";
 import "../deposit/Deposit.sol";
 import "../system/TBTCSystem.sol";
-import {DepositOwnerToken} from "../system/DepositOwnerToken.sol";
+import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 
 /// @title Deposit Factory
 /// @notice Factory for the creation of new deposit clones.
@@ -39,7 +39,7 @@ contract DepositFactory is CloneFactory{
     function createDeposit (
         address _TBTCSystem,
         address _TBTCToken,
-        address _DepositOwnerToken,
+        address _TBTCDepositToken,
         address _FeeRebateToken,
         address _VendingMachine,
         uint256 _keepThreshold,
@@ -50,13 +50,13 @@ contract DepositFactory is CloneFactory{
         Deposit(address(uint160(cloneAddress))).createNewDeposit.value(msg.value)(
             _TBTCSystem,
             _TBTCToken,
-            _DepositOwnerToken,
+            _TBTCDepositToken,
             _FeeRebateToken,
             _VendingMachine,
             _keepThreshold,
             _keepSize);
 
-        DepositOwnerToken(_DepositOwnerToken).mint(msg.sender, uint256(cloneAddress));
+        TBTCDepositToken(_TBTCDepositToken).mint(msg.sender, uint256(cloneAddress));
 
         emit DepositCloneCreated(cloneAddress);
 

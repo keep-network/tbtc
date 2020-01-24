@@ -7,13 +7,13 @@ contract TestDeposit is Deposit {
     function setExteriorAddresses(
         address _sys,
         address _token,
-        address _depositOwnerToken,
+        address _tbtcDepositToken,
         address _feeRebateToken,
         address _vendingMachine
     ) public {
         self.TBTCSystem = _sys;
         self.TBTCToken = _token;
-        self.DepositOwnerToken = _depositOwnerToken;
+        self.TBTCDepositToken = _tbtcDepositToken;
         self.FeeRebateToken = _feeRebateToken;
         self.VendingMachine = _vendingMachine;
     }
@@ -42,12 +42,29 @@ contract TestDeposit is Deposit {
 
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
 
+    function setUndercollateralizedThresholdPercent(uint128 _undercollateralizedThresholdPercent) public {
+        self.undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
+    }
+
+    function getUndercollateralizedThresholdPercent() public view returns (uint128) { return self.undercollateralizedThresholdPercent; }
+
+    function setSeverelyUndercollateralizedThresholdPercent(uint128 _severelyUndercollateralizedThresholdPercent) public {
+        self.severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
+    }
+
+    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint128) {
+        return self.severelyUndercollateralizedThresholdPercent;
+    }
+
     function setLiquidationAndCourtesyInitated(
         uint256 _liquidation,
         uint256 _courtesy
     ) public {
         self.liquidationInitiated = _liquidation;
         self.courtesyCallInitiated = _courtesy;
+    }
+    function setLiquidationInitiator(address payable _initiator) public {
+        self.liquidationInitiator = _initiator;
     }
 
     function getLiquidationAndCourtesyInitiated() public view returns (uint256, uint256) {
@@ -122,7 +139,7 @@ contract TestDeposit is Deposit {
 
     function getUTXOInfo() public view returns (bytes8, uint256, bytes memory) {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
-    } 
+    }
 
     function getRedemptionTbtcRequirement(address _requester) public view returns (uint256) {
         return self.getRedemptionTbtcRequirement(_requester);

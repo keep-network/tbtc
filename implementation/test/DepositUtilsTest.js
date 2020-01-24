@@ -1,4 +1,6 @@
 import expectThrow from './helpers/expectThrow'
+import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
+import increaseTime from './helpers/increaseTime'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
@@ -15,7 +17,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
-const DepositOwnerToken = artifacts.require('TestDepositOwnerToken')
+const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
@@ -41,7 +43,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'DepositOwnerToken', contract: DepositOwnerToken },
+  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
   { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
@@ -73,7 +75,7 @@ contract('DepositUtils', (accounts) => {
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
   let tbtcSystemStub
-  let depositOwnerToken
+  let tbtcDepositToken
   let feeRebateToken
 
   before(async () => {
@@ -87,7 +89,7 @@ contract('DepositUtils', (accounts) => {
 
     testUtilsInstance = deployed.TestDepositUtils
 
-    depositOwnerToken = deployed.DepositOwnerToken
+    tbtcDepositToken = deployed.TBTCDepositToken
     feeRebateToken = deployed.FeeRebateToken
 
     feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testUtilsInstance.address))
@@ -95,7 +97,7 @@ contract('DepositUtils', (accounts) => {
     await testUtilsInstance.createNewDeposit(
       tbtcSystemStub.address,
       tbtcToken.address,
-      depositOwnerToken.address,
+      tbtcDepositToken.address,
       feeRebateToken.address,
       utils.address0,
       1, // m
@@ -298,13 +300,6 @@ contract('DepositUtils', (accounts) => {
     })
   })
 
-  describe('beneficiaryReward()', async () => {
-    it('returns a derived constant', async () => {
-      const beneficiaryReward = await testUtilsInstance.beneficiaryReward.call()
-      expect(beneficiaryReward).to.eq.BN(10 ** 5)
-    })
-  })
-
   describe('determineCompressionPrefix()', async () => {
     it('selects 2 for even', async () => {
       const res = await testUtilsInstance.determineCompressionPrefix.call('0x' + '00'.repeat(32))
@@ -481,6 +476,47 @@ contract('DepositUtils', (accounts) => {
         testUtilsInstance.pushFundsToKeepGroup.call(10000000000000),
         'Not enough funds to send'
       )
+    })
+  })
+
+  describe('remainingTerm', async () => {
+    const prevoutValueBytes = '0xffffffffffffffff'
+    const outpoint = '0x' + '33'.repeat(36)
+    let depositTerm
+    let fundedAt
+
+    before(async () => {
+      depositTerm = await deployed.TBTCConstants.getDepositTerm.call()
+
+      // Set Deposit.fundedAt to current block.
+      const block = await web3.eth.getBlock('latest')
+      fundedAt = block.timestamp
+      await testUtilsInstance.setUTXOInfo(prevoutValueBytes, fundedAt, outpoint)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('returns remaining term from current block', async () => {
+      // Because there is time elapsed since we call `setUTXOInfo`, we get the time again.
+      const block = await web3.eth.getBlock('latest')
+
+      const remainingTerm = await testUtilsInstance.remainingTerm.call()
+      const expectedRemainingTerm = new BN(fundedAt).add(depositTerm).sub(new BN(block.timestamp))
+      expect(remainingTerm).to.eq.BN(expectedRemainingTerm)
+    })
+
+    it('returns 0 if deposit is at term', async () => {
+      // Simulate an entire term.
+      await increaseTime(depositTerm.toNumber())
+
+      const remainingTerm = await testUtilsInstance.remainingTerm.call()
+      expect(remainingTerm).to.eq.BN(0)
     })
   })
 })

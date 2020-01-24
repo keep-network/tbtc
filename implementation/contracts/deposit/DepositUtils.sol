@@ -26,15 +26,18 @@ library DepositUtils {
         // SET DURING CONSTRUCTION
         address TBTCSystem;
         address TBTCToken;
-        address DepositOwnerToken;
+        address TBTCDepositToken;
         address FeeRebateToken;
         address VendingMachine;
         uint8 currentState;
         uint256 signerFeeDivisor;
+        uint128 undercollateralizedThresholdPercent;
+        uint128 severelyUndercollateralizedThresholdPercent;
 
         // SET ON FRAUD
         uint256 liquidationInitiated;  // Timestamp of when liquidation starts
         uint256 courtesyCallInitiated; // When the courtesy call is issued
+        address payable liquidationInitiator;
 
         // written when we request a keep
         address keepAddress;  // The address of our keep contract
@@ -191,7 +194,7 @@ library DepositUtils {
 
         _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
 
-        require(bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSize(), "Deposit too small");
+        require(bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSizeBtc(), "Deposit too small");
 
         checkProofFromTxId(_d, txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
@@ -231,37 +234,11 @@ library DepositUtils {
         return _available.mul(_percentage).div(100);
     }
 
-    /// @notice         Determines the fees due to the signers for work performeds
+    /// @notice         Determines the fees due to the signers for work performed
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee(Deposit storage _d) public view returns (uint256) {
-        return TBTCConstants.getLotSize()
-            .mul(TBTCConstants.getSatoshiMultiplier())
-            .div(_d.signerFeeDivisor);
-    }
-
-    /// @notice     calculates the beneficiary reward based on the deposit size
-    /// @dev        the amount of extra ether to pay the beneficiary at closing time
-    /// @return     the amount of ether in wei to pay the beneficiary
-    function beneficiaryReward() public pure returns (uint256) {
-        return TBTCConstants.getLotSize().div(TBTCConstants.getBeneficiaryRewardDivisor());
-    }
-
-    /// @notice         Determines the amount of TBTC paid to redeem the deposit
-    /// @dev            This is the amount of TBTC needed to repay to redeem the Deposit
-    /// @return         Outstanding debt in smallest TBTC unit (tsat)
-    function redemptionTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSize().add(signerFee(_d)).add(beneficiaryReward());
-        } else {
-            return 0;
-        }
-    }
-
-    /// @notice     Determines the threshold amount of TBTC necessary to liquidate
-    /// @return     The amount of TBTC to buy during liquidation
-    function liquidationTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        return TBTCConstants.getLotSize().add(beneficiaryReward());
+        return TBTCConstants.getLotSizeTbtc().div(_d.signerFeeDivisor);
     }
 
     /// @notice     Determines the amount of TBTC accepted in the auction
@@ -269,7 +246,7 @@ library DepositUtils {
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSize();
+            return TBTCConstants.getLotSizeTbtc();
         } else {
             return 0;
         }
@@ -367,8 +344,8 @@ library DepositUtils {
     /// @dev            We cast the address to a uint256 to match the 721 standard
     /// @return         The current deposit beneficiary
     function depositOwner(Deposit storage _d) public view returns (address payable) {
-        IERC721 _depositOwnerToken = IERC721(_d.DepositOwnerToken);
-        return address(uint160(_depositOwnerToken.ownerOf(uint256(address(this)))));
+        IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
+        return address(uint160(_tbtcDepositToken.ownerOf(uint256(address(this)))));
     }
 
     /// @notice     Deletes state after termination of redemption process
@@ -400,7 +377,7 @@ library DepositUtils {
 
         address rebateTokenHolder = feeRebateTokenHolder(_d);
 
-        // We didn't escrow a rebate if the requestor is also the Fee Rebate Token holder
+        // We didn't escrow a rebate if the requester is also the Fee Rebate Token holder
         if(_d.requesterAddress == rebateTokenHolder) return;
 
         // pay out the rebate if it is available

@@ -60,6 +60,8 @@ library DepositFunding {
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
         _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep(_m, _n);
         _d.signerFeeDivisor = TBTCSystem(_d.TBTCSystem).getSignerFeeDivisor();
+        _d.undercollateralizedThresholdPercent = TBTCSystem(_d.TBTCSystem).getUndercollateralizedThresholdPercent();
+        _d.severelyUndercollateralizedThresholdPercent = TBTCSystem(_d.TBTCSystem).getSeverelyUndercollateralizedThresholdPercent();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
@@ -99,7 +101,7 @@ library DepositFunding {
 
     /// @notice     Seizes signer bonds and distributes them to the funder
     /// @dev        This is only called as part of funding fraud flow
-    function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) public {
+    function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) internal {
         uint256 _seized = _d.seizeSignerBonds();
         _d.depositOwner().transfer(_seized);  // Transfer whole amount
     }
@@ -316,6 +318,7 @@ library DepositFunding {
         // Write down the UTXO info and set to active. Congratulations :)
         _d.utxoSizeBytes = _valueBytes;
         _d.utxoOutpoint = _utxoOutpoint;
+        _d.fundedAt = block.timestamp;
 
         fundingTeardown(_d);
         _d.setActive();

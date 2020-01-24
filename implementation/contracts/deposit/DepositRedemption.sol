@@ -54,7 +54,8 @@ library DepositRedemption {
     /// @dev    Will revert if redemption is not possible by msg.sender.
     /// @return The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _requester) public view returns(uint256){
-        if(_d.remainingTerm() > 0 && !_d.inCourtesyCall()){
+        bool inCourtesy = _d.inCourtesyCall();
+        if(_d.remainingTerm() > 0 && !inCourtesy){
             if(msg.sender == _d.VendingMachine){
                 if(_requester != _d.feeRebateTokenHolder()){
                     return _d.signerFee();
@@ -70,7 +71,19 @@ library DepositRedemption {
             }
             return 0;
         }
-        return TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
+
+        if(inCourtesy) {
+            return TBTCConstants.getLotSizeTbtc();
+        }
+
+        if(_d.depositOwner() == msg.sender){
+            uint256 signerFee = _d.signerFee();
+            if(TBTCToken(_d.TBTCToken).balanceOf(address(this)) < signerFee) {
+                return signerFee;
+            }
+            return 0;
+        }
+        return TBTCConstants.getLotSizeTbtc();
     }
 
     /// @notice Handles TBTC requirements for redemption
@@ -78,20 +91,19 @@ library DepositRedemption {
     function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         address feeRebateTokenHolder = _d.feeRebateTokenHolder();
-        address depositOwnerTokenHolder = _d.depositOwner();
+        address tdtHolder = _d.depositOwner();
         address vendingMachine = _d.VendingMachine;
 
-        uint256 tbtcLot = TBTCConstants.getLotSize().mul(TBTCConstants.getSatoshiMultiplier());
-
+        uint256 tbtcLot = TBTCConstants.getLotSizeTbtc();
         uint256 signerFee = _d.signerFee();
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
 
-        // if we owe 0 TBTC, Deposit is pre-term, msg.sender is DOT owner and FRT holder.
+        // if we owe 0 TBTC, msg.sender is TDT owner and FRT holder.
         if(tbtcOwed == 0){
             return;
         }
-        // if we owe signerfee, Deposit is pre-term, msg.sender is DOT owner but not FRT holder.
+        // if we owe signerfee, msg.sender is TDT owner but not FRT holder.
         if(tbtcOwed == signerFee){
             _tbtc.transferFrom(msg.sender, address(this), signerFee);
             return;
@@ -99,21 +111,21 @@ library DepositRedemption {
         // Redemmer always owes a full TBTC for at-term redemption.
         if(tbtcOwed == tbtcLot){
             // the TDT holder has exclusive redemption rights to a UXTO up until the deposit’s term.
-            // At that point, we open it up so anyone may redeem it. 
-            // As compensation, the DOT owner is reimbursed in TBTC
-            // Vending Machine-owned DOTs have been used to mint TBTC, 
+            // At that point, we open it up so anyone may redeem it.
+            // As compensation, the TDT owner is reimbursed in TBTC
+            // Vending Machine-owned TDTs have been used to mint TBTC,
             // and we should always burn a full TBTC to redeem the deposit.
-            if(depositOwnerTokenHolder == vendingMachine){
+            if(tdtHolder == vendingMachine){
                 _tbtc.burnFrom(msg.sender, tbtcLot);
             }
-            // if signer fee is not escrowed, escrow and it here and send the rest to DOT owner
+            // if signer fee is not escrowed, escrow and it here and send the rest to TDT owner
             else if(_tbtc.balanceOf(address(this)) < signerFee){
                 _tbtc.transferFrom(msg.sender, address(this), signerFee);
-                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, tbtcLot.sub(signerFee));
+                _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
             }
-            // tansfer a full TBTC to DOT owner if signerFee is escrowed
+            // tansfer a full TBTC to TDT owner if signerFee is escrowed
             else{
-                _tbtc.transferFrom(msg.sender, depositOwnerTokenHolder, tbtcLot);
+                _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot);
             }
             return;
         }
@@ -360,7 +372,7 @@ library DepositRedemption {
     /// @param  _d  deposit storage pointer
     function notifyRedemptionProofTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedepmtionProofTimeout(), "Proof timer has not elapsed");
+        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedemptionProofTimeout(), "Proof timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 }
