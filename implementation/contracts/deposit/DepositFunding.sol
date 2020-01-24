@@ -49,19 +49,23 @@ library DepositFunding {
     function createNewDeposit(
         DepositUtils.Deposit storage _d,
         uint256 _m,
-        uint256 _n
+        uint256 _n,
+        uint256 _lotSize
     ) public returns (bool) {
-        require(TBTCSystem(_d.TBTCSystem).getAllowNewDeposits(), "Opening new deposits is currently disabled.");
+        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
+
+        require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
         /* solium-disable-next-line value-in-payable */
         require(msg.value == TBTCConstants.getFunderBondAmount(), "incorrect funder bond amount");
-
+        require(_system.isAllowedLotSize(_lotSize), 'provided lot size not supported');
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
-        _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep(_m, _n);
-        _d.signerFeeDivisor = TBTCSystem(_d.TBTCSystem).getSignerFeeDivisor();
-        _d.undercollateralizedThresholdPercent = TBTCSystem(_d.TBTCSystem).getUndercollateralizedThresholdPercent();
-        _d.severelyUndercollateralizedThresholdPercent = TBTCSystem(_d.TBTCSystem).getSeverelyUndercollateralizedThresholdPercent();
+        _d.lotSizeBtc = _lotSize;
+        _d.keepAddress = _system.requestNewKeep(_m, _n);
+        _d.signerFeeDivisor = _system.getSignerFeeDivisor();
+        _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
+        _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
