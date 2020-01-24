@@ -25,6 +25,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint128 private undercollateralizedThresholdPercent = 140;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
+    uint256[] lotSizes = [10**7, 20**7, 50**7, 10**8]; // satoshi
 
     constructor(address _priceFeed) public {
         priceFeed = _priceFeed;
@@ -63,6 +64,30 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @return The signer fee divisor.
     function getSignerFeeDivisor() external view returns (uint256) { return signerFeeDivisor; }
 
+    /// @notice Set the allowed deposit lot sizes.
+    /// @dev    Lot shizes should be 
+    /// @param _lotSizes array of allowed lot sizes.
+    function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
+        lotSizes = _lotSizes;
+    }
+
+    /// @notice Gets the allowed lot sizes
+    /// @return uint256 array of allowed lot sizes 
+    function getAllowedLotSizes() external view returns (uint256[]){
+        return lotSizes;
+    }
+
+    /// @notice Check if a lot size is allowed.
+    /// @param _lotSizes lot size to check.
+    /// @return true if lot size is allowed, false otherwise. 
+    function isAllowedLotSize(uint256 _lotSize) external view returns (bool){
+        for( uint i = 0; i < lotSizes.length; i++){
+            if (lotSizes[i] == _lotSize){
+                return true;
+            }
+        }
+        return false;
+    }
     /// @notice Set the system collateralization levels
     /// @param _undercollateralizedThresholdPercent first undercollateralization trigger
     /// @param _severelyUndercollateralizedThresholdPercent second undercollateralization trigger
