@@ -65,21 +65,21 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function getSignerFeeDivisor() external view returns (uint256) { return signerFeeDivisor; }
 
     /// @notice Set the allowed deposit lot sizes.
-    /// @dev    Lot shizes should be 
-    /// @param _lotSizes array of allowed lot sizes.
+    /// @dev    Lot sizes should be 
+    /// @param _lotSizes Array of allowed lot sizes.
     function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
         lotSizes = _lotSizes;
     }
 
     /// @notice Gets the allowed lot sizes
-    /// @return uint256 array of allowed lot sizes 
-    function getAllowedLotSizes() external view returns (uint256[]){
+    /// @return Uint256 array of allowed lot sizes 
+    function getAllowedLotSizes() external view returns (uint256[] memory){
         return lotSizes;
     }
 
     /// @notice Check if a lot size is allowed.
-    /// @param _lotSizes lot size to check.
-    /// @return true if lot size is allowed, false otherwise. 
+    /// @param _lotSize Lot size to check.
+    /// @return True if lot size is allowed, false otherwise. 
     function isAllowedLotSize(uint256 _lotSize) external view returns (bool){
         for( uint i = 0; i < lotSizes.length; i++){
             if (lotSizes[i] == _lotSize){
