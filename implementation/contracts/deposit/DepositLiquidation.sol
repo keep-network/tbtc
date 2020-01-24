@@ -58,7 +58,7 @@ library DepositLiquidation {
             revert("System returned a bad price");
         }
 
-        uint256 _lotSize = TBTCConstants.getLotSizeBtc();
+        uint256 _lotSize = _d.lotSizeBtc;
         uint256 _lotValue = _lotSize * _price;
 
         // Amount of wei the signers have
@@ -237,13 +237,15 @@ library DepositLiquidation {
         address tdtHolder = _d.depositOwner();
 
         TBTCToken _tbtcToken = TBTCToken(_d.TBTCToken);
-        require(_tbtcToken.balanceOf(msg.sender) >= TBTCConstants.getLotSizeTbtc(), "Not enough TBTC to cover outstanding debt");
+
+        uint256 lotSizeTbtc = _d.lotSizeTbtc();
+        require(_tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc, "Not enough TBTC to cover outstanding debt");
 
         if(tdtHolder == _d.VendingMachine){
-            _tbtcToken.burnFrom(msg.sender, TBTCConstants.getLotSizeTbtc());  // burn minimal amount to cover size
+            _tbtcToken.burnFrom(msg.sender, lotSizeTbtc);  // burn minimal amount to cover size
         }
         else{
-            _tbtcToken.transferFrom(msg.sender, tdtHolder, TBTCConstants.getLotSizeTbtc());
+            _tbtcToken.transferFrom(msg.sender, tdtHolder, lotSizeTbtc);
         }
 
         // Distribute funds to auction buyer

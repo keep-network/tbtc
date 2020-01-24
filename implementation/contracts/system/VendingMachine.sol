@@ -39,7 +39,7 @@ contract VendingMachine {
         require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
         require(isQualified(address(_tdtId)), "Deposit must be qualified");
 
-        uint256 depositValue = TBTCConstants.getLotSizeTbtc();
+        uint256 depositValue = Deposit(address(uint160(_tdtId))).lotSizeTbtc();
         require(tbtcToken.balanceOf(msg.sender) >= depositValue, "Not enough TBTC for TDT exchange");
         tbtcToken.burnFrom(msg.sender, depositValue);
 
@@ -60,7 +60,7 @@ contract VendingMachine {
         // If the backing Deposit does not have a signer fee in escrow, mint it.
         Deposit deposit = Deposit(address(uint160(_tdtId)));
         uint256 signerFee = deposit.signerFee();
-        uint256 depositValue = TBTCConstants.getLotSizeTbtc();
+        uint256 depositValue = deposit.lotSizeTbtc();
 
         if(tbtcToken.balanceOf(address(_tdtId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
