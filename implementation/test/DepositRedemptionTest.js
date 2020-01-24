@@ -138,7 +138,7 @@ contract('DepositRedemption', (accounts) => {
       expect(tbtcOwed).to.eq.BN(new BN(0))
     })
 
-    it('returns full TBTC if we are pre term and we are at courtesy_call', async () => {
+    it('returns full TBTC if we are pre term and we are at COURTESY_CALL', async () => {
       await testInstance.setState(utils.states.COURTESY_CALL)
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
@@ -365,7 +365,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(eventList[0].returnValues._digest, sighash)
     })
 
-    it('updates state successfully and fires a RedemptionRequested event from courtesy_call state', async () => {
+    it('updates state successfully and fires a RedemptionRequested event from COURTESY_CALL state', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
