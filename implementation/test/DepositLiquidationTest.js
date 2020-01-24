@@ -102,6 +102,7 @@ contract('DepositLiquidation', (accounts) => {
     await testInstance.setSignerFeeDivisor(new BN('200'))
     await testInstance.setUndercollateralizedThresholdPercent(new BN('140'))
     await testInstance.setSeverelyUndercollateralizedThresholdPercent(new BN('120'))
+    await testInstance.setLotSize(new BN('100000000'))
 
     await tbtcDepositToken.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
     await feeRebateToken.forceMint(beneficiary, web3.utils.toBN(deployed.TestDeposit.address))
@@ -127,7 +128,7 @@ contract('DepositLiquidation', (accounts) => {
     let buyer
 
     before(async () => {
-      lotSize = await deployed.TBTCConstants.getLotSizeTbtc.call()
+      lotSize = await testInstance.lotSizeTbtc.call()
       buyer = accounts[1]
     })
 
@@ -279,7 +280,7 @@ contract('DepositLiquidation', (accounts) => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
       oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
-      lotSize = await deployed.TBTCConstants.getLotSizeBtc.call()
+      lotSize = await testInstance.lotSizeBtc.call()
       lotValue = lotSize.mul(oraclePrice)
 
       undercollateralizedPercent = await tbtcSystemStub.getUndercollateralizedThresholdPercent.call()
@@ -404,7 +405,7 @@ contract('DepositLiquidation', (accounts) => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
 
       oraclePrice = await tbtcSystemStub.fetchBitcoinPrice.call()
-      lotSize = await deployed.TBTCConstants.getLotSizeBtc.call()
+      lotSize = await testInstance.lotSizeBtc.call()
       lotValue = lotSize.mul(oraclePrice)
 
       severelyUndercollateralizedPercent = await tbtcSystemStub.getSeverelyUndercollateralizedThresholdPercent.call()

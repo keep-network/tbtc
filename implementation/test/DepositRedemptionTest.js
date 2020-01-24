@@ -90,14 +90,14 @@ contract('DepositRedemption', (accounts) => {
       vendingMachine
     )
     await testInstance.setSignerFeeDivisor(new BN('200'))
+    await testInstance.setLotSize(new BN('100000000'))
 
     await feeRebateToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     tdtId = await web3.utils.toBN(testInstance.address)
     await tbtcDepositToken.forceMint(accounts[0], tdtId)
 
-
-    depositValue = await deployed.TBTCConstants.getLotSizeTbtc()
+    depositValue = await testInstance.lotSizeTbtc.call()
     signerFee = await testInstance.signerFee.call()
     depositTerm = await deployed.TBTCConstants.getDepositTerm.call()
   })

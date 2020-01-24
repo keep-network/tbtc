@@ -74,6 +74,7 @@ contract('DepositUtils', (accounts) => {
   let beneficiary
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
+  const fullBtc = 100000000
   let tbtcSystemStub
   let tbtcDepositToken
   let feeRebateToken
@@ -102,6 +103,7 @@ contract('DepositUtils', (accounts) => {
       utils.address0,
       1, // m
       1, // n
+      fullBtc,
       { value: funderBondAmount }
     )
 
