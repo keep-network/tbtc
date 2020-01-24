@@ -78,7 +78,7 @@ library DepositRedemption {
             }
             return 0;
         }
-        return TBTCConstants.getLotSizeTbtc();
+        return _d.lotSizeTbtc();
     }
 
     /// @notice Handles TBTC requirements for redemption
@@ -89,7 +89,7 @@ library DepositRedemption {
         address tdtHolder = _d.depositOwner();
         address vendingMachine = _d.VendingMachine;
 
-        uint256 tbtcLot = TBTCConstants.getLotSizeTbtc();
+        uint256 tbtcLot = _d.lotSizeTbtc();
         uint256 signerFee = _d.signerFee();
 
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
