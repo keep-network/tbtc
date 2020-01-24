@@ -60,6 +60,8 @@ library DepositFunding {
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
         _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep(_m, _n);
         _d.signerFeeDivisor = TBTCSystem(_d.TBTCSystem).getSignerFeeDivisor();
+        _d.undercollateralizedThresholdPercent = TBTCSystem(_d.TBTCSystem).getUndercollateralizedThresholdPercent();
+        _d.severelyUndercollateralizedThresholdPercent = TBTCSystem(_d.TBTCSystem).getSeverelyUndercollateralizedThresholdPercent();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
