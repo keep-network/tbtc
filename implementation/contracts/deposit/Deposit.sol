@@ -48,6 +48,18 @@ contract Deposit {
         return self.signerFee();
     }
 
+    /// @notice     Get the Deposit BTC lot size.
+    /// @return     uint256 lot size in satoshi
+    function lotSizeBtc() public view returns (uint256){
+        return self.lotSizeBtc;
+    }
+
+    /// @notice     Get the Deposit ERC20 lot size.
+    /// @return     uint256 lot size in erc20 decimal (max 18)
+    function lotSizeTbtc() public view returns (uint256){
+        return self.lotSizeTbtc();
+    }
+
     // THIS IS THE INIT FUNCTION
     /// @notice         The system can spin up a new deposit
     /// @dev            This should be called by an approved contract, not a developer
