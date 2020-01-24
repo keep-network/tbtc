@@ -29,6 +29,7 @@ library DepositUtils {
         address TBTCDepositToken;
         address FeeRebateToken;
         address VendingMachine;
+        uint256 lotSizeBtc;
         uint8 currentState;
         uint256 signerFeeDivisor;
         uint128 undercollateralizedThresholdPercent;
