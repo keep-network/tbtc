@@ -105,6 +105,7 @@ contract('VendingMachine', (accounts) => {
       vendingMachine.address
     )
     await testInstance.setSignerFeeDivisor(signerFeeDivisor)
+    await testInstance.setLotSize(new BN('100000000'))
 
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
 
@@ -116,7 +117,7 @@ contract('VendingMachine', (accounts) => {
 
     tdtId = await web3.utils.toBN(testInstance.address)
 
-    depositValue = await deployed.TBTCConstants.getLotSizeTbtc()
+    depositValue = await testInstance.lotSizeTbtc()
     signerFee = depositValue.div(signerFeeDivisor)
   })
 
@@ -327,7 +328,7 @@ contract('VendingMachine', (accounts) => {
     let block
 
     before(async () => {
-      requiredBalance = await deployed.TBTCConstants.getLotSizeTbtc.call()
+      requiredBalance = await testInstance.lotSizeTbtc.call()
 
       block = await web3.eth.getBlock('latest')
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
