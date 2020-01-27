@@ -149,6 +149,10 @@ contract TestDeposit is Deposit {
         return self.getRedemptionTbtcRequirement(_requester);
     }
 
+   function getOwnerRedemptionTbtcRequirement(address _requester) public view returns (uint256) {
+        return self.getOwnerRedemptionTbtcRequirement(_requester);
+    }
+
      function performRedemptionTBTCTransfers() public {
         self.performRedemptionTBTCTransfers();
     }
