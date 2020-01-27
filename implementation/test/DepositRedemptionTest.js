@@ -126,21 +126,21 @@ contract('DepositRedemption', (accounts) => {
       await restoreSnapshot()
     })
 
-    it('returns signerFee if we are pre term and FRT holder is not msg.sender', async () => {
+    it('returns signerFee if we are pre term and redeemer is not FRT holder', async () => {
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed.toString(), signerFee.toString())
     })
 
-    it('returns zero if deposit is pre-term and msg.sender is FRT holder', async () => {
+    it('returns zero if deposit is pre-term and redeemer is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       assert.equal(tbtcOwed, 0)
     })
 
-    it('reverts if deposit is pre-term and msg.sender is not Deposit owner', async () => {
+    it('reverts if deposit is pre-term and redeemer is not Deposit owner', async () => {
       await expectThrow(
-        testInstance.getRedemptionTbtcRequirement.call(accounts[0], { from: accounts[2] }),
+        testInstance.getRedemptionTbtcRequirement.call(accounts[1]),
         'redemption can only be called by deposit owner until deposit reaches term'
       )
     })
@@ -181,6 +181,7 @@ contract('DepositRedemption', (accounts) => {
     beforeEach(async () => {
       await createSnapshot()
       block = await web3.eth.getBlock('latest')
+      await testInstance.setRequesterAddress(accounts[0])
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
     })
 
@@ -188,7 +189,7 @@ contract('DepositRedemption', (accounts) => {
       await restoreSnapshot()
     })
 
-    it('does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
+    it('does nothing if deposit is pre-term and redeemer is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
 
       block = await web3.eth.getBlock('latest')
@@ -198,7 +199,7 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(events.length, 0)
     })
 
-    it('transfers signerFee if deposit is pre-term and msg.sender is not FRT holder', async () => {
+    it('transfers signerFee if deposit is pre-term and redeemer is not FRT holder', async () => {
       await tbtcToken.resetBalance(signerFee)
       await tbtcToken.resetAllowance(testInstance.address, signerFee)
       block = await web3.eth.getBlock('latest')
@@ -305,7 +306,7 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
 
       const requestInfo = await testInstance.getRequestInfo()
       assert.equal(requestInfo[1], requesterPKH)
@@ -324,7 +325,7 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH)
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
       const event = events[0]
@@ -337,14 +338,14 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setState(utils.states.LIQUIDATED)
 
       await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
         'Redemption only available from Active or Courtesy state'
       )
     })
 
     it('reverts if the fee is low', async () => {
       await expectThrow(
-        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20), accounts[0]),
+        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
         'Fee is too low'
       )
     })
@@ -356,7 +357,7 @@ contract('DepositRedemption', (accounts) => {
       await tbtcDepositToken.transferFrom(accounts[0], accounts[4], tdtId)
 
       await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
         'redemption can only be called by deposit owner until deposit reaches term'
       )
     })
