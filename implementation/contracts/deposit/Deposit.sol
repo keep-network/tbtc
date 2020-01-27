@@ -42,6 +42,10 @@ contract Deposit {
         return self.remainingTerm();
     }
 
+    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
+        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
+    }
+
     /// @notice     Get the signer fee for the Deposit.
     /// @return     Fee amount in TBTC
     function signerFee() public view returns (uint256) {
@@ -79,10 +83,27 @@ contract Deposit {
     /// @return                     True if successful, otherwise revert
     function requestRedemption(
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH,
-        address payable _requesterAddress
+        bytes20 _requesterPKH
     ) public returns (bool) {
-        self.requestRedemption(_outputValueBytes, _requesterPKH, _requesterAddress);
+        self.requestRedemption(_outputValueBytes, _requesterPKH);
+        return true;
+    }
+
+    /// @notice                     Anyone can request redemption
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
+    /// @param  _outputValueBytes   The 8-byte LE output size
+    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
+    function requestRedemptionAndTransfer(
+        bytes8 _outputValueBytes,
+        bytes20 _requesterPKH,
+        address payable _finalRecipient
+    ) public returns (bool) {
+        self.requestRedemptionAndTransfer(
+            _outputValueBytes,
+            _requesterPKH,
+            _finalRecipient
+        );
         return true;
     }
 
