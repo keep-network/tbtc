@@ -50,28 +50,41 @@ library DepositRedemption {
         _d.approvedDigests[_digest] = block.timestamp;
     }
 
-    /// @notice Get TBTC amount required by redemption.
-    /// @dev    Will revert if redemption is not possible by msg.sender.
-    /// @return The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _requester) public view returns(uint256){
+    /// @notice             Get TBTC amount required for redemption assuming _redeemer
+    ///                     is this deposit's TDT owner.
+    /// @dev                Will revert if redemption is not possible by msg.sender.
+    /// @param _redeemer    The assumed owner of the deposit's TDT 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) public view returns(uint256) {
         if(_d.remainingTerm() > 0){
-            if(msg.sender == _d.VendingMachine){
-                if(_requester != _d.feeRebateTokenHolder()){
-                    return _d.signerFee();
-                }
-                return 0;
-            }
-            require(
-                _d.depositOwner() == msg.sender,
-                "redemption can only be called by deposit owner until deposit reaches term"
-            );
-            if(_d.feeRebateTokenHolder() != msg.sender) {
+            if(_d.feeRebateTokenHolder() != _redeemer) {
                 return _d.signerFee();
             }
             return 0;
         }
+        uint256 signerFee = _d.signerFee();
+        if(TBTCToken(_d.TBTCToken).balanceOf(address(this)) < signerFee) {
+            return signerFee;
+        }
+        return 0;
+    }
 
-        if(_d.depositOwner() == msg.sender){
+    /// @notice             Get TBTC amount required by redemption.
+    /// @dev                Will revert if redemption is not possible by msg.sender.
+    /// @param _redeemer    The deposit redeemer. 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
+        if(_d.remainingTerm() > 0){
+            require(
+                _d.depositOwner() == _redeemer,
+                "redemption can only be called by deposit owner until deposit reaches term"
+            );
+            if(_d.feeRebateTokenHolder() != _redeemer) {
+                return _d.signerFee();
+            }
+            return 0;
+        }
+        if(_d.depositOwner() == _redeemer){
             uint256 signerFee = _d.signerFee();
             if(TBTCToken(_d.TBTCToken).balanceOf(address(this)) < signerFee) {
                 return signerFee;
@@ -91,7 +104,6 @@ library DepositRedemption {
 
         uint256 tbtcLot = TBTCConstants.getLotSizeTbtc();
         uint256 signerFee = _d.signerFee();
-
         uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
 
         // if we owe 0 TBTC, msg.sender is TDT owner and FRT holder.
@@ -117,7 +129,7 @@ library DepositRedemption {
             else if(_tbtc.balanceOf(address(this)) < signerFee){
                 _tbtc.transferFrom(msg.sender, address(this), signerFee);
                 _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
-            }
+             }
             // tansfer a full TBTC to TDT owner if signerFee is escrowed
             else{
                 _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot);
@@ -132,18 +144,18 @@ library DepositRedemption {
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
-    /// @param  _requesterAddress   The address of the requester.
-    function requestRedemption(
+    /// @param  _redeemer           The deposit redeemer.
+    function _requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
         bytes20 _requesterPKH,
-        address payable _requesterAddress
+        address payable _redeemer
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
 
         // set requesterAddress early to enable direct access by other functions
-        _d.requesterAddress = _requesterAddress;
+        _d.requesterAddress = _redeemer;
 
         performRedemptionTBTCTransfers(_d);
 
@@ -170,12 +182,49 @@ library DepositRedemption {
 
         _d.setAwaitingWithdrawalSignature();
         _d.logRedemptionRequested(
-            msg.sender,
+            _redeemer,
             _sighash,
             _d.utxoSize(),
             _requesterPKH,
             _requestedFee,
             _d.utxoOutpoint);
+    }
+
+    /// @notice                     Anyone can request redemption
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
+    /// @param  _d                  deposit storage pointer
+    /// @param  _outputValueBytes   The 8-byte LE output size
+    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
+    function requestRedemptionAndTransfer(
+        DepositUtils.Deposit storage _d,
+        bytes8 _outputValueBytes,
+        bytes20 _requesterPKH,
+        address payable _finalRecipient
+    ) public {
+        IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
+        require(msg.sender != _finalRecipient, "Caller and final recipient cannot be the same.");
+
+        _tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
+
+        _requestRedemption(_d, _outputValueBytes, _requesterPKH, _finalRecipient);
+    }
+
+    /// @notice                     Anyone can request redemption
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
+    /// @param  _d                  deposit storage pointer
+    /// @param  _outputValueBytes   The 8-byte LE output size
+    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    function requestRedemption(
+        DepositUtils.Deposit storage _d,
+        bytes8 _outputValueBytes,
+        bytes20 _requesterPKH
+    ) public {
+        require(
+            msg.sender == _d.depositOwner() || _d.inCourtesyCall() || _d.remainingTerm() > 0,
+            "redemption request conditions not met."
+        );
+        _requestRedemption(_d, _outputValueBytes, _requesterPKH, msg.sender);
     }
 
     /// @notice     Anyone may provide a withdrawal signature if it was requested
@@ -370,4 +419,8 @@ library DepositRedemption {
         require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedemptionProofTimeout(), "Proof timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
+    function getSender(DepositUtils.Deposit storage _d) public view returns(address) {
+        return msg.sender;
+    }
+
 }
