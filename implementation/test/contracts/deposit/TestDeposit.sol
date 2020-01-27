@@ -117,7 +117,11 @@ contract TestDeposit is Deposit {
         self.withdrawalRequestTime = _withdrawalRequestTime;
         self.lastRequestedDigest = _lastRequestedDigest;
     }
-
+    function setRequesterAddress(
+        address payable _requesterAddress
+    ) public {
+        self.requesterAddress = _requesterAddress;
+    }
     function getRequestInfo() public view returns (address, bytes20, uint256, uint256, bytes32) {
         return (
             self.requesterAddress,
