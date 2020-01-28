@@ -73,31 +73,10 @@ library DepositRedemption {
     /// @param _redeemer    The deposit redeemer. 
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
-        // if(_d.depositOwner() == _redeemer){
-        //     return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
-        // }
-        // require(_d.remainingTerm() == 0, "Redemption can only be called by deposit owner.");
-        // return TBTCConstants.getLotSizeTbtc();
-
-
-
-
-        if(_d.remainingTerm() > 0){
-            require(
-                _d.depositOwner() == _redeemer,
-                "redemption can only be called by deposit owner until deposit reaches term"
-            );
-            if(_d.feeRebateTokenHolder() != _redeemer) {
-                return _d.signerFee();
-            }
+        if (_d.depositOwner() == _redeemer) {
+            return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
         }
-        if(_d.depositOwner() == _redeemer){
-            uint256 signerFee = _d.signerFee();
-            if(TBTCToken(_d.TBTCToken).balanceOf(address(this)) < signerFee) {
-                return signerFee;
-            }
-            return 0;
-        }
+        require(_d.remainingTerm() == 0, "redemption can only be called by deposit owner until deposit reaches term");
         return TBTCConstants.getLotSizeTbtc();
     }
 
