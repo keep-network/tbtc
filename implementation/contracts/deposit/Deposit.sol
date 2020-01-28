@@ -90,9 +90,9 @@ contract Deposit {
     }
 
     /// @notice                     Anyone can request redemption
-    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx and pays for the redemption
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
     function requestRedemptionAndTransfer(
         bytes8 _outputValueBytes,

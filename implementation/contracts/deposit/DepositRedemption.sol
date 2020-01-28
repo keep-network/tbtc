@@ -68,7 +68,7 @@ library DepositRedemption {
         return 0;
     }
 
-    /// @notice             Get TBTC amount required by redemption.
+    /// @notice             Get TBTC amount required by redemption by a specified _redeemer
     /// @dev                Will revert if redemption is not possible by msg.sender.
     /// @param _redeemer    The deposit redeemer. 
     /// @return             The amount in TBTC needed to redeem the deposit.
@@ -125,11 +125,10 @@ library DepositRedemption {
         revert("tbtcOwed value must be 0, SignerFee, or a full TBTC");
     }
 
-    /// @notice                     Anyone can request redemption
-    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
+    /// @notice                     Internal redemption logic
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @param  _redeemer           The deposit redeemer.
     function _requestRedemption(
         DepositUtils.Deposit storage _d,
@@ -177,10 +176,11 @@ library DepositRedemption {
     }
 
     /// @notice                     Anyone can request redemption
-    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx and pays for the redemption
+    ///                             on behalf of _finalRecipient.
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
     function requestRedemptionAndTransfer(
         DepositUtils.Deposit storage _d,
@@ -201,7 +201,7 @@ library DepositRedemption {
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
