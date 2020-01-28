@@ -170,7 +170,8 @@ library DepositRedemption {
             _d.utxoOutpoint);
     }
 
-    /// @notice                     Anyone can request redemption
+    /// @notice                     Anyone can request redemption as long as they can
+    ///                             approve the TDT transfer to the final recipient.
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx and pays for the redemption
     ///                             on behalf of _finalRecipient.
     /// @param  _d                  deposit storage pointer
@@ -190,7 +191,8 @@ library DepositRedemption {
         _requestRedemption(_d, _outputValueBytes, _redeemerPKH, _finalRecipient);
     }
 
-    /// @notice                     Anyone can request redemption
+    /// @notice                     Only TDT owner can request redemption, 
+    ///                             unless Deposit is expired or in COURTESY_CALL.
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
