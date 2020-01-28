@@ -145,6 +145,15 @@ contract('DepositRedemption', (accounts) => {
       const tbtcOwed = await testInstance.getOwnerRedemptionTbtcRequirement.call(accounts[0])
       expect(tbtcOwed).to.eq.BN(signerFee)
     })
+
+    it('returns correct fee if deposit is pre-term, owner is FRT holder and signer fee is partially escrowed', async () => {
+      const expectedFee = new BN(100)
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.forceMint(testInstance.address, signerFee.sub(expectedFee))
+
+      const tbtcOwed = await testInstance.getOwnerRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(expectedFee)
+    })
   })
 
   describe('getRedemptionTbtcRequirement', async () => {
@@ -184,6 +193,15 @@ contract('DepositRedemption', (accounts) => {
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       expect(tbtcOwed).to.eq.BN(signerFee)
+    })
+
+    it('returns correct fee if deposit is pre-term, owner is FRT holder and signer fee is partially escrowed', async () => {
+      const expectedFee = new BN(100)
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.forceMint(testInstance.address, signerFee.sub(expectedFee))
+
+      const tbtcOwed = await testInstance.getOwnerRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(expectedFee)
     })
 
     it('reverts if deposit is pre-term and redeemer is not Deposit owner', async () => {
@@ -259,6 +277,22 @@ contract('DepositRedemption', (accounts) => {
       expect(events[0].returnValues.from).to.equal(accounts[0])
       expect(events[0].returnValues.to).to.equal(testInstance.address)
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
+    })
+
+    it('transfers correct fee if deposit is pre-term, owner is FRT holder and signer fee is partially escrowed', async () => {
+      const expectedFee = new BN(100)
+      await tbtcToken.forceMint(testInstance.address, signerFee.sub(expectedFee))
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.resetBalance(expectedFee)
+      await tbtcToken.resetAllowance(testInstance.address, expectedFee)
+      block = await web3.eth.getBlock('latest')
+
+      await testInstance.performRedemptionTBTCTransfers()
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(testInstance.address)
+      expect(events[0].returnValues.value).to.eq.BN(expectedFee)
     })
 
     it('transfers signerFee if deposit is pre-term and redeemer is not FRT holder', async () => {

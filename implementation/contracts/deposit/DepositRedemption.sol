@@ -61,8 +61,9 @@ library DepositRedemption {
                 return _d.signerFee();
             }
         }
-        if(TBTCToken(_d.TBTCToken).balanceOf(address(this)) < signerFee) {
-            return signerFee;
+        uint256 contractTbtcBalance = TBTCToken(_d.TBTCToken).balanceOf(address(this));
+        if(contractTbtcBalance < signerFee) {
+            return signerFee.sub(contractTbtcBalance);
         }
         return 0;
     }
@@ -96,8 +97,8 @@ library DepositRedemption {
             return;
         }
         // if we owe signerfee, msg.sender is TDT owner but not FRT holder.
-        if(tbtcOwed == signerFee){
-            _tbtc.transferFrom(msg.sender, address(this), signerFee);
+        if(tbtcOwed <= signerFee){
+            _tbtc.transferFrom(msg.sender, address(this), tbtcOwed);
             return;
         }
         // Redemmer always owes a full TBTC for at-term redemption.
