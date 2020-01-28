@@ -207,10 +207,6 @@ library DepositRedemption {
         bytes8 _outputValueBytes,
         bytes20 _redeemerPKH
     ) public {
-        require(
-            msg.sender == _d.depositOwner() || _d.inCourtesyCall() || _d.remainingTerm() > 0,
-            "redemption request conditions not met."
-        );
         _requestRedemption(_d, _outputValueBytes, _redeemerPKH, msg.sender);
     }
 
