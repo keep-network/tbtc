@@ -185,10 +185,8 @@ library DepositRedemption {
     ) public {
         IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
 
-        if(msg.sender != _finalRecipient){
-            _tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
-        }
-
+        _tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
+    
         _requestRedemption(_d, _outputValueBytes, _redeemerPKH, _finalRecipient);
     }
 
