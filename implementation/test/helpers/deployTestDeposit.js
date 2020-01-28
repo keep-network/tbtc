@@ -95,10 +95,10 @@ export default async function deployTestDeposit(
   const tbtcToken = await TestToken.new(tbtcSystemStub.address)
   const testDeposit = deployed.TestDeposit
 
-  const tbtcDepositToken = await deployed.TBTCDepositToken
-  const feeRebateToken = await deployed.FeeRebateToken
-  const depositUtils = await deployed.DepositUtils
-  const ecdsaKeepStub = await deployed.ECDSAKeepStub
+  const tbtcDepositToken = deployed.TBTCDepositToken
+  const feeRebateToken = deployed.FeeRebateToken
+  const depositUtils = deployed.DepositUtils
+  const ecdsaKeepStub = deployed.ECDSAKeepStub
 
   await testDeposit.setExteriorAddresses(
     tbtcSystemStub.address,
