@@ -58,7 +58,7 @@ library DepositLiquidation {
             revert("System returned a bad price");
         }
 
-        uint256 _lotSize = _d.lotSizeBtc;
+        uint256 _lotSize = _d.lotSizeSatoshis;
         uint256 _lotValue = _lotSize * _price;
 
         // Amount of wei the signers have

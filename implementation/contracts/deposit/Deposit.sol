@@ -50,8 +50,8 @@ contract Deposit {
 
     /// @notice     Get the Deposit BTC lot size.
     /// @return     uint256 lot size in satoshi
-    function lotSizeBtc() public view returns (uint256){
-        return self.lotSizeBtc;
+    function lotSizeSatoshis() public view returns (uint256){
+        return self.lotSizeSatoshis;
     }
 
     /// @notice     Get the Deposit ERC20 lot size.

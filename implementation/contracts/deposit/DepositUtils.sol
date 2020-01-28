@@ -29,7 +29,7 @@ library DepositUtils {
         address TBTCDepositToken;
         address FeeRebateToken;
         address VendingMachine;
-        uint256 lotSizeBtc;
+        uint256 lotSizeSatoshis;
         uint8 currentState;
         uint256 signerFeeDivisor;
         uint128 undercollateralizedThresholdPercent;
@@ -195,7 +195,7 @@ library DepositUtils {
 
         _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
 
-        require(bytes8LEToUint(_valueBytes) >= _d.lotSizeBtc, "Deposit too small");
+        require(bytes8LEToUint(_valueBytes) >= _d.lotSizeSatoshis, "Deposit too small");
 
         checkProofFromTxId(_d, txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
@@ -238,7 +238,7 @@ library DepositUtils {
     /// @notice         Gets the lot size in erc20 decimal places (max 18) 
     /// @return         uint256 lot size in erc20 
     function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
-        return _d.lotSizeBtc * 10**10;
+        return _d.lotSizeSatoshis * 10**10;
     }
 
     /// @notice         Determines the fees due to the signers for work performed

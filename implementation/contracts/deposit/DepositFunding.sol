@@ -61,7 +61,7 @@ library DepositFunding {
         require(_system.isAllowedLotSize(_lotSize), "provided lot size not supported");
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
-        _d.lotSizeBtc = _lotSize;
+        _d.lotSizeSatoshis = _lotSize;
         _d.keepAddress = _system.requestNewKeep(_m, _n);
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();

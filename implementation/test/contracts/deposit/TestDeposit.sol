@@ -43,7 +43,7 @@ contract TestDeposit is Deposit {
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
     
     function setLotSize(uint256 _lotSize) public {
-        self.lotSizeBtc = _lotSize;
+        self.lotSizeSatoshis = _lotSize;
     }
 
     function setUndercollateralizedThresholdPercent(uint128 _undercollateralizedThresholdPercent) public {

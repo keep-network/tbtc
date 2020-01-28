@@ -33,7 +33,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint128 private undercollateralizedThresholdPercent = 140;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
-    uint256[] lotSizes = [10**7, 20**7, 50**7, 10**8]; // satoshi. [0.1, 0.2, 0.5, 1.0] BTC
+    uint256[] lotSizesSatoshi = [10**7, 20**7, 50**7, 10**8]; // satoshi. [0.1, 0.2, 0.5, 1.0] BTC
       // This event is fired when we init the deposit
 
     constructor(address _priceFeed) public {
@@ -79,22 +79,22 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @dev    Lot sizes should be 
     /// @param _lotSizes Array of allowed lot sizes.
     function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
-        lotSizes = _lotSizes;
+        lotSizesSatoshi = _lotSizes;
         emit LogUpdateLotSizes(_lotSizes);
     }
 
     /// @notice Gets the allowed lot sizes
     /// @return Uint256 array of allowed lot sizes 
     function getAllowedLotSizes() external view returns (uint256[] memory){
-        return lotSizes;
+        return lotSizesSatoshi;
     }
 
     /// @notice Check if a lot size is allowed.
     /// @param _lotSize Lot size to check.
     /// @return True if lot size is allowed, false otherwise. 
     function isAllowedLotSize(uint256 _lotSize) external view returns (bool){
-        for( uint i = 0; i < lotSizes.length; i++){
-            if (lotSizes[i] == _lotSize){
+        for( uint i = 0; i < lotSizesSatoshi.length; i++){
+            if (lotSizesSatoshi[i] == _lotSize){
                 return true;
             }
         }
