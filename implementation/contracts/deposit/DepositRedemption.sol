@@ -182,7 +182,7 @@ library DepositRedemption {
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
-    function requestRedemptionAndTransfer(
+    function transferAndRequestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
         bytes20 _redeemerPKH,

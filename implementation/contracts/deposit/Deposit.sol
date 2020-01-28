@@ -90,12 +90,12 @@ contract Deposit {
     /// @param  _outputValueBytes   The 8-byte LE output size
     /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
-    function requestRedemptionAndTransfer(
+    function transferAndRequestRedemption(
         bytes8 _outputValueBytes,
         bytes20 _redeemerPKH,
         address payable _finalRecipient
     ) public returns (bool) {
-        self.requestRedemptionAndTransfer(
+        self.transferAndRequestRedemption(
             _outputValueBytes,
             _redeemerPKH,
             _finalRecipient

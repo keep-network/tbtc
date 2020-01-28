@@ -135,6 +135,6 @@ contract VendingMachine {
             tbtcToken.approve(_depositAddress, tbtcOwed);
         }
 
-        _d.requestRedemptionAndTransfer(_outputValueBytes, _requesterPKH, _finalRecipient);
+        _d.transferAndRequestRedemption(_outputValueBytes, _requesterPKH, _finalRecipient);
     }
 }
