@@ -316,7 +316,8 @@ contract('VendingMachine', (accounts) => {
     })
   })
 
-  describe('#tbtcToBtc', async () => {
+  // eslint-disable-next-line no-only-tests/no-only-tests
+  describe.only('#tbtcToBtc', async () => {
     const sighash = '0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90'
     const outpoint = '0x' + '33'.repeat(36)
     const valueBytes = '0x1111111111111111'
@@ -348,7 +349,7 @@ contract('VendingMachine', (accounts) => {
 
     it('successfully redeems via wrapper', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-
+      await tbtcToken.forceMint(testInstance.address, signerFee)
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
