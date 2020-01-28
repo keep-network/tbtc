@@ -238,7 +238,7 @@ library DepositUtils {
     /// @notice         Gets the lot size in erc20 decimal places (max 18) 
     /// @return         uint256 lot size in erc20 
     function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
-        return _d.lotSizeSatoshis * 10**10;
+        return _d.lotSizeSatoshis * TBTCConstants.getSatoshiMultiplier();
     }
 
     /// @notice         Determines the fees due to the signers for work performed
