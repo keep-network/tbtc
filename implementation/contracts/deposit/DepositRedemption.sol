@@ -30,7 +30,7 @@ library DepositRedemption {
 
     /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address
     /// @dev        Approves the keep contract, then expects it to call transferFrom
-    function distributeSignerFee(DepositUtils.Deposit storage _d) public {
+    function distributeSignerFee(DepositUtils.Deposit storage _d) internal {
         address _tbtcTokenAddress = _d.TBTCToken;
         TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 

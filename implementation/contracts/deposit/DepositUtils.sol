@@ -350,7 +350,7 @@ library DepositUtils {
 
     /// @notice     Deletes state after termination of redemption process
     /// @dev        We keep around the requester address so we can pay them out
-    function redemptionTeardown(Deposit storage _d) public {
+    function redemptionTeardown(Deposit storage _d) internal {
         // don't 0 requesterAddress because we use it to calculate auctionTBTCAmount
         _d.requesterPKH = bytes20(0);
         _d.initialRedemptionFee = 0;
@@ -361,7 +361,7 @@ library DepositUtils {
     /// @notice     Seize the signer bond from the keep contract
     /// @dev        we check our balance before and after
     /// @return     the amount of ether seized
-    function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
+    function seizeSignerBonds(Deposit storage _d) internal returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.seizeSignerBonds(_d.keepAddress);
@@ -372,7 +372,7 @@ library DepositUtils {
 
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner
     ///             whenever this is called we are shutting down.
-    function distributeFeeRebate(Deposit storage _d) public {
+    function distributeFeeRebate(Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
         address rebateTokenHolder = feeRebateTokenHolder(_d);
@@ -390,7 +390,7 @@ library DepositUtils {
     /// @dev                useful for returning bonds to the group, or otherwise paying them
     /// @param  _ethValue   the amount of ether to send
     /// @return             true if successful, otherwise revert
-    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
+    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
         _keep.distributeETHToMembers.value(_ethValue)();
