@@ -20,10 +20,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     address public keepRegistry;
     address public priceFeed;
 
-    // Governed parameters by the TBTCSystem owner
+    // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = true;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
-
+    uint128 private undercollateralizedThresholdPercent = 140;  // percent
+    uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
 
     constructor(address _priceFeed) public {
         priceFeed = _priceFeed;
@@ -47,7 +48,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Gets whether new deposits are allowed.
-    function getAllowNewDeposits() public view returns (bool) { return allowNewDeposits; }
+    function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
 
     /// @notice Set the system signer fee divisor.
     /// @param _signerFeeDivisor The signer fee divisor.
@@ -60,7 +61,32 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Gets the system signer fee divisor.
     /// @return The signer fee divisor.
-    function getSignerFeeDivisor() public view returns (uint256) { return signerFeeDivisor; }
+    function getSignerFeeDivisor() external view returns (uint256) { return signerFeeDivisor; }
+
+    /// @notice Set the system collateralization levels
+    /// @param _undercollateralizedThresholdPercent first undercollateralization trigger
+    /// @param _severelyUndercollateralizedThresholdPercent second undercollateralization trigger
+    function setCollateralizationThresholds(
+        uint128 _undercollateralizedThresholdPercent,
+        uint128 _severelyUndercollateralizedThresholdPercent
+    ) external onlyOwner {
+        require(
+            _undercollateralizedThresholdPercent > _severelyUndercollateralizedThresholdPercent,
+            "Severe undercollateralized threshold must be > undercollateralized threshold"
+        );
+        undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
+        severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
+    }
+
+    /// @notice Get the system undercollateralization level for new deposits
+    function getUndercollateralizedThresholdPercent() external view returns (uint128) {
+        return undercollateralizedThresholdPercent;
+    }
+
+    /// @notice Get the system severe undercollateralization level for new deposits
+    function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint128) {
+        return severelyUndercollateralizedThresholdPercent;
+    }
 
     // Price Feed
     function fetchBitcoinPrice() external view returns (uint256) {

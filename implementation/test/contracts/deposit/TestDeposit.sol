@@ -42,6 +42,20 @@ contract TestDeposit is Deposit {
 
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
 
+    function setUndercollateralizedThresholdPercent(uint128 _undercollateralizedThresholdPercent) public {
+        self.undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
+    }
+
+    function getUndercollateralizedThresholdPercent() public view returns (uint128) { return self.undercollateralizedThresholdPercent; }
+
+    function setSeverelyUndercollateralizedThresholdPercent(uint128 _severelyUndercollateralizedThresholdPercent) public {
+        self.severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
+    }
+
+    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint128) {
+        return self.severelyUndercollateralizedThresholdPercent;
+    }
+
     function setLiquidationAndCourtesyInitated(
         uint256 _liquidation,
         uint256 _courtesy
