@@ -54,7 +54,7 @@ library DepositRedemption {
     ///                     is this deposit's TDT owner.
     /// @param _redeemer    The assumed owner of the deposit's TDT 
     /// @return             The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) public view returns(uint256) {
+    function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
         uint256 signerFee = _d.signerFee();
         if(_d.remainingTerm() > 0){
             if(_d.feeRebateTokenHolder() != _redeemer) {
