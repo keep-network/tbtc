@@ -125,17 +125,12 @@ library DepositRedemption {
         revert("tbtcOwed value must be 0, SignerFee, or a full TBTC");
     }
 
-    /// @notice                     Internal redemption logic
-    /// @param  _d                  deposit storage pointer
-    /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
-    /// @param  _redeemer           The deposit redeemer.
     function _requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
         bytes20 _redeemerPKH,
         address payable _redeemer
-    ) public {
+    ) internal {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         require(_redeemerPKH != bytes20(0), "cannot send value to zero pkh");
 
