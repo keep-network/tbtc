@@ -316,8 +316,7 @@ contract('VendingMachine', (accounts) => {
     })
   })
 
-  // eslint-disable-next-line no-only-tests/no-only-tests
-  describe.only('#tbtcToBtc', async () => {
+  describe('#tbtcToBtc', async () => {
     const sighash = '0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90'
     const outpoint = '0x' + '33'.repeat(36)
     const valueBytes = '0x1111111111111111'

@@ -90,7 +90,7 @@ library DepositRedemption {
 
         uint256 tbtcLot = TBTCConstants.getLotSizeTbtc();
         uint256 signerFee = _d.signerFee();
-        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.requesterAddress);
+        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.redeemerAddress);
 
         // if we owe 0 TBTC, msg.sender is TDT owner and FRT holder.
         if(tbtcOwed == 0){
@@ -129,19 +129,19 @@ library DepositRedemption {
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @param  _redeemer           The deposit redeemer.
     function _requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH,
+        bytes20 _redeemerPKH,
         address payable _redeemer
     ) public {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
-        require(_requesterPKH != bytes20(0), "cannot send value to zero pkh");
+        require(_redeemerPKH != bytes20(0), "cannot send value to zero pkh");
 
-        // set requesterAddress early to enable direct access by other functions
-        _d.requesterAddress = _redeemer;
+        // set redeemerAddress early to enable direct access by other functions
+        _d.redeemerAddress = _redeemer;
 
         performRedemptionTBTCTransfers(_d);
 
@@ -156,10 +156,10 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _outputValueBytes,
-            _requesterPKH);
+            _redeemerPKH);
 
         // write all request details
-        _d.requesterPKH = _requesterPKH;
+        _d.redeemerPKH = _redeemerPKH;
         _d.initialRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
@@ -171,7 +171,7 @@ library DepositRedemption {
             _redeemer,
             _sighash,
             _d.utxoSize(),
-            _requesterPKH,
+            _redeemerPKH,
             _requestedFee,
             _d.utxoOutpoint);
     }
@@ -180,12 +180,12 @@ library DepositRedemption {
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
     function requestRedemptionAndTransfer(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH,
+        bytes20 _redeemerPKH,
         address payable _finalRecipient
     ) public {
         IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
@@ -193,24 +193,24 @@ library DepositRedemption {
 
         _tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
 
-        _requestRedemption(_d, _outputValueBytes, _requesterPKH, _finalRecipient);
+        _requestRedemption(_d, _outputValueBytes, _redeemerPKH, _finalRecipient);
     }
 
     /// @notice                     Anyone can request redemption
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _d                  deposit storage pointer
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     function requestRedemption(
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH
+        bytes20 _redeemerPKH
     ) public {
         require(
             msg.sender == _d.depositOwner() || _d.inCourtesyCall() || _d.remainingTerm() > 0,
             "redemption request conditions not met."
         );
-        _requestRedemption(_d, _outputValueBytes, _requesterPKH, msg.sender);
+        _requestRedemption(_d, _outputValueBytes, _redeemerPKH, msg.sender);
     }
 
     /// @notice     Anyone may provide a withdrawal signature if it was requested
@@ -271,7 +271,7 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _newOutputValueBytes,
-            _d.requesterPKH);
+            _d.redeemerPKH);
 
         // Ratchet the signature and redemption proof timeouts
         _d.withdrawalRequestTime = block.timestamp;
@@ -285,7 +285,7 @@ library DepositRedemption {
             msg.sender,
             _sighash,
             _d.utxoSize(),
-            _d.requesterPKH,
+            _d.redeemerPKH,
             _d.utxoSize().sub(_newOutputValue),
             _d.utxoOutpoint);
     }
@@ -296,7 +296,7 @@ library DepositRedemption {
         bytes8 _newOutputValueBytes
     ) public view returns (uint256 _newOutputValue){
 
-        // Check that we're incrementing the fee by exactly the requester's initial fee
+        // Check that we're incrementing the fee by exactly the redeemer's initial fee
         uint256 _previousOutputValue = DepositUtils.bytes8LEToUint(_previousOutputValueBytes);
         _newOutputValue = DepositUtils.bytes8LEToUint(_newOutputValueBytes);
         require(_previousOutputValue.sub(_newOutputValue) == _d.initialRedemptionFee, "Not an allowed fee step");
@@ -307,7 +307,7 @@ library DepositRedemption {
             _d.signerPKH(),
             _d.utxoSizeBytes,
             _previousOutputValueBytes,
-            _d.requesterPKH);
+            _d.redeemerPKH);
         require(
             _d.wasDigestApprovedForSigning(_previousSighash) == _d.withdrawalRequestTime,
             "Provided previous value does not yield previous sighash"
@@ -365,7 +365,7 @@ library DepositRedemption {
     /// @param  _d              deposit storage pointer
     /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
     /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    /// @return                 The value sent to the requester's public key hash
+    /// @return                 The value sent to the redeemer's public key hash
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
         bytes memory _txInputVector,
@@ -382,7 +382,7 @@ library DepositRedemption {
             "Tx spends the wrong UTXO"
         );
         require(
-            keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH)),
+            keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.redeemerPKH)),
             "Tx sends value to wrong pubkeyhash"
         );
         return (uint256(_output.extractValue()));
