@@ -52,7 +52,6 @@ library DepositRedemption {
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
     ///                     is this deposit's TDT owner.
-    /// @dev                Will revert if redemption is not possible by msg.sender.
     /// @param _redeemer    The assumed owner of the deposit's TDT 
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) public view returns(uint256) {

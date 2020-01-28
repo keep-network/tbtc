@@ -42,10 +42,6 @@ contract Deposit {
         return self.remainingTerm();
     }
 
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
-        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
-    }
-
     /// @notice     Get the signer fee for the Deposit.
     /// @return     Fee amount in TBTC
     function signerFee() public view returns (uint256) {
@@ -107,10 +103,20 @@ contract Deposit {
         return true;
     }
 
-    /// @notice View function for access to TBTC required by redemption.
-    /// @return The amount in TBTC needed to redeem the deposit.
+    /// @notice             Get TBTC amount required by redemption by a specified _redeemer
+    /// @dev                Will revert if redemption is not possible by msg.sender.
+    /// @param _redeemer    The deposit redeemer. 
+    /// @return             The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){       
         return self.getRedemptionTbtcRequirement(_redeemer);
+    }
+
+    /// @notice             Get TBTC amount required for redemption assuming _redeemer
+    ///                     is this deposit's TDT owner.
+    /// @param _redeemer    The assumed owner of the deposit's TDT 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
+        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
     }
 
     /// @notice     Anyone may provide a withdrawal signature if it was requested
