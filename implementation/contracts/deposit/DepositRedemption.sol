@@ -115,7 +115,7 @@ library DepositRedemption {
             else if(_tbtc.balanceOf(address(this)) < signerFee){
                 _tbtc.transferFrom(msg.sender, address(this), signerFee);
                 _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
-             }
+            }
             // tansfer a full TBTC to TDT owner if signerFee is escrowed
             else{
                 _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot);
