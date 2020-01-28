@@ -46,7 +46,6 @@ contract.only('VendingMachine', (accounts) => {
   const signerFeeDivisor = new BN('200')
 
   before(async () => {
-
     let deployed
     ({
       tbtcSystemStub,
@@ -56,7 +55,7 @@ contract.only('VendingMachine', (accounts) => {
       testDeposit,
       ecdsaKeepStub,
       deployed,
-    } = await deployTestDeposit([{ name: "VendingMachine", contract: TestVendingMachine }]))
+    } = await deployTestDeposit([{ name: 'VendingMachine', contract: TestVendingMachine }]))
     testVendingMachine = deployed.VendingMachine
 
     assertBalance = new AssertBalance(tbtcToken)
