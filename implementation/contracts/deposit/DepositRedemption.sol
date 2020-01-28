@@ -189,9 +189,10 @@ library DepositRedemption {
         address payable _finalRecipient
     ) public {
         IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
-        require(msg.sender != _finalRecipient, "Caller and final recipient cannot be the same.");
 
-        _tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
+        if(msg.sender != _finalRecipient){
+            _tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
+        }
 
         _requestRedemption(_d, _outputValueBytes, _redeemerPKH, _finalRecipient);
     }
