@@ -12,10 +12,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
-    event LogUpdateLotSizes(uint256[] _lotSizes);
-    event LogUpdateAllowNewDeposits(bool _allowNewDeposits);
-    event LogUpdateSignerFeeDivisor(uint256 _signerFeeDivisor);
-    event LogUpdateCollateralizationThresholds(
+    event LogLotSizesUpdated(uint256[] _lotSizes);
+    event LogAllowNewDepositsUpdated(bool _allowNewDeposits);
+    event LogSignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
+    event LogCollateralizationThresholdsUpdated(
         uint256 _undercollateralizedThresholdPercent,
         uint256 _severelyUndercollateralizedThresholdPercent
     );
@@ -55,7 +55,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         external onlyOwner
     {
         allowNewDeposits = _allowNewDeposits;
-        emit LogUpdateAllowNewDeposits(_allowNewDeposits);
+        emit LogAllowNewDepositsUpdated(_allowNewDeposits);
     }
 
     /// @notice Gets whether new deposits are allowed.
@@ -68,7 +68,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     {
         require(_signerFeeDivisor > 1, "Signer fee must be lower than 100%");
         signerFeeDivisor = _signerFeeDivisor;
-        emit LogUpdateSignerFeeDivisor(_signerFeeDivisor);
+        emit LogSignerFeeDivisorUpdated(_signerFeeDivisor);
     }
 
     /// @notice Gets the system signer fee divisor.
@@ -80,7 +80,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _lotSizes Array of allowed lot sizes.
     function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
         lotSizesSatoshi = _lotSizes;
-        emit LogUpdateLotSizes(_lotSizes);
+        emit LogLotSizesUpdated(_lotSizes);
     }
 
     /// @notice Gets the allowed lot sizes
@@ -114,7 +114,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
         undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
         severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
-        emit LogUpdateCollateralizationThresholds(
+        emit LogCollateralizationThresholdsUpdated(
             _undercollateralizedThresholdPercent,
             _severelyUndercollateralizedThresholdPercent
         );
