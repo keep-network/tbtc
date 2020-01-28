@@ -128,14 +128,21 @@ contract('DepositRedemption', (accounts) => {
 
     it('returns signerFee if we are pre term and FRT holder is not msg.sender', async () => {
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed.toString(), signerFee.toString())
+      expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
     it('returns zero if deposit is pre-term and msg.sender is FRT holder', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed, 0)
+      expect(tbtcOwed).to.eq.BN(new BN(0))
+    })
+
+    it('returns full TBTC if we are pre term and we are at COURTESY_CALL', async () => {
+      await testInstance.setState(utils.states.COURTESY_CALL)
+
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(depositValue)
     })
 
     it('reverts if deposit is pre-term and msg.sender is not Deposit owner', async () => {
@@ -150,7 +157,7 @@ contract('DepositRedemption', (accounts) => {
       await tbtcDepositToken.transferFrom(accounts[0], accounts[1], tdtId)
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed.toString(), depositValue.toString())
+      expect(tbtcOwed).to.eq.BN(depositValue)
     })
 
     it('returns SignerFee if we are at-term, caller is TDT owner, and fee is not escrowed', async () => {
@@ -182,6 +189,8 @@ contract('DepositRedemption', (accounts) => {
       await createSnapshot()
       block = await web3.eth.getBlock('latest')
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await tbtcToken.resetBalance(depositValue)
+      await tbtcToken.resetAllowance(testInstance.address, depositValue)
     })
 
     afterEach(async () => {
@@ -198,9 +207,49 @@ contract('DepositRedemption', (accounts) => {
       assert.equal(events.length, 0)
     })
 
+    it('burns 1 TBTC if deposit is in COURTESY_CALL and TDT owner is the Vending Machine', async () => {
+      await tbtcDepositToken.transferFrom(accounts[0], vendingMachine, tdtId)
+      block = await web3.eth.getBlock('latest')
+      await testInstance.setState(utils.states.COURTESY_CALL)
+
+      await testInstance.performRedemptionTBTCTransfers()
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(utils.address0)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+    })
+
+    it('escrows fee and sends correct TBTC if Deposit is in COURTESY_CALL and fee is not escrowed', async () => {
+      block = await web3.eth.getBlock('latest')
+      await testInstance.setState(utils.states.COURTESY_CALL)
+      await testInstance.performRedemptionTBTCTransfers()
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(testInstance.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
+      expect(events[1].returnValues.from).to.equal(accounts[0])
+      expect(events[1].returnValues.to).to.equal(accounts[0])
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+
+    it('transfers 1 TBTC to TDT owner if deposit is in COURTESY_CALL and fee is escrowed', async () => {
+      await tbtcToken.forceMint(testInstance.address, signerFee)
+      await testInstance.setState(utils.states.COURTESY_CALL)
+      block = await web3.eth.getBlock('latest')
+
+      await testInstance.performRedemptionTBTCTransfers()
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(accounts[0])
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+    })
+
     it('transfers signerFee if deposit is pre-term and msg.sender is not FRT holder', async () => {
-      await tbtcToken.resetBalance(signerFee)
-      await tbtcToken.resetAllowance(testInstance.address, signerFee)
       block = await web3.eth.getBlock('latest')
 
       await testInstance.performRedemptionTBTCTransfers()
@@ -231,8 +280,7 @@ contract('DepositRedemption', (accounts) => {
       await increaseTime(depositTerm.toNumber())
       await tbtcDepositToken.transferFrom(accounts[0], accounts[1], tdtId)
       await tbtcToken.forceMint(testInstance.address, signerFee)
-      await tbtcToken.resetBalance(depositValue)
-      await tbtcToken.resetAllowance(testInstance.address, depositValue)
+      await increaseTime(depositTerm.toNumber())
       block = await web3.eth.getBlock('latest')
 
       await testInstance.performRedemptionTBTCTransfers()
@@ -303,6 +351,25 @@ contract('DepositRedemption', (accounts) => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is ~12,297,829,380 BTC
+      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
+
+      const requestInfo = await testInstance.getRequestInfo()
+      assert.equal(requestInfo[1], requesterPKH)
+      assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
+      assert.equal(requestInfo[4], sighash)
+
+      // fired an event
+      const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList[0].returnValues._digest, sighash)
+    })
+
+    it('updates state successfully and fires a RedemptionRequested event from COURTESY_CALL state', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+
+      await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+      await testInstance.setState(utils.states.COURTESY_CALL)
 
       // the fee is ~12,297,829,380 BTC
       await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
