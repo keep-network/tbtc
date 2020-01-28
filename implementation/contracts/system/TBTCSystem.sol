@@ -34,7 +34,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint128 private undercollateralizedThresholdPercent = 140;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
     uint256[] lotSizesSatoshi = [10**7, 20**7, 50**7, 10**8]; // satoshi. [0.1, 0.2, 0.5, 1.0] BTC
-      // This event is fired when we init the deposit
 
     constructor(address _priceFeed) public {
         priceFeed = _priceFeed;
