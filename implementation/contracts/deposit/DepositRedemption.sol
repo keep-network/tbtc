@@ -402,8 +402,4 @@ library DepositRedemption {
         require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedemptionProofTimeout(), "Proof timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
-    function getSender(DepositUtils.Deposit storage _d) public view returns(address) {
-        return msg.sender;
-    }
-
 }
