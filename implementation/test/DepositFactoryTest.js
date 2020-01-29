@@ -9,7 +9,7 @@ const DepositLiquidation = artifacts.require('DepositLiquidation')
 const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositUtils = artifacts.require('DepositUtils')
 const TestDeposit = artifacts.require('TestDeposit')
-const DepositFactory = artifacts.require('DepositFactory')
+const TestDepositFactory = artifacts.require('TestDepositFactory')
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -20,7 +20,7 @@ chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'DepositFactory', contract: DepositFactory },
+  { name: 'DepositFactory', contract: TestDepositFactory, param: utils.address0 }, // we don't care about ACL param. Bypassed in test
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
@@ -46,6 +46,7 @@ contract('DepositFactory', (accounts) => {
 
     tbtcToken = await TBTCToken.new(utils.address0)
     tbtcDepositToken = await TBTCDepositToken.new(factory.address)
+
     factory.setExternalDependencies(
       depositContract.address,
       tbtcSystemStub.address,
