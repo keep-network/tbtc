@@ -3,6 +3,8 @@ pragma solidity ^0.5.10;
 
 import {IKeepRegistry} from "@keep-network/keep-ecdsa/contracts/api/IKeepRegistry.sol";
 import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeepVendor.sol";
+import {VendingMachine} from "./VendingMachine.sol";
+import {DepositFactory} from "../proxy/DepositFactory.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
@@ -31,11 +33,35 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     function initialize(
-        address _keepRegistry
+        address _keepRegistry,
+        address _depositFactory,
+        address _masterDepositAddress,
+        address _tbtcSystem,
+        address _tbtcToken,
+        address _depositOwnerToken,
+        address _feeRebateToken,
+        address _vendingMachine,
+        uint256 _keepThreshold,
+        uint256 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
         keepRegistry = _keepRegistry;
+        VendingMachine(_vendingMachine).setExternalAddresses(
+            _tbtcToken,
+            _depositOwnerToken,
+            _feeRebateToken
+        );
+        DepositFactory(_depositFactory).setExternalDependencies(
+            _masterDepositAddress,
+            _tbtcSystem,
+            _tbtcToken,
+            _depositOwnerToken,
+            _feeRebateToken,
+            _vendingMachine,
+            _keepThreshold,
+            _keepSize
+        );
         _initialized = true;
     }
 
