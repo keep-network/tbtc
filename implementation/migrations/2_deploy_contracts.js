@@ -42,6 +42,9 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
+    // deposit factory
+    await deployer.deploy(DepositFactory)
+   
     // bitcoin-spv
     await deployer.deploy(BytesLib)
     await deployer.link(BytesLib, all)
@@ -79,7 +82,7 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(DepositFunding)
     await deployer.link(DepositFunding, all)
 
-    await deployer.deploy(Deposit)
+    await deployer.deploy(Deposit, DepositFactory.address)
 
     // price oracle
     await deployer.deploy(BTCETHPriceFeed)
@@ -101,9 +104,6 @@ module.exports = (deployer, network, accounts) => {
     }
     // vending machine
     await deployer.deploy(VendingMachine)
-
-    // deposit factory
-    await deployer.deploy(DepositFactory)
 
     // system
     await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
