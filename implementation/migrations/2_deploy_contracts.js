@@ -101,7 +101,7 @@ module.exports = (deployer, network, accounts) => {
     }
 
     // deposit factory
-    await deployer.deploy(DepositFactory, Deposit.address)
+    await deployer.deploy(DepositFactory)
 
     // system
     await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)

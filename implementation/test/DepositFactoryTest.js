@@ -41,12 +41,22 @@ contract('DepositFactory', (accounts) => {
     const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
     depositContract = deployed.TestDeposit
-    factory = await DepositFactory.new(depositContract.address)
+    factory = await DepositFactory.new()
 
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TBTCToken.new(tbtcSystemStub.address)
     tbtcDepositToken = deployed.TBTCDepositToken
+    factory.setExternalDependencies(
+      depositContract.address,
+      tbtcSystemStub.address,
+      tbtcToken.address,
+      tbtcDepositToken.address,
+      utils.address0,
+      utils.address0,
+      1,
+      1,
+    )
   })
 
   describe('createDeposit()', async () => {
@@ -54,24 +64,10 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
         { value: funderBondAmount }
       )
 
       await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
         { value: funderBondAmount }
       )
 
@@ -87,13 +83,6 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
         { value: funderBondAmount }
       )
 
@@ -120,24 +109,10 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
         { value: funderBondAmount }
       )
 
       await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
         { value: funderBondAmount }
       )
 
@@ -206,13 +181,6 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
         { value: funderBondAmount }
       )
 
