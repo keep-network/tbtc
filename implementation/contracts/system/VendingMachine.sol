@@ -15,13 +15,13 @@ contract VendingMachine {
     TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
-    constructor(
+    function setExternalAddresses(
         address _tbtcToken,
-        address _tbtcDepositToken,
+        address _depositOwnerToken,
         address _feeRebateToken
     ) public {
         tbtcToken = TBTCToken(_tbtcToken);
-        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
+        tbtcDepositToken = TBTCDepositToken(_depositOwnerToken);
         feeRebateToken = FeeRebateToken(_feeRebateToken);
     }
 
