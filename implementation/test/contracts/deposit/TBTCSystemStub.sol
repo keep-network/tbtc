@@ -17,6 +17,10 @@ contract TBTCSystemStub is TBTCSystem {
     function setOraclePrice(uint256 _oraclePrice) external {
         oraclePrice = _oraclePrice;
     }
+    
+    function setKeepRegistry(address _keepRegistry) external {
+        keepRegistry = _keepRegistry;
+    }
 
     /// @dev Override TBTCSystem.fetchBitcoinPrice, don't call out to the price feed.
     function fetchBitcoinPrice() external view returns (uint256) {
