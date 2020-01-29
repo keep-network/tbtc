@@ -45,7 +45,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
@@ -90,7 +89,7 @@ contract('DepositFraud', (accounts) => {
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
-    tbtcDepositToken = deployed.TBTCDepositToken
+    tbtcDepositToken = await TBTCDepositToken.new(utils.address0)
 
     testInstance = deployed.TestDeposit
 

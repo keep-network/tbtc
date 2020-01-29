@@ -43,7 +43,6 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
   { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
@@ -89,7 +88,7 @@ contract('DepositUtils', (accounts) => {
 
     testUtilsInstance = deployed.TestDepositUtils
 
-    tbtcDepositToken = deployed.TBTCDepositToken
+    tbtcDepositToken = await TBTCDepositToken.new(utils.address0)
     feeRebateToken = deployed.FeeRebateToken
 
     feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testUtilsInstance.address))

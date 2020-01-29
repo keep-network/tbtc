@@ -26,7 +26,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
   { name: 'TestDeposit', contract: TestDeposit },
-  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
 ]
 
 contract('DepositFactory', (accounts) => {
@@ -42,11 +41,10 @@ contract('DepositFactory', (accounts) => {
 
     depositContract = deployed.TestDeposit
     factory = await DepositFactory.new()
-
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TBTCToken.new(tbtcSystemStub.address)
-    tbtcDepositToken = deployed.TBTCDepositToken
+    tbtcDepositToken = await TBTCDepositToken.new(factory.address)
     factory.setExternalDependencies(
       depositContract.address,
       tbtcSystemStub.address,

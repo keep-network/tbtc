@@ -108,10 +108,10 @@ module.exports = (deployer, network, accounts) => {
 
     // token
     await deployer.deploy(TBTCToken, TBTCSystem.address)
-    await deployer.deploy(TBTCDepositToken)
+    await deployer.deploy(TBTCDepositToken, DepositFactory.address)
     await deployer.deploy(FeeRebateToken)
 
     // vending machine
-    await deployer.deploy(VendingMachine, TBTCToken.address, TBTCDepositToken.address, FeeRebateToken.address)
+    await deployer.deploy(VendingMachine)
   })
 }
