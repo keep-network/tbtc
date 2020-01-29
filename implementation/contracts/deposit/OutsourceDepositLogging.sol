@@ -16,28 +16,28 @@ library OutsourceDepositLogging {
 
     /// @notice                 Fires a RedemptionRequested event
     /// @dev                    This is the only event without an explicit timestamp
-    /// @param  _requester      The ethereum address of the requester
+    /// @param  _redeemer       The ethereum address of the redeemer
     /// @param  _digest         The calculated sighash digest
     /// @param  _utxoSize       The size of the utxo in sat
-    /// @param  _requesterPKH   The requester's 20-byte bitcoin pkh
-    /// @param  _requestedFee   The requester or bump-system specified fee
+    /// @param  _redeemerPKH    The redeemer's 20-byte bitcoin pkh
+    /// @param  _requestedFee   The redeemer or bump-system specified fee
     /// @param  _outpoint       The 36 byte outpoint
     /// @return                 True if successful, else revert
     function logRedemptionRequested(
         DepositUtils.Deposit storage _d,
-        address _requester,
+        address _redeemer,
         bytes32 _digest,
         uint256 _utxoSize,
-        bytes20 _requesterPKH,
+        bytes20 _redeemerPKH,
         uint256 _requestedFee,
         bytes calldata _outpoint
     ) external {
         DepositLog _logger = DepositLog(_d.TBTCSystem);
         _logger.logRedemptionRequested(
-            _requester,
+            _redeemer,
             _digest,
             _utxoSize,
-            _requesterPKH,
+            _redeemerPKH,
             _requestedFee,
             _outpoint);
     }

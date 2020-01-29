@@ -107,6 +107,55 @@ contract('DepositRedemption', (accounts) => {
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
+  describe('getOwnerRedemptionTbtcRequirement', async () => {
+    let outpoint
+    let valueBytes
+    let block
+    before(async () => {
+      outpoint = '0x' + '33'.repeat(36)
+      valueBytes = '0x1111111111111111'
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+      block = await web3.eth.getBlock('latest')
+      await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('returns signerFee if we are pre-term and owner is not FRT holder', async () => {
+      const tbtcOwed = await testInstance.getOwnerRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(signerFee)
+    })
+
+    it('returns zero if deposit is pre-term, owner is FRT holder and signer fee is escrowed', async () => {
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.forceMint(testInstance.address, signerFee)
+
+      const tbtcOwed = await testInstance.getOwnerRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(new BN(0))
+    })
+
+    it('returns signer fee if deposit is pre-term, owner is FRT holder and signer fee is not escrowed', async () => {
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+
+      const tbtcOwed = await testInstance.getOwnerRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(signerFee)
+    })
+
+    it('returns correct fee if deposit is pre-term, owner is FRT holder and signer fee is partially escrowed', async () => {
+      const expectedFee = new BN(100)
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.forceMint(testInstance.address, signerFee.sub(expectedFee))
+
+      const tbtcOwed = await testInstance.getOwnerRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(expectedFee)
+    })
+  })
+
   describe('getRedemptionTbtcRequirement', async () => {
     let outpoint
     let valueBytes
@@ -126,13 +175,14 @@ contract('DepositRedemption', (accounts) => {
       await restoreSnapshot()
     })
 
-    it('returns signerFee if we are pre term and FRT holder is not msg.sender', async () => {
+    it('returns signerFee if we are pre term and redeemer is not FRT holder', async () => {
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
-    it('returns zero if deposit is pre-term and msg.sender is FRT holder', async () => {
+    it('returns zero if deposit is pre-term, redeemer is FRT holder and signer fee is escrowed', async () => {
       await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.forceMint(testInstance.address, signerFee)
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
       expect(tbtcOwed).to.eq.BN(new BN(0))
@@ -145,10 +195,26 @@ contract('DepositRedemption', (accounts) => {
       expect(tbtcOwed).to.eq.BN(depositValue)
     })
 
-    it('reverts if deposit is pre-term and msg.sender is not Deposit owner', async () => {
+    it('returns signer fee if deposit is pre-term, redeemer is FRT holder and signer fee is not escrowed', async () => {
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+
+      const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(signerFee)
+    })
+
+    it('returns correct fee if deposit is pre-term, owner is FRT holder and signer fee is partially escrowed', async () => {
+      const expectedFee = new BN(100)
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.forceMint(testInstance.address, signerFee.sub(expectedFee))
+
+      const tbtcOwed = await testInstance.getOwnerRedemptionTbtcRequirement.call(accounts[0])
+      expect(tbtcOwed).to.eq.BN(expectedFee)
+    })
+
+    it('reverts if deposit is pre-term and redeemer is not Deposit owner', async () => {
       await expectThrow(
-        testInstance.getRedemptionTbtcRequirement.call(accounts[0], { from: accounts[2] }),
-        'redemption can only be called by deposit owner until deposit reaches term'
+        testInstance.getRedemptionTbtcRequirement.call(accounts[1]),
+        'Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL'
       )
     })
 
@@ -164,7 +230,7 @@ contract('DepositRedemption', (accounts) => {
       await increaseTime(depositTerm.toNumber())
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed.toString(), signerFee.toString())
+      expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
     it('returns zero if we are at-term, caller is TDT owner and signer fee is escrowed', async () => {
@@ -172,7 +238,7 @@ contract('DepositRedemption', (accounts) => {
       await increaseTime(depositTerm.toNumber())
 
       const tbtcOwed = await testInstance.getRedemptionTbtcRequirement.call(accounts[0])
-      assert.equal(tbtcOwed, 0)
+      expect(tbtcOwed).to.eq.BN(new BN(0))
     })
   })
 
@@ -188,6 +254,7 @@ contract('DepositRedemption', (accounts) => {
     beforeEach(async () => {
       await createSnapshot()
       block = await web3.eth.getBlock('latest')
+      await testInstance.setRedeemerAddress(accounts[0])
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testInstance.address, depositValue)
@@ -197,7 +264,8 @@ contract('DepositRedemption', (accounts) => {
       await restoreSnapshot()
     })
 
-    it('does nothing if deposit is pre-term and msg.sender is FRT holder', async () => {
+    it('does nothing if deposit is pre-term, redeemer is FRT holder and signerFee is escrowed', async () => {
+      await tbtcToken.forceMint(testInstance.address, signerFee)
       await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
 
       block = await web3.eth.getBlock('latest')
@@ -205,6 +273,20 @@ contract('DepositRedemption', (accounts) => {
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
       assert.equal(events.length, 0)
+    })
+
+    it('escrows signerFee if deposit is pre-term, redeemer is FRT holder and signerFee is not escrowed', async () => {
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.resetBalance(signerFee)
+      await tbtcToken.resetAllowance(testInstance.address, signerFee)
+      block = await web3.eth.getBlock('latest')
+
+      await testInstance.performRedemptionTBTCTransfers()
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(testInstance.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
 
     it('burns 1 TBTC if deposit is in COURTESY_CALL and TDT owner is the Vending Machine', async () => {
@@ -215,14 +297,32 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.performRedemptionTBTCTransfers()
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+
       expect(events[0].returnValues.from).to.equal(accounts[0])
       expect(events[0].returnValues.to).to.equal(utils.address0)
       expect(events[0].returnValues.value).to.eq.BN(depositValue)
     })
 
+    it('escrows correct fee if deposit is pre-term, owner is TDT holder and signer fee is partially escrowed', async () => {
+      const expectedFee = new BN(100)
+      await tbtcToken.forceMint(testInstance.address, signerFee.sub(expectedFee))
+      await feeRebateToken.transferFrom(accounts[4], accounts[0], tdtId, { from: accounts[4] })
+      await tbtcToken.resetBalance(expectedFee)
+      await tbtcToken.resetAllowance(testInstance.address, expectedFee)
+      block = await web3.eth.getBlock('latest')
+
+      await testInstance.performRedemptionTBTCTransfers()
+
+      const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
+      expect(events[0].returnValues.from).to.equal(accounts[0])
+      expect(events[0].returnValues.to).to.equal(testInstance.address)
+      expect(events[0].returnValues.value).to.eq.BN(expectedFee)
+    })
+
     it('escrows fee and sends correct TBTC if Deposit is in COURTESY_CALL and fee is not escrowed', async () => {
       block = await web3.eth.getBlock('latest')
       await testInstance.setState(utils.states.COURTESY_CALL)
+
       await testInstance.performRedemptionTBTCTransfers()
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
@@ -243,13 +343,14 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.performRedemptionTBTCTransfers()
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
-
       expect(events[0].returnValues.from).to.equal(accounts[0])
       expect(events[0].returnValues.to).to.equal(accounts[0])
       expect(events[0].returnValues.value).to.eq.BN(depositValue)
     })
 
-    it('transfers signerFee if deposit is pre-term and msg.sender is not FRT holder', async () => {
+    it('transfers signerFee if deposit is pre-term and redeemer is not FRT holder', async () => {
+      await tbtcToken.resetBalance(signerFee)
+      await tbtcToken.resetAllowance(testInstance.address, signerFee)
       block = await web3.eth.getBlock('latest')
 
       await testInstance.performRedemptionTBTCTransfers()
@@ -325,7 +426,7 @@ contract('DepositRedemption', (accounts) => {
     const valueBytes = '0x1111111111111111'
     const keepPubkeyX = '0x' + '33'.repeat(32)
     const keepPubkeyY = '0x' + '44'.repeat(32)
-    const requesterPKH = '0x' + '33'.repeat(20)
+    const redeemerPKH = '0x' + '33'.repeat(20)
     let requiredBalance
 
     before(async () => {
@@ -353,10 +454,10 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
+      await testInstance.requestRedemption('0x1111111100000000', redeemerPKH)
 
       const requestInfo = await testInstance.getRequestInfo()
-      assert.equal(requestInfo[1], requesterPKH)
+      assert.equal(requestInfo[1], redeemerPKH)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
       assert.equal(requestInfo[4], sighash)
 
@@ -372,10 +473,10 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setState(utils.states.COURTESY_CALL)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
+      await testInstance.requestRedemption('0x1111111100000000', redeemerPKH)
 
       const requestInfo = await testInstance.getRequestInfo()
-      assert.equal(requestInfo[1], requesterPKH)
+      assert.equal(requestInfo[1], redeemerPKH)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
       assert.equal(requestInfo[4], sighash)
 
@@ -391,7 +492,7 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
       // the fee is ~12,297,829,380 BTC
-      await testInstance.requestRedemption('0x1111111100000000', requesterPKH, accounts[0])
+      await testInstance.requestRedemption('0x1111111100000000', redeemerPKH)
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
       const event = events[0]
@@ -404,14 +505,14 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setState(utils.states.LIQUIDATED)
 
       await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
         'Redemption only available from Active or Courtesy state'
       )
     })
 
     it('reverts if the fee is low', async () => {
       await expectThrow(
-        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20), accounts[0]),
+        testInstance.requestRedemption('0x0011111111111111', '0x' + '33'.repeat(20)),
         'Fee is too low'
       )
     })
@@ -423,8 +524,8 @@ contract('DepositRedemption', (accounts) => {
       await tbtcDepositToken.transferFrom(accounts[0], accounts[4], tdtId)
 
       await expectThrow(
-        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20), accounts[0]),
-        'redemption can only be called by deposit owner until deposit reaches term'
+        testInstance.requestRedemption('0x1111111100000000', '0x' + '33'.repeat(20)),
+        'Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL'
       )
     })
   })
@@ -548,7 +649,7 @@ contract('DepositRedemption', (accounts) => {
     const newOutputBytes = '0x0100feffffffffff'
     const initialFee = 0xffff
     const outpoint = '0x' + '33'.repeat(36)
-    const requesterPKH = '0x' + '33'.repeat(20)
+    const redeemerPKH = '0x' + '33'.repeat(20)
     let feeIncreaseTimer
 
     before(async () => {
@@ -563,7 +664,7 @@ contract('DepositRedemption', (accounts) => {
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, prevSighash)
+      await testInstance.setRequestInfo(utils.address0, redeemerPKH, initialFee, withdrawalRequestTime, prevSighash)
       await deployed.ECDSAKeepStub.setSuccess(true)
     })
 
@@ -590,7 +691,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('reverts if the increase fee timer has not elapsed', async () => {
       const block = await web3.eth.getBlock('latest')
-      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, block.timestamp, prevSighash)
+      await testInstance.setRequestInfo(utils.address0, redeemerPKH, initialFee, block.timestamp, prevSighash)
 
       await expectThrow(
         testInstance.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
@@ -606,7 +707,7 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('reverts if the previous sighash was not the latest approved', async () => {
-      await testInstance.setRequestInfo(utils.address0, requesterPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
+      await testInstance.setRequestInfo(utils.address0, redeemerPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
 
       // Previous sigHash is not approved for signing.
       await testInstance.setDigestApprovedAtTime(prevSighash, 0)
@@ -632,13 +733,13 @@ contract('DepositRedemption', (accounts) => {
     const headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000'
-    const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const redeemerPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
       await tbtcSystemStub.setCurrentDiff(currentDiff)
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testInstance.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
-      await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
+      await testInstance.setRequestInfo('0x' + '11'.repeat(20), redeemerPKH, 14544, 0, '0x' + '11' * 32)
     })
 
     it('updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
@@ -681,11 +782,11 @@ contract('DepositRedemption', (accounts) => {
     const outputValue = 490029088
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000'
-    const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const redeemerPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
       await testInstance.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testInstance.setRequestInfo('0x' + '11'.repeat(20), requesterPKH, 14544, 0, '0x' + '11' * 32)
+      await testInstance.setRequestInfo('0x' + '11'.repeat(20), redeemerPKH, 14544, 0, '0x' + '11' * 32)
     })
 
     it('returns the output value', async () => {
