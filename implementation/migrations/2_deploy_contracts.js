@@ -42,9 +42,6 @@ const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
-    // deposit factory
-    await deployer.deploy(DepositFactory)
-   
     // bitcoin-spv
     await deployer.deploy(BytesLib)
     await deployer.link(BytesLib, all)
@@ -66,6 +63,18 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(OutsourceDepositLogging)
     await deployer.link(OutsourceDepositLogging, all)
 
+    // price oracle
+    await deployer.deploy(BTCETHPriceFeed)
+
+    // system
+    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
+
+    // deposit factory
+    await deployer.deploy(DepositFactory, TBTCSystem.address)
+
+    // vending machine
+    await deployer.deploy(VendingMachine, TBTCSystem.address)
+
     // deposit
     await deployer.deploy(DepositStates)
     await deployer.link(DepositStates, all)
@@ -84,9 +93,6 @@ module.exports = (deployer, network, accounts) => {
 
     await deployer.deploy(Deposit, DepositFactory.address)
 
-    // price oracle
-    await deployer.deploy(BTCETHPriceFeed)
-
     // price feeds
     if (network !== 'mainnet') {
       // On mainnet, we use the MakerDAO-deployed price feeds.
@@ -102,11 +108,6 @@ module.exports = (deployer, network, accounts) => {
       await btcPriceFeed.setValue(web3.utils.toWei(prices.BTCUSD))
       await ethPriceFeed.setValue(web3.utils.toWei(prices.ETHUSD))
     }
-    // vending machine
-    await deployer.deploy(VendingMachine)
-
-    // system
-    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
 
     // token
     await deployer.deploy(TBTCToken, VendingMachine.address)
