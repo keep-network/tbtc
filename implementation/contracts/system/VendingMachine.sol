@@ -7,19 +7,24 @@ import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
 import {DepositUtils} from "../deposit/DepositUtils.sol";
 import "../deposit/Deposit.sol";
+import "./SystemAuthority.sol";
 
-contract VendingMachine {
+contract VendingMachine is SystemAuthority{
     using SafeMath for uint256;
 
     TBTCToken tbtcToken;
     TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
+    constructor(address _systemAddress) 
+        SystemAuthority(_systemAddress)
+    public {}
+
     function setExternalAddresses(
         address _tbtcToken,
         address _depositOwnerToken,
         address _feeRebateToken
-    ) public {
+    ) public onlySystem {
         tbtcToken = TBTCToken(_tbtcToken);
         tbtcDepositToken = TBTCDepositToken(_depositOwnerToken);
         feeRebateToken = FeeRebateToken(_feeRebateToken);
