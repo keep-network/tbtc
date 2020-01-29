@@ -4,6 +4,7 @@ import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {DepositStates} from "./DepositStates.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
@@ -20,6 +21,7 @@ library DepositUtils {
     using BTCUtils for uint256;
     using ValidateSPV for bytes;
     using ValidateSPV for bytes32;
+    using DepositStates for DepositUtils.Deposit;
 
     struct Deposit {
 
@@ -361,7 +363,7 @@ library DepositUtils {
     /// @notice     Seize the signer bond from the keep contract
     /// @dev        we check our balance before and after
     /// @return     the amount of ether seized
-    function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
+    function seizeSignerBonds(Deposit storage _d) internal returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.seizeSignerBonds(_d.keepAddress);
@@ -372,7 +374,7 @@ library DepositUtils {
 
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner
     ///             whenever this is called we are shutting down.
-    function distributeFeeRebate(Deposit storage _d) public {
+    function distributeFeeRebate(Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
         address rebateTokenHolder = feeRebateTokenHolder(_d);
@@ -390,10 +392,42 @@ library DepositUtils {
     /// @dev                useful for returning bonds to the group, or otherwise paying them
     /// @param  _ethValue   the amount of ether to send
     /// @return             true if successful, otherwise revert
-    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
+    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
         _keep.distributeETHToMembers.value(_ethValue)();
         return true;
+    }
+
+    /// @notice             Get TBTC amount required for redemption assuming _redeemer
+    ///                     is this deposit's TDT owner.
+    /// @param _redeemer    The assumed owner of the deposit's TDT 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
+        uint256 fee = signerFee(_d);
+        bool inCourtesy = _d.inCourtesyCall();
+        if(remainingTerm(_d) > 0 && !inCourtesy){
+            if(feeRebateTokenHolder(_d) != _redeemer) {
+                return fee;
+            }
+        }
+        uint256 contractTbtcBalance = TBTCToken(_d.TBTCToken).balanceOf(address(this));
+        if(contractTbtcBalance < fee) {
+            return fee.sub(contractTbtcBalance);
+        }
+        return 0;
+    }
+
+    /// @notice             Get TBTC amount required by redemption by a specified _redeemer
+    /// @dev                Will revert if redemption is not possible by msg.sender.
+    /// @param _redeemer    The deposit redeemer. 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
+        bool inCourtesy = _d.inCourtesyCall();
+        if (depositOwner(_d) == _redeemer && !inCourtesy) {
+            return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
+        }
+        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL");
+        return TBTCConstants.getLotSizeTbtc();
     }
 }

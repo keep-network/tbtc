@@ -30,7 +30,7 @@ library DepositRedemption {
 
     /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address
     /// @dev        Approves the keep contract, then expects it to call transferFrom
-    function distributeSignerFee(DepositUtils.Deposit storage _d) public {
+    function distributeSignerFee(DepositUtils.Deposit storage _d) internal {
         address _tbtcTokenAddress = _d.TBTCToken;
         TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 
@@ -50,53 +50,22 @@ library DepositRedemption {
         _d.approvedDigests[_digest] = block.timestamp;
     }
 
-    /// @notice             Get TBTC amount required for redemption assuming _redeemer
-    ///                     is this deposit's TDT owner.
-    /// @param _redeemer    The assumed owner of the deposit's TDT 
-    /// @return             The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
-        uint256 signerFee = _d.signerFee();
-        if(_d.remainingTerm() > 0){
-            if(_d.feeRebateTokenHolder() != _redeemer) {
-                return _d.signerFee();
-            }
-        }
-        uint256 contractTbtcBalance = TBTCToken(_d.TBTCToken).balanceOf(address(this));
-        if(contractTbtcBalance < signerFee) {
-            return signerFee.sub(contractTbtcBalance);
-        }
-        return 0;
-    }
-
-    /// @notice             Get TBTC amount required by redemption by a specified _redeemer
-    /// @dev                Will revert if redemption is not possible by msg.sender.
-    /// @param _redeemer    The deposit redeemer. 
-    /// @return             The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
-        if (_d.depositOwner() == _redeemer) {
-            return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
-        }
-        require(_d.remainingTerm() == 0, "redemption can only be called by deposit owner until deposit reaches term");
-        return TBTCConstants.getLotSizeTbtc();
-    }
-
     /// @notice Handles TBTC requirements for redemption
     /// @dev Burns or transfers depending on term and supply-peg impact
     function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
-        address feeRebateTokenHolder = _d.feeRebateTokenHolder();
         address tdtHolder = _d.depositOwner();
         address vendingMachine = _d.VendingMachine;
 
         uint256 tbtcLot = TBTCConstants.getLotSizeTbtc();
         uint256 signerFee = _d.signerFee();
-        uint256 tbtcOwed = getRedemptionTbtcRequirement(_d, _d.redeemerAddress);
+        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(_d.redeemerAddress);
 
         // if we owe 0 TBTC, msg.sender is TDT owner and FRT holder.
         if(tbtcOwed == 0){
             return;
         }
-        // if we owe signerfee, msg.sender is TDT owner but not FRT holder.
+        // if we owe > 0 & < signerfee, msg.sender is TDT owner but not FRT holder.
         if(tbtcOwed <= signerFee){
             _tbtc.transferFrom(msg.sender, address(this), tbtcOwed);
             return;
