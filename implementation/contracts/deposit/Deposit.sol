@@ -5,8 +5,9 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {DepositFunding} from "./DepositFunding.sol";
 import {DepositRedemption} from "./DepositRedemption.sol";
 import {DepositStates} from "./DepositStates.sol";
+import "../system/DepositFactoryAuthority.sol";
 
-contract Deposit {
+contract Deposit is DepositFactoryAuthority {
 
     using DepositRedemption for DepositUtils.Deposit;
     using DepositFunding for DepositUtils.Deposit;
@@ -18,7 +19,9 @@ contract Deposit {
 
     // We separate the constructor from createNewDeposit to make proxy factories easier
     /* solium-disable-next-line no-empty-blocks */
-    constructor () public {}
+    constructor (address _factoryAddress)
+        DepositFactoryAuthority(_factoryAddress)
+    public {}
 
     function () external payable {}
 
@@ -62,7 +65,7 @@ contract Deposit {
         address _VendingMachine,
         uint256 _m,
         uint256 _n
-    ) public payable returns (bool) {
+    ) public onlyFactory payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.TBTCDepositToken = _TBTCDepositToken;
