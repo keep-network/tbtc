@@ -12,32 +12,12 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
-const DepositFunding = artifacts.require('DepositFunding')
-const DepositLiquidation = artifacts.require('DepositLiquidation')
-const DepositRedemption = artifacts.require('DepositRedemption')
-const DepositUtils = artifacts.require('DepositUtils')
-const DepositStates = artifacts.require('DepositStates')
-const TBTCConstants = artifacts.require('TBTCConstants')
-const TestDeposit = artifacts.require('TestDeposit')
-
-const TEST_DEPOSIT_DEPLOY = [
-  { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'DepositRedemption', contract: DepositRedemption },
-  { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'DepositStates', contract: DepositStates },
-  { name: 'TBTCConstants', contract: TBTCConstants },
-  { name: 'TestDeposit', contract: TestDeposit },
-]
-
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
 
   describe('requestNewKeep()', async () => {
     before(async () => {
-      await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-
       ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
 
       const keepRegistry = await KeepRegistryStub.new()
