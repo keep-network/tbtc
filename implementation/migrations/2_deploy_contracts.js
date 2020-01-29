@@ -99,6 +99,8 @@ module.exports = (deployer, network, accounts) => {
       await btcPriceFeed.setValue(web3.utils.toWei(prices.BTCUSD))
       await ethPriceFeed.setValue(web3.utils.toWei(prices.ETHUSD))
     }
+    // vending machine
+    await deployer.deploy(VendingMachine)
 
     // deposit factory
     await deployer.deploy(DepositFactory)
@@ -107,11 +109,8 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
 
     // token
-    await deployer.deploy(TBTCToken, TBTCSystem.address)
+    await deployer.deploy(TBTCToken, VendingMachine.address)
     await deployer.deploy(TBTCDepositToken, DepositFactory.address)
-    await deployer.deploy(FeeRebateToken)
-
-    // vending machine
-    await deployer.deploy(VendingMachine)
+    await deployer.deploy(FeeRebateToken, VendingMachine.address)
   })
 }

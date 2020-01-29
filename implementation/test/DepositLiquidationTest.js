@@ -49,7 +49,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
@@ -85,9 +84,9 @@ contract('DepositLiquidation', (accounts) => {
 
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
-    tbtcToken = await TestToken.new(tbtcSystemStub.address)
+    tbtcToken = await TestToken.new(utils.address0)
     tbtcDepositToken = await TBTCDepositToken.new(utils.address0)
-    feeRebateToken = deployed.FeeRebateToken
+    feeRebateToken = await FeeRebateToken.new(utils.address0)
 
     testInstance = deployed.TestDeposit
 

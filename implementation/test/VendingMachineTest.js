@@ -48,7 +48,6 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TestDepositUtils', contract: TestDepositUtils },
-  { name: 'FeeRebateToken', contract: FeeRebateToken },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 const currentDifficulty = 6353030562983
@@ -90,7 +89,7 @@ contract('VendingMachine', (accounts) => {
     tbtcToken = await TestToken.new(vendingMachine.address)
 
     tbtcDepositToken = await TBTCDepositToken.new(utils.address0)
-    feeRebateToken = deployed.FeeRebateToken
+    feeRebateToken = await FeeRebateToken.new(vendingMachine.address)
 
     assertBalance = new AssertBalance(tbtcToken)
 

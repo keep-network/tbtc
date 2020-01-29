@@ -43,7 +43,7 @@ contract('DepositFactory', (accounts) => {
     factory = await DepositFactory.new()
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
-    tbtcToken = await TBTCToken.new(tbtcSystemStub.address)
+    tbtcToken = await TBTCToken.new(utils.address0)
     tbtcDepositToken = await TBTCDepositToken.new(factory.address)
     factory.setExternalDependencies(
       depositContract.address,
