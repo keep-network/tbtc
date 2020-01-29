@@ -1,7 +1,7 @@
 pragma solidity ^0.5.10;
 
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol";
-import "./ERC721MinterAuthority.sol";
+import "./DepositFactoryAuthority.sol";
 
 
 /// @title tBTC Deposit Token for tracking deposit ownership
@@ -16,11 +16,11 @@ import "./ERC721MinterAuthority.sol";
 /// @dev Currently, TDTs are minted using the uint256 casting of the
 ///      corresponding deposit contract's address. That is, the TDTs id is
 ///      convertible to the deposit's address and vice versa.
-contract TBTCDepositToken is ERC721Metadata, ERC721MinterAuthority {
+contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
 
     constructor(address _depositFactory) 
         ERC721Metadata("tBTC Deopsit Token", "TDT")
-        ERC721MinterAuthority(_depositFactory) 
+        DepositFactoryAuthority(_depositFactory) 
     public {
         // solium-disable-previous-line no-empty-blocks
     }
