@@ -20,12 +20,13 @@ chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositFunding', contract: DepositFunding },
+  { name: 'DepositFactory', contract: DepositFactory },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
   { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
-  { name: 'TestDeposit', contract: TestDeposit },
+  { name: 'TestDeposit', contract: TestDeposit, param: utils.address0 },
 ]
 
 contract('DepositFactory', (accounts) => {
@@ -39,8 +40,8 @@ contract('DepositFactory', (accounts) => {
   before(async () => {
     const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
+    factory = deployed.DepositFactory
     depositContract = deployed.TestDeposit
-    factory = await DepositFactory.new()
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
 
     tbtcToken = await TBTCToken.new(utils.address0)

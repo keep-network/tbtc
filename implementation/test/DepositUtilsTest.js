@@ -42,7 +42,7 @@ const TEST_DEPOSIT_UTILS_DEPLOY = [
   { name: 'DepositFunding', contract: DepositFunding },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'TestDepositUtils', contract: TestDepositUtils },
+  { name: 'TestDepositUtils', contract: TestDepositUtils, param: utils.address0 },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // real tx from mainnet bitcoin, interpreted as funding tx
@@ -324,7 +324,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('returns base value for unset public key', async () => {
-      const newTestUtilsInstance = await TestDepositUtils.new()
+      const newTestUtilsInstance = await TestDepositUtils.new(utils.address0)
       const signerPubkey = await newTestUtilsInstance.signerPubkey.call()
       assert.equal(signerPubkey, '0x' + '00'.repeat(64))
     })

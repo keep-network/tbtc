@@ -27,7 +27,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositUtils', contract: DepositUtils },
   { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TBTCConstants },
-  { name: 'TestDeposit', contract: TestDeposit },
+  { name: 'TestDeposit', contract: TestDeposit, param: utils.address0 },
 ]
 
 contract('TBTCSystem', (accounts) => {
