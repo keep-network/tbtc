@@ -4,6 +4,28 @@ import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
 contract TestDeposit is Deposit {
 
+    constructor(address _factoryAddress) 
+        Deposit(_factoryAddress)
+    public{}
+
+    function createNewDeposit(
+        address _TBTCSystem,
+        address _TBTCToken,
+        address _TBTCDepositToken,
+        address _FeeRebateToken,
+        address _VendingMachine,
+        uint256 _m,
+        uint256 _n
+    ) public payable returns (bool) {
+        self.TBTCSystem = _TBTCSystem;
+        self.TBTCToken = _TBTCToken;
+        self.TBTCDepositToken = _TBTCDepositToken;
+        self.FeeRebateToken = _FeeRebateToken;
+        self.VendingMachine = _VendingMachine;
+        self.createNewDeposit(_m, _n);
+        return true;
+    }
+
     function setExteriorAddresses(
         address _sys,
         address _token,
