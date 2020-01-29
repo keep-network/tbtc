@@ -349,12 +349,12 @@ contract('VendingMachine', (accounts) => {
 
     it('successfully redeems via wrapper', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-
+      await tbtcToken.forceMint(testInstance.address, signerFee)
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
       await feeRebateToken.forceMint(accounts[0], tdtId)
-      await vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH)
+      await vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH, accounts[0])
       const requestInfo = await testInstance.getRequestInfo()
       assert.equal(requestInfo[1], requesterPKH)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
@@ -373,7 +373,7 @@ contract('VendingMachine', (accounts) => {
       await feeRebateToken.forceMint(accounts[1], tdtId)
 
       await expectThrow(
-        vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH),
+        vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH, accounts[0]),
         'SafeMath: subtraction overflow.'
       )
     })

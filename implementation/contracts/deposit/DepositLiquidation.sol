@@ -81,7 +81,7 @@ library DepositLiquidation {
         if (_d.auctionTBTCAmount() == 0) {
             // we came from the redemption flow
             _d.setLiquidated();
-            _d.requesterAddress.transfer(_seized);
+            _d.redeemerAddress.transfer(_seized);
             _d.logLiquidated();
             return;
         }
@@ -184,7 +184,7 @@ library DepositLiquidation {
             "No input spending custodied UTXO found at given index"
         );
 
-        if (_d.requesterPKH != bytes20(0)) {
+        if (_d.redeemerPKH != bytes20(0)) {
             require(
                 validateRedeemerNotPaid(_d, _txOutputVector),
                 "Found an output paying the redeemer as requested"
@@ -194,7 +194,7 @@ library DepositLiquidation {
         startSignerFraudLiquidation(_d);
     }
 
-    /// @notice                 Search _txOutputVector for output paying the requester
+    /// @notice                 Search _txOutputVector for output paying the redeemer
     /// @dev                    Require that outputs checked are witness
     /// @param  _d              Deposit storage pointer
     /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
@@ -216,7 +216,7 @@ library DepositLiquidation {
             if (_output.extractValue() >= _requiredOutputValue
                 // extract the output flag and check that it is witness
                 && keccak256(_output.slice(8, 3)) == keccak256(hex"160014")
-                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.requesterPKH))) {
+                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.redeemerPKH))) {
                 return false;
             }
         }
