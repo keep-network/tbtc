@@ -5,7 +5,7 @@ import "./VendingMachineAuthority.sol";
 
 contract FeeRebateToken is ERC721Metadata, VendingMachineAuthority {
 
- constructor(address _vendingMachine) 
+    constructor(address _vendingMachine)
         ERC721Metadata("Fee Rebate Token", "FRT")
         VendingMachineAuthority(_vendingMachine)
     public {
