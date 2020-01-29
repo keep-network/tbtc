@@ -4,6 +4,10 @@ import "../../../contracts/system/VendingMachine.sol";
 
 contract TestVendingMachine is VendingMachine {
 
+    constructor(address _tbtcSystem)
+        VendingMachine(_tbtcSystem)
+    public {}
+
     function setExteriorAddresses(
         address _tbtcToken,
         address _tbtcDepositToken,
