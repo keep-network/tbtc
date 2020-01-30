@@ -9,8 +9,11 @@ import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
+
+    using SafeMath for uint256;
 
     event LogLotSizesUpdated(uint256[] _lotSizes);
     event LogAllowNewDepositsUpdated(bool _allowNewDeposits);
@@ -21,6 +24,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     );
 
     bool _initialized = false;
+    uint128 pausedTimestamp;
+    uint128 pausedDuration = 10 days;
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
@@ -29,7 +34,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     address public priceFeed;
 
     // Parameters governed by the TBTCSystem owner
-    bool private allowNewDeposits = true;
+    bool private allowNewDeposits = false;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint128 private undercollateralizedThresholdPercent = 140;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
@@ -46,6 +51,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
         keepRegistry = _keepRegistry;
         _initialized = true;
+        allowNewDeposits = true;
     }
 
     /// @notice Enables/disables new deposits from being created.
@@ -57,8 +63,23 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         emit LogAllowNewDepositsUpdated(_allowNewDeposits);
     }
 
-    /// @notice Gets whether new deposits are allowed.
+    /// @notice gets whether new deposits are allowed
     function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
+
+    /// @notice One-time-use emergency function to disallow future deposit creation for 10 days. 
+    function emergencyPauseNewDeposits() external onlyOwner returns (bool) { 
+        require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
+        pausedTimestamp = block.timestamp;
+        allowNewDeposits = false;
+        emit LogAllowNewDepositsUpdated(false);
+    }
+
+    /// @notice Anyone can reactivate deposit creations after the pause duration is over.
+    function resumeNewDeposits() public {
+        require(block.timestamp.sub(pausedTimestamp) > pausedDuration, "Deposits are still paused");
+        allowNewDeposits = true;
+        emit LogAllowNewDepositsUpdated(true);
+    }
 
     /// @notice Set the system signer fee divisor.
     /// @param _signerFeeDivisor The signer fee divisor.
