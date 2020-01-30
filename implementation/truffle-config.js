@@ -64,6 +64,7 @@ module.exports = {
     },
     keep_test: {
       provider: function() {
+      // ETH_HOSTNAME is set in a Circle Context.
       // CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD is set in a Circle context. For now this value
       // is shared between the contract owner Ethereum account on both our internal testnet
       // and on Ropsten.
