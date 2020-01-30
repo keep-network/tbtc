@@ -90,6 +90,7 @@ contract('DepositFunding', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+    tbtcSystemStub.initialize(utils.address0)
 
     tbtcToken = await TestToken.new(tbtcSystemStub.address)
     tbtcDepositToken = deployed.TBTCDepositToken
