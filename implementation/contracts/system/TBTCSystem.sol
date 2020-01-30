@@ -15,10 +15,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
 
-    event LogLotSizesUpdated(uint256[] _lotSizes);
-    event LogAllowNewDepositsUpdated(bool _allowNewDeposits);
-    event LogSignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
-    event LogCollateralizationThresholdsUpdated(
+    event LotSizesUpdated(uint256[] _lotSizes);
+    event AllowNewDepositsUpdated(bool _allowNewDeposits);
+    event SignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
+    event CollateralizationThresholdsUpdated(
         uint256 _undercollateralizedThresholdPercent,
         uint256 _severelyUndercollateralizedThresholdPercent
     );
@@ -60,7 +60,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         external onlyOwner
     {
         allowNewDeposits = _allowNewDeposits;
-        emit LogAllowNewDepositsUpdated(_allowNewDeposits);
+        emit AllowNewDepositsUpdated(_allowNewDeposits);
     }
 
     /// @notice gets whether new deposits are allowed
@@ -71,14 +71,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
         pausedTimestamp = block.timestamp;
         allowNewDeposits = false;
-        emit LogAllowNewDepositsUpdated(false);
+        emit AllowNewDepositsUpdated(false);
     }
 
     /// @notice Anyone can reactivate deposit creations after the pause duration is over.
     function resumeNewDeposits() public {
         require(block.timestamp.sub(pausedTimestamp) > pausedDuration, "Deposits are still paused");
         allowNewDeposits = true;
-        emit LogAllowNewDepositsUpdated(true);
+        emit AllowNewDepositsUpdated(true);
     }
 
     /// @notice Set the system signer fee divisor.
@@ -88,7 +88,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     {
         require(_signerFeeDivisor > 1, "Signer fee must be lower than 100%");
         signerFeeDivisor = _signerFeeDivisor;
-        emit LogSignerFeeDivisorUpdated(_signerFeeDivisor);
+        emit SignerFeeDivisorUpdated(_signerFeeDivisor);
     }
 
     /// @notice Gets the system signer fee divisor.
@@ -100,7 +100,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _lotSizes Array of allowed lot sizes.
     function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
         lotSizesSatoshis = _lotSizes;
-        emit LogLotSizesUpdated(_lotSizes);
+        emit LotSizesUpdated(_lotSizes);
     }
 
     /// @notice Gets the allowed lot sizes
@@ -134,7 +134,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
         undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
         severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
-        emit LogCollateralizationThresholdsUpdated(
+        emit CollateralizationThresholdsUpdated(
             _undercollateralizedThresholdPercent,
             _severelyUndercollateralizedThresholdPercent
         );
