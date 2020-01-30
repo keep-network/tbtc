@@ -54,15 +54,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         allowNewDeposits = true;
     }
 
-    /// @notice Enables/disables new deposits from being created.
-    /// @param _allowNewDeposits Whether to allow new deposits.
-    function setAllowNewDeposits(bool _allowNewDeposits)
-        external onlyOwner
-    {
-        allowNewDeposits = _allowNewDeposits;
-        emit AllowNewDepositsUpdated(_allowNewDeposits);
-    }
-
     /// @notice gets whether new deposits are allowed
     function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
 
