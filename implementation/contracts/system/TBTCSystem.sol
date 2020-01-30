@@ -24,8 +24,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     );
 
     bool _initialized = false;
-    uint128 pausedTimestamp;
-    uint128 pausedDuration = 10 days;
+    uint256 pausedTimestamp;
+    uint256 pausedDuration = 10 days;
 
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
