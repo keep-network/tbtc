@@ -35,7 +35,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
 ]
 
-contract.only('TBTCSystem', (accounts) => {
+contract('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
 
@@ -90,6 +90,8 @@ contract.only('TBTCSystem', (accounts) => {
   })
 
   describe('emergencyPauseNewDeposits', async () => {
+    let term
+
     beforeEach(async () => {
       await createSnapshot()
     })
@@ -105,9 +107,23 @@ contract.only('TBTCSystem', (accounts) => {
       expect(allowNewDeposits).to.equal(false)
     })
 
+    it('does not allows new deposit re-activation before 10 days', async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
+      term = await tbtcSystem.getRemainingPauseTerm()
+
+      await increaseTime(term.toNumber() - 10) // T-10 seconds. toNumber because increaseTime doesn't support BN
+
+      await expectThrow(
+        tbtcSystem.resumeNewDeposits(),
+        'Deposits are still paused'
+      )
+    })
+
     it('allows new deposit creation after 10 days', async () => {
       await tbtcSystem.emergencyPauseNewDeposits()
-      await increaseTime(new BN(864000)) // 10 days
+      term = await tbtcSystem.getRemainingPauseTerm()
+
+      await increaseTime(term.toNumber()) // 10 days
       tbtcSystem.resumeNewDeposits()
       const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
@@ -115,7 +131,9 @@ contract.only('TBTCSystem', (accounts) => {
 
     it('reverts if emergencyPauseNewDeposits has already been called', async () => {
       await tbtcSystem.emergencyPauseNewDeposits()
-      await increaseTime(new BN(864000)) // 10 days
+      term = await tbtcSystem.getRemainingPauseTerm()
+
+      await increaseTime(term.toNumber()) // 10 days
       tbtcSystem.resumeNewDeposits()
 
       await expectThrow(
