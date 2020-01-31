@@ -7,7 +7,7 @@ import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
 import {DepositUtils} from "../deposit/DepositUtils.sol";
 import "../deposit/Deposit.sol";
-import "./TbtcSystemAuthority.sol";
+import "./TBTCSystemAuthority.sol";
 
 contract VendingMachine is TBTCSystemAuthority{
     using SafeMath for uint256;

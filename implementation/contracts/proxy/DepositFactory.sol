@@ -3,7 +3,7 @@ pragma solidity ^0.5.10;
 import "./CloneFactory.sol";
 import "../deposit/Deposit.sol";
 import "../system/TBTCSystem.sol";
-import "../system/TbtcSystemAuthority.sol";
+import "../system/TBTCSystemAuthority.sol";
 import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 
 
