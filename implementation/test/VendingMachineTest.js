@@ -397,31 +397,30 @@ contract('VendingMachine', (accounts) => {
       })
 
       it('successfully requests redemption', async () => {
-        const blockNumber = await web3.eth.getBlock('latest').number
-        await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+        await testInstance.setState(utils.states.ACTIVE)
+        await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
+        await tbtcToken.forceMint(accounts[0], depositValue.add(signerFee))
         await feeRebateToken.forceMint(accounts[0], tdtId)
 
-        const tbtcToBtc = RedemptionScript.abi.filter((x) => x.name == 'tbtcToBtc')[0]
+        const blockNumber = await web3.eth.getBlock('latest').number
+
+        await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+        const tbtcToBtc = TestVendingMachine.abi.filter((x) => x.name == 'tbtcToBtc')[0]
         const calldata = web3.eth.abi.encodeFunctionCall(
-          tbtcToBtc,
-          [accounts[0], testInstance.address, '0x1111111100000000', requesterPKH]
+          tbtcToBtc, [testInstance.address, '0x1111111100000000', requesterPKH, accounts[0]]
         )
 
-        try {
-          await tbtcToken.approveAndCall(
-            redemptionScript.address,
-            requiredBalance,
-            calldata
-          )
-        } catch (ex) {
-          // WORKAROUND: Truffle has an issue with transactions that emit events with the same name [1].
-          // In this case, it's an ERC20 and an ERC721, the TBTC and TDT contracts, which both emit
-          // `Transfer` events.
-          //
-          // [1]: https://github.com/trufflesuite/truffle/issues/1729
+        await tbtcToken.approveAndCall(
+          redemptionScript.address,
+          depositValue.add(signerFee),
+          calldata
+        )
 
-          // TypeError: Cannot read property \'toString\' of null
-        }
+        const requestInfo = await testInstance.getRequestInfo()
+        assert.equal(requestInfo[1], requesterPKH)
+        assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
+        assert.equal(requestInfo[4], sighash)
 
         // fired an event
         const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
@@ -437,7 +436,7 @@ contract('VendingMachine', (accounts) => {
       await tbtcSystemStub.setCurrentDiff(currentDifficulty)
       await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-
+      await tbtcToken.zeroBalance(accounts[0])
       await tbtcDepositToken.forceMint(accounts[0], tdtId)
       fundingScript = await FundingScript.new(vendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
     })
@@ -452,13 +451,15 @@ contract('VendingMachine', (accounts) => {
 
     it('calls unqualifiedDepositToTbtcABI', async () => {
       const unqualifiedDepositToTbtcABI = TestVendingMachine.abi.filter((x) => x.name == 'unqualifiedDepositToTbtc')[0]
+      const calldata = web3.eth.abi.encodeFunctionCall(
+        unqualifiedDepositToTbtcABI,
+        [testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders]
+      )
+
       await tbtcDepositToken.approveAndCall(
         fundingScript.address,
         tdtId,
-        web3.eth.abi.encodeFunctionCall(
-          unqualifiedDepositToTbtcABI,
-          [testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders]
-        )
+        calldata
       )
 
       const UTXOInfo = await testInstance.getUTXOInfo.call()
