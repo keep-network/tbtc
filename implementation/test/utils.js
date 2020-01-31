@@ -47,12 +47,17 @@ async function deploySystem(deploy_list) {
   // eslint-disable-next-line camelcase,guard-for-in
   for (const i in deploy_list) {
     await deploy_list[i].contract.link(linkable)
-    const contract =
-      (deploy_list[i].param == undefined) ?
-        await deploy_list[i].contract.new():
-        (linkable[deploy_list[i].param] == undefined) ?
-          await deploy_list[i].contract.new(deploy_list[i].param):
-          await deploy_list[i].contract.new(linkable[deploy_list[i].param])
+
+    let contract
+    if (deploy_list[i].param == undefined) {
+      contract = await deploy_list[i].contract.new()
+    } else {
+      if (linkable[deploy_list[i].param] == undefined) {
+        contract = await deploy_list[i].contract.new(deploy_list[i].param)
+      } else {
+        contract = await deploy_list[i].contract.new(linkable[deploy_list[i].param])
+      }
+    }
 
     linkable[deploy_list[i].name] = contract.address
     deployed[deploy_list[i].name] = contract
