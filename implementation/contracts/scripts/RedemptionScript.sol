@@ -35,46 +35,15 @@ contract RedemptionScript {
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
         tbtcToken.transferFrom(_from, address(this), _amount);
         tbtcToken.approve(address(vendingMachine), _amount);
+        bytes4 functionSignature;
+        assembly { functionSignature := mload(add(_extraData, 0x20)) }
+        require(functionSignature == vendingMachine.tbtcToBtc.selector, "Invalid method signature encoded in _extraData.");
 
-        (bool success, bytes memory returnData) = address(this).call(_extraData);
+        (bool success, bytes memory returnData) = address(vendingMachine).call(_extraData);
         // By default, `address.call`  will catch any revert messages.
         // Converting the `returnData` to a string will effectively forward any revert messages.
         // https://ethereum.stackexchange.com/questions/69133/forward-revert-message-from-low-level-solidity-call
         // TODO: there's some noisy couple bytes at the beginning of the converted string, maybe the ABI-coded length?
         require(success, string(returnData));
-    }
-
-    /// @notice Redeems a Deposit by purchasing a TDT with TBTC, and using the TDT to redeem corresponding Deposit.
-    ///         This function will revert if the Deposit is not in ACTIVE state.
-    /// @dev Vending Machine transfers TBTC allowance to Deposit.
-    /// @param  _depositAddress     The address of the Deposit to redeem.
-    /// @param  _outputValueBytes   The 8-byte Bitcoin transaction output size in Little Endian.
-    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds.
-    function tbtcToBtc(
-        address payable _from,
-        address payable _depositAddress,
-        bytes8 _outputValueBytes,
-        bytes20 _requesterPKH
-    ) public{
-        address payable requesterAddress = _from;
-
-        vendingMachine.tbtcToTdt(uint256(_depositAddress));
-
-        Deposit _d = Deposit(_depositAddress);
-
-        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(requesterAddress);
-
-        if(tbtcOwed != 0){
-            require(tbtcToken.transferFrom(requesterAddress, address(this), tbtcOwed), "transfer failed");
-            tbtcToken.approve(_depositAddress, tbtcOwed);
-        }
-
-        _d.requestRedemption(
-            _outputValueBytes,
-            _requesterPKH,
-            requesterAddress
-        );
-
-        return;
     }
 }
