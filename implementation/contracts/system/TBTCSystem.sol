@@ -98,6 +98,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @dev    Lot sizes should be 
     /// @param _lotSizes Array of allowed lot sizes.
     function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
+        require(arrayContains(_lotSizes, 10**8), "Lot size array must always contain 1BTC");
         lotSizesSatoshis = _lotSizes;
         emit LotSizesUpdated(_lotSizes);
     }
@@ -106,6 +107,17 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @return Uint256 array of allowed lot sizes 
     function getAllowedLotSizes() external view returns (uint256[] memory){
         return lotSizesSatoshis;
+    }
+
+    /// @notice Checks if a uint256 value exists in a unt256 array
+    /// @return true if it exists, false otherwise.
+    function arrayContains(uint256[] memory _array, uint256 _value) internal pure returns (bool){
+        for( uint i = 0; i < _array.length; i++){
+            if (_array[i] == _value){
+                return true;
+            }
+        }
+        return false;    
     }
 
     /// @notice Check if a lot size is allowed.
