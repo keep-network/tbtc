@@ -222,6 +222,8 @@ contract('DepositRedemption', (accounts) => {
       block = await web3.eth.getBlock('latest')
       await testDeposit.setRedeemerAddress(accounts[0])
       await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await tbtcToken.resetBalance(depositValue)
+      await tbtcToken.resetAllowance(testDeposit.address, depositValue)
     })
 
     afterEach(async () => {
