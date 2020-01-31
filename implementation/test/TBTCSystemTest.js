@@ -89,6 +89,26 @@ contract('TBTCSystem', (accounts) => {
     })
   })
 
+  describe('setLotSizes', async () => {
+    it('sets a different lot size array', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+      const lotSizes = [10**8, 10**6]
+      await tbtcSystem.setLotSizes(lotSizes)
+
+      const eventList = await tbtcSystem.getPastEvents('LotSizesUpdated', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+      expect(eventList[0].returnValues._lotSizes).to.eql(['100000000', '1000000']) // deep equality check
+    })
+
+    it('reverts if lot size array does not contain a 1BTC lot size', async () => {
+      const lotSizes = []
+      await expectThrow(
+        tbtcSystem.setLotSizes(lotSizes),
+        'Lot size array must always contain 1BTC'
+      )
+    })
+  })
+
   describe('emergencyPauseNewDeposits', async () => {
     let term
 
