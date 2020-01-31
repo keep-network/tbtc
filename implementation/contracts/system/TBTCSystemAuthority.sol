@@ -1,17 +1,17 @@
 pragma solidity 0.5.10;
 
-contract SystemAuthority {
+contract TBTCSystemAuthority {
 
     address internal _tbtcSystem;
 
     /// @notice Set the address of the System contract on contract initialization
-    constructor(address _systemAddress) public {
-        _tbtcSystem = _systemAddress;
+    constructor(address _tbtcSystemAddress) public {
+        _tbtcSystem = _tbtcSystemAddress;
     }
 
     /// @notice Function modifier ensures modified function is only called by set deeposit factory
-    modifier onlySystem(){
-        require(msg.sender == _tbtcSystem, "Caller must be depositFactory contract");
+    modifier onlyTbtcSystem(){
+        require(msg.sender == _tbtcSystemAddress, "Caller must be depositFactory contract");
         _;
     }
 }

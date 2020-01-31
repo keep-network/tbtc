@@ -48,7 +48,7 @@ contract DepositFactory is CloneFactory, SystemAuthority{
         address _vendingMachine,
         uint256 _keepThreshold,
         uint256 _keepSize
-    ) public onlySystem{
+    ) public onlyTbtcSystem{
         masterDepositAddress = _masterDepositAddress;
         tbtcSystem = _tbtcSystem;
         tbtcToken = _tbtcToken;

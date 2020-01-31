@@ -24,7 +24,7 @@ contract VendingMachine is SystemAuthority{
         address _tbtcToken,
         address _depositOwnerToken,
         address _feeRebateToken
-    ) public onlySystem {
+    ) public onlyTbtcSystem {
         tbtcToken = TBTCToken(_tbtcToken);
         tbtcDepositToken = TBTCDepositToken(_depositOwnerToken);
         feeRebateToken = FeeRebateToken(_feeRebateToken);
