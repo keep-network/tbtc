@@ -100,8 +100,16 @@ contract('TBTCSystem', (accounts) => {
       expect(eventList[0].returnValues._lotSizes).to.eql(['100000000', '1000000']) // deep equality check
     })
 
-    it('reverts if lot size array does not contain a 1BTC lot size', async () => {
+    it('reverts if lot size array is empty', async () => {
       const lotSizes = []
+      await expectThrow(
+        tbtcSystem.setLotSizes(lotSizes),
+        'Lot size array must always contain 1BTC'
+      )
+    })
+
+    it('reverts if lot size array does not contain a 1BTC lot size', async () => {
+      const lotSizes = [10**7]
       await expectThrow(
         tbtcSystem.setLotSizes(lotSizes),
         'Lot size array must always contain 1BTC'
