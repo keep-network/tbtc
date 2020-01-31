@@ -34,4 +34,20 @@ contract TBTCDepositToken is ERC721Metadata {
     function exists(uint256 _tokenId) public view returns (bool) {
         return _exists(_tokenId);
     }
+
+    /// @notice           Set allowance for other address and notify.
+    ///                   Allows `_spender` to transfer the specified TDT
+    ///                   on your behalf and then ping the contract about it.
+    /// @dev              The `_spender` should implement the `tokenRecipient` interface below
+    ///                   to receive approval notifications.
+    /// @param _spender   Address of contract authorized to spend.
+    /// @param _tdtId     The TDT they can spend.
+    /// @param _extraData Extra information to send to the approved contract.
+    function approveAndCall(address _spender, uint256 _tdtId, bytes memory _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        approve(_spender, _tdtId);
+        spender.receiveApproval(msg.sender, _tdtId, address(this), _extraData);
+    }
 }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
+
