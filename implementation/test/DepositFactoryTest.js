@@ -20,13 +20,13 @@ chai.use(bnChai(BN))
 
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'DepositFactory', contract: TestDepositFactory, param: utils.address0 }, // we don't care about ACL param. Bypassed in test
+  { name: 'DepositFactory', contract: TestDepositFactory, constructorParam: utils.address0 }, // we don't care about ACL param. Bypassed in test
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
   { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
-  { name: 'TestDeposit', contract: TestDeposit, param: utils.address0 },
+  { name: 'TestDeposit', contract: TestDeposit, constructorParam: utils.address0 },
 ]
 
 contract('DepositFactory', (accounts) => {

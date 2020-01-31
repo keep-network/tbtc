@@ -24,17 +24,17 @@ const TestDepositFactory = artifacts.require('TestDepositFactory')
 const TestVendingMachine = artifacts.require('TestVendingMachine')
 
 const TEST_DEPOSIT_DEPLOY = [
-  { name: 'TBTCSystem', contract: TBTCSystem, param: utils.address0 },
+  { name: 'TBTCSystem', contract: TBTCSystem, constructorParam: utils.address0 },
   { name: 'DepositFunding', contract: DepositFunding },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the names
-  { name: 'DepositFactory', contract: TestDepositFactory, param: 'TBTCSystem' }, // we don't care about ACL param. Bypassed in test
-  { name: 'TestVendingMachine', contract: TestVendingMachine, param: 'TBTCSystem' },
+  { name: 'DepositFactory', contract: TestDepositFactory, constructorParam: 'TBTCSystem' }, // we don't care about ACL param. Bypassed in test
+  { name: 'TestVendingMachine', contract: TestVendingMachine, constructorParam: 'TBTCSystem' },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositUtils', contract: DepositUtils },
   { name: 'DepositStates', contract: DepositStates },
   { name: 'TBTCConstants', contract: TBTCConstants },
-  { name: 'TestDeposit', contract: TestDeposit, param: utils.address0 },
+  { name: 'TestDeposit', contract: TestDeposit, constructorParam: utils.address0 },
 ]
 
 contract('TBTCSystem', (accounts) => {

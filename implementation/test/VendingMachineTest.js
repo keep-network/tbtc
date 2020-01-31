@@ -42,12 +42,12 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
   { name: 'DepositStates', contract: DepositStates },
   { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'TestVendingMachine', contract: TestVendingMachine, param: utils.address0 },
+  { name: 'TestVendingMachine', contract: TestVendingMachine, constructorParam: utils.address0 },
   { name: 'DepositFunding', contract: DepositFunding },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'TestDeposit', contract: TestDeposit, param: utils.address0 },
-  { name: 'TestDepositUtils', contract: TestDepositUtils, param: utils.address0 },
+  { name: 'TestDeposit', contract: TestDeposit, constructorParam: utils.address0 },
+  { name: 'TestDepositUtils', contract: TestDepositUtils, constructorParam: utils.address0 },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 const currentDifficulty = 6353030562983

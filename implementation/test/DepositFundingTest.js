@@ -41,8 +41,8 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositFunding', contract: DepositFunding },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'TestDeposit', contract: TestDeposit, param: utils.address0 },
-  { name: 'TestDepositUtils', contract: TestDepositUtils, param: utils.address0 },
+  { name: 'TestDeposit', contract: TestDeposit, constructorParam: utils.address0 },
+  { name: 'TestDepositUtils', contract: TestDepositUtils, constructorParam: utils.address0 },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub }]
 
 // spare signature:
