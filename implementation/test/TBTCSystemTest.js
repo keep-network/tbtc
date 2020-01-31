@@ -107,6 +107,13 @@ contract('TBTCSystem', (accounts) => {
       expect(allowNewDeposits).to.equal(false)
     })
 
+    it('reverts if msg.sender is not owner', async () => {
+      await expectThrow(
+        tbtcSystem.emergencyPauseNewDeposits({ from: accounts[1] }),
+        'Ownable: caller is not the owner'
+      )
+    })
+
     it('does not allows new deposit re-activation before 10 days', async () => {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
