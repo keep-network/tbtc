@@ -1,4 +1,9 @@
 import expectThrow from './helpers/expectThrow'
+import increaseTime from './helpers/increaseTime'
+import {
+  createSnapshot,
+  restoreSnapshot,
+} from './helpers/snapshot'
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -30,7 +35,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
 ]
 
-contract('TBTCSystem', (accounts) => {
+contract.only('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
 
@@ -84,18 +89,39 @@ contract('TBTCSystem', (accounts) => {
     })
   })
 
-  describe('setAllowNewDeposits', async () => {
-    it('sets allowNewDeposits', async () => {
-      await tbtcSystem.setAllowNewDeposits(false)
+  describe('emergencyPauseNewDeposits', async () => {
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('pauses new deposit creation', async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
 
       const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(false)
     })
 
-    it('reverts if msg.sender != owner', async () => {
+    it('allows new deposit creation after 10 days', async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
+      await increaseTime(new BN(864000)) // 10 days
+      tbtcSystem.resumeNewDeposits()
+      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(true)
+    })
+
+    it('reverts if emergencyPauseNewDeposits has already been called', async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
+      await increaseTime(new BN(864000)) // 10 days
+      tbtcSystem.resumeNewDeposits()
+
       await expectThrow(
-        tbtcSystem.setAllowNewDeposits(false, { from: accounts[1] }),
-        ''
+        tbtcSystem.emergencyPauseNewDeposits(),
+        'emergencyPauseNewDeposits can only be called once'
       )
     })
   })
