@@ -42,7 +42,6 @@ contract DepositFactory is CloneFactory{
         address _TBTCDepositToken,
         address _FeeRebateToken,
         address _VendingMachine,
-        address _RedemptionScript,
         uint256 _keepThreshold,
         uint256 _keepSize,
         uint256 _lotSize
@@ -55,7 +54,6 @@ contract DepositFactory is CloneFactory{
             _TBTCDepositToken,
             _FeeRebateToken,
             _VendingMachine,
-            _RedemptionScript,
             _keepThreshold,
             _keepSize,
             _lotSize

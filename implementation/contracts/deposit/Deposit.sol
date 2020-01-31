@@ -72,7 +72,6 @@ contract Deposit {
         address _TBTCDepositToken,
         address _FeeRebateToken,
         address _VendingMachine,
-        address _RedemptionScript,
         uint256 _m,
         uint256 _n,
         uint256 _lotSize
@@ -82,7 +81,6 @@ contract Deposit {
         self.TBTCDepositToken = _TBTCDepositToken;
         self.FeeRebateToken = _FeeRebateToken;
         self.VendingMachine = _VendingMachine;
-        self.RedemptionScript = _RedemptionScript;
         self.createNewDeposit(_m, _n, _lotSize);
         return true;
     }
