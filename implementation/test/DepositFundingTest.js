@@ -82,6 +82,7 @@ contract('DepositFunding', (accounts) => {
   let beneficiary
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
+  const fullBtc = 100000000
   let tbtcSystemStub
   let tbtcDepositToken
 
@@ -127,6 +128,7 @@ contract('DepositFunding', (accounts) => {
         utils.address0,
         1, // m
         1,
+        fullBtc,
         { value: funderBondAmount }
       )
 
@@ -163,7 +165,8 @@ contract('DepositFunding', (accounts) => {
           utils.address0,
           utils.address0,
           1, // m
-          1),
+          1,
+          fullBtc),
         'Deposit setup already requested'
       )
     })
@@ -179,7 +182,8 @@ contract('DepositFunding', (accounts) => {
           utils.address0,
           utils.address0,
           1, // m
-          1
+          1,
+          fullBtc
         ),
         'Opening new deposits is currently disabled.'
       )
@@ -385,9 +389,11 @@ contract('DepositFunding', (accounts) => {
       const blockNumber = await web3.eth.getBlock('latest').number
 
       await testInstance.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+      const expectedFundedAt = (await web3.eth.getBlock('latest')).timestamp
 
       const UTXOInfo = await testInstance.getUTXOInfo.call()
       assert.equal(UTXOInfo[0], _outValueBytes)
+      assert.equal(UTXOInfo[1], expectedFundedAt)
       assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
 
       const signingGroupRequestedAt = await testInstance.getSigningGroupRequestedAt.call()

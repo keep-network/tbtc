@@ -41,6 +41,24 @@ contract TestDeposit is Deposit {
     }
 
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
+    
+    function setLotSize(uint256 _lotSizeSatoshis) public {
+        self.lotSizeSatoshis = _lotSizeSatoshis;
+    }
+
+    function setUndercollateralizedThresholdPercent(uint128 _undercollateralizedThresholdPercent) public {
+        self.undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
+    }
+
+    function getUndercollateralizedThresholdPercent() public view returns (uint128) { return self.undercollateralizedThresholdPercent; }
+
+    function setSeverelyUndercollateralizedThresholdPercent(uint128 _severelyUndercollateralizedThresholdPercent) public {
+        self.severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
+    }
+
+    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint128) {
+        return self.severelyUndercollateralizedThresholdPercent;
+    }
 
     function setLiquidationAndCourtesyInitated(
         uint256 _liquidation,
@@ -91,23 +109,27 @@ contract TestDeposit is Deposit {
     }
 
     function setRequestInfo(
-        address payable _requesterAddress,
-        bytes20 _requesterPKH,
+        address payable _redeemerAddress,
+        bytes20 _redeemerPKH,
         uint256 _initialRedemptionFee,
         uint256 _withdrawalRequestTime,
         bytes32 _lastRequestedDigest
     ) public {
-        self.requesterAddress = _requesterAddress;
-        self.requesterPKH = _requesterPKH;
+        self.redeemerAddress = _redeemerAddress;
+        self.redeemerPKH = _redeemerPKH;
         self.initialRedemptionFee = _initialRedemptionFee;
         self.withdrawalRequestTime = _withdrawalRequestTime;
         self.lastRequestedDigest = _lastRequestedDigest;
     }
-
+    function setRedeemerAddress(
+        address payable _redeemerAddress
+    ) public {
+        self.redeemerAddress = _redeemerAddress;
+    }
     function getRequestInfo() public view returns (address, bytes20, uint256, uint256, bytes32) {
         return (
-            self.requesterAddress,
-            self.requesterPKH,
+            self.redeemerAddress,
+            self.redeemerPKH,
             self.initialRedemptionFee,
             self.withdrawalRequestTime,
             self.lastRequestedDigest);
@@ -127,8 +149,12 @@ contract TestDeposit is Deposit {
         return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
 
-    function getRedemptionTbtcRequirement(address _requester) public view returns (uint256) {
-        return self.getRedemptionTbtcRequirement(_requester);
+    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
+        return self.getRedemptionTbtcRequirement(_redeemer);
+    }
+
+   function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
+        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
     }
 
      function performRedemptionTBTCTransfers() public {

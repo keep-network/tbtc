@@ -25,14 +25,14 @@ library DepositFunding {
 
     /// @notice     Deletes state after funding
     /// @dev        This is called when we go to ACTIVE or setup fails without fraud
-    function fundingTeardown(DepositUtils.Deposit storage _d) public {
+    function fundingTeardown(DepositUtils.Deposit storage _d) internal {
         _d.signingGroupRequestedAt = 0;
         _d.fundingProofTimerStart = 0;
     }
 
     /// @notice     Deletes state after the funding ECDSA fraud process
     /// @dev        This is only called as we transition to setup failed
-    function fundingFraudTeardown(DepositUtils.Deposit storage _d) public {
+    function fundingFraudTeardown(DepositUtils.Deposit storage _d) internal {
         _d.keepAddress = address(0);
         _d.signingGroupRequestedAt = 0;
         _d.fundingProofTimerStart = 0;
@@ -49,17 +49,23 @@ library DepositFunding {
     function createNewDeposit(
         DepositUtils.Deposit storage _d,
         uint256 _m,
-        uint256 _n
+        uint256 _n,
+        uint256 _lotSize
     ) public returns (bool) {
-        require(TBTCSystem(_d.TBTCSystem).getAllowNewDeposits(), "Opening new deposits is currently disabled.");
+        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
+
+        require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
         /* solium-disable-next-line value-in-payable */
         require(msg.value == TBTCConstants.getFunderBondAmount(), "incorrect funder bond amount");
-
+        require(_system.isAllowedLotSize(_lotSize), "provided lot size not supported");
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
-        _d.keepAddress = TBTCSystem(_d.TBTCSystem).requestNewKeep(_m, _n);
-        _d.signerFeeDivisor = TBTCSystem(_d.TBTCSystem).getSignerFeeDivisor();
+        _d.lotSizeSatoshis = _lotSize;
+        _d.keepAddress = _system.requestNewKeep(_m, _n);
+        _d.signerFeeDivisor = _system.getSignerFeeDivisor();
+        _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
+        _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
@@ -70,7 +76,7 @@ library DepositFunding {
 
     /// @notice     Transfers the funders bond to the signers if the funder never funds
     /// @dev        Called only by notifyFundingTimeout
-    function revokeFunderBond(DepositUtils.Deposit storage _d) public {
+    function revokeFunderBond(DepositUtils.Deposit storage _d) internal {
         if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
             _d.pushFundsToKeepGroup(TBTCConstants.getFunderBondAmount());
         } else if (address(this).balance > 0) {
@@ -80,7 +86,7 @@ library DepositFunding {
 
     /// @notice     Returns the funder's bond plus a payment at contract teardown
     /// @dev        Returns the balance if insufficient. Always call this before distributing signer payments
-    function returnFunderBond(DepositUtils.Deposit storage _d) public {
+    function returnFunderBond(DepositUtils.Deposit storage _d) internal {
         if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
             _d.depositOwner().transfer(TBTCConstants.getFunderBondAmount());
         } else if (address(this).balance > 0) {
@@ -90,7 +96,7 @@ library DepositFunding {
 
     /// @notice     slashes the signers partially for committing fraud before funding occurs
     /// @dev        called only by notifyFraudFundingTimeout
-    function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) public {
+    function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) internal {
         uint256 _seized = _d.seizeSignerBonds();
         uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
         _d.pushFundsToKeepGroup(_seized.sub(_slash));
@@ -316,6 +322,7 @@ library DepositFunding {
         // Write down the UTXO info and set to active. Congratulations :)
         _d.utxoSizeBytes = _valueBytes;
         _d.utxoOutpoint = _utxoOutpoint;
+        _d.fundedAt = block.timestamp;
 
         fundingTeardown(_d);
         _d.setActive();

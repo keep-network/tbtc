@@ -1,4 +1,6 @@
 import expectThrow from './helpers/expectThrow'
+import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
+import increaseTime from './helpers/increaseTime'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
@@ -72,6 +74,7 @@ contract('DepositUtils', (accounts) => {
   let beneficiary
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
+  const fullBtc = 100000000
   let tbtcSystemStub
   let tbtcDepositToken
   let feeRebateToken
@@ -100,6 +103,7 @@ contract('DepositUtils', (accounts) => {
       utils.address0,
       1, // m
       1, // n
+      fullBtc,
       { value: funderBondAmount }
     )
 
@@ -474,6 +478,47 @@ contract('DepositUtils', (accounts) => {
         testUtilsInstance.pushFundsToKeepGroup.call(10000000000000),
         'Not enough funds to send'
       )
+    })
+  })
+
+  describe('remainingTerm', async () => {
+    const prevoutValueBytes = '0xffffffffffffffff'
+    const outpoint = '0x' + '33'.repeat(36)
+    let depositTerm
+    let fundedAt
+
+    before(async () => {
+      depositTerm = await deployed.TBTCConstants.getDepositTerm.call()
+
+      // Set Deposit.fundedAt to current block.
+      const block = await web3.eth.getBlock('latest')
+      fundedAt = block.timestamp
+      await testUtilsInstance.setUTXOInfo(prevoutValueBytes, fundedAt, outpoint)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('returns remaining term from current block', async () => {
+      // Because there is time elapsed since we call `setUTXOInfo`, we get the time again.
+      const block = await web3.eth.getBlock('latest')
+
+      const remainingTerm = await testUtilsInstance.remainingTerm.call()
+      const expectedRemainingTerm = new BN(fundedAt).add(depositTerm).sub(new BN(block.timestamp))
+      expect(remainingTerm).to.eq.BN(expectedRemainingTerm)
+    })
+
+    it('returns 0 if deposit is at term', async () => {
+      // Simulate an entire term.
+      await increaseTime(depositTerm.toNumber())
+
+      const remainingTerm = await testUtilsInstance.remainingTerm.call()
+      expect(remainingTerm).to.eq.BN(0)
     })
   })
 })

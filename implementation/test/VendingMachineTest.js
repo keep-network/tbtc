@@ -108,6 +108,7 @@ contract('VendingMachine', (accounts) => {
       vendingMachine.address
     )
     await testInstance.setSignerFeeDivisor(signerFeeDivisor)
+    await testInstance.setLotSize(new BN('100000000'))
 
     await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
 
@@ -119,7 +120,7 @@ contract('VendingMachine', (accounts) => {
 
     tdtId = await web3.utils.toBN(testInstance.address)
 
-    depositValue = await deployed.TBTCConstants.getLotSizeTbtc()
+    depositValue = await testInstance.lotSizeTbtc()
     signerFee = depositValue.div(signerFeeDivisor)
   })
 
@@ -330,7 +331,7 @@ contract('VendingMachine', (accounts) => {
     let block
 
     before(async () => {
-      requiredBalance = await deployed.TBTCConstants.getLotSizeTbtc.call()
+      requiredBalance = await testInstance.lotSizeTbtc.call()
 
       block = await web3.eth.getBlock('latest')
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
@@ -351,12 +352,12 @@ contract('VendingMachine', (accounts) => {
 
     it('successfully redeems via wrapper', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
-
+      await tbtcToken.forceMint(testInstance.address, signerFee)
       await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
       await feeRebateToken.forceMint(accounts[0], tdtId)
-      await vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH)
+      await vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH, accounts[0])
       const requestInfo = await testInstance.getRequestInfo()
       assert.equal(requestInfo[1], requesterPKH)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
@@ -375,7 +376,7 @@ contract('VendingMachine', (accounts) => {
       await feeRebateToken.forceMint(accounts[1], tdtId)
 
       await expectThrow(
-        vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH),
+        vendingMachine.tbtcToBtc(testInstance.address, '0x1111111100000000', requesterPKH, accounts[0]),
         'SafeMath: subtraction overflow.'
       )
     })
