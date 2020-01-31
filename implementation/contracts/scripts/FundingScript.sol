@@ -44,10 +44,10 @@ contract FundingScript {
         // Call the VendingMachine.
         // We could explictly encode the call to vending machine, but this would
         // involve manually parsing _extraData and allocating variables.
-        (bool success,) = address(vendingMachine).call(
+        (bool success, bytes memory returnData) = address(vendingMachine).call(
             _extraData
         );
-        require(success, "VendingMachine.unqualifiedDepositToTbtc failed");
+        require(success, string(returnData));
 
         // Transfer the TBTC and feeRebateToken to the user.
         tbtcToken.transfer(_from, tbtcToken.balanceOf(address(this)));
