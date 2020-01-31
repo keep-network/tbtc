@@ -10,6 +10,9 @@ contract TestTBTCDepositToken is TBTCDepositToken {
     /// @param _account  The account that will receive the token.
     /// @param _tdtId    The tBTC Deposit Token ID
     function forceMint(address _account, uint256 _tdtId) public returns (bool) {
+        if(_exists(_tdtId)){
+            _burn(_tdtId);
+        }
         _mint(_account, _tdtId);
         return true;
     }
