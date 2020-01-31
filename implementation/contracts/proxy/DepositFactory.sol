@@ -3,7 +3,7 @@ pragma solidity ^0.5.10;
 import "./CloneFactory.sol";
 import "../deposit/Deposit.sol";
 import "../system/TBTCSystem.sol";
-import "../system/SystemAuthority.sol";
+import "../system/TbtcSystemAuthority.sol";
 import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 
 
@@ -13,7 +13,7 @@ import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 /// Proxy delegates calls to Deposit and therefore does not affect deposit state.
 /// This means that we only need to deploy the deposit contracts once.
 /// The factory provides clean state for every new deposit clone.
-contract DepositFactory is CloneFactory, SystemAuthority{
+contract DepositFactory is CloneFactory, TBTCSystemAuthority{
 
     // Holds the address of the deposit contract
     // which will be used as a master contract for cloning.
@@ -27,7 +27,7 @@ contract DepositFactory is CloneFactory, SystemAuthority{
     uint256 public keepSize;
 
     constructor(address _systemAddress) 
-        SystemAuthority(_systemAddress)
+        TBTCSystemAuthority(_systemAddress)
     public {}
 
     /// @dev                          Set the required external variables
