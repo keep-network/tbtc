@@ -35,7 +35,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
 ]
 
-contract('TBTCSystem', (accounts) => {
+contract.only('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
 
@@ -90,7 +90,6 @@ contract('TBTCSystem', (accounts) => {
   })
 
   describe('emergencyPauseNewDeposits', async () => {
-
     beforeEach(async () => {
       await createSnapshot()
     })
