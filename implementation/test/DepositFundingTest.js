@@ -81,6 +81,7 @@ contract('DepositFunding', (accounts) => {
   let beneficiary
   let tbtcToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
+  const fullBtc = 100000000
   let tbtcSystemStub
   let tbtcDepositToken
 
@@ -126,6 +127,7 @@ contract('DepositFunding', (accounts) => {
         utils.address0,
         1, // m
         1,
+        fullBtc,
         { value: funderBondAmount }
       )
 
@@ -162,7 +164,8 @@ contract('DepositFunding', (accounts) => {
           utils.address0,
           utils.address0,
           1, // m
-          1),
+          1,
+          fullBtc),
         'Deposit setup already requested'
       )
     })
@@ -178,7 +181,8 @@ contract('DepositFunding', (accounts) => {
           utils.address0,
           utils.address0,
           1, // m
-          1
+          1,
+          fullBtc
         ),
         'Opening new deposits is currently disabled.'
       )

@@ -57,7 +57,7 @@ library DepositRedemption {
         address tdtHolder = _d.depositOwner();
         address vendingMachine = _d.VendingMachine;
 
-        uint256 tbtcLot = TBTCConstants.getLotSizeTbtc();
+        uint256 tbtcLot = _d.lotSizeTbtc();
         uint256 signerFee = _d.signerFee();
         uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(_d.redeemerAddress);
 

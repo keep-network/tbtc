@@ -31,6 +31,7 @@ library DepositUtils {
         address TBTCDepositToken;
         address FeeRebateToken;
         address VendingMachine;
+        uint256 lotSizeSatoshis;
         uint8 currentState;
         uint256 signerFeeDivisor;
         uint128 undercollateralizedThresholdPercent;
@@ -196,7 +197,7 @@ library DepositUtils {
 
         _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
 
-        require(bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSizeBtc(), "Deposit too small");
+        require(bytes8LEToUint(_valueBytes) >= _d.lotSizeSatoshis, "Deposit too small");
 
         checkProofFromTxId(_d, txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
@@ -236,11 +237,17 @@ library DepositUtils {
         return _available.mul(_percentage).div(100);
     }
 
+    /// @notice         Gets the lot size in erc20 decimal places (max 18) 
+    /// @return         uint256 lot size in erc20 
+    function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
+        return _d.lotSizeSatoshis * TBTCConstants.getSatoshiMultiplier();
+    }
+
     /// @notice         Determines the fees due to the signers for work performed
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee(Deposit storage _d) public view returns (uint256) {
-        return TBTCConstants.getLotSizeTbtc().div(_d.signerFeeDivisor);
+        return lotSizeTbtc(_d).div(_d.signerFeeDivisor);
     }
 
     /// @notice     Determines the amount of TBTC accepted in the auction
@@ -248,7 +255,7 @@ library DepositUtils {
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.redeemerAddress == address(0)) {
-            return TBTCConstants.getLotSizeTbtc();
+            return lotSizeTbtc(_d);
         } else {
             return 0;
         }
@@ -428,6 +435,6 @@ library DepositUtils {
             return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
         }
         require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL");
-        return TBTCConstants.getLotSizeTbtc();
+        return lotSizeTbtc(_d);
     }
 }

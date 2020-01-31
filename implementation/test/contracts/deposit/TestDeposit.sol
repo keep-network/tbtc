@@ -15,14 +15,15 @@ contract TestDeposit is Deposit {
         address _FeeRebateToken,
         address _VendingMachine,
         uint256 _m,
-        uint256 _n
+        uint256 _n,
+        uint256 _lotSize
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.TBTCDepositToken = _TBTCDepositToken;
         self.FeeRebateToken = _FeeRebateToken;
         self.VendingMachine = _VendingMachine;
-        self.createNewDeposit(_m, _n);
+        self.createNewDeposit(_m, _n, _lotSize);
         return true;
     }
 
@@ -63,6 +64,10 @@ contract TestDeposit is Deposit {
     }
 
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
+    
+    function setLotSize(uint256 _lotSizeSatoshis) public {
+        self.lotSizeSatoshis = _lotSizeSatoshis;
+    }
 
     function setUndercollateralizedThresholdPercent(uint128 _undercollateralizedThresholdPercent) public {
         self.undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;

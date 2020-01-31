@@ -35,6 +35,7 @@ contract('DepositFactory', (accounts) => {
   let tbtcToken
   let tbtcDepositToken
   const funderBondAmount = new BN('10').pow(new BN('5'))
+  const fullBtc = 100000000
   let tbtcSystemStub
 
   before(async () => {
@@ -64,10 +65,12 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
+        fullBtc,
         { value: funderBondAmount }
       )
 
       await factory.createDeposit(
+        fullBtc,
         { value: funderBondAmount }
       )
 
@@ -83,9 +86,9 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
+        fullBtc,
         { value: funderBondAmount }
       )
-
       const eventList = await factory.getPastEvents(
         'DepositCloneCreated',
         {
@@ -109,10 +112,12 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
+        fullBtc,
         { value: funderBondAmount }
       )
 
       await factory.createDeposit(
+        fullBtc,
         { value: funderBondAmount }
       )
 
@@ -166,6 +171,7 @@ contract('DepositFactory', (accounts) => {
         utils.address0,
         1,
         1,
+        fullBtc,
         { value: funderBondAmount }
       )
 
@@ -181,6 +187,7 @@ contract('DepositFactory', (accounts) => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await factory.createDeposit(
+        fullBtc,
         { value: funderBondAmount }
       )
 

@@ -67,7 +67,7 @@ contract DepositFactory is CloneFactory, SystemAuthority{
     ///                        to create a clone is by also calling createNewDeposit()
     ///                        Deposits created this way will never pass by state 0 (START)
     /// @return                True if successful, otherwise revert
-    function createDeposit () public payable returns(address) {
+    function createDeposit (uint256 _lotSize) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
 
         Deposit(address(uint160(cloneAddress))).createNewDeposit.value(msg.value)(
@@ -77,7 +77,9 @@ contract DepositFactory is CloneFactory, SystemAuthority{
             feeRebateToken,
             vendingMachine,
             keepThreshold,
-            keepSize);
+            keepSize,
+            _lotSize
+        );
 
         TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));
 

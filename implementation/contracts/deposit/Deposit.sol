@@ -51,6 +51,18 @@ contract Deposit is DepositFactoryAuthority {
         return self.signerFee();
     }
 
+    /// @notice     Get the Deposit BTC lot size.
+    /// @return     uint256 lot size in satoshi
+    function lotSizeSatoshis() public view returns (uint256){
+        return self.lotSizeSatoshis;
+    }
+
+    /// @notice     Get the Deposit ERC20 lot size.
+    /// @return     uint256 lot size in erc20 decimal (max 18)
+    function lotSizeTbtc() public view returns (uint256){
+        return self.lotSizeTbtc();
+    }
+
     // THIS IS THE INIT FUNCTION
     /// @notice         The system can spin up a new deposit
     /// @dev            This should be called by an approved contract, not a developer
@@ -64,14 +76,15 @@ contract Deposit is DepositFactoryAuthority {
         address _FeeRebateToken,
         address _VendingMachine,
         uint256 _m,
-        uint256 _n
+        uint256 _n,
+        uint256 _lotSize
     ) public onlyFactory payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.TBTCDepositToken = _TBTCDepositToken;
         self.FeeRebateToken = _FeeRebateToken;
         self.VendingMachine = _VendingMachine;
-        self.createNewDeposit(_m, _n);
+        self.createNewDeposit(_m, _n, _lotSize);
         return true;
     }
 
