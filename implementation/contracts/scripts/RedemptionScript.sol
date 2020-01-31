@@ -35,7 +35,10 @@ contract RedemptionScript {
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
         tbtcToken.transferFrom(_from, address(this), _amount);
         tbtcToken.approve(address(vendingMachine), _amount);
+
+        // Verify _extraData is a call to tbtcToBtc.
         bytes4 functionSignature;
+        /* solium-disable security/no-inline-assembly */
         assembly { functionSignature := mload(add(_extraData, 0x20)) }
         require(functionSignature == vendingMachine.tbtcToBtc.selector, "Invalid method signature encoded in _extraData.");
 
