@@ -63,16 +63,12 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(OutsourceDepositLogging)
     await deployer.link(OutsourceDepositLogging, all)
 
-    // price oracle
     await deployer.deploy(BTCETHPriceFeed)
 
-    // system
     await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
 
-    // deposit factory
     await deployer.deploy(DepositFactory, TBTCSystem.address)
 
-    // vending machine
     await deployer.deploy(VendingMachine, TBTCSystem.address)
 
     // deposit
