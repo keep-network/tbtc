@@ -35,7 +35,7 @@ const TEST_DEPOSIT_DEPLOY = [
   { name: 'TestDeposit', contract: TestDeposit },
 ]
 
-contract.only('TBTCSystem', (accounts) => {
+contract('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
 
