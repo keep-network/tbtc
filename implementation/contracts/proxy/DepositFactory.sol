@@ -43,7 +43,8 @@ contract DepositFactory is CloneFactory{
         address _FeeRebateToken,
         address _VendingMachine,
         uint256 _keepThreshold,
-        uint256 _keepSize
+        uint256 _keepSize,
+        uint256 _lotSize
     ) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
 
@@ -54,7 +55,9 @@ contract DepositFactory is CloneFactory{
             _FeeRebateToken,
             _VendingMachine,
             _keepThreshold,
-            _keepSize);
+            _keepSize,
+            _lotSize
+        );
 
         TBTCDepositToken(_TBTCDepositToken).mint(msg.sender, uint256(cloneAddress));
 

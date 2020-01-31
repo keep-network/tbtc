@@ -12,6 +12,14 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
+    event LogLotSizesUpdated(uint256[] _lotSizes);
+    event LogAllowNewDepositsUpdated(bool _allowNewDeposits);
+    event LogSignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
+    event LogCollateralizationThresholdsUpdated(
+        uint256 _undercollateralizedThresholdPercent,
+        uint256 _severelyUndercollateralizedThresholdPercent
+    );
+
     bool _initialized = false;
 
     uint256 currentDifficulty = 1;
@@ -25,6 +33,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint128 private undercollateralizedThresholdPercent = 140;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
+    uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 20**7, 50**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     constructor(address _priceFeed) public {
         priceFeed = _priceFeed;
@@ -45,6 +54,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         external onlyOwner
     {
         allowNewDeposits = _allowNewDeposits;
+        emit LogAllowNewDepositsUpdated(_allowNewDeposits);
     }
 
     /// @notice Gets whether new deposits are allowed.
@@ -57,11 +67,38 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     {
         require(_signerFeeDivisor > 1, "Signer fee must be lower than 100%");
         signerFeeDivisor = _signerFeeDivisor;
+        emit LogSignerFeeDivisorUpdated(_signerFeeDivisor);
     }
 
     /// @notice Gets the system signer fee divisor.
     /// @return The signer fee divisor.
     function getSignerFeeDivisor() external view returns (uint256) { return signerFeeDivisor; }
+
+    /// @notice Set the allowed deposit lot sizes.
+    /// @dev    Lot sizes should be 
+    /// @param _lotSizes Array of allowed lot sizes.
+    function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
+        lotSizesSatoshis = _lotSizes;
+        emit LogLotSizesUpdated(_lotSizes);
+    }
+
+    /// @notice Gets the allowed lot sizes
+    /// @return Uint256 array of allowed lot sizes 
+    function getAllowedLotSizes() external view returns (uint256[] memory){
+        return lotSizesSatoshis;
+    }
+
+    /// @notice Check if a lot size is allowed.
+    /// @param _lotSize Lot size to check.
+    /// @return True if lot size is allowed, false otherwise. 
+    function isAllowedLotSize(uint256 _lotSize) external view returns (bool){
+        for( uint i = 0; i < lotSizesSatoshis.length; i++){
+            if (lotSizesSatoshis[i] == _lotSize){
+                return true;
+            }
+        }
+        return false;
+    }
 
     /// @notice Set the system collateralization levels
     /// @param _undercollateralizedThresholdPercent first undercollateralization trigger
@@ -76,6 +113,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
         undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
         severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
+        emit LogCollateralizationThresholdsUpdated(
+            _undercollateralizedThresholdPercent,
+            _severelyUndercollateralizedThresholdPercent
+        );
     }
 
     /// @notice Get the system undercollateralization level for new deposits
