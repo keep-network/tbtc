@@ -63,6 +63,12 @@ contract Deposit is DepositFactoryAuthority {
         return self.lotSizeTbtc();
     }
 
+    /// @notice     Get the size of the funding UTXO.
+    /// @return     Uint256 UTXO size.
+    function utxoSize() public view returns (uint256){
+        return self.utxoSize();
+    }
+
     // THIS IS THE INIT FUNCTION
     /// @notice         The system can spin up a new deposit
     /// @dev            This should be called by an approved contract, not a developer
