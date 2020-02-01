@@ -11,7 +11,7 @@ contract TBTCSystemAuthority {
 
     /// @notice Function modifier ensures modified function is only called by set deeposit factory
     modifier onlyTbtcSystem(){
-        require(msg.sender == tbtcSystem, "Caller must be depositFactory contract");
+        require(msg.sender == tbtcSystem, "Caller must be tbtcSystem contract");
         _;
     }
 }

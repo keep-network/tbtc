@@ -17,7 +17,7 @@ contract TBTCSystemStub is TBTCSystem {
     function setOraclePrice(uint256 _oraclePrice) external {
         oraclePrice = _oraclePrice;
     }
-    
+
     function setKeepRegistry(address _keepRegistry) external {
         keepRegistry = _keepRegistry;
     }

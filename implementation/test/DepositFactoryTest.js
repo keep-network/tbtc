@@ -27,9 +27,8 @@ contract('DepositFactory', () => {
       tbtcToken,
       tbtcDepositToken,
       testDeposit,
+      factory,
     } = await deployTestDeposit())
-
-    factory = await DepositFactory.new(testDeposit.address)
   })
 
   describe('createDeposit()', async () => {
