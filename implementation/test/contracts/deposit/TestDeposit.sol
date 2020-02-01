@@ -127,7 +127,7 @@ contract TestDeposit is Deposit {
         self.signingGroupPubkeyY = _y;
     }
 
-    function getSigningGroupPublicKey() public returns (bytes32, bytes32){
+    function getSigningGroupPublicKey() public view returns (bytes32, bytes32){
         return (self.signingGroupPubkeyX, self.signingGroupPubkeyY);
     }
 

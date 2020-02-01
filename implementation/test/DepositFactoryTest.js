@@ -1,64 +1,35 @@
+import deployTestDeposit from './helpers/deployTestDeposit'
+
+import BN from 'bn.js'
+import utils from './utils'
+import chai, { expect } from 'chai'
+import bnChai from 'bn-chai'
+chai.use(bnChai(BN))
+
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
-const TBTCToken = artifacts.require('TBTCToken')
-const TBTCDepositToken = artifacts.require('TBTCDepositToken')
-const TBTCSystemStub = artifacts.require('TBTCSystemStub')
-const TestTBTCConstants = artifacts.require('TestTBTCConstants')
-const DepositStates = artifacts.require('DepositStates')
-const DepositFunding = artifacts.require('DepositFunding')
-const DepositLiquidation = artifacts.require('DepositLiquidation')
-const DepositRedemption = artifacts.require('DepositRedemption')
-const DepositUtils = artifacts.require('DepositUtils')
 const TestDeposit = artifacts.require('TestDeposit')
 const TestDepositFactory = artifacts.require('TestDepositFactory')
 
-const BN = require('bn.js')
-const utils = require('./utils')
-const chai = require('chai')
-const expect = chai.expect
-const bnChai = require('bn-chai')
-chai.use(bnChai(BN))
-
-const TEST_DEPOSIT_DEPLOY = [
-  { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'DepositFactory', contract: TestDepositFactory, constructorParam: utils.address0 }, // we don't care about ACL param. Bypassed in test
-  { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'DepositRedemption', contract: DepositRedemption },
-  { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'DepositStates', contract: DepositStates },
-  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
-  { name: 'TestDeposit', contract: TestDeposit, constructorParam: utils.address0 },
-]
-
-contract('DepositFactory', (accounts) => {
-  let factory
-  let depositContract
+contract('DepositFactory', () => {
+  let tbtcSystemStub
   let tbtcToken
   let tbtcDepositToken
+  let testDeposit
+
+  let factory
+
   const funderBondAmount = new BN('10').pow(new BN('5'))
   const fullBtc = 100000000
-  let tbtcSystemStub
 
   before(async () => {
-    const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    ({
+      tbtcSystemStub,
+      tbtcToken,
+      tbtcDepositToken,
+      testDeposit,
+    } = await deployTestDeposit())
 
-    factory = deployed.DepositFactory
-    depositContract = deployed.TestDeposit
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
-    tbtcSystemStub.initialize(utils.address0)
-
-    tbtcToken = await TBTCToken.new(utils.address0)
-    tbtcDepositToken = await TBTCDepositToken.new(factory.address)
-
-    factory.setExternalDependencies(
-      depositContract.address,
-      tbtcSystemStub.address,
-      tbtcToken.address,
-      tbtcDepositToken.address,
-      utils.address0,
-      utils.address0,
-      1,
-      1,
-    )
+    factory = await DepositFactory.new(testDeposit.address)
   })
 
   describe('createDeposit()', async () => {
@@ -164,7 +135,7 @@ contract('DepositFactory', (accounts) => {
     it('is not affected by state changes to master', async () => {
       const keep = await ECDSAKeepStub.new()
 
-      await depositContract.createNewDeposit(
+      await testDeposit.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,
@@ -176,14 +147,14 @@ contract('DepositFactory', (accounts) => {
         { value: funderBondAmount }
       )
 
-      await depositContract.setKeepAddress(keep.address)
+      await testDeposit.setKeepAddress(keep.address)
 
       await keep.setPublicKey(publicKey)
 
-      await depositContract.retrieveSignerPubkey()
+      await testDeposit.retrieveSignerPubkey()
 
       // master deposit should now be in AWAITING_BTC_FUNDING_PROOF
-      const masterState = await depositContract.getCurrentState()
+      const masterState = await testDeposit.getCurrentState()
 
       const blockNumber = await web3.eth.getBlockNumber()
 

@@ -17,31 +17,6 @@ const TBTCSystem = artifacts.require('TBTCSystem')
 const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
-const DepositFunding = artifacts.require('DepositFunding')
-const DepositLiquidation = artifacts.require('DepositLiquidation')
-const DepositRedemption = artifacts.require('DepositRedemption')
-const DepositUtils = artifacts.require('DepositUtils')
-const TestTBTCConstants = artifacts.require('TestTBTCConstants')
-const DepositStates = artifacts.require('DepositStates')
-const TBTCConstants = artifacts.require('TBTCConstants')
-const TestDeposit = artifacts.require('TestDeposit')
-const TestDepositFactory = artifacts.require('TestDepositFactory')
-const TestVendingMachine = artifacts.require('TestVendingMachine')
-
-const TEST_DEPOSIT_DEPLOY = [
-  { name: 'TBTCSystem', contract: TBTCSystem, constructorParam: utils.address0 },
-  { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the names
-  { name: 'DepositFactory', contract: TestDepositFactory, constructorParam: 'TBTCSystem' }, // we don't care about ACL param. Bypassed in test
-  { name: 'TestVendingMachine', contract: TestVendingMachine, constructorParam: 'TBTCSystem' },
-  { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'DepositRedemption', contract: DepositRedemption },
-  { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'DepositStates', contract: DepositStates },
-  { name: 'TBTCConstants', contract: TBTCConstants },
-  { name: 'TestDeposit', contract: TestDeposit, constructorParam: utils.address0 },
-]
-
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
@@ -76,6 +51,19 @@ contract('TBTCSystem', (accounts) => {
   })
 
   describe('requestNewKeep()', async () => {
+    before(async () => {
+      ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
+
+      const keepRegistry = await KeepRegistryStub.new()
+      await keepRegistry.setVendor(ecdsaKeepVendor.address)
+
+      tbtcSystem = await TBTCSystem.new(utils.address0)
+
+      await tbtcSystem.initialize(
+        keepRegistry.address
+      )
+    })
+
     it('sends caller as owner to open new keep', async () => {
       const expectedKeepOwner = accounts[2]
 
@@ -180,7 +168,7 @@ contract('TBTCSystem', (accounts) => {
       term = await tbtcSystem.getRemainingPauseTerm()
 
       await increaseTime(term.toNumber()) // 10 days
-      tbtcSystem.resumeNewDeposits()
+      await tbtcSystem.resumeNewDeposits()
       const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
     })

@@ -11,7 +11,7 @@ contract KeepRegistryStub is IKeepRegistry {
         vendor = _vendorAddress;
     }
 
-    function getVendor(string calldata _keepType) external view returns (address){
+    function getVendor(string calldata) external view returns (address){
         return vendor;
     }
 }
