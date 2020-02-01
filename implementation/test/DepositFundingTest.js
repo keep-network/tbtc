@@ -1,4 +1,8 @@
 import expectThrow from './helpers/expectThrow'
+import {
+  createSnapshot,
+  restoreSnapshot,
+} from './helpers/snapshot'
 
 const BytesLib = artifacts.require('BytesLib')
 const BTCUtils = artifacts.require('BTCUtils')
@@ -89,6 +93,7 @@ contract('DepositFunding', (accounts) => {
     deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
 
     tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+    tbtcSystemStub.initialize(utils.address0)
 
     tbtcToken = await TestToken.new(utils.address0)
     tbtcDepositToken = await TBTCDepositToken.new(utils.address0)
@@ -106,11 +111,16 @@ contract('DepositFunding', (accounts) => {
     await tbtcDepositToken.forceMint(accounts[4], web3.utils.toBN(deployed.TestDeposit.address))
 
     beneficiary = accounts[4]
+    await testInstance.reset()
+    await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
   })
 
   beforeEach(async () => {
-    await testInstance.reset()
-    await testInstance.setKeepAddress(deployed.ECDSAKeepStub.address)
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
   })
 
   describe('createNewDeposit', async () => {
@@ -171,7 +181,7 @@ contract('DepositFunding', (accounts) => {
     })
 
     it('fails if new deposits are disabled', async () => {
-      await tbtcSystemStub.setAllowNewDeposits(false)
+      await tbtcSystemStub.emergencyPauseNewDeposits()
 
       await expectThrow(
         testInstance.createNewDeposit.call(
@@ -186,8 +196,6 @@ contract('DepositFunding', (accounts) => {
         ),
         'Opening new deposits is currently disabled.'
       )
-
-      await tbtcSystemStub.setAllowNewDeposits(true)
     })
 
     it.skip('stores payment value as funder\'s bond', async () => {
