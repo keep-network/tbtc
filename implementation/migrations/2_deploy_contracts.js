@@ -23,6 +23,8 @@ const BTCUSDPriceFeed = artifacts.require('BTCUSDPriceFeed')
 const ETHUSDPriceFeed = artifacts.require('ETHUSDPriceFeed')
 const prices = require('./prices')
 
+const MockRelay = artifacts.require('MockRelay')
+
 // system
 const TBTCConstants = artifacts.require('TBTCConstants')
 const TBTCSystem = artifacts.require('TBTCSystem')
@@ -84,6 +86,7 @@ module.exports = (deployer, network, accounts) => {
     // price oracle
     await deployer.deploy(BTCETHPriceFeed)
 
+    let difficultyRelay
     // price feeds
     if (network !== 'mainnet') {
       // On mainnet, we use the MakerDAO-deployed price feeds.
@@ -98,13 +101,22 @@ module.exports = (deployer, network, accounts) => {
 
       await btcPriceFeed.setValue(web3.utils.toWei(prices.BTCUSD))
       await ethPriceFeed.setValue(web3.utils.toWei(prices.ETHUSD))
+
+      // On mainnet, we use the Summa-provided relay; see
+      // https://github.com/summa-tx/relays . On testnet, we use a local mock.
+      await deployer.deploy(MockRelay)
+      difficultyRelay = await MockRelay.deployed()
+    }
+
+    if (! difficultyRelay) {
+      throw new Error('Difficulty relay not found.')
     }
 
     // deposit factory
     await deployer.deploy(DepositFactory, Deposit.address)
 
     // system
-    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
+    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address, difficultyRelay.address)
 
     // token
     await deployer.deploy(TBTCToken, TBTCSystem.address)
