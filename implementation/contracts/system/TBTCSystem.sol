@@ -98,8 +98,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @dev    Lot sizes should be 
     /// @param _lotSizes Array of allowed lot sizes.
     function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
-        lotSizesSatoshis = _lotSizes;
-        emit LotSizesUpdated(_lotSizes);
+        for( uint i = 0; i < _lotSizes.length; i++){
+            if (_lotSizes[i] == 10**8){
+                lotSizesSatoshis = _lotSizes;
+                emit LotSizesUpdated(_lotSizes);
+                return;
+            }
+        }
+        revert("Lot size array must always contain 1BTC");
     }
 
     /// @notice Gets the allowed lot sizes
