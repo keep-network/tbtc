@@ -48,6 +48,24 @@ contract Deposit {
         return self.signerFee();
     }
 
+    /// @notice     Get the Deposit BTC lot size.
+    /// @return     uint256 lot size in satoshi
+    function lotSizeSatoshis() public view returns (uint256){
+        return self.lotSizeSatoshis;
+    }
+
+    /// @notice     Get the Deposit ERC20 lot size.
+    /// @return     uint256 lot size in erc20 decimal (max 18)
+    function lotSizeTbtc() public view returns (uint256){
+        return self.lotSizeTbtc();
+    }
+
+    /// @notice     Get the size of the funding UTXO.
+    /// @return     Uint256 UTXO size.
+    function utxoSize() public view returns (uint256){
+        return self.utxoSize();
+    }
+
     // THIS IS THE INIT FUNCTION
     /// @notice         The system can spin up a new deposit
     /// @dev            This should be called by an approved contract, not a developer
@@ -61,35 +79,63 @@ contract Deposit {
         address _FeeRebateToken,
         address _VendingMachine,
         uint256 _m,
-        uint256 _n
+        uint256 _n,
+        uint256 _lotSize
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.TBTCDepositToken = _TBTCDepositToken;
         self.FeeRebateToken = _FeeRebateToken;
         self.VendingMachine = _VendingMachine;
-        self.createNewDeposit(_m, _n);
+        self.createNewDeposit(_m, _n, _lotSize);
         return true;
     }
 
     /// @notice                     Anyone can request redemption
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
     /// @return                     True if successful, otherwise revert
     function requestRedemption(
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH,
-        address payable _requesterAddress
+        bytes20 _redeemerPKH
     ) public returns (bool) {
-        self.requestRedemption(_outputValueBytes, _requesterPKH, _requesterAddress);
+        self.requestRedemption(_outputValueBytes, _redeemerPKH);
         return true;
     }
 
-    /// @notice View function for access to TBTC required by redemption.
-    /// @return The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(address _requester) public view returns(uint256){       
-        return self.getRedemptionTbtcRequirement(_requester);
+    /// @notice                     Anyone can request redemption
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx and pays for the redemption
+    /// @param  _outputValueBytes   The 8-byte LE output size
+    /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
+    function transferAndRequestRedemption(
+        bytes8 _outputValueBytes,
+        bytes20 _redeemerPKH,
+        address payable _finalRecipient
+    ) public returns (bool) {
+        self.transferAndRequestRedemption(
+            _outputValueBytes,
+            _redeemerPKH,
+            _finalRecipient
+        );
+        return true;
+    }
+
+    /// @notice             Get TBTC amount required by redemption by a specified _redeemer
+    /// @dev                Will revert if redemption is not possible by msg.sender.
+    /// @param _redeemer    The deposit redeemer. 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){       
+        return self.getRedemptionTbtcRequirement(_redeemer);
+    }
+
+    /// @notice             Get TBTC amount required for redemption assuming _redeemer
+    ///                     is this deposit's TDT owner.
+    /// @param _redeemer    The assumed owner of the deposit's TDT 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
+        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
     }
 
     /// @notice     Anyone may provide a withdrawal signature if it was requested

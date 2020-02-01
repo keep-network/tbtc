@@ -27,7 +27,7 @@ contract VendingMachine {
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
     /// @param _depositAddress the address of the deposit
-    function isQualified(address payable _depositAddress) public returns (bool) {
+    function isQualified(address payable _depositAddress) public view returns (bool) {
         return Deposit(_depositAddress).inActive();
     }
 
@@ -39,7 +39,7 @@ contract VendingMachine {
         require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
         require(isQualified(address(_tdtId)), "Deposit must be qualified");
 
-        uint256 depositValue = TBTCConstants.getLotSizeTbtc();
+        uint256 depositValue = Deposit(address(uint160(_tdtId))).lotSizeTbtc();
         require(tbtcToken.balanceOf(msg.sender) >= depositValue, "Not enough TBTC for TDT exchange");
         tbtcToken.burnFrom(msg.sender, depositValue);
 
@@ -60,7 +60,7 @@ contract VendingMachine {
         // If the backing Deposit does not have a signer fee in escrow, mint it.
         Deposit deposit = Deposit(address(uint160(_tdtId)));
         uint256 signerFee = deposit.signerFee();
-        uint256 depositValue = TBTCConstants.getLotSizeTbtc();
+        uint256 depositValue = deposit.lotSizeTbtc();
 
         if(tbtcToken.balanceOf(address(_tdtId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
@@ -108,32 +108,33 @@ contract VendingMachine {
         tdtToTbtc(uint256(_depositAddress));
     }
 
-    /// @notice Redeems a Deposit by purchasing a TDT with TBTC, and using the TDT to redeem corresponding Deposit.
+    /// @notice Redeems a Deposit by purchasing a TDT with TBTC for _finalRecipient,
+    ///         and using the TDT to redeem corresponding Deposit as _finalRecipient.
     ///         This function will revert if the Deposit is not in ACTIVE state.
     /// @dev Vending Machine transfers TBTC allowance to Deposit.
     /// @param  _depositAddress     The address of the Deposit to redeem.
     /// @param  _outputValueBytes   The 8-byte Bitcoin transaction output size in Little Endian.
     /// @param  _requesterPKH       The 20-byte Bitcoin pubkeyhash to which to send funds.
+    /// @param  _finalRecipient     The deposit redeemer. This address will receive the TDT.
     function tbtcToBtc(
         address payable _depositAddress,
         bytes8 _outputValueBytes,
-        bytes20 _requesterPKH
-    ) public{
+        bytes20 _requesterPKH,
+        address payable _finalRecipient
+    ) public {
+        require(tbtcDepositToken.exists(uint256(_depositAddress)), "tBTC Deposit Token does not exist");
         Deposit _d = Deposit(_depositAddress);
 
-        tbtcToTdt(uint256(_depositAddress));
+        tbtcToken.burnFrom(msg.sender, _d.lotSizeTbtc());
+        tbtcDepositToken.approve(_depositAddress, uint256(_depositAddress));
 
-        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(msg.sender);
+        uint256 tbtcOwed = _d.getOwnerRedemptionTbtcRequirement(msg.sender);
 
         if(tbtcOwed != 0){
             tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
             tbtcToken.approve(_depositAddress, tbtcOwed);
         }
 
-        _d.requestRedemption(
-            _outputValueBytes,
-            _requesterPKH,
-            msg.sender
-        );
+        _d.transferAndRequestRedemption(_outputValueBytes, _requesterPKH, _finalRecipient);
     }
 }

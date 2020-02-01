@@ -4,6 +4,7 @@ import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {DepositStates} from "./DepositStates.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
@@ -20,6 +21,7 @@ library DepositUtils {
     using BTCUtils for uint256;
     using ValidateSPV for bytes;
     using ValidateSPV for bytes32;
+    using DepositStates for DepositUtils.Deposit;
 
     struct Deposit {
 
@@ -29,6 +31,7 @@ library DepositUtils {
         address TBTCDepositToken;
         address FeeRebateToken;
         address VendingMachine;
+        uint256 lotSizeSatoshis;
         uint8 currentState;
         uint256 signerFeeDivisor;
         uint128 undercollateralizedThresholdPercent;
@@ -49,8 +52,8 @@ library DepositUtils {
         bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
-        address payable requesterAddress;  // The requester's address, used as fallback for fraud in redemption
-        bytes20 requesterPKH;  // The 20-byte requester PKH
+        address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
+        bytes20 redeemerPKH;  // The 20-byte redeemer PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
@@ -194,7 +197,7 @@ library DepositUtils {
 
         _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
 
-        require(bytes8LEToUint(_valueBytes) >= TBTCConstants.getLotSizeBtc(), "Deposit too small");
+        require(bytes8LEToUint(_valueBytes) >= _d.lotSizeSatoshis, "Deposit too small");
 
         checkProofFromTxId(_d, txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
@@ -234,19 +237,25 @@ library DepositUtils {
         return _available.mul(_percentage).div(100);
     }
 
+    /// @notice         Gets the lot size in erc20 decimal places (max 18) 
+    /// @return         uint256 lot size in erc20 
+    function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
+        return _d.lotSizeSatoshis * TBTCConstants.getSatoshiMultiplier();
+    }
+
     /// @notice         Determines the fees due to the signers for work performed
     /// @dev            Signers are paid based on the TBTC issued
     /// @return         Accumulated fees in smallest TBTC unit (tsat)
     function signerFee(Deposit storage _d) public view returns (uint256) {
-        return TBTCConstants.getLotSizeTbtc().div(_d.signerFeeDivisor);
+        return lotSizeTbtc(_d).div(_d.signerFeeDivisor);
     }
 
     /// @notice     Determines the amount of TBTC accepted in the auction
-    /// @dev        If requesterAddress is non-0, that means we came from redemption, and no auction should happen
+    /// @dev        If redeemerAddress is non-0, that means we came from redemption, and no auction should happen
     /// @return     The amount of TBTC that must be paid at auction for the signer's bond
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        if (_d.requesterAddress == address(0)) {
-            return TBTCConstants.getLotSizeTbtc();
+        if (_d.redeemerAddress == address(0)) {
+            return lotSizeTbtc(_d);
         } else {
             return 0;
         }
@@ -349,10 +358,10 @@ library DepositUtils {
     }
 
     /// @notice     Deletes state after termination of redemption process
-    /// @dev        We keep around the requester address so we can pay them out
+    /// @dev        We keep around the redeemer address so we can pay them out
     function redemptionTeardown(Deposit storage _d) public {
-        // don't 0 requesterAddress because we use it to calculate auctionTBTCAmount
-        _d.requesterPKH = bytes20(0);
+        // don't 0 redeemerAddress because we use it to calculate auctionTBTCAmount
+        _d.redeemerPKH = bytes20(0);
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);
@@ -361,7 +370,7 @@ library DepositUtils {
     /// @notice     Seize the signer bond from the keep contract
     /// @dev        we check our balance before and after
     /// @return     the amount of ether seized
-    function seizeSignerBonds(Deposit storage _d) public returns (uint256) {
+    function seizeSignerBonds(Deposit storage _d) internal returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.seizeSignerBonds(_d.keepAddress);
@@ -372,13 +381,13 @@ library DepositUtils {
 
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner
     ///             whenever this is called we are shutting down.
-    function distributeFeeRebate(Deposit storage _d) public {
+    function distributeFeeRebate(Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
         address rebateTokenHolder = feeRebateTokenHolder(_d);
 
-        // We didn't escrow a rebate if the requester is also the Fee Rebate Token holder
-        if(_d.requesterAddress == rebateTokenHolder) return;
+        // We didn't escrow a rebate if the redeemer is also the Fee Rebate Token holder
+        if(_d.redeemerAddress == rebateTokenHolder) return;
 
         // pay out the rebate if it is available
         if(_tbtc.balanceOf(address(this)) >= signerFee(_d)) {
@@ -390,10 +399,42 @@ library DepositUtils {
     /// @dev                useful for returning bonds to the group, or otherwise paying them
     /// @param  _ethValue   the amount of ether to send
     /// @return             true if successful, otherwise revert
-    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) public returns (bool) {
+    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
         _keep.distributeETHToMembers.value(_ethValue)();
         return true;
+    }
+
+    /// @notice             Get TBTC amount required for redemption assuming _redeemer
+    ///                     is this deposit's TDT owner.
+    /// @param _redeemer    The assumed owner of the deposit's TDT 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
+        uint256 fee = signerFee(_d);
+        bool inCourtesy = _d.inCourtesyCall();
+        if(remainingTerm(_d) > 0 && !inCourtesy){
+            if(feeRebateTokenHolder(_d) != _redeemer) {
+                return fee;
+            }
+        }
+        uint256 contractTbtcBalance = TBTCToken(_d.TBTCToken).balanceOf(address(this));
+        if(contractTbtcBalance < fee) {
+            return fee.sub(contractTbtcBalance);
+        }
+        return 0;
+    }
+
+    /// @notice             Get TBTC amount required by redemption by a specified _redeemer
+    /// @dev                Will revert if redemption is not possible by msg.sender.
+    /// @param _redeemer    The deposit redeemer. 
+    /// @return             The amount in TBTC needed to redeem the deposit.
+    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
+        bool inCourtesy = _d.inCourtesyCall();
+        if (depositOwner(_d) == _redeemer && !inCourtesy) {
+            return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
+        }
+        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL");
+        return lotSizeTbtc(_d);
     }
 }
