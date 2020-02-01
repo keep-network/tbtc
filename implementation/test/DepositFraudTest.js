@@ -36,6 +36,7 @@ const _merkleProof = '0x886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd5
 
 contract('DepositFraud', (accounts) => {
   let tbtcConstants
+  let mockRelay
   let tbtcSystemStub
   let tbtcDepositToken
   let testDeposit
@@ -47,6 +48,7 @@ contract('DepositFraud', (accounts) => {
   before(async () => {
     ({
       tbtcConstants,
+      mockRelay,
       tbtcSystemStub,
       tbtcDepositToken,
       testDeposit,
@@ -237,7 +239,7 @@ contract('DepositFraud', (accounts) => {
   describe('provideFraudBTCFundingProof', async () => {
     beforeEach(async () => {
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await mockRelay.setMock(currentDifficulty, 1)
       await testDeposit.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
       await ecdsaKeepStub.send(1000000, { from: accounts[0] })
     })
@@ -404,7 +406,7 @@ contract('DepositFraud', (accounts) => {
 
     beforeEach(async () => {
       await testDeposit.setState(utils.states.ACTIVE)
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await mockRelay.setMock(currentDifficulty, 1)
       await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await ecdsaKeepStub.send(1000000, { from: accounts[0] })
     })

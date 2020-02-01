@@ -17,6 +17,7 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 
 const TestToken = artifacts.require('TestToken')
+const MockRelay = artifacts.require('MockRelay')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
@@ -92,9 +93,11 @@ export default async function deployTestDeposit(
   const vendingMachine = deployed.VendingMachine
   const vendingMachineAddress = vendingMachine ? vendingMachine.address : utils.address0
 
-  const tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+  const mockRelay = await MockRelay.new()
+  const tbtcSystemStub = await TBTCSystemStub.new(utils.address0, mockRelay.address)
   const keepRegistry = await KeepRegistryStub.new()
-  tbtcSystemStub.initialize(keepRegistry.address)
+  await tbtcSystemStub.initialize(keepRegistry.address)
+  await mockRelay.setMock(1, 1)
 
   const tbtcToken = await TestToken.new(tbtcSystemStub.address)
   const testDeposit = deployed.TestDeposit
@@ -117,6 +120,7 @@ export default async function deployTestDeposit(
 
   return {
     tbtcConstants,
+    mockRelay,
     tbtcSystemStub,
     tbtcToken,
     tbtcDepositToken,

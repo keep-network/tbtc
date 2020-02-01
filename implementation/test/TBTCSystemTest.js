@@ -28,7 +28,7 @@ contract('TBTCSystem', (accounts) => {
       const keepRegistry = await KeepRegistryStub.new()
       await keepRegistry.setVendor(ecdsaKeepVendor.address)
 
-      tbtcSystem = await TBTCSystem.new(utils.address0)
+      tbtcSystem = await TBTCSystem.new(utils.address0, utils.address0)
 
       await tbtcSystem.initialize(
         keepRegistry.address

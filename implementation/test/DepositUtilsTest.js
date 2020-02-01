@@ -39,6 +39,7 @@ contract('DepositUtils', (accounts) => {
   const fullBtc = 100000000
 
   let tbtcConstants
+  let mockRelay
   let tbtcSystemStub
   let tbtcToken
   let tbtcDepositToken
@@ -49,6 +50,7 @@ contract('DepositUtils', (accounts) => {
   before(async () => {
     ({
       tbtcConstants,
+      mockRelay,
       tbtcSystemStub,
       tbtcToken,
       tbtcDepositToken,
@@ -81,7 +83,7 @@ contract('DepositUtils', (accounts) => {
       const blockDifficulty = await testDeposit.currentBlockDifficulty.call()
       expect(blockDifficulty).to.eq.BN(1)
 
-      await tbtcSystemStub.setCurrentDiff(33)
+      await mockRelay.setMock(33, 1)
       const newBlockDifficulty = await testDeposit.currentBlockDifficulty.call()
       expect(newBlockDifficulty).to.eq.BN(33)
     })
@@ -92,7 +94,7 @@ contract('DepositUtils', (accounts) => {
       const blockDifficulty = await testDeposit.previousBlockDifficulty.call()
       expect(blockDifficulty).to.eq.BN(1)
 
-      await tbtcSystemStub.setPreviousDiff(44)
+      await mockRelay.setMock(1, 44)
       const newBlockDifficulty = await testDeposit.previousBlockDifficulty.call()
       expect(newBlockDifficulty).to.eq.BN(44)
     })
@@ -100,8 +102,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('evaluateProofDifficulty()', async () => {
     it('reverts on unknown difficulty', async () => {
-      await tbtcSystemStub.setCurrentDiff(1)
-      await tbtcSystemStub.setPreviousDiff(1)
+      await mockRelay.setMock(1, 1)
 
       await expectThrow(
         testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0]),
@@ -110,13 +111,12 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('evaluates a header proof with previous', async () => {
-      await tbtcSystemStub.setPreviousDiff(5646403851534)
+      await mockRelay.setMock(1, 5646403851534)
       await testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
     it('evaluates a header proof with current', async () => {
-      await tbtcSystemStub.setPreviousDiff(1)
-      await tbtcSystemStub.setCurrentDiff(5646403851534)
+      await mockRelay.setMock(5646403851534, 1)
       await testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
@@ -129,7 +129,7 @@ contract('DepositUtils', (accounts) => {
 
     describe('reverts on a ValidateSPV errors', async () => {
       before(async () => {
-        await tbtcSystemStub.setCurrentDiff(5646403851534)
+        await mockRelay.setMock(5646403851534, 1)
       })
 
       it('bad headers chain length work', async () => {
@@ -169,7 +169,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('checkProofFromTxId()', async () => {
     before(async () => {
-      await tbtcSystemStub.setCurrentDiff(utils.TX.difficulty)
+      await mockRelay.setMock(utils.TX.difficulty, 1)
     })
 
     it('does not error', async () => {
@@ -184,7 +184,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails with bad difficulty', async () => {
-      await tbtcSystemStub.setCurrentDiff(1)
+      await mockRelay.setMock(1, 1)
 
       await expectThrow(
         testDeposit.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0]),
@@ -217,7 +217,7 @@ contract('DepositUtils', (accounts) => {
   describe('validateAndParseFundingSPVProof()', async () => {
     before(async () => {
       await testDeposit.setPubKey(_signerPubkeyX, _signerPubkeyY)
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await mockRelay.setMock(currentDifficulty, 1)
     })
 
     it('returns correct value and outpoint', async () => {

@@ -44,6 +44,7 @@ const _outValueBytes = '0x2040351d00000000'
 
 contract('DepositFunding', (accounts) => {
   let tbtcConstants
+  let mockRelay
   let tbtcSystemStub
   let tbtcToken
   let tbtcDepositToken
@@ -59,6 +60,7 @@ contract('DepositFunding', (accounts) => {
   before(async () => {
     ({
       tbtcConstants,
+      mockRelay,
       tbtcSystemStub,
       tbtcToken,
       tbtcDepositToken,
@@ -344,7 +346,7 @@ contract('DepositFunding', (accounts) => {
 
   describe('provideBTCFundingProof', async () => {
     beforeEach(async () => {
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await mockRelay.setMock(currentDifficulty, 1)
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
       await ecdsaKeepStub.send(1000000, { from: accounts[0] })

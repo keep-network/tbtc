@@ -11,6 +11,7 @@ const TestDeposit = artifacts.require('TestDeposit')
 const DepositFactory = artifacts.require('DepositFactory')
 
 contract('DepositFactory', () => {
+  let mockRelay
   let tbtcSystemStub
   let tbtcToken
   let tbtcDepositToken
@@ -23,6 +24,7 @@ contract('DepositFactory', () => {
 
   before(async () => {
     ({
+      mockRelay,
       tbtcSystemStub,
       tbtcToken,
       tbtcDepositToken,
@@ -156,7 +158,7 @@ contract('DepositFactory', () => {
 
       await deposit1.retrieveSignerPubkey()
       await deposit2.retrieveSignerPubkey()
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await mockRelay.setMock(currentDifficulty, currentDifficulty)
       await deposit2.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       // deposit1 should be AWAITING_BTC_FUNDING_PROOF (2)
