@@ -1,11 +1,11 @@
 pragma solidity ^0.5.10;
 
-contract TestRelay {
+contract MockRelay {
 
   uint256 current;
   uint256 previous;
 
-  function setMock(uint256 _current, uint256 _previous) returns (bool) {
+  function setMock(uint256 _current, uint256 _previous) public returns (bool) {
     current = _current;
     previous = _previous;
   }
