@@ -1,5 +1,9 @@
 import expectThrow from './helpers/expectThrow'
 import deployTestDeposit from './helpers/deployTestDeposit'
+import {
+  createSnapshot,
+  restoreSnapshot,
+} from './helpers/snapshot'
 
 import BN from 'bn.js'
 import utils from './utils'
@@ -64,11 +68,17 @@ contract('DepositFunding', (accounts) => {
 
     beneficiary = accounts[4]
     await tbtcDepositToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
+
+    await testDeposit.reset()
+    await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   })
 
   beforeEach(async () => {
-    await testDeposit.reset()
-    await testDeposit.setKeepAddress(ecdsaKeepStub.address)
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
   })
 
   describe('createNewDeposit', async () => {
@@ -129,7 +139,7 @@ contract('DepositFunding', (accounts) => {
     })
 
     it('fails if new deposits are disabled', async () => {
-      await tbtcSystemStub.setAllowNewDeposits(false)
+      await tbtcSystemStub.emergencyPauseNewDeposits()
 
       await expectThrow(
         testDeposit.createNewDeposit.call(
@@ -144,8 +154,6 @@ contract('DepositFunding', (accounts) => {
         ),
         'Opening new deposits is currently disabled.'
       )
-
-      await tbtcSystemStub.setAllowNewDeposits(true)
     })
 
     it.skip('stores payment value as funder\'s bond', async () => {

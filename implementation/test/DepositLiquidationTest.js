@@ -8,8 +8,6 @@ import chai, { expect } from 'chai'
 import bnChai from 'bn-chai'
 chai.use(bnChai(BN))
 
-const KeepRegistryStub = artifacts.require('KeepRegistryStub')
-
 // spare signature:
 // signing with privkey '11' * 32
 // const preimage = '0x' + '33'.repeat(32)
@@ -56,9 +54,6 @@ contract('DepositLiquidation', (accounts) => {
 
     await tbtcDepositToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
     await feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
-
-    const keepRegistry = await KeepRegistryStub.new()
-    await tbtcSystemStub.initialize(keepRegistry.address)
   })
 
   beforeEach(async () => {

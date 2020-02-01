@@ -14,6 +14,7 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
+const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
@@ -92,6 +93,9 @@ export default async function deployTestDeposit(
   const vendingMachineAddress = vendingMachine ? vendingMachine.address : utils.address0
 
   const tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+  const keepRegistry = await KeepRegistryStub.new()
+  tbtcSystemStub.initialize(keepRegistry.address)
+
   const tbtcToken = await TestToken.new(tbtcSystemStub.address)
   const testDeposit = deployed.TestDeposit
 
