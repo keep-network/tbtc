@@ -5,7 +5,7 @@ import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 import {VendingMachine} from "../system/VendingMachine.sol";
 
-/// @notice A one-click script for minting TBTC from an unqualified DOT.
+/// @notice A one-click script for minting TBTC from an unqualified TDT.
 /// @dev Wrapper script for VendingMachine.unqualifiedDepositToTbtc.
 contract FundingScript {
     TBTCToken tbtcToken;
@@ -25,10 +25,10 @@ contract FundingScript {
         feeRebateToken = FeeRebateToken(_FeeRebateToken);
     }
 
-    /// @notice Receives approval for a DOT transfer, and calls `VendingMachine.unqualifiedDepositToTbtc` for a user.
+    /// @notice Receives approval for a TDT transfer, and calls `VendingMachine.unqualifiedDepositToTbtc` for a user.
     /// @dev Implements the approveAndCall receiver interface.
     /// @param _from The owner of the token who approved them for transfer.
-    /// @param _tokenId Approved DOT for the transfer.
+    /// @param _tokenId Approved TDT for the transfer.
     /// @param _token Token contract address.
     /// @param _extraData Encoded function call to `VendingMachine.unqualifiedDepositToTbtc`.
     function receiveApproval(address _from, uint256 _tokenId, address _token, bytes memory _extraData) public {
