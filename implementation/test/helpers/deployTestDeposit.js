@@ -101,7 +101,7 @@ export default async function deployTestDeposit(
   const tbtcSystemStub = deployed.TBTCSystemStub
   const keepRegistryStub = await KeepRegistryStub.new()
 
-  const tbtcToken = await TestToken.new(tbtcSystemStub.address)
+  const tbtcToken = await TestToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
 
   const tbtcDepositToken = deployed.TBTCDepositToken
