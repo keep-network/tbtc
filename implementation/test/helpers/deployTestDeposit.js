@@ -75,6 +75,7 @@ export const TEST_DEPOSIT_DEPLOY = [
  *    - testDeposit
  *    - depositUtils
  *    - ecdsaKeepStub
+ *    - depositFactory
  *    Additionally, the object contains a `deployed` property that holds
  *    references to all deployed contracts by specified name.
  */
@@ -106,7 +107,7 @@ export default async function deployTestDeposit(
   const feeRebateToken = deployed.FeeRebateToken
   const depositUtils = deployed.DepositUtils
   const ecdsaKeepStub = deployed.ECDSAKeepStub
-  const factory = deployed.TestDepositFactory
+  const depositFactory = deployed.TestDepositFactory
 
   await testDeposit.setExteriorAddresses(
     tbtcSystemStub.address,
@@ -121,7 +122,7 @@ export default async function deployTestDeposit(
 
   tbtcSystemStub.initialize(
     keepRegistry.address,
-    factory.address,
+    depositFactory.address,
     testDeposit.address,
     tbtcSystemStub.address,
     tbtcToken.address,
@@ -131,7 +132,7 @@ export default async function deployTestDeposit(
     1,
     1)
 
-    return {
+  return {
     tbtcConstants,
     tbtcSystemStub,
     tbtcToken,
@@ -140,7 +141,7 @@ export default async function deployTestDeposit(
     testDeposit,
     depositUtils,
     ecdsaKeepStub,
-    factory,
+    depositFactory,
     deployed,
   }
 }
