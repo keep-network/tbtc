@@ -58,21 +58,21 @@ contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
     // Functions implemented for IBondedECDSAKeep interface.
 
     function submitSignatureFraud(
-        address _keepAddress,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s,
-        bytes32 _signedDigest,
-        bytes calldata _preimage
+        address,
+        uint8,
+        bytes32,
+        bytes32,
+        bytes32,
+        bytes calldata
     ) external returns (bool){
        return success;
     }
 
-    function checkBondAmount(address _keepAddress) external view returns (uint256){
+    function checkBondAmount(address) external view returns (uint256){
         return bondAmount;
     }
 
-    function seizeSignerBonds(address _keepAddress) external returns (bool){
+    function seizeSignerBonds(address) external returns (bool){
         if (address(this).balance > 0) {
             msg.sender.transfer(address(this).balance);
         }
