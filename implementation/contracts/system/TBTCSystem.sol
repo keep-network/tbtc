@@ -21,6 +21,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     event LotSizesUpdated(uint256[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
     event SignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
+    event SignerBondPercentageUpdated(uint256 _signerBondPercentage);
     event CollateralizationThresholdsUpdated(
         uint256 _undercollateralizedThresholdPercent,
         uint256 _severelyUndercollateralizedThresholdPercent
@@ -41,6 +42,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint128 private undercollateralizedThresholdPercent = 140;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
+    uint258 private signerBondPercentage = 150; // percent
     uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 20**7, 50**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     constructor(address _priceFeed) public {
@@ -182,6 +184,23 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return severelyUndercollateralizedThresholdPercent;
     }
 
+    /// @param signerBondPercentage Percentage of lotSize needed as minimum signer bond.
+    function setSignerBondPercentage(
+        uint128 _signerBondPercentage
+    ) external onlyOwner {
+        require(
+            _signerBondPercentage > _undercollateralizedThresholdPercent,
+            "Signer bond is lower than the _undercollateralizedThresholdPercent"
+        );
+        signerBondPercentage = _signerBondPercentage;
+        emit SignerBondPercentageUpdated(_signerBondPercentage);
+    }
+
+    /// @notice Get the minimum signer bond requirement
+    function getSignerBondPercentage() external view returns (uint128) {
+        return signerBondPercentage;
+    }
+
     // Price Feed
     function fetchBitcoinPrice() external view returns (uint256) {
         return IBTCETHPriceFeed(priceFeed).getPrice();
@@ -207,7 +226,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Request a new keep opening.
     /// @param _m Minimum number of honest keep members required to sign.
     /// @param _n Number of members in the keep.
-    /// @param _bond The value of eth required by the keep as bond
     /// @return Address of a new keep.
     function requestNewKeep(uint256 _m, uint256 _n, uint256 _bond)
         external
