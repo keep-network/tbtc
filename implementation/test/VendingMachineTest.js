@@ -1,3 +1,5 @@
+const FundingScript = artifacts.require('FundingScript')
+const RedemptionScript = artifacts.require('RedemptionScript')
 
 import expectThrow from './helpers/expectThrow'
 import { AssertBalance } from './helpers/assertBalance'
@@ -27,7 +29,7 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract('VendingMachine', (accounts) => {
+contract('testVendingMachine', (accounts) => {
   let testVendingMachine
 
   let tbtcSystemStub
@@ -55,8 +57,8 @@ contract('VendingMachine', (accounts) => {
       testDeposit,
       ecdsaKeepStub,
       deployed,
-    } = await deployTestDeposit([{ name: 'VendingMachine', contract: TestVendingMachine }]))
-    testVendingMachine = deployed.VendingMachine
+    } = await deployTestDeposit([{ name: 'testVendingMachine', contract: TestVendingMachine }]))
+    testVendingMachine = deployed.testVendingMachine
 
     assertBalance = new AssertBalance(tbtcToken)
 
@@ -336,7 +338,7 @@ contract('VendingMachine', (accounts) => {
       let redemptionScript
 
       before(async () => {
-        redemptionScript = await RedemptionScript.new(vendingMachine.address, tbtcToken.address, feeRebateToken.address)
+        redemptionScript = await RedemptionScript.new(testVendingMachine.address, tbtcToken.address, feeRebateToken.address)
       })
 
       beforeEach(async () => {
@@ -348,18 +350,18 @@ contract('VendingMachine', (accounts) => {
       })
 
       it('successfully requests redemption', async () => {
-        await testInstance.setState(utils.states.ACTIVE)
-        await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
+        await testDeposit.setState(utils.states.ACTIVE)
+        await tbtcDepositToken.forceMint(testVendingMachine.address, tdtId)
         await tbtcToken.forceMint(accounts[0], depositValue.add(signerFee))
         await feeRebateToken.forceMint(accounts[0], tdtId)
 
         const blockNumber = await web3.eth.getBlock('latest').number
 
-        await testInstance.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+        await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
         const tbtcToBtc = TestVendingMachine.abi.filter((x) => x.name == 'tbtcToBtc')[0]
         const calldata = web3.eth.abi.encodeFunctionCall(
-          tbtcToBtc, [testInstance.address, '0x1111111100000000', requesterPKH, accounts[0]]
+          tbtcToBtc, [testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0]]
         )
 
         await tbtcToken.approveAndCall(
@@ -368,7 +370,7 @@ contract('VendingMachine', (accounts) => {
           calldata
         )
 
-        const requestInfo = await testInstance.getRequestInfo()
+        const requestInfo = await testDeposit.getRequestInfo()
         assert.equal(requestInfo[1], requesterPKH)
         assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
         assert.equal(requestInfo[4], sighash)
@@ -399,11 +401,11 @@ contract('VendingMachine', (accounts) => {
 
     before(async () => {
       await tbtcSystemStub.setCurrentDiff(currentDifficulty)
-      await testInstance.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await testInstance.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
+      await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
       await tbtcToken.zeroBalance(accounts[0])
       await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      fundingScript = await FundingScript.new(vendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
+      fundingScript = await FundingScript.new(testVendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
     })
 
     beforeEach(async () => {
@@ -418,7 +420,7 @@ contract('VendingMachine', (accounts) => {
       const unqualifiedDepositToTbtcABI = TestVendingMachine.abi.filter((x) => x.name == 'unqualifiedDepositToTbtc')[0]
       const calldata = web3.eth.abi.encodeFunctionCall(
         unqualifiedDepositToTbtcABI,
-        [testInstance.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders]
+        [testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders]
       )
 
       await tbtcDepositToken.approveAndCall(
@@ -427,12 +429,12 @@ contract('VendingMachine', (accounts) => {
         calldata
       )
 
-      const UTXOInfo = await testInstance.getUTXOInfo.call()
+      const UTXOInfo = await testDeposit.getUTXOInfo.call()
       assert.equal(UTXOInfo[0], _outValueBytes)
       assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
 
       await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
-      expect(await tbtcDepositToken.ownerOf(tdtId)).to.equal(vendingMachine.address)
+      expect(await tbtcDepositToken.ownerOf(tdtId)).to.equal(testVendingMachine.address)
       expect(await feeRebateToken.ownerOf(tdtId)).to.equal(accounts[0])
     })
 
