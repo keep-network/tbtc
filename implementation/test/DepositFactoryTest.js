@@ -27,17 +27,6 @@ contract('DepositFactory', () => {
       testDeposit,
       depositFactory,
     } = await deployTestDeposit())
-
-    await depositFactory.setExternalDependencies(
-      testDeposit.address,
-      tbtcSystemStub.address,
-      tbtcToken.address,
-      tbtcDepositToken.address,
-      utils.address0,
-      utils.address0,
-      1,
-      1,
-    )
   })
 
   describe('createDeposit()', async () => {

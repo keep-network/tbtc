@@ -20,8 +20,8 @@ const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
-const TestDepositFactory = artifacts.require('TestDepositFactory')
-const TestVendingMachine = artifacts.require('TestVendingMachine')
+const DepositFactory = artifacts.require('DepositFactory')
+const VendingMachine = artifacts.require('VendingMachine')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
@@ -30,8 +30,8 @@ export const TEST_DEPOSIT_DEPLOY = [
   { name: 'TBTCSystemStub', contract: TBTCSystemStub, constructorParam: utils.address0 },
   { name: 'DepositFunding', contract: DepositFunding },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
-  { name: 'TestDepositFactory', contract: TestDepositFactory, constructorParam: 'TBTCSystemStub' }, // we don't care about ACL param. Bypassed in test
-  { name: 'TestVendingMachine', contract: TestVendingMachine, constructorParam: 'TBTCSystemStub' },
+  { name: 'DepositFactory', contract: DepositFactory, constructorParam: 'TBTCSystemStub' },
+  { name: 'VendingMachine', contract: VendingMachine, constructorParam: 'TBTCSystemStub' },
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },
   { name: 'ValidateSPV', contract: ValidateSPV },
@@ -41,9 +41,9 @@ export const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'TestDeposit', contract: TestDeposit, constructorParam: 'TestDepositFactory' },
-  { name: 'TBTCDepositToken', contract: TBTCDepositToken, constructorParam: 'TestDepositFactory' },
-  { name: 'FeeRebateToken', contract: FeeRebateToken, constructorParam: 'TestVendingMachine' },
+  { name: 'TestDeposit', contract: TestDeposit, constructorParam: 'DepositFactory' },
+  { name: 'TBTCDepositToken', contract: TBTCDepositToken, constructorParam: 'DepositFactory' },
+  { name: 'FeeRebateToken', contract: FeeRebateToken, constructorParam: 'VendingMachine' },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub },
 ]
 
@@ -96,7 +96,7 @@ export default async function deployTestDeposit(
 
   const tbtcConstants = deployed.TBTCConstants
 
-  const vendingMachine = deployed.TestVendingMachine
+  const vendingMachine = deployed.VendingMachine
 
   const tbtcSystemStub = deployed.TBTCSystemStub
   const keepRegistryStub = await KeepRegistryStub.new()
@@ -108,7 +108,7 @@ export default async function deployTestDeposit(
   const feeRebateToken = deployed.FeeRebateToken
   const depositUtils = deployed.DepositUtils
   const ecdsaKeepStub = deployed.ECDSAKeepStub
-  const depositFactory = deployed.TestDepositFactory
+  const depositFactory = deployed.DepositFactory
 
   await testDeposit.setExteriorAddresses(
     tbtcSystemStub.address,
