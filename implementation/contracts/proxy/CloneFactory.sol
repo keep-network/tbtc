@@ -25,7 +25,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 //solhint-disable max-line-length
-//solhint-disable no-inline-assembly
 
 // Implementation of [EIP-1167] based on [clone-factory]
 // source code.

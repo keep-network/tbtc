@@ -37,6 +37,16 @@ contract TestToken is TBTCToken{
         _burn(_account, _amount);
     }
 
+    /// @dev                Zeros out the balance of a given address.
+    ///                     Does nothing if address has zero balance.
+    /// @param _account     The address to zero the balance of. 
+    function zeroBalance(address _account) public {
+        uint256 currentBalance = balanceOf(msg.sender);
+        if (currentBalance > 0){
+            _burn(_account, currentBalance);
+        }
+    }
+
     /// @dev                Uses exposed token functions to reset caller's balance.
     /// @param _newBalance  New balance to assign to caller
     function resetBalance(uint256 _newBalance) public {

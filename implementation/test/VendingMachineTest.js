@@ -1,3 +1,5 @@
+const FundingScript = artifacts.require('FundingScript')
+const RedemptionScript = artifacts.require('RedemptionScript')
 
 import expectThrow from './helpers/expectThrow'
 import { AssertBalance } from './helpers/assertBalance'
@@ -321,6 +323,123 @@ contract('VendingMachine', (accounts) => {
       await expectThrow(
         vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0]),
         'SafeMath: subtraction overflow.'
+      )
+    })
+
+    describe('RedemptionScript', async () => {
+      let redemptionScript
+
+      before(async () => {
+        redemptionScript = await RedemptionScript.new(vendingMachine.address, tbtcToken.address, feeRebateToken.address)
+      })
+
+      beforeEach(async () => {
+        await createSnapshot()
+      })
+
+      afterEach(async () => {
+        await restoreSnapshot()
+      })
+
+      it('successfully requests redemption', async () => {
+        await testDeposit.setState(utils.states.ACTIVE)
+        await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
+        await tbtcToken.forceMint(accounts[0], depositValue.add(signerFee))
+        await feeRebateToken.forceMint(accounts[0], tdtId)
+
+        const blockNumber = await web3.eth.getBlock('latest').number
+
+        await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+        const tbtcToBtc = vendingMachine.abi.filter((x) => x.name == 'tbtcToBtc')[0]
+        const calldata = web3.eth.abi.encodeFunctionCall(
+          tbtcToBtc, [testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0]]
+        )
+
+        await tbtcToken.approveAndCall(
+          redemptionScript.address,
+          depositValue.add(signerFee),
+          calldata
+        )
+
+        const requestInfo = await testDeposit.getRequestInfo()
+        assert.equal(requestInfo[1], requesterPKH)
+        assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
+        assert.equal(requestInfo[4], sighash)
+
+        // fired an event
+        const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
+        assert.equal(eventList[0].returnValues._digest, sighash)
+      })
+
+      it('reverts for unknown function calls encoded in _extraData', async () => {
+        const unknownFunctionSignature = '0xCAFEBABE'
+        await tbtcToken.forceMint(accounts[0], depositValue.add(signerFee))
+
+        await expectThrow(
+          tbtcToken.approveAndCall(
+            redemptionScript.address,
+            depositValue.add(signerFee),
+            unknownFunctionSignature
+          ),
+          'Bad _extraData signature. Call must be to tbtcToBtc.'
+        )
+      })
+    })
+  })
+
+  describe('FundingScript', async () => {
+    let fundingScript
+
+    before(async () => {
+      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
+      await tbtcToken.zeroBalance(accounts[0])
+      await tbtcDepositToken.forceMint(accounts[0], tdtId)
+      fundingScript = await FundingScript.new(vendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('calls unqualifiedDepositToTbtcABI', async () => {
+      const unqualifiedDepositToTbtcABI = vendingMachine.abi.filter((x) => x.name == 'unqualifiedDepositToTbtc')[0]
+      const calldata = web3.eth.abi.encodeFunctionCall(
+        unqualifiedDepositToTbtcABI,
+        [testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders]
+      )
+
+      await tbtcDepositToken.approveAndCall(
+        fundingScript.address,
+        tdtId,
+        calldata
+      )
+
+      const UTXOInfo = await testDeposit.getUTXOInfo.call()
+      assert.equal(UTXOInfo[0], _outValueBytes)
+      assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
+
+      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
+      expect(await tbtcDepositToken.ownerOf(tdtId)).to.equal(vendingMachine.address)
+      expect(await feeRebateToken.ownerOf(tdtId)).to.equal(accounts[0])
+    })
+
+    it('reverts for unknown function calls encoded in _extraData', async () => {
+      const unknownFunctionSignature = '0xCAFEBABE'
+
+      await expectThrow(
+        tbtcDepositToken.approveAndCall(
+          fundingScript.address,
+          tdtId,
+          unknownFunctionSignature
+        ),
+        'Bad _extraData signature. Call must be to unqualifiedDepositToTbtc.'
       )
     })
   })

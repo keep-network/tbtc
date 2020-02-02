@@ -4,6 +4,11 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "./VendingMachineAuthority.sol";
 
+/**
+ @dev Interface of recipient contract for approveAndCall pattern.
+*/
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
+
 contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
@@ -40,5 +45,21 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @param _amount   The amount of tokens that will be burnt.
     function burn(uint256 _amount) public {
         _burn(msg.sender, _amount);
+    }
+
+    /// @notice           Set allowance for other address and notify.
+    ///                   Allows `_spender` to spend no more than `_value` tokens
+    ///                   on your behalf and then ping the contract about it.
+    /// @dev              The `_spender` should implement the `tokenRecipient` interface above
+    ///                   to receive approval notifications.
+    /// @param _spender   Address of contract authorized to spend.
+    /// @param _value     The max amount they can spend.
+    /// @param _extraData Extra information to send to the approved contract.
+    function approveAndCall(address _spender, uint256 _value, bytes memory _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, address(this), _extraData);
+            return true;
+        }
     }
 }
