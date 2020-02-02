@@ -40,7 +40,10 @@ contract RedemptionScript {
         bytes4 functionSignature;
         /* solium-disable security/no-inline-assembly */
         assembly { functionSignature := mload(add(_extraData, 0x20)) }
-        require(functionSignature == vendingMachine.tbtcToBtc.selector, "Invalid method signature encoded in _extraData.");
+        require(
+            functionSignature == vendingMachine.tbtcToBtc.selector,
+            "Bad _extraData signature. Call must be to tbtcToBtc."
+        );
 
         (bool success, bytes memory returnData) = address(vendingMachine).call(_extraData);
         // By default, `address.call`  will catch any revert messages.

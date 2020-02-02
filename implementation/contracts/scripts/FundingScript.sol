@@ -39,7 +39,10 @@ contract FundingScript {
         bytes4 sig;
         /* solium-disable security/no-inline-assembly */
         assembly { sig := mload(add(_extraData, 0x20)) }
-        require(sig == vendingMachine.unqualifiedDepositToTbtc.selector, "Invalid method signature encoded in _extraData.");
+        require(
+            sig == vendingMachine.unqualifiedDepositToTbtc.selector, 
+            "Bad _extraData signature. Call must be to unqualifiedDepositToTbtc."
+        );
 
         // Call the VendingMachine.
         // We could explictly encode the call to vending machine, but this would
