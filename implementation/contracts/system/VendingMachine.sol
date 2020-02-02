@@ -22,11 +22,11 @@ contract VendingMachine is TBTCSystemAuthority{
 
     function setExternalAddresses(
         address _tbtcToken,
-        address _depositOwnerToken,
+        address _tbtcDepositToken,
         address _feeRebateToken
     ) public onlyTbtcSystem {
         tbtcToken = TBTCToken(_tbtcToken);
-        tbtcDepositToken = TBTCDepositToken(_depositOwnerToken);
+        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         feeRebateToken = FeeRebateToken(_feeRebateToken);
     }
 
