@@ -51,7 +51,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _depositFactory,
         address _masterDepositAddress,
         address _tbtcToken,
-        address _depositOwnerToken,
+        address _tbtcDepositToken,
         address _feeRebateToken,
         address _vendingMachine,
         uint256 _keepThreshold,
@@ -62,14 +62,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         keepRegistry = _keepRegistry;
         VendingMachine(_vendingMachine).setExternalAddresses(
             _tbtcToken,
-            _depositOwnerToken,
+            _tbtcDepositToken,
             _feeRebateToken
         );
         DepositFactory(_depositFactory).setExternalDependencies(
             _masterDepositAddress,
             address(this),
             _tbtcToken,
-            _depositOwnerToken,
+            _tbtcDepositToken,
             _feeRebateToken,
             _vendingMachine,
             _keepThreshold,
