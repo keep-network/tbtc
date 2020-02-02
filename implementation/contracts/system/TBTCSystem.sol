@@ -85,7 +85,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function setSignerFeeDivisor(uint256 _signerFeeDivisor)
         external onlyOwner
     {
-        require(_signerFeeDivisor > 1, "Signer fee must be lower than 100%");
+        require(_signerFeeDivisor > 9, "Signer fee must be less than or equal to 10%");
         signerFeeDivisor = _signerFeeDivisor;
         emit SignerFeeDivisorUpdated(_signerFeeDivisor);
     }
