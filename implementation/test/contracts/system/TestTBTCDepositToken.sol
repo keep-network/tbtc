@@ -3,6 +3,11 @@ pragma solidity ^0.5.10;
 import "../../../contracts/system/TBTCDepositToken.sol";
 
 contract TestTBTCDepositToken is TBTCDepositToken {
+
+    constructor(address _factory) 
+        TBTCDepositToken(_factory)
+    public{}
+
     /// @dev             We can't call TBTCDepositToken mint function from tests because of ACL.
     ///                  This function bypasses ACL and can be called in tests.
     ///                  Mints a token and assigns it to an account.

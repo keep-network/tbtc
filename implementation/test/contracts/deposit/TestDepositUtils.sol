@@ -4,6 +4,9 @@ import {DepositUtils} from '../../../contracts/deposit/DepositUtils.sol';
 import {TestDeposit} from './TestDeposit.sol';
 
 contract TestDepositUtils is TestDeposit {
+    constructor(address _factoryAddress) 
+        TestDeposit(_factoryAddress)
+    public{}
 
     // Passthroughs to test view and pure functions
 

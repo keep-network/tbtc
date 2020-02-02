@@ -63,6 +63,14 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(OutsourceDepositLogging)
     await deployer.link(OutsourceDepositLogging, all)
 
+    await deployer.deploy(BTCETHPriceFeed)
+
+    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
+
+    await deployer.deploy(DepositFactory, TBTCSystem.address)
+
+    await deployer.deploy(VendingMachine, TBTCSystem.address)
+
     // deposit
     await deployer.deploy(DepositStates)
     await deployer.link(DepositStates, all)
@@ -79,10 +87,7 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(DepositFunding)
     await deployer.link(DepositFunding, all)
 
-    await deployer.deploy(Deposit)
-
-    // price oracle
-    await deployer.deploy(BTCETHPriceFeed)
+    await deployer.deploy(Deposit, DepositFactory.address)
 
     // price feeds
     if (network !== 'mainnet') {
@@ -100,18 +105,9 @@ module.exports = (deployer, network, accounts) => {
       await ethPriceFeed.setValue(web3.utils.toWei(prices.ETHUSD))
     }
 
-    // deposit factory
-    await deployer.deploy(DepositFactory, Deposit.address)
-
-    // system
-    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
-
     // token
-    await deployer.deploy(TBTCToken, TBTCSystem.address)
-    await deployer.deploy(TBTCDepositToken)
-    await deployer.deploy(FeeRebateToken)
-
-    // vending machine
-    await deployer.deploy(VendingMachine, TBTCToken.address, TBTCDepositToken.address, FeeRebateToken.address)
+    await deployer.deploy(TBTCToken, VendingMachine.address)
+    await deployer.deploy(TBTCDepositToken, DepositFactory.address)
+    await deployer.deploy(FeeRebateToken, VendingMachine.address)
   })
 }

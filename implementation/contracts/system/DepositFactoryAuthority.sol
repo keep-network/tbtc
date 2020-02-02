@@ -1,6 +1,6 @@
 pragma solidity 0.5.10;
 
-contract ERC721MinterAuthority {
+contract DepositFactoryAuthority {
 
     address internal _depositFactory;
 

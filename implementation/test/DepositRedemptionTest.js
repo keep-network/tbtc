@@ -10,8 +10,6 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-const TestVendingMachine = artifacts.require('TestVendingMachine')
-
 // spare signature:
 // signing with privkey '11' * 32
 // const preimage = '0x' + '33'.repeat(32)
@@ -37,7 +35,7 @@ contract('DepositRedemption', (accounts) => {
   let depositTerm
   let tdtId
   // TODO tdtHolder, frtHolder
-  let testVendingMachine
+  let vendingMachine
 
   const tdtHolder = accounts[0]
   const frtHolder = accounts[4]
@@ -53,8 +51,8 @@ contract('DepositRedemption', (accounts) => {
       testDeposit,
       ecdsaKeepStub,
       deployed,
-    } = await deployTestDeposit([{ name: 'VendingMachine', contract: TestVendingMachine }]))
-    testVendingMachine = deployed.VendingMachine
+    } = await deployTestDeposit())
+    vendingMachine = deployed.VendingMachine
 
     await testDeposit.setSignerFeeDivisor(new BN('200'))
 
@@ -256,7 +254,7 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('burns 1 TBTC if deposit is in COURTESY_CALL and TDT owner is the Vending Machine', async () => {
-      await tbtcDepositToken.transferFrom(accounts[0], testVendingMachine.address, tdtId)
+      await tbtcDepositToken.transferFrom(accounts[0], vendingMachine.address, tdtId)
       block = await web3.eth.getBlock('latest')
       await testDeposit.setState(utils.states.COURTESY_CALL)
 
@@ -329,7 +327,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine', async () => {
       await increaseTime(depositTerm.toNumber())
-      await tbtcDepositToken.transferFrom(tdtHolder, testVendingMachine.address, tdtId)
+      await tbtcDepositToken.transferFrom(tdtHolder, vendingMachine.address, tdtId)
       await tbtcToken.resetBalance(depositValue)
       await tbtcToken.resetAllowance(testDeposit.address, depositValue)
       block = await web3.eth.getBlock('latest')

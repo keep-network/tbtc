@@ -12,8 +12,6 @@ import chai, { expect } from 'chai'
 import bnChai from 'bn-chai'
 chai.use(bnChai(BN))
 
-const TestVendingMachine = artifacts.require('TestVendingMachine')
-
 const currentDifficulty = 6353030562983
 const _version = '0x01000000'
 const _txInputVector = `0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff`
@@ -29,8 +27,8 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract('testVendingMachine', (accounts) => {
-  let testVendingMachine
+contract('VendingMachine', (accounts) => {
+  let vendingMachine
 
   let tbtcSystemStub
   let tbtcToken
@@ -57,18 +55,12 @@ contract('testVendingMachine', (accounts) => {
       testDeposit,
       ecdsaKeepStub,
       deployed,
-    } = await deployTestDeposit([{ name: 'testVendingMachine', contract: TestVendingMachine }]))
-    testVendingMachine = deployed.testVendingMachine
+    } = await deployTestDeposit())
+    vendingMachine = deployed.VendingMachine
 
     assertBalance = new AssertBalance(tbtcToken)
 
     await testDeposit.setSignerFeeDivisor(signerFeeDivisor)
-
-    await testVendingMachine.setExteriorAddresses(
-      tbtcToken.address,
-      tbtcDepositToken.address,
-      feeRebateToken.address,
-    )
 
     tdtId = await web3.utils.toBN(testDeposit.address)
 
@@ -79,13 +71,13 @@ contract('testVendingMachine', (accounts) => {
   describe('#isQualified', async () => {
     it('returns true if deposit is in ACTIVE State', async () => {
       await testDeposit.setState(utils.states.ACTIVE)
-      const qualified = await testVendingMachine.isQualified.call(testDeposit.address)
+      const qualified = await vendingMachine.isQualified.call(testDeposit.address)
       expect(qualified).to.be.true
     })
 
     it('returns false if deposit is not in ACTIVE State', async () => {
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      const qualified = await testVendingMachine.isQualified.call(testDeposit.address)
+      const qualified = await vendingMachine.isQualified.call(testDeposit.address)
       expect(qualified).to.be.false
     })
   })
@@ -105,9 +97,9 @@ contract('testVendingMachine', (accounts) => {
 
     it('converts TDT to TBTC', async () => {
       await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      await tbtcDepositToken.approve(testVendingMachine.address, tdtId, { from: accounts[0] })
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: accounts[0] })
 
-      await testVendingMachine.tdtToTbtc(tdtId)
+      await vendingMachine.tdtToTbtc(tdtId)
 
       await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
     })
@@ -116,26 +108,26 @@ contract('testVendingMachine', (accounts) => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
 
       await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      await tbtcDepositToken.approve(testVendingMachine.address, tdtId, { from: accounts[0] })
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: accounts[0] })
 
-      await testVendingMachine.tdtToTbtc(tdtId)
+      await vendingMachine.tdtToTbtc(tdtId)
 
       await assertBalance.tbtc(accounts[0], depositValue)
     })
 
     it('fails if deposit not qualified', async () => {
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await tbtcDepositToken.forceMint(testVendingMachine.address, tdtId)
+      await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
 
       await expectThrow(
-        testVendingMachine.tdtToTbtc(tdtId),
+        vendingMachine.tdtToTbtc(tdtId),
         'Deposit must be qualified'
       )
     })
 
     it(`fails if TDT doesn't exist`, async () => {
       await expectThrow(
-        testVendingMachine.tdtToTbtc(new BN(123345)),
+        vendingMachine.tdtToTbtc(new BN(123345)),
         'tBTC Deposit Token does not exist'
       )
     })
@@ -144,7 +136,7 @@ contract('testVendingMachine', (accounts) => {
       await tbtcDepositToken.forceMint(accounts[0], tdtId)
 
       await expectThrow(
-        testVendingMachine.tdtToTbtc(tdtId),
+        vendingMachine.tdtToTbtc(tdtId),
         'ERC721: transfer caller is not owner nor approved.'
       )
     })
@@ -164,12 +156,12 @@ contract('testVendingMachine', (accounts) => {
     })
 
     it('converts TBTC to TDT', async () => {
-      await tbtcDepositToken.forceMint(testVendingMachine.address, tdtId)
+      await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
       await tbtcToken.forceMint(accounts[0], depositValue)
-      await tbtcToken.approve(testVendingMachine.address, depositValue, { from: accounts[0] })
+      await tbtcToken.approve(vendingMachine.address, depositValue, { from: accounts[0] })
 
       const fromBlock = await web3.eth.getBlockNumber()
-      await testVendingMachine.tbtcToTdt(tdtId)
+      await vendingMachine.tbtcToTdt(tdtId)
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock, toBlock: 'latest' })
       const tbtcBurntEvent = events[0]
@@ -184,26 +176,26 @@ contract('testVendingMachine', (accounts) => {
 
     it('fails if deposit not qualified', async () => {
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      await tbtcDepositToken.forceMint(testVendingMachine.address, tdtId)
+      await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
 
       await expectThrow(
-        testVendingMachine.tbtcToTdt(tdtId),
+        vendingMachine.tbtcToTdt(tdtId),
         'Deposit must be qualified'
       )
     })
 
     it(`fails if caller hasn't got enough TBTC`, async () => {
-      await tbtcDepositToken.forceMint(testVendingMachine.address, tdtId)
+      await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
 
       await expectThrow(
-        testVendingMachine.tbtcToTdt(tdtId),
+        vendingMachine.tbtcToTdt(tdtId),
         'Not enough TBTC for TDT exchange.'
       )
     })
 
     it(`fails if TDT doesn't exist`, async () => {
       await expectThrow(
-        testVendingMachine.tdtToTbtc(new BN(123345)),
+        vendingMachine.tdtToTbtc(new BN(123345)),
         'tBTC Deposit Token does not exist'
       )
     })
@@ -213,10 +205,10 @@ contract('testVendingMachine', (accounts) => {
       const depositOwner = accounts[1]
       await tbtcDepositToken.forceMint(depositOwner, tdtId)
       await tbtcToken.forceMint(accounts[0], depositValue)
-      await tbtcToken.approve(testVendingMachine.address, depositValue, { from: accounts[0] })
+      await tbtcToken.approve(vendingMachine.address, depositValue, { from: accounts[0] })
 
       await expectThrow(
-        testVendingMachine.tbtcToTdt(tdtId),
+        vendingMachine.tbtcToTdt(tdtId),
         'Deposit is locked.'
       )
     })
@@ -239,10 +231,10 @@ contract('testVendingMachine', (accounts) => {
 
     it('qualifies a Deposit', async () => {
       await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      await tbtcDepositToken.approve(testVendingMachine.address, tdtId, { from: accounts[0] })
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: accounts[0] })
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await testVendingMachine.unqualifiedDepositToTbtc(testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+      await vendingMachine.unqualifiedDepositToTbtc(testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
       assert.equal(UTXOInfo[0], _outValueBytes)
@@ -263,9 +255,9 @@ contract('testVendingMachine', (accounts) => {
 
     it('mints TBTC to the TDT owner and siger fee to Deposit', async () => {
       await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      await tbtcDepositToken.approve(testVendingMachine.address, tdtId, { from: accounts[0] })
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: accounts[0] })
 
-      await testVendingMachine.unqualifiedDepositToTbtc(testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+      await vendingMachine.unqualifiedDepositToTbtc(testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
       await assertBalance.tbtc(testDeposit.address, signerFee)
@@ -286,9 +278,9 @@ contract('testVendingMachine', (accounts) => {
       requiredBalance = await testDeposit.lotSizeTbtc.call()
 
       block = await web3.eth.getBlock('latest')
-      await tbtcDepositToken.forceMint(testVendingMachine.address, tdtId)
+      await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
       await tbtcToken.resetBalance(requiredBalance)
-      await tbtcToken.resetAllowance(testVendingMachine.address, requiredBalance)
+      await tbtcToken.resetAllowance(vendingMachine.address, requiredBalance)
       await ecdsaKeepStub.setSuccess(true)
       await testDeposit.setState(utils.states.ACTIVE)
       await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
@@ -309,7 +301,7 @@ contract('testVendingMachine', (accounts) => {
 
       // the fee is ~12,297,829,380 BTC
       await feeRebateToken.forceMint(accounts[0], tdtId)
-      await testVendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0])
+      await vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0])
       const requestInfo = await testDeposit.getRequestInfo()
 
       assert.equal(requestInfo[1], requesterPKH)
@@ -329,7 +321,7 @@ contract('testVendingMachine', (accounts) => {
       await feeRebateToken.forceMint(accounts[1], tdtId)
 
       await expectThrow(
-        testVendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0]),
+        vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0]),
         'SafeMath: subtraction overflow.'
       )
     })
@@ -338,7 +330,7 @@ contract('testVendingMachine', (accounts) => {
       let redemptionScript
 
       before(async () => {
-        redemptionScript = await RedemptionScript.new(testVendingMachine.address, tbtcToken.address, feeRebateToken.address)
+        redemptionScript = await RedemptionScript.new(vendingMachine.address, tbtcToken.address, feeRebateToken.address)
       })
 
       beforeEach(async () => {
@@ -351,7 +343,7 @@ contract('testVendingMachine', (accounts) => {
 
       it('successfully requests redemption', async () => {
         await testDeposit.setState(utils.states.ACTIVE)
-        await tbtcDepositToken.forceMint(testVendingMachine.address, tdtId)
+        await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
         await tbtcToken.forceMint(accounts[0], depositValue.add(signerFee))
         await feeRebateToken.forceMint(accounts[0], tdtId)
 
@@ -359,7 +351,7 @@ contract('testVendingMachine', (accounts) => {
 
         await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
-        const tbtcToBtc = TestVendingMachine.abi.filter((x) => x.name == 'tbtcToBtc')[0]
+        const tbtcToBtc = vendingMachine.abi.filter((x) => x.name == 'tbtcToBtc')[0]
         const calldata = web3.eth.abi.encodeFunctionCall(
           tbtcToBtc, [testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0]]
         )
@@ -405,7 +397,7 @@ contract('testVendingMachine', (accounts) => {
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
       await tbtcToken.zeroBalance(accounts[0])
       await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      fundingScript = await FundingScript.new(testVendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
+      fundingScript = await FundingScript.new(vendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
     })
 
     beforeEach(async () => {
@@ -417,7 +409,7 @@ contract('testVendingMachine', (accounts) => {
     })
 
     it('calls unqualifiedDepositToTbtcABI', async () => {
-      const unqualifiedDepositToTbtcABI = TestVendingMachine.abi.filter((x) => x.name == 'unqualifiedDepositToTbtc')[0]
+      const unqualifiedDepositToTbtcABI = vendingMachine.abi.filter((x) => x.name == 'unqualifiedDepositToTbtc')[0]
       const calldata = web3.eth.abi.encodeFunctionCall(
         unqualifiedDepositToTbtcABI,
         [testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders]
@@ -434,7 +426,7 @@ contract('testVendingMachine', (accounts) => {
       assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
 
       await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
-      expect(await tbtcDepositToken.ownerOf(tdtId)).to.equal(testVendingMachine.address)
+      expect(await tbtcDepositToken.ownerOf(tdtId)).to.equal(vendingMachine.address)
       expect(await feeRebateToken.ownerOf(tdtId)).to.equal(accounts[0])
     })
 

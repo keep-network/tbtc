@@ -15,7 +15,7 @@ chai.use(bnChai(BN))
 // const pubkey = '0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1'
 // const v = 28
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
-// const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
+// const s = '0xs234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
 contract('DepositLiquidation', (accounts) => {
   let tbtcConstants
