@@ -1,8 +1,9 @@
 /* solium-disable function-order */
 pragma solidity ^0.5.10;
 
-import {IKeepRegistry} from "@keep-network/keep-ecdsa/contracts/api/IKeepRegistry.sol";
-import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeepVendor.sol";
+import {IBondedECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepVendor.sol";
+import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
+
 import {VendingMachine} from "./VendingMachine.sol";
 import {DepositFactory} from "../proxy/DepositFactory.sol";
 
@@ -206,16 +207,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Request a new keep opening.
     /// @param _m Minimum number of honest keep members required to sign.
     /// @param _n Number of members in the keep.
+    /// @param _bond The value of eth required by the keep as bond
     /// @return Address of a new keep.
-    function requestNewKeep(uint256 _m, uint256 _n)
+    function requestNewKeep(uint256 _m, uint256 _n, uint256 _bond)
         external
         payable
         returns (address _keepAddress)
     {
-        address keepVendorAddress = IKeepRegistry(keepRegistry)
-            .getVendor("ECDSAKeep");
-
-        _keepAddress = IECDSAKeepVendor(keepVendorAddress)
-            .openKeep(_n,_m, msg.sender);
+        _keepVendor = IBondedECDSAKeepVendor(vendorAddress);
+        _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
+        _keepFactory.openKeep(_n, _m, msg.sender, _bond);
     }
 }
