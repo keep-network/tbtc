@@ -98,7 +98,7 @@ export default async function deployTestDeposit(
 
   const vendingMachine = deployed.TestVendingMachine
 
-  const tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
+  const tbtcSystemStub = deployed.TBTCSystemStub
   const keepRegistryStub = await KeepRegistryStub.new()
 
   const tbtcToken = await TestToken.new(tbtcSystemStub.address)
