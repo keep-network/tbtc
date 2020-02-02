@@ -43,28 +43,27 @@ function chainToProofBytes(chain) {
 // constructorParam parameter. The constructorParam will be passed as a constructor parameter
 // for the deployed contract. If the constructorParam is the name of a previously deployed contract,
 // that contract's address is passed as the constructor parameter instead.cd
-// eslint-disable-next-line camelcase
-async function deploySystem(deploy_list) {
+async function deploySystem(deployList) {
   const deployed = {} // name: contract object
   const linkable = {} // name: linkable address
 
-  // eslint-disable-next-line camelcase,guard-for-in
-  for (const i in deploy_list) {
-    await deploy_list[i].contract.link(linkable)
+  for (let i = 0; i < deployList.length; ++i) {
+    await deployList[i].contract.link(linkable)
 
     let contract
-    if (deploy_list[i].constructorParam == undefined) {
-      contract = await deploy_list[i].contract.new()
+    if (deployList[i].constructorParam == undefined) {
+      contract = await deployList[i].contract.new()
     } else {
-      if (linkable[deploy_list[i].constructorParam] == undefined) {
-        contract = await deploy_list[i].contract.new(deploy_list[i].constructorParam)
+      const constructorParamAddress = linkable[deployList[i].constructorParam]
+      if (constructorParamAddress == undefined) {
+        contract = await deployList[i].contract.new(deployList[i].constructorParam)
       } else {
-        contract = await deploy_list[i].contract.new(linkable[deploy_list[i].constructorParam])
+        contract = await deployList[i].contract.new(constructorParamAddress)
       }
     }
 
-    linkable[deploy_list[i].name] = contract.address
-    deployed[deploy_list[i].name] = contract
+    linkable[deployList[i].name] = contract.address
+    deployed[deployList[i].name] = contract
   }
   return deployed
 }
