@@ -88,7 +88,11 @@ export default async function deployTestDeposit(
   for (let i = 0; i < deployment.length; ++i) {
     const substitution = substitutions[deployment[i].name]
     if (substitution) {
-      deployment[i].contract = substitution
+      deployment[i] = {
+        name: deployment[i].name,
+        contract: substitution,
+        constructorParam: deployment[i].constructorParam,
+      }
     }
   }
 
