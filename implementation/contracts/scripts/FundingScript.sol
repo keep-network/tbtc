@@ -36,11 +36,11 @@ contract FundingScript {
         tbtcDepositToken.approve(address(vendingMachine), _tokenId);
 
         // Verify _extraData is a call to unqualifiedDepositToTbtc.
-        bytes4 sig;
+        bytes4 functionSignature;
         /* solium-disable security/no-inline-assembly */
-        assembly { sig := mload(add(_extraData, 0x20)) }
+        assembly { functionSignature := mload(add(_extraData, 0x20)) }
         require(
-            sig == vendingMachine.unqualifiedDepositToTbtc.selector, 
+            functionSignature == vendingMachine.unqualifiedDepositToTbtc.selector,
             "Bad _extraData signature. Call must be to unqualifiedDepositToTbtc."
         );
 
