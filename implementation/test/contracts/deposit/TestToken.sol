@@ -6,8 +6,8 @@ import "../../../contracts/system/TBTCToken.sol";
 
 contract TestToken is TBTCToken{
 
-    constructor(address _TBTCSystem)
-        TBTCToken(_TBTCSystem)
+    constructor(address _vendingMachine)
+        TBTCToken(_vendingMachine)
     public {
         // solium-disable-previous-line no-empty-blocks
     }
@@ -35,6 +35,16 @@ contract TestToken is TBTCToken{
         // NOTE: this uses internal function _burn instead of _burnFrom.
         // This will bypass allowance check for now.
         _burn(_account, _amount);
+    }
+
+    /// @dev                Zeros out the balance of a given address.
+    ///                     Does nothing if address has zero balance.
+    /// @param _account     The address to zero the balance of. 
+    function zeroBalance(address _account) public {
+        uint256 currentBalance = balanceOf(msg.sender);
+        if (currentBalance > 0){
+            _burn(_account, currentBalance);
+        }
     }
 
     /// @dev                Uses exposed token functions to reset caller's balance.

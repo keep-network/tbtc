@@ -7,19 +7,24 @@ import {TBTCToken} from "./TBTCToken.sol";
 import {TBTCConstants} from "../deposit/TBTCConstants.sol";
 import {DepositUtils} from "../deposit/DepositUtils.sol";
 import "../deposit/Deposit.sol";
+import "./TBTCSystemAuthority.sol";
 
-contract VendingMachine {
+contract VendingMachine is TBTCSystemAuthority{
     using SafeMath for uint256;
 
     TBTCToken tbtcToken;
     TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
-    constructor(
+    constructor(address _systemAddress) 
+        TBTCSystemAuthority(_systemAddress)
+    public {}
+
+    function setExternalAddresses(
         address _tbtcToken,
         address _tbtcDepositToken,
         address _feeRebateToken
-    ) public {
+    ) public onlyTbtcSystem {
         tbtcToken = TBTCToken(_tbtcToken);
         tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         feeRebateToken = FeeRebateToken(_feeRebateToken);
@@ -27,7 +32,7 @@ contract VendingMachine {
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
     /// @param _depositAddress the address of the deposit
-    function isQualified(address payable _depositAddress) public returns (bool) {
+    function isQualified(address payable _depositAddress) public view returns (bool) {
         return Deposit(_depositAddress).inActive();
     }
 

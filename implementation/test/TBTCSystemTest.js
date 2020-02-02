@@ -1,55 +1,42 @@
 import expectThrow from './helpers/expectThrow'
+import increaseTime from './helpers/increaseTime'
+import {
+  createSnapshot,
+  restoreSnapshot,
+} from './helpers/snapshot'
+import deployTestDeposit from './helpers/deployTestDeposit'
 
 const BN = require('bn.js')
-const utils = require('./utils')
 const chai = require('chai')
 const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
-
-const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
-
-const DepositFunding = artifacts.require('DepositFunding')
-const DepositLiquidation = artifacts.require('DepositLiquidation')
-const DepositRedemption = artifacts.require('DepositRedemption')
-const DepositUtils = artifacts.require('DepositUtils')
-const DepositStates = artifacts.require('DepositStates')
-const TBTCConstants = artifacts.require('TBTCConstants')
-const TestDeposit = artifacts.require('TestDeposit')
-
-const TEST_DEPOSIT_DEPLOY = [
-  { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'DepositRedemption', contract: DepositRedemption },
-  { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'DepositStates', contract: DepositStates },
-  { name: 'TBTCConstants', contract: TBTCConstants },
-  { name: 'TestDeposit', contract: TestDeposit },
-]
 
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
 
+  before(async () => {
+    const {
+      tbtcSystemStub,
+      keepRegistryStub,
+    } = await deployTestDeposit(
+      [],
+      // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
+      // test TBTCSystem itself.
+      { TBTCSystemStub: TBTCSystem }
+    )
+    // Refer to this correctly throughout the rest of the test.
+    tbtcSystem = tbtcSystemStub
+
+    ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
+    await keepRegistryStub.setVendor(ecdsaKeepVendor.address)
+  })
+
   describe('requestNewKeep()', async () => {
-    before(async () => {
-      await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-
-      ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
-
-      const keepRegistry = await KeepRegistryStub.new()
-      await keepRegistry.setVendor(ecdsaKeepVendor.address)
-
-      tbtcSystem = await TBTCSystem.new(utils.address0)
-
-      await tbtcSystem.initialize(
-        keepRegistry.address
-      )
-    })
-
     it('sends caller as owner to open new keep', async () => {
       const expectedKeepOwner = accounts[2]
 
@@ -84,18 +71,91 @@ contract('TBTCSystem', (accounts) => {
     })
   })
 
-  describe('setAllowNewDeposits', async () => {
-    it('sets allowNewDeposits', async () => {
-      await tbtcSystem.setAllowNewDeposits(false)
+  describe('setLotSizes', async () => {
+    it('sets a different lot size array', async () => {
+      const blockNumber = await web3.eth.getBlock('latest').number
+      const lotSizes = [10**8, 10**6]
+      await tbtcSystem.setLotSizes(lotSizes)
+
+      const eventList = await tbtcSystem.getPastEvents('LotSizesUpdated', { fromBlock: blockNumber, toBlock: 'latest' })
+      assert.equal(eventList.length, 1)
+      expect(eventList[0].returnValues._lotSizes).to.eql(['100000000', '1000000']) // deep equality check
+    })
+
+    it('reverts if lot size array is empty', async () => {
+      const lotSizes = []
+      await expectThrow(
+        tbtcSystem.setLotSizes(lotSizes),
+        'Lot size array must always contain 1BTC'
+      )
+    })
+
+    it('reverts if lot size array does not contain a 1BTC lot size', async () => {
+      const lotSizes = [10**7]
+      await expectThrow(
+        tbtcSystem.setLotSizes(lotSizes),
+        'Lot size array must always contain 1BTC'
+      )
+    })
+  })
+
+  describe('emergencyPauseNewDeposits', async () => {
+    let term
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it('pauses new deposit creation', async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
 
       const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(false)
     })
 
-    it('reverts if msg.sender != owner', async () => {
+    it('reverts if msg.sender is not owner', async () => {
       await expectThrow(
-        tbtcSystem.setAllowNewDeposits(false, { from: accounts[1] }),
-        ''
+        tbtcSystem.emergencyPauseNewDeposits({ from: accounts[1] }),
+        'Ownable: caller is not the owner'
+      )
+    })
+
+    it('does not allows new deposit re-activation before 10 days', async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
+      term = await tbtcSystem.getRemainingPauseTerm()
+
+      await increaseTime(term.toNumber() - 10) // T-10 seconds. toNumber because increaseTime doesn't support BN
+
+      await expectThrow(
+        tbtcSystem.resumeNewDeposits(),
+        'Deposits are still paused'
+      )
+    })
+
+    it('allows new deposit creation after 10 days', async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
+      term = await tbtcSystem.getRemainingPauseTerm()
+
+      await increaseTime(term.toNumber()) // 10 days
+      await tbtcSystem.resumeNewDeposits()
+      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(true)
+    })
+
+    it('reverts if emergencyPauseNewDeposits has already been called', async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
+      term = await tbtcSystem.getRemainingPauseTerm()
+
+      await increaseTime(term.toNumber()) // 10 days
+      tbtcSystem.resumeNewDeposits()
+
+      await expectThrow(
+        tbtcSystem.emergencyPauseNewDeposits(),
+        'emergencyPauseNewDeposits can only be called once'
       )
     })
   })

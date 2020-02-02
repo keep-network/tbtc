@@ -3,6 +3,11 @@ pragma solidity ^0.5.10;
 import "../../../contracts/system/FeeRebateToken.sol";
 
 contract TestFeeRebateToken is FeeRebateToken {
+
+    constructor(address _vendingMachine)
+        FeeRebateToken(_vendingMachine)
+    public{}
+
     /// @dev             We can't call FeeRebateToken mint function from tests because of ACL.
     ///                  This function bypasses ACL and can be called in tests.
     ///                  Mints a token and assigns it to an account.

@@ -4,6 +4,29 @@ import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
 contract TestDeposit is Deposit {
 
+    constructor(address _factoryAddress) 
+        Deposit(_factoryAddress)
+    public{}
+
+    function createNewDeposit(
+        address _TBTCSystem,
+        address _TBTCToken,
+        address _TBTCDepositToken,
+        address _FeeRebateToken,
+        address _VendingMachine,
+        uint256 _m,
+        uint256 _n,
+        uint256 _lotSize
+    ) public payable returns (bool) {
+        self.TBTCSystem = _TBTCSystem;
+        self.TBTCToken = _TBTCToken;
+        self.TBTCDepositToken = _TBTCDepositToken;
+        self.FeeRebateToken = _FeeRebateToken;
+        self.VendingMachine = _VendingMachine;
+        self.createNewDeposit(_m, _n, _lotSize);
+        return true;
+    }
+
     function setExteriorAddresses(
         address _sys,
         address _token,
@@ -104,7 +127,7 @@ contract TestDeposit is Deposit {
         self.signingGroupPubkeyY = _y;
     }
 
-    function getSigningGroupPublicKey() public returns (bytes32, bytes32){
+    function getSigningGroupPublicKey() public view returns (bytes32, bytes32){
         return (self.signingGroupPubkeyX, self.signingGroupPubkeyY);
     }
 
