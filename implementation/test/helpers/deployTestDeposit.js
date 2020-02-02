@@ -74,6 +74,7 @@ export const TEST_DEPOSIT_DEPLOY = [
  *    - feeRebateToken
  *    - testDeposit
  *    - depositUtils
+ *    - keepRegistryStub
  *    - ecdsaKeepStub
  *    - depositFactory
  *    Additionally, the object contains a `deployed` property that holds
@@ -98,7 +99,7 @@ export default async function deployTestDeposit(
   const vendingMachine = deployed.TestVendingMachine
 
   const tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
-  const keepRegistry = await KeepRegistryStub.new()
+  const keepRegistryStub = await KeepRegistryStub.new()
 
   const tbtcToken = await TestToken.new(tbtcSystemStub.address)
   const testDeposit = deployed.TestDeposit
@@ -120,8 +121,8 @@ export default async function deployTestDeposit(
   await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   await testDeposit.setLotSize(new BN('100000000'))
 
-  tbtcSystemStub.initialize(
-    keepRegistry.address,
+  await tbtcSystemStub.initialize(
+    keepRegistryStub.address,
     depositFactory.address,
     testDeposit.address,
     tbtcSystemStub.address,
@@ -130,7 +131,8 @@ export default async function deployTestDeposit(
     feeRebateToken.address,
     vendingMachine.address,
     1,
-    1)
+    1
+  )
 
   return {
     tbtcConstants,
@@ -140,6 +142,7 @@ export default async function deployTestDeposit(
     feeRebateToken,
     testDeposit,
     depositUtils,
+    keepRegistryStub,
     ecdsaKeepStub,
     depositFactory,
     deployed,

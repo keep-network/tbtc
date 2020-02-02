@@ -4,6 +4,7 @@ import {
   createSnapshot,
   restoreSnapshot,
 } from './helpers/snapshot'
+import deployTestDeposit from './helpers/deployTestDeposit'
 
 const BN = require('bn.js')
 const utils = require('./utils')
@@ -13,32 +14,30 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
-
-const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
-  let factory
-  let vendingMachine
 
   before(async () => {
-    const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
+    const {
+      keepRegistryStub,
+      depositFactory,
+      deployed,
+    } = await deployTestDeposit()
+    const vendingMachine = deployed.TestVendingMachine
 
     ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
+    await keepRegistryStub.setVendor(ecdsaKeepVendor.address)
 
-    const keepRegistry = await KeepRegistryStub.new()
-    await keepRegistry.setVendor(ecdsaKeepVendor.address)
-
-    tbtcSystem = deployed.TBTCSystem
-
-    factory = deployed.DepositFactory
-    vendingMachine = deployed.TestVendingMachine
-
+    // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to test
+    // TBTCSystem itself; thus, we deploy and initialize a new one here with the
+    // minimum needed to test the core functions.
+    tbtcSystem = await TBTCSystem.new(utils.address0)
     await tbtcSystem.initialize(
-      keepRegistry.address,
-      factory.address,
+      keepRegistryStub.address,
+      depositFactory.address,
       utils.address0,
       utils.address0,
       utils.address0,
@@ -51,19 +50,6 @@ contract('TBTCSystem', (accounts) => {
   })
 
   describe('requestNewKeep()', async () => {
-    before(async () => {
-      ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
-
-      const keepRegistry = await KeepRegistryStub.new()
-      await keepRegistry.setVendor(ecdsaKeepVendor.address)
-
-      tbtcSystem = await TBTCSystem.new(utils.address0)
-
-      await tbtcSystem.initialize(
-        keepRegistry.address
-      )
-    })
-
     it('sends caller as owner to open new keep', async () => {
       const expectedKeepOwner = accounts[2]
 
