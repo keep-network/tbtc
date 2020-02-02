@@ -4,37 +4,39 @@ import {
   createSnapshot,
   restoreSnapshot,
 } from './helpers/snapshot'
+import deployTestDeposit from './helpers/deployTestDeposit'
 
 const BN = require('bn.js')
-const utils = require('./utils')
 const chai = require('chai')
 const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
-
-const KeepRegistryStub = artifacts.require('KeepRegistryStub')
 const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
   let ecdsaKeepVendor
 
+  before(async () => {
+    const {
+      tbtcSystemStub,
+      keepRegistryStub,
+    } = await deployTestDeposit(
+      [],
+      // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
+      // test TBTCSystem itself.
+      { TBTCSystemStub: TBTCSystem }
+    )
+    // Refer to this correctly throughout the rest of the test.
+    tbtcSystem = tbtcSystemStub
+
+    ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
+    await keepRegistryStub.setVendor(ecdsaKeepVendor.address)
+  })
+
   describe('requestNewKeep()', async () => {
-    before(async () => {
-      ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
-
-      const keepRegistry = await KeepRegistryStub.new()
-      await keepRegistry.setVendor(ecdsaKeepVendor.address)
-
-      tbtcSystem = await TBTCSystem.new(utils.address0)
-
-      await tbtcSystem.initialize(
-        keepRegistry.address
-      )
-    })
-
     it('sends caller as owner to open new keep', async () => {
       const expectedKeepOwner = accounts[2]
 

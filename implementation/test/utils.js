@@ -39,13 +39,29 @@ function chainToProofBytes(chain) {
   return byteString
 }
 
+// Links and deploys contracts. contract Name and address are used along with an optional
+// constructorParam parameter. The constructorParam will be passed as a constructor parameter
+// for the deployed contract. If the constructorParam is the name of a previously deployed contract,
+// that contract's address is passed as the constructor parameter instead.cd
 async function deploySystem(deployList) {
   const deployed = {} // name: contract object
   const linkable = {} // name: linkable address
 
   for (let i = 0; i < deployList.length; ++i) {
     await deployList[i].contract.link(linkable)
-    const contract = await deployList[i].contract.new()
+
+    let contract
+    if (deployList[i].constructorParam == undefined) {
+      contract = await deployList[i].contract.new()
+    } else {
+      const constructorParamAddress = linkable[deployList[i].constructorParam]
+      if (constructorParamAddress == undefined) {
+        contract = await deployList[i].contract.new(deployList[i].constructorParam)
+      } else {
+        contract = await deployList[i].contract.new(constructorParamAddress)
+      }
+    }
+
     linkable[deployList[i].name] = contract.address
     deployed[deployList[i].name] = contract
   }

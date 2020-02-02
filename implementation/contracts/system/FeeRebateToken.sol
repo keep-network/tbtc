@@ -1,10 +1,14 @@
 pragma solidity ^0.5.10;
 
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol";
+import "./VendingMachineAuthority.sol";
 
-contract FeeRebateToken is ERC721Metadata {
+contract FeeRebateToken is ERC721Metadata, VendingMachineAuthority {
 
-    constructor() ERC721Metadata("Fee Rebate Token", "FRT") public {
+    constructor(address _vendingMachine)
+        ERC721Metadata("Fee Rebate Token", "FRT")
+        VendingMachineAuthority(_vendingMachine)
+    public {
         // solium-disable-previous-line no-empty-blocks
     }
 
@@ -12,7 +16,7 @@ contract FeeRebateToken is ERC721Metadata {
     /// Reverts if the given token ID already exists.
     /// @param _to The address that will own the minted token
     /// @param _tokenId uint256 ID of the token to be minted
-    function mint(address _to, uint256 _tokenId) public {
+    function mint(address _to, uint256 _tokenId) public onlyVendingMachine {
         _mint(_to, _tokenId);
     }
 

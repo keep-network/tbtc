@@ -20,25 +20,30 @@ const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
+const DepositFactory = artifacts.require('DepositFactory')
+const VendingMachine = artifacts.require('VendingMachine')
 
 const TestTBTCConstants = artifacts.require('TestTBTCConstants')
 const TestDeposit = artifacts.require('TestDeposit')
 
 export const TEST_DEPOSIT_DEPLOY = [
+  { name: 'TBTCSystemStub', contract: TBTCSystemStub, constructorParam: utils.address0 },
+  { name: 'DepositFunding', contract: DepositFunding },
+  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
+  { name: 'DepositFactory', contract: DepositFactory, constructorParam: 'TBTCSystemStub' },
+  { name: 'VendingMachine', contract: VendingMachine, constructorParam: 'TBTCSystemStub' },
   { name: 'BytesLib', contract: BytesLib },
   { name: 'BTCUtils', contract: BTCUtils },
   { name: 'ValidateSPV', contract: ValidateSPV },
   { name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs },
-  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
   { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
   { name: 'DepositStates', contract: DepositStates },
-  { name: 'DepositFunding', contract: DepositFunding },
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'TestDeposit', contract: TestDeposit },
-  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
-  { name: 'FeeRebateToken', contract: FeeRebateToken },
+  { name: 'TestDeposit', contract: TestDeposit, constructorParam: 'DepositFactory' },
+  { name: 'TBTCDepositToken', contract: TBTCDepositToken, constructorParam: 'DepositFactory' },
+  { name: 'FeeRebateToken', contract: FeeRebateToken, constructorParam: 'VendingMachine' },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub },
 ]
 
@@ -69,7 +74,9 @@ export const TEST_DEPOSIT_DEPLOY = [
  *    - feeRebateToken
  *    - testDeposit
  *    - depositUtils
+ *    - keepRegistryStub
  *    - ecdsaKeepStub
+ *    - depositFactory
  *    Additionally, the object contains a `deployed` property that holds
  *    references to all deployed contracts by specified name.
  */
@@ -81,7 +88,11 @@ export default async function deployTestDeposit(
   for (let i = 0; i < deployment.length; ++i) {
     const substitution = substitutions[deployment[i].name]
     if (substitution) {
-      deployment[i].contract = substitution
+      deployment[i] = {
+        name: deployment[i].name,
+        contract: substitution,
+        constructorParam: deployment[i].constructorParam,
+      }
     }
   }
 
@@ -90,30 +101,41 @@ export default async function deployTestDeposit(
   const tbtcConstants = deployed.TBTCConstants
 
   const vendingMachine = deployed.VendingMachine
-  const vendingMachineAddress = vendingMachine ? vendingMachine.address : utils.address0
 
-  const tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
-  const keepRegistry = await KeepRegistryStub.new()
-  tbtcSystemStub.initialize(keepRegistry.address)
+  const tbtcSystemStub = deployed.TBTCSystemStub
+  const keepRegistryStub = await KeepRegistryStub.new()
 
-  const tbtcToken = await TestToken.new(tbtcSystemStub.address)
+  const tbtcToken = await TestToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
 
   const tbtcDepositToken = deployed.TBTCDepositToken
   const feeRebateToken = deployed.FeeRebateToken
   const depositUtils = deployed.DepositUtils
   const ecdsaKeepStub = deployed.ECDSAKeepStub
+  const depositFactory = deployed.DepositFactory
 
   await testDeposit.setExteriorAddresses(
     tbtcSystemStub.address,
     tbtcToken.address,
     tbtcDepositToken.address,
     feeRebateToken.address,
-    vendingMachineAddress,
+    vendingMachine.address,
   )
 
   await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   await testDeposit.setLotSize(new BN('100000000'))
+
+  await tbtcSystemStub.initialize(
+    keepRegistryStub.address,
+    depositFactory.address,
+    testDeposit.address,
+    tbtcToken.address,
+    tbtcDepositToken.address,
+    feeRebateToken.address,
+    vendingMachine.address,
+    1,
+    1
+  )
 
   return {
     tbtcConstants,
@@ -123,7 +145,9 @@ export default async function deployTestDeposit(
     feeRebateToken,
     testDeposit,
     depositUtils,
+    keepRegistryStub,
     ecdsaKeepStub,
+    depositFactory,
     deployed,
   }
 }

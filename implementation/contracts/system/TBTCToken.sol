@@ -19,7 +19,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @param _account  The account that will receive the created tokens.
     /// @param _amount   The amount of tokens that will be created.
     // TODO: add back ACL when vending machine refactoring is done.
-    function mint(address _account, uint256 _amount) public returns (bool) {
+    function mint(address _account, uint256 _amount) public onlyVendingMachine returns (bool) {
         // NOTE: this is a public function with unchecked minting.
         _mint(_account, _amount);
         return true;
