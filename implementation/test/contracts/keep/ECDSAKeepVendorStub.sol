@@ -11,10 +11,10 @@ contract ECDSAKeepVendorStub is IECDSAKeepVendor {
     function openKeep(
         uint256,
         uint256,
-        address _owner
+        address _owner,
+        uint256 _bond
     ) external payable returns (address) {
         keepOwner = _owner;
-
         return keepAddress;
     }
 }
