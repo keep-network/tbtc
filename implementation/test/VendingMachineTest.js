@@ -70,7 +70,7 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract('VendingMachine', (accounts) => {
+contract.only('VendingMachine', (accounts) => {
   let deployed
   let vendingMachine
   let tbtcToken
@@ -426,6 +426,20 @@ contract('VendingMachine', (accounts) => {
         const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
         assert.equal(eventList[0].returnValues._digest, sighash)
       })
+
+      it('reverts for unknown function calls encoded in _extraData', async () => {
+        const unknownFunctionSignature = '0xCAFEBABE'
+        await tbtcToken.forceMint(accounts[0], depositValue.add(signerFee))
+
+        await expectThrow(
+          tbtcToken.approveAndCall(
+            redemptionScript.address,
+            depositValue.add(signerFee),
+            unknownFunctionSignature
+          ),
+          'Bad _extraData signature. Call must be to tbtcToBtc.'
+        )
+      })
     })
   })
 
@@ -480,7 +494,7 @@ contract('VendingMachine', (accounts) => {
           tdtId,
           unknownFunctionSignature
         ),
-        'Invalid method signature encoded in _extraData.'
+        'Bad _extraData signature. Call must be to unqualifiedDepositToTbtc.'
       )
     })
   })
