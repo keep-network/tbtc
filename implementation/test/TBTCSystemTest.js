@@ -42,7 +42,6 @@ contract('TBTCSystem', (accounts) => {
       utils.address0,
       utils.address0,
       utils.address0,
-      utils.address0,
       vendingMachine.address,
       1,
       1

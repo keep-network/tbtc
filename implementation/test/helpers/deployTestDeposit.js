@@ -125,7 +125,6 @@ export default async function deployTestDeposit(
     keepRegistryStub.address,
     depositFactory.address,
     testDeposit.address,
-    tbtcSystemStub.address,
     tbtcToken.address,
     tbtcDepositToken.address,
     feeRebateToken.address,
