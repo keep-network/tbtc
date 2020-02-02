@@ -37,7 +37,6 @@ contract FundingScript {
 
         // Verify _extraData is a call to unqualifiedDepositToTbtc.
         bytes4 functionSignature;
-        /* solium-disable security/no-inline-assembly */
         assembly { functionSignature := mload(add(_extraData, 0x20)) }
         require(
             functionSignature == vendingMachine.unqualifiedDepositToTbtc.selector,

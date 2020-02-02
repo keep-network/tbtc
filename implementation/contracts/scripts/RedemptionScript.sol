@@ -38,7 +38,6 @@ contract RedemptionScript {
 
         // Verify _extraData is a call to tbtcToBtc.
         bytes4 functionSignature;
-        /* solium-disable security/no-inline-assembly */
         assembly { functionSignature := mload(add(_extraData, 0x20)) }
         require(
             functionSignature == vendingMachine.tbtcToBtc.selector,
