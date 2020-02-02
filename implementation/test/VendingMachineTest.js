@@ -60,7 +60,7 @@ contract('VendingMachine', (accounts) => {
 
     await testDeposit.setSignerFeeDivisor(signerFeeDivisor)
 
-    await testVendingMachine.setExteriorAddresses(
+    await testVendingMachine.setExternalAddresses(
       tbtcToken.address,
       tbtcDepositToken.address,
       feeRebateToken.address,

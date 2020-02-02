@@ -8,11 +8,11 @@ contract TestVendingMachine is VendingMachine {
         VendingMachine(_tbtcSystem)
     public {}
 
-    function setExteriorAddresses(
+    function setExternalAddresses(
         address _tbtcToken,
         address _tbtcDepositToken,
         address _feeRebateToken
-    ) external {
+    ) public {
         tbtcToken = TBTCToken(_tbtcToken);
         tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         feeRebateToken = FeeRebateToken(_feeRebateToken);
