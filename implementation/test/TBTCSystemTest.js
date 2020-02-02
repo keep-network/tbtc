@@ -7,7 +7,6 @@ import {
 import deployTestDeposit from './helpers/deployTestDeposit'
 
 const BN = require('bn.js')
-const utils = require('./utils')
 const chai = require('chai')
 const expect = chai.expect
 const bnChai = require('bn-chai')
@@ -22,30 +21,19 @@ contract('TBTCSystem', (accounts) => {
 
   before(async () => {
     const {
+      tbtcSystemStub,
       keepRegistryStub,
-      depositFactory,
-      deployed,
-    } = await deployTestDeposit()
-    const vendingMachine = deployed.TestVendingMachine
+    } = await deployTestDeposit(
+      [],
+      // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
+      // test TBTCSystem itself.
+      { TBTCSystemStub: TBTCSystem }
+    )
+    // Refer to this correctly throughout the rest of the test.
+    tbtcSystem = tbtcSystemStub
 
     ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
     await keepRegistryStub.setVendor(ecdsaKeepVendor.address)
-
-    // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to test
-    // TBTCSystem itself; thus, we deploy and initialize a new one here with the
-    // minimum needed to test the core functions.
-    tbtcSystem = await TBTCSystem.new(utils.address0)
-    await tbtcSystem.initialize(
-      keepRegistryStub.address,
-      depositFactory.address,
-      utils.address0,
-      utils.address0,
-      utils.address0,
-      utils.address0,
-      vendingMachine.address,
-      1,
-      1
-    )
   })
 
   describe('requestNewKeep()', async () => {
