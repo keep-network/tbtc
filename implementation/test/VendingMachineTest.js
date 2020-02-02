@@ -10,8 +10,6 @@ import chai, { expect } from 'chai'
 import bnChai from 'bn-chai'
 chai.use(bnChai(BN))
 
-const TestVendingMachine = artifacts.require('TestVendingMachine')
-
 const currentDifficulty = 6353030562983
 const _version = '0x01000000'
 const _txInputVector = `0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff`
@@ -55,8 +53,8 @@ contract('VendingMachine', (accounts) => {
       testDeposit,
       ecdsaKeepStub,
       deployed,
-    } = await deployTestDeposit([{ name: 'VendingMachine', contract: TestVendingMachine }]))
-    testVendingMachine = deployed.VendingMachine
+    } = await deployTestDeposit())
+    testVendingMachine = deployed.TestVendingMachine
 
     assertBalance = new AssertBalance(tbtcToken)
 

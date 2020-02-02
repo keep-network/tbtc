@@ -10,8 +10,6 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-const TestVendingMachine = artifacts.require('TestVendingMachine')
-
 // spare signature:
 // signing with privkey '11' * 32
 // const preimage = '0x' + '33'.repeat(32)
@@ -53,8 +51,8 @@ contract('DepositRedemption', (accounts) => {
       testDeposit,
       ecdsaKeepStub,
       deployed,
-    } = await deployTestDeposit([{ name: 'VendingMachine', contract: TestVendingMachine }]))
-    testVendingMachine = deployed.VendingMachine
+    } = await deployTestDeposit())
+    testVendingMachine = deployed.TestVendingMachine
 
     await testDeposit.setSignerFeeDivisor(new BN('200'))
 
