@@ -12,6 +12,13 @@ contract TestToken is TBTCToken{
         // solium-disable-previous-line no-empty-blocks
     }
 
+    // Override to drop ACL.
+    function mint(address _account, uint256 _amount) public returns (bool) {
+        // NOTE: this is a public function with unchecked minting.
+        _mint(_account, _amount);
+        return true;
+    }
+
     /// @dev             We can't call TBTCToken mint function from deposit Test becuase of ACL.
     ///                  This function bypasses ACL and can be called in Deposit tests
     ///                  Mints an amount of the token and assigns it to an account.
