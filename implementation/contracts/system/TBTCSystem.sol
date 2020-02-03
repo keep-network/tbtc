@@ -22,9 +22,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
     event SignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
     event CollateralizationThresholdsUpdated(
-        uint256 _initialCollateralizedPercent,
-        uint256 _undercollateralizedThresholdPercent,
-        uint256 _severelyUndercollateralizedThresholdPercent
+        uint128 _initialCollateralizedPercent,
+        uint128 _undercollateralizedThresholdPercent,
+        uint128 _severelyUndercollateralizedThresholdPercent
     );
 
     bool _initialized = false;
