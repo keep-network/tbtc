@@ -54,11 +54,11 @@ contract('DepositLiquidation', (accounts) => {
 
     await tbtcDepositToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
     await feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
+    await testDeposit.reset()
+    await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   })
 
   beforeEach(async () => {
-    await testDeposit.reset()
-    await testDeposit.setKeepAddress(ecdsaKeepStub.address)
     await createSnapshot()
   })
 
@@ -226,7 +226,7 @@ contract('DepositLiquidation', (accounts) => {
       lotSize = await testDeposit.lotSizeSatoshis.call()
       lotValue = lotSize.mul(oraclePrice)
 
-      undercollateralizedPercent = await tbtcSystemStub.getUndercollateralizedThresholdPercent.call()
+      undercollateralizedPercent = await testDeposit.getUndercollateralizedThresholdPercent.call()
     })
 
     beforeEach(async () => {

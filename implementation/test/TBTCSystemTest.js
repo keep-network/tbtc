@@ -22,7 +22,7 @@ contract('TBTCSystem', (accounts) => {
   before(async () => {
     const {
       tbtcSystemStub,
-      ecdsaKeepFactory,
+      ecdsaKeepFactoryStub,
     } = await deployTestDeposit(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
@@ -31,13 +31,14 @@ contract('TBTCSystem', (accounts) => {
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
+    ecdsaKeepFactory = ecdsaKeepFactoryStub
   })
 
   describe('requestNewKeep()', async () => {
     it('sends caller as owner to open new keep', async () => {
       const expectedKeepOwner = accounts[2]
 
-      await tbtcSystem.requestNewKeep(5, 10, { from: expectedKeepOwner })
+      await tbtcSystem.requestNewKeep(5, 10, 0, { from: expectedKeepOwner })
       const keepOwner = await ecdsaKeepFactory.keepOwner.call()
 
       assert.equal(expectedKeepOwner, keepOwner, 'incorrect keep owner address')
@@ -46,7 +47,7 @@ contract('TBTCSystem', (accounts) => {
     it('returns keep address', async () => {
       const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
 
-      const result = await tbtcSystem.requestNewKeep.call(5, 10)
+      const result = await tbtcSystem.requestNewKeep.call(5, 10, 0)
 
       assert.equal(expectedKeepAddress, result, 'incorrect keep address')
     })
