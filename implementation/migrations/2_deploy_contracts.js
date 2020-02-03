@@ -23,6 +23,8 @@ const BTCUSDPriceFeed = artifacts.require('BTCUSDPriceFeed')
 const ETHUSDPriceFeed = artifacts.require('ETHUSDPriceFeed')
 const prices = require('./prices')
 
+const MockRelay = artifacts.require('MockRelay')
+
 // system
 const TBTCConstants = artifacts.require('TBTCConstants')
 const TBTCSystem = artifacts.require('TBTCSystem')
@@ -63,9 +65,37 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(OutsourceDepositLogging)
     await deployer.link(OutsourceDepositLogging, all)
 
+    let difficultyRelay
+    // price feeds
+    if (network !== 'mainnet') {
+      // On mainnet, we use the MakerDAO-deployed price feeds.
+      // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
+      // Otherwise, we deploy our own mock price feeds, which are simpler
+      // to maintain.
+      await deployer.deploy(BTCUSDPriceFeed)
+      await deployer.deploy(ETHUSDPriceFeed)
+
+      const btcPriceFeed = await BTCUSDPriceFeed.deployed()
+      const ethPriceFeed = await ETHUSDPriceFeed.deployed()
+
+      await btcPriceFeed.setValue(web3.utils.toWei(prices.BTCUSD))
+      await ethPriceFeed.setValue(web3.utils.toWei(prices.ETHUSD))
+
+      // On mainnet, we use the Summa-provided relay; see
+      // https://github.com/summa-tx/relays . On testnet, we use a local mock.
+      await deployer.deploy(MockRelay)
+      difficultyRelay = await MockRelay.deployed()
+    }
+
+    // TODO This should be dropped soon.
     await deployer.deploy(BTCETHPriceFeed)
 
-    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address)
+    if (! difficultyRelay) {
+      throw new Error('Difficulty relay not found.')
+    }
+
+    // system
+    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address, difficultyRelay.address)
 
     await deployer.deploy(DepositFactory, TBTCSystem.address)
 
@@ -88,22 +118,6 @@ module.exports = (deployer, network, accounts) => {
     await deployer.link(DepositFunding, all)
 
     await deployer.deploy(Deposit, DepositFactory.address)
-
-    // price feeds
-    if (network !== 'mainnet') {
-      // On mainnet, we use the MakerDAO-deployed price feeds.
-      // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
-      // Otherwise, we deploy our own mock price feeds, which are simpler
-      // to maintain.
-      await deployer.deploy(BTCUSDPriceFeed)
-      await deployer.deploy(ETHUSDPriceFeed)
-
-      const btcPriceFeed = await BTCUSDPriceFeed.deployed()
-      const ethPriceFeed = await ETHUSDPriceFeed.deployed()
-
-      await btcPriceFeed.setValue(web3.utils.toWei(prices.BTCUSD))
-      await ethPriceFeed.setValue(web3.utils.toWei(prices.ETHUSD))
-    }
 
     // token
     await deployer.deploy(TBTCToken, VendingMachine.address)

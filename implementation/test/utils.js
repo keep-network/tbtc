@@ -39,10 +39,11 @@ function chainToProofBytes(chain) {
   return byteString
 }
 
-// Links and deploys contracts. contract Name and address are used along with an optional
-// constructorParam parameter. The constructorParam will be passed as a constructor parameter
-// for the deployed contract. If the constructorParam is the name of a previously deployed contract,
-// that contract's address is passed as the constructor parameter instead.cd
+// Links and deploys contracts. contract Name and address are used along with
+// an optional constructorParams parameter. The constructorParams will be
+// passed as constructor parameter for the deployed contract. If the
+// constructorParams contain the name of a previously deployed contract, that
+// contract's address is passed as the constructor parameter instead.
 async function deploySystem(deployList) {
   const deployed = {} // name: contract object
   const linkable = {} // name: linkable address
@@ -51,15 +52,13 @@ async function deploySystem(deployList) {
     await deployList[i].contract.link(linkable)
 
     let contract
-    if (deployList[i].constructorParam == undefined) {
+    if (deployList[i].constructorParams == undefined) {
       contract = await deployList[i].contract.new()
     } else {
-      const constructorParamAddress = linkable[deployList[i].constructorParam]
-      if (constructorParamAddress == undefined) {
-        contract = await deployList[i].contract.new(deployList[i].constructorParam)
-      } else {
-        contract = await deployList[i].contract.new(constructorParamAddress)
-      }
+      const resolvedConstructorParams =
+        deployList[i].constructorParams.map((param) => linkable[param] || param)
+
+      contract = await deployList[i].contract.new(...resolvedConstructorParams)
     }
 
     linkable[deployList[i].name] = contract.address

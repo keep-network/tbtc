@@ -21,6 +21,7 @@ chai.use(bnChai(BN))
 
 contract('DepositRedemption', (accounts) => {
   let tbtcConstants
+  let mockRelay
   let tbtcSystemStub
   let tbtcToken
   let tbtcDepositToken
@@ -44,6 +45,7 @@ contract('DepositRedemption', (accounts) => {
     let deployed
     ({
       tbtcConstants,
+      mockRelay,
       tbtcSystemStub,
       tbtcToken,
       tbtcDepositToken,
@@ -700,7 +702,7 @@ contract('DepositRedemption', (accounts) => {
     const redeemerOutputScript = '0x16001486e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
-      await tbtcSystemStub.setCurrentDiff(currentDiff)
+      await mockRelay.setMock(currentDiff, 1)
       await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testDeposit.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testDeposit.setRequestInfo('0x' + '11'.repeat(20), redeemerOutputScript, 14544, 0, '0x' + '11' * 32)

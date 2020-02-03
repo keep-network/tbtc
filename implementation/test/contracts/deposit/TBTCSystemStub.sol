@@ -1,15 +1,16 @@
 pragma solidity ^0.5.10;
 
 import {TBTCSystem} from '../../../contracts/system/TBTCSystem.sol';
+import {MockRelay} from '../relay/MockRelay.sol';
 
 contract TBTCSystemStub is TBTCSystem {
     address keepAddress = address(7);
     uint256 oraclePrice = 10 ** 12;
 
-    constructor(address _priceFeed)
+    constructor(address _priceFeed, address _relay)
         // Set expected factory address to 0-address.
         // Address is irelevant as test use forceMint function to bypass ACL
-        TBTCSystem(_priceFeed)
+        TBTCSystem(_priceFeed, _relay)
     public {
         // solium-disable-previous-line no-empty-blocks
     }
@@ -21,14 +22,6 @@ contract TBTCSystemStub is TBTCSystem {
     /// @dev Override TBTCSystem.fetchBitcoinPrice, don't call out to the price feed.
     function fetchBitcoinPrice() external view returns (uint256) {
         return oraclePrice;
-    }
-
-    function setCurrentDiff(uint256 _currentDifficulty) external {
-        currentDifficulty = _currentDifficulty;
-    }
-
-    function setPreviousDiff(uint256 _previousDifficulty) external {
-        previousDifficulty = _previousDifficulty;
     }
 
     // override parent

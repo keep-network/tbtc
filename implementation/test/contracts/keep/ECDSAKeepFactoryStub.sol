@@ -1,3 +1,5 @@
+pragma solidity ^0.5.10;
+
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
 contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
