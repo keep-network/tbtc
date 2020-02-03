@@ -22,9 +22,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
     event SignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
     event CollateralizationThresholdsUpdated(
+        uint256 _initialCollateralizedPercent,
         uint256 _undercollateralizedThresholdPercent,
-        uint256 _severelyUndercollateralizedThresholdPercent,
-        uint256 _initialCollateralizedPercent
+        uint256 _severelyUndercollateralizedThresholdPercent
     );
 
     bool _initialized = false;
@@ -40,7 +40,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
-    uint258 private initialCollateralizedPercent = 150; // percent
+    uint128 private initialCollateralizedPercent = 150; // percent
     uint128 private undercollateralizedThresholdPercent = 135;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
     uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 20**7, 50**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
@@ -197,8 +197,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Get the minimum signer bond requirement
-    function getSignerBondPercentage() external view returns (uint128) {
-        return signerBondPercentage;
+    function getInitialCollateralizedPercent() external view returns (uint128) {
+        return initialCollateralizedPercent;
     }
 
     // Price Feed
