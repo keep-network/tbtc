@@ -196,7 +196,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return severelyUndercollateralizedThresholdPercent;
     }
 
-    /// @notice Get the minimum signer bond requirement
+    /// @notice Get the system initial collateralized level for new deposits.
     function getInitialCollateralizedPercent() external view returns (uint128) {
         return initialCollateralizedPercent;
     }
