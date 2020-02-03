@@ -230,10 +230,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function requestNewKeep(uint256 _m, uint256 _n, uint256 _bond)
         external
         payable
-        returns (address _keepAddress)
+        returns (address)
     {
         IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
         IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
-        _keepFactory.openKeep(_n, _m, msg.sender, _bond);
+        return _keepFactory.openKeep(_n, _m, msg.sender, _bond);
     }
 }

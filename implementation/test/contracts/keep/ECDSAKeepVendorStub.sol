@@ -25,7 +25,7 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
         uint256,
         uint256,
         address _owner,
-        uint256 _bond
+        uint256
     ) external payable returns (address) {
         keepOwner = _owner;
         return keepAddress;
