@@ -14,7 +14,8 @@ const DepositRedemption = artifacts.require('DepositRedemption')
 const DepositLiquidation = artifacts.require('DepositLiquidation')
 
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
-const KeepRegistryStub = artifacts.require('KeepRegistryStub')
+const ECDSAKeepFactoryStub = artifacts.require('ECDSAKeepFactoryStub')
+const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
 const TestToken = artifacts.require('TestToken')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
@@ -74,7 +75,7 @@ export const TEST_DEPOSIT_DEPLOY = [
  *    - feeRebateToken
  *    - testDeposit
  *    - depositUtils
- *    - keepRegistryStub
+ *    - keepVendorStub
  *    - ecdsaKeepStub
  *    - depositFactory
  *    Additionally, the object contains a `deployed` property that holds
@@ -103,7 +104,8 @@ export default async function deployTestDeposit(
   const vendingMachine = deployed.VendingMachine
 
   const tbtcSystemStub = deployed.TBTCSystemStub
-  const keepRegistryStub = await KeepRegistryStub.new()
+  const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
+  const ecdsaKeepVendorStub = await ECDSAKeepVendorStub.new(ecdsaKeepFactoryStub.address)
 
   const tbtcToken = await TestToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
@@ -126,7 +128,7 @@ export default async function deployTestDeposit(
   await testDeposit.setLotSize(new BN('100000000'))
 
   await tbtcSystemStub.initialize(
-    keepRegistryStub.address,
+    ecdsaKeepVendorStub.address,
     depositFactory.address,
     testDeposit.address,
     tbtcToken.address,
@@ -145,7 +147,7 @@ export default async function deployTestDeposit(
     feeRebateToken,
     testDeposit,
     depositUtils,
-    keepRegistryStub,
+    ecdsaKeepFactoryStub,
     ecdsaKeepStub,
     depositFactory,
     deployed,

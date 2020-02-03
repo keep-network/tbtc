@@ -1,11 +1,10 @@
 pragma solidity ^0.5.10;
 
-import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
-import {IBondedECDSAKeep} from "../../../contracts/external/IBondedECDSAKeep.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 
 /// @notice Implementation of ECDSAKeep interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
-contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
+contract ECDSAKeepStub is IBondedECDSAKeep {
     bytes publicKey;
     bool success;
     uint256 bondAmount = 10000;
@@ -35,8 +34,6 @@ contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
     function burnContractBalance() public {
         address(0).transfer(address(this).balance);
     }
-
-    // Functions implemented for IECDSAKeep interface.
 
     function getPublicKey() external view returns (bytes memory) {
         return publicKey;

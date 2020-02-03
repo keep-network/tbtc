@@ -20,7 +20,7 @@
   "author": "James Prestwich",
   "license": "UNLICENSED",
   "dependencies": {
-    "@keep-network/keep-ecdsa": "^0.1.2",
+    "@keep-network/keep-ecdsa": "^0.7.5",
     "@summa-tx/bitcoin-spv-sol": "^2.2.0",
     "@truffle/hdwallet-provider": "^1.0.26",
     "bn-chai": "^1.0.1",

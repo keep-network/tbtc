@@ -17,12 +17,12 @@ const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
-  let ecdsaKeepVendor
+  let ecdsaKeepFactory
 
   before(async () => {
     const {
       tbtcSystemStub,
-      keepRegistryStub,
+      ecdsaKeepFactory,
     } = await deployTestDeposit(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
@@ -31,9 +31,6 @@ contract('TBTCSystem', (accounts) => {
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
-
-    ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
-    await keepRegistryStub.setVendor(ecdsaKeepVendor.address)
   })
 
   describe('requestNewKeep()', async () => {
@@ -41,13 +38,13 @@ contract('TBTCSystem', (accounts) => {
       const expectedKeepOwner = accounts[2]
 
       await tbtcSystem.requestNewKeep(5, 10, { from: expectedKeepOwner })
-      const keepOwner = await ecdsaKeepVendor.keepOwner.call()
+      const keepOwner = await ecdsaKeepFactory.keepOwner.call()
 
       assert.equal(expectedKeepOwner, keepOwner, 'incorrect keep owner address')
     })
 
     it('returns keep address', async () => {
-      const expectedKeepAddress = await ecdsaKeepVendor.keepAddress.call()
+      const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
 
       const result = await tbtcSystem.requestNewKeep.call(5, 10)
 

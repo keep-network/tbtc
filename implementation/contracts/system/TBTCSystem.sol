@@ -34,7 +34,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 currentDifficulty = 1;
     uint256 previousDifficulty = 1;
 
-    address public keepRegistry;
+    address public keepVendor;
     address public priceFeed;
 
     // Parameters governed by the TBTCSystem owner
@@ -50,7 +50,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     function initialize(
-        address _keepRegistry,
+        address _keepVendor,
         address _depositFactory,
         address _masterDepositAddress,
         address _tbtcToken,
@@ -62,7 +62,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
-        keepRegistry = _keepRegistry;
+        keepVendor = _keepVendor;
         VendingMachine(_vendingMachine).setExternalAddresses(
             _tbtcToken,
             _tbtcDepositToken,
@@ -232,8 +232,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         payable
         returns (address _keepAddress)
     {
-        _keepVendor = IBondedECDSAKeepVendor(vendorAddress);
-        _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
+        IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
+        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
         _keepFactory.openKeep(_n, _m, msg.sender, _bond);
     }
 }
