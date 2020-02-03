@@ -272,7 +272,7 @@ contract('VendingMachine', (accounts) => {
     const valueBytes = '0x1111111111111111'
     const keepPubkeyX = '0x' + '33'.repeat(32)
     const keepPubkeyY = '0x' + '44'.repeat(32)
-    const requesterPKH = '0x' + '33'.repeat(20)
+    const redeemerOutputScript = '0x160014' + '33'.repeat(20)
     let requiredBalance
     let block
 
@@ -303,10 +303,10 @@ contract('VendingMachine', (accounts) => {
 
       // the fee is ~12,297,829,380 BTC
       await feeRebateToken.forceMint(accounts[0], tdtId)
-      await vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0])
+      await vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', redeemerOutputScript, accounts[0])
       const requestInfo = await testDeposit.getRequestInfo()
 
-      assert.equal(requestInfo[1], requesterPKH)
+      assert.equal(requestInfo[1], redeemerOutputScript)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
       assert.equal(requestInfo[4], sighash)
 
@@ -323,7 +323,7 @@ contract('VendingMachine', (accounts) => {
       await feeRebateToken.forceMint(accounts[1], tdtId)
 
       await expectThrow(
-        vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0]),
+        vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', redeemerOutputScript, accounts[0]),
         'SafeMath: subtraction overflow.'
       )
     })
@@ -355,7 +355,7 @@ contract('VendingMachine', (accounts) => {
 
         const tbtcToBtc = vendingMachine.abi.filter((x) => x.name == 'tbtcToBtc')[0]
         const calldata = web3.eth.abi.encodeFunctionCall(
-          tbtcToBtc, [testDeposit.address, '0x1111111100000000', requesterPKH, accounts[0]]
+          tbtcToBtc, [testDeposit.address, '0x1111111100000000', redeemerOutputScript, accounts[0]]
         )
 
         await tbtcToken.approveAndCall(
@@ -365,7 +365,7 @@ contract('VendingMachine', (accounts) => {
         )
 
         const requestInfo = await testDeposit.getRequestInfo()
-        assert.equal(requestInfo[1], requesterPKH)
+        assert.equal(requestInfo[1], redeemerOutputScript)
         assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
         assert.equal(requestInfo[4], sighash)
 

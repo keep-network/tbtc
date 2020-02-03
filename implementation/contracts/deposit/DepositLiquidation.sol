@@ -184,7 +184,7 @@ library DepositLiquidation {
             "No input spending custodied UTXO found at given index"
         );
 
-        if (_d.redeemerPKH != bytes20(0)) {
+        if (_d.redeemerOutputScript.length > 0) {
             require(
                 validateRedeemerNotPaid(_d, _txOutputVector),
                 "Found an output paying the redeemer as requested"
@@ -213,10 +213,8 @@ library DepositLiquidation {
             _output = _txOutputVector.slice(_offset, _txOutputVector.length - _offset);
             _offset += _output.determineOutputLength();
 
-            if (_output.extractValue() >= _requiredOutputValue
-                // extract the output flag and check that it is witness
-                && keccak256(_output.slice(8, 3)) == keccak256(hex"160014")
-                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.redeemerPKH))) {
+            if (_output.extractValue() >= _requiredOutputValue &&
+                keccak256(_output.slice(8, 3).concat(_output.extractHash())) == keccak256(abi.encodePacked(_d.redeemerOutputScript))) {
                 return false;
             }
         }

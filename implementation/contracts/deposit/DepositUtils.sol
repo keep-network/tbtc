@@ -53,7 +53,7 @@ library DepositUtils {
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
         address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
-        bytes20 redeemerPKH;  // The 20-byte redeemer PKH
+        bytes redeemerOutputScript;  // The 20-byte redeemer PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
@@ -361,7 +361,7 @@ library DepositUtils {
     /// @dev        We keep around the redeemer address so we can pay them out
     function redemptionTeardown(Deposit storage _d) public {
         // don't 0 redeemerAddress because we use it to calculate auctionTBTCAmount
-        _d.redeemerPKH = bytes20(0);
+        _d.redeemerOutputScript = "";
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);

@@ -352,14 +352,14 @@ contract('DepositFraud', (accounts) => {
 
   describe('validateRedeemerNotPaid', async () => {
     const _txOutputVector = '0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6'
-    const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const redeemerOutputScript = '0x16001486e7303082a6a21d5837176bc808bf4828371ab6'
     const prevoutValueBytes = '0xf078351d00000000'
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const _longTxOutputVector = `0x034897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b078952112040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6`
 
     beforeEach(async () => {
       await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testDeposit.setRequestInfo(utils.address0, requesterPKH, 2424, 0, utils.bytes32zero)
+      await testDeposit.setRequestInfo(utils.address0, redeemerOutputScript, 2424, 0, utils.bytes32zero)
     })
 
     it('returns false if redeemer is paid and value is sufficient', async () => {
@@ -402,7 +402,7 @@ contract('DepositFraud', (accounts) => {
     const _targetInputIndex = 0
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000' // 490043632
-    const requesterPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const redeemerOutputScript = '0x16001486e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
       await testDeposit.setState(utils.states.ACTIVE)
@@ -478,7 +478,7 @@ contract('DepositFraud', (accounts) => {
       // is `490043632 - (2424 * 6) = 490029088`.
       await testDeposit.setRequestInfo(
         utils.address0,
-        requesterPKH,
+        redeemerOutputScript,
         2424,
         0,
         utils.bytes32zero
