@@ -65,27 +65,6 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(OutsourceDepositLogging)
     await deployer.link(OutsourceDepositLogging, all)
 
-    // deposit
-    await deployer.deploy(DepositStates)
-    await deployer.link(DepositStates, all)
-
-    await deployer.deploy(DepositUtils)
-    await deployer.link(DepositUtils, all)
-
-    await deployer.deploy(DepositLiquidation)
-    await deployer.link(DepositLiquidation, all)
-
-    await deployer.deploy(DepositRedemption)
-    await deployer.link(DepositRedemption, all)
-
-    await deployer.deploy(DepositFunding)
-    await deployer.link(DepositFunding, all)
-
-    await deployer.deploy(Deposit)
-
-    // price oracle
-    await deployer.deploy(BTCETHPriceFeed)
-
     let difficultyRelay
     // price feeds
     if (network !== 'mainnet') {
@@ -108,22 +87,41 @@ module.exports = (deployer, network, accounts) => {
       difficultyRelay = await MockRelay.deployed()
     }
 
+    // TODO This should be dropped soon.
+    await deployer.deploy(BTCETHPriceFeed)
+
     if (! difficultyRelay) {
       throw new Error('Difficulty relay not found.')
     }
 
-    // deposit factory
-    await deployer.deploy(DepositFactory, Deposit.address)
-
     // system
     await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address, difficultyRelay.address)
 
-    // token
-    await deployer.deploy(TBTCToken, TBTCSystem.address)
-    await deployer.deploy(TBTCDepositToken)
-    await deployer.deploy(FeeRebateToken)
+    await deployer.deploy(DepositFactory, TBTCSystem.address)
 
-    // vending machine
-    await deployer.deploy(VendingMachine, TBTCToken.address, TBTCDepositToken.address, FeeRebateToken.address)
+    await deployer.deploy(VendingMachine, TBTCSystem.address)
+
+    // deposit
+    await deployer.deploy(DepositStates)
+    await deployer.link(DepositStates, all)
+
+    await deployer.deploy(DepositUtils)
+    await deployer.link(DepositUtils, all)
+
+    await deployer.deploy(DepositLiquidation)
+    await deployer.link(DepositLiquidation, all)
+
+    await deployer.deploy(DepositRedemption)
+    await deployer.link(DepositRedemption, all)
+
+    await deployer.deploy(DepositFunding)
+    await deployer.link(DepositFunding, all)
+
+    await deployer.deploy(Deposit, DepositFactory.address)
+
+    // token
+    await deployer.deploy(TBTCToken, VendingMachine.address)
+    await deployer.deploy(TBTCDepositToken, DepositFactory.address)
+    await deployer.deploy(FeeRebateToken, VendingMachine.address)
   })
 }

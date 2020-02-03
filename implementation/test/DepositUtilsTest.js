@@ -294,7 +294,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('returns base value for unset public key', async () => {
-      const newTestUtilsInstance = await TestDepositUtils.new()
+      const newTestUtilsInstance = await TestDepositUtils.new(utils.address0)
       const signerPubkey = await newTestUtilsInstance.signerPubkey.call()
       assert.equal(signerPubkey, '0x' + '00'.repeat(64))
     })

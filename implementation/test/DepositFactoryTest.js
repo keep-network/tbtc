@@ -8,7 +8,6 @@ chai.use(bnChai(BN))
 
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const TestDeposit = artifacts.require('TestDeposit')
-const DepositFactory = artifacts.require('DepositFactory')
 
 contract('DepositFactory', () => {
   let mockRelay
@@ -16,8 +15,7 @@ contract('DepositFactory', () => {
   let tbtcToken
   let tbtcDepositToken
   let testDeposit
-
-  let factory
+  let depositFactory
 
   const funderBondAmount = new BN('10').pow(new BN('5'))
   const fullBtc = 100000000
@@ -29,40 +27,25 @@ contract('DepositFactory', () => {
       tbtcToken,
       tbtcDepositToken,
       testDeposit,
+      depositFactory,
     } = await deployTestDeposit())
-
-    factory = await DepositFactory.new(testDeposit.address)
   })
 
   describe('createDeposit()', async () => {
     it('creates new clone instances', async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
         { value: funderBondAmount }
       )
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
         { value: funderBondAmount }
       )
 
-      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       assert.equal(eventList.length, 2)
       assert(web3.utils.isAddress(eventList[0].returnValues.depositCloneAddress))
@@ -73,19 +56,11 @@ contract('DepositFactory', () => {
     it('correctly forwards value to Deposit', async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
         { value: funderBondAmount }
       )
-
-      const eventList = await factory.getPastEvents(
+      const eventList = await depositFactory.getPastEvents(
         'DepositCloneCreated',
         {
           fromBlock: blockNumber,
@@ -107,31 +82,17 @@ contract('DepositFactory', () => {
       const keep2 = await ECDSAKeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
         { value: funderBondAmount }
       )
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
         { value: funderBondAmount }
       )
 
-      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       const clone1 = eventList[0].returnValues.depositCloneAddress
       const clone2 = eventList[1].returnValues.depositCloneAddress
@@ -196,19 +157,12 @@ contract('DepositFactory', () => {
 
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
         { value: funderBondAmount }
       )
 
-      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
       const cloneNew = eventList[0].returnValues.depositCloneAddress
       const depositNew = await TestDeposit.at(cloneNew)
 

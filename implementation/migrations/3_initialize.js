@@ -15,7 +15,18 @@ module.exports = async function(deployer, network) {
 
   // System.
   const tbtcSystem = await TBTCSystem.deployed()
-  await tbtcSystem.initialize(KeepRegistryAddress)
+  await tbtcSystem.initialize(
+    KeepRegistryAddress,
+    DepositFactory.address,
+    Deposit.addres,
+    TBTCSystem.address,
+    TBTCToken.address,
+    TBTCDepositToken.address,
+    FeeRebateToken.address,
+    VendingMachine.address,
+    3,
+    3
+  )
 
   // Price feed.
   const btcEthPriceFeed = await BTCETHPriceFeed.deployed()

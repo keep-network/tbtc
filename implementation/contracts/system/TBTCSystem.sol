@@ -3,6 +3,8 @@ pragma solidity ^0.5.10;
 
 import {IKeepRegistry} from "@keep-network/keep-ecdsa/contracts/api/IKeepRegistry.sol";
 import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeepVendor.sol";
+import {VendingMachine} from "./VendingMachine.sol";
+import {DepositFactory} from "../proxy/DepositFactory.sol";
 
 import {IRelay} from "@summa-tx/relay-sol/contracts/Relay.sol";
 
@@ -46,11 +48,34 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     function initialize(
-        address _keepRegistry
+        address _keepRegistry,
+        address _depositFactory,
+        address _masterDepositAddress,
+        address _tbtcToken,
+        address _tbtcDepositToken,
+        address _feeRebateToken,
+        address _vendingMachine,
+        uint256 _keepThreshold,
+        uint256 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
         keepRegistry = _keepRegistry;
+        VendingMachine(_vendingMachine).setExternalAddresses(
+            _tbtcToken,
+            _tbtcDepositToken,
+            _feeRebateToken
+        );
+        DepositFactory(_depositFactory).setExternalDependencies(
+            _masterDepositAddress,
+            address(this),
+            _tbtcToken,
+            _tbtcDepositToken,
+            _feeRebateToken,
+            _vendingMachine,
+            _keepThreshold,
+            _keepSize
+        );
         _initialized = true;
         allowNewDeposits = true;
     }
@@ -69,6 +94,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Anyone can reactivate deposit creations after the pause duration is over.
     function resumeNewDeposits() public {
         require(allowNewDeposits == false, "New deposits are currently allowed");
+        require(pausedTimestamp != 0, "Deposit has not been paused");
         require(block.timestamp.sub(pausedTimestamp) >= pausedDuration, "Deposits are still paused");
         allowNewDeposits = true;
         emit AllowNewDepositsUpdated(true);
@@ -86,7 +112,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function setSignerFeeDivisor(uint256 _signerFeeDivisor)
         external onlyOwner
     {
-        require(_signerFeeDivisor > 1, "Signer fee must be lower than 100%");
+        require(_signerFeeDivisor > 9, "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.");
         signerFeeDivisor = _signerFeeDivisor;
         emit SignerFeeDivisorUpdated(_signerFeeDivisor);
     }
