@@ -3,7 +3,7 @@ pragma solidity ^0.5.10;
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
-import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {TBTCSystem} from "../system/TBTCSystem.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -62,7 +62,8 @@ library DepositFunding {
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
         _d.lotSizeSatoshis = _lotSize;
-        _d.keepAddress = _system.requestNewKeep(_m, _n);
+        uint256 _bondRequirement = _lotSize.mul(_system.getInitialCollateralizedPercent()).div(100);
+        _d.keepAddress = _system.requestNewKeep(_m, _n, _bondRequirement);
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
         _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();
@@ -133,7 +134,7 @@ library DepositFunding {
     function retrieveSignerPubkey(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not currently awaiting signer setup");
 
-        bytes memory _publicKey = IECDSAKeep(_d.keepAddress).getPublicKey();
+        bytes memory _publicKey = IBondedECDSAKeep(_d.keepAddress).getPublicKey();
         require(_publicKey.length == 64, "public key not set or not 64-bytes long");
 
         _d.signingGroupPubkeyX = _publicKey.slice(0, 32).toBytes32();

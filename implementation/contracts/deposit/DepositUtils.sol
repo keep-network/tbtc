@@ -8,8 +8,7 @@ import {DepositStates} from "./DepositStates.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
-import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
-import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 
@@ -401,7 +400,7 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.distributeETHToMembers.value(_ethValue)();
         return true;
     }

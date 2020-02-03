@@ -6,7 +6,7 @@ import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 import {CheckBitcoinSigs} from "@summa-tx/bitcoin-spv-sol/contracts/CheckBitcoinSigs.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
@@ -34,7 +34,7 @@ library DepositRedemption {
         address _tbtcTokenAddress = _d.TBTCToken;
         TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
 
-        IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
         _tbtcToken.approve(_d.keepAddress, _d.signerFee());
         _keep.distributeERC20ToMembers(_tbtcTokenAddress, _d.signerFee());
@@ -45,7 +45,7 @@ library DepositRedemption {
     /// for given digest
     /// @param _digest Digest to approve
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) internal {
-        IECDSAKeep(_d.keepAddress).sign(_digest);
+        IBondedECDSAKeep(_d.keepAddress).sign(_digest);
 
         _d.approvedDigests[_digest] = block.timestamp;
     }

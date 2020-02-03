@@ -13,16 +13,15 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
-const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
-  let ecdsaKeepVendor
+  let ecdsaKeepFactory
 
   before(async () => {
     const {
       tbtcSystemStub,
-      keepRegistryStub,
+      ecdsaKeepFactoryStub,
     } = await deployTestDeposit(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
@@ -31,25 +30,23 @@ contract('TBTCSystem', (accounts) => {
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
-
-    ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
-    await keepRegistryStub.setVendor(ecdsaKeepVendor.address)
+    ecdsaKeepFactory = ecdsaKeepFactoryStub
   })
 
   describe('requestNewKeep()', async () => {
     it('sends caller as owner to open new keep', async () => {
       const expectedKeepOwner = accounts[2]
 
-      await tbtcSystem.requestNewKeep(5, 10, { from: expectedKeepOwner })
-      const keepOwner = await ecdsaKeepVendor.keepOwner.call()
+      await tbtcSystem.requestNewKeep(5, 10, 0, { from: expectedKeepOwner })
+      const keepOwner = await ecdsaKeepFactory.keepOwner.call()
 
       assert.equal(expectedKeepOwner, keepOwner, 'incorrect keep owner address')
     })
 
     it('returns keep address', async () => {
-      const expectedKeepAddress = await ecdsaKeepVendor.keepAddress.call()
+      const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
 
-      const result = await tbtcSystem.requestNewKeep.call(5, 10)
+      const result = await tbtcSystem.requestNewKeep.call(5, 10, 0)
 
       assert.equal(expectedKeepAddress, result, 'incorrect keep address')
     })
