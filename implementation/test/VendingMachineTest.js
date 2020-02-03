@@ -30,6 +30,7 @@ const _outValueBytes = '0x2040351d00000000'
 contract('VendingMachine', (accounts) => {
   let vendingMachine
 
+  let mockRelay
   let tbtcSystemStub
   let tbtcToken
   let tbtcDepositToken
@@ -48,6 +49,7 @@ contract('VendingMachine', (accounts) => {
   before(async () => {
     let deployed
     ({
+      mockRelay,
       tbtcSystemStub,
       tbtcToken,
       tbtcDepositToken,
@@ -216,7 +218,7 @@ contract('VendingMachine', (accounts) => {
 
   describe('#unqualifiedDepositToTbtc', async () => {
     before(async () => {
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await mockRelay.setMock(currentDifficulty, 1)
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
     })
@@ -392,7 +394,7 @@ contract('VendingMachine', (accounts) => {
     let fundingScript
 
     before(async () => {
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await mockRelay.setMock(currentDifficulty, 1)
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
       await tbtcToken.zeroBalance(accounts[0])

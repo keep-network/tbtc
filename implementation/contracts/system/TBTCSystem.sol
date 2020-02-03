@@ -6,6 +6,8 @@ import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKee
 import {VendingMachine} from "./VendingMachine.sol";
 import {DepositFactory} from "../proxy/DepositFactory.sol";
 
+import {IRelay} from "@summa-tx/relay-sol/contracts/Relay.sol";
+
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
@@ -29,11 +31,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 pausedTimestamp;
     uint256 pausedDuration = 10 days;
 
-    uint256 currentDifficulty = 1;
-    uint256 previousDifficulty = 1;
-
     address public keepRegistry;
     address public priceFeed;
+    address public relay;
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
@@ -42,8 +42,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
     uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 20**7, 50**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
-    constructor(address _priceFeed) public {
+    constructor(address _priceFeed, address _relay) public {
         priceFeed = _priceFeed;
+        relay = _relay;
     }
 
     function initialize(
@@ -189,18 +190,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     // Difficulty Oracle
     // TODO: This is a workaround. It will be replaced by tbtc-difficulty-oracle.
     function fetchRelayCurrentDifficulty() external view returns (uint256) {
-        return currentDifficulty;
+        return IRelay(relay).getCurrentEpochDifficulty();
     }
 
     function fetchRelayPreviousDifficulty() external view returns (uint256) {
-        return previousDifficulty;
-    }
-
-    function submitCurrentDifficulty(uint256 _currentDifficulty) public {
-        if (currentDifficulty != _currentDifficulty) {
-            previousDifficulty = currentDifficulty;
-            currentDifficulty = _currentDifficulty;
-        }
+        return IRelay(relay).getPrevEpochDifficulty();
     }
 
     /// @notice Request a new keep opening.
