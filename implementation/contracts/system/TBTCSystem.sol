@@ -21,10 +21,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     event LotSizesUpdated(uint256[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
     event SignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
-    event SignerBondPercentageUpdated(uint256 _signerBondPercentage);
     event CollateralizationThresholdsUpdated(
         uint256 _undercollateralizedThresholdPercent,
-        uint256 _severelyUndercollateralizedThresholdPercent
+        uint256 _severelyUndercollateralizedThresholdPercent,
+        uint256 _initialCollateralizedPercent
     );
 
     bool _initialized = false;
@@ -40,9 +40,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
-    uint128 private undercollateralizedThresholdPercent = 140;  // percent
+    uint258 private initialCollateralizedPercent = 150; // percent
+    uint128 private undercollateralizedThresholdPercent = 135;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
-    uint258 private signerBondPercentage = 150; // percent
     uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 20**7, 50**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     constructor(address _priceFeed) public {
@@ -86,7 +86,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days. 
-    function emergencyPauseNewDeposits() external onlyOwner returns (bool) { 
+    function emergencyPauseNewDeposits() external onlyOwner returns (bool) {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
         pausedTimestamp = block.timestamp;
         allowNewDeposits = false;
@@ -124,7 +124,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function getSignerFeeDivisor() external view returns (uint256) { return signerFeeDivisor; }
 
     /// @notice Set the allowed deposit lot sizes.
-    /// @dev    Lot sizes should be 
+    /// @dev    Lot size array should always contain 10**8 satoshis (1BTC value)
     /// @param _lotSizes Array of allowed lot sizes.
     function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
         for( uint i = 0; i < _lotSizes.length; i++){
@@ -138,14 +138,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Gets the allowed lot sizes
-    /// @return Uint256 array of allowed lot sizes 
+    /// @return Uint256 array of allowed lot sizes
     function getAllowedLotSizes() external view returns (uint256[] memory){
         return lotSizesSatoshis;
     }
 
     /// @notice Check if a lot size is allowed.
     /// @param _lotSize Lot size to check.
-    /// @return True if lot size is allowed, false otherwise. 
+    /// @return True if lot size is allowed, false otherwise.
     function isAllowedLotSize(uint256 _lotSize) external view returns (bool){
         for( uint i = 0; i < lotSizesSatoshis.length; i++){
             if (lotSizesSatoshis[i] == _lotSize){
@@ -156,19 +156,31 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Set the system collateralization levels
+    /// @param _initialCollateralizedPercent default signing bond percent for new deposits
     /// @param _undercollateralizedThresholdPercent first undercollateralization trigger
     /// @param _severelyUndercollateralizedThresholdPercent second undercollateralization trigger
     function setCollateralizationThresholds(
+        uint128 _initialCollateralizedPercent,
         uint128 _undercollateralizedThresholdPercent,
         uint128 _severelyUndercollateralizedThresholdPercent
     ) external onlyOwner {
         require(
-            _undercollateralizedThresholdPercent > _severelyUndercollateralizedThresholdPercent,
-            "Severe undercollateralized threshold must be > undercollateralized threshold"
+            _initialCollateralizedPercent <= 300,
+            "Initial collateralized percent must be <= 300%"
         );
+        require(
+            _initialCollateralizedPercent > _undercollateralizedThresholdPercent,
+            "Undercollateralized threshold must be < initial collateralized percent"
+        );
+        require(
+            _undercollateralizedThresholdPercent > _severelyUndercollateralizedThresholdPercent,
+            "Severe undercollateralized threshold must be < undercollateralized threshold"
+        );
+        initialCollateralizedPercent = _initialCollateralizedPercent;
         undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
         severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
         emit CollateralizationThresholdsUpdated(
+            _initialCollateralizedPercent,
             _undercollateralizedThresholdPercent,
             _severelyUndercollateralizedThresholdPercent
         );
@@ -182,18 +194,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Get the system severe undercollateralization level for new deposits
     function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint128) {
         return severelyUndercollateralizedThresholdPercent;
-    }
-
-    /// @param signerBondPercentage Percentage of lotSize needed as minimum signer bond.
-    function setSignerBondPercentage(
-        uint128 _signerBondPercentage
-    ) external onlyOwner {
-        require(
-            _signerBondPercentage > _undercollateralizedThresholdPercent,
-            "Signer bond is lower than the _undercollateralizedThresholdPercent"
-        );
-        signerBondPercentage = _signerBondPercentage;
-        emit SignerBondPercentageUpdated(_signerBondPercentage);
     }
 
     /// @notice Get the minimum signer bond requirement
