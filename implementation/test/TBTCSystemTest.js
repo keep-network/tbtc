@@ -13,7 +13,6 @@ const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
-const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
