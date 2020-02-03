@@ -390,7 +390,7 @@ contract('DepositRedemption', (accounts) => {
     const valueBytes = '0x1111111111111111'
     const keepPubkeyX = '0x' + '33'.repeat(32)
     const keepPubkeyY = '0x' + '44'.repeat(32)
-    const redeemerPKH = '0x' + '33'.repeat(20)
+    const redeemerOutputScript = '0x160014' + '33'.repeat(20)
     let requiredBalance
 
     before(async () => {
@@ -418,10 +418,10 @@ contract('DepositRedemption', (accounts) => {
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
       // the fee is ~12,297,829,380 BTC
-      await testDeposit.requestRedemption('0x1111111100000000', redeemerPKH)
+      await testDeposit.requestRedemption('0x1111111100000000', redeemerOutputScript)
 
       const requestInfo = await testDeposit.getRequestInfo()
-      assert.equal(requestInfo[1], redeemerPKH)
+      assert.equal(requestInfo[1], redeemerOutputScript)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
       assert.equal(requestInfo[4], sighash)
 
@@ -437,10 +437,10 @@ contract('DepositRedemption', (accounts) => {
       await testDeposit.setState(utils.states.COURTESY_CALL)
 
       // the fee is ~12,297,829,380 BTC
-      await testDeposit.requestRedemption('0x1111111100000000', redeemerPKH)
+      await testDeposit.requestRedemption('0x1111111100000000', redeemerOutputScript)
 
       const requestInfo = await testDeposit.getRequestInfo()
-      assert.equal(requestInfo[1], redeemerPKH)
+      assert.equal(requestInfo[1], redeemerOutputScript)
       assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
       assert.equal(requestInfo[4], sighash)
 
@@ -456,7 +456,7 @@ contract('DepositRedemption', (accounts) => {
       await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
       // the fee is ~12,297,829,380 BTC
-      await testDeposit.requestRedemption('0x1111111100000000', redeemerPKH)
+      await testDeposit.requestRedemption('0x1111111100000000', redeemerOutputScript)
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock: block.number, toBlock: 'latest' })
       const event = events[0]
@@ -613,7 +613,7 @@ contract('DepositRedemption', (accounts) => {
     const newOutputBytes = '0x0100feffffffffff'
     const initialFee = 0xffff
     const outpoint = '0x' + '33'.repeat(36)
-    const redeemerPKH = '0x' + '33'.repeat(20)
+    const redeemerOutputScript = '0x160014' + '33'.repeat(20)
     let feeIncreaseTimer
 
     before(async () => {
@@ -628,7 +628,7 @@ contract('DepositRedemption', (accounts) => {
       await testDeposit.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testDeposit.setRequestInfo(utils.address0, redeemerPKH, initialFee, withdrawalRequestTime, prevSighash)
+      await testDeposit.setRequestInfo(utils.address0, redeemerOutputScript, initialFee, withdrawalRequestTime, prevSighash)
       await ecdsaKeepStub.setSuccess(true)
     })
 
@@ -655,7 +655,7 @@ contract('DepositRedemption', (accounts) => {
 
     it('reverts if the increase fee timer has not elapsed', async () => {
       const block = await web3.eth.getBlock('latest')
-      await testDeposit.setRequestInfo(utils.address0, redeemerPKH, initialFee, block.timestamp, prevSighash)
+      await testDeposit.setRequestInfo(utils.address0, redeemerOutputScript, initialFee, block.timestamp, prevSighash)
 
       await expectThrow(
         testDeposit.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
@@ -671,7 +671,7 @@ contract('DepositRedemption', (accounts) => {
     })
 
     it('reverts if the previous sighash was not the latest approved', async () => {
-      await testDeposit.setRequestInfo(utils.address0, redeemerPKH, initialFee, withdrawalRequestTime, keepPubkeyX)
+      await testDeposit.setRequestInfo(utils.address0, redeemerOutputScript, initialFee, withdrawalRequestTime, keepPubkeyX)
 
       // Previous sigHash is not approved for signing.
       await testDeposit.setDigestApprovedAtTime(prevSighash, 0)
@@ -697,13 +697,13 @@ contract('DepositRedemption', (accounts) => {
     const headerChain = '0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e'
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000'
-    const redeemerPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const redeemerOutputScript = '0x16001486e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
       await tbtcSystemStub.setCurrentDiff(currentDiff)
       await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await testDeposit.setState(utils.states.AWAITING_WITHDRAWAL_PROOF)
-      await testDeposit.setRequestInfo('0x' + '11'.repeat(20), redeemerPKH, 14544, 0, '0x' + '11' * 32)
+      await testDeposit.setRequestInfo('0x' + '11'.repeat(20), redeemerOutputScript, 14544, 0, '0x' + '11' * 32)
     })
 
     it('updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event', async () => {
@@ -716,7 +716,7 @@ contract('DepositRedemption', (accounts) => {
 
       const requestInfo = await testDeposit.getRequestInfo.call()
       assert.equal(requestInfo[0], '0x' + '11'.repeat(20)) // address is intentionally not cleared
-      assert.equal(requestInfo[1], utils.address0)
+      assert.equal(requestInfo[1], null)
       assert.equal(requestInfo[4], utils.bytes32zero)
 
       const eventList = await tbtcSystemStub.getPastEvents('Redeemed', { fromBlock: blockNumber, toBlock: 'latest' })
@@ -746,11 +746,11 @@ contract('DepositRedemption', (accounts) => {
     const outputValue = 490029088
     const outpoint = '0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000'
     const prevoutValueBytes = '0xf078351d00000000'
-    const redeemerPKH = '0x86e7303082a6a21d5837176bc808bf4828371ab6'
+    const redeemerOutputScript = '0x16001486e7303082a6a21d5837176bc808bf4828371ab6'
 
     beforeEach(async () => {
       await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testDeposit.setRequestInfo('0x' + '11'.repeat(20), redeemerPKH, 14544, 0, '0x' + '11' * 32)
+      await testDeposit.setRequestInfo('0x' + '11'.repeat(20), redeemerOutputScript, 14544, 0, '0x' + '11' * 32)
     })
 
     it('returns the output value', async () => {

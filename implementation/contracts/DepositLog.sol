@@ -24,7 +24,7 @@ contract DepositLog {
         address indexed _requester,
         bytes32 indexed _digest,
         uint256 _utxoSize,
-        bytes20 _requesterPKH,
+        bytes _redeemerOutputScript,
         uint256 _requestedFee,
         bytes _outpoint
     );
@@ -120,7 +120,7 @@ contract DepositLog {
     /// @param  _requester      The ethereum address of the requester
     /// @param  _digest         The calculated sighash digest
     /// @param  _utxoSize       The size of the utxo in sat
-    /// @param  _requesterPKH   The requester's 20-byte bitcoin pkh
+    /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @param  _requestedFee   The requester or bump-system specified fee
     /// @param  _outpoint       The 36 byte outpoint
     /// @return                 True if successful, else revert
@@ -128,7 +128,7 @@ contract DepositLog {
         address _requester,
         bytes32 _digest,
         uint256 _utxoSize,
-        bytes20 _requesterPKH,
+        bytes memory _redeemerOutputScript,
         uint256 _requestedFee,
         bytes memory _outpoint
     ) public returns (bool) {
@@ -138,7 +138,7 @@ contract DepositLog {
             _requester,
             _digest,
             _utxoSize,
-            _requesterPKH,
+            _redeemerOutputScript,
             _requestedFee,
             _outpoint);
         return true;

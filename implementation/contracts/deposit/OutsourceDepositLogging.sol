@@ -19,7 +19,7 @@ library OutsourceDepositLogging {
     /// @param  _redeemer       The ethereum address of the redeemer
     /// @param  _digest         The calculated sighash digest
     /// @param  _utxoSize       The size of the utxo in sat
-    /// @param  _redeemerPKH    The redeemer's 20-byte bitcoin pkh
+    /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @param  _requestedFee   The redeemer or bump-system specified fee
     /// @param  _outpoint       The 36 byte outpoint
     /// @return                 True if successful, else revert
@@ -28,18 +28,19 @@ library OutsourceDepositLogging {
         address _redeemer,
         bytes32 _digest,
         uint256 _utxoSize,
-        bytes20 _redeemerPKH,
+        bytes memory _redeemerOutputScript,
         uint256 _requestedFee,
-        bytes calldata _outpoint
-    ) external {
+        bytes memory _outpoint
+    ) public { // not external to allow bytes memory output scripts
         DepositLog _logger = DepositLog(_d.TBTCSystem);
         _logger.logRedemptionRequested(
             _redeemer,
             _digest,
             _utxoSize,
-            _redeemerPKH,
+            _redeemerOutputScript,
             _requestedFee,
-            _outpoint);
+            _outpoint
+        );
     }
 
     /// @notice         Fires a GotRedemptionSignature event

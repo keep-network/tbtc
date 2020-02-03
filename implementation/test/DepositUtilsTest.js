@@ -10,6 +10,7 @@ import bnChai from 'bn-chai'
 chai.use(bnChai(BN))
 
 const TestDepositUtils = artifacts.require('TestDepositUtils')
+const TestDepositUtilsSPV = artifacts.require('TestDepositUtilsSPV')
 
 // real tx from mainnet bitcoin, interpreted as funding tx
 // tx source: https://www.blockchain.com/btc/tx/7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f
@@ -215,7 +216,37 @@ contract('DepositUtils', (accounts) => {
   })
 
   describe('validateAndParseFundingSPVProof()', async () => {
+    let tbtcSystemStub
+    let tbtcToken
+    let tbtcDepositToken
+    let feeRebateToken
+    let testDeposit
+
     before(async () => {
+      ({
+        tbtcSystemStub,
+        tbtcToken,
+        tbtcDepositToken,
+        feeRebateToken,
+        testDeposit,
+      } = await deployTestDeposit([], { TestDeposit: TestDepositUtilsSPV }))
+
+      beneficiary = accounts[2]
+
+      feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
+
+      await testDeposit.createNewDeposit(
+        tbtcSystemStub.address,
+        tbtcToken.address,
+        tbtcDepositToken.address,
+        feeRebateToken.address,
+        utils.address0,
+        1, // m
+        1, // n
+        fullBtc,
+        { value: funderBondAmount }
+      )
+
       await testDeposit.setPubKey(_signerPubkeyX, _signerPubkeyY)
       await tbtcSystemStub.setCurrentDiff(currentDifficulty)
     })
