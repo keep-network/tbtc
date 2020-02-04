@@ -239,7 +239,7 @@ contract('DepositFraud', (accounts) => {
   describe('provideFraudBTCFundingProof', async () => {
     beforeEach(async () => {
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-      await mockRelay.setMock(currentDifficulty, 1)
+      await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
       await testDeposit.setState(utils.states.FRAUD_AWAITING_BTC_FUNDING_PROOF)
       await ecdsaKeepStub.send(1000000, { from: accounts[0] })
     })
@@ -406,7 +406,7 @@ contract('DepositFraud', (accounts) => {
 
     beforeEach(async () => {
       await testDeposit.setState(utils.states.ACTIVE)
-      await mockRelay.setMock(currentDifficulty, 1)
+      await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
       await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
       await ecdsaKeepStub.send(1000000, { from: accounts[0] })
     })

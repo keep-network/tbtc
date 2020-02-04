@@ -2,16 +2,19 @@ pragma solidity ^0.5.10;
 
 contract MockRelay {
 
-  uint256 current;
-  uint256 previous;
+  uint256 current = 1;
+  uint256 previous = 1;
 
-  function setMock(uint256 _current, uint256 _previous) public returns (bool) {
+  function setCurrentEpochDifficulty(uint256 _current) public {
     current = _current;
-    previous = _previous;
   }
 
   function getCurrentEpochDifficulty() external view returns (uint256) {
       return current;
+  }
+
+  function setPrevEpochDifficulty(uint256 _previous) public {
+    previous = _previous;
   }
 
   function getPrevEpochDifficulty() external view returns (uint256) {

@@ -106,7 +106,7 @@ export default async function deployTestDeposit(
   const vendingMachine = deployed.VendingMachine
 
   const mockRelay = deployed.MockRelay
-  await mockRelay.setMock(1, 1)
+  await mockRelay.setPrevEpochDifficulty(1)
 
   const tbtcSystemStub = deployed.TBTCSystemStub
   const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
