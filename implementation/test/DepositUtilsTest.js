@@ -494,8 +494,10 @@ contract('DepositUtils', (accounts) => {
       // Set Deposit.fundedAt to current block.
       await testDeposit.setUTXOInfo(prevoutValueBytes, block.timestamp, outpoint)
       remainingTerm = await testDeposit.remainingTerm.call()
+      const finalBlock = await web3.eth.getBlock('latest')
+      const expectedRemainder = (new BN(block.timestamp)).add(depositTerm).sub(new BN(finalBlock.timestamp))
 
-      expect(remainingTerm).to.eq.BN(depositTerm)
+      expect(remainingTerm).to.eq.BN(expectedRemainder)
     })
 
     it('returns 0 if deposit is at term', async () => {
