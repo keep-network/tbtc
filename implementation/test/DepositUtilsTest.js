@@ -483,38 +483,28 @@ contract('DepositUtils', (accounts) => {
     const prevoutValueBytes = '0xffffffffffffffff'
     const outpoint = '0x' + '33'.repeat(36)
     let depositTerm
-    let fundedAt
+    let remainingTerm
+    let block
 
     before(async () => {
       depositTerm = await tbtcConstants.getDepositTerm.call()
-      // Set Deposit.fundedAt to current block.
-      const block = await web3.eth.getBlock('latest')
-      fundedAt = block.timestamp
-      await testDeposit.setUTXOInfo(prevoutValueBytes, fundedAt, outpoint)
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it('returns remaining term from current block', async () => {
-      // Because there is time elapsed since we call `setUTXOInfo`, we get the time again.
-      const remainingTerm = await testDeposit.remainingTerm.call()
-      const block = await web3.eth.getBlock('latest')
+      block = await web3.eth.getBlock('latest')
+      // Set Deposit.fundedAt to current block.
+      await testDeposit.setUTXOInfo(prevoutValueBytes, block.timestamp, outpoint)
+      remainingTerm = await testDeposit.remainingTerm.call()
 
-      const expectedRemainingTerm = new BN(fundedAt).add(depositTerm).sub(new BN(block.timestamp))
-      expect(remainingTerm).to.eq.BN(expectedRemainingTerm)
+      expect(remainingTerm).to.eq.BN(depositTerm)
     })
 
     it('returns 0 if deposit is at term', async () => {
-      // Simulate an entire term.
+      block = await web3.eth.getBlock('latest')
+      await testDeposit.setUTXOInfo(prevoutValueBytes, block.timestamp, outpoint)
       await increaseTime(depositTerm.toNumber())
 
-      const remainingTerm = await testDeposit.remainingTerm.call()
+      remainingTerm = await testDeposit.remainingTerm.call()
       expect(remainingTerm).to.eq.BN(0)
     })
   })
