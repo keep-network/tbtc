@@ -4,9 +4,7 @@ import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
 contract TestDeposit is Deposit {
 
-    constructor(address _factoryAddress) 
-        Deposit(_factoryAddress)
-    public{}
+    constructor() public {}
 
     function createNewDeposit(
         address _TBTCSystem,

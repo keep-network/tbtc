@@ -7,31 +7,24 @@ import bnChai from 'bn-chai'
 chai.use(bnChai(BN))
 
 const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
+const Deposit = artifacts.require('Deposit')
 const TestDeposit = artifacts.require('TestDeposit')
 
 contract('DepositFactory', () => {
-  let mockRelay
-  let tbtcSystemStub
-  let tbtcToken
-  let tbtcDepositToken
-  let testDeposit
-  let depositFactory
-
   const funderBondAmount = new BN('10').pow(new BN('5'))
   const fullBtc = 100000000
 
-  before(async () => {
-    ({
-      mockRelay,
-      tbtcSystemStub,
-      tbtcToken,
-      tbtcDepositToken,
-      testDeposit,
-      depositFactory,
-    } = await deployTestDeposit())
-  })
-
   describe('createDeposit()', async () => {
+    let depositFactory
+
+    before(async () => {
+      // To properly test createDeposit, we deploy the real Deposit contract and
+      // make sure we don't get hit by the ACL hammer.
+      ({
+        depositFactory,
+      } = await deployTestDeposit([], { 'TestDeposit': Deposit }))
+    })
+
     it('creates new clone instances', async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
@@ -75,7 +68,25 @@ contract('DepositFactory', () => {
   })
 
   describe('clone state', async () => {
+    let mockRelay
+    let tbtcSystemStub
+    let tbtcToken
+    let tbtcDepositToken
+    let testDeposit
+    let depositFactory
+
     const publicKey = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6ee8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
+
+    before(async () => {
+      ({
+        mockRelay,
+        tbtcSystemStub,
+        tbtcToken,
+        tbtcDepositToken,
+        testDeposit,
+        depositFactory,
+      } = await deployTestDeposit([]))
+    })
 
     it('is not affected by state changes to other clone', async () => {
       const keep1 = await ECDSAKeepStub.new()

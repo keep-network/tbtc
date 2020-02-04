@@ -44,7 +44,7 @@ export const TEST_DEPOSIT_DEPLOY = [
   { name: 'DepositRedemption', contract: DepositRedemption },
   { name: 'DepositLiquidation', contract: DepositLiquidation },
   { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'TestDeposit', contract: TestDeposit, constructorParams: ['DepositFactory'] },
+  { name: 'TestDeposit', contract: TestDeposit },
   { name: 'TBTCDepositToken', contract: TBTCDepositToken, constructorParams: ['DepositFactory'] },
   { name: 'FeeRebateToken', contract: FeeRebateToken, constructorParams: ['VendingMachine'] },
   { name: 'ECDSAKeepStub', contract: ECDSAKeepStub },
@@ -121,16 +121,20 @@ export default async function deployTestDeposit(
   const ecdsaKeepStub = deployed.ECDSAKeepStub
   const depositFactory = deployed.DepositFactory
 
-  await testDeposit.setExteriorAddresses(
-    tbtcSystemStub.address,
-    tbtcToken.address,
-    tbtcDepositToken.address,
-    feeRebateToken.address,
-    vendingMachine.address,
-  )
+  if (testDeposit.setExteriorAddresses) {
+    // Test setup if this is in fact a TestDeposit. If it's been substituted
+    // with e.g. Deposit, we don't set it up.
+    await testDeposit.setExteriorAddresses(
+      tbtcSystemStub.address,
+      tbtcToken.address,
+      tbtcDepositToken.address,
+      feeRebateToken.address,
+      vendingMachine.address,
+    )
 
-  await testDeposit.setKeepAddress(ecdsaKeepStub.address)
-  await testDeposit.setLotSize(new BN('100000000'))
+    await testDeposit.setKeepAddress(ecdsaKeepStub.address)
+    await testDeposit.setLotSize(new BN('100000000'))
+  }
 
   await tbtcSystemStub.initialize(
     ecdsaKeepVendorStub.address,
