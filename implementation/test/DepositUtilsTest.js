@@ -487,7 +487,6 @@ contract('DepositUtils', (accounts) => {
 
     before(async () => {
       depositTerm = await tbtcConstants.getDepositTerm.call()
-
       // Set Deposit.fundedAt to current block.
       const block = await web3.eth.getBlock('latest')
       fundedAt = block.timestamp
@@ -504,9 +503,9 @@ contract('DepositUtils', (accounts) => {
 
     it('returns remaining term from current block', async () => {
       // Because there is time elapsed since we call `setUTXOInfo`, we get the time again.
+      const remainingTerm = await testDeposit.remainingTerm.call()
       const block = await web3.eth.getBlock('latest')
 
-      const remainingTerm = await testDeposit.remainingTerm.call()
       const expectedRemainingTerm = new BN(fundedAt).add(depositTerm).sub(new BN(block.timestamp))
       expect(remainingTerm).to.eq.BN(expectedRemainingTerm)
     })
