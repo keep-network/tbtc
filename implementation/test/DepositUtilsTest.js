@@ -1,5 +1,4 @@
 import expectThrow from './helpers/expectThrow'
-import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 import increaseTime from './helpers/increaseTime'
 import deployTestDeposit from './helpers/deployTestDeposit'
 
