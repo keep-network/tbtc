@@ -53,7 +53,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function initialize(
         address _keepVendor,
         address _depositFactory,
-        address _masterDepositAddress,
+        address payable _masterDepositAddress,
         address _tbtcToken,
         address _tbtcDepositToken,
         address _feeRebateToken,

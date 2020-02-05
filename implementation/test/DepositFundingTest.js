@@ -346,7 +346,7 @@ contract('DepositFunding', (accounts) => {
 
   describe('provideBTCFundingProof', async () => {
     beforeEach(async () => {
-      await mockRelay.setMock(currentDifficulty, 1)
+      await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
       await ecdsaKeepStub.send(1000000, { from: accounts[0] })

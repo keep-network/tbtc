@@ -4,9 +4,7 @@ import {DepositUtils} from '../../../contracts/deposit/DepositUtils.sol';
 import {TestDeposit} from './TestDeposit.sol';
 
 contract TestDepositUtils is TestDeposit {
-    constructor(address _factoryAddress) 
-        TestDeposit(_factoryAddress)
-    public{}
+    constructor() public {}
 
     // Passthroughs to test view and pure functions
 
@@ -107,9 +105,7 @@ contract TestDepositUtils is TestDeposit {
 // TestDepositUtils contract causes it to run out of gas before finishing its
 // deploy.
 contract TestDepositUtilsSPV is TestDeposit {
-    constructor(address _factoryAddress)
-        TestDeposit(_factoryAddress)
-    public{}
+    constructor() public {}
 
     function setPubKey(
         bytes32 _signingGroupPubkeyX,
