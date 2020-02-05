@@ -228,6 +228,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     {
         IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
         IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
-        return _keepFactory.openKeep(_n, _m, msg.sender, _bond);
+        return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond);
     }
 }
