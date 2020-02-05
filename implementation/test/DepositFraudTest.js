@@ -138,24 +138,6 @@ contract('DepositFraud', (accounts) => {
         'Signature is not fraudulent'
       )
     })
-
-    it('returns the funder bond if the timer has not elapsed', async () => {
-      const funderBondAmount = new BN('10').pow(new BN('5'))
-      const blockNumber = await web3.eth.getBlock('latest').number
-      await testDeposit.send(funderBondAmount, { from: beneficiary })
-      const initialBalance = await web3.eth.getBalance(beneficiary)
-
-      await ecdsaKeepStub.setBondAmount(funderBondAmount)
-      await testDeposit.setFundingProofTimerStart(fundingProofTimerStart * 6)
-      await testDeposit.provideFundingECDSAFraudProof(0, utils.bytes32zero, utils.bytes32zero, utils.bytes32zero, '0x00')
-
-      const finalBalance = await web3.eth.getBalance(beneficiary)
-      const eventList = await tbtcSystemStub.getPastEvents('FraudDuringSetup', { fromBlock: blockNumber, toBlock: 'latest' })
-      const balanceCheck = new BN(initialBalance).add(funderBondAmount)
-
-      assert.equal(eventList.length, 1)
-      expect(finalBalance, 'funder should be included in final result').to.eq.BN(balanceCheck)
-    })
   })
 
   describe('notifyFraudFundingTimeout', async () => {
