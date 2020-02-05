@@ -15,4 +15,8 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
         keepOwner = _owner;
         return keepAddress;
     }
+    function openKeepFeeEstimate() external returns (uint256){
+        return 0;
+    }
+
 }
