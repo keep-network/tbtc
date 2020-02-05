@@ -83,7 +83,7 @@ contract('DepositUtils', (accounts) => {
       const blockDifficulty = await testDeposit.currentBlockDifficulty.call()
       expect(blockDifficulty).to.eq.BN(1)
 
-      await mockRelay.setMock(33, 1)
+      await mockRelay.setCurrentEpochDifficulty(33)
       const newBlockDifficulty = await testDeposit.currentBlockDifficulty.call()
       expect(newBlockDifficulty).to.eq.BN(33)
     })
@@ -94,7 +94,7 @@ contract('DepositUtils', (accounts) => {
       const blockDifficulty = await testDeposit.previousBlockDifficulty.call()
       expect(blockDifficulty).to.eq.BN(1)
 
-      await mockRelay.setMock(1, 44)
+      await mockRelay.setPrevEpochDifficulty(44)
       const newBlockDifficulty = await testDeposit.previousBlockDifficulty.call()
       expect(newBlockDifficulty).to.eq.BN(44)
     })
@@ -102,7 +102,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('evaluateProofDifficulty()', async () => {
     it('reverts on unknown difficulty', async () => {
-      await mockRelay.setMock(1, 1)
+      await mockRelay.setPrevEpochDifficulty(1)
 
       await expectThrow(
         testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0]),
@@ -111,12 +111,12 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('evaluates a header proof with previous', async () => {
-      await mockRelay.setMock(1, 5646403851534)
+      await mockRelay.setPrevEpochDifficulty(5646403851534)
       await testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
     it('evaluates a header proof with current', async () => {
-      await mockRelay.setMock(5646403851534, 1)
+      await mockRelay.setCurrentEpochDifficulty(5646403851534)
       await testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
     })
 
@@ -129,7 +129,7 @@ contract('DepositUtils', (accounts) => {
 
     describe('reverts on a ValidateSPV errors', async () => {
       before(async () => {
-        await mockRelay.setMock(5646403851534, 1)
+        await mockRelay.setCurrentEpochDifficulty(5646403851534)
       })
 
       it('bad headers chain length work', async () => {
@@ -169,7 +169,7 @@ contract('DepositUtils', (accounts) => {
 
   describe('checkProofFromTxId()', async () => {
     before(async () => {
-      await mockRelay.setMock(utils.TX.difficulty, 1)
+      await mockRelay.setCurrentEpochDifficulty(utils.TX.difficulty)
     })
 
     it('does not error', async () => {
@@ -184,7 +184,8 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('fails with bad difficulty', async () => {
-      await mockRelay.setMock(1, 1)
+      await mockRelay.setCurrentEpochDifficulty(1)
+      await mockRelay.setPrevEpochDifficulty(1)
 
       await expectThrow(
         testDeposit.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0]),
@@ -248,7 +249,7 @@ contract('DepositUtils', (accounts) => {
       )
 
       await testDeposit.setPubKey(_signerPubkeyX, _signerPubkeyY)
-      await mockRelay.setMock(currentDifficulty, 1)
+      await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
     })
 
     it('returns correct value and outpoint', async () => {
@@ -325,7 +326,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('returns base value for unset public key', async () => {
-      const newTestUtilsInstance = await TestDepositUtils.new(utils.address0)
+      const newTestUtilsInstance = await TestDepositUtils.new()
       const signerPubkey = await newTestUtilsInstance.signerPubkey.call()
       assert.equal(signerPubkey, '0x' + '00'.repeat(64))
     })

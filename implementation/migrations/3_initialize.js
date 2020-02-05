@@ -18,7 +18,7 @@ module.exports = async function(deployer, network) {
   await tbtcSystem.initialize(
     KeepRegistryAddress,
     DepositFactory.address,
-    Deposit.addres,
+    Deposit.address,
     TBTCSystem.address,
     TBTCToken.address,
     TBTCDepositToken.address,

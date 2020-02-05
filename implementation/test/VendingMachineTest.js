@@ -218,7 +218,7 @@ contract('VendingMachine', (accounts) => {
 
   describe('#unqualifiedDepositToTbtc', async () => {
     before(async () => {
-      await mockRelay.setMock(currentDifficulty, 1)
+      await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
     })
@@ -394,7 +394,7 @@ contract('VendingMachine', (accounts) => {
     let fundingScript
 
     before(async () => {
-      await mockRelay.setMock(currentDifficulty, 1)
+      await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
       await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
       await tbtcToken.zeroBalance(accounts[0])

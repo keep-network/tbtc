@@ -20,9 +20,8 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
 
     constructor(address _depositFactory) 
         ERC721Metadata("tBTC Deopsit Token", "TDT")
-        DepositFactoryAuthority(_depositFactory) 
     public {
-        // solium-disable-previous-line no-empty-blocks
+        initialize(_depositFactory);
     }
 
     /// @dev Mints a new token.
