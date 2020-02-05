@@ -27,7 +27,6 @@ module.exports = async function(deployer, network) {
     KeepRegistryAddress,
     DepositFactory.address,
     Deposit.address,
-    TBTCSystem.address,
     TBTCToken.address,
     TBTCDepositToken.address,
     FeeRebateToken.address,
