@@ -50,6 +50,15 @@ contract('TBTCSystem', (accounts) => {
 
       assert.equal(expectedKeepAddress, result, 'incorrect keep address')
     })
+
+    it('forwards value to keep factory', async () => {
+      const openKeepFee = new BN(99)
+
+      await tbtcSystem.requestNewKeep(5, 10, 0, { value: openKeepFee })
+
+      const finalBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
+      expect(finalBalance, 'TBTCSystem did not correctly forward value to keep factory').to.eq.BN(openKeepFee)
+    })
   })
 
   describe('setSignerFeeDivisor', async () => {

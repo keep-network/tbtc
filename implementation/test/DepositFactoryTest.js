@@ -10,6 +10,8 @@ const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
 const Deposit = artifacts.require('Deposit')
 const TestDeposit = artifacts.require('TestDeposit')
 
+const TBTCSystem = artifacts.require('TBTCSystem')
+
 contract('DepositFactory', () => {
   const openKeepFee = new BN('10').pow(new BN('5'))
   const fullBtc = 100000000
@@ -47,20 +49,26 @@ contract('DepositFactory', () => {
       assert.notEqual(eventList[0].returnValues.depositCloneAddress, eventList[1].returnValues.depositCloneAddress, 'clone addresses should not be equal')
     })
 
-    it('correctly forwards value to Keep', async () => {
-      // Check for tbtcSystemStub receiving value since it does not
-      // implement a value forward to keep.
-      const initialBalance = await web3.eth.getBalance(tbtcSystemStub.address)
+    it('correctly forwards value to keep factory', async () => {
+      let depositFactory
+      let ecdsaKeepFactoryStub
+
+      // Use real TBTCSystem contract to validate value forwarding:
+      // DepositFactory -> Deposit -> TBTCSystem -> ECDSAKeepFactory
+      ({
+        depositFactory,
+        ecdsaKeepFactoryStub,
+      } = await deployTestDeposit([], { 'TestDeposit': Deposit, 'TBTCSystemStub': TBTCSystem }))
 
       await depositFactory.createDeposit(
         fullBtc,
         { value: openKeepFee }
       )
 
-      const finalBalance = await web3.eth.getBalance(tbtcSystemStub.address)
-      const balanceCheck = new BN(finalBalance).sub(new BN(initialBalance))
-
-      expect(balanceCheck, 'Factory did not correctly forward value on Deposit creation').to.eq.BN(openKeepFee)
+      expect(
+        await web3.eth.getBalance(ecdsaKeepFactoryStub.address),
+        'Factory did not correctly forward value on Deposit creation'
+      ).to.eq.BN(openKeepFee)
     })
   })
 
