@@ -1,7 +1,15 @@
 const TBTCSystem = artifacts.require('TBTCSystem')
+
 const BTCETHPriceFeed = artifacts.require('BTCETHPriceFeed')
 const MockBTCUSDPriceFeed = artifacts.require('BTCUSDPriceFeed')
 const MockETHUSDPriceFeed = artifacts.require('ETHUSDPriceFeed')
+
+const DepositFactory = artifacts.require('DepositFactory')
+const Deposit = artifacts.require('Deposit')
+const TBTCToken = artifacts.require('TBTCToken')
+const TBTCDepositToken = artifacts.require('TBTCDepositToken')
+const FeeRebateToken = artifacts.require('FeeRebateToken')
+const VendingMachine = artifacts.require('VendingMachine')
 
 const {
   KeepRegistryAddress,
