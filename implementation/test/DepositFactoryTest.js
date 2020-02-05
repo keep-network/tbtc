@@ -18,7 +18,7 @@ contract('DepositFactory', () => {
 
   describe('createDeposit()', async () => {
     let depositFactory
-    let tbtcSystemStub
+
     before(async () => {
       // To properly test createDeposit, we deploy the real Deposit contract and
       // make sure we don't get hit by the ACL hammer.
@@ -50,9 +50,6 @@ contract('DepositFactory', () => {
     })
 
     it('correctly forwards value to keep factory', async () => {
-      let depositFactory
-      let ecdsaKeepFactoryStub
-
       // Use real TBTCSystem contract to validate value forwarding:
       // DepositFactory -> Deposit -> TBTCSystem -> ECDSAKeepFactory
       ({
