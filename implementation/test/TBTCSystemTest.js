@@ -34,10 +34,14 @@ contract('TBTCSystem', (accounts) => {
   })
 
   describe('requestNewKeep()', async () => {
+    let openKeepFee
+    before(async () => {
+      openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
+    })
     it('sends caller as owner to open new keep', async () => {
       const expectedKeepOwner = accounts[2]
 
-      await tbtcSystem.requestNewKeep(5, 10, 0, { from: expectedKeepOwner })
+      await tbtcSystem.requestNewKeep(5, 10, 0, { from: expectedKeepOwner, value: openKeepFee })
       const keepOwner = await ecdsaKeepFactory.keepOwner.call()
 
       assert.equal(expectedKeepOwner, keepOwner, 'incorrect keep owner address')
@@ -46,9 +50,19 @@ contract('TBTCSystem', (accounts) => {
     it('returns keep address', async () => {
       const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
 
-      const result = await tbtcSystem.requestNewKeep.call(5, 10, 0)
+      const result = await tbtcSystem.requestNewKeep.call(5, 10, 0, { value: openKeepFee })
 
       assert.equal(expectedKeepAddress, result, 'incorrect keep address')
+    })
+
+    it('forwards value to keep factory', async () => {
+      const initialBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
+
+      await tbtcSystem.requestNewKeep(5, 10, 0, { value: openKeepFee })
+
+      const finalBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
+      const balanceCheck = new BN(finalBalance).sub(new BN(initialBalance))
+      expect(balanceCheck, 'TBTCSystem did not correctly forward value to keep factory').to.eq.BN(openKeepFee)
     })
   })
 

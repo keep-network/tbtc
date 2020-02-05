@@ -55,7 +55,6 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
     // Functions implemented for IBondedECDSAKeep interface.
 
     function submitSignatureFraud(
-        address,
         uint8,
         bytes32,
         bytes32,
@@ -65,11 +64,11 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
        return success;
     }
 
-    function checkBondAmount(address) external view returns (uint256){
+    function checkBondAmount() external view returns (uint256){
         return bondAmount;
     }
 
-    function seizeSignerBonds(address) external returns (bool){
+    function seizeSignerBonds() external returns (bool){
         if (address(this).balance > 0) {
             msg.sender.transfer(address(this).balance);
         }
