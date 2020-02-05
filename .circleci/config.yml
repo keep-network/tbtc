@@ -299,21 +299,21 @@ workflows:
       - migrate_contracts:
           filters:
             branches:
-              only: master
+              only: sthompson22/keep-dev/deploy-v0.6.0
           context: keep-dev
           requires:
             - setup_github_package_registry
       - build_initcontainer:
           filters:
             branches:
-              only: master
+              only: sthompson22/keep-dev/deploy-v0.6.0
           context: keep-dev
           requires:
             - migrate_contracts
       - publish_images:
           filters:
             branches:
-              only: master
+              only: sthompson22/keep-dev/deploy-v0.6.0
           context: keep-dev
           requires:
             - migrate_contracts
@@ -321,7 +321,7 @@ workflows:
       - publish_contract_data:
           filters:
             branches:
-              only: master
+              only: sthompson22/keep-dev/deploy-v0.6.0
           context: keep-dev
           requires:
             - migrate_contracts
