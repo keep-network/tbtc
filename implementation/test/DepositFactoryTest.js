@@ -50,7 +50,7 @@ contract('DepositFactory', () => {
 
     it('correctly forwards value to keep factory', async () => {
       // Use real TBTCSystem contract to validate value forwarding:
-      // DepositFactory -> Deposit -> TBTCSystem -> ECDSAKeepFactory 
+      // DepositFactory -> Deposit -> TBTCSystem -> ECDSAKeepFactory
       let ecdsaKeepFactoryStub;
       ({
         ecdsaKeepFactoryStub,
@@ -61,7 +61,6 @@ contract('DepositFactory', () => {
         fullBtc,
         { value: openKeepFee }
       )
-      // const factory = await ECDSAKeepVendorStub.selectFactory()
       expect(
         await web3.eth.getBalance(ecdsaKeepFactoryStub.address),
         'Factory did not correctly forward value on Deposit creation'
