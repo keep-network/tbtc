@@ -17,7 +17,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
 
     // Holds the address of the deposit contract
     // which will be used as a master contract for cloning.
-    address public masterDepositAddress;
+    address payable public masterDepositAddress;
     address public tbtcSystem;
     address public tbtcToken;
     address public tbtcDepositToken;
@@ -40,7 +40,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     /// @param _keepThreshold         Minimum number of honest keep members
     /// @param _keepSize              Number of all members in a keep
     function setExternalDependencies(
-        address _masterDepositAddress,
+        address payable _masterDepositAddress,
         address _tbtcSystem,
         address _tbtcToken,
         address _depositOwnerToken,
@@ -50,6 +50,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         uint256 _keepSize
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
+        Deposit(masterDepositAddress).initialize(address(this));
 
         tbtcSystem = _tbtcSystem;
         tbtcToken = _tbtcToken;
