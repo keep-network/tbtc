@@ -1,5 +1,9 @@
 import expectThrow from './helpers/expectThrow'
 import deployTestDeposit from './helpers/deployTestDeposit'
+import {
+  createSnapshot,
+  restoreSnapshot,
+} from './helpers/snapshot'
 
 import BN from 'bn.js'
 import utils from './utils'
@@ -284,9 +288,18 @@ contract('DepositFraud', (accounts) => {
 
 
   describe('provideECDSAFraudProof', async () => {
-    beforeEach(async () => {
+    before(async () => {
       await testDeposit.setState(utils.states.ACTIVE)
       await ecdsaKeepStub.send(1000000, { from: accounts[0] })
+      await ecdsaKeepStub.setSuccess(true)
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it('executes', async () => {
