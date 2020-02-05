@@ -11,16 +11,17 @@ const Deposit = artifacts.require('Deposit')
 const TestDeposit = artifacts.require('TestDeposit')
 
 contract('DepositFactory', () => {
-  const funderBondAmount = new BN('10').pow(new BN('5'))
+  const openKeepFee = new BN('10').pow(new BN('5'))
   const fullBtc = 100000000
 
   describe('createDeposit()', async () => {
     let depositFactory
-
+    let tbtcSystemStub
     before(async () => {
       // To properly test createDeposit, we deploy the real Deposit contract and
       // make sure we don't get hit by the ACL hammer.
       ({
+        tbtcSystemStub,
         depositFactory,
       } = await deployTestDeposit([], { 'TestDeposit': Deposit }))
     })
@@ -30,12 +31,12 @@ contract('DepositFactory', () => {
 
       await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
       await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
       const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
@@ -46,24 +47,20 @@ contract('DepositFactory', () => {
       assert.notEqual(eventList[0].returnValues.depositCloneAddress, eventList[1].returnValues.depositCloneAddress, 'clone addresses should not be equal')
     })
 
-    it('correctly forwards value to Deposit', async () => {
-      const blockNumber = await web3.eth.getBlockNumber()
+    it('correctly forwards value to Keep', async () => {
+      // Check for tbtcSystemStub receiving value since it does not
+      // implement a value forward to keep.
+      const initialBalance = await web3.eth.getBalance(tbtcSystemStub.address)
 
       await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
-      const eventList = await depositFactory.getPastEvents(
-        'DepositCloneCreated',
-        {
-          fromBlock: blockNumber,
-          toBlock: 'latest',
-        })
 
-      const depositAddress = eventList[eventList.length - 1].returnValues.depositCloneAddress
+      const finalBalance = await web3.eth.getBalance(tbtcSystemStub.address)
+      const balanceCheck = new BN(finalBalance).sub(new BN(initialBalance))
 
-      const balance = await web3.eth.getBalance(depositAddress)
-      assert.equal(balance, funderBondAmount, 'Factory did not correctly forward value on Deposit creation')
+      expect(balanceCheck, 'Factory did not correctly forward value on Deposit creation').to.eq.BN(openKeepFee)
     })
   })
 
@@ -95,12 +92,12 @@ contract('DepositFactory', () => {
 
       await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
       await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
       const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
@@ -155,7 +152,7 @@ contract('DepositFactory', () => {
         1,
         1,
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
       await testDeposit.setKeepAddress(keep.address)
@@ -171,7 +168,7 @@ contract('DepositFactory', () => {
 
       await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
       const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
