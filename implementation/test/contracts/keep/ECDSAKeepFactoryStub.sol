@@ -5,6 +5,7 @@ import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IB
 contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
      address public keepOwner;
      address public keepAddress = address(888);
+     uint256 feeEstimate = 123456;
 
     function openKeep(
         uint256,
@@ -12,11 +13,17 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
         address _owner,
         uint256
     ) external payable returns (address) {
+        require(msg.value >= feeEstimate, "Insufficient value for new keep creation");
         keepOwner = _owner;
         return keepAddress;
     }
+
     function openKeepFeeEstimate() external returns (uint256){
-        return 0;
+        return feeEstimate;
+    }
+
+    function setOpenKeepFeeEstimate(uint256 _fee) external {
+        feeEstimate = _fee;
     }
 
 }
