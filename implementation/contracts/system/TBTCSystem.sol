@@ -217,6 +217,17 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return IRelay(relay).getPrevEpochDifficulty();
     }
 
+    /// @notice Gets a fee estimate for creating a new Deposit.
+    /// @return Uint256 estimate.
+    function createNewDepositFeeEstimate()
+        external
+        returns (uint256)
+    {
+        IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
+        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
+        return _keepFactory.openKeepFeeEstimate();
+    }
+
     /// @notice Request a new keep opening.
     /// @param _m Minimum number of honest keep members required to sign.
     /// @param _n Number of members in the keep.
@@ -228,6 +239,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     {
         IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
         IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
-        return _keepFactory.openKeep(_n, _m, msg.sender, _bond);
+        return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond);
     }
 }

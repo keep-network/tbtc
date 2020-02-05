@@ -39,7 +39,7 @@ library DepositLiquidation {
         bytes memory _preimage
     ) public returns (bool _isFraud) {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        return _keep.submitSignatureFraud(_d.keepAddress, _v, _r, _s, _signedDigest, _preimage);
+        return _keep.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
     }
 
     /// @notice     Determines the collateralization percentage of the signing group
