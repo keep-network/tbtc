@@ -56,12 +56,12 @@ library DepositFunding {
 
         require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
-        /* solium-disable-next-line value-in-payable */
         require(_system.isAllowedLotSize(_lotSize), "provided lot size not supported");
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
         _d.lotSizeSatoshis = _lotSize;
         uint256 _bondRequirement = _lotSize.mul(_system.getInitialCollateralizedPercent()).div(100);
+        /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirement);
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
