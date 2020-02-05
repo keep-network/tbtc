@@ -317,7 +317,7 @@ library DepositUtils {
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        return _keep.checkBondAmount(_d.keepAddress);
+        return _keep.checkBondAmount();
     }
 
     /// @notice         Convert a LE bytes8 to a uint256
@@ -372,7 +372,7 @@ library DepositUtils {
     function seizeSignerBonds(Deposit storage _d) internal returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        _keep.seizeSignerBonds(_d.keepAddress);
+        _keep.seizeSignerBonds();
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
         return _postCallBalance.sub(_preCallBalance);
