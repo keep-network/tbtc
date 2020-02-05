@@ -1,5 +1,4 @@
 import expectThrow from './helpers/expectThrow'
-import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
 import increaseTime from './helpers/increaseTime'
 import deployTestDeposit from './helpers/deployTestDeposit'
 
@@ -484,36 +483,25 @@ contract('DepositUtils', (accounts) => {
     const prevoutValueBytes = '0xffffffffffffffff'
     const outpoint = '0x' + '33'.repeat(36)
     let depositTerm
-    let fundedAt
 
     before(async () => {
       depositTerm = await tbtcConstants.getDepositTerm.call()
-
-      // Set Deposit.fundedAt to current block.
-      const block = await web3.eth.getBlock('latest')
-      fundedAt = block.timestamp
-      await testDeposit.setUTXOInfo(prevoutValueBytes, fundedAt, outpoint)
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     it('returns remaining term from current block', async () => {
-      // Because there is time elapsed since we call `setUTXOInfo`, we get the time again.
       const block = await web3.eth.getBlock('latest')
-
+      // Set Deposit.fundedAt to current block.
+      await testDeposit.setUTXOInfo(prevoutValueBytes, block.timestamp, outpoint)
       const remainingTerm = await testDeposit.remainingTerm.call()
-      const expectedRemainingTerm = new BN(fundedAt).add(depositTerm).sub(new BN(block.timestamp))
-      expect(remainingTerm).to.eq.BN(expectedRemainingTerm)
+      const finalBlock = await web3.eth.getBlock('latest')
+      const expectedRemainder = (new BN(block.timestamp)).add(depositTerm).sub(new BN(finalBlock.timestamp))
+
+      expect(remainingTerm).to.eq.BN(expectedRemainder)
     })
 
     it('returns 0 if deposit is at term', async () => {
-      // Simulate an entire term.
+      const block = await web3.eth.getBlock('latest')
+      await testDeposit.setUTXOInfo(prevoutValueBytes, block.timestamp, outpoint)
       await increaseTime(depositTerm.toNumber())
 
       const remainingTerm = await testDeposit.remainingTerm.call()
