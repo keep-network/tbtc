@@ -482,18 +482,16 @@ contract('DepositUtils', (accounts) => {
     const prevoutValueBytes = '0xffffffffffffffff'
     const outpoint = '0x' + '33'.repeat(36)
     let depositTerm
-    let remainingTerm
-    let block
 
     before(async () => {
       depositTerm = await tbtcConstants.getDepositTerm.call()
     })
 
     it('returns remaining term from current block', async () => {
-      block = await web3.eth.getBlock('latest')
+      const block = await web3.eth.getBlock('latest')
       // Set Deposit.fundedAt to current block.
       await testDeposit.setUTXOInfo(prevoutValueBytes, block.timestamp, outpoint)
-      remainingTerm = await testDeposit.remainingTerm.call()
+      const remainingTerm = await testDeposit.remainingTerm.call()
       const finalBlock = await web3.eth.getBlock('latest')
       const expectedRemainder = (new BN(block.timestamp)).add(depositTerm).sub(new BN(finalBlock.timestamp))
 
@@ -501,11 +499,11 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('returns 0 if deposit is at term', async () => {
-      block = await web3.eth.getBlock('latest')
+      const block = await web3.eth.getBlock('latest')
       await testDeposit.setUTXOInfo(prevoutValueBytes, block.timestamp, outpoint)
       await increaseTime(depositTerm.toNumber())
 
-      remainingTerm = await testDeposit.remainingTerm.call()
+      const remainingTerm = await testDeposit.remainingTerm.call()
       expect(remainingTerm).to.eq.BN(0)
     })
   })
