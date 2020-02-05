@@ -1,4 +1,5 @@
 import deployTestDeposit from './helpers/deployTestDeposit'
+import expectThrow from './helpers/expectThrow'
 
 import BN from 'bn.js'
 import utils from './utils'
@@ -13,11 +14,12 @@ const TestDeposit = artifacts.require('TestDeposit')
 const TBTCSystem = artifacts.require('TBTCSystem')
 
 contract('DepositFactory', () => {
-  const openKeepFee = new BN('10').pow(new BN('5'))
+  const openKeepFee = new BN('123456') // set in ECDAKeepFactory
   const fullBtc = 100000000
 
   describe('createDeposit()', async () => {
     let depositFactory
+    let ecdsaKeepFactoryStub
 
     before(async () => {
       // To properly test createDeposit, we deploy the real Deposit contract and
@@ -51,7 +53,6 @@ contract('DepositFactory', () => {
     it('correctly forwards value to keep factory', async () => {
       // Use real TBTCSystem contract to validate value forwarding:
       // DepositFactory -> Deposit -> TBTCSystem -> ECDSAKeepFactory
-      let ecdsaKeepFactoryStub;
       ({
         ecdsaKeepFactoryStub,
         depositFactory,
@@ -65,6 +66,17 @@ contract('DepositFactory', () => {
         await web3.eth.getBalance(ecdsaKeepFactoryStub.address),
         'Factory did not correctly forward value on Deposit creation'
       ).to.eq.BN(openKeepFee)
+    })
+
+    it('reverts if insufficient fee is provided', async () => {
+      const badOpenKeepFee = openKeepFee.sub(new BN(1))
+      await expectThrow(
+        depositFactory.createDeposit(
+          fullBtc,
+          { value: badOpenKeepFee }
+        ),
+        'Insufficient value for new keep creation'
+      )
     })
   })
 
