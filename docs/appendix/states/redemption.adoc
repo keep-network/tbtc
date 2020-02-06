@@ -21,8 +21,8 @@ broken supply peg.
 
 The requester notifies the `Deposit` of the bitcoin tx information (fee and
 recipient pubkeyhash) they are requesting, along with enough TBTC to cover the
-outstanding TBTC from the `Deposit`, plus enough to cover signer fees and the
-funder bond payment.
+outstanding TBTC from the `Deposit`, plus enough to cover signer fees.
+
 
 == States
 

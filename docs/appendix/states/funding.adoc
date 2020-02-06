@@ -9,7 +9,7 @@ ifndef::tbtc[toc::[]]
 
 This is the process to set up a deposit, and fund it with BTC. Upon successful
 funding, the funder will own and new _Deposit_ and will be able to create new
-TBTC. To start the funding process, a funder places a small bond, and requests
+TBTC. To start the funding process, a funder pays a small fee to request
 creation of a new keep to custody BTC. If a new keep is successfully formed,
 the Keep contracts notify the _Deposit_ of the signing group's public key. If
 keep setup fails, the funding process is aborted and the Keep system punishes
@@ -19,8 +19,8 @@ Once a keep is formed, the funder transfers BTC to the keep's pay to witness
 public key hash (p2wpkh) address. This BTC becomes the underlying collateral
 for the new _Deposit_. The funder proves deposit via a stateless SPV proof of
 inclusion in the Bitcoin blockchain. If the funder fails to make this transfer
-in a timely manner, the funding process is aborted and the funder's keep bond
-is forfeit.
+in a timely manner, the funding process is aborted and the signing group's bonds
+are returned to the signers.
 
 Once BTC collateralization has been proven, the _Deposit_ becomes active. Then
 the funder may withdraw TBTC, up to the amount of BTC collateral (less the

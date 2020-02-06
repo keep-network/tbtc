@@ -34,11 +34,10 @@ image::{root-prefix}img/generated/initiate-deposit.png[]
 == Deposit request
 
 The starting point for acquiring TBTC is generating a _deposit request_. This
-request is a transaction to a smart contract on tBTC's host chain.
-signals that the sender requires a signing group backed wallet Because signing
-groups are not free to create, deposit requests include a small bond in the host
-chain's native token to cover the creation of the signing group. The bond is
-refunded when a successful deposit is made to the generated wallet.
+request is a transaction to a smart contract on tBTC's host chain, and
+signals that the sender requires a signing group backed wallet. Because signing
+groups are not free to create, deposit requests include a small payment in the
+host chain's native token to cover the creation of the signing group.
 
 [[signer-selection]]
 === Signer selection
@@ -122,10 +121,11 @@ which runs as a set of smart contracts on the host chain. As such, the Bitcoin
 transaction issued by the depositor has to be proven to the tBTC system before
 the tBTC system allows the depositor to behave as if they have successfully
 deposited their BTC into the signer wallet. When a deposit proof is accepted
-by the system, the deposit bond is refunded to the depositor. If a deposit
+by the system, the deposit is marked as active or qualified and can be used to
+mint TBTC token in the vending machine (see
+<<{root-prefix}minting/index.adoc#vending-machine>> for more). If a deposit
 proof is not received within a given timeout window, the signing group will
-disband and the system will seize the bond's value, making it available to the
-signing group members to reclaim.
+disband and the system will mark the deposit closed.
 
 === Light Relays
 
