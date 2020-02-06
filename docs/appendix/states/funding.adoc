@@ -23,9 +23,9 @@ in a timely manner, the funding process is aborted and the signing group's bonds
 are returned to the signers.
 
 Once BTC collateralization has been proven, the _Deposit_ becomes active. Then
-the funder may withdraw TBTC, up to the amount of BTC collateral (less the
-reserved TBTC). The funding process can only result in an active _Deposit_ or
-an abort state.
+the funder may mint TBTC, up to the amount of BTC collateral (less the
+reserved TBTC), using the vending machine contract. The funding process can
+only result in an active _Deposit_ or an abort state.
 
 == States
 
