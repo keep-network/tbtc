@@ -213,21 +213,6 @@ contract('DepositFunding', (accounts) => {
         'Signing group formation timeout not yet elapsed'
       )
     })
-
-    it('returns funder bond', async () => {
-      await testDeposit.send(funderBondAmount, { from: beneficiary })
-
-      const initialBalance = await web3.eth.getBalance(beneficiary)
-
-      await testDeposit.setSigningGroupRequestedAt(fundingProofTimerStart)
-      await ecdsaKeepStub.setBondAmount(funderBondAmount)
-
-      await testDeposit.notifySignerSetupFailure()
-
-      const balance = await web3.eth.getBalance(beneficiary)
-      const balanceCheck = new BN(initialBalance).add(funderBondAmount)
-      expect(balance, 'bond not returned to funder').to.eq.BN(balanceCheck)
-    })
   })
 
   describe('retrieveSignerPubkey', async () => {
@@ -333,15 +318,6 @@ contract('DepositFunding', (accounts) => {
         'Funding timeout has not elapsed'
       )
     })
-
-    it('distributes the funder bond to the keep group', async () => {
-      await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
-      await testDeposit.send(funderBondAmount, { from: beneficiary })
-      await testDeposit.notifyFundingTimeout()
-
-      const keepBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
-      assert.equal(keepBalance, new BN(funderBondAmount), 'funder bond not distributed properly')
-    })
   })
 
   describe('provideBTCFundingProof', async () => {
@@ -392,19 +368,6 @@ contract('DepositFunding', (accounts) => {
         ),
         'Not awaiting funding'
       )
-    })
-
-    it('returns funder bonds', async () => {
-      await testDeposit.send(funderBondAmount, { from: beneficiary })
-
-      const initialBalance = await web3.eth.getBalance(beneficiary)
-
-      await testDeposit.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-
-      const actualBalance = await web3.eth.getBalance(beneficiary)
-      const expectedBalance = new BN(initialBalance).add(funderBondAmount)
-
-      assert.equal(actualBalance, expectedBalance, 'funder bond not correctly returned')
     })
   })
 })

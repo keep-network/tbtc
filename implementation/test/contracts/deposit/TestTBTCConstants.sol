@@ -22,7 +22,6 @@ library TestTBTCConstants {
     uint256 public constant FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FORMATION_TIMEOUT = 3 * 60 * 60; // seconds
     uint256 public constant FRAUD_FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
-    uint256 public constant FUNDER_BOND_AMOUNT_WEI = 10 ** 5; // wei
 
     // Liquidation Flow
     uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
@@ -44,7 +43,6 @@ library TestTBTCConstants {
     function getFundingTimeout() public pure returns (uint256) { return FUNDING_PROOF_TIMEOUT; }
     function getSigningGroupFormationTimeout() public pure returns (uint256) { return FORMATION_TIMEOUT; }
     function getFraudFundingTimeout() public pure returns (uint256) { return FRAUD_FUNDING_PROOF_TIMEOUT; }
-    function getFunderBondAmount() public pure returns (uint256) { return FUNDER_BOND_AMOUNT_WEI; }
 
     function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
     function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }

@@ -74,26 +74,6 @@ library DepositFunding {
         return true;
     }
 
-    /// @notice     Transfers the funders bond to the signers if the funder never funds
-    /// @dev        Called only by notifyFundingTimeout
-    function revokeFunderBond(DepositUtils.Deposit storage _d) internal {
-        if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
-            _d.pushFundsToKeepGroup(TBTCConstants.getFunderBondAmount());
-        } else if (address(this).balance > 0) {
-            _d.pushFundsToKeepGroup(address(this).balance);
-        }
-    }
-
-    /// @notice     Returns the funder's bond plus a payment at contract teardown
-    /// @dev        Returns the balance if insufficient. Always call this before distributing signer payments
-    function returnFunderBond(DepositUtils.Deposit storage _d) internal {
-        if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
-            _d.depositOwner().transfer(TBTCConstants.getFunderBondAmount());
-        } else if (address(this).balance > 0) {
-            _d.depositOwner().transfer(address(this).balance);
-        }
-    }
-
     /// @notice     slashes the signers partially for committing fraud before funding occurs
     /// @dev        called only by notifyFraudFundingTimeout
     function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) internal {
@@ -122,7 +102,6 @@ library DepositFunding {
         _d.setFailedSetup();
         _d.logSetupFailed();
 
-        returnFunderBond(_d);
         fundingTeardown(_d);
     }
 
@@ -159,7 +138,6 @@ library DepositFunding {
         _d.setFailedSetup();
         _d.logSetupFailed();
 
-        revokeFunderBond(_d);
         fundingTeardown(_d);
     }
 
@@ -197,7 +175,6 @@ library DepositFunding {
             /* NB: This is reuse of the variable */
             _d.fundingProofTimerStart = block.timestamp;
             _d.setFraudAwaitingBTCFundingProof();
-            returnFunderBond(_d);
         }
     }
 
@@ -297,13 +274,6 @@ library DepositFunding {
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
-        // Design decision:
-        // We COULD revoke the funder bond here if the funding proof timeout has elapsed
-        // HOWEVER, that would only create a situation where the funder loses eerything
-        // It would be a large punishment for a small crime (being slightly late)
-        // So if the funder manages to call this before anyone notifies of timeout
-        // We let them have a freebie
-
         bytes8 _valueBytes;
         bytes memory  _utxoOutpoint;
 
@@ -326,8 +296,6 @@ library DepositFunding {
         fundingTeardown(_d);
         _d.setActive();
         _d.logFunded();
-
-        returnFunderBond(_d);
 
         return true;
     }
