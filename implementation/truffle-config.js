@@ -63,10 +63,16 @@ module.exports = {
       from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB",
     },
     keep_test: {
-      host: "localhost",
-      port: 8545,
-      network_id: "*",
-      from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB",
+      provider: function() {
+      // ETH_HOSTNAME is set in a Circle Context.
+      // CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD is set in a Circle context. For now this value
+      // is shared between the contract owner Ethereum account on both our internal testnet
+      // and on Ropsten.
+      return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD, process.env.ETH_HOSTNAME)
+      },
+      gas: 6721975,
+      // ETH_NETWORK_ID is set in a Circle context.
+      network_id: process.env.ETH_NETWORK_ID
     },
     mainnet: {
       provider: function() {
