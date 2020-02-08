@@ -419,7 +419,7 @@ describe('DepositUtils', async function() {
 
       await testDeposit.redemptionTeardown()
       const newRequestInfo = await testDeposit.getRequestInfo.call()
-      expect(requestInfo[4]).to.equal('0x' + '33'.repeat(32))
+      expect(newRequestInfo[4]).to.equal('0x' + '00'.repeat(32))
     })
   })
 
