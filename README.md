@@ -1,6 +1,8 @@
 # tBTC
 
 [![CircleCI Build Status](https://circleci.com/gh/keep-network/tbtc.svg?style=svg&circle-token=ec728f5ca814b6cb2db5ffeb7258151b752a207e)](https://circleci.com/gh/keep-network/tbtc)
+[![Docs](https://img.shields.io/badge/docs-website-yellow.svg)](http://docs.keep.network/tbtc/solidity/)
+[![Chat with us on Discord](https://img.shields.io/badge/chat-Discord-blueViolet.svg)](https://discord.gg/4R6RGFf)
 
 tBTC is a trustlessly Bitcoin-backed ERC-20 token.
 
