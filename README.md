@@ -11,12 +11,11 @@ chains.
 
 This repo contains the Solidity [smart contracts](implementation/) and [whitepaper](documentation/).
 
-
 ## Getting started
 
  * Read the [Whitepaper](http://docs.keep.network/tbtc/)
  * Consult [Solidity API documentation](http://docs.keep.network/tbtc/solidity/)
- * For questions and support, join us on [Discord]()
+ * For questions and support, join us on [Discord](https://discord.gg/4R6RGFf).
 
 ## Installation
 
@@ -54,14 +53,18 @@ We strongly recommend that the community help us make improvements and determine
 
 ### Build
 
-```
-git clone https://github.com/keep-network/tbtc
+Clone and install dependencies:
 
-# Install dependencies.
+```sh
+git clone https://github.com/keep-network/tbtc
 cd tbtc/implementation
 npm install
+```
 
-npm run compile
+Deploy contracts:
+
+```sh
+truffle migrate --reset
 ```
 
 ### Test
@@ -78,7 +81,7 @@ contract.only('TBTCToken', function(accounts) {
 
 ### Lint
 
-We use ESLint and Solium for linting code.
+We use ESLint and Solium for linting code. To run:
 
 ```sh
 npm run sol:lint:fix
@@ -94,7 +97,6 @@ code.
 ### Prerequisites
 
 Docs are written in [AsciiDoctor](http://asciidoctor.org/), diagrams in a LaTeX package called [Tikz](https://www.overleaf.com/learn/latex/TikZ_package).
-
 
 ##### macOS
 
@@ -124,7 +126,6 @@ make pngs
 # Generate index.pdf
 asciidoctor-pdf index.adoc
 ```
-
 
 ## License
 
