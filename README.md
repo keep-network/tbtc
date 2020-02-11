@@ -77,7 +77,7 @@ To run the test suite, execute `truffle test`.
 
 To run specific tests, add [`.only`](https://jaketrent.com/post/run-single-mocha-test/) to the `contract` block:
 
-```
+```js
 contract.only('TBTCToken', function(accounts) {
 ```
 
@@ -131,4 +131,4 @@ asciidoctor-pdf index.adoc
 
 ## License
 
-tBTC is released under the MIT License.
+tBTC is released under the [MIT License](LICENSE).
