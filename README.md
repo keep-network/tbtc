@@ -40,7 +40,11 @@ contract MySystem {
 }
 ```
 
-## Development
+## Contributing
+
+We strongly recommend that the community help us make improvements and determine the future direction of the protocol. To report bugs within this package, please create an issue in this repository.
+
+**Read our [Contributing guidelines](https://github.com/keep-network/tbtc/blob/master/CONTRIBUTING.md).**
 
 ### Prerequisites
 
@@ -72,6 +76,15 @@ To run specific tests, add [`.only`](https://jaketrent.com/post/run-single-mocha
 contract.only('TBTCToken', function(accounts) {
 ```
 
+### Lint
+
+We use ESLint and Solium for linting code.
+
+```sh
+npm run sol:lint:fix
+npm run js:lint:fix
+```
+
 ## Documentation
 
 The documentation includes a project overview and rationale, as well as the
@@ -100,7 +113,6 @@ Docs are written in [AsciiDoctor](http://asciidoctor.org/), diagrams in a LaTeX 
     # Update TeX package tree
     sudo texhash
     ```
-
 
 ### Build
 
