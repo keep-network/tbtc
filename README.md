@@ -15,8 +15,8 @@ This repo contains the Solidity [smart contracts](implementation/) and [specific
 
 ## Getting started
 
- * Read the [specification](http://docs.keep.network/tbtc/)
- * Consult [Solidity API documentation](http://docs.keep.network/tbtc/solidity/)
+ * Read the [specification](http://docs.keep.network/tbtc/).
+ * Consult [Solidity API documentation](http://docs.keep.network/tbtc/solidity/).
  * For questions and support, join the #tbtc channel on [Discord](https://discord.gg/4R6RGFf).
 
 ## Installation
@@ -49,7 +49,7 @@ All contributions are welcome. To report bugs, please create an issue on this re
 
 ### Prerequisites
 
- * Node.js, [npm](https://docs.npmjs.com/cli/install)
+ * Node.js, [npm](https://docs.npmjs.com/cli/install).
  * A local Ethereum blockchain. We recommend [Ganache](https://www.trufflesuite.com/ganache).
  * [Truffle framework](https://www.trufflesuite.com/docs/truffle/overview).
 
