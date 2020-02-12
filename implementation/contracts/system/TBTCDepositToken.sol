@@ -15,7 +15,9 @@ import "./DepositFactoryAuthority.sol";
 //          deposit's BTC.
 /// @dev Currently, TDTs are minted using the uint256 casting of the
 ///      corresponding deposit contract's address. That is, the TDTs id is
-///      convertible to the deposit's address and vice versa.
+///      convertible to the deposit's address and vice versa. TDTs are minted
+///      automatically by the factory during each deposit's initialization. See
+///      DepositFactory.createNewDeposit() for more info on how the TDT is minted. 
 contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
 
     constructor(address _depositFactory) 
@@ -39,7 +41,8 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
         return _exists(_tokenId);
     }
 
-    /// @notice           Set allowance for other address and notify.
+    /// @notice           Allow another contract to spend on the caller's behalf.
+    ///                   Set allowance for other address and notify.
     ///                   Allows `_spender` to transfer the specified TDT
     ///                   on your behalf and then ping the contract about it.
     /// @dev              The `_spender` should implement the `tokenRecipient` interface below
