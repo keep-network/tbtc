@@ -17,7 +17,7 @@ All Bitcoin transactions are proven using SPV proofs, which rely on an [on-chain
 The **Deposit contract** is the core of tBTC; Deposits are to tBTC as Vaults are to MakerDAO. Deposits are created by the DepositFactory, and are parameterised by:
 
 * **lot size**: the BTC size of the deposit. *eg. 1 BTC* 
-* **signer fee**: the fees paid to signers. *eg. 0.5%
+* **signer fee**: the fees paid to signers. *eg. 0.5%*
 
 These are governed by the `TBTCSystem`. Once a deposit is created, these parameters are set in stone.
 
