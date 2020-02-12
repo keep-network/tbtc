@@ -21,21 +21,31 @@ This repo contains the Solidity [smart contracts](implementation/) and [specific
 
 ## Installation
 
-```sh
-$ npm install @tbtc/contracts
-```
+tBTC contracts are currently published in the GitHub Package Registry. 
+
+ 1. Add a file `.npmrc` to the same directory as your project's `package.json`.
+ 2. Paste the following to configure the GitHub Package Registry for tBTC:
+    ```
+    @keep-network:registry=https://npm.pkg.github.com/keep-network
+    ```
+ 3. Install the package:
+    ```sh
+    $ npm install @keep-network/tbtc
+    ```
 
 ## Usage
+
+**NOTE:** tBTC contracts require *solc* v0.5.10 or higher. You may have to [configure solc in your `truffle-config.js`](https://www.trufflesuite.com/docs/truffle/reference/configuration#compiler-configuration).
 
 Once installed, you can use the contracts in the library by importing them:
 
 ```sol
 pragma solidity ^0.5.0;
 
-import "@tbtc/contracts/deposit/Deposit.sol";
+import "@keep-network/tbtc/contracts/deposit/Deposit.sol";
 
 contract MySystem {
-    function checkTerm() external {
+    function checkTerm(address _depositAddress) external {
         uint256 remainingTerm = Deposit(_depositAddress).remainingTerm();
     }
 }
