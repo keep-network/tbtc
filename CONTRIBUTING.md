@@ -1,6 +1,6 @@
 ## tbtc Contribution Guide
 
-👍🎉 First off, thanks for taking the time to contribute! 🎉👍 We welcome contributions from anyone on the internet, and are grateful for even the smallest of fixes!
+👍🎉 First off, thanks for taking the time to contribute! 🎉👍 Contributions are welcome from anyone on the internet, and even the smallest of fixes are appreciated!
 
 The following is a set of guidelines for contributing to tBTC and its packages. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
@@ -14,8 +14,8 @@ The following is a set of guidelines for contributing to tBTC and its packages. 
 
 Before marking the PR as open for review, make sure:
 
--   It passes our linter checks (`npm run lint`)
--   It passes our continuous integration tests.
+-   It passes the linter checks (`npm run lint`)
+-   It passes the [continuous integration tests](https://app.circleci.com/github/keep-network/tbtc/pipelines) on CircleCI.
 -   Your changes have sufficient test coverage (e.g regression tests have been added for bug fixes, unit tests for new features)
 
 ### Development Tooling
