@@ -25,7 +25,7 @@ Deposits have a fixed term of 6 months. While they can be redeemed at anytime, a
 
 Lastly, Deposits can be locked or unlocked. A locked deposit can only be redeemed by the deposit owner, the holder of a token called the tBTC Deposit Token (TDT).
 
-#### Funding a Deposit
+### Funding a Deposit
 
 The funding flow is as follows:
 
@@ -39,7 +39,7 @@ The funding flow is as follows:
 
 After the deposit has been qualified, the TDT can be used to mint TBTC. But wait! Why *yet another token*? 
 
-#### TDT's and TBTC's
+### TDT's and TBTC's
 
 In step 1 of the funding flow, when the deposit is created, we saw that the depositor receives a token called the TDT. What is this token, you might ask?
 
@@ -55,7 +55,7 @@ To recap:
 
 The TDT is interchangeable for TBTC using a contract called the *vending machine*.
 
-#### Minting TBTC
+### Minting TBTC
 
 After a Deposit is funded and *qualified*, it is ready for minting TBTC. The TDT represents the now-confirmed UXTO, and we are ready to swap it using the vending machine.
 
@@ -64,7 +64,7 @@ The **vending machine** manages the changing of TDT into TBTC and vice-versa.
 1. Given a TDT, it will mint TBTC.
 2. Given TBTC, it will burn it and return the TDT.
 
-#### Redeeming a Deposit
+### Redeeming a Deposit
 
 The redemption flow is as follows:
 
@@ -74,7 +74,7 @@ The redemption flow is as follows:
 4. Redeemer receives BTC.
 5. Signers prove the tx, and receive their fees and bond back.
 
-#### Liquidation
+### Liquidation
 
 The "happy paths" have been covered, but there hasn't been discussion of when *things fall apart*. 
 
