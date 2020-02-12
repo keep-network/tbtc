@@ -63,11 +63,11 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
 
     event DepositCloneCreated(address depositCloneAddress);
 
-    /// @notice                Creates a new deposit instance
-    /// @dev                   Calls createNewDeposit from deposit contract as init method.
-    ///                        We don't offer pure createClone, meaning that the only way
-    ///                        to create a clone is by also calling createNewDeposit()
-    ///                        Deposits created this way will never pass by state 0 (START)
+    /// @notice                Creates a new deposit instance and mints a TDT.    
+    ///                        This function is currently the only way to create a new deposit. 
+    /// @dev                   Calls Deposit.createNewDeposit to initialize the instance.
+    ///                        Mints the TDT to the function caller. 
+    //                         See (TBTCDepositToken for more info on TDTs)
     /// @return                True if successful, otherwise revert
     function createDeposit (uint256 _lotSize) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
