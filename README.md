@@ -47,7 +47,9 @@ All contributions are welcome. To report bugs, please create an issue on this re
 
 **Read the [Contributing guidelines](https://github.com/keep-network/tbtc/blob/master/CONTRIBUTING.md).**
 
-### Prerequisites
+### Setup environment
+
+You should have installed:
 
  * Node.js, [npm](https://docs.npmjs.com/cli/install).
  * A local Ethereum blockchain. We recommend [Ganache](https://www.trufflesuite.com/ganache).
