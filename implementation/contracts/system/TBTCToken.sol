@@ -4,11 +4,9 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "./VendingMachineAuthority.sol";
 
-/**
- @dev Interface of recipient contract for approveAndCall pattern.
-*/
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
-
+/// @title  TBTC Token
+/// @notice This is the TBTC ERC20 contract.
+/// @dev    Tokens can only be minted by the Vending Machine (VendingMachine.sol)
 contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
@@ -63,3 +61,6 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
         }
     }
 }
+
+/// @dev Interface of recipient contract for approveAndCall pattern.
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }

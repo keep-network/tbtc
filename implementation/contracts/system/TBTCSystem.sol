@@ -16,6 +16,10 @@ import {DepositLog} from "../DepositLog.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+/// @title  TBTC System
+/// @notice This contract acts as a central point for ACL, 
+///         value governance, and price oracle.
+/// @dev    Governable values only affect new deposit creation.
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
