@@ -24,14 +24,14 @@ A whole new world of digital money is out there, and at its core is openness. tB
 
 Now that we've covered a bit of why tBTC exists, let's continue to understand how it works.
 
-## Deposits
+## Deposits 
 
-The **Deposit contract** is the core of tBTC; Deposits are to tBTC as Vaults are to MakerDAO. Deposits are created by the DepositFactory, and are parameterised by:
+The **`Deposit` contract** is the core of tBTC; Deposits are to tBTC as Vaults are to MakerDAO. Deposits are created by the `DepositFactory`, and are parameterised by:
 
 * **lot size**: the BTC size of the deposit. *eg. 1 BTC* 
 * **signer fee**: the fees paid to signers. *eg. 0.5%*
 
-These are governed by the `TBTCSystem`. Once a deposit is created, these parameters are set in stone.
+These are governed by the `TBTCSystem` contract. Once a deposit is created, these parameters are set in stone.
 
 Deposits have a fixed term of 6 months. While they can be redeemed at anytime, after 6 months they must be closed. This ensures signers are paid.
 
@@ -94,4 +94,4 @@ To disincentivise signers from stealing bitcoin, deposits are overcollateralised
 
 ---
 
-*If you have any questions, suggestions, improvements, don't hesitate to reach out via GitHub and/or chat in the Discord.*
+*If you have any questions, suggestions, improvements, don't hesitate to reach out via GitHub and/or [chat on Discord](https://discord.gg/4R6RGFf).*
