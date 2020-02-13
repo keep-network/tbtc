@@ -4,6 +4,7 @@
         "security"
     ],
     "rules": {
-        "security/no-block-members": "off"
+        "security/no-block-members": "off",
+        "security/no-inline-assembly": "off"
     }
 }

@@ -4,6 +4,27 @@ import {Deposit} from '../../../contracts/deposit/Deposit.sol';
 
 contract TestDeposit is Deposit {
 
+    constructor() public {}
+
+    function createNewDeposit(
+        address _TBTCSystem,
+        address _TBTCToken,
+        address _TBTCDepositToken,
+        address _FeeRebateToken,
+        address _VendingMachine,
+        uint256 _m,
+        uint256 _n,
+        uint256 _lotSize
+    ) public payable returns (bool) {
+        self.TBTCSystem = _TBTCSystem;
+        self.TBTCToken = _TBTCToken;
+        self.TBTCDepositToken = _TBTCDepositToken;
+        self.FeeRebateToken = _FeeRebateToken;
+        self.VendingMachine = _VendingMachine;
+        self.createNewDeposit(_m, _n, _lotSize);
+        return true;
+    }
+
     function setExteriorAddresses(
         address _sys,
         address _token,
@@ -21,7 +42,7 @@ contract TestDeposit is Deposit {
     function reset() public {
         setState(0);
         setLiquidationAndCourtesyInitated(0, 0);
-        setRequestInfo(address(0), bytes20(0), 0, 0, bytes32(0));
+        setRequestInfo(address(0), "", 0, 0, bytes32(0));
         setUTXOInfo(bytes8(0), 0, '');
 
         setKeepAddress(address(0));
@@ -104,19 +125,19 @@ contract TestDeposit is Deposit {
         self.signingGroupPubkeyY = _y;
     }
 
-    function getSigningGroupPublicKey() public returns (bytes32, bytes32){
+    function getSigningGroupPublicKey() public view returns (bytes32, bytes32){
         return (self.signingGroupPubkeyX, self.signingGroupPubkeyY);
     }
 
     function setRequestInfo(
         address payable _redeemerAddress,
-        bytes20 _redeemerPKH,
+        bytes memory _redeemerOutputScript,
         uint256 _initialRedemptionFee,
         uint256 _withdrawalRequestTime,
         bytes32 _lastRequestedDigest
     ) public {
         self.redeemerAddress = _redeemerAddress;
-        self.redeemerPKH = _redeemerPKH;
+        self.redeemerOutputScript = _redeemerOutputScript;
         self.initialRedemptionFee = _initialRedemptionFee;
         self.withdrawalRequestTime = _withdrawalRequestTime;
         self.lastRequestedDigest = _lastRequestedDigest;
@@ -126,13 +147,14 @@ contract TestDeposit is Deposit {
     ) public {
         self.redeemerAddress = _redeemerAddress;
     }
-    function getRequestInfo() public view returns (address, bytes20, uint256, uint256, bytes32) {
+    function getRequestInfo() public view returns (address, bytes memory, uint256, uint256, bytes32) {
         return (
             self.redeemerAddress,
-            self.redeemerPKH,
+            self.redeemerOutputScript,
             self.initialRedemptionFee,
             self.withdrawalRequestTime,
-            self.lastRequestedDigest);
+            self.lastRequestedDigest
+        );
     }
 
     function setUTXOInfo(

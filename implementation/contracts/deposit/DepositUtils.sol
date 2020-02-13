@@ -8,8 +8,7 @@ import {DepositStates} from "./DepositStates.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
-import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
-import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 
@@ -53,7 +52,7 @@ library DepositUtils {
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
         address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
-        bytes20 redeemerPKH;  // The 20-byte redeemer PKH
+        bytes redeemerOutputScript;  // The 20-byte redeemer PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
@@ -318,7 +317,7 @@ library DepositUtils {
     /// @return     The amount of bonded ETH in wei
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        return _keep.checkBondAmount(_d.keepAddress);
+        return _keep.checkBondAmount();
     }
 
     /// @notice         Convert a LE bytes8 to a uint256
@@ -361,7 +360,7 @@ library DepositUtils {
     /// @dev        We keep around the redeemer address so we can pay them out
     function redemptionTeardown(Deposit storage _d) public {
         // don't 0 redeemerAddress because we use it to calculate auctionTBTCAmount
-        _d.redeemerPKH = bytes20(0);
+        _d.redeemerOutputScript = "";
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);
@@ -373,7 +372,7 @@ library DepositUtils {
     function seizeSignerBonds(Deposit storage _d) internal returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        _keep.seizeSignerBonds(_d.keepAddress);
+        _keep.seizeSignerBonds();
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
         return _postCallBalance.sub(_preCallBalance);
@@ -401,7 +400,7 @@ library DepositUtils {
     /// @return             true if successful, otherwise revert
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IECDSAKeep _keep = IECDSAKeep(_d.keepAddress);
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         _keep.distributeETHToMembers.value(_ethValue)();
         return true;
     }

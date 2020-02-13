@@ -3,7 +3,7 @@ pragma solidity ^0.5.10;
 import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
-import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {TBTCSystem} from "../system/TBTCSystem.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -56,13 +56,13 @@ library DepositFunding {
 
         require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
-        /* solium-disable-next-line value-in-payable */
-        require(msg.value == TBTCConstants.getFunderBondAmount(), "incorrect funder bond amount");
         require(_system.isAllowedLotSize(_lotSize), "provided lot size not supported");
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
         _d.lotSizeSatoshis = _lotSize;
-        _d.keepAddress = _system.requestNewKeep(_m, _n);
+        uint256 _bondRequirement = _lotSize.mul(_system.getInitialCollateralizedPercent()).div(100);
+        /* solium-disable-next-line value-in-payable */
+        _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirement);
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
         _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();
@@ -72,26 +72,6 @@ library DepositFunding {
         _d.logCreated(_d.keepAddress);
 
         return true;
-    }
-
-    /// @notice     Transfers the funders bond to the signers if the funder never funds
-    /// @dev        Called only by notifyFundingTimeout
-    function revokeFunderBond(DepositUtils.Deposit storage _d) internal {
-        if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
-            _d.pushFundsToKeepGroup(TBTCConstants.getFunderBondAmount());
-        } else if (address(this).balance > 0) {
-            _d.pushFundsToKeepGroup(address(this).balance);
-        }
-    }
-
-    /// @notice     Returns the funder's bond plus a payment at contract teardown
-    /// @dev        Returns the balance if insufficient. Always call this before distributing signer payments
-    function returnFunderBond(DepositUtils.Deposit storage _d) internal {
-        if (address(this).balance >= TBTCConstants.getFunderBondAmount()) {
-            _d.depositOwner().transfer(TBTCConstants.getFunderBondAmount());
-        } else if (address(this).balance > 0) {
-            _d.depositOwner().transfer(address(this).balance);
-        }
     }
 
     /// @notice     slashes the signers partially for committing fraud before funding occurs
@@ -122,7 +102,6 @@ library DepositFunding {
         _d.setFailedSetup();
         _d.logSetupFailed();
 
-        returnFunderBond(_d);
         fundingTeardown(_d);
     }
 
@@ -133,7 +112,7 @@ library DepositFunding {
     function retrieveSignerPubkey(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not currently awaiting signer setup");
 
-        bytes memory _publicKey = IECDSAKeep(_d.keepAddress).getPublicKey();
+        bytes memory _publicKey = IBondedECDSAKeep(_d.keepAddress).getPublicKey();
         require(_publicKey.length == 64, "public key not set or not 64-bytes long");
 
         _d.signingGroupPubkeyX = _publicKey.slice(0, 32).toBytes32();
@@ -159,7 +138,6 @@ library DepositFunding {
         _d.setFailedSetup();
         _d.logSetupFailed();
 
-        revokeFunderBond(_d);
         fundingTeardown(_d);
     }
 
@@ -187,7 +165,6 @@ library DepositFunding {
 
         bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         require(_isFraud, "Signature is not fraudulent");
-        _d.seizeSignerBonds();
         _d.logFraudDuringSetup();
 
         // If the funding timeout has elapsed, punish the funder too!
@@ -198,7 +175,6 @@ library DepositFunding {
             /* NB: This is reuse of the variable */
             _d.fundingProofTimerStart = block.timestamp;
             _d.setFraudAwaitingBTCFundingProof();
-            returnFunderBond(_d);
         }
     }
 
@@ -298,13 +274,6 @@ library DepositFunding {
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
-        // Design decision:
-        // We COULD revoke the funder bond here if the funding proof timeout has elapsed
-        // HOWEVER, that would only create a situation where the funder loses eerything
-        // It would be a large punishment for a small crime (being slightly late)
-        // So if the funder manages to call this before anyone notifies of timeout
-        // We let them have a freebie
-
         bytes8 _valueBytes;
         bytes memory  _utxoOutpoint;
 
@@ -327,8 +296,6 @@ library DepositFunding {
         fundingTeardown(_d);
         _d.setActive();
         _d.logFunded();
-
-        returnFunderBond(_d);
 
         return true;
     }

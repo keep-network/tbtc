@@ -4,9 +4,9 @@ import {
   createSnapshot,
   restoreSnapshot,
 } from './helpers/snapshot'
+import deployTestDeposit from './helpers/deployTestDeposit'
 
 const BN = require('bn.js')
-const utils = require('./utils')
 const chai = require('chai')
 const expect = chai.expect
 const bnChai = require('bn-chai')
@@ -14,62 +14,55 @@ chai.use(bnChai(BN))
 
 const TBTCSystem = artifacts.require('TBTCSystem')
 
-const KeepRegistryStub = artifacts.require('KeepRegistryStub')
-const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
-
-const DepositFunding = artifacts.require('DepositFunding')
-const DepositLiquidation = artifacts.require('DepositLiquidation')
-const DepositRedemption = artifacts.require('DepositRedemption')
-const DepositUtils = artifacts.require('DepositUtils')
-const DepositStates = artifacts.require('DepositStates')
-const TBTCConstants = artifacts.require('TBTCConstants')
-const TestDeposit = artifacts.require('TestDeposit')
-
-const TEST_DEPOSIT_DEPLOY = [
-  { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'DepositRedemption', contract: DepositRedemption },
-  { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'DepositStates', contract: DepositStates },
-  { name: 'TBTCConstants', contract: TBTCConstants },
-  { name: 'TestDeposit', contract: TestDeposit },
-]
-
 contract('TBTCSystem', (accounts) => {
   let tbtcSystem
-  let ecdsaKeepVendor
+  let ecdsaKeepFactory
+
+  before(async () => {
+    const {
+      tbtcSystemStub,
+      ecdsaKeepFactoryStub,
+    } = await deployTestDeposit(
+      [],
+      // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
+      // test TBTCSystem itself.
+      { TBTCSystemStub: TBTCSystem }
+    )
+    // Refer to this correctly throughout the rest of the test.
+    tbtcSystem = tbtcSystemStub
+    ecdsaKeepFactory = ecdsaKeepFactoryStub
+  })
 
   describe('requestNewKeep()', async () => {
+    let openKeepFee
     before(async () => {
-      await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-
-      ecdsaKeepVendor = await ECDSAKeepVendorStub.new()
-
-      const keepRegistry = await KeepRegistryStub.new()
-      await keepRegistry.setVendor(ecdsaKeepVendor.address)
-
-      tbtcSystem = await TBTCSystem.new(utils.address0)
-
-      await tbtcSystem.initialize(
-        keepRegistry.address
-      )
+      openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
     })
-
     it('sends caller as owner to open new keep', async () => {
       const expectedKeepOwner = accounts[2]
 
-      await tbtcSystem.requestNewKeep(5, 10, { from: expectedKeepOwner })
-      const keepOwner = await ecdsaKeepVendor.keepOwner.call()
+      await tbtcSystem.requestNewKeep(5, 10, 0, { from: expectedKeepOwner, value: openKeepFee })
+      const keepOwner = await ecdsaKeepFactory.keepOwner.call()
 
       assert.equal(expectedKeepOwner, keepOwner, 'incorrect keep owner address')
     })
 
     it('returns keep address', async () => {
-      const expectedKeepAddress = await ecdsaKeepVendor.keepAddress.call()
+      const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
 
-      const result = await tbtcSystem.requestNewKeep.call(5, 10)
+      const result = await tbtcSystem.requestNewKeep.call(5, 10, 0, { value: openKeepFee })
 
       assert.equal(expectedKeepAddress, result, 'incorrect keep address')
+    })
+
+    it('forwards value to keep factory', async () => {
+      const initialBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
+
+      await tbtcSystem.requestNewKeep(5, 10, 0, { value: openKeepFee })
+
+      const finalBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
+      const balanceCheck = new BN(finalBalance).sub(new BN(initialBalance))
+      expect(balanceCheck, 'TBTCSystem did not correctly forward value to keep factory').to.eq.BN(openKeepFee)
     })
   })
 
@@ -159,7 +152,7 @@ contract('TBTCSystem', (accounts) => {
       term = await tbtcSystem.getRemainingPauseTerm()
 
       await increaseTime(term.toNumber()) // 10 days
-      tbtcSystem.resumeNewDeposits()
+      await tbtcSystem.resumeNewDeposits()
       const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
     })

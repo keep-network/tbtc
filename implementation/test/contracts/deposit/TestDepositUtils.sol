@@ -4,6 +4,7 @@ import {DepositUtils} from '../../../contracts/deposit/DepositUtils.sol';
 import {TestDeposit} from './TestDeposit.sol';
 
 contract TestDepositUtils is TestDeposit {
+    constructor() public {}
 
     // Passthroughs to test view and pure functions
 
@@ -43,38 +44,8 @@ contract TestDepositUtils is TestDeposit {
         return self.findAndParseFundingOutput(_txOutputVector, _fundingOutputIndex);
     }
 
-    function validateAndParseFundingSPVProof(
-        bytes4 _txVersion,
-        bytes memory _txInputVector,
-        bytes memory _txOutputVector,
-        bytes4 _txLocktime,
-        uint8 _fundingOutputIndex,
-        bytes memory _merkleProof,
-        uint256 _txIndexInBlock,
-        bytes memory _bitcoinHeaders
-    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
-      return self.validateAndParseFundingSPVProof(
-        _txVersion,
-        _txInputVector,
-        _txOutputVector,
-        _txLocktime,
-        _fundingOutputIndex,
-        _merkleProof,
-        _txIndexInBlock,
-        _bitcoinHeaders
-        );
-    }
-
-    function auctionValue() public view returns (uint256) {
-        return self.auctionValue();
-    }
-
     function signerFee() public view returns (uint256) {
         return self.signerFee();
-    }
-
-    function auctionTBTCAmount() public view returns (uint256) {
-        return self.auctionTBTCAmount();
     }
 
     function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes memory) {
@@ -127,5 +98,42 @@ contract TestDepositUtils is TestDeposit {
 
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
+    }
+}
+
+// Separate contract for testing SPV proofs, as putting this in the main
+// TestDepositUtils contract causes it to run out of gas before finishing its
+// deploy.
+contract TestDepositUtilsSPV is TestDeposit {
+    constructor() public {}
+
+    function setPubKey(
+        bytes32 _signingGroupPubkeyX,
+        bytes32 _signingGroupPubkeyY
+    ) public {
+        self.signingGroupPubkeyX = _signingGroupPubkeyX;
+        self.signingGroupPubkeyY = _signingGroupPubkeyY;
+    }
+
+    function validateAndParseFundingSPVProof(
+        bytes4 _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes4 _txLocktime,
+        uint8 _fundingOutputIndex,
+        bytes memory _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes memory _bitcoinHeaders
+    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
+      return self.validateAndParseFundingSPVProof(
+        _txVersion,
+        _txInputVector,
+        _txOutputVector,
+        _txLocktime,
+        _fundingOutputIndex,
+        _merkleProof,
+        _txIndexInBlock,
+        _bitcoinHeaders
+        );
     }
 }

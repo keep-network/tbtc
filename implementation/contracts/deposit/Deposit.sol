@@ -5,8 +5,9 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {DepositFunding} from "./DepositFunding.sol";
 import {DepositRedemption} from "./DepositRedemption.sol";
 import {DepositStates} from "./DepositStates.sol";
+import "../system/DepositFactoryAuthority.sol";
 
-contract Deposit {
+contract Deposit is DepositFactoryAuthority {
 
     using DepositRedemption for DepositUtils.Deposit;
     using DepositFunding for DepositUtils.Deposit;
@@ -81,7 +82,7 @@ contract Deposit {
         uint256 _m,
         uint256 _n,
         uint256 _lotSize
-    ) public payable returns (bool) {
+    ) public onlyFactory payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.TBTCDepositToken = _TBTCDepositToken;
@@ -94,29 +95,29 @@ contract Deposit {
     /// @notice                     Anyone can request redemption
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH       The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @return                     True if successful, otherwise revert
     function requestRedemption(
         bytes8 _outputValueBytes,
-        bytes20 _redeemerPKH
+        bytes memory _redeemerOutputScript
     ) public returns (bool) {
-        self.requestRedemption(_outputValueBytes, _redeemerPKH);
+        self.requestRedemption(_outputValueBytes, _redeemerOutputScript);
         return true;
     }
 
     /// @notice                     Anyone can request redemption
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx and pays for the redemption
     /// @param  _outputValueBytes   The 8-byte LE output size
-    /// @param  _redeemerPKH        The 20-byte Bitcoin pubkeyhash to which to send funds
+    /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
     function transferAndRequestRedemption(
         bytes8 _outputValueBytes,
-        bytes20 _redeemerPKH,
+        bytes memory _redeemerOutputScript,
         address payable _finalRecipient
     ) public returns (bool) {
         self.transferAndRequestRedemption(
             _outputValueBytes,
-            _redeemerPKH,
+            _redeemerOutputScript,
             _finalRecipient
         );
         return true;

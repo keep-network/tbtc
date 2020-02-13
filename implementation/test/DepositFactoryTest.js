@@ -1,85 +1,48 @@
-const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
-const TBTCToken = artifacts.require('TBTCToken')
-const TBTCDepositToken = artifacts.require('TBTCDepositToken')
-const TBTCSystemStub = artifacts.require('TBTCSystemStub')
-const TestTBTCConstants = artifacts.require('TestTBTCConstants')
-const DepositStates = artifacts.require('DepositStates')
-const DepositFunding = artifacts.require('DepositFunding')
-const DepositLiquidation = artifacts.require('DepositLiquidation')
-const DepositRedemption = artifacts.require('DepositRedemption')
-const DepositUtils = artifacts.require('DepositUtils')
-const TestDeposit = artifacts.require('TestDeposit')
-const DepositFactory = artifacts.require('DepositFactory')
+import deployTestDeposit from './helpers/deployTestDeposit'
+import expectThrow from './helpers/expectThrow'
 
-const BN = require('bn.js')
-const utils = require('./utils')
-const chai = require('chai')
-const expect = chai.expect
-const bnChai = require('bn-chai')
+import BN from 'bn.js'
+import utils from './utils'
+import chai, { expect } from 'chai'
+import bnChai from 'bn-chai'
 chai.use(bnChai(BN))
 
-const TEST_DEPOSIT_DEPLOY = [
-  { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'DepositRedemption', contract: DepositRedemption },
-  { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'DepositStates', contract: DepositStates },
-  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
-  { name: 'TestDeposit', contract: TestDeposit },
-  { name: 'TBTCDepositToken', contract: TBTCDepositToken },
-]
+const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
+const Deposit = artifacts.require('Deposit')
+const TestDeposit = artifacts.require('TestDeposit')
 
-contract('DepositFactory', (accounts) => {
-  let factory
-  let depositContract
-  let tbtcToken
-  let tbtcDepositToken
-  const funderBondAmount = new BN('10').pow(new BN('5'))
+const TBTCSystem = artifacts.require('TBTCSystem')
+
+contract('DepositFactory', () => {
+  const openKeepFee = new BN('123456') // set in ECDAKeepFactory
   const fullBtc = 100000000
-  let tbtcSystemStub
-
-  before(async () => {
-    const deployed = await utils.deploySystem(TEST_DEPOSIT_DEPLOY)
-
-    depositContract = deployed.TestDeposit
-    factory = await DepositFactory.new(depositContract.address)
-
-    tbtcSystemStub = await TBTCSystemStub.new(utils.address0)
-    tbtcSystemStub.initialize(utils.address0)
-
-    tbtcToken = await TBTCToken.new(tbtcSystemStub.address)
-    tbtcDepositToken = deployed.TBTCDepositToken
-  })
 
   describe('createDeposit()', async () => {
+    let depositFactory
+    let ecdsaKeepFactoryStub
+
+    before(async () => {
+      // To properly test createDeposit, we deploy the real Deposit contract and
+      // make sure we don't get hit by the ACL hammer.
+      ({
+        depositFactory,
+      } = await deployTestDeposit([], { 'TestDeposit': Deposit }))
+    })
+
     it('creates new clone instances', async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
-      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       assert.equal(eventList.length, 2)
       assert(web3.utils.isAddress(eventList[0].returnValues.depositCloneAddress))
@@ -87,68 +50,73 @@ contract('DepositFactory', (accounts) => {
       assert.notEqual(eventList[0].returnValues.depositCloneAddress, eventList[1].returnValues.depositCloneAddress, 'clone addresses should not be equal')
     })
 
-    it('correctly forwards value to Deposit', async () => {
-      const blockNumber = await web3.eth.getBlockNumber()
+    it('correctly forwards value to keep factory', async () => {
+      // Use real TBTCSystem contract to validate value forwarding:
+      // DepositFactory -> Deposit -> TBTCSystem -> ECDSAKeepFactory
+      ({
+        ecdsaKeepFactoryStub,
+        depositFactory,
+      } = await deployTestDeposit([], { 'TestDeposit': Deposit, 'TBTCSystemStub': TBTCSystem }))
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
+      expect(
+        await web3.eth.getBalance(ecdsaKeepFactoryStub.address),
+        'Factory did not correctly forward value on Deposit creation'
+      ).to.eq.BN(openKeepFee)
+    })
 
-      const eventList = await factory.getPastEvents(
-        'DepositCloneCreated',
-        {
-          fromBlock: blockNumber,
-          toBlock: 'latest',
-        })
-
-      const depositAddress = eventList[eventList.length - 1].returnValues.depositCloneAddress
-
-      const balance = await web3.eth.getBalance(depositAddress)
-      assert.equal(balance, funderBondAmount, 'Factory did not correctly forward value on Deposit creation')
+    it('reverts if insufficient fee is provided', async () => {
+      const badOpenKeepFee = openKeepFee.sub(new BN(1))
+      await expectThrow(
+        depositFactory.createDeposit(
+          fullBtc,
+          { value: badOpenKeepFee }
+        ),
+        'Insufficient value for new keep creation'
+      )
     })
   })
 
   describe('clone state', async () => {
+    let mockRelay
+    let tbtcSystemStub
+    let tbtcToken
+    let tbtcDepositToken
+    let testDeposit
+    let depositFactory
+
     const publicKey = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6ee8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
+
+    before(async () => {
+      ({
+        mockRelay,
+        tbtcSystemStub,
+        tbtcToken,
+        tbtcDepositToken,
+        testDeposit,
+        depositFactory,
+      } = await deployTestDeposit([]))
+    })
 
     it('is not affected by state changes to other clone', async () => {
       const keep1 = await ECDSAKeepStub.new()
       const keep2 = await ECDSAKeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
-      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
       const clone1 = eventList[0].returnValues.depositCloneAddress
       const clone2 = eventList[1].returnValues.depositCloneAddress
@@ -175,7 +143,8 @@ contract('DepositFactory', (accounts) => {
 
       await deposit1.retrieveSignerPubkey()
       await deposit2.retrieveSignerPubkey()
-      await tbtcSystemStub.setCurrentDiff(currentDifficulty)
+      await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
+      await mockRelay.setPrevEpochDifficulty(currentDifficulty)
       await deposit2.provideBTCFundingProof(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
 
       // deposit1 should be AWAITING_BTC_FUNDING_PROOF (2)
@@ -190,7 +159,7 @@ contract('DepositFactory', (accounts) => {
     it('is not affected by state changes to master', async () => {
       const keep = await ECDSAKeepStub.new()
 
-      await depositContract.createNewDeposit(
+      await testDeposit.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,
@@ -199,33 +168,26 @@ contract('DepositFactory', (accounts) => {
         1,
         1,
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
-      await depositContract.setKeepAddress(keep.address)
+      await testDeposit.setKeepAddress(keep.address)
 
       await keep.setPublicKey(publicKey)
 
-      await depositContract.retrieveSignerPubkey()
+      await testDeposit.retrieveSignerPubkey()
 
       // master deposit should now be in AWAITING_BTC_FUNDING_PROOF
-      const masterState = await depositContract.getCurrentState()
+      const masterState = await testDeposit.getCurrentState()
 
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await factory.createDeposit(
-        tbtcSystemStub.address,
-        tbtcToken.address,
-        tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
-        1,
-        1,
+      await depositFactory.createDeposit(
         fullBtc,
-        { value: funderBondAmount }
+        { value: openKeepFee }
       )
 
-      const eventList = await factory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
+      const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
       const cloneNew = eventList[0].returnValues.depositCloneAddress
       const depositNew = await TestDeposit.at(cloneNew)
 

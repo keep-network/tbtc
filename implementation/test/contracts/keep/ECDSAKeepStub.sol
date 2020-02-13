@@ -1,11 +1,10 @@
 pragma solidity ^0.5.10;
 
-import {IECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeep.sol";
-import {IBondedECDSAKeep} from "../../../contracts/external/IBondedECDSAKeep.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 
 /// @notice Implementation of ECDSAKeep interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
-contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
+contract ECDSAKeepStub is IBondedECDSAKeep {
     bytes publicKey;
     bool success;
     uint256 bondAmount = 10000;
@@ -36,8 +35,6 @@ contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
         address(0).transfer(address(this).balance);
     }
 
-    // Functions implemented for IECDSAKeep interface.
-
     function getPublicKey() external view returns (bytes memory) {
         return publicKey;
     }
@@ -58,21 +55,20 @@ contract ECDSAKeepStub is IECDSAKeep, IBondedECDSAKeep {
     // Functions implemented for IBondedECDSAKeep interface.
 
     function submitSignatureFraud(
-        address _keepAddress,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s,
-        bytes32 _signedDigest,
-        bytes calldata _preimage
+        uint8,
+        bytes32,
+        bytes32,
+        bytes32,
+        bytes calldata
     ) external returns (bool){
        return success;
     }
 
-    function checkBondAmount(address _keepAddress) external view returns (uint256){
+    function checkBondAmount() external view returns (uint256){
         return bondAmount;
     }
 
-    function seizeSignerBonds(address _keepAddress) external returns (bool){
+    function seizeSignerBonds() external returns (bool){
         if (address(this).balance > 0) {
             msg.sender.transfer(address(this).balance);
         }

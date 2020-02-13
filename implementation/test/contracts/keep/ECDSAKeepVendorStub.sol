@@ -1,20 +1,17 @@
 pragma solidity ^0.5.10;
 
-import {IECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IECDSAKeepVendor.sol";
+import {IBondedECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepVendor.sol";
 
 /// @notice Implementation of ECDSAKeepVendor interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
-contract ECDSAKeepVendorStub is IECDSAKeepVendor {
-     address public keepOwner;
-     address public keepAddress = address(888);
+contract ECDSAKeepVendorStub is IBondedECDSAKeepVendor {
+     address payable factory;
 
-    function openKeep(
-        uint256 _groupSize,
-        uint256 _honestThreshold,
-        address _owner
-    ) external payable returns (address) {
-        keepOwner = _owner;
+     constructor(address payable _factory) public {
+       factory = _factory;
+     }
 
-        return keepAddress;
-    }
+     function selectFactory() public view returns (address payable) {
+       return factory;
+     }
 }

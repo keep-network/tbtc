@@ -6,7 +6,7 @@ import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
-import {IBondedECDSAKeep} from "../external/IBondedECDSAKeep.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
@@ -39,7 +39,7 @@ library DepositLiquidation {
         bytes memory _preimage
     ) public returns (bool _isFraud) {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        return _keep.submitSignatureFraud(_d.keepAddress, _v, _r, _s, _signedDigest, _preimage);
+        return _keep.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
     }
 
     /// @notice     Determines the collateralization percentage of the signing group
@@ -184,7 +184,7 @@ library DepositLiquidation {
             "No input spending custodied UTXO found at given index"
         );
 
-        if (_d.redeemerPKH != bytes20(0)) {
+        if (_d.redeemerOutputScript.length > 0) {
             require(
                 validateRedeemerNotPaid(_d, _txOutputVector),
                 "Found an output paying the redeemer as requested"
@@ -213,10 +213,8 @@ library DepositLiquidation {
             _output = _txOutputVector.slice(_offset, _txOutputVector.length - _offset);
             _offset += _output.determineOutputLength();
 
-            if (_output.extractValue() >= _requiredOutputValue
-                // extract the output flag and check that it is witness
-                && keccak256(_output.slice(8, 3)) == keccak256(hex"160014")
-                && keccak256(_output.extractHash()) == keccak256(abi.encodePacked(_d.redeemerPKH))) {
+            if (_output.extractValue() >= _requiredOutputValue &&
+                keccak256(_output.slice(8, 3).concat(_output.extractHash())) == keccak256(abi.encodePacked(_d.redeemerOutputScript))) {
                 return false;
             }
         }
