@@ -49,7 +49,7 @@ To recap:
 1. TBTC - the fungible ERC20, intended for the average user.
 2. TDT - the non-fungible ERC721, intended for advanced usage.
 
-The TDT and TBTC are interchangeable for each other using a contract called the *vending machine*. 
+The TDT and TBTC are interchangeable for each other using a contract called the *vending machine*, which we'll get to in a moment. 
 
 ## Funding a Deposit
 
