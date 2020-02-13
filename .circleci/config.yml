@@ -329,49 +329,49 @@ workflows:
     jobs:
       - keep_test_approval:
           type: approval
-          # filters:
-          #   tags:
-          #     only: /^v.*/
-          #   branches:
-          #     ignore: /.*/
+           filters:
+             tags:
+               only: /^v.*/
+             branches:
+               ignore: /.*/
       - setup_github_package_registry:
           context: github-package-registry
           requires:
             - keep_test_approval
       - migrate_contracts:
-          # filters:
-          #   tags:
-          #     only: /^v.*/
-          #   branches:
-          #     ignore: /.*/
+           filters:
+             tags:
+               only: /^v.*/
+             branches:
+               ignore: /.*/
           context: keep-test
           requires:
             - setup_github_package_registry
       - build_initcontainer:
-          # filters:
-          #   tags:
-          #     only: /^v.*/
-          #   branches:
-          #     ignore: /.*/
+           filters:
+             tags:
+               only: /^v.*/
+             branches:
+               ignore: /.*/
           context: keep-test
           requires:
             - migrate_contracts
       - publish_images:
-          # filters:
-          #   tags:
-          #     only: /^v.*/
-          #   branches:
-          #     ignore: /.*/
+           filters:
+             tags:
+               only: /^v.*/
+             branches:
+               ignore: /.*/
           context: keep-test
           requires:
             - migrate_contracts
             - build_initcontainer
       - publish_contract_data:
-          # filters:
-          #   tags:
-          #     only: /^v.*/
-          #   branches:
-          #     ignore: /.*/
+           filters:
+             tags:
+               only: /^v.*/
+             branches:
+               ignore: /.*/
           context: keep-test
           requires:
             - migrate_contracts
