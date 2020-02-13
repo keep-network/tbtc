@@ -54,6 +54,17 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         relay = _relay;
     }
 
+    /// @notice        Initialize contracts 
+    /// @dev           Only the Deposit factory can call this. 
+    /// @param _keepVendor        ECDSA keep vendor address. 
+    /// @param _depositFactory    Deposit Fctpry address. More info in DepositFactory.sol.
+    /// @param _masterDepositAddress  Master Deposit address. more info in Deposit.sol.
+    /// @param _tBTCToken         TBTCToken address. More info in TBTCToken.sol.
+    /// @param _tBTCDepositToken  TBTCDepositToken (TDT) address. more info in TBTCDepositToken.sol.
+    /// @param _feeRebateToken    FeeRebateToken (FRT) address. More info in FeeRebateToken.sol.
+    /// @param _vendingMachine    Vending Machine address. More info in VendingMachine.sol
+    /// @param _keepThreshold     Signing group honesty threshold.
+    /// @param _keepSize          Signing group size. 
     function initialize(
         address _keepVendor,
         address _depositFactory,
