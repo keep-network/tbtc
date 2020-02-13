@@ -21,7 +21,7 @@ This repo contains the Solidity [smart contracts](implementation/) and [specific
 
 ## Installation
 
-tBTC contracts are currently published in the GitHub Package Registry. 
+tBTC contracts are currently published in the GitHub Package Registry.
 
  1. Add a file `.npmrc` to the same directory as your project's `package.json`.
  2. Paste the following to configure the GitHub Package Registry for tBTC:
@@ -50,6 +50,12 @@ contract MySystem {
     }
 }
 ```
+
+## Security
+
+tBTC is currently under audit.
+
+Please report any security issues you find to security@keep.network.
 
 ## Contributing
 
@@ -106,7 +112,7 @@ npm run js:lint:fix
 
 The documentation includes a project overview and rationale, as well as the
 on-chain specification. Docs should always be updated before or in tandem with
-code. 
+code.
 
 ### Prerequisites
 
