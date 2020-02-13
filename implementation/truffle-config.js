@@ -56,24 +56,23 @@ module.exports = {
       //  gas: 100000000000000,
       gasPrice: 1
     },
+
     keep_dev: {
-      host: "localhost",
-      port: 8545,
-      network_id: "*",
-      from: "0x0F0977c4161a371B5E5eE6a8F43Eb798cD1Ae1DB",
-    },
-    keep_test: {
       provider: function() {
-      // ETH_HOSTNAME is set in a Circle Context.
-      // CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD is set in a Circle context. For now this value
-      // is shared between the contract owner Ethereum account on both our internal testnet
-      // and on Ropsten.
-      return new HDWalletProvider("EBAE221D3C6A4707B1B00927CE9DD6F866DC426658842CE3CFF5EBDAC2BF6000", "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
+        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://localhost:8545")
       },
       gas: 6721975,
-      // ETH_NETWORK_ID is set in a Circle context.
+      network_id: 1101
+    },
+
+    ropsten: {
+      provider: function() {
+        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://eth-tx-ropsten.test.keep.network:8545")
+      },
+      gas: 6721975,
       network_id: 3
     },
+
     mainnet: {
       provider: function() {
         return new HDWalletProvider(mnemonic, "https://mainnet.infura.io/")
