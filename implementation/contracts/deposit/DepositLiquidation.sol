@@ -21,15 +21,15 @@ library DepositLiquidation {
     using DepositStates for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
 
-    /// @notice                 Notifies the keep contract of fraud
-    /// @dev                    Calls out to the keep contract. this could get expensive if preimage is large
-    /// @param  _d               deposit storage pointer
-    /// @param  _v              Signature recovery value
-    /// @param  _r              Signature R value
-    /// @param  _s              Signature S value
-    /// @param _signedDigest    The digest signed by the signature vrs tuple
-    /// @param _preimage        The sha256 preimage of the digest
-    /// @return                 True if fraud, otherwise revert
+    /// @notice                 Notifies the keep contract of fraud.
+    /// @dev                    Calls out to the keep contract. this could get expensive if preimage is large.
+    /// @param  _d              deposit storage pointer.
+    /// @param  _v              Signature recovery value.
+    /// @param  _r              Signature R value.
+    /// @param  _s              Signature S value.
+    /// @param _signedDigest    The digest signed by the signature vrs tuple.
+    /// @param _preimage        The sha256 preimage of the digest.
+    /// @return                 True if fraud, otherwise revert.
     function submitSignatureFraud(
         DepositUtils.Deposit storage _d,
         uint8 _v,
@@ -42,10 +42,10 @@ library DepositLiquidation {
         return _keep.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
     }
 
-    /// @notice     Determines the collateralization percentage of the signing group
-    /// @dev        Compares the bond value and lot value
-    /// @param _d   deposit storage pointer
-    /// @return     collateralization percentage as uint
+    /// @notice     Determines the collateralization percentage of the signing group.
+    /// @dev        Compares the bond value and lot value.
+    /// @param _d   deposit storage pointer.
+    /// @return     collateralization percentage as uint.
     function getCollateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
 
         // Determine value of the lot in wei
@@ -68,9 +68,9 @@ library DepositLiquidation {
         return (_bondValue.mul(100).div(_lotValue));
     }
 
-    /// @notice         Starts signer liquidation due to fraud
-    /// @dev            We first attempt to liquidate on chain, then by auction
-    /// @param  _d      deposit storage pointer
+    /// @notice         Starts signer liquidation due to fraud.
+    /// @dev            We first attempt to liquidate on chain, then by auction.
+    /// @param  _d      deposit storage pointer.
     function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(true);
 
@@ -93,9 +93,9 @@ library DepositLiquidation {
         
     }
 
-    /// @notice         Starts signer liquidation due to abort or undercollateralization
-    /// @dev            We first attempt to liquidate on chain, then by auction
-    /// @param  _d      deposit storage pointer
+    /// @notice         Starts signer liquidation due to abort or undercollateralization.
+    /// @dev            We first attempt to liquidate on chain, then by auction.
+    /// @param  _d      deposit storage pointer.
     function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(false);
         // Reclaim used state for gas savings
@@ -107,14 +107,14 @@ library DepositLiquidation {
         _d.setFraudLiquidationInProgress();
     }
 
-    /// @notice                 Anyone can provide a signature that was not requested to prove fraud
-    /// @dev                    ECDSA is NOT SECURE unless you verify the digest
-    /// @param  _d              deposit storage pointer
-    /// @param  _v              Signature recovery value
-    /// @param  _r              Signature R value
-    /// @param  _s              Signature S value
-    /// @param _signedDigest    The digest signed by the signature vrs tuple
-    /// @param _preimage        The sha256 preimage of the digest
+    /// @notice                 Anyone can provide a signature that was not requested to prove fraud.
+    /// @dev                    ECDSA is NOT SECURE unless you verify the digest.
+    /// @param  _d              deposit storage pointer.
+    /// @param  _v              Signature recovery value.
+    /// @param  _r              Signature R value.
+    /// @param  _s              Signature S value.
+    /// @param _signedDigest    The digest signed by the signature vrs tuple.
+    /// @param _preimage        The sha256 preimage of the digest.
     function provideECDSAFraudProof(
         DepositUtils.Deposit storage _d,
         uint8 _v,
@@ -136,17 +136,17 @@ library DepositLiquidation {
         startSignerFraudLiquidation(_d);
     }
 
-    /// @notice                   Anyone may notify the deposit of fraud via an SPV proof
-    /// @dev                      We strong prefer ECDSA fraud proofs
-    /// @param  _d                deposit storage pointer
-    /// @param  _txVersion        Transaction version number (4-byte LE)
-    /// @param  _txInputVector    All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
-    /// @param  _txOutputVector   All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    /// @param  _txLocktime       Final 4 bytes of the transaction
-    /// @param  _merkleProof      The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _txIndexInBlock   Transaction index in the block (0-indexed)
-    /// @param  _targetInputIndex Index of the input that spends the custodied UTXO
-    /// @param  _bitcoinHeaders   An array of tightly-packed bitcoin headers
+    /// @notice                   Anyone may notify the deposit of fraud via an SPV proof.
+    /// @dev                      We strong prefer ECDSA fraud proofs.
+    /// @param  _d                deposit storage pointer.
+    /// @param  _txVersion        Transaction version number (4-byte LE).
+    /// @param  _txInputVector    All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs.
+    /// @param  _txOutputVector   All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
+    /// @param  _txLocktime       Final 4 bytes of the transaction.
+    /// @param  _merkleProof      The merkle proof of inclusion of the tx in the bitcoin block.
+    /// @param  _txIndexInBlock   Transaction index in the block (0-indexed).
+    /// @param  _targetInputIndex Index of the input that spends the custodied UTXO.
+    /// @param  _bitcoinHeaders   An array of tightly-packed bitcoin headers.
     function provideSPVFraudProof(
         DepositUtils.Deposit storage _d,
         bytes4 _txVersion,
@@ -194,11 +194,11 @@ library DepositLiquidation {
         startSignerFraudLiquidation(_d);
     }
 
-    /// @notice                 Search _txOutputVector for output paying the redeemer
-    /// @dev                    Require that outputs checked are witness
-    /// @param  _d              Deposit storage pointer
-    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    /// @return                 False if output paying redeemer was found, true otherwise
+    /// @notice                 Search _txOutputVector for output paying the redeemer.
+    /// @dev                    Require that outputs checked are witness.
+    /// @param  _d              Deposit storage pointer.
+    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
+    /// @return                 False if output paying redeemer was found, true otherwise.
     function validateRedeemerNotPaid(
         DepositUtils.Deposit storage _d,
         bytes memory _txOutputVector
@@ -221,9 +221,9 @@ library DepositLiquidation {
         return true;
     }
 
-    /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud
-    /// @dev        For interface, reading auctionValue will give a past value. the current is better
-    /// @param  _d  deposit storage pointer
+    /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
+    /// @dev        For interface, reading auctionValue will give a past value. the current is better.
+    /// @param  _d  deposit storage pointer.
     function purchaseSignerBondsAtAuction(DepositUtils.Deposit storage _d) public {
         bool _wasFraud = _d.inFraudLiquidationInProgress();
         require(_d.inSignerLiquidation(), "No active auction");
@@ -275,9 +275,9 @@ library DepositLiquidation {
         }
     }
 
-    /// @notice     Notify the contract that the signers are undercollateralized
-    /// @dev        Calls out to the system for oracle info
-    /// @param  _d  deposit storage pointer
+    /// @notice     Notify the contract that the signers are undercollateralized.
+    /// @dev        Calls out to the system for oracle info.
+    /// @param  _d  deposit storage pointer.
     function notifyCourtesyCall(DepositUtils.Deposit storage _d) public  {
         require(_d.inActive(), "Can only courtesy call from active state");
         require(getCollateralizationPercentage(_d) < _d.undercollateralizedThresholdPercent, "Signers have sufficient collateral");
@@ -286,9 +286,9 @@ library DepositLiquidation {
         _d.logCourtesyCalled();
     }
 
-    /// @notice     Goes from courtesy call to active
-    /// @dev        Only callable if collateral is sufficient and the deposit is not expiring
-    /// @param  _d  deposit storage pointer
+    /// @notice     Goes from courtesy call to active.
+    /// @dev        Only callable if collateral is sufficient and the deposit is not expiring.
+    /// @param  _d  deposit storage pointer.
     function exitCourtesyCall(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not currently in courtesy call");
         require(block.timestamp <= _d.fundedAt + TBTCConstants.getDepositTerm(), "Deposit is expiring");
@@ -297,27 +297,27 @@ library DepositLiquidation {
         _d.logExitedCourtesyCall();
     }
 
-    /// @notice     Notify the contract that the signers are undercollateralized
-    /// @dev        Calls out to the system for oracle info
-    /// @param  _d  deposit storage pointer
+    /// @notice     Notify the contract that the signers are undercollateralized.
+    /// @dev        Calls out to the system for oracle info.
+    /// @param  _d  deposit storage pointer.
     function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
         require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
         require(getCollateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
         startSignerAbortLiquidation(_d);
     }
 
-    /// @notice     Notifies the contract that the courtesy period has elapsed
-    /// @dev        This is treated as an abort, rather than fraud
-    /// @param  _d  deposit storage pointer
+    /// @notice     Notifies the contract that the courtesy period has elapsed.
+    /// @dev        This is treated as an abort, rather than fraud.
+    /// @param  _d  deposit storage pointer.
     function notifyCourtesyTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
         require(block.timestamp >= _d.courtesyCallInitiated + TBTCConstants.getCourtesyCallTimeout(), "Courtesy period has not elapsed");
         startSignerAbortLiquidation(_d);
     }
 
-    /// @notice     Notifies the contract that its term limit has been reached
-    /// @dev        This initiates a courtesy call
-    /// @param  _d  deposit storage pointer
+    /// @notice     Notifies the contract that its term limit has been reached.
+    /// @dev        This initiates a courtesy call.
+    /// @param  _d  deposit storage pointer.
     function notifyDepositExpiryCourtesyCall(DepositUtils.Deposit storage _d) public {
         require(_d.inActive(), "Deposit is not active");
         require(block.timestamp >= _d.fundedAt + TBTCConstants.getDepositTerm(), "Deposit term not elapsed");

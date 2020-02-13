@@ -11,8 +11,8 @@ import "./DepositFactoryAuthority.sol";
 ///         versa. Owning a TDT is equivalent to owning its corresponding
 ///         deposit. TDTs can be transferred freely. tBTC's VendingMachine
 ///         contract takes ownership of TDTs and in exchange returns fungible
-///          TBTC tokens whose value is backed 1-to-1 by the corresponding
-///          deposit's BTC.
+///         TBTC tokens whose value is backed 1-to-1 by the corresponding
+///         deposit's BTC.
 /// @dev Currently, TDTs are minted using the uint256 casting of the
 ///      corresponding deposit contract's address. That is, the TDTs id is
 ///      convertible to the deposit's address and vice versa. TDTs are minted
@@ -35,8 +35,8 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
     }
 
     /// @dev Returns whether the specified token exists.
-    /// @param _tokenId uint256 ID of the token to query the existence of
-    /// @return bool whether the token exists
+    /// @param _tokenId uint256 ID of the token to query the existence of.
+    /// @return bool whether the token exists.
     function exists(uint256 _tokenId) public view returns (bool) {
         return _exists(_tokenId);
     }

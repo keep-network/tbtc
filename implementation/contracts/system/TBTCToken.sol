@@ -4,9 +4,9 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "./VendingMachineAuthority.sol";
 
-/// @title  TBTC Token
+/// @title  TBTC Token.
 /// @notice This is the TBTC ERC20 contract.
-/// @dev    Tokens can only be minted by the Vending Machine (VendingMachine.sol)
+/// @dev    Tokens can only be minted by the Vending Machine (VendingMachine.sol).
 contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
@@ -18,7 +18,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     }
 
     /// @dev             Mints an amount of the token and assigns it to an account.
-    ///                  Uses the internal _mint function
+    ///                  Uses the internal _mint function.
     /// @param _account  The account that will receive the created tokens.
     /// @param _amount   The amount of tokens that will be created.
     // TODO: add back ACL when vending machine refactoring is done.
@@ -28,7 +28,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
         return true;
     }
 
-    /// @dev             Burns an amount of the token of a given account
+    /// @dev             Burns an amount of the token of a given account.
     ///                  deducting from the sender's allowance for said account.
     ///                  Uses the internal _burn function.
     /// @param _account  The account whose tokens will be burnt.

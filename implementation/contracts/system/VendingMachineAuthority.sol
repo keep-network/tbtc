@@ -11,7 +11,7 @@ contract VendingMachineAuthority {
         VendingMachine = _vendingMachine;
     }
 
-    /// @notice Function modifier ensures modified function caller address is the vending machine
+    /// @notice Function modifier ensures modified function caller address is the vending machine.
     modifier onlyVendingMachine() {
         require(msg.sender == VendingMachine, "caller must be the vending machine");
         _;

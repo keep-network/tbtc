@@ -10,7 +10,7 @@ import "./VendingMachineAuthority.sol";
 ///         could result in reimbursement of the singer fee payed to open the deposit.
 /// @dev    This token is minted automatically when a TDT (TBTCDepositToken.sol)
 ///         is exchanged for TBTC (TBTCToken.sol) via the 
-///         Vending Machine (VendingMachine.sol)
+///         Vending Machine (VendingMachine.sol).
 contract FeeRebateToken is ERC721Metadata, VendingMachineAuthority {
 
     constructor(address _vendingMachine)
@@ -22,15 +22,15 @@ contract FeeRebateToken is ERC721Metadata, VendingMachineAuthority {
 
     /// @dev Mints a new token.
     /// Reverts if the given token ID already exists.
-    /// @param _to The address that will own the minted token
-    /// @param _tokenId uint256 ID of the token to be minted
+    /// @param _to The address that will own the minted token.
+    /// @param _tokenId uint256 ID of the token to be minted.
     function mint(address _to, uint256 _tokenId) public onlyVendingMachine {
         _mint(_to, _tokenId);
     }
 
     /// @dev Returns whether the specified token exists.
-    /// @param _tokenId uint256 ID of the token to query the existence of
-    /// @return bool whether the token exists
+    /// @param _tokenId uint256 ID of the token to query the existence of.
+    /// @return bool whether the token exists.
     function exists(uint256 _tokenId) public view returns (bool) {
         return _exists(_tokenId);
     }

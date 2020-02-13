@@ -28,8 +28,8 @@ library DepositRedemption {
     using DepositLiquidation for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
 
-    /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address
-    /// @dev        Approves the keep contract, then expects it to call transferFrom
+    /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address.
+    /// @dev        Approves the keep contract, then expects it to call transferFrom.
     function distributeSignerFee(DepositUtils.Deposit storage _d) internal {
         address _tbtcTokenAddress = _d.TBTCToken;
         TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
@@ -40,18 +40,18 @@ library DepositRedemption {
         _keep.distributeERC20ToMembers(_tbtcTokenAddress, _d.signerFee());
     }
 
-    /// @notice Approves digest for signing by a keep
+    /// @notice Approves digest for signing by a keep.
     /// @dev Calls given keep to sign the digest. Records a current timestamp
-    /// for given digest
-    /// @param _digest Digest to approve
+    /// for given digest.
+    /// @param _digest Digest to approve.
     function approveDigest(DepositUtils.Deposit storage _d, bytes32 _digest) internal {
         IBondedECDSAKeep(_d.keepAddress).sign(_digest);
 
         _d.approvedDigests[_digest] = block.timestamp;
     }
 
-    /// @notice Handles TBTC requirements for redemption
-    /// @dev Burns or transfers depending on term and supply-peg impact
+    /// @notice Handles TBTC requirements for redemption.
+    /// @dev Burns or transfers depending on term and supply-peg impact.
     function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         address tdtHolder = _d.depositOwner();
@@ -139,12 +139,12 @@ library DepositRedemption {
             _d.utxoOutpoint);
     }
 
-    /// @notice                     Anyone can request redemption as long as they can
+    /// @notice                     Anyone can request redemption as long as they can.
     ///                             approve the TDT transfer to the final recipient.
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx and pays for the redemption
     ///                             on behalf of _finalRecipient.
-    /// @param  _d                  deposit storage pointer
-    /// @param  _outputValueBytes   The 8-byte LE output size
+    /// @param  _d                  deposit storage pointer.
+    /// @param  _outputValueBytes   The 8-byte LE output size.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
     function transferAndRequestRedemption(
@@ -162,9 +162,9 @@ library DepositRedemption {
 
     /// @notice                     Only TDT owner can request redemption, 
     ///                             unless Deposit is expired or in COURTESY_CALL.
-    /// @dev                        The redeemer specifies details about the Bitcoin redemption tx
-    /// @param  _d                  deposit storage pointer
-    /// @param  _outputValueBytes   The 8-byte LE output size
+    /// @dev                        The redeemer specifies details about the Bitcoin redemption transaction.
+    /// @param  _d                  deposit storage pointer.
+    /// @param  _outputValueBytes   The 8-byte LE output size.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     function requestRedemption(
         DepositUtils.Deposit storage _d,
@@ -174,12 +174,12 @@ library DepositRedemption {
         _requestRedemption(_d, _outputValueBytes, _redeemerOutputScript, msg.sender);
     }
 
-    /// @notice     Anyone may provide a withdrawal signature if it was requested
-    /// @dev        The signers will be penalized if this (or provideRedemptionProof) is not called
-    /// @param  _d  deposit storage pointer
-    /// @param  _v  Signature recovery value
-    /// @param  _r  Signature R value
-    /// @param  _s  Signature S value
+    /// @notice     Anyone may provide a withdrawal signature if it was requested.
+    /// @dev        The signers will be penalized if this (or provideRedemptionProof) is not called.
+    /// @param  _d  deposit storage pointer.
+    /// @param  _v  Signature recovery value.
+    /// @param  _r  Signature R value.
+    /// @param  _s  Signature S value.
     function provideRedemptionSignature(
         DepositUtils.Deposit storage _d,
         uint8 _v,
@@ -210,12 +210,12 @@ library DepositRedemption {
 
     }
 
-    /// @notice                             Anyone may notify the contract that a fee bump is needed
-    /// @dev                                This sends us back to AWAITING_WITHDRAWAL_SIGNATURE
-    /// @param  _d                          deposit storage pointer
-    /// @param  _previousOutputValueBytes   The previous output's value
-    /// @param  _newOutputValueBytes        The new output's value
-    /// @return                             True if successful, False if prevented by timeout, otherwise revert
+    /// @notice                             Anyone may notify the contract that a fee bump is needed.
+    /// @dev                                This sends us back to AWAITING_WITHDRAWAL_SIGNATURE.
+    /// @param  _d                          deposit storage pointer.
+    /// @param  _previousOutputValueBytes   The previous output's value.
+    /// @param  _newOutputValueBytes        The new output's value.
+    /// @return                             True if successful, False if prevented by timeout, otherwise revert.
     function increaseRedemptionFee(
         DepositUtils.Deposit storage _d,
         bytes8 _previousOutputValueBytes,
@@ -275,16 +275,16 @@ library DepositRedemption {
         );
     }
 
-    /// @notice                 Anyone may provide a withdrawal proof to prove redemption
-    /// @dev                    The signers will be penalized if this is not called
-    /// @param  _d              deposit storage pointer
-    /// @param  _txVersion      Transaction version number (4-byte LE)
-    /// @param  _txInputVector  All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
-    /// @param  _txOutputVector All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    /// @param  _txLocktime     Final 4 bytes of the transaction
-    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param  _txIndexInBlock The index of the tx in the Bitcoin block (0-indexed)
-    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers
+    /// @notice                 Anyone may provide a withdrawal proof to prove redemption.
+    /// @dev                    The signers will be penalized if this is not called.
+    /// @param  _d              deposit storage pointer.
+    /// @param  _txVersion      Transaction version number (4-byte LE).
+    /// @param  _txInputVector  All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs.
+    /// @param  _txOutputVector All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
+    /// @param  _txLocktime     Final 4 bytes of the transaction.
+    /// @param  _merkleProof    The merkle proof of inclusion of the tx in the bitcoin block.
+    /// @param  _txIndexInBlock The index of the tx in the Bitcoin block (0-indexed).
+    /// @param  _bitcoinHeaders An array of tightly-packed bitcoin headers.
     function provideRedemptionProof(
         DepositUtils.Deposit storage _d,
         bytes4 _txVersion,
@@ -319,14 +319,14 @@ library DepositRedemption {
     }
 
     /// @notice                 Check the redemption transaction input and output vector to ensure the transaction spends
-    ///                         the correct UTXO and sends value to the appropreate public key hash
+    ///                         the correct UTXO and sends value to the appropreate public key hash.
     /// @dev                    We only look at the first input and first output. Revert if we find the wrong UTXO or value recipient.
     ///                         It's safe to look at only the first input/output as anything that breaks this can be considered fraud
-    ///                         and can be caught by ECDSAFraudProof
-    /// @param  _d              deposit storage pointer
-    /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
-    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    /// @return                 The value sent to the redeemer's public key hash
+    ///                         and can be caught by ECDSAFraudProof.
+    /// @param  _d              deposit storage pointer.
+    /// @param _txInputVector   All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs.
+    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
+    /// @return                 The value sent to the redeemer's public key hash.
     function redemptionTransactionChecks(
         DepositUtils.Deposit storage _d,
         bytes memory _txInputVector,
@@ -349,18 +349,18 @@ library DepositRedemption {
         return (uint256(_output.extractValue()));
     }
 
-    /// @notice     Anyone may notify the contract that the signers have failed to produce a signature
-    /// @dev        This is considered fraud, and is punished
-    /// @param  _d  deposit storage pointer
+    /// @notice     Anyone may notify the contract that the signers have failed to produce a signature.
+    /// @dev        This is considered fraud, and is punished.
+    /// @param  _d  deposit storage pointer.
     function notifySignatureTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalSignature(), "Not currently awaiting a signature");
         require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getSignatureTimeout(), "Signature timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 
-    /// @notice     Anyone may notify the contract that the signers have failed to produce a redemption proof
-    /// @dev        This is considered fraud, and is punished
-    /// @param  _d  deposit storage pointer
+    /// @notice     Anyone may notify the contract that the signers have failed to produce a redemption proof.
+    /// @dev        This is considered fraud, and is punished.
+    /// @param  _d  deposit storage pointer.
     function notifyRedemptionProofTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
         require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedemptionProofTimeout(), "Proof timer has not elapsed");

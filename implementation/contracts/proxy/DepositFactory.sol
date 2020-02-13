@@ -30,15 +30,15 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         TBTCSystemAuthority(_systemAddress)
     public {}
 
-    /// @dev                          Set the required external variables
-    /// @param _masterDepositAddress  The address of the master deposit contract
-    /// @param _tbtcSystem            Address of system contract
-    /// @param _tbtcToken             Address of TBTC token contract
-    /// @param _depositOwnerToken     Address of the Deposit Owner Token contract
-    /// @param _feeRebateToken        Address of the Fee Rebate Token contract
-    /// @param _vendingMachine        Address of the Vending Machine contract
-    /// @param _keepThreshold         Minimum number of honest keep members
-    /// @param _keepSize              Number of all members in a keep
+    /// @dev                          Set the required external variables.
+    /// @param _masterDepositAddress  The address of the master deposit contract.
+    /// @param _tbtcSystem            Address of system contract.
+    /// @param _tbtcToken             Address of TBTC token contract.
+    /// @param _depositOwnerToken     Address of the Deposit Owner Token contract.
+    /// @param _feeRebateToken        Address of the Fee Rebate Token contract.
+    /// @param _vendingMachine        Address of the Vending Machine contract.
+    /// @param _keepThreshold         Minimum number of honest keep members.
+    /// @param _keepSize              Number of all members in a keep.
     function setExternalDependencies(
         address payable _masterDepositAddress,
         address _tbtcSystem,
@@ -67,8 +67,8 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     ///                        This function is currently the only way to create a new deposit. 
     /// @dev                   Calls Deposit.createNewDeposit to initialize the instance.
     ///                        Mints the TDT to the function caller. 
-    //                         See (TBTCDepositToken for more info on TDTs)
-    /// @return                True if successful, otherwise revert
+    //                         See (TBTCDepositToken for more info on TDTs).
+    /// @return                True if successful, otherwise revert.
     function createDeposit (uint256 _lotSize) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
 

@@ -16,7 +16,7 @@ import {DepositLog} from "../DepositLog.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-/// @title  TBTC System
+/// @title  TBTC System.
 /// @notice This contract acts as a central point for ACL, 
 ///         value governance, and price oracle.
 /// @dev    Governable values only affect new deposit creation.
@@ -87,7 +87,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         allowNewDeposits = true;
     }
 
-    /// @notice gets whether new deposits are allowed
+    /// @notice gets whether new deposits are allowed.
     function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days. 
