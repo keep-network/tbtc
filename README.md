@@ -21,17 +21,9 @@ This repo contains the Solidity [smart contracts](implementation/) and [specific
 
 ## Installation
 
-tBTC contracts are currently published in the GitHub Package Registry.
-
- 1. Add a file `.npmrc` to the same directory as your project's `package.json`.
- 2. Paste the following to configure the GitHub Package Registry for tBTC:
-    ```
-    @keep-network:registry=https://npm.pkg.github.com/keep-network
-    ```
- 3. Install the package:
-    ```sh
-    $ npm install @keep-network/tbtc
-    ```
+```sh
+$ npm install @keep-network/tbtc
+```
 
 ## Usage
 
@@ -45,7 +37,7 @@ pragma solidity ^0.5.0;
 import "@keep-network/tbtc/contracts/deposit/Deposit.sol";
 
 contract MySystem {
-    function checkTerm(address _depositAddress) external {
+    function checkTerm(address payable _depositAddress) external {
         uint256 remainingTerm = Deposit(_depositAddress).remainingTerm();
     }
 }
