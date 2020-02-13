@@ -90,7 +90,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev           Only the Deposit factory can call this. 
     /// @param _TBTCSystem        TBTCSystem address. More info in VendingMachine.sol.
     /// @param _TBTCToken         TBTCToken address. More info in TBTCToken.sol.
-    /// @param _TBTCDepositToken  TBTCDepositToken (TDT) address. more info in TBTCDepositToken.sol.
+    /// @param _TBTCDepositToken  TBTCDepositToken (TDT) address. More info in TBTCDepositToken.sol.
     /// @param _FeeRebateToken    FeeRebateToken (FRT) address. More info in FeeRebateToken.sol.
     /// @param _VendingMachine    VendingMachine address. More info in VendingMachine.sol.
     /// @param _m           Signing group honesty threshold.
