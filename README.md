@@ -15,7 +15,8 @@ This repo contains the Solidity [smart contracts](implementation/) and [specific
 
 ## Getting started
 
- * Read the [specification](http://docs.keep.network/tbtc/).
+ * Read the [introduction to tBTC](docs/introduction-to-tbtc.md).
+ * Dig into the [specification](http://docs.keep.network/tbtc/).
  * Consult [Solidity API documentation](http://docs.keep.network/tbtc/solidity/).
  * For questions and support, join the #tbtc channel on [Discord](https://discord.gg/4R6RGFf).
 
