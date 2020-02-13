@@ -12,7 +12,7 @@ tBTC is a trustless bridge of Bitcoin onto Ethereum. It produces the TBTC token,
 
 Using the Keep protocol, a Bitcoin wallet is created and secured by a decentralized set of signers. A user deposits BTC into this wallet, and proves the deposit transaction on the Ethereum chain. From this deposit, TBTC can be minted and transacted. TBTC can be redeemed for the underlying BTC at any time, and the signers will sign a transaction sending it to a user-provided address.
 
-All Bitcoin transactions are proven using SPV proofs, which rely on an [on-chain difficulty relay](https://github.com/summa-tx/relays), operated by Summa.
+All Bitcoin transactions are proven using SPV proofs, which rely on an [on-chain relay](https://github.com/summa-tx/relays), operated by Summa.
 
 ## Why tBTC?
 
