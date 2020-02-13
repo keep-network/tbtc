@@ -25,6 +25,11 @@ contract VendingMachine is TBTCSystemAuthority{
         TBTCSystemAuthority(_systemAddress)
     public {}
 
+    /// @notice Set external contracts needed by the Vending Machine.
+    /// @dev    Addresses are used to update the local contract instance.
+    /// @param _TBTCToken        TBTCToken address. More info in TBTCToken.sol.
+    /// @param _TBTCDepositToken TBTCDepositToken (TDT) address. more info in TBTCDepositToken.sol.
+    /// @param _FeeRebateToken   FeeRebateToken (FRT) address. More info in FeeRebateToken.sol.
     function setExternalAddresses(
         address _tbtcToken,
         address _tbtcDepositToken,
