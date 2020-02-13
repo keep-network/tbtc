@@ -70,7 +70,7 @@ library DepositUtils {
 
     /// @notice         Gets the current block difficulty.
     /// @dev            Calls the light relay and gets the current block.
-    /// @return         The difficulty (uint256).
+    /// @return         The difficulty.
     function currentBlockDifficulty(Deposit storage _d) public view returns (uint256) {
         ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
         return _sys.fetchRelayCurrentDifficulty();
@@ -78,7 +78,7 @@ library DepositUtils {
 
     /// @notice         Gets the previous block difficulty.
     /// @dev            Calls the light relay and gets the previous block difficulty.
-    /// @return         The difficulty (uint256).
+    /// @return         The difficulty.
     function previousBlockDifficulty(Deposit storage _d) public view returns (uint256) {
         ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
         return _sys.fetchRelayPreviousDifficulty();
