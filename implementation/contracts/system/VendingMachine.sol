@@ -12,7 +12,7 @@ import "./TBTCSystemAuthority.sol";
 /// @title  Vending Machine
 /// @notice The Vending Machine swaps TDTs (TBTCDepositToken.sol)
 ///         to TBTC (TBTCToken.sol) and vice versa. 
-/// @dev    The Vending Machine has exclusive TBTC and FRT (FeeRebateToken.sol) minting
+/// @dev    The Vending Machine should have exclusive TBTC and FRT (FeeRebateToken.sol) minting
 ///         privileges.
 contract VendingMachine is TBTCSystemAuthority{
     using SafeMath for uint256;
