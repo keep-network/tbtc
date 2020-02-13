@@ -46,14 +46,14 @@ ssh utilitybox << EOF
   sleep 10s
   echo ">>>>>>FINISH Port Forward eth-tx-node FINISH>>>>>>"
 
-  echo "<<<<<<START Unlock Contract Owner ETH Account START<<<<<<"
-  echo "geth --exec \"personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 900)\" attach http://localhost:8545"
-  geth --exec "personal.unlockAccount(\"${CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS}\", \"${CONTRACT_OWNER_ETH_ACCOUNT_PASSWORD}\", 900)" attach http://localhost:8545
-  echo ">>>>>>FINISH Unlock Contract Owner ETH Account FINISH>>>>>>"
+    echo "<<<<<<START Setting Contract Owner Key START<<<<<<"
+  echo "export CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=\$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY"
+  export CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
+  echo ">>>>>>FINISH Setting Contract Owner Key FINISH>>>>>>"
 
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/implementation
-  npm install 
+  npm install
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 EOF
