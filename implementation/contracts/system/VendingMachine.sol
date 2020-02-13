@@ -10,9 +10,9 @@ import "../deposit/Deposit.sol";
 import "./TBTCSystemAuthority.sol";
 
 /// @title  Vending Machine
-/// @notice The Vending Machine is responsible for swapping TDTs (TBTCDepositToken.sol)
+/// @notice The Vending Machine swaps TDTs (TBTCDepositToken.sol)
 ///         to TBTC (TBTCToken.sol) and vice versa. 
-/// @dev    THe Vending Machine has exclusive TBTC and FRT (FeeRebateToken.sol) minting
+/// @dev    The Vending Machine has exclusive TBTC and FRT (FeeRebateToken.sol) minting
 ///         privileges.
 contract VendingMachine is TBTCSystemAuthority{
     using SafeMath for uint256;
@@ -28,7 +28,7 @@ contract VendingMachine is TBTCSystemAuthority{
     /// @notice Set external contracts needed by the Vending Machine.
     /// @dev    Addresses are used to update the local contract instance.
     /// @param _tbtcToken        TBTCToken address. More info in TBTCToken.sol.
-    /// @param _tbtcDepositToken TBTCDepositToken (TDT) address. more info in TBTCDepositToken.sol.
+    /// @param _tbtcDepositToken TBTCDepositToken (TDT) address. More info in TBTCDepositToken.sol.
     /// @param _feeRebateToken   FeeRebateToken (FRT) address. More info in FeeRebateToken.sol.
     function setExternalAddresses(
         address _tbtcToken,
@@ -46,9 +46,10 @@ contract VendingMachine is TBTCSystemAuthority{
         return Deposit(_depositAddress).inActive();
     }
 
-    /// @notice Pay back the deposit's TBTC and receive the tBTC Deposit Token
+    /// @notice Burn TBTC and receive the tBTC Deposit Token
     ///         as long as it is qualified.
-    /// @dev    Burns TBTC, transfers TDT from vending machine to caller.
+    /// @dev    We burn the lotSize of the Deposit in order to maintain
+    ///         the TBTC supply peg in the Vending Machine.
     /// @param _tdtId ID of tBTC Deposit Token to buy.
     function tbtcToTdt(uint256 _tdtId) public {
         require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
@@ -63,7 +64,7 @@ contract VendingMachine is TBTCSystemAuthority{
         tbtcDepositToken.transferFrom(address(this), msg.sender, _tdtId);
     }
 
-    /// @notice Trade in the tBTC Deposit Token and mint TBTC.
+    /// @notice Transfer the tBTC Deposit Token and mint TBTC.
     /// @dev    Transfers TDT from caller to vending machine, and mints TBTC to caller.
     /// @param _tdtId ID of tBTC Deposit Token to sell.
     function tdtToTbtc(uint256 _tdtId) public {
