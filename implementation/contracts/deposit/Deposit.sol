@@ -11,7 +11,7 @@ import "../system/DepositFactoryAuthority.sol";
 /// @notice This is the main contract for tBTC. It is the state machine
 /// that (through various libraries) handles bitcoin funding,
 /// bitcoin-spv proofs, redemption, liquidation, and fraud logic. 
-/// @dev This is the execution context for tbtc libraries:
+/// @dev This is the execution context for libraries:
 /// DepositFunding, DepositLiquidaton, DepositRedemption,
 /// DepositSTates, depositUtils, OutsourceDepositLogging, and TBTCConstants.
 contract Deposit is DepositFactoryAuthority {

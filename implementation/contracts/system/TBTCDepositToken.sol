@@ -56,5 +56,7 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
         spender.receiveApproval(msg.sender, _tdtId, address(this), _extraData);
     }
 }
+
+/// @notice Interface of recipient contract for approveAndCall pattern. This is implemented in FundingScript.sol
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
 
