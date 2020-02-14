@@ -499,7 +499,8 @@ contract('DepositUtils', (accounts) => {
       expect(remainingTerm).to.eq.BN(expectedRemainder)
     })
 
-    it('returns 0 if deposit is at term', async () => {
+    // TODO: Fix this test intermittently failing. See https://github.com/keep-network/tbtc/issues/464
+    it.skip('returns 0 if deposit is at term', async () => {
       const block = await web3.eth.getBlock('latest')
       await testDeposit.setUTXOInfo(prevoutValueBytes, block.timestamp, outpoint)
       await increaseTime(depositTerm.toNumber())
