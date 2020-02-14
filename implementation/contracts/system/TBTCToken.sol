@@ -11,7 +11,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
     constructor(address _VendingMachine)
-        ERC20Detailed("Trustless bitcoin", "TBTC", 18)
+        ERC20Detailed("tBTC", "TBTC", 18)
         VendingMachineAuthority(_VendingMachine)
     public {
         // solium-disable-previous-line no-empty-blocks
