@@ -41,8 +41,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     bool private allowNewDeposits = false;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint128 private initialCollateralizedPercent = 150; // percent
-    uint128 private undercollateralizedThresholdPercent = 135;  // percent
-    uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
+    uint128 private undercollateralizedThresholdPercent = 125;  // percent
+    uint128 private severelyUndercollateralizedThresholdPercent = 110; // percent
     uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     constructor(address _priceFeed, address _relay) public {
@@ -86,7 +86,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice gets whether new deposits are allowed
     function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
 
-    /// @notice One-time-use emergency function to disallow future deposit creation for 10 days. 
+    /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
     function emergencyPauseNewDeposits() external onlyOwner returns (bool) {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
         pausedTimestamp = block.timestamp;

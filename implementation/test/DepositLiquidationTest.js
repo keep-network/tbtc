@@ -48,9 +48,12 @@ contract('DepositLiquidation', (accounts) => {
 
     beneficiary = accounts[4]
 
+    const underThreshold = await tbtcSystemStub.getUndercollateralizedThresholdPercent()
+    const severeThreshold = await tbtcSystemStub.getSeverelyUndercollateralizedThresholdPercent()
+
+    await testDeposit.setUndercollateralizedThresholdPercent(new BN(underThreshold))
+    await testDeposit.setSeverelyUndercollateralizedThresholdPercent(new BN(severeThreshold))
     await testDeposit.setSignerFeeDivisor(new BN('200'))
-    await testDeposit.setUndercollateralizedThresholdPercent(new BN('140'))
-    await testDeposit.setSeverelyUndercollateralizedThresholdPercent(new BN('120'))
 
     await tbtcDepositToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
     await feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
