@@ -1,10 +1,12 @@
 pragma solidity ^0.5.10;
 
-import {DepositUtils} from '../../../contracts/deposit/DepositUtils.sol';
-import {TestDeposit} from './TestDeposit.sol';
+import {DepositUtils} from "../../../contracts/deposit/DepositUtils.sol";
+import {TestDeposit} from "./TestDeposit.sol";
 
 contract TestDepositUtils is TestDeposit {
-    constructor() public {}
+    constructor() public {
+    // solium-disable-previous-line no-empty-blocks
+    }
 
     // Passthroughs to test view and pure functions
 
@@ -28,7 +30,7 @@ contract TestDepositUtils is TestDeposit {
     ) public view returns (bytes32) {
         self.checkProofFromTxId(_bitcoinTxId, _merkleProof, _index, _bitcoinHeaders);
     }
-    
+
     function setPubKey(
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
@@ -105,7 +107,9 @@ contract TestDepositUtils is TestDeposit {
 // TestDepositUtils contract causes it to run out of gas before finishing its
 // deploy.
 contract TestDepositUtilsSPV is TestDeposit {
-    constructor() public {}
+    constructor() public {
+        // solium-disable-previous-line no-empty-blocks
+    }
 
     function setPubKey(
         bytes32 _signingGroupPubkeyX,
@@ -125,15 +129,15 @@ contract TestDepositUtilsSPV is TestDeposit {
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
     ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
-      return self.validateAndParseFundingSPVProof(
-        _txVersion,
-        _txInputVector,
-        _txOutputVector,
-        _txLocktime,
-        _fundingOutputIndex,
-        _merkleProof,
-        _txIndexInBlock,
-        _bitcoinHeaders
+        return self.validateAndParseFundingSPVProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
         );
     }
 }
