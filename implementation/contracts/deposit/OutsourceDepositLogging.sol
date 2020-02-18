@@ -7,7 +7,9 @@ library OutsourceDepositLogging {
 
 
     /// @notice               Fires a Created event.
-    /// @dev                  We append the sender, which is the deposit contract that called.
+    /// @dev                  `DepositLog.logCreated` fires a Created event with
+    ///                       _keepAddress, msg.sender and block.timestamp. 
+    ///                       msg.sender will be the calling Deposit's address.
     /// @param  _keepAddress  The address of the associated keep.
     function logCreated(DepositUtils.Deposit storage _d, address _keepAddress) external {
         DepositLog _logger = DepositLog(_d.TBTCSystem);
