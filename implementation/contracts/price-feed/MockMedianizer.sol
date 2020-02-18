@@ -3,7 +3,7 @@ pragma solidity ^0.5.10;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../external/IMedianizer.sol";
 
-/// @notice A mock implementation of a medianizer price oracle.
+/// @title A mock implementation of a medianizer price oracle.
 /// @dev This is used in the Keep testnets only. Mainnet uses the MakerDAO medianizer.
 contract MockMedianizer is Ownable, IMedianizer {
     uint256 private value;

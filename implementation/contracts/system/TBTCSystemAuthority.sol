@@ -2,7 +2,7 @@ pragma solidity 0.5.10;
 
 /// @title  TBTC System Authority.
 /// @notice Contract to secure function calls to the TBTC System contract.
-/// @dev    the TBTCSysten contract address is passed as a constructor parameter.
+/// @dev    the `TBTCSysten` contract address is passed as a constructor parameter.
 contract TBTCSystemAuthority {
 
     address internal tbtcSystem;

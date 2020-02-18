@@ -57,12 +57,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice        Initialize contracts 
     /// @dev           Only the Deposit factory should call this. 
     /// @param _keepVendor        ECDSA keep vendor address. 
-    /// @param _depositFactory    Deposit Factory address. More info in DepositFactory.sol.
-    /// @param _masterDepositAddress  Master Deposit address. More info in Deposit.sol.
-    /// @param _tbtcToken         TBTCToken address. More info in TBTCToken.sol.
-    /// @param _tbtcDepositToken  TBTCDepositToken (TDT) address. More info in TBTCDepositToken.sol.
-    /// @param _feeRebateToken    FeeRebateToken (FRT) address. More info in FeeRebateToken.sol.
-    /// @param _vendingMachine    Vending Machine address. More info in VendingMachine.sol
+    /// @param _depositFactory    Deposit Factory address. More info in `DepositFactory.sol`.
+    /// @param _masterDepositAddress  Master Deposit address. More info in `Deposit.sol`.
+    /// @param _tbtcToken         TBTCToken address. More info in `TBTCToken.sol`.
+    /// @param _tbtcDepositToken  TBTCDepositToken (TDT) address. More info in `TBTCDepositToken.sol`.
+    /// @param _feeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken.sol`.
+    /// @param _vendingMachine    Vending Machine address. More info in `VendingMachine.sol`.
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size. 
     function initialize(

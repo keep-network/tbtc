@@ -41,7 +41,7 @@ library DepositFunding {
     }
 
     /// @notice         Internally called function to set up a newly created Deposit instance.
-    ///                 This should not be called by developers, use DepositFactory.createNewDeposit
+    ///                 This should not be called by developers, use `DepositFactory.createNewDeposit`
     ///                 to create a new deposit.
     /// @dev            If called directly, the transaction will revert since the call will be 
     ///                 executed on an already set-up instance.

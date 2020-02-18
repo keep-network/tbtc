@@ -12,8 +12,8 @@ import "../system/DepositFactoryAuthority.sol";
 /// that (through various libraries) handles bitcoin funding,
 /// bitcoin-spv proofs, redemption, liquidation, and fraud logic. 
 /// @dev This is the execution context for libraries:
-/// DepositFunding, DepositLiquidaton, DepositRedemption,
-/// DepositSTates, depositUtils, OutsourceDepositLogging, and TBTCConstants.
+/// `DepositFunding`, `DepositLiquidaton`, `DepositRedemption`,
+/// `DepositSTates`, `depositUtils`, `OutsourceDepositLogging`, and `TBTCConstants`.
 contract Deposit is DepositFactoryAuthority {
 
     using DepositRedemption for DepositUtils.Deposit;
@@ -78,7 +78,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @notice     Get the size of the funding UTXO.
     /// @dev        This will only return 0 unless
     ///             the funding transaction has been confirmed on-chain. 
-    ///             See provideBTCFundingProof for more info on the funding proof. 
+    ///             See `provideBTCFundingProof` for more info on the funding proof. 
     /// @return     Uint256 UTXO size in satoshi.
     ///             0 if no funding proof has been provided.
     function utxoSize() public view returns (uint256){
@@ -88,11 +88,11 @@ contract Deposit is DepositFactoryAuthority {
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this. 
-    /// @param _TBTCSystem        TBTCSystem address. More info in VendingMachine.sol.
+    /// @param _TBTCSystem        TBTCSystem address. More info in `VendingMachine.sol`.
     /// @param _TBTCToken         TBTCToken address. More info in TBTCToken.sol.
-    /// @param _TBTCDepositToken  TBTCDepositToken (TDT) address. More info in TBTCDepositToken.sol.
-    /// @param _FeeRebateToken    FeeRebateToken (FRT) address. More info in FeeRebateToken.sol.
-    /// @param _VendingMachine    VendingMachine address. More info in VendingMachine.sol.
+    /// @param _TBTCDepositToken  TBTCDepositToken (TDT) address. More info in `TBTCDepositToken.sol`.
+    /// @param _FeeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken.sol`.
+    /// @param _VendingMachine    VendingMachine address. More info in `VendingMachine.sol`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
     /// @param _lotSize     The minimum amount of satoshi the funder is required to send. 

@@ -6,7 +6,7 @@ import "./VendingMachineAuthority.sol";
 
 /// @title  TBTC Token.
 /// @notice This is the TBTC ERC20 contract.
-/// @dev    Tokens can only be minted by the Vending Machine (VendingMachine.sol).
+/// @dev    Tokens can only be minted by the Vending Machine (`VendingMachine.sol`).
 contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
