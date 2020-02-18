@@ -40,11 +40,14 @@ library DepositFunding {
         _d.signingGroupPubkeyY = bytes32(0);
     }
 
-    /// @notice         The system can spin up a new deposit.
-    /// @dev            This should be called by an approved contract, not a developer.
+    /// @notice         Internally called function to set up a newly created Deposit instance.
+    ///                 This should not be called by developers, use DepositFactory.createNewDeposit
+    ///                 to create a new deposit.
+    /// @dev            If called directly, the transaction will revert since the call will be 
+    ///                 executed on an already set-up instance.
     /// @param _d       deposit storage pointer.
-    /// @param _m       m for m-of-n.
-    /// @param _m       n for m-of-n.
+    /// @param _m       Signing group honesty threshold.
+    /// @param _n       Signing group size.
     /// @return         True if successful, otherwise revert.
     function createNewDeposit(
         DepositUtils.Deposit storage _d,
@@ -57,8 +60,7 @@ library DepositFunding {
         require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
         require(_system.isAllowedLotSize(_lotSize), "provided lot size not supported");
-        // TODO: Whole value is stored as funder bond in the deposit, but part
-        // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
+ 
         _d.lotSizeSatoshis = _lotSize;
         uint256 _bondRequirement = _lotSize.mul(_system.getInitialCollateralizedPercent()).div(100);
         /* solium-disable-next-line value-in-payable */
@@ -74,8 +76,8 @@ library DepositFunding {
         return true;
     }
 
-    /// @notice     slashes the signers partially for committing fraud before funding occurs.
-    /// @dev        called only by notifyFraudFundingTimeout.
+    /// @notice     Slashes the signers partially for committing fraud before funding occurs.
+    /// @dev        Called only by notifyFraudFundingTimeout.
     function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) internal {
         uint256 _seized = _d.seizeSignerBonds();
         uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
@@ -91,7 +93,7 @@ library DepositFunding {
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
-    /// @dev        We rely on the keep system punishes the signers in this case.
+    /// @dev        We rely on the keep system to punish the signers in this case.
     /// @param  _d  deposit storage pointer.
     function notifySignerSetupFailure(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not awaiting setup");
@@ -142,7 +144,7 @@ library DepositFunding {
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud during funding.
-    /// @dev                    ECDSA is NOT SECURE unless you verify the digest.
+    /// @dev                    Calls out to the keep to verify if there was fraud.
     /// @param  _d              deposit storage pointer.
     /// @param  _v              Signature recovery value.
     /// @param  _r              Signature R value.
