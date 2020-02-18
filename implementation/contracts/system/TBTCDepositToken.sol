@@ -41,7 +41,7 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
         return _exists(_tokenId);
     }
 
-    /// @notice           Allow another contract to spend on the caller's behalf.
+    /// @notice           Allow another address to spend on the caller's behalf.
     ///                   Set allowance for other address and notify.
     ///                   Allows `_spender` to transfer the specified TDT
     ///                   on your behalf and then ping the contract about it.
@@ -58,7 +58,7 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
 }
 
 /// @title Interface of recipient contract for approveAndCall pattern. 
-/// This is implemented in RedemptionScript.sol
+/// See `FundingScript` contract for an example. 
 interface tokenRecipient { 
     function receiveApproval(
         address _from,

@@ -88,11 +88,11 @@ contract Deposit is DepositFactoryAuthority {
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this. 
-    /// @param _TBTCSystem        TBTCSystem address. More info in `VendingMachine.sol`.
-    /// @param _TBTCToken         TBTCToken address. More info in TBTCToken.sol.
-    /// @param _TBTCDepositToken  TBTCDepositToken (TDT) address. More info in `TBTCDepositToken.sol`.
-    /// @param _FeeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken.sol`.
-    /// @param _VendingMachine    VendingMachine address. More info in `VendingMachine.sol`.
+    /// @param _TBTCSystem        TBTCSystem address. More info in `VendingMachine`.
+    /// @param _TBTCToken         TBTCToken address. More info in TBTCToken`.
+    /// @param _TBTCDepositToken  TBTCDepositToken (TDT) address. More info in `TBTCDepositToken`.
+    /// @param _FeeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken`.
+    /// @param _VendingMachine    VendingMachine address. More info in `VendingMachine`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
     /// @param _lotSize     The minimum amount of satoshi the funder is required to send. 
