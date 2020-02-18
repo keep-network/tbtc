@@ -23,11 +23,6 @@ contract TBTCSystemStub is TBTCSystem {
         return oraclePrice;
     }
 
-    // override parent
-    function approvedToLog(address) public pure returns (bool) {
-        return true;
-    }
-
     function requestNewKeep(uint256, uint256, uint256) external payable returns (address _keepAddress) {
         return keepAddress;
     }
