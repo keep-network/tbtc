@@ -28,7 +28,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
         return true;
     }
 
-    /// @dev             Burns an amount of the token of a given account.
+    /// @dev             Burns an amount of the token from the given account's balance.
     ///                  deducting from the sender's allowance for said account.
     ///                  Uses the internal _burn function.
     /// @param _account  The account whose tokens will be burnt.
@@ -63,7 +63,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
 }
 
 /// @title Interface of recipient contract for approveAndCall pattern. 
-/// This is implemented in RedemptionScript.sol
+/// See `RedemptionScript` for an example.
 interface tokenRecipient { 
     function receiveApproval(
         address _from,
