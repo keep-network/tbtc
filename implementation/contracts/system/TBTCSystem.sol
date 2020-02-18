@@ -41,9 +41,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     bool private allowNewDeposits = false;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint128 private initialCollateralizedPercent = 150; // percent
-    uint128 private undercollateralizedThresholdPercent = 135;  // percent
-    uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
-    uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 20**7, 50**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
+    uint128 private undercollateralizedThresholdPercent = 125;  // percent
+    uint128 private severelyUndercollateralizedThresholdPercent = 110; // percent
+    uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     constructor(address _priceFeed, address _relay) public {
         priceFeed = _priceFeed;
