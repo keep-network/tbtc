@@ -11,6 +11,9 @@ import "./VendingMachineAuthority.sol";
 /// @dev    This token is minted automatically when a TDT (TBTCDepositToken.sol)
 ///         is exchanged for TBTC (TBTCToken.sol) via the 
 ///         Vending Machine (VendingMachine.sol).
+///         When the Deposit is redeemed, the TDT holder will be reimbursed
+///         the signer fee if the redeemer is not the TDT holder and Deposit is not
+///         at-term or in COURTESY_CALL. 
 contract FeeRebateToken is ERC721Metadata, VendingMachineAuthority {
 
     constructor(address _vendingMachine)
