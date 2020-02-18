@@ -69,7 +69,7 @@ library DepositUtils {
     }
 
     /// @notice         Gets the current block difficulty.
-    /// @dev            Calls the light relay and gets the current block.
+    /// @dev            Calls the light relay and gets the current block difficulty.
     /// @return         The difficulty.
     function currentBlockDifficulty(Deposit storage _d) public view returns (uint256) {
         ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);

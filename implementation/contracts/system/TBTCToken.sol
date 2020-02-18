@@ -62,5 +62,14 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     }
 }
 
-/// @notice Interface of recipient contract for approveAndCall pattern. This is implemented in RedemptionScript.sol
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
+/// @title Interface of recipient contract for approveAndCall pattern. 
+/// This is implemented in RedemptionScript.sol
+interface tokenRecipient { 
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes calldata
+        _extraDat
+    ) external; 
+}

@@ -7,7 +7,7 @@ import "./VendingMachineAuthority.sol";
 /// @notice The Fee Rebate Token (FRT) is a non fungible token (ERC721)
 ///         the ID of which corresponds to a given deposit address. 
 ///         If the corresponding deposit is still active, ownership of this token
-///         could result in reimbursement of the singer fee payed to open the deposit.
+///         could result in reimbursement of the singer fee paid to open the deposit.
 /// @dev    This token is minted automatically when a TDT (TBTCDepositToken.sol)
 ///         is exchanged for TBTC (TBTCToken.sol) via the 
 ///         Vending Machine (VendingMachine.sol).
