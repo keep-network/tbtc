@@ -8,9 +8,9 @@ import "./VendingMachineAuthority.sol";
 ///         the ID of which corresponds to a given deposit address. 
 ///         If the corresponding deposit is still active, ownership of this token
 ///         could result in reimbursement of the singer fee paid to open the deposit.
-/// @dev    This token is minted automatically when a TDT (TBTCDepositToken.sol)
-///         is exchanged for TBTC (TBTCToken.sol) via the 
-///         Vending Machine (VendingMachine.sol).
+/// @dev    This token is minted automatically when a TDT (TBTCDepositToken)
+///         is exchanged for TBTC (TBTCToken) via the 
+///         Vending Machine (VendingMachine).
 ///         When the Deposit is redeemed, the TDT holder will be reimbursed
 ///         the signer fee if the redeemer is not the TDT holder and Deposit is not
 ///         at-term or in COURTESY_CALL. 
