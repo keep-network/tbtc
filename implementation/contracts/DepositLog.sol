@@ -94,7 +94,7 @@ contract DepositLog {
 
     /// @notice             Checks if an address is an allowed logger
     /// @dev                checks tbtcDepositToken to see if the caller represents
-    ///                     and existing deposit.
+    ///                     an existing deposit.
     ///                     We don't require this, so deposits are not bricked if the system borks
     /// @param  _caller     The address of the calling contract
     /// @return             True if approved, otherwise false
