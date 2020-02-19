@@ -6,8 +6,8 @@
   "scripts": {
     "clean": "rm -rf build/",
     "compile": "truffle compile",
-    "test": "mocha --exit --recursive test",
-    "refresh": "truffle compile && npm run test",
+    "test": "truffle compile && mocha --exit --recursive test",
+    "quick-test": "mocha --exit --recursive test",
     "test:debug": "NODE_ENV=test node --inspect node_modules/.bin/truffle test",
     "js:lint": "eslint ${npm_package_config_eslintPaths}",
     "js:lint:fix": "eslint --fix ${npm_package_config_eslintPaths}",
