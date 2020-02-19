@@ -20,6 +20,7 @@ contract('DepositFactory', () => {
   describe('createDeposit()', async () => {
     let depositFactory
     let ecdsaKeepFactoryStub
+    let mockBTCETHPriceFeed
 
     before(async () => {
       // To properly test createDeposit, we deploy the real Deposit contract and
@@ -56,7 +57,9 @@ contract('DepositFactory', () => {
       ({
         ecdsaKeepFactoryStub,
         depositFactory,
+        mockBTCETHPriceFeed,
       } = await deployTestDeposit([], { 'TestDeposit': Deposit, 'TBTCSystemStub': TBTCSystem }))
+      await mockBTCETHPriceFeed.setPrice(new BN('1000000000000', 10))
 
       await depositFactory.createDeposit(
         fullBtc,
