@@ -64,7 +64,7 @@ library DepositFunding {
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementSatoshi);
+        _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementWei);
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
         _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();
