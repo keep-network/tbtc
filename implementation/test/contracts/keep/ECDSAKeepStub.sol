@@ -68,10 +68,9 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         return bondAmount;
     }
 
-    function seizeSignerBonds() external returns (bool){
+    function seizeSignerBonds() external {
         if (address(this).balance > 0) {
             msg.sender.transfer(address(this).balance);
         }
-        return true;
     }
 }
