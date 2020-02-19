@@ -50,14 +50,6 @@ library DepositLiquidation {
 
         // Determine value of the lot in wei
         uint256 _price = _d.fetchBitcoinPrice();
-        if (_price == 0 || _price > 10 ** 18) {
-            /*
-              This is if a sat is worth 0 wei, or is worth 1 ether
-              TODO: what should this behavior be?
-            */
-            revert("System returned a bad price");
-        }
-
         uint256 _lotSize = _d.lotSizeSatoshis;
         uint256 _lotValue = _lotSize * _price;
 
