@@ -210,7 +210,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @return The price of one satoshi in wei.
     function fetchBitcoinPrice() external view returns (uint256) {
         uint256 price = IBTCETHPriceFeed(priceFeed).getPrice();
-        if (_price == 0 || _price > 10 ** 18) {
+        if (price == 0 || price > 10 ** 18) {
             /*
               This is if a sat is worth 0 wei, or is worth 1 ether
               TODO: what should this behavior be?
