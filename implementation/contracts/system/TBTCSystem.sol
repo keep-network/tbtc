@@ -221,6 +221,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @return Uint256 estimate.
     function createNewDepositFeeEstimate()
         external
+        view
         returns (uint256)
     {
         IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
