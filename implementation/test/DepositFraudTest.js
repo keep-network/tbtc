@@ -264,7 +264,7 @@ describe('DepositFraud', async function() {
       const balanceAfter = await web3.eth.getBalance(beneficiary)
       const balanceCheck = new BN(initialBalance).add(new BN(signerBond))
 
-      expect(balanceCheck, 'partial slash not correctly awarded to funder').to.bignumber.equal(balanceAfter)
+      expect(balanceCheck, 'partial slash not correctly awarded to funder').to.eq.BN(balanceAfter)
     })
   })
 

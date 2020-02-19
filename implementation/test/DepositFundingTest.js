@@ -330,7 +330,7 @@ describe('DepositFunding', async function() {
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
       expect(UTXOInfo[0]).to.equal(_outValueBytes)
-      expect(UTXOInfo[1]).to.bignumber.equal(new BN(expectedFundedAt))
+      expect(UTXOInfo[1]).to.eq.BN(new BN(expectedFundedAt))
       expect(UTXOInfo[2]).to.equal(_expectedUTXOoutpoint)
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
@@ -340,7 +340,7 @@ describe('DepositFunding', async function() {
       expect(fundingProofTimerStart, 'fundingProofTimerStart not deconsted').to.not.equal(0)
 
       const depositState = await testDeposit.getState.call()
-      expect(depositState).to.bignumber.equal(states.ACTIVE)
+      expect(depositState).to.eq.BN(states.ACTIVE)
 
       const eventList = await tbtcSystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
       expect(eventList.length).to.equal(1)

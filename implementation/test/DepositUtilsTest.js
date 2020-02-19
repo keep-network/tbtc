@@ -464,7 +464,7 @@ describe('DepositUtils', async function() {
       await testDeposit.send(value, { from: owner })
       await testDeposit.pushFundsToKeepGroup(value)
       const keepBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(keepBalance).to.bignumber.equal(new BN(value))
+      expect(keepBalance).to.eq.BN(new BN(value))
     })
 
     it('reverts if insufficient value', async () => {

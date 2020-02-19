@@ -401,7 +401,7 @@ describe('DepositLiquidation', async function() {
       await testDeposit.notifyUndercollateralizedLiquidation()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(new BN(bond), 'Bond not seized as expected').to.bignumber.equal('0')
+      expect(new BN(bond), 'Bond not seized as expected').to.eq.BN('0')
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
@@ -449,7 +449,7 @@ describe('DepositLiquidation', async function() {
       await testDeposit.notifyCourtesyTimeout()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(new BN(bond), 'Bond not seized as expected').to.bignumber.equal('0')
+      expect(new BN(bond), 'Bond not seized as expected').to.eq.BN('0')
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)

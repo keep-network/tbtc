@@ -530,7 +530,7 @@ describe('DepositRedemption', async function() {
         .catch((err) => {
           assert.fail(`cannot check digest approval: ${err}`)
         })
-      expect(timestamp, 'incorrect registered timestamp').to.bignumber.equal(new BN(expectedTimestamp))
+      expect(timestamp, 'incorrect registered timestamp').to.eq.BN(new BN(expectedTimestamp))
     })
   })
 
@@ -700,7 +700,7 @@ describe('DepositRedemption', async function() {
       await testDeposit.provideRedemptionProof(_version, _txInputVector, _txOutputVector, _txLocktime, proof, index, headerChain)
 
       const depositState = await testDeposit.getState.call()
-      expect(depositState).to.bignumber.equal(states.REDEEMED)
+      expect(depositState).to.eq.BN(states.REDEEMED)
 
       const requestInfo = await testDeposit.getRequestInfo.call()
       expect(requestInfo[0]).to.equal('0x' + '11'.repeat(20))
@@ -743,7 +743,7 @@ describe('DepositRedemption', async function() {
 
     it('returns the output value', async () => {
       const redemptionChecks = await testDeposit.redemptionTransactionChecks.call(_txInputVector, _txOutputVector)
-      expect(redemptionChecks).to.bignumber.equal(new BN(outputValue))
+      expect(redemptionChecks).to.eq.BN(new BN(outputValue))
     })
 
     it('reverts if bad input vector is provided', async () => {
@@ -814,7 +814,7 @@ describe('DepositRedemption', async function() {
 
     it('reverts if no funds received as signer bond', async () => {
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(new BN(0), 'no bond should be sent').to.bignumber.equal(bond)
+      expect(new BN(0), 'no bond should be sent').to.eq.BN(bond)
 
       await expectRevert(
         testDeposit.notifySignatureTimeout(),
@@ -827,7 +827,7 @@ describe('DepositRedemption', async function() {
       await testDeposit.notifySignatureTimeout()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(bond, 'Bond not seized as expected').to.bignumber.equal(new BN(0))
+      expect(bond, 'Bond not seized as expected').to.eq.BN(new BN(0))
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
@@ -871,7 +871,7 @@ describe('DepositRedemption', async function() {
     it('reverts if no funds recieved as signer bond', async () => {
       await testDeposit.setRequestInfo(ZERO_ADDRESS, ZERO_ADDRESS, 0, withdrawalRequestTime, bytes32zero)
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(bond, 'no bond should be sent').to.bignumber.equal(new BN(0))
+      expect(bond, 'no bond should be sent').to.eq.BN(new BN(0))
 
       await expectRevert(
         testDeposit.notifyRedemptionProofTimeout(),
@@ -884,7 +884,7 @@ describe('DepositRedemption', async function() {
       await testDeposit.notifyRedemptionProofTimeout()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(bond, 'Bond not seized as expected').to.bignumber.equal(new BN(0))
+      expect(bond, 'Bond not seized as expected').to.eq.BN(new BN(0))
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
