@@ -14,14 +14,14 @@ contract TestDeposit is Deposit {
         address _VendingMachine,
         uint256 _m,
         uint256 _n,
-        uint256 _lotSize
+        uint256 _lotSizeSatoshis
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
         self.TBTCDepositToken = _TBTCDepositToken;
         self.FeeRebateToken = _FeeRebateToken;
         self.VendingMachine = _VendingMachine;
-        self.createNewDeposit(_m, _n, _lotSize);
+        self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
     }
 

@@ -145,11 +145,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Check if a lot size is allowed.
-    /// @param _lotSize Lot size to check.
+    /// @param _lotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint256 _lotSize) external view returns (bool){
+    function isAllowedLotSize(uint256 _lotSizeSatoshis) external view returns (bool){
         for( uint i = 0; i < lotSizesSatoshis.length; i++){
-            if (lotSizesSatoshis[i] == _lotSize){
+            if (lotSizesSatoshis[i] == _lotSizeSatoshis){
                 return true;
             }
         }
