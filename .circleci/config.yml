@@ -175,7 +175,7 @@ jobs:
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
-            export BONDED_ECDSA_KEEP_VENDOR_CONTRACT_DATA="BondedECDSAKeepVendorAddress.json"
+            export BONDED_ECDSA_KEEP_VENDOR_CONTRACT_DATA="BondedECDSAKeepVendor.json"
             implementation/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
