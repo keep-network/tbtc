@@ -60,9 +60,11 @@ library DepositFunding {
         // TODO: Whole value is stored as funder bond in the deposit, but part
         // of it should be transferred to keep: https://github.com/keep-network/tbtc/issues/297
         _d.lotSizeSatoshis = _lotSize;
-        uint256 _bondRequirement = _lotSize.mul(_system.getInitialCollateralizedPercent()).div(100);
+        uint256 _bondRequirementSatoshi = _lotSize.mul(_system.getInitialCollateralizedPercent()).div(100);
+        uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
+
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirement);
+        _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementSatoshi);
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
         _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();
