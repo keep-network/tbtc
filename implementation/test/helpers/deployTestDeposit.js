@@ -19,6 +19,7 @@ const ECDSAKeepVendorStub = artifacts.require('ECDSAKeepVendorStub')
 
 const TestToken = artifacts.require('TestToken')
 const MockRelay = artifacts.require('MockRelay')
+const MockBTCETHPriceFeed = artifacts.require('MockBTCETHPriceFeed')
 const TBTCSystemStub = artifacts.require('TBTCSystemStub')
 const TBTCDepositToken = artifacts.require('TestTBTCDepositToken')
 const FeeRebateToken = artifacts.require('TestFeeRebateToken')
@@ -30,7 +31,8 @@ const TestDeposit = artifacts.require('TestDeposit')
 
 export const TEST_DEPOSIT_DEPLOY = [
   { name: 'MockRelay', contract: MockRelay },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub, constructorParams: [utils.address0, 'MockRelay'] },
+  { name: 'MockBTCETHPriceFeed', contract: MockBTCETHPriceFeed },
+  { name: 'TBTCSystemStub', contract: TBTCSystemStub, constructorParams: ['MockBTCETHPriceFeed', 'MockRelay'] },
   { name: 'DepositFunding', contract: DepositFunding },
   { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
   { name: 'DepositFactory', contract: DepositFactory, constructorParams: ['TBTCSystemStub'] },
@@ -121,6 +123,8 @@ export default async function deployTestDeposit(
   const ecdsaKeepStub = deployed.ECDSAKeepStub
   const depositFactory = deployed.DepositFactory
 
+  const mockBTCETHPriceFeed = deployed.MockBTCETHPriceFeed
+
   if (testDeposit.setExteriorAddresses) {
     // Test setup if this is in fact a TestDeposit. If it's been substituted
     // with e.g. Deposit, we don't set it up.
@@ -151,6 +155,7 @@ export default async function deployTestDeposit(
   return {
     tbtcConstants,
     mockRelay,
+    mockBTCETHPriceFeed,
     tbtcSystemStub,
     tbtcToken,
     tbtcDepositToken,
