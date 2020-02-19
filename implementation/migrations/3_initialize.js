@@ -12,7 +12,7 @@ const FeeRebateToken = artifacts.require('FeeRebateToken')
 const VendingMachine = artifacts.require('VendingMachine')
 
 const {
-  KeepRegistryAddress,
+  BondedECDSAKeepVendorAddress,
   BTCUSDPriceFeed,
   ETHUSDPriceFeed,
 } = require('./externals')
@@ -24,7 +24,7 @@ module.exports = async function(deployer, network) {
   // System.
   const tbtcSystem = await TBTCSystem.deployed()
   await tbtcSystem.initialize(
-    KeepRegistryAddress,
+    BondedECDSAKeepVendorAddress,
     DepositFactory.address,
     Deposit.address,
     TBTCToken.address,
