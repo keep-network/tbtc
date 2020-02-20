@@ -207,7 +207,7 @@ library DepositUtils {
     }
 
     /// @notice Retreive the remaining term of the deposit
-    /// @dev    The value is not guaranteed since block.timestmap can be lightly manipulated by miners.
+    /// @dev    The return value is not guaranteed since block.timestmap can be lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at term
     function remainingTerm(DepositUtils.Deposit storage _d) public view returns(uint256){
         uint256 endOfTerm = _d.fundedAt + TBTCConstants.getDepositTerm();
@@ -220,7 +220,7 @@ library DepositUtils {
     /// @notice     Calculates the amount of value at auction right now.
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up.
     /// @param _d   deposit storage pointer.
-    /// @return     the value to distribute in the auction at the current time.
+    /// @return     the value in wei to distribute in the auction at the current time.
     function auctionValue(Deposit storage _d) public view returns (uint256) {
         uint256 _elapsed = block.timestamp.sub(_d.liquidationInitiated);
         uint256 _available = address(this).balance;
@@ -237,7 +237,7 @@ library DepositUtils {
     }
 
     /// @notice         Gets the lot size in erc20 decimal places (max 18)
-    /// @return         uint256 lot size in erc20
+    /// @return         uint256 lot size in 10**18 decimals.
     function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
         return _d.lotSizeSatoshis * TBTCConstants.getSatoshiMultiplier();
     }
@@ -281,25 +281,25 @@ library DepositUtils {
         return abi.encodePacked(determineCompressionPrefix(_pubkeyY), _pubkeyX);
     }
 
-    /// @notice         Returns the packed public key (64 bytes) for the signing group.
-    /// @dev            We store it as 2 bytes32, (2 slots) then repack it on demand.
-    /// @return         64 byte public key.
+    /// @notice    Returns the packed public key (64 bytes) for the signing group.
+    /// @dev       We store it as 2 bytes32, (2 slots) then repack it on demand.
+    /// @return    64 byte public key.
     function signerPubkey(Deposit storage _d) public view returns (bytes memory) {
         return abi.encodePacked(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
     }
 
-    /// @notice         Returns the Bitcoin pubkeyhash (hash160) for the signing group.
-    /// @dev            This is used in bitcoin output scripts for the signers.
-    /// @return         20-bytes public key hash.
+    /// @notice    Returns the Bitcoin pubkeyhash (hash160) for the signing group.
+    /// @dev       This is used in bitcoin output scripts for the signers.
+    /// @return    20-bytes public key hash.
     function signerPKH(Deposit storage _d) public view returns (bytes20) {
         bytes memory _pubkey = compressPubkey(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
         bytes memory _digest = _pubkey.hash160();
         return bytes20(_digest.toAddress(0));  // dirty solidity hack
     }
 
-    /// @notice         Returns the size of the deposit UTXO in satoshi.
-    /// @dev            We store the deposit as bytes8 to make signature checking easier.
-    /// @return         UTXO value in satoshi.
+    /// @notice    Returns the size of the deposit UTXO in satoshi.
+    /// @dev       We store the deposit as bytes8 to make signature checking easier.
+    /// @return    UTXO value in satoshi.
     function utxoSize(Deposit storage _d) public view returns (uint256) {
         return bytes8LEToUint(_d.utxoSizeBytes);
     }
@@ -368,7 +368,7 @@ library DepositUtils {
 
     /// @notice     Seize the signer bond from the keep contract.
     /// @dev        we check our balance before and after.
-    /// @return     the amount of ether seized.
+    /// @return     The amount seized in wei.
     function seizeSignerBonds(Deposit storage _d) internal returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
@@ -379,7 +379,7 @@ library DepositUtils {
     }
 
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner.
-    ///             whenever this is called we are shutting down.
+    /// @dev        Whenever this is called we are shutting down.
     function distributeFeeRebate(Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
@@ -394,10 +394,10 @@ library DepositUtils {
         }
     }
 
-    /// @notice             pushes ether held by the deposit to the signer group.
-    /// @dev                useful for returning bonds to the group, or otherwise paying them.
-    /// @param  _ethValue   the amount of ether to send.
-    /// @return             true if successful, otherwise revert.
+    /// @notice             Pushes ether held by the deposit to the signer group.
+    /// @dev                Useful for returning bonds to the group, or otherwise paying them.
+    /// @param  _ethValue   The amount of ether to send.
+    /// @return             True if successful, otherwise revert.
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
