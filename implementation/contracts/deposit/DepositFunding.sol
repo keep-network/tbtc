@@ -53,18 +53,20 @@ library DepositFunding {
         DepositUtils.Deposit storage _d,
         uint256 _m,
         uint256 _n,
-        uint256 _lotSize
+        uint256 _lotSizeSatoshis
     ) public returns (bool) {
         TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
 
         require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
-        require(_system.isAllowedLotSize(_lotSize), "provided lot size not supported");
+        require(_system.isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
 
-        _d.lotSizeSatoshis = _lotSize;
-        uint256 _bondRequirement = _lotSize.mul(_system.getInitialCollateralizedPercent()).div(100);
+        _d.lotSizeSatoshis = _lotSizeSatoshis;
+        uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_system.getInitialCollateralizedPercent()).div(100);
+        uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
+
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirement);
+        _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementWei);
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
         _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();

@@ -69,7 +69,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     ///                        Mints the TDT to the function caller.
     //                         (See `TBTCDepositToken` for more info on TDTs).
     /// @return                True if successful, otherwise revert.
-    function createDeposit (uint256 _lotSize) public payable returns(address) {
+    function createDeposit (uint256 _lotSizeSatoshis) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
 
         Deposit deposit = Deposit(address(uint160(cloneAddress)));
@@ -82,7 +82,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
                 vendingMachine,
                 keepThreshold,
                 keepSize,
-                _lotSize
+                _lotSizeSatoshis
             );
 
         TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));

@@ -160,11 +160,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Check if a lot size is allowed.
-    /// @param _lotSize Lot size to check.
+    /// @param _lotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint256 _lotSize) external view returns (bool){
+    function isAllowedLotSize(uint256 _lotSizeSatoshis) external view returns (bool){
         for( uint i = 0; i < lotSizesSatoshis.length; i++){
-            if (lotSizesSatoshis[i] == _lotSize){
+            if (lotSizesSatoshis[i] == _lotSizeSatoshis){
                 return true;
             }
         }
@@ -218,8 +218,21 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     // Price Feed
+
+    /// @notice Get the price of one satoshi in wei.
+    /// @dev Reverts if the price of one satoshi is 0 wei, or
+    ///      if the price of one satoshi is 1 ether.
+    /// @return The price of one satoshi in wei.
     function fetchBitcoinPrice() external view returns (uint256) {
-        return IBTCETHPriceFeed(priceFeed).getPrice();
+        uint256 price = IBTCETHPriceFeed(priceFeed).getPrice();
+        if (price == 0 || price > 10 ** 18) {
+            /*
+              This is if a sat is worth 0 wei, or is worth 1 ether
+              TODO: what should this behavior be?
+            */
+            revert("System returned a bad price");
+        }
+        return price;
     }
 
     // Difficulty Oracle
