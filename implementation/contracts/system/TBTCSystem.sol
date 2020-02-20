@@ -206,7 +206,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Get the price of one satoshi in wei.
     /// @dev Reverts if the price of one satoshi is 0 wei, or
-    ///      if the price of one satoshi is 1 ether.  
+    ///      if the price of one satoshi is 1 ether.
     /// @return The price of one satoshi in wei.
     function fetchBitcoinPrice() external view returns (uint256) {
         uint256 price = IBTCETHPriceFeed(priceFeed).getPrice();
