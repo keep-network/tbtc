@@ -319,15 +319,6 @@ describe('DepositLiquidation', async function() {
       )
     })
 
-    it('reverts if the deposit term is expiring anyway', async () => {
-      await testDeposit.setUTXOInfo('0x' + '00'.repeat(8), 0, '0x' + '00'.repeat(36))
-
-      await expectRevert(
-        testDeposit.exitCourtesyCall(),
-        'Deposit is expiring'
-      )
-    })
-
     it('reverts if the deposit is still undercollateralized', async () => {
       await tbtcSystemStub.setOraclePrice(new BN('1000000000000', 10))
       await ecdsaKeepStub.setBondAmount(0)
@@ -453,56 +444,6 @@ describe('DepositLiquidation', async function() {
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
       expect(liquidationTime[0], 'liquidation timestamp not recorded').not.to.eq.BN(0)
-    })
-  })
-
-  describe('notifyDepositExpiryCourtesyCall', async () => {
-    let timer
-    let fundedTime
-
-    before(async () => {
-      timer = await tbtcConstants.getCourtesyCallTimeout.call()
-    })
-
-    beforeEach(async () => {
-      const block = await web3.eth.getBlock('latest')
-      const blockTimestamp = block.timestamp
-      fundedTime = blockTimestamp - timer.toNumber() - 1 // has expired
-      await testDeposit.setState(states.ACTIVE)
-      await testDeposit.setUTXOInfo('0x' + '00'.repeat(8), 0, '0x' + '00'.repeat(36))
-    })
-
-    it('sets courtesy call state, stores the time, and logs CourtesyCalled', async () => {
-      const blockNumber = await web3.eth.getBlock('latest').number
-
-      await testDeposit.notifyDepositExpiryCourtesyCall()
-
-      const depositState = await testDeposit.getState.call()
-      expect(depositState).to.eq.BN(states.COURTESY_CALL)
-
-      const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
-      expect(liquidationTime[1]).not.to.eq.BN(0)
-
-      const eventList = await tbtcSystemStub.getPastEvents('CourtesyCalled', { fromBlock: blockNumber, toBlock: 'latest' })
-      expect(eventList.length).to.equal(1)
-    })
-
-    it('reverts if not in active', async () => {
-      await testDeposit.setState(states.START)
-
-      await expectRevert(
-        testDeposit.notifyDepositExpiryCourtesyCall(),
-        'Deposit is not active'
-      )
-    })
-
-    it('reverts if deposit not yet expiring', async () => {
-      await testDeposit.setUTXOInfo('0x' + '00'.repeat(8), fundedTime * 5, '0x' + '00'.repeat(36))
-
-      await expectRevert(
-        testDeposit.notifyDepositExpiryCourtesyCall(),
-        'Deposit term not elapsed'
-      )
     })
   })
 })

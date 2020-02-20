@@ -290,7 +290,6 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function exitCourtesyCall(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not currently in courtesy call");
-        require(block.timestamp <= _d.fundedAt + TBTCConstants.getDepositTerm(), "Deposit is expiring");
         require(getCollateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
         _d.setActive();
         _d.logExitedCourtesyCall();
@@ -312,16 +311,5 @@ library DepositLiquidation {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
         require(block.timestamp >= _d.courtesyCallInitiated + TBTCConstants.getCourtesyCallTimeout(), "Courtesy period has not elapsed");
         startSignerAbortLiquidation(_d);
-    }
-
-    /// @notice     Notifies the contract that its term limit has been reached.
-    /// @dev        This initiates a courtesy call.
-    /// @param  _d  Deposit storage pointer.
-    function notifyDepositExpiryCourtesyCall(DepositUtils.Deposit storage _d) public {
-        require(_d.inActive(), "Deposit is not active");
-        require(block.timestamp >= _d.fundedAt + TBTCConstants.getDepositTerm(), "Deposit term not elapsed");
-        _d.setCourtesyCall();
-        _d.logCourtesyCalled();
-        _d.courtesyCallInitiated = block.timestamp;
     }
 }
