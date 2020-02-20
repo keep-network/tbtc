@@ -116,7 +116,7 @@ library DepositUtils {
     }
 
     /// @notice                 Syntactically check an SPV proof for a bitcoin transaction with its hash (ID).
-    /// @dev                    Stateless SPV Proof verification documented elsewhere (see `github.com/summa-tx/bitcoin-spv`).
+    /// @dev                    Stateless SPV Proof verification documented elsewhere (see https://github.com/summa-tx/bitcoin-spv).
     /// @param _d               Deposit storage pointer.
     /// @param _txId            The bitcoin txid of the tx that is purportedly included in the header chain.
     /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block.
