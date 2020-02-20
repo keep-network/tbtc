@@ -21,7 +21,7 @@ contract VendingMachine is TBTCSystemAuthority{
     TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
-    constructor(address _systemAddress) 
+    constructor(address _systemAddress)
         TBTCSystemAuthority(_systemAddress)
     public {}
 

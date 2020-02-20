@@ -236,8 +236,8 @@ library DepositUtils {
         return _available.mul(_percentage).div(100);
     }
 
-    /// @notice         Gets the lot size in erc20 decimal places (max 18) 
-    /// @return         uint256 lot size in erc20 
+    /// @notice         Gets the lot size in erc20 decimal places (max 18)
+    /// @return         uint256 lot size in erc20
     function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
         return _d.lotSizeSatoshis * TBTCConstants.getSatoshiMultiplier();
     }
@@ -426,7 +426,7 @@ library DepositUtils {
 
     /// @notice             Get TBTC amount required by redemption by a specified _redeemer.
     /// @dev                Will revert if redemption is not possible by msg.sender.
-    /// @param _redeemer    The deposit redeemer. 
+    /// @param _redeemer    The deposit redeemer.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
         bool inCourtesy = _d.inCourtesyCall();

@@ -26,7 +26,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     uint256 public keepThreshold;
     uint256 public keepSize;
 
-    constructor(address _systemAddress) 
+    constructor(address _systemAddress)
         TBTCSystemAuthority(_systemAddress)
     public {}
 

@@ -50,6 +50,7 @@ contract FundingScript {
         // We could explictly encode the call to vending machine, but this would
         // involve manually parsing _extraData and allocating variables.
         (bool success, bytes memory returnData) = address(vendingMachine).call(
+            // solium-disable-previous-line security/no-low-level-calls
             _extraData
         );
         require(success, string(returnData));

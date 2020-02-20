@@ -1,20 +1,13 @@
-import expectThrow from './helpers/expectThrow'
-import increaseTime from './helpers/increaseTime'
-import {
-  createSnapshot,
-  restoreSnapshot,
-} from './helpers/snapshot'
-import deployTestDeposit from './helpers/deployTestDeposit'
+const { deployAndLinkAll } = require('../testHelpers/testDeployer.js')
+const { increaseTime } = require('../testHelpers/utils.js')
+const { createSnapshot, restoreSnapshot } = require('../testHelpers/helpers/snapshot.js')
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment')
+const { BN, expectRevert } = require('@openzeppelin/test-helpers')
+const { expect } = require('chai')
 
-const BN = require('bn.js')
-const chai = require('chai')
-const expect = chai.expect
-const bnChai = require('bn-chai')
-chai.use(bnChai(BN))
+const TBTCSystem = contract.fromArtifact('TBTCSystem')
 
-const TBTCSystem = artifacts.require('TBTCSystem')
-
-contract('TBTCSystem', (accounts) => {
+describe('TBTCSystem', async function() {
   let tbtcSystem
   let ecdsaKeepFactory
 
@@ -22,7 +15,7 @@ contract('TBTCSystem', (accounts) => {
     const {
       tbtcSystemStub,
       ecdsaKeepFactoryStub,
-    } = await deployTestDeposit(
+    } = await deployAndLinkAll(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
       // test TBTCSystem itself.
@@ -44,7 +37,7 @@ contract('TBTCSystem', (accounts) => {
       await tbtcSystem.requestNewKeep(5, 10, 0, { from: expectedKeepOwner, value: openKeepFee })
       const keepOwner = await ecdsaKeepFactory.keepOwner.call()
 
-      assert.equal(expectedKeepOwner, keepOwner, 'incorrect keep owner address')
+      expect(expectedKeepOwner, 'incorrect keep owner address').to.equal(keepOwner)
     })
 
     it('returns keep address', async () => {
@@ -52,7 +45,7 @@ contract('TBTCSystem', (accounts) => {
 
       const result = await tbtcSystem.requestNewKeep.call(5, 10, 0, { value: openKeepFee })
 
-      assert.equal(expectedKeepAddress, result, 'incorrect keep address')
+      expect(expectedKeepAddress, 'incorrect keep address').to.equal(result)
     })
 
     it('forwards value to keep factory', async () => {
@@ -75,7 +68,7 @@ contract('TBTCSystem', (accounts) => {
     })
 
     it('reverts if msg.sender != owner', async () => {
-      await expectThrow(
+      await expectRevert.unspecified(
         tbtcSystem.setSignerFeeDivisor(new BN('201'), { from: accounts[1] }),
         ''
       )
@@ -89,13 +82,13 @@ contract('TBTCSystem', (accounts) => {
       await tbtcSystem.setLotSizes(lotSizes)
 
       const eventList = await tbtcSystem.getPastEvents('LotSizesUpdated', { fromBlock: blockNumber, toBlock: 'latest' })
-      assert.equal(eventList.length, 1)
+      expect(eventList.length).to.equal(1)
       expect(eventList[0].returnValues._lotSizes).to.eql(['100000000', '1000000']) // deep equality check
     })
 
     it('reverts if lot size array is empty', async () => {
       const lotSizes = []
-      await expectThrow(
+      await expectRevert(
         tbtcSystem.setLotSizes(lotSizes),
         'Lot size array must always contain 1BTC'
       )
@@ -103,7 +96,7 @@ contract('TBTCSystem', (accounts) => {
 
     it('reverts if lot size array does not contain a 1BTC lot size', async () => {
       const lotSizes = [10**7]
-      await expectThrow(
+      await expectRevert(
         tbtcSystem.setLotSizes(lotSizes),
         'Lot size array must always contain 1BTC'
       )
@@ -129,7 +122,7 @@ contract('TBTCSystem', (accounts) => {
     })
 
     it('reverts if msg.sender is not owner', async () => {
-      await expectThrow(
+      await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits({ from: accounts[1] }),
         'Ownable: caller is not the owner'
       )
@@ -141,7 +134,7 @@ contract('TBTCSystem', (accounts) => {
 
       await increaseTime(term.toNumber() - 10) // T-10 seconds. toNumber because increaseTime doesn't support BN
 
-      await expectThrow(
+      await expectRevert(
         tbtcSystem.resumeNewDeposits(),
         'Deposits are still paused'
       )
@@ -164,7 +157,7 @@ contract('TBTCSystem', (accounts) => {
       await increaseTime(term.toNumber()) // 10 days
       tbtcSystem.resumeNewDeposits()
 
-      await expectThrow(
+      await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits(),
         'emergencyPauseNewDeposits can only be called once'
       )

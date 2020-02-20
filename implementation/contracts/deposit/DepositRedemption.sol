@@ -156,11 +156,11 @@ library DepositRedemption {
         IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
 
         _tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
-    
+
         _requestRedemption(_d, _outputValueBytes, _redeemerOutputScript, _finalRecipient);
     }
 
-    /// @notice                     Only TDT owner can request redemption, 
+    /// @notice                     Only TDT owner can request redemption,
     ///                             unless Deposit is expired or in COURTESY_CALL.
     /// @dev                        The redeemer specifies details about the Bitcoin redemption transaction.
     /// @param  _d                  deposit storage pointer.

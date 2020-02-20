@@ -161,7 +161,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev                Will revert if redemption is not possible by _redeemer.
     /// @param _redeemer    The deposit redeemer.
     /// @return             The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){       
+    function getRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
         return self.getRedemptionTbtcRequirement(_redeemer);
     }
 
