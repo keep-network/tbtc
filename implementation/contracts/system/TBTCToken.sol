@@ -4,11 +4,9 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "./VendingMachineAuthority.sol";
 
-/**
- @dev Interface of recipient contract for approveAndCall pattern.
-*/
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
-
+/// @title  TBTC Token.
+/// @notice This is the TBTC ERC20 contract.
+/// @dev    Tokens can only be minted by the `VendingMachine` contract.
 contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
@@ -20,7 +18,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     }
 
     /// @dev             Mints an amount of the token and assigns it to an account.
-    ///                  Uses the internal _mint function
+    ///                  Uses the internal _mint function.
     /// @param _account  The account that will receive the created tokens.
     /// @param _amount   The amount of tokens that will be created.
     // TODO: add back ACL when vending machine refactoring is done.
@@ -30,7 +28,7 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
         return true;
     }
 
-    /// @dev             Burns an amount of the token of a given account
+    /// @dev             Burns an amount of the token from the given account's balance.
     ///                  deducting from the sender's allowance for said account.
     ///                  Uses the internal _burn function.
     /// @param _account  The account whose tokens will be burnt.
@@ -62,4 +60,16 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
             return true;
         }
     }
+}
+
+/// @title Interface of recipient contract for approveAndCall pattern.
+/// See `RedemptionScript` for an example.
+interface tokenRecipient {
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes calldata
+        _extraDat
+    ) external;
 }

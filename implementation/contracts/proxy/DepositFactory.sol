@@ -30,15 +30,15 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         TBTCSystemAuthority(_systemAddress)
     public {}
 
-    /// @dev                          Set the required external variables
-    /// @param _masterDepositAddress  The address of the master deposit contract
-    /// @param _tbtcSystem            Address of system contract
-    /// @param _tbtcToken             Address of TBTC token contract
-    /// @param _depositOwnerToken     Address of the Deposit Owner Token contract
-    /// @param _feeRebateToken        Address of the Fee Rebate Token contract
-    /// @param _vendingMachine        Address of the Vending Machine contract
-    /// @param _keepThreshold         Minimum number of honest keep members
-    /// @param _keepSize              Number of all members in a keep
+    /// @dev                          Set the required external variables.
+    /// @param _masterDepositAddress  The address of the master deposit contract.
+    /// @param _tbtcSystem            Address of system contract.
+    /// @param _tbtcToken             Address of TBTC token contract.
+    /// @param _depositOwnerToken     Address of the Deposit Owner Token contract.
+    /// @param _feeRebateToken        Address of the Fee Rebate Token contract.
+    /// @param _vendingMachine        Address of the Vending Machine contract.
+    /// @param _keepThreshold         Minimum number of honest keep members.
+    /// @param _keepSize              Number of all members in a keep.
     function setExternalDependencies(
         address payable _masterDepositAddress,
         address _tbtcSystem,
@@ -63,13 +63,13 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
 
     event DepositCloneCreated(address depositCloneAddress);
 
-    /// @notice                Creates a new deposit instance
-    /// @dev                   Calls createNewDeposit from deposit contract as init method.
-    ///                        We don't offer pure createClone, meaning that the only way
-    ///                        to create a clone is by also calling createNewDeposit()
-    ///                        Deposits created this way will never pass by state 0 (START)
-    /// @return                True if successful, otherwise revert
-    function createDeposit (uint256 _lotSize) public payable returns(address) {
+    /// @notice                Creates a new deposit instance and mints a TDT.
+    ///                        This function is currently the only way to create a new deposit.
+    /// @dev                   Calls `Deposit.createNewDeposit` to initialize the instance.
+    ///                        Mints the TDT to the function caller.
+    //                         (See `TBTCDepositToken` for more info on TDTs).
+    /// @return                True if successful, otherwise revert.
+    function createDeposit (uint256 _lotSizeSatoshis) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
 
         Deposit deposit = Deposit(address(uint160(cloneAddress)));
@@ -82,7 +82,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
                 vendingMachine,
                 keepThreshold,
                 keepSize,
-                _lotSize
+                _lotSizeSatoshis
             );
 
         TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));

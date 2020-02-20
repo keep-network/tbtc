@@ -18,6 +18,7 @@ const ECDSAKeepFactoryStub = contract.fromArtifact('ECDSAKeepFactoryStub')
 const ECDSAKeepVendorStub = contract.fromArtifact('ECDSAKeepVendorStub')
 const TestToken = contract.fromArtifact('TestToken')
 const MockRelay = contract.fromArtifact('MockRelay')
+const MockBTCETHPriceFeed = contract.fromArtifact('MockBTCETHPriceFeed')
 const TBTCSystemStub = contract.fromArtifact('TBTCSystemStub')
 const TBTCDepositToken = contract.fromArtifact('TestTBTCDepositToken')
 const FeeRebateToken = contract.fromArtifact('TestFeeRebateToken')
@@ -28,10 +29,12 @@ const TestDeposit = contract.fromArtifact('TestDeposit')
 const RedemptionScript = contract.fromArtifact('RedemptionScript')
 const FundingScript = contract.fromArtifact('FundingScript')
 
+
 const TEST_DEPOSIT_DEPLOY = [
   { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
   { name: 'MockRelay', contract: MockRelay },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub, constructorParams: [ZERO_ADDRESS, 'MockRelay'] },
+  { name: 'MockBTCETHPriceFeed', contract: MockBTCETHPriceFeed },
+  { name: 'TBTCSystemStub', contract: TBTCSystemStub, constructorParams: ['MockBTCETHPriceFeed', 'MockRelay'] },
   { name: 'DepositFactory', contract: DepositFactory, constructorParams: ['TBTCSystemStub'] },
   { name: 'VendingMachine', contract: VendingMachine, constructorParams: ['TBTCSystemStub'] },
   { name: 'DepositStates', contract: DepositStates },
@@ -121,6 +124,7 @@ async function deployAndLinkAll(
   const depositUtils = deployed.DepositUtils
   const ecdsaKeepStub = deployed.ECDSAKeepStub
   const depositFactory = deployed.DepositFactory
+  const mockBTCETHPriceFeed = deployed.MockBTCETHPriceFeed
   const redemptionScript = await RedemptionScript.new(vendingMachine.address, tbtcToken.address, feeRebateToken.address)
   const fundingScript = await FundingScript.new(vendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
   if (testDeposit.setExteriorAddresses) {
@@ -153,6 +157,7 @@ async function deployAndLinkAll(
   return {
     tbtcConstants,
     mockRelay,
+    mockBTCETHPriceFeed,
     tbtcSystemStub,
     tbtcToken,
     tbtcDepositToken,
