@@ -41,7 +41,7 @@ contract VendingMachine is TBTCSystemAuthority{
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
-    /// @param _depositAddress the address of the deposit
+    /// @param _depositAddress The address of the deposit
     function isQualified(address payable _depositAddress) public view returns (bool) {
         return Deposit(_depositAddress).inActive();
     }

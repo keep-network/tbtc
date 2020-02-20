@@ -47,9 +47,9 @@ library OutsourceDepositLogging {
 
     /// @notice         Fires a GotRedemptionSignature event.
     /// @dev            We append the sender, which is the deposit contract that called.
-    /// @param  _digest signed digest.
-    /// @param  _r      signature r value.
-    /// @param  _s      signature s value.
+    /// @param  _digest Signed digest.
+    /// @param  _r      Signature r value.
+    /// @param  _s      Signature s value.
     /// @return         True if successful, else revert.
     function logGotRedemptionSignature(
         DepositUtils.Deposit storage _d,

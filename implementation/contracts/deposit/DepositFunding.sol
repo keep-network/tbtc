@@ -45,7 +45,7 @@ library DepositFunding {
     ///                 to create a new deposit.
     /// @dev            If called directly, the transaction will revert since the call will be
     ///                 executed on an already set-up instance.
-    /// @param _d       deposit storage pointer.
+    /// @param _d       Deposit storage pointer.
     /// @param _m       Signing group honesty threshold.
     /// @param _n       Signing group size.
     /// @return         True if successful, otherwise revert.
@@ -94,7 +94,7 @@ library DepositFunding {
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
     /// @dev        We rely on the keep system to punish the signers in this case.
-    /// @param  _d  deposit storage pointer.
+    /// @param  _d  Deposit storage pointer.
     function notifySignerSetupFailure(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not awaiting setup");
         require(
@@ -109,7 +109,7 @@ library DepositFunding {
 
     /// @notice             we poll the Keep contract to retrieve our pubkey.
     /// @dev                We store the pubkey as 2 bytestrings, X and Y.
-    /// @param  _d          deposit storage pointer.
+    /// @param  _d          Deposit storage pointer.
     /// @return             True if successful, otherwise revert.
     function retrieveSignerPubkey(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not currently awaiting signer setup");
@@ -130,7 +130,7 @@ library DepositFunding {
 
     /// @notice     Anyone may notify the contract that the funder has failed to send BTC.
     /// @dev        This is considered a funder fault, and we revoke their bond.
-    /// @param  _d  deposit storage pointer.
+    /// @param  _d  Deposit storage pointer.
     function notifyFundingTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingBTCFundingProof(), "Funding timeout has not started");
         require(
@@ -145,7 +145,7 @@ library DepositFunding {
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud during funding.
     /// @dev                    Calls out to the keep to verify if there was fraud.
-    /// @param  _d              deposit storage pointer.
+    /// @param  _d              Deposit storage pointer.
     /// @param  _v              Signature recovery value.
     /// @param  _r              Signature R value.
     /// @param  _s              Signature S value.
@@ -182,7 +182,7 @@ library DepositFunding {
 
     /// @notice     Anyone may notify the contract no funding proof was submitted during funding fraud.
     /// @dev        This is not a funder fault. The signers have faulted, so the funder shouldn't fund.
-    /// @param  _d  deposit storage pointer.
+    /// @param  _d  Deposit storage pointer.
     function notifyFraudFundingTimeout(DepositUtils.Deposit storage _d) public {
         require(
             _d.inFraudAwaitingBTCFundingProof(),
