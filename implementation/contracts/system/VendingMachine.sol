@@ -46,10 +46,11 @@ contract VendingMachine is TBTCSystemAuthority{
         return Deposit(_depositAddress).inActive();
     }
 
-    /// @notice Burn TBTC and receive the tBTC Deposit Token
+    /// @notice Burns TBTC and transfers the tBTC Deposit Token to the caller
     ///         as long as it is qualified.
     /// @dev    We burn the lotSize of the Deposit in order to maintain
-    ///         the TBTC supply peg in the Vending Machine.
+    ///         the TBTC supply peg in the Vending Machine. VendingMachine must be approved
+    ///         by the caller to burn the required amount.
     /// @param _tdtId ID of tBTC Deposit Token to buy.
     function tbtcToTdt(uint256 _tdtId) public {
         require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
@@ -66,6 +67,7 @@ contract VendingMachine is TBTCSystemAuthority{
 
     /// @notice Transfer the tBTC Deposit Token and mint TBTC.
     /// @dev    Transfers TDT from caller to vending machine, and mints TBTC to caller.
+    ///         Vending Machine must be approved to transfer TDT by the caller.
     /// @param _tdtId ID of tBTC Deposit Token to sell.
     function tdtToTbtc(uint256 _tdtId) public {
         require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
