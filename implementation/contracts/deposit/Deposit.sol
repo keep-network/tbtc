@@ -437,12 +437,4 @@ contract Deposit is DepositFactoryAuthority {
         self.notifyCourtesyTimeout();
         return true;
     }
-
-    /// @notice     Notifies the contract that its term limit has been reached
-    /// @dev        This initiates a courtesy call
-    /// @return     True if successful, otherwise revert
-    function notifyDepositExpiryCourtesyCall() public returns (bool) {
-        self.notifyDepositExpiryCourtesyCall();
-        return true;
-    }
 }
