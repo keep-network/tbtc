@@ -11,7 +11,7 @@ import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 /// @dev Wrapper script for VendingMachine.tbtcToBtc.
 contract RedemptionScript {
     using BytesLib for bytes;
-    
+
     TBTCToken tbtcToken;
     VendingMachine vendingMachine;
     FeeRebateToken feeRebateToken;
@@ -45,6 +45,7 @@ contract RedemptionScript {
         );
 
         (bool success, bytes memory returnData) = address(vendingMachine).call(_extraData);
+        // solium-disable-previous-line security/no-low-level-calls
         // By default, `address.call`  will catch any revert messages.
         // Converting the `returnData` to a string will effectively forward any revert messages.
         // https://ethereum.stackexchange.com/questions/69133/forward-revert-message-from-low-level-solidity-call

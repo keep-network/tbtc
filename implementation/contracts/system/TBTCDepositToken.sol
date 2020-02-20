@@ -18,7 +18,7 @@ import "./DepositFactoryAuthority.sol";
 ///      convertible to the deposit's address and vice versa.
 contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
 
-    constructor(address _depositFactory) 
+    constructor(address _depositFactory)
         ERC721Metadata("tBTC Deposit Token", "TDT")
     public {
         initialize(_depositFactory);

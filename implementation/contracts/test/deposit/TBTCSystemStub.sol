@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-import {TBTCSystem} from '../../../contracts/system/TBTCSystem.sol';
+import {TBTCSystem} from "../../../contracts/system/TBTCSystem.sol";
 
 contract TBTCSystemStub is TBTCSystem {
     address keepAddress = address(7);

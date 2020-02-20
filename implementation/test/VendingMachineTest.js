@@ -1,17 +1,12 @@
-const FundingScript = artifacts.require('FundingScript')
-const RedemptionScript = artifacts.require('RedemptionScript')
-
-import expectThrow from './helpers/expectThrow'
-import { AssertBalance } from './helpers/assertBalance'
-import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
-import deployTestDeposit from './helpers/deployTestDeposit'
-
-import BN from 'bn.js'
-import utils from './utils'
-import chai, { expect } from 'chai'
-import bnChai from 'bn-chai'
-chai.use(bnChai(BN))
-
+const { deployAndLinkAll } = require('../testHelpers/testDeployer.js')
+const { states } = require('../testHelpers/utils.js')
+const { AssertBalance } = require('../testHelpers/helpers/assertBalance.js')
+const { createSnapshot, restoreSnapshot } = require('../testHelpers/helpers/snapshot.js')
+const { accounts, web3 } = require('@openzeppelin/test-environment')
+const [owner] = accounts
+const { BN, constants, expectRevert } = require('@openzeppelin/test-helpers')
+const { ZERO_ADDRESS } = constants
+const { expect } = require('chai')
 const currentDifficulty = 6353030562983
 const _version = '0x01000000'
 const _txInputVector = `0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff`
@@ -24,12 +19,10 @@ const _signerPubkeyX = '0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e
 const _signerPubkeyY = '0xe8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1'
 const _merkleProof = '0x886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe049'
 const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c00000000'
-// const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract('VendingMachine', (accounts) => {
+describe('VendingMachine', async function() {
   let vendingMachine
-
   let mockRelay
   let tbtcSystemStub
   let tbtcToken
@@ -57,7 +50,9 @@ contract('VendingMachine', (accounts) => {
       testDeposit,
       ecdsaKeepStub,
       deployed,
-    } = await deployTestDeposit())
+      redemptionScript,
+      fundingScript,
+    } = await deployAndLinkAll())
     vendingMachine = deployed.VendingMachine
 
     assertBalance = new AssertBalance(tbtcToken)
@@ -72,13 +67,13 @@ contract('VendingMachine', (accounts) => {
 
   describe('#isQualified', async () => {
     it('returns true if deposit is in ACTIVE State', async () => {
-      await testDeposit.setState(utils.states.ACTIVE)
+      await testDeposit.setState(states.ACTIVE)
       const qualified = await vendingMachine.isQualified.call(testDeposit.address)
       expect(qualified).to.be.true
     })
 
     it('returns false if deposit is not in ACTIVE State', async () => {
-      await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
       const qualified = await vendingMachine.isQualified.call(testDeposit.address)
       expect(qualified).to.be.false
     })
@@ -86,7 +81,7 @@ contract('VendingMachine', (accounts) => {
 
   describe('#tdtToTbtc', async () => {
     before(async () => {
-      await testDeposit.setState(utils.states.ACTIVE)
+      await testDeposit.setState(states.ACTIVE)
     })
 
     beforeEach(async () => {
@@ -98,47 +93,47 @@ contract('VendingMachine', (accounts) => {
     })
 
     it('converts TDT to TBTC', async () => {
-      await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: accounts[0] })
+      await tbtcDepositToken.forceMint(owner, tdtId)
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: owner })
 
-      await vendingMachine.tdtToTbtc(tdtId)
+      await vendingMachine.tdtToTbtc(tdtId, { from: owner })
 
-      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
+      await assertBalance.tbtc(owner, depositValue.sub(signerFee))
     })
 
     it('mints full lot size if backing deposit has signer fee escrowed', async () => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
 
-      await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: accounts[0] })
+      await tbtcDepositToken.forceMint(owner, tdtId)
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: owner })
 
-      await vendingMachine.tdtToTbtc(tdtId)
+      await vendingMachine.tdtToTbtc(tdtId, { from: owner })
 
-      await assertBalance.tbtc(accounts[0], depositValue)
+      await assertBalance.tbtc(owner, depositValue)
     })
 
     it('fails if deposit not qualified', async () => {
-      await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
 
-      await expectThrow(
-        vendingMachine.tdtToTbtc(tdtId),
+      await expectRevert(
+        vendingMachine.tdtToTbtc(tdtId, { from: owner }),
         'Deposit must be qualified'
       )
     })
 
     it(`fails if TDT doesn't exist`, async () => {
-      await expectThrow(
-        vendingMachine.tdtToTbtc(new BN(123345)),
+      await expectRevert(
+        vendingMachine.tdtToTbtc(new BN(123345), { from: owner }),
         'tBTC Deposit Token does not exist'
       )
     })
 
     it(`fails if TDT transfer not approved`, async () => {
-      await tbtcDepositToken.forceMint(accounts[0], tdtId)
+      await tbtcDepositToken.forceMint(owner, tdtId)
 
-      await expectThrow(
-        vendingMachine.tdtToTbtc(tdtId),
+      await expectRevert(
+        vendingMachine.tdtToTbtc(tdtId, { from: owner }),
         'ERC721: transfer caller is not owner nor approved.'
       )
     })
@@ -146,7 +141,7 @@ contract('VendingMachine', (accounts) => {
 
   describe('#tbtcToTdt', async () => {
     before(async () => {
-      await testDeposit.setState(utils.states.ACTIVE)
+      await testDeposit.setState(states.ACTIVE)
     })
 
     beforeEach(async () => {
@@ -159,29 +154,29 @@ contract('VendingMachine', (accounts) => {
 
     it('converts TBTC to TDT', async () => {
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
-      await tbtcToken.forceMint(accounts[0], depositValue)
-      await tbtcToken.approve(vendingMachine.address, depositValue, { from: accounts[0] })
+      await tbtcToken.forceMint(owner, depositValue)
+      await tbtcToken.approve(vendingMachine.address, depositValue, { from: owner })
 
       const fromBlock = await web3.eth.getBlockNumber()
-      await vendingMachine.tbtcToTdt(tdtId)
+      await vendingMachine.tbtcToTdt(tdtId, { from: owner })
 
       const events = await tbtcToken.getPastEvents('Transfer', { fromBlock, toBlock: 'latest' })
       const tbtcBurntEvent = events[0]
-      expect(tbtcBurntEvent.returnValues.from).to.equal(accounts[0])
-      expect(tbtcBurntEvent.returnValues.to).to.equal(utils.address0)
+      expect(tbtcBurntEvent.returnValues.from).to.equal(owner)
+      expect(tbtcBurntEvent.returnValues.to).to.equal(ZERO_ADDRESS)
       expect(tbtcBurntEvent.returnValues.value).to.equal(depositValue.toString())
 
       expect(
         await tbtcDepositToken.ownerOf(tdtId)
-      ).to.equal(accounts[0])
+      ).to.equal(owner)
     })
 
     it('fails if deposit not qualified', async () => {
-      await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
 
-      await expectThrow(
-        vendingMachine.tbtcToTdt(tdtId),
+      await expectRevert(
+        vendingMachine.tbtcToTdt(tdtId, { from: owner }),
         'Deposit must be qualified'
       )
     })
@@ -189,15 +184,15 @@ contract('VendingMachine', (accounts) => {
     it(`fails if caller hasn't got enough TBTC`, async () => {
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
 
-      await expectThrow(
-        vendingMachine.tbtcToTdt(tdtId),
+      await expectRevert(
+        vendingMachine.tbtcToTdt(tdtId, { from: owner }),
         'Not enough TBTC for TDT exchange.'
       )
     })
 
     it(`fails if TDT doesn't exist`, async () => {
-      await expectThrow(
-        vendingMachine.tdtToTbtc(new BN(123345)),
+      await expectRevert(
+        vendingMachine.tdtToTbtc(new BN(123345), { from: owner }),
         'tBTC Deposit Token does not exist'
       )
     })
@@ -206,11 +201,11 @@ contract('VendingMachine', (accounts) => {
       // Deposit is locked if the tBTC Deposit Token is not owned by the vending machine
       const depositOwner = accounts[1]
       await tbtcDepositToken.forceMint(depositOwner, tdtId)
-      await tbtcToken.forceMint(accounts[0], depositValue)
-      await tbtcToken.approve(vendingMachine.address, depositValue, { from: accounts[0] })
+      await tbtcToken.forceMint(owner, depositValue)
+      await tbtcToken.approve(vendingMachine.address, depositValue, { from: owner })
 
-      await expectThrow(
-        vendingMachine.tbtcToTdt(tdtId),
+      await expectRevert(
+        vendingMachine.tbtcToTdt(tdtId, { from: owner }),
         'Deposit is locked.'
       )
     })
@@ -219,7 +214,7 @@ contract('VendingMachine', (accounts) => {
   describe('#unqualifiedDepositToTbtc', async () => {
     before(async () => {
       await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
-      await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
     })
 
@@ -232,36 +227,50 @@ contract('VendingMachine', (accounts) => {
     })
 
     it('qualifies a Deposit', async () => {
-      await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: accounts[0] })
+      await tbtcDepositToken.forceMint(owner, tdtId)
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: owner })
       const blockNumber = await web3.eth.getBlock('latest').number
 
-      await vendingMachine.unqualifiedDepositToTbtc(testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
+      await vendingMachine.unqualifiedDepositToTbtc(
+        testDeposit.address,
+        _version, _txInputVector,
+        _txOutputVector, _txLocktime,
+        _fundingOutputIndex, _merkleProof,
+        _txIndexInBlock, _bitcoinHeaders,
+        { from: owner }
+      )
+
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
-      assert.equal(UTXOInfo[0], _outValueBytes)
-      assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
+      expect(UTXOInfo[0]).to.equal(_outValueBytes)
+      expect(UTXOInfo[2]).to.equal(_expectedUTXOoutpoint)
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
-      assert(signingGroupRequestedAt.eqn(0), 'signingGroupRequestedAt not updated')
+      expect(signingGroupRequestedAt, 'signingGroupRequestedAt not updated').to.not.equal(0)
 
       const fundingProofTimerStart = await testDeposit.getFundingProofTimerStart.call()
-      assert(fundingProofTimerStart.eqn(0), 'fundingProofTimerStart not updated')
+      expect(fundingProofTimerStart, 'undingProofTimerStart not updated').to.not.equal(0)
 
       const depositState = await testDeposit.getState.call()
-      expect(depositState).to.eq.BN(utils.states.ACTIVE)
+      expect(depositState).to.be.bignumber.equal(states.ACTIVE)
 
       const eventList = await tbtcSystemStub.getPastEvents('Funded', { fromBlock: blockNumber, toBlock: 'latest' })
-      assert.equal(eventList.length, 1)
+      expect(eventList.length).to.equal(1)
     })
 
     it('mints TBTC to the TDT owner and siger fee to Deposit', async () => {
-      await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: accounts[0] })
+      await tbtcDepositToken.forceMint(owner, tdtId)
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, { from: owner })
 
-      await vendingMachine.unqualifiedDepositToTbtc(testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-
-      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
+      await vendingMachine.unqualifiedDepositToTbtc(
+        testDeposit.address,
+        _version, _txInputVector,
+        _txOutputVector, _txLocktime,
+        _fundingOutputIndex, _merkleProof,
+        _txIndexInBlock, _bitcoinHeaders,
+        { from: owner }
+      )
+      await assertBalance.tbtc(owner, depositValue.sub(signerFee))
       await assertBalance.tbtc(testDeposit.address, signerFee)
     })
   })
@@ -279,12 +288,13 @@ contract('VendingMachine', (accounts) => {
     before(async () => {
       requiredBalance = await testDeposit.lotSizeTbtc.call()
 
+      await tbtcToken.zeroBalance(owner, { from: owner })
       block = await web3.eth.getBlock('latest')
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
-      await tbtcToken.resetBalance(requiredBalance)
-      await tbtcToken.resetAllowance(vendingMachine.address, requiredBalance)
+      await tbtcToken.resetBalance(requiredBalance, { from: owner })
+      await tbtcToken.resetAllowance(vendingMachine.address, requiredBalance, { from: owner })
       await ecdsaKeepStub.setSuccess(true)
-      await testDeposit.setState(utils.states.ACTIVE)
+      await testDeposit.setState(states.ACTIVE)
       await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
     })
 
@@ -295,24 +305,22 @@ contract('VendingMachine', (accounts) => {
     afterEach(async () => {
       await restoreSnapshot()
     })
-
     it('successfully redeems via wrapper', async () => {
       const blockNumber = await web3.eth.getBlock('latest').number
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
-
       // the fee is ~12,297,829,380 BTC
-      await feeRebateToken.forceMint(accounts[0], tdtId)
-      await vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', redeemerOutputScript, accounts[0])
+      await feeRebateToken.forceMint(owner, tdtId)
+      await vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', redeemerOutputScript, owner, { from: owner })
       const requestInfo = await testDeposit.getRequestInfo()
 
-      assert.equal(requestInfo[1], redeemerOutputScript)
-      assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
-      assert.equal(requestInfo[4], sighash)
+      expect(requestInfo[1]).to.equal(redeemerOutputScript)
+      expect(requestInfo[3]).to.not.equal(0)
+      expect(requestInfo[4]).to.equal(sighash)
 
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
-      assert.equal(eventList[0].returnValues._digest, sighash)
+      expect(eventList[0].returnValues._digest).to.equal(sighash)
     })
 
     it('fails to redeem with insufficient balance', async () => {
@@ -322,19 +330,13 @@ contract('VendingMachine', (accounts) => {
       // requester does not own the FRT, and therefore owes an additional SignerFee
       await feeRebateToken.forceMint(accounts[1], tdtId)
 
-      await expectThrow(
-        vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', redeemerOutputScript, accounts[0]),
+      await expectRevert(
+        vendingMachine.tbtcToBtc(testDeposit.address, '0x1111111100000000', redeemerOutputScript, owner),
         'SafeMath: subtraction overflow.'
       )
     })
 
     describe('RedemptionScript', async () => {
-      let redemptionScript
-
-      before(async () => {
-        redemptionScript = await RedemptionScript.new(vendingMachine.address, tbtcToken.address, feeRebateToken.address)
-      })
-
       beforeEach(async () => {
         await createSnapshot()
       })
@@ -344,10 +346,10 @@ contract('VendingMachine', (accounts) => {
       })
 
       it('successfully requests redemption', async () => {
-        await testDeposit.setState(utils.states.ACTIVE)
+        await testDeposit.setState(states.ACTIVE)
         await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
-        await tbtcToken.forceMint(accounts[0], depositValue.add(signerFee))
-        await feeRebateToken.forceMint(accounts[0], tdtId)
+        await tbtcToken.forceMint(owner, depositValue.add(signerFee))
+        await feeRebateToken.forceMint(owner, tdtId)
 
         const blockNumber = await web3.eth.getBlock('latest').number
 
@@ -355,34 +357,36 @@ contract('VendingMachine', (accounts) => {
 
         const tbtcToBtc = vendingMachine.abi.filter((x) => x.name == 'tbtcToBtc')[0]
         const calldata = web3.eth.abi.encodeFunctionCall(
-          tbtcToBtc, [testDeposit.address, '0x1111111100000000', redeemerOutputScript, accounts[0]]
+          tbtcToBtc, [testDeposit.address, '0x1111111100000000', redeemerOutputScript, owner]
         )
 
         await tbtcToken.approveAndCall(
           redemptionScript.address,
           depositValue.add(signerFee),
-          calldata
+          calldata,
+          { from: owner }
         )
 
         const requestInfo = await testDeposit.getRequestInfo()
-        assert.equal(requestInfo[1], redeemerOutputScript)
-        assert(!requestInfo[3].eqn(0)) // withdrawalRequestTime is set
-        assert.equal(requestInfo[4], sighash)
+        expect(requestInfo[1]).to.equal(redeemerOutputScript)
+        expect(requestInfo[3]).to.not.equal(0)
+        expect(requestInfo[4]).to.equal(sighash)
 
         // fired an event
         const eventList = await tbtcSystemStub.getPastEvents('RedemptionRequested', { fromBlock: blockNumber, toBlock: 'latest' })
-        assert.equal(eventList[0].returnValues._digest, sighash)
+        expect(eventList[0].returnValues._digest).to.equal(sighash)
       })
 
       it('reverts for unknown function calls encoded in _extraData', async () => {
         const unknownFunctionSignature = '0xCAFEBABE'
-        await tbtcToken.forceMint(accounts[0], depositValue.add(signerFee))
+        await tbtcToken.forceMint(owner, depositValue.add(signerFee))
 
-        await expectThrow(
+        await expectRevert(
           tbtcToken.approveAndCall(
             redemptionScript.address,
             depositValue.add(signerFee),
-            unknownFunctionSignature
+            unknownFunctionSignature,
+            { from: owner }
           ),
           'Bad _extraData signature. Call must be to tbtcToBtc.'
         )
@@ -391,15 +395,12 @@ contract('VendingMachine', (accounts) => {
   })
 
   describe('FundingScript', async () => {
-    let fundingScript
-
     before(async () => {
       await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
-      await testDeposit.setState(utils.states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-      await tbtcToken.zeroBalance(accounts[0])
-      await tbtcDepositToken.forceMint(accounts[0], tdtId)
-      fundingScript = await FundingScript.new(vendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
+      await tbtcToken.zeroBalance(owner, { from: owner })
+      await tbtcDepositToken.forceMint(owner, tdtId)
     })
 
     beforeEach(async () => {
@@ -414,32 +415,42 @@ contract('VendingMachine', (accounts) => {
       const unqualifiedDepositToTbtcABI = vendingMachine.abi.filter((x) => x.name == 'unqualifiedDepositToTbtc')[0]
       const calldata = web3.eth.abi.encodeFunctionCall(
         unqualifiedDepositToTbtcABI,
-        [testDeposit.address, _version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders]
+        [testDeposit.address,
+          _version,
+          _txInputVector,
+          _txOutputVector,
+          _txLocktime,
+          _fundingOutputIndex,
+          _merkleProof,
+          _txIndexInBlock,
+          _bitcoinHeaders]
       )
 
       await tbtcDepositToken.approveAndCall(
         fundingScript.address,
         tdtId,
-        calldata
+        calldata,
+        { from: owner }
       )
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
-      assert.equal(UTXOInfo[0], _outValueBytes)
-      assert.equal(UTXOInfo[2], _expectedUTXOoutpoint)
+      expect(UTXOInfo[0]).to.equal(_outValueBytes)
+      expect(UTXOInfo[2]).to.equal(_expectedUTXOoutpoint)
 
-      await assertBalance.tbtc(accounts[0], depositValue.sub(signerFee))
+      await assertBalance.tbtc(owner, depositValue.sub(signerFee))
       expect(await tbtcDepositToken.ownerOf(tdtId)).to.equal(vendingMachine.address)
-      expect(await feeRebateToken.ownerOf(tdtId)).to.equal(accounts[0])
+      expect(await feeRebateToken.ownerOf(tdtId)).to.equal(owner)
     })
 
     it('reverts for unknown function calls encoded in _extraData', async () => {
       const unknownFunctionSignature = '0xCAFEBABE'
 
-      await expectThrow(
+      await expectRevert(
         tbtcDepositToken.approveAndCall(
           fundingScript.address,
           tdtId,
-          unknownFunctionSignature
+          unknownFunctionSignature,
+          { from: owner }
         ),
         'Bad _extraData signature. Call must be to unqualifiedDepositToTbtc.'
       )
