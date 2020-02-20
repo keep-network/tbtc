@@ -1,3 +1,5 @@
+const { web3 } = require('@openzeppelin/test-environment')
+
 /**
  * Snapshots are a feature of some EVM implementations ([1]) for improved dev UX.
  * They allow us to snapshot the entire state of the chain, and restore it at a
@@ -41,8 +43,7 @@
 
 
 const snapshotIdsStack = []
-
-export async function createSnapshot() {
+async function createSnapshot() {
   const snapshotId = await new Promise((res, rej) => {
     web3.currentProvider.send({
       jsonrpc: '2.0',
@@ -57,7 +58,7 @@ export async function createSnapshot() {
   snapshotIdsStack.push(snapshotId)
 }
 
-export async function restoreSnapshot() {
+async function restoreSnapshot() {
   const snapshotId = snapshotIdsStack.pop()
 
   try {
@@ -76,3 +77,6 @@ export async function restoreSnapshot() {
     throw new Error(`Snapshot with id #${snapshotId} failed to revert`)
   }
 }
+
+module.exports.createSnapshot = createSnapshot
+module.exports.restoreSnapshot = restoreSnapshot

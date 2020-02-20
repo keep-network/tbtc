@@ -90,7 +90,6 @@ library DepositLiquidation {
         _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
 
         _d.setFraudLiquidationInProgress();
-        
     }
 
     /// @notice         Starts signer liquidation due to abort or undercollateralization
@@ -254,8 +253,8 @@ library DepositLiquidation {
         _d.distributeFeeRebate();
 
         // For fraud, pay remainder to the liquidation initiator.
-        // For non-fraud, split 50-50 between initiator and signers. if the transfer amount is 1, 
-        // division will yield a 0 value which causes a revert; instead, 
+        // For non-fraud, split 50-50 between initiator and signers. if the transfer amount is 1,
+        // division will yield a 0 value which causes a revert; instead,
         // we simply ignore such a tiny amount and leave some wei dust in escrow
         uint256 contractEthBalance = address(this).balance;
         address payable initiator = _d.liquidationInitiator;

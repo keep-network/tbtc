@@ -125,15 +125,15 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice             Get TBTC amount required by redemption by a specified _redeemer
     /// @dev                Will revert if redemption is not possible by msg.sender.
-    /// @param _redeemer    The deposit redeemer. 
+    /// @param _redeemer    The deposit redeemer.
     /// @return             The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){       
+    function getRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
         return self.getRedemptionTbtcRequirement(_redeemer);
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
     ///                     is this deposit's TDT owner.
-    /// @param _redeemer    The assumed owner of the deposit's TDT 
+    /// @param _redeemer    The assumed owner of the deposit's TDT
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
         return self.getOwnerRedemptionTbtcRequirement(_redeemer);
