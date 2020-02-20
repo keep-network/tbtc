@@ -2,7 +2,7 @@ pragma solidity ^0.5.10;
 
 /// @title  Vending Machine Authority.
 /// @notice Contract to secure function calls to the Vending Machine.
-/// @dev    Secured by setting the VendingMachine address and using the 
+/// @dev    Secured by setting the VendingMachine address and using the
 ///         onlyVendingMachine modifier on functions requiring restriction.
 contract VendingMachineAuthority {
     address internal VendingMachine;

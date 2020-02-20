@@ -10,7 +10,7 @@ import "../system/DepositFactoryAuthority.sol";
 /// @title  Deposit.
 /// @notice This is the main contract for tBTC. It is the state machine
 /// that (through various libraries) handles bitcoin funding,
-/// bitcoin-spv proofs, redemption, liquidation, and fraud logic. 
+/// bitcoin-spv proofs, redemption, liquidation, and fraud logic.
 /// @dev This is the execution context for libraries:
 /// `DepositFunding`, `DepositLiquidaton`, `DepositRedemption`,
 /// `DepositStates`, `DepositUtils`, `OutsourceDepositLogging`, and `TBTCConstants`.
@@ -54,7 +54,7 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice     Get the signer fee for the Deposit.
     /// @dev        This is the one-time fee required by the signers to perform .
-    ///             the tasks needed to maintain a decentralized and trustless 
+    ///             the tasks needed to maintain a decentralized and trustless
     ///             model for tBTC. It is a percentage of the lotSize (deposit size).
     /// @return     Fee amount in tBTC.
     function signerFee() public view returns (uint256) {
@@ -77,8 +77,8 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice     Get the size of the funding UTXO.
     /// @dev        This will only return 0 unless
-    ///             the funding transaction has been confirmed on-chain. 
-    ///             See `provideBTCFundingProof` for more info on the funding proof. 
+    ///             the funding transaction has been confirmed on-chain.
+    ///             See `provideBTCFundingProof` for more info on the funding proof.
     /// @return     Uint256 UTXO size in satoshi.
     ///             0 if no funding proof has been provided.
     function utxoSize() public view returns (uint256){
@@ -87,7 +87,7 @@ contract Deposit is DepositFactoryAuthority {
 
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
-    /// @dev           Only the Deposit factory can call this. 
+    /// @dev           Only the Deposit factory can call this.
     /// @param _TBTCSystem        `TBTCSystem` address. More info in `VendingMachine`.
     /// @param _TBTCToken         `TBTCToken` address. More info in TBTCToken`.
     /// @param _TBTCDepositToken  `TBTCDepositToken` (TDT) address. More info in `TBTCDepositToken`.
@@ -95,7 +95,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @param _VendingMachine    `VendingMachine` address. More info in `VendingMachine`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
-    /// @param _lotSize     The minimum amount of satoshi the funder is required to send. 
+    /// @param _lotSize     The minimum amount of satoshi the funder is required to send.
     ///                     This is also the amount of TBTC the TDT holder will receive:
     ///                     (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
     /// @return             True if successful, otherwise revert.
@@ -120,7 +120,7 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice                     Deposit owner (TDT holder) can request redemption.
     ///                             Once redemption is requested
-    ///                             a proof with sufficient accumulated difficulty is 
+    ///                             a proof with sufficient accumulated difficulty is
     ///                             required to complete redemption.
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx.
     /// @param  _outputValueBytes   The 8-byte Little Endian output size.
@@ -135,12 +135,12 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     /// @notice                     Deposit owner (TDT holder) can request redemption.
-    ///                             Once redemption is requested a proof with 
+    ///                             Once redemption is requested a proof with
     ///                             sufficient accumulated difficulty is required
     ///                             to complete redemption.
-    /// @dev                        The caller specifies details about the Bitcoin redemption tx and pays 
-    ///                             for the redemption. The TDT (deposit ownership) is transfered to _finalRecipient, and 
-    ///                             _finalRecipient is marked as the deposit redeemer. 
+    /// @dev                        The caller specifies details about the Bitcoin redemption tx and pays
+    ///                             for the redemption. The TDT (deposit ownership) is transfered to _finalRecipient, and
+    ///                             _finalRecipient is marked as the deposit redeemer.
     /// @param  _outputValueBytes   The 8-byte LE output size.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.

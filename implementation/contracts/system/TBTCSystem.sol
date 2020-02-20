@@ -17,7 +17,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title  TBTC System.
-/// @notice This contract acts as a central point for access control, 
+/// @notice This contract acts as a central point for access control,
 ///         value governance, and price feed.
 /// @dev    Governable values should only affect new deposit creation.
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
@@ -54,9 +54,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         relay = _relay;
     }
 
-    /// @notice        Initialize contracts 
-    /// @dev           Only the Deposit factory should call this, and only once. 
-    /// @param _keepVendor        ECDSA keep vendor address. 
+    /// @notice        Initialize contracts
+    /// @dev           Only the Deposit factory should call this, and only once.
+    /// @param _keepVendor        ECDSA keep vendor address.
     /// @param _depositFactory    Deposit Factory address. More info in `DepositFactory`.
     /// @param _masterDepositAddress  Master Deposit address. More info in `Deposit`.
     /// @param _tbtcToken         TBTCToken address. More info in `TBTCToken`.
@@ -64,7 +64,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _feeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken`.
     /// @param _vendingMachine    Vending Machine address. More info in `VendingMachine`.
     /// @param _keepThreshold     Signing group honesty threshold.
-    /// @param _keepSize          Signing group size. 
+    /// @param _keepSize          Signing group size.
     function initialize(
         address _keepVendor,
         address _depositFactory,

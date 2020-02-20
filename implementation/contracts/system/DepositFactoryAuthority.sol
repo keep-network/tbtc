@@ -2,7 +2,7 @@ pragma solidity 0.5.10;
 
 /// @title  Deposit Factory Authority
 /// @notice Contract to secure function calls to the Deposit Factory.
-/// @dev    Secured by setting the depositFactory address and using the onlyFactory 
+/// @dev    Secured by setting the depositFactory address and using the onlyFactory
 ///         modifier on functions requiring restriction.
 contract DepositFactoryAuthority {
 

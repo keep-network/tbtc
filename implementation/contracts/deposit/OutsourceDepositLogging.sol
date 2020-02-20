@@ -8,7 +8,7 @@ library OutsourceDepositLogging {
 
     /// @notice               Fires a Created event.
     /// @dev                  `DepositLog.logCreated` fires a Created event with
-    ///                       _keepAddress, msg.sender and block.timestamp. 
+    ///                       _keepAddress, msg.sender and block.timestamp.
     ///                       msg.sender will be the calling Deposit's address.
     /// @param  _keepAddress  The address of the associated keep.
     function logCreated(DepositUtils.Deposit storage _d, address _keepAddress) external {

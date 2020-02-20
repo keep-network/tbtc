@@ -17,7 +17,7 @@ import "./DepositFactoryAuthority.sol";
 ///      corresponding deposit contract's address. That is, the TDTs id is
 ///      convertible to the deposit's address and vice versa. TDTs are minted
 ///      automatically by the factory during each deposit's initialization. See
-///      DepositFactory.createNewDeposit() for more info on how the TDT is minted. 
+///      DepositFactory.createNewDeposit() for more info on how the TDT is minted.
 contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
 
     constructor(address _depositFactory)
@@ -57,14 +57,14 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
     }
 }
 
-/// @title Interface of recipient contract for approveAndCall pattern. 
-/// See `FundingScript` contract for an example. 
-interface tokenRecipient { 
+/// @title Interface of recipient contract for approveAndCall pattern.
+/// See `FundingScript` contract for an example.
+interface tokenRecipient {
     function receiveApproval(
         address _from,
         uint256 _value,
         address _token,
         bytes calldata
         _extraDat
-    ) external; 
+    ) external;
 }

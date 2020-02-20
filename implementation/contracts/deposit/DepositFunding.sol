@@ -43,7 +43,7 @@ library DepositFunding {
     /// @notice         Internally called function to set up a newly created Deposit instance.
     ///                 This should not be called by developers, use `DepositFactory.createNewDeposit`
     ///                 to create a new deposit.
-    /// @dev            If called directly, the transaction will revert since the call will be 
+    /// @dev            If called directly, the transaction will revert since the call will be
     ///                 executed on an already set-up instance.
     /// @param _d       deposit storage pointer.
     /// @param _m       Signing group honesty threshold.
@@ -60,7 +60,7 @@ library DepositFunding {
         require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
         require(_system.isAllowedLotSize(_lotSize), "provided lot size not supported");
- 
+
         _d.lotSizeSatoshis = _lotSize;
         uint256 _bondRequirement = _lotSize.mul(_system.getInitialCollateralizedPercent()).div(100);
         /* solium-disable-next-line value-in-payable */
