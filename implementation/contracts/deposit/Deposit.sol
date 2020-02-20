@@ -13,7 +13,7 @@ import "../system/DepositFactoryAuthority.sol";
 /// bitcoin-spv proofs, redemption, liquidation, and fraud logic. 
 /// @dev This is the execution context for libraries:
 /// `DepositFunding`, `DepositLiquidaton`, `DepositRedemption`,
-/// `DepositSTates`, `depositUtils`, `OutsourceDepositLogging`, and `TBTCConstants`.
+/// `DepositStates`, `DepositUtils`, `OutsourceDepositLogging`, and `TBTCConstants`.
 contract Deposit is DepositFactoryAuthority {
 
     using DepositRedemption for DepositUtils.Deposit;
@@ -88,11 +88,11 @@ contract Deposit is DepositFactoryAuthority {
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this. 
-    /// @param _TBTCSystem        TBTCSystem address. More info in `VendingMachine`.
-    /// @param _TBTCToken         TBTCToken address. More info in TBTCToken`.
-    /// @param _TBTCDepositToken  TBTCDepositToken (TDT) address. More info in `TBTCDepositToken`.
-    /// @param _FeeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken`.
-    /// @param _VendingMachine    VendingMachine address. More info in `VendingMachine`.
+    /// @param _TBTCSystem        `TBTCSystem` address. More info in `VendingMachine`.
+    /// @param _TBTCToken         `TBTCToken` address. More info in TBTCToken`.
+    /// @param _TBTCDepositToken  `TBTCDepositToken` (TDT) address. More info in `TBTCDepositToken`.
+    /// @param _FeeRebateToken    `FeeRebateToken` (FRT) address. More info in `FeeRebateToken`.
+    /// @param _VendingMachine    `VendingMachine` address. More info in `VendingMachine`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
     /// @param _lotSize     The minimum amount of satoshi the funder is required to send. 
