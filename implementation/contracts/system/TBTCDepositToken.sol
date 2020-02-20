@@ -11,11 +11,13 @@ import "./DepositFactoryAuthority.sol";
 ///         versa. Owning a TDT is equivalent to owning its corresponding
 ///         deposit. TDTs can be transferred freely. tBTC's VendingMachine
 ///         contract takes ownership of TDTs and in exchange returns fungible
-//          TBTC tokens whose value is backed 1-to-1 by the corresponding
-//          deposit's BTC.
+///         TBTC tokens whose value is backed 1-to-1 by the corresponding
+///         deposit's BTC.
 /// @dev Currently, TDTs are minted using the uint256 casting of the
 ///      corresponding deposit contract's address. That is, the TDTs id is
-///      convertible to the deposit's address and vice versa.
+///      convertible to the deposit's address and vice versa. TDTs are minted
+///      automatically by the factory during each deposit's initialization. See
+///      DepositFactory.createNewDeposit() for more info on how the TDT is minted.
 contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
 
     constructor(address _depositFactory)
@@ -33,13 +35,14 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
     }
 
     /// @dev Returns whether the specified token exists.
-    /// @param _tokenId uint256 ID of the token to query the existence of
-    /// @return bool whether the token exists
+    /// @param _tokenId uint256 ID of the token to query the existence of.
+    /// @return bool whether the token exists.
     function exists(uint256 _tokenId) public view returns (bool) {
         return _exists(_tokenId);
     }
 
-    /// @notice           Set allowance for other address and notify.
+    /// @notice           Allow another address to spend on the caller's behalf.
+    ///                   Set allowance for other address and notify.
     ///                   Allows `_spender` to transfer the specified TDT
     ///                   on your behalf and then ping the contract about it.
     /// @dev              The `_spender` should implement the `tokenRecipient` interface below
@@ -53,5 +56,15 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
         spender.receiveApproval(msg.sender, _tdtId, address(this), _extraData);
     }
 }
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
 
+/// @title Interface of recipient contract for approveAndCall pattern.
+/// See `FundingScript` contract for an example.
+interface tokenRecipient {
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes calldata
+        _extraDat
+    ) external;
+}

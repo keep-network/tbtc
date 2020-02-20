@@ -8,7 +8,10 @@ import {Deposit} from "../deposit/Deposit.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 
 /// @notice A one-click script for redeeming TBTC into BTC.
-/// @dev Wrapper script for VendingMachine.tbtcToBtc.
+/// @dev Wrapper script for VendingMachine.tbtcToBtc
+/// This contract implements receiveApproval() and can therefore use
+/// approveAndCall(). This pattern combines TBTC Token approval and
+/// vendingMachine.tbtcToBtc() in a single transaction.
 contract RedemptionScript {
     using BytesLib for bytes;
 
