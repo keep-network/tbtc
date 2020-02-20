@@ -1,10 +1,12 @@
 pragma solidity ^0.5.10;
 
-import {Deposit} from '../../../contracts/deposit/Deposit.sol';
+import {Deposit} from "../../../contracts/deposit/Deposit.sol";
 
 contract TestDeposit is Deposit {
 
-    constructor() public {}
+    constructor() public {
+    // solium-disable-previous-line no-empty-blocks
+    }
 
     function createNewDeposit(
         address _TBTCSystem,
@@ -43,7 +45,7 @@ contract TestDeposit is Deposit {
         setState(0);
         setLiquidationAndCourtesyInitated(0, 0);
         setRequestInfo(address(0), "", 0, 0, bytes32(0));
-        setUTXOInfo(bytes8(0), 0, '');
+        setUTXOInfo(bytes8(0), 0, "");
 
         setKeepAddress(address(0));
         setSigningGroupRequestedAt(0);
@@ -62,7 +64,7 @@ contract TestDeposit is Deposit {
     }
 
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
-    
+
     function setLotSize(uint256 _lotSizeSatoshis) public {
         self.lotSizeSatoshis = _lotSizeSatoshis;
     }
@@ -175,11 +177,11 @@ contract TestDeposit is Deposit {
         return self.getRedemptionTbtcRequirement(_redeemer);
     }
 
-   function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
+    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
         return self.getOwnerRedemptionTbtcRequirement(_redeemer);
     }
 
-     function performRedemptionTBTCTransfers() public {
+    function performRedemptionTBTCTransfers() public {
         self.performRedemptionTBTCTransfers();
     }
 
@@ -196,7 +198,7 @@ contract TestDeposit is Deposit {
         return self.wasDigestApprovedForSigning(_digest);
     }
 
-     function redemptionTransactionChecks(
+    function redemptionTransactionChecks(
         bytes memory _txInputVector,
         bytes memory _txOutputVector
     ) public view returns (uint256) {
