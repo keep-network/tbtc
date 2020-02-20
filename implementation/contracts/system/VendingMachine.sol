@@ -9,6 +9,11 @@ import {DepositUtils} from "../deposit/DepositUtils.sol";
 import "../deposit/Deposit.sol";
 import "./TBTCSystemAuthority.sol";
 
+/// @title  Vending Machine
+/// @notice The Vending Machine swaps TDTs (`TBTCDepositToken`)
+///         to TBTC (`TBTCToken`) and vice versa.
+/// @dev    The Vending Machine should have exclusive TBTC and FRT (`FeeRebateToken`) minting
+///         privileges.
 contract VendingMachine is TBTCSystemAuthority{
     using SafeMath for uint256;
 
@@ -20,6 +25,11 @@ contract VendingMachine is TBTCSystemAuthority{
         TBTCSystemAuthority(_systemAddress)
     public {}
 
+    /// @notice Set external contracts needed by the Vending Machine.
+    /// @dev    Addresses are used to update the local contract instance.
+    /// @param _tbtcToken        TBTCToken address. More info in `TBTCToken`.
+    /// @param _tbtcDepositToken TBTCDepositToken (TDT) address. More info in `TBTCDepositToken`.
+    /// @param _feeRebateToken   FeeRebateToken (FRT) address. More info in `FeeRebateToken`.
     function setExternalAddresses(
         address _tbtcToken,
         address _tbtcDepositToken,
@@ -31,15 +41,17 @@ contract VendingMachine is TBTCSystemAuthority{
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
-    /// @param _depositAddress the address of the deposit
+    /// @param _depositAddress The address of the deposit
     function isQualified(address payable _depositAddress) public view returns (bool) {
         return Deposit(_depositAddress).inActive();
     }
 
-    /// @notice Pay back the deposit's TBTC and receive the tBTC Deposit Token
+    /// @notice Burns TBTC and transfers the tBTC Deposit Token to the caller
     ///         as long as it is qualified.
-    /// @dev    Burns TBTC, transfers TDT from vending machine to caller
-    /// @param _tdtId ID of tBTC Deposit Token to buy
+    /// @dev    We burn the lotSize of the Deposit in order to maintain
+    ///         the TBTC supply peg in the Vending Machine. VendingMachine must be approved
+    ///         by the caller to burn the required amount.
+    /// @param _tdtId ID of tBTC Deposit Token to buy.
     function tbtcToTdt(uint256 _tdtId) public {
         require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
         require(isQualified(address(_tdtId)), "Deposit must be qualified");
@@ -53,9 +65,10 @@ contract VendingMachine is TBTCSystemAuthority{
         tbtcDepositToken.transferFrom(address(this), msg.sender, _tdtId);
     }
 
-    /// @notice Trade in the tBTC Deposit Token and mint TBTC.
-    /// @dev    Transfers TDT from caller to vending machine, and mints TBTC to caller
-    /// @param _tdtId ID of tBTC Deposit Token to sell
+    /// @notice Transfer the tBTC Deposit Token and mint TBTC.
+    /// @dev    Transfers TDT from caller to vending machine, and mints TBTC to caller.
+    ///         Vending Machine must be approved to transfer TDT by the caller.
+    /// @param _tdtId ID of tBTC Deposit Token to sell.
     function tdtToTbtc(uint256 _tdtId) public {
         require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
         require(isQualified(address(_tdtId)), "Deposit must be qualified");
@@ -84,7 +97,7 @@ contract VendingMachine is TBTCSystemAuthority{
     // WRAPPERS
 
     /// @notice Qualifies a deposit and mints TBTC.
-    /// @dev User must allow VendingManchine to transfer TDT
+    /// @dev User must allow VendingManchine to transfer TDT.
     function unqualifiedDepositToTbtc(
         address payable _depositAddress,
         bytes4 _txVersion,
