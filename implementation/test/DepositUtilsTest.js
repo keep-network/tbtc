@@ -1,15 +1,12 @@
-import expectThrow from './helpers/expectThrow'
-import increaseTime from './helpers/increaseTime'
-import deployTestDeposit from './helpers/deployTestDeposit'
-
-import BN from 'bn.js'
-import utils from './utils'
-import chai, { expect } from 'chai'
-import bnChai from 'bn-chai'
-chai.use(bnChai(BN))
-
-const TestDepositUtils = artifacts.require('TestDepositUtils')
-const TestDepositUtilsSPV = artifacts.require('TestDepositUtilsSPV')
+const { deployAndLinkAll } = require('../testHelpers/testDeployer.js')
+const { HEADER_PROOFS, TX, LOW_WORK_HEADER, increaseTime } = require('../testHelpers/utils.js')
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment')
+const [owner] = accounts
+const { BN, constants, expectRevert } = require('@openzeppelin/test-helpers')
+const { ZERO_ADDRESS } = constants
+const { expect } = require('chai')
+const TestDepositUtils = contract.fromArtifact('TestDepositUtils')
+const TestDepositUtilsSPV = contract.fromArtifact('TestDepositUtilsSPV')
 
 // real tx from mainnet bitcoin, interpreted as funding tx
 // tx source: https://www.blockchain.com/btc/tx/7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f
@@ -32,12 +29,10 @@ const _expectedUTXOoutpoint = '0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5
 // const _outputValue = 490029088;
 const _outValueBytes = '0x2040351d00000000'
 
-contract('DepositUtils', (accounts) => {
+describe('DepositUtils', async function() {
   let beneficiary
-
   const funderBondAmount = new BN('10').pow(new BN('5'))
   const fullBtc = 100000000
-
   let tbtcConstants
   let mockRelay
   let tbtcSystemStub
@@ -57,7 +52,7 @@ contract('DepositUtils', (accounts) => {
       feeRebateToken,
       testDeposit,
       ecdsaKeepStub,
-    } = await deployTestDeposit([], { TestDeposit: TestDepositUtils }))
+    } = await deployAndLinkAll([], { TestDeposit: TestDepositUtils }))
 
     beneficiary = accounts[2]
 
@@ -68,7 +63,7 @@ contract('DepositUtils', (accounts) => {
       tbtcToken.address,
       tbtcDepositToken.address,
       feeRebateToken.address,
-      utils.address0,
+      ZERO_ADDRESS,
       1, // m
       1, // n
       fullBtc,
@@ -104,25 +99,25 @@ contract('DepositUtils', (accounts) => {
     it('reverts on unknown difficulty', async () => {
       await mockRelay.setPrevEpochDifficulty(1)
 
-      await expectThrow(
-        testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0]),
+      await expectRevert(
+        testDeposit.evaluateProofDifficulty(HEADER_PROOFS[0]),
         'not at current or previous difficulty'
       )
     })
 
     it('evaluates a header proof with previous', async () => {
       await mockRelay.setPrevEpochDifficulty(5646403851534)
-      await testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
+      await testDeposit.evaluateProofDifficulty(HEADER_PROOFS[0])
     })
 
     it('evaluates a header proof with current', async () => {
       await mockRelay.setCurrentEpochDifficulty(5646403851534)
-      await testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0])
+      await testDeposit.evaluateProofDifficulty(HEADER_PROOFS[0])
     })
 
     it('reverts on low difficulty', async () => {
-      await expectThrow(
-        testDeposit.evaluateProofDifficulty(utils.HEADER_PROOFS[0].slice(0, 160 * 4 + 2)),
+      await expectRevert(
+        testDeposit.evaluateProofDifficulty(HEADER_PROOFS[0].slice(0, 160 * 4 + 2)),
         'Insufficient accumulated difficulty in header chain'
       )
     })
@@ -138,9 +133,9 @@ contract('DepositUtils', (accounts) => {
         // `2`). Each header is expected to be `160` characters, we take
         // `4` headers and cut out a last byte from the last header (subtract
         // `2`).
-        const badLengthChain = utils.HEADER_PROOFS[0].slice(0, (2 + (160 * 4)) - 2)
+        const badLengthChain = HEADER_PROOFS[0].slice(0, (2 + (160 * 4)) - 2)
 
-        await expectThrow(
+        await expectRevert(
           testDeposit.evaluateProofDifficulty(badLengthChain),
           'Invalid length of the headers chain'
         )
@@ -149,18 +144,18 @@ contract('DepositUtils', (accounts) => {
       it('invalid headers chain', async () => {
         // Cut out one header from the headers chain. Take out second header
         // from the headers chain.
-        const invalidChain = utils.HEADER_PROOFS[0].slice(0, (2 + 160))
-          + utils.HEADER_PROOFS[0].slice((2 + (160 * 2)), (2 + (160 * 4)))
+        const invalidChain = HEADER_PROOFS[0].slice(0, (2 + 160))
+          + HEADER_PROOFS[0].slice((2 + (160 * 2)), (2 + (160 * 4)))
 
-        await expectThrow(
+        await expectRevert(
           testDeposit.evaluateProofDifficulty(invalidChain),
           'Invalid headers chain'
         )
       })
 
       it('insufficient work in a header', async () => {
-        await expectThrow(
-          testDeposit.evaluateProofDifficulty(utils.LOW_WORK_HEADER),
+        await expectRevert(
+          testDeposit.evaluateProofDifficulty(LOW_WORK_HEADER),
           'Insufficient work in a header'
         )
       })
@@ -169,16 +164,16 @@ contract('DepositUtils', (accounts) => {
 
   describe('checkProofFromTxId()', async () => {
     before(async () => {
-      await mockRelay.setCurrentEpochDifficulty(utils.TX.difficulty)
+      await mockRelay.setCurrentEpochDifficulty(TX.difficulty)
     })
 
     it('does not error', async () => {
-      await testDeposit.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0])
+      await testDeposit.checkProofFromTxId.call(TX.tx_id_le, TX.proof, TX.index, HEADER_PROOFS.slice(-1)[0])
     })
 
     it('fails with a broken proof', async () => {
-      await expectThrow(
-        testDeposit.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, 0, utils.HEADER_PROOFS.slice(-1)[0]),
+      await expectRevert(
+        testDeposit.checkProofFromTxId.call(TX.tx_id_le, TX.proof, 0, HEADER_PROOFS.slice(-1)[0]),
         'Tx merkle proof is not valid for provided header and txId'
       )
     })
@@ -187,8 +182,8 @@ contract('DepositUtils', (accounts) => {
       await mockRelay.setCurrentEpochDifficulty(1)
       await mockRelay.setPrevEpochDifficulty(1)
 
-      await expectThrow(
-        testDeposit.checkProofFromTxId.call(utils.TX.tx_id_le, utils.TX.proof, utils.TX.index, utils.HEADER_PROOFS.slice(-1)[0]),
+      await expectRevert(
+        testDeposit.checkProofFromTxId.call(TX.tx_id_le, TX.proof, TX.index, HEADER_PROOFS.slice(-1)[0]),
         'not at current or previous difficulty'
       )
     })
@@ -202,13 +197,13 @@ contract('DepositUtils', (accounts) => {
     it('correctly returns valuebytes', async () => {
       await testDeposit.setPubKey(_signerPubkeyX, _signerPubkeyY)
       const valueBytes = await testDeposit.findAndParseFundingOutput.call(_txOutputVector, _fundingOutputIndex)
-      assert.equal(_outValueBytes, valueBytes, 'Got incorrect value bytes from funding output')
+      expect(_outValueBytes, 'Got incorrect value bytes from funding output').to.equal(valueBytes)
     })
 
     it('fails with incorrect signer pubKey', async () => {
       await testDeposit.setPubKey('0x' + '11'.repeat(20), '0x' + '11'.repeat(20))
 
-      await expectThrow(
+      await expectRevert(
         testDeposit.findAndParseFundingOutput.call(_txOutputVector, _fundingOutputIndex),
         'could not identify output funding the required public key hash'
       )
@@ -230,7 +225,7 @@ contract('DepositUtils', (accounts) => {
         tbtcDepositToken,
         feeRebateToken,
         testDeposit,
-      } = await deployTestDeposit([], { TestDeposit: TestDepositUtilsSPV }))
+      } = await deployAndLinkAll([], { TestDeposit: TestDepositUtilsSPV }))
 
       beneficiary = accounts[2]
 
@@ -241,7 +236,7 @@ contract('DepositUtils', (accounts) => {
         tbtcToken.address,
         tbtcDepositToken.address,
         feeRebateToken.address,
-        utils.address0,
+        ZERO_ADDRESS,
         1, // m
         1, // n
         fullBtc,
@@ -254,26 +249,26 @@ contract('DepositUtils', (accounts) => {
 
     it('returns correct value and outpoint', async () => {
       const parseResults = await testDeposit.validateAndParseFundingSPVProof.call(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders)
-      assert.equal(parseResults[0], _outValueBytes)
-      assert.equal(parseResults[1], _expectedUTXOoutpoint)
+      expect(parseResults[0]).to.equal(_outValueBytes)
+      expect(parseResults[1]).to.equal(_expectedUTXOoutpoint)
     })
 
     it('fails with bad _txInputVector', async () => {
-      await expectThrow(
+      await expectRevert(
         testDeposit.validateAndParseFundingSPVProof.call(_version, '0x' + '00'.repeat(32), _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders),
         'invalid input vector provided'
       )
     })
 
     it('fails with bad _txOutputVector', async () => {
-      await expectThrow(
+      await expectRevert(
         testDeposit.validateAndParseFundingSPVProof.call(_version, _txInputVector, '0x' + '00'.repeat(32), _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _bitcoinHeaders),
         'invalid output vector provided'
       )
     })
 
     it('fails with bad _merkleProof', async () => {
-      await expectThrow(
+      await expectRevert(
         testDeposit.validateAndParseFundingSPVProof.call(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, '0x' + '00'.repeat(32), _txIndexInBlock, _bitcoinHeaders),
         'Tx merkle proof is not valid for provided header and txId'
       )
@@ -282,7 +277,7 @@ contract('DepositUtils', (accounts) => {
     it('fails with insufficient difficulty', async () => {
       const _badheaders = `0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6`
 
-      await expectThrow(
+      await expectRevert(
         testDeposit.validateAndParseFundingSPVProof.call(_version, _txInputVector, _txOutputVector, _txLocktime, _fundingOutputIndex, _merkleProof, _txIndexInBlock, _badheaders),
         'Insufficient accumulated difficulty in header chain'
       )
@@ -303,18 +298,18 @@ contract('DepositUtils', (accounts) => {
   describe('determineCompressionPrefix()', async () => {
     it('selects 2 for even', async () => {
       const res = await testDeposit.determineCompressionPrefix.call('0x' + '00'.repeat(32))
-      assert.equal(res, '0x02')
+      expect(res).to.equal('0x02')
     })
     it('selects 3 for odd', async () => {
       const res = await testDeposit.determineCompressionPrefix.call('0x' + '00'.repeat(31) + '01')
-      assert.equal(res, '0x03')
+      expect(res).to.equal('0x03')
     })
   })
 
   describe('compressPubkey()', async () => {
     it('returns a 33 byte array with a prefix', async () => {
       const compressed = await testDeposit.compressPubkey.call('0x' + '00'.repeat(32), '0x' + '00'.repeat(32))
-      assert.equal(compressed, '0x02' + '00'.repeat(32))
+      expect(compressed).to.equal('0x02' + '00'.repeat(32))
     })
   })
 
@@ -322,13 +317,13 @@ contract('DepositUtils', (accounts) => {
     it('returns the concatenated signer X and Y coordinates', async () => {
       await testDeposit.setPubKey(_signerPubkeyX, _signerPubkeyY)
       const signerPubkey = await testDeposit.signerPubkey.call()
-      assert.equal(signerPubkey, _concatenatedKeys)
+      expect(signerPubkey).to.equal(_concatenatedKeys)
     })
 
     it('returns base value for unset public key', async () => {
       const newTestUtilsInstance = await TestDepositUtils.new()
       const signerPubkey = await newTestUtilsInstance.signerPubkey.call()
-      assert.equal(signerPubkey, '0x' + '00'.repeat(64))
+      expect(signerPubkey).to.equal('0x' + '00'.repeat(64))
     })
   })
 
@@ -337,7 +332,7 @@ contract('DepositUtils', (accounts) => {
       const expectedSignerPKH = '0xa99c23add58e3d0712278b2873c3c0bd21657115'
       await testDeposit.setPubKey(_signerPubkeyX, _signerPubkeyX)
       const signerPKH = await testDeposit.signerPKH.call()
-      assert.equal(signerPKH, expectedSignerPKH)
+      expect(signerPKH).to.equal(expectedSignerPKH)
     })
   })
 
@@ -412,7 +407,7 @@ contract('DepositUtils', (accounts) => {
   describe('feeRebateTokenHolder()', async () => {
     it('calls out to the system', async () => {
       const res = await testDeposit.feeRebateTokenHolder.call()
-      assert.equal(res, accounts[2])
+      expect(res).to.equal(accounts[2])
     })
   })
 
@@ -420,17 +415,18 @@ contract('DepositUtils', (accounts) => {
     it('deletes state', async () => {
       await testDeposit.setRequestInfo('0x' + '11'.repeat(20), '0x' + '11'.repeat(20), 5, 6, '0x' + '33'.repeat(32))
       const requestInfo = await testDeposit.getRequestInfo.call()
-      assert.equal(requestInfo[4], '0x' + '33'.repeat(32))
+      expect(requestInfo[4]).to.equal('0x' + '33'.repeat(32))
+
       await testDeposit.redemptionTeardown()
       const newRequestInfo = await testDeposit.getRequestInfo.call()
-      assert.equal(newRequestInfo[4], '0x' + '00'.repeat(32))
+      expect(newRequestInfo[4]).to.equal('0x' + '00'.repeat(32))
     })
   })
 
   describe('seizeSignerBonds()', async () => {
     it('calls out to the keep system and returns the seized amount', async () => {
       const value = 5000
-      await ecdsaKeepStub.send(value, { from: accounts[0] })
+      await ecdsaKeepStub.send(value, { from: owner })
 
       const seized = await testDeposit.seizeSignerBonds.call()
       await testDeposit.seizeSignerBonds()
@@ -439,7 +435,7 @@ contract('DepositUtils', (accounts) => {
     })
 
     it('errors if no funds were seized', async () => {
-      await expectThrow(
+      await expectRevert(
         testDeposit.seizeSignerBonds.call(),
         'No funds received, unexpected'
       )
@@ -465,14 +461,14 @@ contract('DepositUtils', (accounts) => {
   describe('pushFundsToKeepGroup()', async () => {
     it('calls out to the keep contract', async () => {
       const value = 10000
-      await testDeposit.send(value, { from: accounts[0] })
+      await testDeposit.send(value, { from: owner })
       await testDeposit.pushFundsToKeepGroup(value)
       const keepBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
-      assert.equal(keepBalance, value) // web3 balances are integers I guess
+      expect(keepBalance).to.eq.BN(new BN(value))
     })
 
     it('reverts if insufficient value', async () => {
-      await expectThrow(
+      await expectRevert(
         testDeposit.pushFundsToKeepGroup.call(10000000000000),
         'Not enough funds to send'
       )

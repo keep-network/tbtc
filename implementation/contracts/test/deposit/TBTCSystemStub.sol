@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-import {TBTCSystem} from '../../../contracts/system/TBTCSystem.sol';
+import {TBTCSystem} from "../../../contracts/system/TBTCSystem.sol";
 
 contract TBTCSystemStub is TBTCSystem {
     address keepAddress = address(7);
@@ -23,12 +23,12 @@ contract TBTCSystemStub is TBTCSystem {
         return oraclePrice;
     }
 
+    function requestNewKeep(uint256, uint256, uint256) external payable returns (address _keepAddress) {
+        return keepAddress;
+    }
+
     // override parent
     function approvedToLog(address) public pure returns (bool) {
         return true;
-    }
-
-    function requestNewKeep(uint256, uint256, uint256) external payable returns (address _keepAddress) {
-        return keepAddress;
     }
 }

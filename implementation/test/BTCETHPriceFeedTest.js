@@ -1,14 +1,13 @@
-const BTCETHPriceFeed = artifacts.require('BTCETHPriceFeed')
-const MockMedianizer = artifacts.require('MockMedianizer')
 
-import { createSnapshot, restoreSnapshot } from './helpers/snapshot'
-const BN = require('bn.js')
-const chai = require('chai')
-const expect = chai.expect
-const bnChai = require('bn-chai')
-chai.use(bnChai(BN))
+const { createSnapshot, restoreSnapshot } = require('../testHelpers/helpers/snapshot.js')
+const { contract, web3 } = require('@openzeppelin/test-environment')
+const { BN } = require('@openzeppelin/test-helpers')
+const { expect } = require('chai')
 
-contract('BTCETHPriceFeed', (accounts) => {
+const BTCETHPriceFeed = contract.fromArtifact('BTCETHPriceFeed')
+const MockMedianizer = contract.fromArtifact('MockMedianizer')
+
+describe('BTCETHPriceFeed', async function() {
   let btcEthPriceFeed
   let btc
   let eth
@@ -37,7 +36,7 @@ contract('BTCETHPriceFeed', (accounts) => {
       // 7152.55 / 142.28 = 50.2709446162
       // 50.2709446162 * 10^10
       // 502,709,446,162 wei
-      expect(price).to.eq.BN('502709446162')
+      expect(price).to.be.bignumber.equal(new BN('502709446162'))
     })
 
     it('casts down each medianizer price to lower 128 bits', async () => {
@@ -48,7 +47,7 @@ contract('BTCETHPriceFeed', (accounts) => {
       await eth.setValue(ethPrice)
 
       const price = await btcEthPriceFeed.getPrice()
-      expect(price).to.eq.BN('20000000000')
+      expect(price).to.be.bignumber.equal(new BN('20000000000'))
     })
   })
 })

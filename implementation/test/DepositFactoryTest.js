@@ -1,34 +1,32 @@
-import deployTestDeposit from './helpers/deployTestDeposit'
-import expectThrow from './helpers/expectThrow'
+const { deployAndLinkAll } = require('../testHelpers/testDeployer.js')
+const { contract, web3 } = require('@openzeppelin/test-environment')
+const { states } = require('../testHelpers/utils.js')
+const { BN, constants, expectRevert } = require('@openzeppelin/test-helpers')
+const { ZERO_ADDRESS } = constants
+const { expect } = require('chai')
 
-import BN from 'bn.js'
-import utils from './utils'
-import chai, { expect } from 'chai'
-import bnChai from 'bn-chai'
-chai.use(bnChai(BN))
 
-const ECDSAKeepStub = artifacts.require('ECDSAKeepStub')
-const Deposit = artifacts.require('Deposit')
-const TestDeposit = artifacts.require('TestDeposit')
+const ECDSAKeepStub = contract.fromArtifact('ECDSAKeepStub')
+const Deposit = contract.fromArtifact('Deposit')
+const TestDeposit = contract.fromArtifact('TestDeposit')
+const TBTCSystem = contract.fromArtifact('TBTCSystem')
 
-const TBTCSystem = artifacts.require('TBTCSystem')
-
-contract('DepositFactory', () => {
+describe('DepositFactory', async function() {
   const openKeepFee = new BN('123456') // set in ECDAKeepFactory
   const fullBtc = 100000000
 
   describe('createDeposit()', async () => {
     let depositFactory
     let ecdsaKeepFactoryStub
+    let mockBTCETHPriceFeed
 
     before(async () => {
       // To properly test createDeposit, we deploy the real Deposit contract and
       // make sure we don't get hit by the ACL hammer.
       ({
         depositFactory,
-      } = await deployTestDeposit([], { 'TestDeposit': Deposit }))
+      } = await deployAndLinkAll([], { 'TestDeposit': Deposit }))
     })
-
     it('creates new clone instances', async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
@@ -44,19 +42,21 @@ contract('DepositFactory', () => {
 
       const eventList = await depositFactory.getPastEvents('DepositCloneCreated', { fromBlock: blockNumber, toBlock: 'latest' })
 
-      assert.equal(eventList.length, 2)
-      assert(web3.utils.isAddress(eventList[0].returnValues.depositCloneAddress))
-      assert(web3.utils.isAddress(eventList[1].returnValues.depositCloneAddress))
-      assert.notEqual(eventList[0].returnValues.depositCloneAddress, eventList[1].returnValues.depositCloneAddress, 'clone addresses should not be equal')
+      expect(eventList.length).to.equal(2)
+
+      expect(web3.utils.isAddress(eventList[0].returnValues.depositCloneAddress)).to.be.true
+      expect(web3.utils.isAddress(eventList[1].returnValues.depositCloneAddress)).to.be.true
+
+      expect(eventList[0].returnValues.depositCloneAddress, 'clone addresses should not be equal').to.not.equal(eventList[1].returnValues.depositCloneAddress)
     })
 
     it('correctly forwards value to keep factory', async () => {
-      // Use real TBTCSystem contract to validate value forwarding:
-      // DepositFactory -> Deposit -> TBTCSystem -> ECDSAKeepFactory
       ({
         ecdsaKeepFactoryStub,
         depositFactory,
-      } = await deployTestDeposit([], { 'TestDeposit': Deposit, 'TBTCSystemStub': TBTCSystem }))
+        mockBTCETHPriceFeed,
+      } = await deployAndLinkAll([], { 'TestDeposit': Deposit, 'TBTCSystemStub': TBTCSystem }))
+      await mockBTCETHPriceFeed.setPrice(new BN('1000000000000', 10))
 
       await depositFactory.createDeposit(
         fullBtc,
@@ -69,8 +69,8 @@ contract('DepositFactory', () => {
     })
 
     it('reverts if insufficient fee is provided', async () => {
-      const badOpenKeepFee = openKeepFee.sub(new BN(1))
-      await expectThrow(
+      const badOpenKeepFee = openKeepFee.sub(new BN('1'))
+      await expectRevert(
         depositFactory.createDeposit(
           fullBtc,
           { value: badOpenKeepFee }
@@ -98,7 +98,7 @@ contract('DepositFactory', () => {
         tbtcDepositToken,
         testDeposit,
         depositFactory,
-      } = await deployTestDeposit([]))
+      } = await deployAndLinkAll([]))
     })
 
     it('is not affected by state changes to other clone', async () => {
@@ -152,8 +152,8 @@ contract('DepositFactory', () => {
       const deposit1state = await deposit1.getCurrentState()
       const deposit2state = await deposit2.getCurrentState()
 
-      expect(deposit1state, 'Deposit 1 should be in AWAITING_BTC_FUNDING_PROOF').to.eq.BN(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      expect(deposit2state, 'Deposit 2 should be in ACTIVE').to.eq.BN(utils.states.ACTIVE)
+      expect(deposit1state, 'Deposit 1 should be in AWAITING_BTC_FUNDING_PROOF').to.eq.BN(states.AWAITING_BTC_FUNDING_PROOF)
+      expect(deposit2state, 'Deposit 2 should be in ACTIVE').to.eq.BN(states.ACTIVE)
     })
 
     it('is not affected by state changes to master', async () => {
@@ -163,8 +163,8 @@ contract('DepositFactory', () => {
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,
-        utils.address0,
-        utils.address0,
+        ZERO_ADDRESS,
+        ZERO_ADDRESS,
         1,
         1,
         fullBtc,
@@ -194,8 +194,8 @@ contract('DepositFactory', () => {
       // should be behind Master, at AWAITING_SIGNER_SETUP
       const newCloneState = await depositNew.getCurrentState()
 
-      expect(masterState, 'Master deposit should be in AWAITING_BTC_FUNDING_PROOF').to.eq.BN(utils.states.AWAITING_BTC_FUNDING_PROOF)
-      expect(newCloneState, 'New clone should be in AWAITING_SIGNER_SETUP').to.eq.BN(utils.states.AWAITING_SIGNER_SETUP)
+      expect(masterState, 'Master deposit should be in AWAITING_BTC_FUNDING_PROOF').to.eq.BN(states.AWAITING_BTC_FUNDING_PROOF)
+      expect(newCloneState, 'New clone should be in AWAITING_SIGNER_SETUP').to.eq.BN(states.AWAITING_SIGNER_SETUP)
     })
   })
 })

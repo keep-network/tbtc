@@ -2,6 +2,7 @@ const headerChains = require('./headerchains.json')
 const tx = require('./tx.json')
 const createHash = require('create-hash')
 const BN = require('bn.js')
+const { web3 } = require('@openzeppelin/test-environment')
 
 // Header with insufficient work. It's used for negative scenario tests when we
 // want to validate invalid header which hash (work) doesn't meet requirement of
@@ -47,22 +48,25 @@ function chainToProofBytes(chain) {
 async function deploySystem(deployList) {
   const deployed = {} // name: contract object
   const linkable = {} // name: linkable address
-
+  const names = []
+  const addresses = []
   for (let i = 0; i < deployList.length; ++i) {
-    await deployList[i].contract.link(linkable)
-
+    await deployList[i].contract.detectNetwork()
+    for (let q = 0; q < names.length; q++) {
+      await deployList[i].contract.link(names[q], addresses[q])
+    }
     let contract
     if (deployList[i].constructorParams == undefined) {
       contract = await deployList[i].contract.new()
     } else {
       const resolvedConstructorParams =
-        deployList[i].constructorParams.map((param) => linkable[param] || param)
-
+          deployList[i].constructorParams.map((param) => linkable[param] || param)
       contract = await deployList[i].contract.new(...resolvedConstructorParams)
     }
-
     linkable[deployList[i].name] = contract.address
     deployed[deployList[i].name] = contract
+    names.push(deployList[i].name)
+    addresses.push(contract.address)
   }
   return deployed
 }
