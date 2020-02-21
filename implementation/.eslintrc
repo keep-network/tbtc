@@ -1,5 +1,5 @@
 {
-  "extends": "eslint-config-keep",
+  "extends": ["eslint-config-keep", "prettier"],
   "parserOptions": {
     "ecmaVersion": 2017,
     "sourceType": "module"
@@ -7,8 +7,5 @@
   "env": {
     "es6": true,
     "mocha": true
-  },
-  "rules": {    
-    "semi": [2, "never"]
   }
 }

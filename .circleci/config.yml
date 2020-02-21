@@ -27,31 +27,19 @@ jobs:
           root: implementation
           paths:
             - .npmrc
-  lint_js:
+  lint:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
           at: implementation
       - run:
-          name: Lint JS
-          working_directory: ~/project/implementation
-          command: |
-            npm install
-            npm run js:lint
-  lint_solidity:
-    executor: docker-node
-    steps:
-      - checkout
-      - attach_workspace:
-          at: implementation
-      - run:
-          name: Lint Solidity
+          name: Lint Implementation
           working_directory: ~/project/implementation
           command: |
             set -ex
-            npm install
-            npm run sol:lint
+            npm ci
+            npm run lint
   unit_test_contracts:
     executor: docker-node
     steps:
@@ -67,7 +55,7 @@ jobs:
       - run:
           name: Run NPM tests
           working_directory: ~/project/implementation
-          command: npm install && npm run test
+          command: npm ci && npm run test
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -109,7 +97,7 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            cd implementation && npm install
+            cd implementation && npm ci
             node_modules/.bin/truffle compile
 
             cd docs
@@ -261,10 +249,7 @@ workflows:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
-      - lint_js:
-          requires:
-            - setup_github_package_registry
-      - lint_solidity:
+      - lint:
           requires:
             - setup_github_package_registry
   test:

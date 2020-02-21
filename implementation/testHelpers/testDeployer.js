@@ -1,58 +1,80 @@
-const { contract } = require('@openzeppelin/test-environment')
-const { constants, BN } = require('@openzeppelin/test-helpers')
-const { deploySystem } = require('./utils.js')
-const { ZERO_ADDRESS } = constants
+const {contract} = require("@openzeppelin/test-environment")
+const {constants, BN} = require("@openzeppelin/test-helpers")
+const {deploySystem} = require("./utils.js")
+const {ZERO_ADDRESS} = constants
 
-const BytesLib = contract.fromArtifact('BytesLib')
-const BTCUtils = contract.fromArtifact('BTCUtils')
-const ValidateSPV = contract.fromArtifact('ValidateSPV')
-const CheckBitcoinSigs = contract.fromArtifact('CheckBitcoinSigs')
-const OutsourceDepositLogging = contract.fromArtifact('OutsourceDepositLogging')
-const DepositStates = contract.fromArtifact('DepositStates')
-const DepositUtils = contract.fromArtifact('DepositUtils')
-const DepositFunding = contract.fromArtifact('DepositFunding')
-const DepositRedemption = contract.fromArtifact('DepositRedemption')
-const DepositLiquidation = contract.fromArtifact('DepositLiquidation')
-const ECDSAKeepStub = contract.fromArtifact('ECDSAKeepStub')
-const ECDSAKeepFactoryStub = contract.fromArtifact('ECDSAKeepFactoryStub')
-const ECDSAKeepVendorStub = contract.fromArtifact('ECDSAKeepVendorStub')
-const TestToken = contract.fromArtifact('TestToken')
-const MockRelay = contract.fromArtifact('MockRelay')
-const MockBTCETHPriceFeed = contract.fromArtifact('MockBTCETHPriceFeed')
-const TBTCSystemStub = contract.fromArtifact('TBTCSystemStub')
-const TBTCDepositToken = contract.fromArtifact('TestTBTCDepositToken')
-const FeeRebateToken = contract.fromArtifact('TestFeeRebateToken')
-const DepositFactory = contract.fromArtifact('DepositFactory')
-const VendingMachine = contract.fromArtifact('VendingMachine')
-const TestTBTCConstants = contract.fromArtifact('TestTBTCConstants')
-const TestDeposit = contract.fromArtifact('TestDeposit')
-const RedemptionScript = contract.fromArtifact('RedemptionScript')
-const FundingScript = contract.fromArtifact('FundingScript')
-
+const BytesLib = contract.fromArtifact("BytesLib")
+const BTCUtils = contract.fromArtifact("BTCUtils")
+const ValidateSPV = contract.fromArtifact("ValidateSPV")
+const CheckBitcoinSigs = contract.fromArtifact("CheckBitcoinSigs")
+const OutsourceDepositLogging = contract.fromArtifact("OutsourceDepositLogging")
+const DepositStates = contract.fromArtifact("DepositStates")
+const DepositUtils = contract.fromArtifact("DepositUtils")
+const DepositFunding = contract.fromArtifact("DepositFunding")
+const DepositRedemption = contract.fromArtifact("DepositRedemption")
+const DepositLiquidation = contract.fromArtifact("DepositLiquidation")
+const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
+const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
+const ECDSAKeepVendorStub = contract.fromArtifact("ECDSAKeepVendorStub")
+const TestToken = contract.fromArtifact("TestToken")
+const MockRelay = contract.fromArtifact("MockRelay")
+const MockBTCETHPriceFeed = contract.fromArtifact("MockBTCETHPriceFeed")
+const TBTCSystemStub = contract.fromArtifact("TBTCSystemStub")
+const TBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
+const FeeRebateToken = contract.fromArtifact("TestFeeRebateToken")
+const DepositFactory = contract.fromArtifact("DepositFactory")
+const VendingMachine = contract.fromArtifact("VendingMachine")
+const TestTBTCConstants = contract.fromArtifact("TestTBTCConstants")
+const TestDeposit = contract.fromArtifact("TestDeposit")
+const RedemptionScript = contract.fromArtifact("RedemptionScript")
+const FundingScript = contract.fromArtifact("FundingScript")
 
 const TEST_DEPOSIT_DEPLOY = [
-  { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
-  { name: 'MockRelay', contract: MockRelay },
-  { name: 'MockBTCETHPriceFeed', contract: MockBTCETHPriceFeed },
-  { name: 'TBTCSystemStub', contract: TBTCSystemStub, constructorParams: ['MockBTCETHPriceFeed', 'MockRelay'] },
-  { name: 'DepositFactory', contract: DepositFactory, constructorParams: ['TBTCSystemStub'] },
-  { name: 'VendingMachine', contract: VendingMachine, constructorParams: ['TBTCSystemStub'] },
-  { name: 'DepositStates', contract: DepositStates },
-  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
-  { name: 'DepositUtils', contract: DepositUtils },
-  { name: 'DepositRedemption', contract: DepositRedemption },
-  { name: 'DepositLiquidation', contract: DepositLiquidation },
-  { name: 'DepositFunding', contract: DepositFunding },
-  { name: 'TestDeposit', contract: TestDeposit },
-  { name: 'BytesLib', contract: BytesLib },
-  { name: 'BTCUtils', contract: BTCUtils },
-  { name: 'ValidateSPV', contract: ValidateSPV },
-  { name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs },
-  { name: 'TBTCDepositToken', contract: TBTCDepositToken, constructorParams: ['DepositFactory'] },
-  { name: 'FeeRebateToken', contract: FeeRebateToken, constructorParams: ['VendingMachine'] },
-  { name: 'ECDSAKeepStub', contract: ECDSAKeepStub, constructorParams: ['VendingMachine', ''] },
+  {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
+  {name: "MockRelay", contract: MockRelay},
+  {name: "MockBTCETHPriceFeed", contract: MockBTCETHPriceFeed},
+  {
+    name: "TBTCSystemStub",
+    contract: TBTCSystemStub,
+    constructorParams: ["MockBTCETHPriceFeed", "MockRelay"],
+  },
+  {
+    name: "DepositFactory",
+    contract: DepositFactory,
+    constructorParams: ["TBTCSystemStub"],
+  },
+  {
+    name: "VendingMachine",
+    contract: VendingMachine,
+    constructorParams: ["TBTCSystemStub"],
+  },
+  {name: "DepositStates", contract: DepositStates},
+  {name: "TBTCConstants", contract: TestTBTCConstants}, // note the name
+  {name: "DepositUtils", contract: DepositUtils},
+  {name: "DepositRedemption", contract: DepositRedemption},
+  {name: "DepositLiquidation", contract: DepositLiquidation},
+  {name: "DepositFunding", contract: DepositFunding},
+  {name: "TestDeposit", contract: TestDeposit},
+  {name: "BytesLib", contract: BytesLib},
+  {name: "BTCUtils", contract: BTCUtils},
+  {name: "ValidateSPV", contract: ValidateSPV},
+  {name: "CheckBitcoinSigs", contract: CheckBitcoinSigs},
+  {
+    name: "TBTCDepositToken",
+    contract: TBTCDepositToken,
+    constructorParams: ["DepositFactory"],
+  },
+  {
+    name: "FeeRebateToken",
+    contract: FeeRebateToken,
+    constructorParams: ["VendingMachine"],
+  },
+  {
+    name: "ECDSAKeepStub",
+    contract: ECDSAKeepStub,
+    constructorParams: ["VendingMachine", ""],
+  },
 ]
-
 
 /**
  * Deploys a test deposit setup and returns a resulting set of contracts. Two
@@ -87,10 +109,7 @@ const TEST_DEPOSIT_DEPLOY = [
  *    Additionally, the object contains a `deployed` property that holds
  *    references to all deployed contracts by specified name.
  */
-async function deployAndLinkAll(
-  additions = [],
-  substitutions = {},
-) {
+async function deployAndLinkAll(additions = [], substitutions = {}) {
   const deployment = TEST_DEPOSIT_DEPLOY.concat(additions)
   for (let i = 0; i < deployment.length; ++i) {
     const substitution = substitutions[deployment[i].name]
@@ -114,7 +133,9 @@ async function deployAndLinkAll(
 
   const tbtcSystemStub = deployed.TBTCSystemStub
   const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
-  const ecdsaKeepVendorStub = await ECDSAKeepVendorStub.new(ecdsaKeepFactoryStub.address)
+  const ecdsaKeepVendorStub = await ECDSAKeepVendorStub.new(
+    ecdsaKeepFactoryStub.address,
+  )
 
   const tbtcToken = await TestToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
@@ -125,8 +146,17 @@ async function deployAndLinkAll(
   const ecdsaKeepStub = deployed.ECDSAKeepStub
   const depositFactory = deployed.DepositFactory
   const mockBTCETHPriceFeed = deployed.MockBTCETHPriceFeed
-  const redemptionScript = await RedemptionScript.new(vendingMachine.address, tbtcToken.address, feeRebateToken.address)
-  const fundingScript = await FundingScript.new(vendingMachine.address, tbtcToken.address, tbtcDepositToken.address, feeRebateToken.address)
+  const redemptionScript = await RedemptionScript.new(
+    vendingMachine.address,
+    tbtcToken.address,
+    feeRebateToken.address,
+  )
+  const fundingScript = await FundingScript.new(
+    vendingMachine.address,
+    tbtcToken.address,
+    tbtcDepositToken.address,
+    feeRebateToken.address,
+  )
   if (testDeposit.setExteriorAddresses) {
     // Test setup if this is in fact a TestDeposit. If it's been substituted
     // with e.g. Deposit, we don't set it up.
@@ -139,7 +169,7 @@ async function deployAndLinkAll(
     )
 
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
-    await testDeposit.setLotSize(new BN('100000000'))
+    await testDeposit.setLotSize(new BN("100000000"))
   }
 
   await tbtcSystemStub.initialize(
@@ -151,7 +181,7 @@ async function deployAndLinkAll(
     feeRebateToken.address,
     vendingMachine.address,
     1,
-    1
+    1,
   )
 
   return {
