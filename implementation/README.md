@@ -9,17 +9,6 @@ Contains the on-chain smart contracts and tests.
 npm install
 ```
 
-#### Migrating externals
-
-tBTC interacts with external systems deployed on-chain, such as [Uniswap](https://uniswap.exchange).
-
-During development, these must be deployed to your local blockchain (ie. Ganache).
-
-```sh
-cd scripts/
-./deploy_uniswap.sh
-```
-
 ### Compilation
 
 ```sh
