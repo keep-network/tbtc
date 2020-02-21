@@ -20,8 +20,8 @@
     "eslintPaths": "test/ migrations/"
   },
   "precommit": "npm run lint",
-  "author": "James Prestwich",
-  "license": "UNLICENSED",
+  "author": "Satoshi Nakamoto 🤪",
+  "license": "MIT",
   "dependencies": {
     "@keep-network/keep-ecdsa": "0.8.0",
     "@summa-tx/bitcoin-spv-sol": "^2.2.0",
