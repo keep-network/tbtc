@@ -1,6 +1,6 @@
 {
-  "name": "tbtc-deposit",
-  "version": "0.0.0",
+  "name": "tbtc",
+  "version": "0.7.0-pre",
   "description": "deposit contract for TBTC",
   "main": "index.js",
   "scripts": {
