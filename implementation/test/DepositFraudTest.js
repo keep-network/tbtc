@@ -402,6 +402,41 @@ describe("DepositFraud", async function() {
     })
   })
 
+  describe("startSignerAbortLiquidation", async () => {
+    let signerBond
+    before(async () => {
+      signerBond = 10000000
+      await ecdsaKeepStub.send(signerBond, {from: accounts[1]})
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("executes and emits StartedLiquidation event", async () => {
+      const block = await web3.eth.getBlock("latest")
+
+      await testDeposit.startSignerAbortLiquidation({from: owner})
+
+      const events = await tbtcSystemStub.getPastEvents("StartedLiquidation", {
+        fromBlock: block.number,
+        toBlock: "latest",
+      })
+      const initiator = await testDeposit.getLiquidationInitiator()
+      const initiated = await testDeposit.getLiquidationTimestamp()
+      expect(events[0].returnValues[0]).to.equal(testDeposit.address)
+      expect(events[0].returnValues[1]).to.be.false
+      expect(events[0].returnValues[2]).to.eq.BN(block.timestamp)
+
+      expect(initiator).to.equal(owner)
+      expect(initiated).to.eq.BN(block.timestamp)
+    })
+  })
+
   describe("provideECDSAFraudProof", async () => {
     before(async () => {
       await testDeposit.setState(states.ACTIVE)
