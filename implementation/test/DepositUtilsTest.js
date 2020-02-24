@@ -619,7 +619,8 @@ describe("DepositUtils", async function() {
         block.timestamp,
         outpoint,
       )
-      await increaseTime(depositTerm.toNumber())
+      const increaseTimeErrorMargin = 10
+      await increaseTime(depositTerm.toNumber() + increaseTimeErrorMargin)
 
       const remainingTerm = await testDeposit.remainingTerm.call()
       expect(remainingTerm).to.eq.BN(0)
