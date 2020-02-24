@@ -95,6 +95,14 @@ contract TestDeposit is Deposit {
         self.liquidationInitiator = _initiator;
     }
 
+    function getLiquidationInitiator() public view returns (address) {
+        return self.liquidationInitiator;
+    }
+
+    function getLiquidationTimestamp() public view returns (uint256) {
+        return self.liquidationInitiated;
+    }
+
     function getLiquidationAndCourtesyInitiated() public view returns (uint256, uint256) {
         return (self.liquidationInitiated, self.courtesyCallInitiated);
     }
