@@ -50,14 +50,6 @@ contract TestDepositUtils is TestDeposit {
         return self.signerFee();
     }
 
-    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes memory) {
-        return DepositUtils.determineCompressionPrefix(_pubkeyY);
-    }
-
-    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes memory) {
-        return DepositUtils.compressPubkey(_pubkeyX, _pubkeyY);
-    }
-
     function signerPubkey() public view returns (bytes memory) {
         return self.signerPubkey();
     }
@@ -80,10 +72,6 @@ contract TestDepositUtils is TestDeposit {
 
     function fetchBondAmount() public view returns (uint256) {
         return self.fetchBondAmount();
-    }
-
-    function bytes8LEToUint(bytes8 _b) public pure returns (uint256) {
-        return DepositUtils.bytes8LEToUint(_b);
     }
 
     function feeRebateTokenHolder() public view returns (address payable) {
