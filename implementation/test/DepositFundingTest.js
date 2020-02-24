@@ -173,8 +173,6 @@ describe("DepositFunding", async function() {
         "Opening new deposits is currently disabled.",
       )
     })
-
-    it.skip("stores payment value as funder's bond", async () => {})
   })
 
   describe("notifySignerSetupFailure", async () => {
