@@ -393,7 +393,10 @@ describe("DepositFraud", async function() {
         toBlock: "latest",
       })
 
-      await assertBalance.eth(owner, new BN(initialBalance).add(new BN(signerBond)))
+      await assertBalance.eth(
+        owner,
+        new BN(initialBalance).add(new BN(signerBond)),
+      )
 
       expect(events[0].returnValues[0]).to.equal(testDeposit.address)
 
