@@ -4,6 +4,7 @@ const {
   createSnapshot,
   restoreSnapshot,
 } = require("../testHelpers/helpers/snapshot.js")
+const {AssertBalance} = require("../testHelpers/helpers/assertBalance.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -34,13 +35,14 @@ describe("DepositFraud", async function() {
   let tbtcDepositToken
   let testDeposit
   let ecdsaKeepStub
-
   let beneficiary
   let fundingProofTimerStart
+  let assertBalance
 
   before(async () => {
     ;({
       tbtcConstants,
+      tbtcToken,
       mockRelay,
       tbtcSystemStub,
       tbtcDepositToken,
@@ -49,6 +51,7 @@ describe("DepositFraud", async function() {
     } = await deployAndLinkAll())
 
     beneficiary = accounts[4]
+    assertBalance = new AssertBalance(tbtcToken)
     tbtcDepositToken.forceMint(
       beneficiary,
       web3.utils.toBN(testDeposit.address),
@@ -341,6 +344,64 @@ describe("DepositFraud", async function() {
     })
   })
 
+  describe("startSignerFraudLiquidation", async () => {
+    let signerBond
+    before(async () => {
+      signerBond = 10000000
+      await ecdsaKeepStub.send(signerBond, {from: accounts[1]})
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("executes and emits StartedLiquidation event", async () => {
+      const block = await web3.eth.getBlock("latest")
+
+      await testDeposit.startSignerFraudLiquidation({from: owner})
+
+      const events = await tbtcSystemStub.getPastEvents("StartedLiquidation", {
+        fromBlock: block.number,
+        toBlock: "latest",
+      })
+
+      const initiator = await testDeposit.getLiquidationInitiator()
+      const initiated = await testDeposit.getLiquidationTimestamp()
+
+      expect(events[0].returnValues[0]).to.equal(testDeposit.address)
+      expect(events[0].returnValues[1]).to.be.true
+      expect(events[0].returnValues[2]).to.eq.BN(block.timestamp)
+
+      expect(initiator).to.equal(owner)
+      expect(initiated).to.eq.BN(block.timestamp)
+    })
+
+    it("completes liquidation if we came from the redemption flow", async () => {
+      // setting redeemer address suggests we are coming from redemption flow
+      testDeposit.setRedeemerAddress(owner)
+
+      const block = await web3.eth.getBlock("latest")
+      const initialBalance = await web3.eth.getBalance(owner)
+      await testDeposit.startSignerFraudLiquidation()
+
+      const events = await tbtcSystemStub.getPastEvents("Liquidated", {
+        fromBlock: block.number,
+        toBlock: "latest",
+      })
+
+      await assertBalance.eth(owner, new BN(initialBalance).add(new BN(signerBond)))
+
+      expect(events[0].returnValues[0]).to.equal(testDeposit.address)
+
+      const depositState = await testDeposit.getState.call()
+      expect(depositState).to.eq.BN(states.LIQUIDATED)
+    })
+  })
+
   describe("provideECDSAFraudProof", async () => {
     before(async () => {
       await testDeposit.setState(states.ACTIVE)
@@ -425,8 +486,6 @@ describe("DepositFraud", async function() {
         "Signature is not fraud",
       )
     })
-
-    it.skip("TODO: full test for startSignerFraudLiquidation", async () => {})
   })
 
   describe("validateRedeemerNotPaid", async () => {
@@ -668,7 +727,5 @@ describe("DepositFraud", async function() {
         "Found an output paying the redeemer as requested",
       )
     })
-
-    it.skip("TODO: full test for startSignerFraudLiquidation", async () => {})
   })
 })
