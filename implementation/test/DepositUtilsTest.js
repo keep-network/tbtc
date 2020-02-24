@@ -41,7 +41,8 @@ const _expectedUTXOoutpoint =
 // const _outputValue = 490029088;
 const _outValueBytes = "0x2040351d00000000"
 
-describe("DepositUtils", async function() {
+// eslint-disable-next-line no-only-tests/no-only-tests
+describe.only("DepositUtils", async function() {
   let beneficiary
   const funderBondAmount = new BN("10").pow(new BN("5"))
   const fullBtc = 100000000
@@ -53,6 +54,7 @@ describe("DepositUtils", async function() {
   let feeRebateToken
   let testDeposit
   let ecdsaKeepStub
+  let depositUtils
 
   before(async () => {
     ;({
@@ -64,6 +66,7 @@ describe("DepositUtils", async function() {
       feeRebateToken,
       testDeposit,
       ecdsaKeepStub,
+      depositUtils,
     } = await deployAndLinkAll([], {TestDeposit: TestDepositUtils}))
 
     beneficiary = accounts[2]
@@ -388,13 +391,13 @@ describe("DepositUtils", async function() {
 
   describe("determineCompressionPrefix()", async () => {
     it("selects 2 for even", async () => {
-      const res = await testDeposit.determineCompressionPrefix.call(
+      const res = await depositUtils.determineCompressionPrefix.call(
         "0x" + "00".repeat(32),
       )
       expect(res).to.equal("0x02")
     })
     it("selects 3 for odd", async () => {
-      const res = await testDeposit.determineCompressionPrefix.call(
+      const res = await depositUtils.determineCompressionPrefix.call(
         "0x" + "00".repeat(31) + "01",
       )
       expect(res).to.equal("0x03")
@@ -403,7 +406,7 @@ describe("DepositUtils", async function() {
 
   describe("compressPubkey()", async () => {
     it("returns a 33 byte array with a prefix", async () => {
-      const compressed = await testDeposit.compressPubkey.call(
+      const compressed = await depositUtils.compressPubkey.call(
         "0x" + "00".repeat(32),
         "0x" + "00".repeat(32),
       )
@@ -469,13 +472,13 @@ describe("DepositUtils", async function() {
 
   describe("bytes8LEToUint()", async () => {
     it("interprets bytes as LE uints ", async () => {
-      let res = await testDeposit.bytes8LEToUint.call("0x" + "00".repeat(8))
+      let res = await depositUtils.bytes8LEToUint.call("0x" + "00".repeat(8))
       expect(res).to.eq.BN(0)
 
-      res = await testDeposit.bytes8LEToUint.call("0x11223344")
+      res = await depositUtils.bytes8LEToUint.call("0x11223344")
       expect(res).to.eq.BN(new BN("44332211", 16))
 
-      res = await testDeposit.bytes8LEToUint.call("0x1100229933884477")
+      res = await depositUtils.bytes8LEToUint.call("0x1100229933884477")
       expect(res).to.eq.BN(new BN("7744883399220011", 16))
     })
   })
