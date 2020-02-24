@@ -66,6 +66,10 @@ contract TestDepositUtils is TestDeposit {
         return self.signerPKH();
     }
 
+    function auctionValue() public view returns (uint256) {
+        return self.auctionValue();
+    }
+
     function utxoSize() public view returns (uint256) {
         return self.utxoSize();
     }
