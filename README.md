@@ -11,7 +11,7 @@ sidechains like [Liquid](https://blockstream.com/liquid/), expanding use cases
 possible via today's Bitcoin network, while bringing superior money to other
 chains.
 
-This repo contains the Solidity [smart contracts](implementation/) and [specification](documentation/).
+This repo contains the Solidity [smart contracts](implementation/) and [specification](docs/).
 
 ## Getting started
 

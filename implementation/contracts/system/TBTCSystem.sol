@@ -16,6 +16,10 @@ import {DepositLog} from "../DepositLog.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+/// @title  TBTC System.
+/// @notice This contract acts as a central point for access control,
+///         value governance, and price feed.
+/// @dev    Governable values should only affect new deposit creation.
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
@@ -41,8 +45,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     bool private allowNewDeposits = false;
     uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
     uint128 private initialCollateralizedPercent = 150; // percent
-    uint128 private undercollateralizedThresholdPercent = 135;  // percent
-    uint128 private severelyUndercollateralizedThresholdPercent = 120; // percent
+    uint128 private undercollateralizedThresholdPercent = 125;  // percent
+    uint128 private severelyUndercollateralizedThresholdPercent = 110; // percent
     uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     constructor(address _priceFeed, address _relay) public {
@@ -50,6 +54,17 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         relay = _relay;
     }
 
+    /// @notice        Initialize contracts
+    /// @dev           Only the Deposit factory should call this, and only once.
+    /// @param _keepVendor        ECDSA keep vendor address.
+    /// @param _depositFactory    Deposit Factory address. More info in `DepositFactory`.
+    /// @param _masterDepositAddress  Master Deposit address. More info in `Deposit`.
+    /// @param _tbtcToken         TBTCToken address. More info in `TBTCToken`.
+    /// @param _tbtcDepositToken  TBTCDepositToken (TDT) address. More info in `TBTCDepositToken`.
+    /// @param _feeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken`.
+    /// @param _vendingMachine    Vending Machine address. More info in `VendingMachine`.
+    /// @param _keepThreshold     Signing group honesty threshold.
+    /// @param _keepSize          Signing group size.
     function initialize(
         address _keepVendor,
         address _depositFactory,
@@ -83,10 +98,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         allowNewDeposits = true;
     }
 
-    /// @notice gets whether new deposits are allowed
+    /// @notice gets whether new deposits are allowed.
     function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
 
-    /// @notice One-time-use emergency function to disallow future deposit creation for 10 days. 
+    /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
     function emergencyPauseNewDeposits() external onlyOwner returns (bool) {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
         pausedTimestamp = block.timestamp;
@@ -145,11 +160,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Check if a lot size is allowed.
-    /// @param _lotSize Lot size to check.
+    /// @param _lotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint256 _lotSize) external view returns (bool){
+    function isAllowedLotSize(uint256 _lotSizeSatoshis) external view returns (bool){
         for( uint i = 0; i < lotSizesSatoshis.length; i++){
-            if (lotSizesSatoshis[i] == _lotSize){
+            if (lotSizesSatoshis[i] == _lotSizeSatoshis){
                 return true;
             }
         }
@@ -203,8 +218,21 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     // Price Feed
+
+    /// @notice Get the price of one satoshi in wei.
+    /// @dev Reverts if the price of one satoshi is 0 wei, or
+    ///      if the price of one satoshi is 1 ether.
+    /// @return The price of one satoshi in wei.
     function fetchBitcoinPrice() external view returns (uint256) {
-        return IBTCETHPriceFeed(priceFeed).getPrice();
+        uint256 price = IBTCETHPriceFeed(priceFeed).getPrice();
+        if (price == 0 || price > 10 ** 18) {
+            /*
+              This is if a sat is worth 0 wei, or is worth 1 ether
+              TODO: what should this behavior be?
+            */
+            revert("System returned a bad price");
+        }
+        return price;
     }
 
     // Difficulty Oracle
@@ -221,6 +249,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @return Uint256 estimate.
     function createNewDepositFeeEstimate()
         external
+        view
         returns (uint256)
     {
         IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);

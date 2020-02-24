@@ -6,7 +6,10 @@ import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 import {VendingMachine} from "../system/VendingMachine.sol";
 
 /// @notice A one-click script for minting TBTC from an unqualified TDT.
-/// @dev Wrapper script for VendingMachine.unqualifiedDepositToTbtc.
+/// @dev Wrapper script for VendingMachine.unqualifiedDepositToTbtc
+/// This contract implements receiveApproval() and can therefore use
+/// approveAndCall(). This pattern combines TBTC Token approval and
+/// vendingMachine.unqualifiedDepositToTbtc() in a single transaction.
 contract FundingScript {
     TBTCToken tbtcToken;
     VendingMachine vendingMachine;
@@ -47,6 +50,7 @@ contract FundingScript {
         // We could explictly encode the call to vending machine, but this would
         // involve manually parsing _extraData and allocating variables.
         (bool success, bytes memory returnData) = address(vendingMachine).call(
+            // solium-disable-previous-line security/no-low-level-calls
             _extraData
         );
         require(success, string(returnData));

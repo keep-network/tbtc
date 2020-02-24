@@ -68,26 +68,26 @@ library DepositUtils {
         mapping (bytes32 => uint256) approvedDigests;
     }
 
-    /// @notice         Gets the current block difficulty
-    /// @dev            Calls the light relay and gets the current block difficulty
-    /// @return         The difficulty
+    /// @notice         Gets the current block difficulty.
+    /// @dev            Calls the light relay and gets the current block difficulty.
+    /// @return         The difficulty.
     function currentBlockDifficulty(Deposit storage _d) public view returns (uint256) {
         ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
         return _sys.fetchRelayCurrentDifficulty();
     }
 
-    /// @notice         Gets the previous block difficulty
-    /// @dev            Calls the light relay and gets the previous block difficulty
-    /// @return         The difficulty
+    /// @notice         Gets the previous block difficulty.
+    /// @dev            Calls the light relay and gets the previous block difficulty.
+    /// @return         The difficulty.
     function previousBlockDifficulty(Deposit storage _d) public view returns (uint256) {
         ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
         return _sys.fetchRelayPreviousDifficulty();
     }
 
-    /// @notice                     Evaluates the header difficulties in a proof
-    /// @dev                        Uses the light oracle to source recent difficulty
-    /// @param  _bitcoinHeaders     The header chain to evaluate
-    /// @return                     True if acceptable, otherwise revert
+    /// @notice                     Evaluates the header difficulties in a proof.
+    /// @dev                        Uses the light oracle to source recent difficulty.
+    /// @param  _bitcoinHeaders     The header chain to evaluate.
+    /// @return                     True if acceptable, otherwise revert.
     function evaluateProofDifficulty(Deposit storage _d, bytes memory _bitcoinHeaders) public view {
         uint256 _reqDiff;
         uint256 _current = currentBlockDifficulty(_d);
@@ -115,13 +115,13 @@ library DepositUtils {
         );
     }
 
-    /// @notice                 Syntactically check an SPV proof for a bitcoin transaction with its hash (ID)
-    /// @dev                    Stateless SPV Proof verification documented elsewhere (see github.com/summa-tx/bitcoin-spv)
-    /// @param _d               Deposit storage pointer
-    /// @param _txId            The bitcoin txid of the tx that is purportedly included in the header chain
-    /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block
-    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (0-indexed)
-    /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers
+    /// @notice                 Syntactically check an SPV proof for a bitcoin transaction with its hash (ID).
+    /// @dev                    Stateless SPV Proof verification documented elsewhere (see https://github.com/summa-tx/bitcoin-spv).
+    /// @param _d               Deposit storage pointer.
+    /// @param _txId            The bitcoin txid of the tx that is purportedly included in the header chain.
+    /// @param _merkleProof     The merkle proof of inclusion of the tx in the bitcoin block.
+    /// @param _txIndexInBlock  The index of the tx in the Bitcoin block (0-indexed).
+    /// @param _bitcoinHeaders  An array of tightly-packed bitcoin headers.
     function checkProofFromTxId(
         Deposit storage _d,
         bytes32 _txId,
@@ -140,13 +140,13 @@ library DepositUtils {
         evaluateProofDifficulty(_d, _bitcoinHeaders);
     }
 
-    /// @notice                     Find and validate funding output in transaction output vector using the index
+    /// @notice                     Find and validate funding output in transaction output vector using the index.
     /// @dev                        Gets `_fundingOutputIndex` output from the output vector and validates if it's
     ///                             Public Key Hash matches a Public Key Hash of the deposit.
-    /// @param _d                   Deposit storage pointer
-    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs
-    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector
-    /// @return                     Funding value
+    /// @param _d                   Deposit storage pointer.
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs.
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector.
+    /// @return                     Funding value.
     function findAndParseFundingOutput(
         DepositUtils.Deposit storage _d,
         bytes memory _txOutputVector,
@@ -166,18 +166,18 @@ library DepositUtils {
         revert("could not identify output funding the required public key hash");
     }
 
-    /// @notice                     Validates the funding tx and parses information from it
-    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding
-    /// @param  _d                  Deposit storage pointer
-    /// @param _txVersion           Transaction version number (4-byte LE)
-    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs
-    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs
-    /// @param _txLocktime          Final 4 bytes of the transaction
-    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed)
-    /// @param _merkleProof         The merkle proof of transaction inclusion in a block
-    /// @param _txIndexInBlock      Transaction index in the block (0-indexed)
-    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first
-    /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint
+    /// @notice                     Validates the funding tx and parses information from it.
+    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding.
+    /// @param  _d                  Deposit storage pointer.
+    /// @param _txVersion           Transaction version number (4-byte LE).
+    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs.
+    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
+    /// @param _txLocktime          Final 4 bytes of the transaction.
+    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed).
+    /// @param _merkleProof         The merkle proof of transaction inclusion in a block.
+    /// @param _txIndexInBlock      Transaction index in the block (0-indexed).
+    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first.
+    /// @return                     The 8-byte LE UTXO size in satoshi, the 36byte outpoint.
     function validateAndParseFundingSPVProof(
         DepositUtils.Deposit storage _d,
         bytes4 _txVersion,
@@ -207,7 +207,7 @@ library DepositUtils {
     }
 
     /// @notice Retreive the remaining term of the deposit
-    /// @dev    The value is not guaranteed since block.timestmap can be lightly manipulated by miners.
+    /// @dev    The return value is not guaranteed since block.timestmap can be lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at term
     function remainingTerm(DepositUtils.Deposit storage _d) public view returns(uint256){
         uint256 endOfTerm = _d.fundedAt + TBTCConstants.getDepositTerm();
@@ -217,10 +217,10 @@ library DepositUtils {
         return 0;
     }
 
-    /// @notice     Calculates the amount of value at auction right now
-    /// @dev        We calculate the % of the auction that has elapsed, then scale the value up
-    /// @param _d   deposit storage pointer
-    /// @return     the value to distribute in the auction at the current time
+    /// @notice     Calculates the amount of value at auction right now.
+    /// @dev        We calculate the % of the auction that has elapsed, then scale the value up.
+    /// @param _d   Deposit storage pointer.
+    /// @return     The value in wei to distribute in the auction at the current time.
     function auctionValue(Deposit storage _d) public view returns (uint256) {
         uint256 _elapsed = block.timestamp.sub(_d.liquidationInitiated);
         uint256 _available = address(this).balance;
@@ -236,22 +236,22 @@ library DepositUtils {
         return _available.mul(_percentage).div(100);
     }
 
-    /// @notice         Gets the lot size in erc20 decimal places (max 18) 
-    /// @return         uint256 lot size in erc20 
+    /// @notice         Gets the lot size in erc20 decimal places (max 18)
+    /// @return         uint256 lot size in 10**18 decimals.
     function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
         return _d.lotSizeSatoshis * TBTCConstants.getSatoshiMultiplier();
     }
 
-    /// @notice         Determines the fees due to the signers for work performed
-    /// @dev            Signers are paid based on the TBTC issued
-    /// @return         Accumulated fees in smallest TBTC unit (tsat)
+    /// @notice         Determines the fees due to the signers for work performed.
+    /// @dev            Signers are paid based on the TBTC issued.
+    /// @return         Accumulated fees in smallest TBTC unit (tsat).
     function signerFee(Deposit storage _d) public view returns (uint256) {
         return lotSizeTbtc(_d).div(_d.signerFeeDivisor);
     }
 
-    /// @notice     Determines the amount of TBTC accepted in the auction
-    /// @dev        If redeemerAddress is non-0, that means we came from redemption, and no auction should happen
-    /// @return     The amount of TBTC that must be paid at auction for the signer's bond
+    /// @notice     Determines the amount of TBTC accepted in the auction.
+    /// @dev        If redeemerAddress is non-0, that means we came from redemption, and no auction should happen.
+    /// @return     The amount of TBTC that must be paid at auction for the signer's bond.
     function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
         if (_d.redeemerAddress == address(0)) {
             return lotSizeTbtc(_d);
@@ -260,10 +260,10 @@ library DepositUtils {
         }
     }
 
-    /// @notice             Determines the prefix to the compressed public key
-    /// @dev                The prefix encodes the parity of the Y coordinate
-    /// @param  _pubkeyY    The Y coordinate of the public key
-    /// @return             The 1-byte prefix for the compressed key
+    /// @notice             Determines the prefix to the compressed public key.
+    /// @dev                The prefix encodes the parity of the Y coordinate.
+    /// @param  _pubkeyY    The Y coordinate of the public key.
+    /// @return             The 1-byte prefix for the compressed key.
     function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes memory) {
         if(uint256(_pubkeyY) & 1 == 1) {
             return hex"03";  // Odd Y
@@ -272,66 +272,66 @@ library DepositUtils {
         }
     }
 
-    /// @notice             Compresses a public key
-    /// @dev                Converts the 64-byte key to a 33-byte key, bitcoin-style
-    /// @param  _pubkeyX    The X coordinate of the public key
-    /// @param  _pubkeyY    The Y coordinate of the public key
-    /// @return             The 33-byte compressed pubkey
+    /// @notice             Compresses a public key.
+    /// @dev                Converts the 64-byte key to a 33-byte key, bitcoin-style.
+    /// @param  _pubkeyX    The X coordinate of the public key.
+    /// @param  _pubkeyY    The Y coordinate of the public key.
+    /// @return             The 33-byte compressed pubkey.
     function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes memory) {
         return abi.encodePacked(determineCompressionPrefix(_pubkeyY), _pubkeyX);
     }
 
-    /// @notice         Returns the packed public key (64 bytes) for the signing group
-    /// @dev            We store it as 2 bytes32, (2 slots) then repack it on demand
-    /// @return         64 byte public key
+    /// @notice    Returns the packed public key (64 bytes) for the signing group.
+    /// @dev       We store it as 2 bytes32, (2 slots) then repack it on demand.
+    /// @return    64 byte public key.
     function signerPubkey(Deposit storage _d) public view returns (bytes memory) {
         return abi.encodePacked(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
     }
 
-    /// @notice         Returns the Bitcoin pubkeyhash (hash160) for the signing group
-    /// @dev            This is used in bitcoin output scripts for the signers
-    /// @return         20-bytes public key hash
+    /// @notice    Returns the Bitcoin pubkeyhash (hash160) for the signing group.
+    /// @dev       This is used in bitcoin output scripts for the signers.
+    /// @return    20-bytes public key hash.
     function signerPKH(Deposit storage _d) public view returns (bytes20) {
         bytes memory _pubkey = compressPubkey(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
         bytes memory _digest = _pubkey.hash160();
         return bytes20(_digest.toAddress(0));  // dirty solidity hack
     }
 
-    /// @notice         Returns the size of the deposit UTXO in satoshi
-    /// @dev            We store the deposit as bytes8 to make signature checking easier
-    /// @return         UTXO value in satoshi
+    /// @notice    Returns the size of the deposit UTXO in satoshi.
+    /// @dev       We store the deposit as bytes8 to make signature checking easier.
+    /// @return    UTXO value in satoshi.
     function utxoSize(Deposit storage _d) public view returns (uint256) {
         return bytes8LEToUint(_d.utxoSizeBytes);
     }
 
-    /// @notice     Gets the current price of Bitcoin in Ether
-    /// @dev        Polls the price feed via the system contract
-    /// @return     The current price of 1 sat in wei
+    /// @notice     Gets the current price of Bitcoin in Ether.
+    /// @dev        Polls the price feed via the system contract.
+    /// @return     The current price of 1 sat in wei.
     function fetchBitcoinPrice(Deposit storage _d) public view returns (uint256) {
         ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
         return _sys.fetchBitcoinPrice();
     }
 
-    /// @notice     Fetches the Keep's bond amount in wei
-    /// @dev        Calls the keep contract to do so
-    /// @return     The amount of bonded ETH in wei
+    /// @notice     Fetches the Keep's bond amount in wei.
+    /// @dev        Calls the keep contract to do so.
+    /// @return     The amount of bonded ETH in wei.
     function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.checkBondAmount();
     }
 
-    /// @notice         Convert a LE bytes8 to a uint256
-    /// @dev            Do this by converting to bytes, then reversing endianness, then converting to int
-    /// @return         The uint256 represented in LE by the bytes8
+    /// @notice         Convert a LE bytes8 to a uint256.
+    /// @dev            Do this by converting to bytes, then reversing endianness, then converting to int.
+    /// @return         The uint256 represented in LE by the bytes8.
     function bytes8LEToUint(bytes8 _b) public pure returns (uint256) {
         return abi.encodePacked(_b).reverseEndianness().bytesToUint();
     }
 
-    /// @notice         Gets timestamp of digest approval for signing
-    /// @dev            Identifies entry in the recorded approvals by keep ID and digest pair
-    /// @param _digest  Digest to check approval for
+    /// @notice         Gets timestamp of digest approval for signing.
+    /// @dev            Identifies entry in the recorded approvals by keep ID and digest pair.
+    /// @param _digest  Digest to check approval for.
     /// @return         Timestamp from the moment of recording the digest for signing.
-    ///                 Returns 0 if the digest was not approved for signing
+    ///                 Returns 0 if the digest was not approved for signing.
     function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
         return _d.approvedDigests[_digest];
     }
@@ -348,16 +348,16 @@ library DepositUtils {
         return address(uint160(tokenHolder));
     }
 
-    /// @notice         Looks up the deposit beneficiary by calling the tBTC system
-    /// @dev            We cast the address to a uint256 to match the 721 standard
-    /// @return         The current deposit beneficiary
+    /// @notice         Looks up the deposit beneficiary by calling the tBTC system.
+    /// @dev            We cast the address to a uint256 to match the 721 standard.
+    /// @return         The current deposit beneficiary.
     function depositOwner(Deposit storage _d) public view returns (address payable) {
         IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
         return address(uint160(_tbtcDepositToken.ownerOf(uint256(address(this)))));
     }
 
-    /// @notice     Deletes state after termination of redemption process
-    /// @dev        We keep around the redeemer address so we can pay them out
+    /// @notice     Deletes state after termination of redemption process.
+    /// @dev        We keep around the redeemer address so we can pay them out.
     function redemptionTeardown(Deposit storage _d) public {
         // don't 0 redeemerAddress because we use it to calculate auctionTBTCAmount
         _d.redeemerOutputScript = "";
@@ -366,9 +366,9 @@ library DepositUtils {
         _d.lastRequestedDigest = bytes32(0);
     }
 
-    /// @notice     Seize the signer bond from the keep contract
-    /// @dev        we check our balance before and after
-    /// @return     the amount of ether seized
+    /// @notice     Seize the signer bond from the keep contract.
+    /// @dev        we check our balance before and after.
+    /// @return     The amount seized in wei.
     function seizeSignerBonds(Deposit storage _d) internal returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
@@ -378,8 +378,8 @@ library DepositUtils {
         return _postCallBalance.sub(_preCallBalance);
     }
 
-    /// @notice     Distributes the fee rebate to the Fee Rebate Token owner
-    ///             whenever this is called we are shutting down.
+    /// @notice     Distributes the fee rebate to the Fee Rebate Token owner.
+    /// @dev        Whenever this is called we are shutting down.
     function distributeFeeRebate(Deposit storage _d) internal {
         TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
 
@@ -394,10 +394,10 @@ library DepositUtils {
         }
     }
 
-    /// @notice             pushes ether held by the deposit to the signer group
-    /// @dev                useful for returning bonds to the group, or otherwise paying them
-    /// @param  _ethValue   the amount of ether to send
-    /// @return             true if successful, otherwise revert
+    /// @notice             Pushes ether held by the deposit to the signer group.
+    /// @dev                Useful for returning bonds to the group, or otherwise paying them.
+    /// @param  _ethValue   The amount of ether to send.
+    /// @return             True if successful, otherwise revert.
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
@@ -407,7 +407,7 @@ library DepositUtils {
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
     ///                     is this deposit's TDT owner.
-    /// @param _redeemer    The assumed owner of the deposit's TDT 
+    /// @param _redeemer    The assumed owner of the deposit's TDT.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
         uint256 fee = signerFee(_d);
@@ -424,9 +424,9 @@ library DepositUtils {
         return 0;
     }
 
-    /// @notice             Get TBTC amount required by redemption by a specified _redeemer
+    /// @notice             Get TBTC amount required by redemption by a specified _redeemer.
     /// @dev                Will revert if redemption is not possible by msg.sender.
-    /// @param _redeemer    The deposit redeemer. 
+    /// @param _redeemer    The deposit redeemer.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
         bool inCourtesy = _d.inCourtesyCall();

@@ -17,6 +17,43 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
     // Define fallback function so the contract can accept ether.
     function() external payable {}
 
+    function getPublicKey() external view returns (bytes memory) {
+        return publicKey;
+    }
+
+    function sign(bytes32 _digest) external {
+        emit SignatureRequested(_digest);
+    }
+
+    function distributeETHToMembers() external payable {
+
+    }
+
+    function distributeERC20ToMembers(address _asset, uint256 _value) external {
+    // solium-disable-previous-line no-empty-blocks
+    }
+
+    // Functions implemented for IBondedECDSAKeep interface.
+
+    function submitSignatureFraud(
+        uint8,
+        bytes32,
+        bytes32,
+        bytes32,
+        bytes calldata
+    ) external returns (bool){
+        return success;
+    }
+
+    function checkBondAmount() external view returns (uint256){
+        return bondAmount;
+    }
+
+    function seizeSignerBonds() external {
+        if (address(this).balance > 0) {
+            msg.sender.transfer(address(this).balance);
+        }
+    }
     // Functions to set data for tests.
 
     function setPublicKey(bytes memory _publicKey) public {
@@ -35,43 +72,4 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         address(0).transfer(address(this).balance);
     }
 
-    function getPublicKey() external view returns (bytes memory) {
-        return publicKey;
-    }
-
-    function sign(bytes32 _digest) external {
-          emit SignatureRequested(_digest);
-    }
-
-    function distributeETHToMembers() external payable {
-
-    }
-
-    function distributeERC20ToMembers(address _asset, uint256 _value) external {
-
-    }
-
-
-    // Functions implemented for IBondedECDSAKeep interface.
-
-    function submitSignatureFraud(
-        uint8,
-        bytes32,
-        bytes32,
-        bytes32,
-        bytes calldata
-    ) external returns (bool){
-       return success;
-    }
-
-    function checkBondAmount() external view returns (uint256){
-        return bondAmount;
-    }
-
-    function seizeSignerBonds() external returns (bool){
-        if (address(this).balance > 0) {
-            msg.sender.transfer(address(this).balance);
-        }
-        return true;
-    }
 }

@@ -6,13 +6,13 @@
    hooks:
     - id: lint-js
       name: 'lint js'
-      entry: /usr/bin/env bash -c "cd implementation && npm run js:lint"
+      entry: /usr/bin/env bash -c "cd implementation && npm run lint:js"
       files: '\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
     - id: lint-sol
       name: 'lint solidity'
-      entry: /usr/bin/env bash -c "cd implementation && npm run sol:lint"
+      entry: /usr/bin/env bash -c "cd implementation && npm run lint:sol"
       files: '\.sol$'
       language: script
       description: "Checks Solidity code according to the package's linter configuration"
