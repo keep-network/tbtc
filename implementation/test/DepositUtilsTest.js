@@ -5,6 +5,10 @@ const {
   LOW_WORK_HEADER,
   increaseTime,
 } = require("../testHelpers/utils.js")
+const {
+  createSnapshot,
+  restoreSnapshot,
+} = require("../testHelpers/helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -41,8 +45,7 @@ const _expectedUTXOoutpoint =
 // const _outputValue = 490029088;
 const _outValueBytes = "0x2040351d00000000"
 
-// eslint-disable-next-line no-only-tests/no-only-tests
-describe.only("DepositUtils", async function() {
+describe("DepositUtils", async function() {
   let beneficiary
   const funderBondAmount = new BN("10").pow(new BN("5"))
   const fullBtc = 100000000
@@ -378,9 +381,60 @@ describe.only("DepositUtils", async function() {
     })
   })
 
-  describe("auctionValue()", async () => {
-    it.skip("is TODO")
+ describe("auctionValue()", async () => {
+   let duration
+   let basePercentage
+   before(async () => {
+    duration = await tbtcConstants.getAuctionDuration.call()
+    basePercentage = await tbtcConstants.getAuctionBasePercentage.call() 
+    auctionValue = new BN(100000000)
   })
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  })
+
+  it("returns base value if no time has elapsed", async () => {
+    testDeposit.send(auctionValue, { from: accounts[0] }) 
+    const block = await web3.eth.getBlock("latest")
+ 
+    await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
+
+    const value = await testDeposit.auctionValue.call()
+    expect(value).to.eq.BN(auctionValue.mul(basePercentage).div(new BN(100)))
+  })
+
+  it("returns full value if auction Duration has elapsed ", async () => {
+    testDeposit.send(auctionValue, { from: accounts[0] }) 
+    const block = await web3.eth.getBlock("latest")
+
+    await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
+    await increaseTime(duration.toNumber())
+
+    const value = await testDeposit.auctionValue.call()
+    expect(value).to.eq.BN(auctionValue)
+  })
+
+  it("scales auction value currectly", async () => {
+    testDeposit.send(auctionValue, { from: accounts[0] }) 
+    const block = await web3.eth.getBlock("latest")
+ 
+    await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
+
+    const elapsedTime = duration.div(new BN(2))
+    const elapsedPercent = new BN(100).sub(basePercentage).mul(elapsedTime).div(duration)
+    const percentage = basePercentage.add(elapsedPercent);
+
+    // elapse half the auction time
+    await increaseTime(elapsedTime.toNumber())
+
+    const value = await testDeposit.auctionValue.call()
+    expect(value).to.eq.BN(auctionValue.mul(percentage).div(new BN(100)))
+  })
+})
 
   describe("signerFee()", async () => {
     it("returns a derived constant", async () => {
@@ -396,6 +450,7 @@ describe.only("DepositUtils", async function() {
       )
       expect(res).to.equal("0x02")
     })
+
     it("selects 3 for odd", async () => {
       const res = await depositUtils.determineCompressionPrefix.call(
         "0x" + "00".repeat(31) + "01",
