@@ -333,7 +333,7 @@ describe("VendingMachine", async function() {
     before(async () => {
       requiredBalance = await testDeposit.lotSizeTbtc.call()
 
-      await tbtcToken.zeroBalance(owner, {from: owner})
+      await tbtcToken.zeroBalance({from: owner})
       block = await web3.eth.getBlock("latest")
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
       await tbtcToken.resetBalance(requiredBalance, {from: owner})
@@ -468,7 +468,7 @@ describe("VendingMachine", async function() {
       await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
       await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-      await tbtcToken.zeroBalance(owner, {from: owner})
+      await tbtcToken.zeroBalance({from: owner})
       await tbtcDepositToken.forceMint(owner, tdtId)
     })
 
