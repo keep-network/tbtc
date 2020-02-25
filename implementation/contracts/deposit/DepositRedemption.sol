@@ -222,7 +222,7 @@ library DepositRedemption {
         bytes8 _newOutputValueBytes
     ) public returns (bool) {
         require(_d.inAwaitingWithdrawalProof(), "Fee increase only available after signature provided");
-        require(block.timestamp >= _d.withdrawalRequestTime + TBTCConstants.getIncreaseFeeTimer(), "Fee increase not yet permitted");
+        require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
 
@@ -305,7 +305,7 @@ library DepositRedemption {
         _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
         _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
-        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, "Fee unexpectedly very high");
+        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee.mul(5), "Fee unexpectedly very high");
 
         // Transfer TBTC to signers
         distributeSignerFee(_d);
@@ -354,7 +354,7 @@ library DepositRedemption {
     /// @param  _d  Deposit storage pointer.
     function notifySignatureTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalSignature(), "Not currently awaiting a signature");
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getSignatureTimeout(), "Signature timer has not elapsed");
+        require(block.timestamp > _d.withdrawalRequestTime.add(TBTCConstants.getSignatureTimeout()), "Signature timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 
@@ -363,7 +363,7 @@ library DepositRedemption {
     /// @param  _d  Deposit storage pointer.
     function notifyRedemptionProofTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedemptionProofTimeout(), "Proof timer has not elapsed");
+        require(block.timestamp > _d.withdrawalRequestTime.add(TBTCConstants.getRedemptionProofTimeout()), "Proof timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 }

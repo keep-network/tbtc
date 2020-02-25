@@ -51,7 +51,7 @@ library DepositLiquidation {
         // Determine value of the lot in wei
         uint256 _satoshiPrice = _d.fetchBitcoinPrice();
         uint256 _lotSizeSatoshis = _d.lotSizeSatoshis;
-        uint256 _lotValue = _lotSizeSatoshis * _satoshiPrice;
+        uint256 _lotValue = _lotSizeSatoshis.mul(_satoshiPrice);
 
         // Amount of wei the signers have
         uint256 _bondValue = _d.fetchBondAmount();
@@ -197,12 +197,12 @@ library DepositLiquidation {
         bytes memory _output;
         uint256 _offset = 1;
         uint256 _permittedFeeBumps = TBTCConstants.getPermittedFeeBumps();  /* TODO: can we refactor withdrawal flow to improve this? */
-        uint256 _requiredOutputValue = _d.utxoSize().sub((_d.initialRedemptionFee * (1 + _permittedFeeBumps)));
+        uint256 _requiredOutputValue = _d.utxoSize().sub((_d.initialRedemptionFee.mul((_permittedFeeBumps.add(1)))));
 
         uint8 _numOuts = uint8(_txOutputVector.slice(0, 1)[0]);
         for (uint8 i = 0; i < _numOuts; i++) {
-            _output = _txOutputVector.slice(_offset, _txOutputVector.length - _offset);
-            _offset += _output.determineOutputLength();
+            _output = _txOutputVector.slice(_offset, _txOutputVector.length.sub(_offset));
+            _offset = _offset.add(_output.determineOutputLength());
 
             if (_output.extractValue() >= _requiredOutputValue &&
                 keccak256(_output.slice(8, 3).concat(_output.extractHash())) == keccak256(abi.encodePacked(_d.redeemerOutputScript))) {
@@ -301,7 +301,7 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function notifyCourtesyTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
-        require(block.timestamp >= _d.courtesyCallInitiated + TBTCConstants.getCourtesyCallTimeout(), "Courtesy period has not elapsed");
+        require(block.timestamp >= _d.courtesyCallInitiated.add(TBTCConstants.getCourtesyCallTimeout()), "Courtesy period has not elapsed");
         startSignerAbortLiquidation(_d);
     }
 }
