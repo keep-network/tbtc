@@ -45,7 +45,7 @@ library DepositLiquidation {
     /// @notice     Determines the collateralization percentage of the signing group.
     /// @dev        Compares the bond value and lot value.
     /// @param _d   Deposit storage pointer.
-    /// @return     collateralization percentage as uint.
+    /// @return     Collateralization percentage as uint.
     function getCollateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
 
         // Determine value of the lot in wei
@@ -61,7 +61,7 @@ library DepositLiquidation {
     }
 
     /// @notice         Starts signer liquidation due to fraud.
-    /// @dev            We first attempt to liquidate on chain, then by auction.
+    /// @dev            Liquidation is done by auction.
     /// @param  _d      Deposit storage pointer.
     function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(true);
@@ -85,7 +85,7 @@ library DepositLiquidation {
     }
 
     /// @notice         Starts signer liquidation due to abort or undercollateralization.
-    /// @dev            We first attempt to liquidate on chain, then by auction.
+    /// @dev            Liquidation is done by auction.
     /// @param  _d      Deposit storage pointer.
     function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(false);
@@ -99,7 +99,7 @@ library DepositLiquidation {
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud.
-    /// @dev                    ECDSA is NOT SECURE unless you verify the digest.
+    /// @dev                    Calls out to the keep to verify if there was fraud.
     /// @param  _d              Deposit storage pointer.
     /// @param  _v              Signature recovery value.
     /// @param  _r              Signature R value.
