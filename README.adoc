@@ -16,7 +16,7 @@ expanding use cases possible via today's Bitcoin network, while bringing
 superior money to other chains.
 
 This repo contains the Solidity link:implementation/[smart contracts]
-and link:documentation/[specification].
+and link:docs/[specification].
 
 toc::[]
 
@@ -77,9 +77,9 @@ Please report any security issues you find to mailto:security@keep.network[secur
 
 == Contributing
 
-All contributions are welcome. To report bugs, please create an issue on
-this repository. To start a discussion, prefer Discord over GitHub
-issues.
+All contributions are welcome. To report bugs, please create an issue on this
+repository. To start a discussion, prefer https://discord.gg/4R6RGFf[Discord]
+over GitHub issues.
 
 *Read the
 https://github.com/keep-network/tbtc/blob/master/CONTRIBUTING.md[Contributing

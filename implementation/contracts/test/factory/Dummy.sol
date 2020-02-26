@@ -1,6 +1,6 @@
 pragma solidity ^0.5.10;
 
-/// @dev Dummy contract to used to test clone factory. 
+/// @dev Dummy contract to used to test clone factory.
 ///      This contract will be cloned
 contract Dummy{
 

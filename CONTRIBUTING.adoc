@@ -16,19 +16,19 @@ request.
 3.  Follow the
 https://github.com/keep-network/tbtc/tree/master/implementation#setup[installation
 & build steps] in the repo's top-level README.
-4.  Setup the recommended link:#development-tooling[Development
-Tooling].
+4.  Setup the recommended <<Development Tooling>>.
 5.  Open a PR against the `master` branch and describe the change you
 are intending to undertake in the PR description.
 
 Before marking the PR as open for review, make sure:
 
-* It passes the linter checks (`npm run lint`)
+* It passes the linter checks (`npm run lint`); see <<Pre-commit>> to make this
+  * automatic
 * It passes the
 https://app.circleci.com/github/keep-network/tbtc/pipelines[continuous
 integration tests] on CircleCI.
 * Your changes have sufficient test coverage (e.g regression tests have
-been added for bug fixes, unit tests for new features)
+  been added for bug fixes, unit tests for new features)
 
 == Development Tooling
 
@@ -53,7 +53,7 @@ here], and then run `pre-commit install` to install the hooks.
 Linters for Solidity and JavaScript code are setup and run automatically
 as part of pre-commit hooks.
 
-If you want to change a rule, or add a custom rule, please make these
+If you want to change a rule, or add a custom rule, please propose these
 changes to our https://github.com/keep-network/solium-config-keep[solium-config-keep]
 and https://github.com/keep-network/eslint-config-keep[eslint-config-keep]
 packages. All other packages have it as a dependency.

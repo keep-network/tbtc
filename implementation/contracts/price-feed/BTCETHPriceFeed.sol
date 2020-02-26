@@ -16,6 +16,7 @@ contract BTCETHPriceFeed is Ownable, IBTCETHPriceFeed {
     IMedianizer ethPriceFeed;
 
     constructor() public {
+    // solium-disable-previous-line no-empty-blocks
     }
 
     /// @notice Initialises the addresses of the BTC/USD and ETH/USD price feeds.

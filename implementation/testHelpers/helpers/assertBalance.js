@@ -4,7 +4,7 @@ const expect = chai.expect
 const bnChai = require('bn-chai')
 chai.use(bnChai(BN))
 
-export class AssertBalance {
+class AssertBalance {
   constructor(tbtc) {
     this.tbtcInstance = tbtc
   }
@@ -19,3 +19,4 @@ export class AssertBalance {
     expect(balance).to.equal(amount)
   }
 }
+module.exports.AssertBalance = AssertBalance

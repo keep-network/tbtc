@@ -3,9 +3,9 @@ pragma solidity ^0.5.10;
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
 contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
-     address public keepOwner;
-     address public keepAddress = address(888);
-     uint256 feeEstimate = 123456;
+    address public keepOwner;
+    address public keepAddress = address(888);
+    uint256 feeEstimate = 123456;
 
     function openKeep(
         uint256,
@@ -18,7 +18,7 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
         return keepAddress;
     }
 
-    function openKeepFeeEstimate() external returns (uint256){
+    function openKeepFeeEstimate() external view returns (uint256) {
         return feeEstimate;
     }
 
