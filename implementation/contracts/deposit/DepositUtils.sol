@@ -210,9 +210,9 @@ library DepositUtils {
     /// @dev    The return value is not guaranteed since block.timestmap can be lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at term
     function remainingTerm(DepositUtils.Deposit storage _d) public view returns(uint256){
-        uint256 endOfTerm = _d.fundedAt + TBTCConstants.getDepositTerm();
+        uint256 endOfTerm = _d.fundedAt.add(TBTCConstants.getDepositTerm());
         if(block.timestamp < endOfTerm ) {
-            return endOfTerm - block.timestamp;
+            return endOfTerm.sub(block.timestamp);
         }
         return 0;
     }
@@ -231,7 +231,7 @@ library DepositUtils {
         // This should make a smooth flow from base% to 100%
         uint256 _basePercentage = TBTCConstants.getAuctionBasePercentage();
         uint256 _elapsedPercentage = uint256(100).sub(_basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
-        uint256 _percentage = _basePercentage + _elapsedPercentage;
+        uint256 _percentage = _basePercentage.add(_elapsedPercentage);
 
         return _available.mul(_percentage).div(100);
     }
@@ -239,7 +239,7 @@ library DepositUtils {
     /// @notice         Gets the lot size in erc20 decimal places (max 18)
     /// @return         uint256 lot size in 10**18 decimals.
     function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
-        return _d.lotSizeSatoshis * TBTCConstants.getSatoshiMultiplier();
+        return _d.lotSizeSatoshis.mul(TBTCConstants.getSatoshiMultiplier());
     }
 
     /// @notice         Determines the fees due to the signers for work performed.

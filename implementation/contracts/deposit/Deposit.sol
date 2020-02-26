@@ -275,7 +275,7 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud during funding.
-    /// @dev                    ECDSA is NOT SECURE unless you verify the digest.
+    /// @dev                    Calls out to the keep to verify if there was fraud.
     /// @param  _v              Signature recovery value.
     /// @param  _r              Signature R value.
     /// @param  _s              Signature S value.
@@ -376,7 +376,7 @@ contract Deposit is DepositFactoryAuthority {
     //
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud.
-    /// @dev                    ECDSA is NOT SECURE unless you verify the digest.
+    /// @dev                    Calls out to the keep to verify if there was fraud.
     /// @param  _v              Signature recovery value.
     /// @param  _r              Signature R value.
     /// @param  _s              Signature S value.
