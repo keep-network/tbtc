@@ -24,28 +24,56 @@ jobs:
           working_directory: ~/project/implementation
           command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - persist_to_workspace:
-          root: implementation
+          root: .
           paths:
-            - .npmrc
+            - implementation/.npmrc
+
+  compile_contracts:
+    executor: docker-node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - restore_cache:
+          keys:
+            # When lock file changes, use increasingly general patterns to restore cache.
+            - v1-client-npm-deps-{{ .Branch }}-{{ checksum "implementation/package-lock.json" }}
+            - v1-client-npm-deps-{{ .Branch }}-
+            - v1-client-npm-deps-
+      - run: cd implementation && npm install
+      - save_cache:
+          key: v1-client-npm-deps-{{ .Branch }}-{{ checksum "implementation/package-lock.json" }}
+          paths:
+            - implementation/node_modules
+
+      - run: cd implementation && node_modules/.bin/truffle compile
+
+      # Persist for downstream use.
+      - persist_to_workspace:
+          root: .
+          paths:
+           - implementation/node_modules
+           - implementation/build/contracts
+
   lint:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
-          at: implementation
+          at: .
       - run:
           name: Lint Implementation
           working_directory: ~/project/implementation
           command: |
             set -ex
-            npm ci
             npm run lint
   unit_test_contracts:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
-          at: implementation
+          at: .
       - run: sudo npm install -g ganache-cli@6.4.2
       - run:
           name: Running testrpc
@@ -55,7 +83,7 @@ jobs:
       - run:
           name: Run NPM tests
           working_directory: ~/project/implementation
-          command: npm ci && npm run test
+          command: npm run test:quick
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -65,13 +93,13 @@ jobs:
           name: Generate TeX-based PNGs
           working_directory: ~/project/docs
           command: |
-            mkdir -p /tmp/docs/img
+            mkdir -p /tmp/build/docs/img
             make pngs
-            cp -r img/generated /tmp/docs/img/generated
+            cp -r img/generated /tmp/build/docs/img/generated
       - persist_to_workspace:
-          root: /tmp/docs
+          root: /tmp
           paths:
-            - ./img/generated/*.png
+            - ./build/docs/img/generated/*.png
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:15
@@ -81,63 +109,63 @@ jobs:
           name: Generate TeX Document Files
           working_directory: ~/project/docs
           command: |
-            mkdir -p /tmp/docs
+            mkdir -p /tmp/build/docs
             make build.pdf
-            cp *.pdf /tmp/docs
+            cp *.pdf /tmp/build/docs
       - persist_to_workspace:
-          root: /tmp/docs
+          root: /tmp
           paths:
-            - ./*.pdf
+            - ./build/docs/*.pdf
   generate_docs_solidity:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
-          at: implementation
+          at: .
       - run:
           name: Generate solidity docs
           command: |
-            cd implementation && npm ci
-            node_modules/.bin/truffle compile
-
-            cd docs
+            cd implementation/docs
             mkdir -p output
             node generate-api-docs.js > output/index.adoc
 
-            mkdir -p /tmp/docs
-            cp -r output /tmp/docs/solidity
+            mkdir -p /tmp/build/docs
+            cp -r output /tmp/build/docs/solidity
       - persist_to_workspace:
-          root: /tmp/docs
+          root: /tmp
           paths:
-            - solidity/*
+            - ./build/docs/solidity/*
   generate_docs_asciidoctor:
     docker:
       - image: asciidoctor/docker-asciidoctor
     steps:
       - checkout
       - attach_workspace:
-          at: ./docs
+          at: .
       - run:
           name: Generate Asciidoctor PDF/HTML Files
           working_directory: ~/project/docs
           command: |
             set -ex
             shopt -s extglob globstar nullglob
+
+            cp -r ../build/docs/img ./
+
             asciidoctor -a revdate=`date +%Y-%m-%d` --failure-level=ERROR *.adoc **/*.adoc
-            for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/build/docs/$(dirname $a); cp $a /tmp/build/docs/$(dirname $a)/; done
             set -x
             asciidoctor-pdf -a revdate=`date +%Y-%m-%d` *.adoc **/*.adoc
-            for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/build/docs/$(dirname $a); cp $a /tmp/build/docs/$(dirname $a)/; done
       - persist_to_workspace:
-          root: /tmp/docs
+          root: /tmp
           paths:
-            - ./
+            - ./build/docs
   upload_docs:
     docker:
       - image: google/cloud-sdk:slim
     steps:
       - attach_workspace:
-          at: /tmp/docs
+          at: /tmp
       - gcp-cli/initialize:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -146,7 +174,7 @@ jobs:
       - run:
           name: Upload Document Files to docs.keep.network
           command: |
-            cd /tmp/docs
+            cd /tmp/build/docs
             export DIR=$(test $CIRCLE_BRANCH != master && echo $CIRCLE_BRANCH/)
             gsutil -m cp -r * gs://docs.keep.network/tbtc/$DIR
   migrate_contracts:
@@ -249,25 +277,34 @@ workflows:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
-      - lint:
+      - compile_contracts:
           requires:
             - setup_github_package_registry
+      - lint:
+          requires:
+            - compile_contracts
   test:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
-      - unit_test_contracts:
+      - compile_contracts:
           requires:
             - setup_github_package_registry
+      - unit_test_contracts:
+          requires:
+            - compile_contracts
   docs:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
+      - compile_contracts:
+          requires:
+            - setup_github_package_registry
       - generate_pngs
       - generate_docs_tex
       - generate_docs_solidity:
           requires:
-            - setup_github_package_registry
+            - compile_contracts
       - generate_docs_asciidoctor:
           requires:
             - generate_docs_solidity
@@ -281,13 +318,16 @@ workflows:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
+      - compile_contracts:
+          requires:
+            - setup_github_package_registry
       - migrate_contracts:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
-            - setup_github_package_registry
+            - compile_contracts
       - build_initcontainer:
           filters:
             branches:
@@ -323,6 +363,9 @@ workflows:
           context: github-package-registry
           requires:
             - keep_test_approval
+      - compile_contracts:
+          requires:
+            - setup_github_package_registry
       - migrate_contracts:
           filters:
             tags:
@@ -331,7 +374,7 @@ workflows:
               ignore: /.*/
           context: keep-test
           requires:
-            - setup_github_package_registry
+            - compile_contracts
       - build_initcontainer:
           filters:
             tags:

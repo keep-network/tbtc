@@ -53,7 +53,6 @@ ssh utilitybox << EOF
 
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/implementation
-  npm install
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 EOF
