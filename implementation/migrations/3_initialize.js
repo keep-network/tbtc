@@ -22,7 +22,7 @@ module.exports = async function(deployer, network) {
   if (process.env.NODE_ENV == "test" && !process.env.INTEGRATION_TEST) return
 
   const keepThreshold = 3
-  const groupSize = 3
+  const keepGroupSize = 3
 
   console.debug(
     `Initializing TBTCSystem [${TBTCSystem.address}] with:\n` +
@@ -34,7 +34,7 @@ module.exports = async function(deployer, network) {
       `  feeRebateToken: ${FeeRebateToken.address}\n` +
       `  vendingMachine: ${VendingMachine.address}\n` +
       `  keepThreshold: ${keepThreshold}\n` +
-      `  keepSize: ${groupSize}`,
+      `  keepSize: ${keepGroupSize}`,
   )
 
   // System.
@@ -48,7 +48,7 @@ module.exports = async function(deployer, network) {
     FeeRebateToken.address,
     VendingMachine.address,
     keepThreshold,
-    groupSize,
+    keepGroupSize,
   )
 
   console.log("TBTCSystem initialized!")
