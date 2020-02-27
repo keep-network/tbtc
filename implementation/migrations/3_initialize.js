@@ -21,6 +21,22 @@ module.exports = async function(deployer, network) {
   // Don't enact this setup during unit testing.
   if (process.env.NODE_ENV == "test" && !process.env.INTEGRATION_TEST) return
 
+  const keepThreshold = 3
+  const keepGroupSize = 3
+
+  console.debug(
+    `Initializing TBTCSystem [${TBTCSystem.address}] with:\n` +
+      `  keepVendor: ${BondedECDSAKeepVendorAddress}\n` +
+      `  depositFactory: ${DepositFactory.address}\n` +
+      `  masterDepositAddress: ${Deposit.address}\n` +
+      `  tbtcToken: ${TBTCToken.address}\n` +
+      `  tbtcDepositToken: ${TBTCDepositToken.address}\n` +
+      `  feeRebateToken: ${FeeRebateToken.address}\n` +
+      `  vendingMachine: ${VendingMachine.address}\n` +
+      `  keepThreshold: ${keepThreshold}\n` +
+      `  keepSize: ${keepGroupSize}`,
+  )
+
   // System.
   const tbtcSystem = await TBTCSystem.deployed()
   await tbtcSystem.initialize(
@@ -31,9 +47,11 @@ module.exports = async function(deployer, network) {
     TBTCDepositToken.address,
     FeeRebateToken.address,
     VendingMachine.address,
-    3,
-    3,
+    keepThreshold,
+    keepGroupSize,
   )
+
+  console.log("TBTCSystem initialized!")
 
   // Price feed.
   const btcEthPriceFeed = await BTCETHPriceFeed.deployed()
