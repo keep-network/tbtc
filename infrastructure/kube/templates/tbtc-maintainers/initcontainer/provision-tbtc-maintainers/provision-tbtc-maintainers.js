@@ -62,6 +62,7 @@ async function provisionTbtcMaintainers() {
     await createTbtcMaintainersConfig(operatorAccount['privateKey']);
 
     console.log("\n########### tbtc-maintainers Provisioning Complete! ###########");
+    process.exit()
   }
   catch(error) {
     console.error(error.message);
