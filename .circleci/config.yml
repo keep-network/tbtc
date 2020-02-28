@@ -188,10 +188,11 @@ jobs:
       - checkout
       - run:
           name: Run Docker build
+          working_directory: ~/project/infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
           command: |
             mkdir -p /tmp/tbtc/docker-images
-            cp /tmp/tbtc/contracts/* infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
-            cd infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
+            cp /tmp/tbtc/contracts/TBTCSystem.json .
+
             docker build \
               -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers .
       - run:
