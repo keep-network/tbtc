@@ -9,7 +9,7 @@ RUN npm install
 
 COPY ./TBTCSystem.json /tmp/TBTCSystem.json
 
-COPY ./tbtc-maintainers-template.toml /tmp/tbtc-maintainers-template.toml
+COPY ./tbtc-maintainers-config-template.toml /tmp/tbtc-maintainers-config-template.toml
 
 COPY ./provision-tbtc-maintainers.js /tmp/provision-tbtc-maintainers.js
 
