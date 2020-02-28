@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "concat-stream": "^2.0.0",
     "toml": "^3.0.0",
     "tomlify-j0.4": "^3.0.0",
     "@truffle/hdwallet-provider": "^1.0.25",

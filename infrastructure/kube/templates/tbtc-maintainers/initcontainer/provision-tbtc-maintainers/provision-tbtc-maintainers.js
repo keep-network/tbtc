@@ -1,7 +1,6 @@
 const fs = require('fs');
 const toml = require('toml');
 const tomlify = require('tomlify-j0.4');
-const concat = require('concat-stream');
 const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
@@ -105,20 +104,15 @@ async function fundOperatorAccount(operator, purse, etherToTransfer) {
 
 async function createTbtcMaintainersConfig(operatorPrivateKey) {
 
-  fs.createReadStream('/tmp/tbtc-maintainers-template.toml', 'utf8').pipe(concat(function (data) {
-    let parsedConfigFile = toml.parse(data);
+  let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/tbtc-maintainers-template.toml', 'utf8'))
 
-    parsedConfigFile.ethereum.URL = ethWSUrl;
-    parsedConfigFile.ethereum.PrivateKey = operatorPrivateKey.replace('0x', '')
+  parsedConfigFile.ethereum.URL = ethWSUrl;
+  parsedConfigFile.ethereum.PrivateKey = operatorPrivateKey.replace('0x', '')
 
-    console.log("TBTCSystem contract address:", tbtcSystemContractAddress)
-    parsedConfigFile.ethereum.ContractAddresses.TBTCSystem = tbtcSystemContractAddress;
+  console.log("TBTCSystem contract address:", tbtcSystemContractAddress)
+  parsedConfigFile.ethereum.ContractAddresses.TBTCSystem = tbtcSystemContractAddress;
 
-    fs.writeFile('/mnt/tbtc-maintainers/config/tbtc-maintainers-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
-      if (error) throw error;
-    });
-  }));
-
+  fs.writeFileSync('/mnt/tbtc-maintainers/config/tbtc-maintainers-config.toml', tomlify.toToml(parsedConfigFile))
   console.log("tbtc-maintainers config written to /mnt/tbtc-maintainers/config/tbtc-maintainers-config.toml");
 };
 
