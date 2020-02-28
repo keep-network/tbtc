@@ -24,11 +24,11 @@ We override transactionConfirmationBlocks and transactionBlockTimeout because th
 is long wait times for scripts to execute.
 */
 const web3_options = {
-    defaultBlock: 'latest',
-    defaultGas: 4712388,
-    transactionBlockTimeout: 25,
-    transactionConfirmationBlocks: 3,
-    transactionPollingTimeout: 480
+  defaultBlock: 'latest',
+  defaultGas: 4712388,
+  transactionBlockTimeout: 25,
+  transactionConfirmationBlocks: 3,
+  transactionPollingTimeout: 480
 };
 const web3 = new Web3(contractOwnerProvider, null, web3_options);
 
@@ -64,7 +64,7 @@ async function provisionTbtcMaintainers() {
     console.log("\n########### tbtc-maintainers Provisioning Complete! ###########");
     process.exit()
   }
-  catch(error) {
+  catch (error) {
     console.error(error.message);
     throw error;
   }
@@ -78,7 +78,7 @@ async function createOperatorEthAccount(accountName) {
   fs.writeFile('/mnt/tbtc-maintainers/config/eth_account_address', ethAccount['address'], (error) => {
     if (error) throw error;
   });
-  console.log(accountName + ' Account '  + ethAccount['address'] + ' Created!');
+  console.log(accountName + ' Account ' + ethAccount['address'] + ' Created!');
   return ethAccount;
 };
 
@@ -99,24 +99,26 @@ async function fundOperatorAccount(operator, purse, etherToTransfer) {
   let transferAmount = web3.utils.toWei(etherToTransfer, "ether")
 
   console.log("Funding account " + operator + " with " + transferAmount + " wei from purse " + purse);
-  await web3.eth.sendTransaction({from:purse, to:operator, value:transferAmount});
+  await web3.eth.sendTransaction({ from: purse, to: operator, value: transferAmount });
   console.log("Account " + operator + " funded!");
 }
 
 async function createTbtcMaintainersConfig(operatorPrivateKey) {
 
-  fs.createReadStream('/tmp/tbtc-maintainers-template.toml', 'utf8').pipe(concat(function(data) {
+  fs.createReadStream('/tmp/tbtc-maintainers-template.toml', 'utf8').pipe(concat(function (data) {
     let parsedConfigFile = toml.parse(data);
 
     parsedConfigFile.ethereum.URL = ethWSUrl;
     parsedConfigFile.ethereum.PrivateKey = operatorPrivateKey.replace('0x', '')
+
+    console.log("TBTCSystem contract address:", tbtcSystemContractAddress)
     parsedConfigFile.ethereum.ContractAddresses.TBTCSystem = tbtcSystemContractAddress;
 
     fs.writeFile('/mnt/tbtc-maintainers/config/tbtc-maintainers-config.toml', tomlify.toToml(parsedConfigFile), (error) => {
       if (error) throw error;
     });
   }));
-  
+
   console.log("tbtc-maintainers config written to /mnt/tbtc-maintainers/config/tbtc-maintainers-config.toml");
 };
 
@@ -124,4 +126,3 @@ provisionTbtcMaintainers().catch(error => {
   console.error(error);
   process.exit(1);
 });
-
