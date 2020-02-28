@@ -6,9 +6,8 @@ const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 // ETH host info
-const ethHost = process.env.ETH_HOSTNAME;
-const ethWsPort = process.env.ETH_WS_PORT;
-const ethRpcPort = process.env.ETH_RPC_PORT;
+const ethRPCUrl = process.env.ETH_RPC_URL;
+const ethWSUrl = process.env.ETH_WS_URL;
 const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
@@ -108,7 +107,7 @@ async function createTbtcMaintainersConfig(operatorPrivateKey) {
   fs.createReadStream('/tmp/tbtc-maintainers-template.toml', 'utf8').pipe(concat(function(data) {
     let parsedConfigFile = toml.parse(data);
 
-    parsedConfigFile.ethereum.URL = ethHost.replace('http://', 'ws://') + ':' + ethWsPort;
+    parsedConfigFile.ethereum.URL = ethWSUrl;
     parsedConfigFile.ethereum.PrivateKey = operatorPrivateKey.replace('0x', '')
     parsedConfigFile.ethereum.ContractAddresses.TBTCSystem = tbtcSystemContractAddress;
 
