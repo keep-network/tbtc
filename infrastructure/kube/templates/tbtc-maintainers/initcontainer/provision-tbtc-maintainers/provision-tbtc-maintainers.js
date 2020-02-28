@@ -15,7 +15,8 @@ var purse = contractOwnerAddress;
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
-let operatorEthAccountPassword = process.env.TBTC_MAINTAINERS_ETH_ACCOUNT_PASSWORD;
+var operatorAddress = process.env.TBTC_MAINTAINERS_ETH_ACCOUNT_ADDRESS
+var operatorPrivateKey = process.env.TBTC_MAINTAINERS_ETH_ACCOUNT_PRIVATE_KEY
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -46,19 +47,11 @@ async function provisionTbtcMaintainers() {
     console.log('###########  Provisioning tbtc-maintainers! ###########');
     console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
 
-    let operatorAccount = await createOperatorEthAccount('operator');
-    var operator = operatorAccount['address'];
-
-    await createOperatorEthAccountKeyfile(operatorAccount['privateKey'], operatorEthAccountPassword);
-
-    // We wallet add to make the local account available to web3 functions in the script.
-    await web3.eth.accounts.wallet.add(operatorAccount['privateKey']);
-
-    console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operator + ' >>>>>>>>>>>>');
-    await fundOperatorAccount(operator, purse, '1');
+    console.log('\n<<<<<<<<<<<< Funding Operator Account ' + operatorAddress + ' >>>>>>>>>>>>');
+    await fundOperatorAccount(operatorAddress, purse, '1');
 
     console.log('\n<<<<<<<<<<<< Creating tbtc-maintainers Config File >>>>>>>>>>>>');
-    await createTbtcMaintainersConfig(operatorAccount['privateKey']);
+    await createTbtcMaintainersConfig();
 
     console.log("\n########### tbtc-maintainers Provisioning Complete! ###########");
     process.exit()
@@ -69,45 +62,22 @@ async function provisionTbtcMaintainers() {
   }
 };
 
-async function createOperatorEthAccount(accountName) {
+async function fundOperatorAccount(operatorAddress, purse, requiredEtherBalance) {
 
-  let ethAccount = await web3.eth.accounts.create();
+  let requiredBalance = web3.utils.toWei(requiredEtherBalance, 'ether')
 
-  // We write to a file for later passage to the tbtc-maintainers container
-  fs.writeFile('/mnt/tbtc-maintainers/config/eth_account_address', ethAccount['address'], (error) => {
-    if (error) throw error;
-  });
-  console.log(accountName + ' Account ' + ethAccount['address'] + ' Created!');
-  return ethAccount;
+  const currentBalance = web3.utils.toBN(await web3.eth.getBalance(operatorAddress))
+  if (currentBalance.gte(requiredBalance)) {
+    console.log('Operator address is already funded, exiting!')
+    return
 };
 
-// We are creating a local account.  We must manually generate a keyfile for use by the tbtc-maintainers
-async function createOperatorEthAccountKeyfile(ethAccountPrivateKey, ethAccountPassword) {
+async function createTbtcMaintainersConfig() {
 
-  let ethAccountKeyfile = await web3.eth.accounts.encrypt(ethAccountPrivateKey, ethAccountPassword);
-
-  // We write to a file for later passage to the tbtc-maintainers container
-  fs.writeFile('/mnt/tbtc-maintainers/config/eth_account_keyfile', JSON.stringify(ethAccountKeyfile), (error) => {
-    if (error) throw error;
-  });
-  console.log('Keyfile generated!');
-};
-
-async function fundOperatorAccount(operator, purse, etherToTransfer) {
-
-  let transferAmount = web3.utils.toWei(etherToTransfer, "ether")
-
-  console.log("Funding account " + operator + " with " + transferAmount + " wei from purse " + purse);
-  await web3.eth.sendTransaction({ from: purse, to: operator, value: transferAmount });
-  console.log("Account " + operator + " funded!");
-}
-
-async function createTbtcMaintainersConfig(operatorPrivateKey) {
-
-  let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/tbtc-maintainers-template.toml', 'utf8'))
+  let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/tbtc-maintainers-config-template.toml', 'utf8'))
 
   parsedConfigFile.ethereum.URL = ethWSUrl;
-  parsedConfigFile.ethereum.PrivateKey = operatorPrivateKey.replace('0x', '')
+  parsedConfigFile.ethereum.PrivateKey = operatorPrivateKey
 
   console.log("TBTCSystem contract address:", tbtcSystemContractAddress)
   parsedConfigFile.ethereum.ContractAddresses.TBTCSystem = tbtcSystemContractAddress;
