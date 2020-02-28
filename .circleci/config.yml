@@ -194,11 +194,13 @@ jobs:
             cp /tmp/tbtc/contracts/TBTCSystem.json .
 
             docker build \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers .
+              --tag initcontainer-provision-tbtc-maintainers .
       - run:
           name: Save tbtc-maintainers-initcontainer image
           command: |
-            docker save -o /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers
+            docker save \
+              --output /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar \
+              initcontainer-provision-tbtc-maintainers
       - persist_to_workspace:
           root: /tmp/tbtc
           paths:
@@ -212,6 +214,10 @@ jobs:
           name: Load Docker images
           command: |
             docker load -i /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar
+      - run:
+          name: Tag Docker images
+          command: |
+            docker tag initcontainer-provision-tbtc-maintainers $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
