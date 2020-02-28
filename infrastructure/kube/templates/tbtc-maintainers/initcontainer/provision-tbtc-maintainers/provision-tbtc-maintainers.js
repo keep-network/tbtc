@@ -70,6 +70,7 @@ async function fundOperatorAccount(operatorAddress, purse, requiredEtherBalance)
   if (currentBalance.gte(requiredBalance)) {
     console.log('Operator address is already funded, exiting!')
     return
+  }
 };
 
 async function createTbtcMaintainersConfig() {
