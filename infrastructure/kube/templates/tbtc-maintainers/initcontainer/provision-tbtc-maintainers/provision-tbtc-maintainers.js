@@ -17,6 +17,8 @@ var purse = contractOwnerAddress;
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
+let operatorEthAccountPassword = process.env.TBTC_MAINTAINERS_ETH_ACCOUNT_PASSWORD;
+
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -46,7 +48,6 @@ async function provisionTbtcMaintainers() {
     console.log('###########  Provisioning tbtc-maintainers! ###########');
     console.log('\n<<<<<<<<<<<< Setting Up Operator Account ' + '>>>>>>>>>>>>');
 
-    let operatorEthAccountPassword = process.env.TBTC_MAINTAINERS_ETH_ACCOUNT_PASSWORD;
     let operatorAccount = await createOperatorEthAccount('operator');
     var operator = operatorAccount['address'];
 
