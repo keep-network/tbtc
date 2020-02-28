@@ -1,6 +1,6 @@
 {
-  "name": "tbtc",
-  "version": "0.7.0-pre",
+  "name": "@keep-network/tbtc",
+  "version": "0.7.0-pre.0",
   "description": "deposit contract for TBTC",
   "main": "index.js",
   "scripts": {
