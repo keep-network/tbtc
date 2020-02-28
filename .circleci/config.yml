@@ -193,11 +193,6 @@ jobs:
             cp /tmp/tbtc/contracts/* infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
             cd infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
             docker build \
-              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
-              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
-              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
-              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
-              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
               -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers .
       - run:
           name: Save tbtc-maintainers-initcontainer image
