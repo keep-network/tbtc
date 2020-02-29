@@ -395,13 +395,13 @@ library DepositUtils {
     }
 
     /// @notice             Pushes ether held by the deposit to the signer group.
-    /// @dev                Useful for returning bonds to the group, or otherwise paying them.
+    /// @dev                Ether is returned to signing group members bonds.
     /// @param  _ethValue   The amount of ether to send.
     /// @return             True if successful, otherwise revert.
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        _keep.distributeETHToMembers.value(_ethValue)();
+        _keep.returnPartialSignerBonds.value(_ethValue)();
         return true;
     }
 

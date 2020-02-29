@@ -25,7 +25,7 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         emit SignatureRequested(_digest);
     }
 
-    function distributeETHToMembers() external payable {
+    function returnPartialSignerBonds() external payable {
 
     }
 
