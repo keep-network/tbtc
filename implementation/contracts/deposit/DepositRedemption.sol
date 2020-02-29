@@ -37,7 +37,7 @@ library DepositRedemption {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
         _tbtcToken.approve(_d.keepAddress, _d.signerFee());
-        _keep.distributeERC20ToMembers(_tbtcTokenAddress, _d.signerFee());
+        _keep.distributeERC20Reward(_tbtcTokenAddress, _d.signerFee());
     }
 
     /// @notice Closes keep associated with the deposit.
