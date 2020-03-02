@@ -7,7 +7,7 @@ COPY ./package-lock.json /tmp/package-lock.json
 
 RUN npm install
 
-COPY ./TBTCSystem.json /tmp/TBTCSystem.json
+COPY ./MockRelay.json /tmp/MockRelay.json
 
 COPY ./tbtc-maintainers-config-template.toml /tmp/tbtc-maintainers-config-template.toml
 

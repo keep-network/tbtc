@@ -191,7 +191,7 @@ jobs:
           working_directory: ~/project/infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
           command: |
             mkdir -p /tmp/tbtc/docker-images
-            cp /tmp/tbtc/contracts/TBTCSystem.json .
+            cp /tmp/tbtc/contracts/MockRelay.json .
 
             docker build \
               --tag initcontainer-provision-tbtc-maintainers .

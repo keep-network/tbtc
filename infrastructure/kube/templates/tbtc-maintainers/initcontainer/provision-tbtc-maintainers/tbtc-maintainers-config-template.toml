@@ -24,4 +24,4 @@
 
 # Addresses of contracts deployed on ethereum blockchain.
 [ethereum.ContractAddresses]
-  TBTCSystem = "Set by Kube"
+  MockRelay = "Set by Kube"
