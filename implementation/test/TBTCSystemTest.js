@@ -9,30 +9,38 @@ const {BN, expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
+const TestTBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
 
 describe("TBTCSystem", async function() {
   let tbtcSystem
   let ecdsaKeepFactory
+  let tdt
 
   before(async () => {
-    const {tbtcSystemStub, ecdsaKeepFactoryStub} = await deployAndLinkAll(
+    const {tbtcSystemStub, ecdsaKeepFactoryStub, tbtcDepositToken} = await deployAndLinkAll(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
       // test TBTCSystem itself.
-      {TBTCSystemStub: TBTCSystem},
+      {TBTCSystemStub: TBTCSystem,
+      tbtcDepositToken: TestTBTCDepositToken},
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
     ecdsaKeepFactory = ecdsaKeepFactoryStub
+    tdt = tbtcDepositToken
   })
 
   describe("requestNewKeep()", async () => {
     let openKeepFee
+
     before(async () => {
       openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
+      await tdt.forceMint(accounts[0], web3.utils.toBN(accounts[0]))
     })
+
     it("sends caller as owner to open new keep", async () => {
       const expectedKeepOwner = accounts[2]
+      await tdt.forceMint(accounts[0], web3.utils.toBN(expectedKeepOwner))
 
       await tbtcSystem.requestNewKeep(5, 10, 0, {
         from: expectedKeepOwner,
@@ -50,6 +58,7 @@ describe("TBTCSystem", async function() {
 
       const result = await tbtcSystem.requestNewKeep.call(5, 10, 0, {
         value: openKeepFee,
+        from: accounts[0]
       })
 
       expect(expectedKeepAddress, "incorrect keep address").to.equal(result)
@@ -58,7 +67,7 @@ describe("TBTCSystem", async function() {
     it("forwards value to keep factory", async () => {
       const initialBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
 
-      await tbtcSystem.requestNewKeep(5, 10, 0, {value: openKeepFee})
+      await tbtcSystem.requestNewKeep(5, 10, 0, {value: openKeepFee, from: accounts[0]})
 
       const finalBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
       const balanceCheck = new BN(finalBalance).sub(new BN(initialBalance))
@@ -67,6 +76,14 @@ describe("TBTCSystem", async function() {
         "TBTCSystem did not correctly forward value to keep factory",
       ).to.eq.BN(openKeepFee)
     })
+
+    it("reverts if caller does not match a valid TDT", async () => {
+      await expectRevert(
+        tbtcSystem.requestNewKeep(5, 10, 0, {value: openKeepFee, from: accounts[1]}),
+        "Caller must be a Deposit contract",
+      )
+    })
+
   })
 
   describe("setSignerFeeDivisor", async () => {
