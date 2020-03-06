@@ -318,34 +318,27 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Get the time remaining until the collateralization thresholds can be updated.
     function getRemainingCollateralizationUpdateTime() external view returns (uint256) {
-        require(collateralizationThresholdsChangeInitiated > 0, "Update not initiated");
-
-        uint256 elapsed = block.timestamp.sub(collateralizationThresholdsChangeInitiated);
-        return (elapsed >= governanceTimeDelay)?
-        0:
-        governanceTimeDelay.sub(elapsed);
+        return getRemainingChangeTime(collateralizationThresholdsChangeInitiated);
     }
 
     /// @notice Get the time remaining until the lot sizes can be updated.
     function getRemainingLotSizesUpdateTime() external view returns (uint256) {
-        require(lotSizesChangeInitiated > 0, "Update not initiated");
-
-        uint256 elapsed = block.timestamp.sub(lotSizesChangeInitiated);
-        return (elapsed >= governanceTimeDelay)?
-        0:
-        governanceTimeDelay.sub(elapsed);
+        return getRemainingChangeTime(lotSizesChangeInitiated);
     }
 
     /// @notice Get the time remaining until the signer fee divisor can be updated.
     function geRemainingSignerFeeDivisorUpdateTime() external view returns (uint256) {
-        require(signerFeeDivisorChangeInitiated > 0, "Update not initiated");
+        return getRemainingChangeTime(signerFeeDivisorChangeInitiated);
+    }
 
-        uint256 elapsed = block.timestamp.sub(signerFeeDivisorChangeInitiated);
+    /// @notice Get the time remaining until the function parameter timer value can be updated.
+    function getRemainingChangeTime(uint256 _changeTimestamp) internal view returns (uint256){
+        require(_changeTimestamp > 0, "Update not initiated");
+        uint256 elapsed = block.timestamp.sub(_changeTimestamp);
         return (elapsed >= governanceTimeDelay)?
         0:
         governanceTimeDelay.sub(elapsed);
     }
-
     // Price Feed
 
     /// @notice Get the price of one satoshi in wei.
