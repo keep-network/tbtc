@@ -151,8 +151,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function getSignerFeeDivisor() external view returns (uint256) { return signerFeeDivisor; }
 
     /// @notice Set the system signer fee divisor.
-    /// @dev    This can be finalized by callingm `finalizeSignerFeeDivisorUpdate`
-    ///          Anytime after `governanceTimeDelay` has elapsed.
+    /// @dev    This can be finalized by calling `finalizeSignerFeeDivisorUpdate`
+    ///         Anytime after `governanceTimeDelay` has elapsed.
     /// @param _signerFeeDivisor The signer fee divisor.
     function beginSignerFeeDivisorUpdate(uint256 _signerFeeDivisor)
         external onlyOwner
@@ -219,17 +219,25 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
     }
 
+    modifier onlyAfterDelay(uint256 _changeInitializedTimestamp) {
+        require(_changeInitializedTimestamp > 0, "Change not initiated");
+        require(
+            block.timestamp.sub(_changeInitializedTimestamp) >=
+                governanceTimeDelay,
+            "Timer not elapsed"
+        );
+        _;
+    }
+
     /// @notice Finish setting the system signer fee divisor.
     /// @dev `beginSignerFeeDivisorUpdate` must be called first, once `governanceTimeDelay`
     ///       has passed, this function can be called to set the signer fee divisor to the
     ///       value set in `beginSignerFeeDivisorUpdate`
     function finalizeSignerFeeDivisorUpdate()
-        external onlyOwner
+        external
+        onlyOwner
+        onlyAfterDelay(signerFeeDivisorChangeInitiated)
     {
-        require(
-            block.timestamp.sub(signerFeeDivisorChangeInitiated) >= governanceTimeDelay,
-            "Timer not elapsed, or change not initiated"
-        );
         signerFeeDivisor = newSignerFeeDivisor;
         emit SignerFeeDivisorUpdated(newSignerFeeDivisor);
         newSignerFeeDivisor = 0;
@@ -239,11 +247,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @dev `beginLotSizesUpdate` must be called first, once `governanceTimeDelay`
     ///       has passed, this function can be called to set the lot sizes to the
     ///       value set in `beginLotSizesUpdate`
-    function finalizeLotSizesUpdate() external onlyOwner {
-        require(
-            block.timestamp.sub(lotSizesChangeInitiated) >= governanceTimeDelay,
-            "Timer not elapsed, or change not initiated"
-        );
+    function finalizeLotSizesUpdate()
+        external
+        onlyOwner
+        onlyAfterDelay(lotSizesChangeInitiated) {
+
         lotSizesSatoshis = newLotSizesSatoshis;
         emit LotSizesUpdated(newLotSizesSatoshis);
         lotSizesChangeInitiated = 0;
@@ -272,11 +280,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @dev `beginCollateralizationThresholdsUpdate` must be called first, once `governanceTimeDelay`
     ///       has passed, this function can be called to set the collateralization thresholds to the
     ///       value set in `beginCollateralizationThresholdsUpdate`
-    function finalizeCollateralizationThresholdsUpdate() external onlyOwner {
-        require(
-            block.timestamp.sub(collateralizationThresholdsChangeInitiated) >= governanceTimeDelay,
-            "Timer not elapsed, or change not initiated"
-        );
+    function finalizeCollateralizationThresholdsUpdate()
+        external
+        onlyOwner
+        onlyAfterDelay(collateralizationThresholdsChangeInitiated) {
+
         initialCollateralizedPercent = newInitialCollateralizedPercent;
         undercollateralizedThresholdPercent = newUndercollateralizedThresholdPercent;
         severelyUndercollateralizedThresholdPercent = newSeverelyUndercollateralizedThresholdPercent;
