@@ -101,7 +101,7 @@ describe("TBTCSystem", async function() {
       it("reverts if the governance timer has not elapsed", async () => {
         await expectRevert(
           tbtcSystem.finalizeSignerFeeDivisorUpdate(),
-          "Timer not elapsed, or change not initiated",
+          "Timer not elapsed",
         )
       })
 
@@ -115,6 +115,13 @@ describe("TBTCSystem", async function() {
         expectEvent(receipt, "SignerFeeDivisorUpdated", {
           _signerFeeDivisor: new BN("201"),
         })
+      })
+
+      it("reverts if a change has not been initiated", async () => {
+        await expectRevert(
+          tbtcSystem.finalizeSignerFeeDivisorUpdate(),
+          "Change not initiated",
+        )
       })
     })
   })
@@ -152,7 +159,7 @@ describe("TBTCSystem", async function() {
       it("reverts if the governance timer has not elapsed", async () => {
         await expectRevert(
           tbtcSystem.finalizeLotSizesUpdate(),
-          "Timer not elapsed, or change not initiated",
+          "Timer not elapsed",
         )
       })
 
@@ -166,6 +173,13 @@ describe("TBTCSystem", async function() {
         expectEvent(receipt, "LotSizesUpdated", {})
         expect(receipt.logs[0].args._lotSizes[0]).to.eq.BN(lotSizes[0])
         expect(receipt.logs[0].args._lotSizes[1]).to.eq.BN(lotSizes[1])
+      })
+
+      it("reverts if a change has not been initiated", async () => {
+        await expectRevert(
+          tbtcSystem.finalizeLotSizesUpdate(),
+          "Change not initiated",
+        )
       })
     })
   })
@@ -227,7 +241,7 @@ describe("TBTCSystem", async function() {
       it("reverts if the governance timer has not elapsed", async () => {
         await expectRevert(
           tbtcSystem.finalizeCollateralizationThresholdsUpdate(),
-          "Timer not elapsed, or change not initiated",
+          "Timer not elapsed",
         )
       })
 
@@ -243,6 +257,13 @@ describe("TBTCSystem", async function() {
           _undercollateralizedThresholdPercent: undercollateralizedPercent,
           _severelyUndercollateralizedThresholdPercent: severelyUndercollateralizedPercent,
         })
+      })
+
+      it("reverts if a change has not been initiated", async () => {
+        await expectRevert(
+          tbtcSystem.finalizeCollateralizationThresholdsUpdate(),
+          "Change not initiated",
+        )
       })
     })
   })
