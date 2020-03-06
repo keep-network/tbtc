@@ -35,24 +35,22 @@ describe("TBTCSystem", async function() {
 
   describe("requestNewKeep()", async () => {
     let openKeepFee
+    const keepOwner = accounts[2]
 
     before(async () => {
       openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
-      await tdt.forceMint(accounts[0], web3.utils.toBN(accounts[0]))
+      await tdt.forceMint(accounts[0], web3.utils.toBN(keepOwner))
     })
 
     it("sends caller as owner to open new keep", async () => {
-      const expectedKeepOwner = accounts[2]
-      await tdt.forceMint(accounts[0], web3.utils.toBN(expectedKeepOwner))
-
       await tbtcSystem.requestNewKeep(5, 10, 0, {
-        from: expectedKeepOwner,
+        from: keepOwner,
         value: openKeepFee,
       })
-      const keepOwner = await ecdsaKeepFactory.keepOwner.call()
+      const actualKeepOwner = await ecdsaKeepFactory.keepOwner.call()
 
-      expect(expectedKeepOwner, "incorrect keep owner address").to.equal(
-        keepOwner,
+      expect(keepOwner, "incorrect keep owner address").to.equal(
+        actualKeepOwner,
       )
     })
 
@@ -61,7 +59,7 @@ describe("TBTCSystem", async function() {
 
       const result = await tbtcSystem.requestNewKeep.call(5, 10, 0, {
         value: openKeepFee,
-        from: accounts[0],
+        from: keepOwner,
       })
 
       expect(expectedKeepAddress, "incorrect keep address").to.equal(result)
@@ -72,7 +70,7 @@ describe("TBTCSystem", async function() {
 
       await tbtcSystem.requestNewKeep(5, 10, 0, {
         value: openKeepFee,
-        from: accounts[0],
+        from: keepOwner,
       })
 
       const finalBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
