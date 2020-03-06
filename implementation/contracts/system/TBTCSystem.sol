@@ -339,6 +339,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         0:
         governanceTimeDelay.sub(elapsed);
     }
+
+    function getGovernanceTimeDelay() public view returns (uint256) {
+        return governanceTimeDelay;
+    }
+
     // Price Feed
 
     /// @notice Get the price of one satoshi in wei.

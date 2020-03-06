@@ -10,8 +10,7 @@ const {expect} = require("chai")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
 
-// eslint-disable-next-line no-only-tests/no-only-tests
-describe.only("TBTCSystem", async function() {
+describe("TBTCSystem", async function() {
   let tbtcSystem
   let ecdsaKeepFactory
 
@@ -67,6 +66,129 @@ describe.only("TBTCSystem", async function() {
         balanceCheck,
         "TBTCSystem did not correctly forward value to keep factory",
       ).to.eq.BN(openKeepFee)
+    })
+  })
+
+  describe("geRemainingSignerFeeDivisorUpdateTime", async () => {
+    let totalDelay
+
+    before(async () => {
+      totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("reverts if update has not been initiated", async () => {
+      await expectRevert(
+        tbtcSystem.geRemainingSignerFeeDivisorUpdateTime.call(),
+        "Update not initiated",
+      )
+    })
+
+    it("returns total delay if no time has passed ", async () => {
+      await tbtcSystem.beginSignerFeeDivisorUpdate(new BN("200"))
+      const remaining = await tbtcSystem.geRemainingSignerFeeDivisorUpdateTime.call()
+      expect(remaining).to.eq.BN(totalDelay)
+    })
+
+    it("returns the correct remaining time", async () => {
+      await tbtcSystem.beginSignerFeeDivisorUpdate(new BN("200"))
+      const expectedRemaining = 100
+      await increaseTime(totalDelay.toNumber() - expectedRemaining)
+
+      const remaining = await tbtcSystem.geRemainingSignerFeeDivisorUpdateTime.call()
+      expect(remaining).to.eq.BN(expectedRemaining)
+    })
+  })
+
+  describe("getRemainingLotSizesUpdateTime", async () => {
+    let totalDelay
+    const lotSizes = [new BN(10 ** 8), new BN(10 ** 6)]
+
+    before(async () => {
+      totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("reverts if update has not been initiated", async () => {
+      await expectRevert(
+        tbtcSystem.getRemainingLotSizesUpdateTime.call(),
+        "Update not initiated",
+      )
+    })
+
+    it("returns total delay if no time has passed ", async () => {
+      await tbtcSystem.beginLotSizesUpdate(lotSizes)
+      const remaining = await tbtcSystem.getRemainingLotSizesUpdateTime.call()
+      expect(remaining).to.eq.BN(totalDelay)
+    })
+
+    it("returns the correct remaining time", async () => {
+      await tbtcSystem.beginLotSizesUpdate(lotSizes)
+      const expectedRemaining = 100
+      await increaseTime(totalDelay.toNumber() - expectedRemaining)
+
+      const remaining = await tbtcSystem.getRemainingLotSizesUpdateTime.call()
+      expect(remaining).to.eq.BN(expectedRemaining)
+    })
+  })
+
+  describe("getRemainingCollateralizationUpdateTime", async () => {
+    let totalDelay
+
+    before(async () => {
+      totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("reverts if update has not been initiated", async () => {
+      await expectRevert(
+        tbtcSystem.getRemainingCollateralizationUpdateTime.call(),
+        "Update not initiated",
+      )
+    })
+
+    it("returns total delay if no time has passed ", async () => {
+      await tbtcSystem.beginCollateralizationThresholdsUpdate(
+        new BN("150"),
+        new BN("130"),
+        new BN("120"),
+      )
+      const remaining = await tbtcSystem.getRemainingCollateralizationUpdateTime.call()
+      expect(remaining).to.eq.BN(totalDelay)
+    })
+
+    it("returns the correct remaining time", async () => {
+      await tbtcSystem.beginCollateralizationThresholdsUpdate(
+        new BN("150"),
+        new BN("130"),
+        new BN("120"),
+      )
+      const expectedRemaining = 100
+      await increaseTime(totalDelay.toNumber() - expectedRemaining)
+
+      const remaining = await tbtcSystem.getRemainingCollateralizationUpdateTime.call()
+      expect(remaining).to.eq.BN(expectedRemaining)
     })
   })
 
