@@ -10,7 +10,8 @@ const {expect} = require("chai")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
 
-describe("TBTCSystem", async function() {
+// eslint-disable-next-line no-only-tests/no-only-tests
+describe.only("TBTCSystem", async function() {
   let tbtcSystem
   let ecdsaKeepFactory
 
@@ -69,7 +70,7 @@ describe("TBTCSystem", async function() {
     })
   })
 
-  describe("update Signer fee", async () => {
+  describe("update signer fee", async () => {
     describe("beginSignerFeeDivisorUpdate", async () => {
       const newFee = new BN("201")
       it("executes and fires SignerFeeDivisorUpdateStarted event", async () => {
@@ -112,9 +113,12 @@ describe("TBTCSystem", async function() {
 
         receipt = await tbtcSystem.finalizeSignerFeeDivisorUpdate()
 
+        const signerFeeDivisor = await tbtcSystem.getSignerFeeDivisor.call()
+
         expectEvent(receipt, "SignerFeeDivisorUpdated", {
           _signerFeeDivisor: new BN("201"),
         })
+        expect(signerFeeDivisor).to.eq.BN(new BN("201"))
       })
 
       it("reverts if a change has not been initiated", async () => {
@@ -170,9 +174,13 @@ describe("TBTCSystem", async function() {
 
         receipt = await tbtcSystem.finalizeLotSizesUpdate()
 
+        const currentLotSizes = await tbtcSystem.getAllowedLotSizes.call()
+
         expectEvent(receipt, "LotSizesUpdated", {})
         expect(receipt.logs[0].args._lotSizes[0]).to.eq.BN(lotSizes[0])
         expect(receipt.logs[0].args._lotSizes[1]).to.eq.BN(lotSizes[1])
+        expect(currentLotSizes[0]).to.eq.BN(lotSizes[0])
+        expect(currentLotSizes[1]).to.eq.BN(lotSizes[1])
       })
 
       it("reverts if a change has not been initiated", async () => {
@@ -252,11 +260,21 @@ describe("TBTCSystem", async function() {
 
         receipt = await tbtcSystem.finalizeCollateralizationThresholdsUpdate()
 
+        const initial = await tbtcSystem.getInitialCollateralizedPercent.call()
+        const undercollateralized = await tbtcSystem.getUndercollateralizedThresholdPercent.call()
+        const severelyUndercollateralized = await tbtcSystem.getSeverelyUndercollateralizedThresholdPercent.call()
+
         expectEvent(receipt, "CollateralizationThresholdsUpdated", {
           _initialCollateralizedPercent: initialPercent,
           _undercollateralizedThresholdPercent: undercollateralizedPercent,
           _severelyUndercollateralizedThresholdPercent: severelyUndercollateralizedPercent,
         })
+
+        expect(initialPercent).to.eq.BN(initial)
+        expect(undercollateralizedPercent).to.eq.BN(undercollateralized)
+        expect(severelyUndercollateralizedPercent).to.eq.BN(
+          severelyUndercollateralized,
+        )
       })
 
       it("reverts if a change has not been initiated", async () => {
