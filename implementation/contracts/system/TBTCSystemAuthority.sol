@@ -8,8 +8,8 @@ contract TBTCSystemAuthority {
     address internal tbtcSystemAddress;
 
     /// @notice Set the address of the System contract on contract initialization.
-    constructor(address _tbtcSystem) public {
-        tbtcSystemAddress = _tbtcSystem;
+    constructor(address _tbtcSystemAddress) public {
+        tbtcSystemAddress = _tbtcSystemAddress;
     }
 
     /// @notice Function modifier ensures modified function is only called by TBTCSystem.
