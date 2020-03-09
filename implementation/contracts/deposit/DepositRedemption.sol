@@ -179,7 +179,7 @@ library DepositRedemption {
     /// @param  _d  Deposit storage pointer.
     /// @param  _v  Signature recovery value.
     /// @param  _r  Signature R value.
-    /// @param  _s  Signature S value.
+    /// @param  _s  Signature S value. Should be in the low half of secp256k1 curve's order.
     function provideRedemptionSignature(
         DepositUtils.Deposit storage _d,
         uint8 _v,
@@ -191,6 +191,15 @@ library DepositRedemption {
         // If we're outside of the signature window, we COULD punish signers here
         // Instead, we consider this a no-harm-no-foul situation.
         // The signers have not stolen funds. Most likely they've just inconvenienced someone
+
+        // Validate `s` value for a malleability concern described in EIP-2.
+        // Only signatures with `s` value in the lower half of the secp256k1
+        // curve's order are considered valid.
+        require(
+            uint256(_s) <=
+                0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
+            "Malleable signature - s should be in the low half of secp256k1 curve's order"
+        );
 
         // The signature must be valid on the pubkey
         require(
