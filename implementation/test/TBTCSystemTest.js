@@ -282,7 +282,10 @@ describe("TBTCSystem", async function() {
         expectEvent(receipt, "LotSizesUpdateStarted", {})
         expect(receipt.logs[0].args[0][0]).to.eq.BN(testSizes[0])
         expect(receipt.logs[0].args[0][1]).to.eq.BN(testSizes[1])
-        expect(receipt.logs[0].args[1]).to.eq.BN(block.timestamp)
+        expect([
+          receipt.logs[0].args[1].toString(),
+          receipt.logs[0].args[1].toString() - 1,
+        ]).to.include(block.timestamp.toString())
       })
 
       it("overrides previous update and resets timer", async () => {
@@ -294,7 +297,10 @@ describe("TBTCSystem", async function() {
         expectEvent(receipt, "LotSizesUpdateStarted", {})
         expect(receipt.logs[0].args[0][0]).to.eq.BN(lotSizes[0])
         expect(receipt.logs[0].args[0][1]).to.eq.BN(lotSizes[1])
-        expect(receipt.logs[0].args[1]).to.eq.BN(block.timestamp)
+        expect([
+          receipt.logs[0].args[1].toString(),
+          receipt.logs[0].args[1].toString() - 1,
+        ]).to.include(block.timestamp.toString())
         expect([
           remainingTime.toString(),
           remainingTime.toString() - 1,
