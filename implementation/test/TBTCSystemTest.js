@@ -36,10 +36,11 @@ describe("TBTCSystem", async function() {
   describe("requestNewKeep()", async () => {
     let openKeepFee
     const keepOwner = accounts[2]
+    const tdtOwner = accounts[1]
 
     before(async () => {
       openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
-      await tdt.forceMint(accounts[0], web3.utils.toBN(keepOwner))
+      await tdt.forceMint(tdtOwner, web3.utils.toBN(keepOwner))
     })
 
     it("sends caller as owner to open new keep", async () => {
@@ -85,7 +86,17 @@ describe("TBTCSystem", async function() {
       await expectRevert(
         tbtcSystem.requestNewKeep(5, 10, 0, {
           value: openKeepFee,
-          from: accounts[1],
+          from: accounts[0],
+        }),
+        "Caller must be a Deposit contract",
+      )
+    })
+
+    it("reverts if caller is the owner of a valid TDT", async () => {
+      await expectRevert(
+        tbtcSystem.requestNewKeep(5, 10, 0, {
+          value: openKeepFee,
+          from: tdtOwner,
         }),
         "Caller must be a Deposit contract",
       )
