@@ -184,7 +184,13 @@ describe("DepositUtils", async function() {
   })
 
   describe("checkProofFromTxId()", async () => {
+    let testDeposit
     before(async () => {
+      ;({
+        mockRelay,
+        testDeposit,
+      } = await deployAndLinkAll([], {TestDeposit: TestDepositUtilsSPV}))
+
       await mockRelay.setCurrentEpochDifficulty(TX.difficulty)
     })
 
@@ -418,7 +424,7 @@ describe("DepositUtils", async function() {
       expect(value).to.eq.BN(auctionValue)
     })
 
-    it("scales auction value correctly", async () => {
+    it("scales auction value currectly", async () => {
       testDeposit.send(auctionValue, {from: accounts[0]})
       const block = await web3.eth.getBlock("latest")
 

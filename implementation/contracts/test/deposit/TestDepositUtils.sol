@@ -22,15 +22,6 @@ contract TestDepositUtils is TestDeposit {
         return self.evaluateProofDifficulty(_bitcoinHeaders);
     }
 
-    function checkProofFromTxId(
-        bytes32 _bitcoinTxId,
-        bytes memory _merkleProof,
-        uint256 _index,
-        bytes memory _bitcoinHeaders
-    ) public view returns (bytes32) {
-        self.checkProofFromTxId(_bitcoinTxId, _merkleProof, _index, _bitcoinHeaders);
-    }
-
     function setPubKey(
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
@@ -131,5 +122,14 @@ contract TestDepositUtilsSPV is TestDeposit {
             _txIndexInBlock,
             _bitcoinHeaders
         );
+    }
+
+    function checkProofFromTxId(
+        bytes32 _bitcoinTxId,
+        bytes memory _merkleProof,
+        uint256 _index,
+        bytes memory _bitcoinHeaders
+    ) public view returns (bytes32) {
+        self.checkProofFromTxId(_bitcoinTxId, _merkleProof, _index, _bitcoinHeaders);
     }
 }
