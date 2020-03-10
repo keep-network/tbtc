@@ -1,7 +1,7 @@
 const {
   createSnapshot,
   restoreSnapshot,
-} = require("../testHelpers/helpers/snapshot.js")
+} = require("./helpers/snapshot.js")
 const {contract, web3} = require("@openzeppelin/test-environment")
 const {BN} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")

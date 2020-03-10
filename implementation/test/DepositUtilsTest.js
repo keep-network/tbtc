@@ -1,14 +1,14 @@
-const {deployAndLinkAll} = require("../testHelpers/testDeployer.js")
+const {deployAndLinkAll} = require("./helpers/testDeployer.js")
 const {
   HEADER_PROOFS,
   TX,
   LOW_WORK_HEADER,
   increaseTime,
-} = require("../testHelpers/utils.js")
+} = require("./helpers/utils.js")
 const {
   createSnapshot,
   restoreSnapshot,
-} = require("../testHelpers/helpers/snapshot.js")
+} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
