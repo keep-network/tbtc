@@ -177,7 +177,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev        The signers will be penalized if this (or provideRedemptionProof) is not called.
     /// @param  _v  Signature recovery value.
     /// @param  _r  Signature R value.
-    /// @param  _s  Signature S value.
+    /// @param  _s  Signature S value. Should be in the low half of secp256k1 curve's order.
     /// @return     True if successful, False if prevented by timeout, otherwise revert.
     function provideRedemptionSignature(
         uint8 _v,
@@ -275,7 +275,7 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud during funding.
-    /// @dev                    ECDSA is NOT SECURE unless you verify the digest.
+    /// @dev                    Calls out to the keep to verify if there was fraud.
     /// @param  _v              Signature recovery value.
     /// @param  _r              Signature R value.
     /// @param  _s              Signature S value.
@@ -376,7 +376,7 @@ contract Deposit is DepositFactoryAuthority {
     //
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud.
-    /// @dev                    ECDSA is NOT SECURE unless you verify the digest.
+    /// @dev                    Calls out to the keep to verify if there was fraud.
     /// @param  _v              Signature recovery value.
     /// @param  _r              Signature R value.
     /// @param  _s              Signature S value.

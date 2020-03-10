@@ -179,7 +179,7 @@ library DepositRedemption {
     /// @param  _d  Deposit storage pointer.
     /// @param  _v  Signature recovery value.
     /// @param  _r  Signature R value.
-    /// @param  _s  Signature S value.
+    /// @param  _s  Signature S value. Should be in the low half of secp256k1 curve's order.
     function provideRedemptionSignature(
         DepositUtils.Deposit storage _d,
         uint8 _v,
@@ -191,6 +191,15 @@ library DepositRedemption {
         // If we're outside of the signature window, we COULD punish signers here
         // Instead, we consider this a no-harm-no-foul situation.
         // The signers have not stolen funds. Most likely they've just inconvenienced someone
+
+        // Validate `s` value for a malleability concern described in EIP-2.
+        // Only signatures with `s` value in the lower half of the secp256k1
+        // curve's order are considered valid.
+        require(
+            uint256(_s) <=
+                0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
+            "Malleable signature - s should be in the low half of secp256k1 curve's order"
+        );
 
         // The signature must be valid on the pubkey
         require(
@@ -222,7 +231,7 @@ library DepositRedemption {
         bytes8 _newOutputValueBytes
     ) public returns (bool) {
         require(_d.inAwaitingWithdrawalProof(), "Fee increase only available after signature provided");
-        require(block.timestamp >= _d.withdrawalRequestTime + TBTCConstants.getIncreaseFeeTimer(), "Fee increase not yet permitted");
+        require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
 
@@ -305,7 +314,7 @@ library DepositRedemption {
         _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
         _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
-        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee * 5, "Fee unexpectedly very high");
+        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee.mul(5), "Fee unexpectedly very high");
 
         // Transfer TBTC to signers
         distributeSignerFee(_d);
@@ -354,7 +363,7 @@ library DepositRedemption {
     /// @param  _d  Deposit storage pointer.
     function notifySignatureTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalSignature(), "Not currently awaiting a signature");
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getSignatureTimeout(), "Signature timer has not elapsed");
+        require(block.timestamp > _d.withdrawalRequestTime.add(TBTCConstants.getSignatureTimeout()), "Signature timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 
@@ -363,7 +372,7 @@ library DepositRedemption {
     /// @param  _d  Deposit storage pointer.
     function notifyRedemptionProofTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
-        require(block.timestamp > _d.withdrawalRequestTime + TBTCConstants.getRedemptionProofTimeout(), "Proof timer has not elapsed");
+        require(block.timestamp > _d.withdrawalRequestTime.add(TBTCConstants.getRedemptionProofTimeout()), "Proof timer has not elapsed");
         _d.startSignerAbortLiquidation();  // not fraud, just failure
     }
 }

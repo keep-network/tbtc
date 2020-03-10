@@ -419,7 +419,7 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.send(1000000, {from: owner})
     })
 
-    it("executes", async () => {
+    it("executes and moves state to LIQUIDATION_IN_PROGRESS", async () => {
       // Bond value is calculated as:
       // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
       // Here we test collateralization less than severely undercollateralized
@@ -431,6 +431,9 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.setBondAmount(bondValue)
 
       await testDeposit.notifyUndercollateralizedLiquidation()
+
+      const depositState = await testDeposit.getState.call()
+      expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
       // TODO: Add validations or cover with `reverts if the deposit is not
       // severely undercollateralized` test case.
     })
@@ -490,8 +493,10 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.send(1000000, {from: owner})
     })
 
-    it("executes", async () => {
+    it("executes and moves state to LIQUIDATION_IN_PROGRESS", async () => {
       await testDeposit.notifyCourtesyTimeout()
+      const depositState = await testDeposit.getState.call()
+      expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
     it("reverts if not in a courtesy call period", async () => {

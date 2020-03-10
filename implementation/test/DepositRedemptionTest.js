@@ -743,6 +743,15 @@ describe("DepositRedemption", async function() {
         "Invalid signature",
       )
     })
+
+    it("reverts if S value is on the upper half of the secp256k1 curve's order", async () => {
+      const s =
+        "0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A1"
+      await expectRevert(
+        testDeposit.provideRedemptionSignature(0, "0x0", s),
+        "Malleable signature - s should be in the low half of secp256k1 curve's order",
+      )
+    })
   })
 
   describe("increaseRedemptionFee", async () => {

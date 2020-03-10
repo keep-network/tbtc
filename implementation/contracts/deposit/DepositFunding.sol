@@ -100,7 +100,7 @@ library DepositFunding {
     function notifySignerSetupFailure(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not awaiting setup");
         require(
-            block.timestamp > _d.signingGroupRequestedAt + TBTCConstants.getSigningGroupFormationTimeout(),
+            block.timestamp > _d.signingGroupRequestedAt.add(TBTCConstants.getSigningGroupFormationTimeout()),
             "Signing group formation timeout not yet elapsed"
         );
         _d.setFailedSetup();
@@ -136,7 +136,7 @@ library DepositFunding {
     function notifyFundingTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingBTCFundingProof(), "Funding timeout has not started");
         require(
-            block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFundingTimeout(),
+            block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout()),
             "Funding timeout has not elapsed."
         );
         _d.setFailedSetup();
@@ -172,7 +172,7 @@ library DepositFunding {
         _d.logFraudDuringSetup();
 
         // If the funding timeout has elapsed, punish the funder too!
-        if (block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFundingTimeout()) {
+        if (block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout())) {
             address(0).transfer(address(this).balance);  // Burn it all down (fire emoji)
             _d.setFailedSetup();
         } else {
@@ -191,7 +191,7 @@ library DepositFunding {
             "Not currently awaiting fraud-related funding proof"
         );
         require(
-            block.timestamp > _d.fundingProofTimerStart + TBTCConstants.getFraudFundingTimeout(),
+            block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFraudFundingTimeout()),
             "Fraud funding proof timeout has not elapsed"
         );
         _d.setFailedSetup();
