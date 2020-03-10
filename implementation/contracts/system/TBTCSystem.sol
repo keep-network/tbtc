@@ -58,7 +58,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint128 private severelyUndercollateralizedThresholdPercent = 110; // percent
     uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
-    uint256 constant governanceTimeDelay = 1 hours;
+    uint256 constant governanceTimeDelay = 6 hours;
 
     uint256 private signerFeeDivisorChangeInitiated;
     uint256 private lotSizesChangeInitiated;
