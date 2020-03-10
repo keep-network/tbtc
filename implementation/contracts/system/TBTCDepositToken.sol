@@ -20,10 +20,10 @@ import "./DepositFactoryAuthority.sol";
 ///      DepositFactory.createNewDeposit() for more info on how the TDT is minted.
 contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
 
-    constructor(address _depositFactory)
+    constructor(address _depositFactoryAddress)
         ERC721Metadata("tBTC Deposit Token", "TDT")
     public {
-        initialize(_depositFactory);
+        initialize(_depositFactoryAddress);
     }
 
     /// @dev Mints a new token.

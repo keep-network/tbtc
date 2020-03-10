@@ -95,7 +95,7 @@ library DepositLiquidation {
 
         _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
         _d.liquidationInitiator = msg.sender;
-        _d.setFraudLiquidationInProgress();
+        _d.setLiquidationInProgress();
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud.
