@@ -380,7 +380,7 @@ describe("DepositFraud", async function() {
       expect(initiated).to.eq.BN(block.timestamp)
     })
 
-    it("completes liquidation if we came from the redemption flow", async () => {
+    it("liquidates immediately with bonds going to the redeemer if we came from the redemption flow", async () => {
       // setting redeemer address suggests we are coming from redemption flow
       testDeposit.setRedeemerAddress(owner)
 
