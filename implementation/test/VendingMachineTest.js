@@ -1,10 +1,7 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
 const {states} = require("./helpers/utils.js")
 const {AssertBalance} = require("./helpers/assertBalance.js")
-const {
-  createSnapshot,
-  restoreSnapshot,
-} = require("./helpers/snapshot.js")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")

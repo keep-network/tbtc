@@ -5,10 +5,7 @@ const {
   LOW_WORK_HEADER,
   increaseTime,
 } = require("./helpers/utils.js")
-const {
-  createSnapshot,
-  restoreSnapshot,
-} = require("./helpers/snapshot.js")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -186,10 +183,9 @@ describe("DepositUtils", async function() {
   describe("checkProofFromTxId()", async () => {
     let testDeposit
     before(async () => {
-      ;({
-        mockRelay,
-        testDeposit,
-      } = await deployAndLinkAll([], {TestDeposit: TestDepositUtilsSPV}))
+      ;({mockRelay, testDeposit} = await deployAndLinkAll([], {
+        TestDeposit: TestDepositUtilsSPV,
+      }))
 
       await mockRelay.setCurrentEpochDifficulty(TX.difficulty)
     })
