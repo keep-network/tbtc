@@ -4,6 +4,8 @@
 
 ifndef::tbtc[]
 toc::[]
+
+:root-prefix: ../
 endif::tbtc[]
 
 include::./disbursal/index.adoc[leveloffset=+1]
