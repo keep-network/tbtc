@@ -183,8 +183,6 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
-      - attach_workspace:
-          at: implementation
       - run:
           name: Provision External Contract Addresses
           command: |
