@@ -206,54 +206,6 @@ jobs:
           root: /tmp/tbtc
           paths:
             - contracts
-  build_initcontainer:
-    executor: docker-git
-    steps:
-      - attach_workspace:
-          at: /tmp/tbtc
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - checkout
-      - run:
-          name: Run Docker build
-          command: |
-            mkdir -p /tmp/tbtc/docker-images
-            cp /tmp/tbtc/contracts/* infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
-            cd infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
-            docker build \
-              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
-              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
-              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
-              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
-              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers .
-      - run:
-          name: Save tbtc-maintainers-initcontainer image
-          command: |
-            docker save -o /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers
-      - persist_to_workspace:
-          root: /tmp/tbtc
-          paths:
-            - docker-images
-  publish_images:
-    executor: gcp-gcr/default
-    steps:
-      - attach_workspace:
-          at: /tmp/tbtc
-      - run:
-          name: Load Docker images
-          command: |
-            docker load -i /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar
-      - gcp-gcr/gcr-auth:
-          google-project-id: GOOGLE_PROJECT_ID
-          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
-          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
-          gcloud-service-key: GCLOUD_SERVICE_KEY
-      - gcp-gcr/push-image:
-          google-project-id: GOOGLE_PROJECT_ID
-          registry-url: $GCR_REGISTRY_URL
-          image: initcontainer-provision-tbtc-maintainers
-          tag: latest
   publish_contract_data:
     executor: gcp-cli/default
     steps:
@@ -328,21 +280,6 @@ workflows:
           context: keep-dev
           requires:
             - compile_contracts
-      - build_initcontainer:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - publish_images:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_initcontainer
       - publish_contract_data:
           filters:
             branches:
@@ -375,25 +312,6 @@ workflows:
           context: keep-test
           requires:
             - compile_contracts
-      - build_initcontainer:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          context: keep-test
-          requires:
-            - migrate_contracts
-      - publish_images:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          context: keep-test
-          requires:
-            - migrate_contracts
-            - build_initcontainer
       - publish_contract_data:
           filters:
             tags:

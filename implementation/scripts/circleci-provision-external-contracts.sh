@@ -12,7 +12,8 @@ function fetch_bonded_keep_vendor_address() {
 }
 
 function set_bonded_keep_vendor_address() {
-  sed -i -e "/BondedECDSAKeepVendorAddress/s/0x[a-fA-F0-9]\{0,40\}/${BONDED_ECDSA_KEEP_VENDOR_ADDRESS}/" ./implementation/migrations/externals.js
+  # TODO: Replace file we store external addresses by a `json` file and use `jq` to update it.
+  sed -i -e "/BondedECDSAKeepVendorAddress/s/0x[a-zA-Z0-9]\{0,40\}/${BONDED_ECDSA_KEEP_VENDOR_ADDRESS}/" ./implementation/migrations/externals.js
 }
 
 fetch_bonded_keep_vendor_address
