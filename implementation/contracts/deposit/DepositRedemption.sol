@@ -44,8 +44,8 @@ library DepositRedemption {
     /// @dev Should be called when the keep is no longer needed and the signing
     /// group can disband.
     function closeKeep(DepositUtils.Deposit storage _d) internal {
-      IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-      _keep.closeKeep();
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
+        _keep.closeKeep();
     }
 
     /// @notice Approves digest for signing by a keep.
