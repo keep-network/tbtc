@@ -177,7 +177,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev        The signers will be penalized if this (or provideRedemptionProof) is not called.
     /// @param  _v  Signature recovery value.
     /// @param  _r  Signature R value.
-    /// @param  _s  Signature S value.
+    /// @param  _s  Signature S value. Should be in the low half of secp256k1 curve's order.
     /// @return     True if successful, False if prevented by timeout, otherwise revert.
     function provideRedemptionSignature(
         uint8 _v,

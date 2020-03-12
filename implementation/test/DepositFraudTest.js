@@ -356,7 +356,7 @@ describe("DepositFraud", async function() {
       await restoreSnapshot()
     })
 
-    it("executes", async () => {
+    it("executes and moves state to FRAUD_LIQUIDATION_IN_PROGRESS", async () => {
       await testDeposit.provideECDSAFraudProof(
         0,
         bytes32zero,
@@ -364,6 +364,8 @@ describe("DepositFraud", async function() {
         bytes32zero,
         "0x00",
       )
+      const depositState = await testDeposit.getState.call()
+      expect(depositState).to.eq.BN(states.FRAUD_LIQUIDATION_IN_PROGRESS)
     })
 
     it("reverts if in the funding flow", async () => {
@@ -519,7 +521,7 @@ describe("DepositFraud", async function() {
       await ecdsaKeepStub.send(1000000, {from: owner})
     })
 
-    it("executes", async () => {
+    it("executes and moves state to FRAUD_LIQUIDATION_IN_PROGRESS", async () => {
       await testDeposit.provideSPVFraudProof(
         _version,
         _txInputVector,
@@ -530,6 +532,8 @@ describe("DepositFraud", async function() {
         _targetInputIndex,
         _bitcoinHeaders,
       )
+      const depositState = await testDeposit.getState.call()
+      expect(depositState).to.eq.BN(states.FRAUD_LIQUIDATION_IN_PROGRESS)
     })
 
     it("reverts if in the funding flow", async () => {
