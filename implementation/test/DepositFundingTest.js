@@ -72,7 +72,7 @@ describe("DepositFunding", async function() {
       testDeposit,
       ecdsaKeepStub,
       ecdsaKeepFactoryStub,
-    } = await deployAndLinkAll([], {TBTCSystemStub: TBTCSystem}))
+    } = await deployAndLinkAll())
 
     ecdsaKeepFactory = ecdsaKeepFactoryStub
     beneficiary = accounts[4]
@@ -185,8 +185,19 @@ describe("DepositFunding", async function() {
     let timer
     let owner
     let openKeepFee
+    before(async () => {})
 
     before(async () => {
+      ;({
+        tbtcConstants,
+        mockRelay,
+        tbtcSystemStub,
+        tbtcToken,
+        tbtcDepositToken,
+        testDeposit,
+        ecdsaKeepStub,
+      } = await deployAndLinkAll([], {TBTCSystemStub: TBTCSystem}))
+
       openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
 
       owner = accounts[1]
@@ -211,7 +222,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
     })
 
-    it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds funder", async () => {
+    it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
       const initialFunderBalance = await web3.eth.getBalance(owner)
       const blockNumber = await web3.eth.getBlock("latest").number
       await testDeposit.notifySignerSetupFailure()
