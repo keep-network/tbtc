@@ -109,6 +109,7 @@ library DepositFunding {
         uint256 _seized = _d.seizeSignerBonds();
         uint256 _refund = _system.createNewDepositFeeEstimate();
 
+        /* solium-disable-next-line security/no-send */
         _d.depositOwner().send(_refund);
         _d.pushFundsToKeepGroup(_seized.sub(_refund));
 
