@@ -34,8 +34,8 @@ describe("TBTCSystem", async function() {
 
   describe("requestNewKeep()", async () => {
     let openKeepFee
-    const keepOwner = accounts[2]
     const tdtOwner = accounts[1]
+    const keepOwner = accounts[2]
 
     before(async () => {
       openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
