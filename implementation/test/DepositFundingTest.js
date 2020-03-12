@@ -9,6 +9,7 @@ const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
 const {ZERO_ADDRESS} = constants
 const {expect} = require("chai")
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
+const TBTCSystem = contract.fromArtifact("TBTCSystem")
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -53,6 +54,7 @@ describe("DepositFunding", async function() {
   let tbtcDepositToken
   let testDeposit
   let ecdsaKeepStub
+  let ecdsaKeepFactory
 
   let fundingProofTimerStart
   let beneficiary
@@ -69,8 +71,10 @@ describe("DepositFunding", async function() {
       tbtcDepositToken,
       testDeposit,
       ecdsaKeepStub,
-    } = await deployAndLinkAll())
+      ecdsaKeepFactoryStub,
+    } = await deployAndLinkAll([], {TBTCSystemStub: TBTCSystem}))
 
+    ecdsaKeepFactory = ecdsaKeepFactoryStub
     beneficiary = accounts[4]
     await tbtcDepositToken.forceMint(
       beneficiary,
@@ -179,14 +183,27 @@ describe("DepositFunding", async function() {
 
   describe("notifySignerSetupFailure", async () => {
     let timer
+    let owner
+    let openKeepFee
 
     before(async () => {
+      openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
+
+      owner = accounts[1]
+      await tbtcDepositToken.forceMint(
+        owner,
+        web3.utils.toBN(testDeposit.address),
+      )
       timer = await tbtcConstants.getSigningGroupFormationTimeout.call()
     })
 
     beforeEach(async () => {
       const block = await web3.eth.getBlock("latest")
       const blockTimestamp = block.timestamp
+      const value = openKeepFee + 100
+
+      await ecdsaKeepStub.send(value)
+
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
 
       await testDeposit.setState(states.AWAITING_SIGNER_SETUP)
@@ -194,11 +211,18 @@ describe("DepositFunding", async function() {
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
     })
 
-    it("updates state to setup failed, deconstes state, and logs SetupFailed", async () => {
+    it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds funder", async () => {
+      const initialFunderBalance = await web3.eth.getBalance(owner)
       const blockNumber = await web3.eth.getBlock("latest").number
       await testDeposit.notifySignerSetupFailure()
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
+      const finalFunderBalance = await web3.eth.getBalance(owner)
+
+      expect(
+        new BN(finalFunderBalance).sub(new BN(initialFunderBalance)),
+      ).to.eq.BN(openKeepFee)
+
       expect(
         signingGroupRequestedAt,
         "signingGroupRequestedAt should be 0",
