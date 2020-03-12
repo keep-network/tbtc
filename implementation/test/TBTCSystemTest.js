@@ -9,7 +9,6 @@ const {BN, expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
-const TestTBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
 
 describe("TBTCSystem", async function() {
   let tbtcSystem
@@ -25,7 +24,7 @@ describe("TBTCSystem", async function() {
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
       // test TBTCSystem itself.
-      {TBTCSystemStub: TBTCSystem, tbtcDepositToken: TestTBTCDepositToken},
+      {TBTCSystemStub: TBTCSystem},
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
