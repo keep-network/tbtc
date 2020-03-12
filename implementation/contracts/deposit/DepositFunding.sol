@@ -103,6 +103,15 @@ library DepositFunding {
             block.timestamp > _d.signingGroupRequestedAt.add(TBTCConstants.getSigningGroupFormationTimeout()),
             "Signing group formation timeout not yet elapsed"
         );
+        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
+
+        // refund the deposit owner the cost to create a new keep at current price levels.
+        uint256 _seized = _d.seizeSignerBonds();
+        uint256 _refund = _system.createNewDepositFeeEstimate();
+
+        _d.depositOwner().send(_refund);
+        _d.pushFundsToKeepGroup(_seized.sub(_refund));
+
         _d.setFailedSetup();
         _d.logSetupFailed();
 
