@@ -256,12 +256,14 @@ library DepositLiquidation {
         }
         if (contractEthBalance > 1) {
             if (_wasFraud) {
-                initiator.transfer(contractEthBalance);
+                /* solium-disable-next-line security/no-send */
+                initiator.send(contractEthBalance);
             } else {
                 // There will always be a liquidation initiator.
                 uint256 split = contractEthBalance.div(2);
                 _d.pushFundsToKeepGroup(split);
-                initiator.transfer(split);
+                /* solium-disable-next-line security/no-send */
+                initiator.send(split);
             }
         }
     }
