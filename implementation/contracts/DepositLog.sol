@@ -2,6 +2,7 @@ pragma solidity ^0.5.10;
 
 import {TBTCDepositToken} from "./system/TBTCDepositToken.sol";
 
+
 contract DepositLog {
     /*
     TODO: review events, see what new information should be added
@@ -11,10 +12,10 @@ contract DepositLog {
       Everyone should be able to ENTIRELY rely on log messages
     */
 
-    // `TBTCDepositToken` mints a token for every new Deposit. 
+    // `TBTCDepositToken` mints a token for every new Deposit.
     // If a token exists for a given ID, we know it is a valid Deposit address.
     TBTCDepositToken tbtcDepositToken;
-    
+
     // This event is fired when we init the deposit
     event Created(
         address indexed _depositContractAddress,
@@ -114,12 +115,15 @@ contract DepositLog {
         return tbtcDepositToken.exists(uint256(_caller));
     }
 
-    /// @notice               Sets the tbtcDepositToken contract. 
-    /// @dev                  The contract is used by `approvedToLog` to check if the 
+    /// @notice               Sets the tbtcDepositToken contract.
+    /// @dev                  The contract is used by `approvedToLog` to check if the
     ///                       caller is a Deposit contract. This should only be called once.
     /// @param  _tbtcDepositTokenAddress  The address of the tbtcDepositToken.
     function setTbtcDepositToken(address _tbtcDepositTokenAddress) public {
-        require(address(tbtcDepositToken) == address(0), "tbtcDepositToken is already set");
+        require(
+            address(tbtcDepositToken) == address(0),
+            "tbtcDepositToken is already set"
+        );
         tbtcDepositToken = TBTCDepositToken(_tbtcDepositTokenAddress);
     }
 
