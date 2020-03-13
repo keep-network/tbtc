@@ -24,40 +24,56 @@ jobs:
           working_directory: ~/project/implementation
           command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - persist_to_workspace:
-          root: implementation
+          root: .
           paths:
-            - .npmrc
-  lint_js:
+            - implementation/.npmrc
+
+  compile_contracts:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
-          at: implementation
-      - run:
-          name: Lint JS
-          working_directory: ~/project/implementation
-          command: |
-            npm install
-            npm run js:lint
-  lint_solidity:
+          at: .
+
+      - restore_cache:
+          keys:
+            # When lock file changes, use increasingly general patterns to restore cache.
+            - v1-client-npm-deps-{{ .Branch }}-{{ checksum "implementation/package-lock.json" }}
+            - v1-client-npm-deps-{{ .Branch }}-
+            - v1-client-npm-deps-
+      - run: cd implementation && npm install
+      - save_cache:
+          key: v1-client-npm-deps-{{ .Branch }}-{{ checksum "implementation/package-lock.json" }}
+          paths:
+            - implementation/node_modules
+
+      - run: cd implementation && node_modules/.bin/truffle compile
+
+      # Persist for downstream use.
+      - persist_to_workspace:
+          root: .
+          paths:
+           - implementation/node_modules
+           - implementation/build/contracts
+
+  lint:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
-          at: implementation
+          at: .
       - run:
-          name: Lint Solidity
+          name: Lint Implementation
           working_directory: ~/project/implementation
           command: |
             set -ex
-            npm install
-            npm run sol:lint
+            npm run lint
   unit_test_contracts:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
-          at: implementation
+          at: .
       - run: sudo npm install -g ganache-cli@6.4.2
       - run:
           name: Running testrpc
@@ -67,7 +83,7 @@ jobs:
       - run:
           name: Run NPM tests
           working_directory: ~/project/implementation
-          command: npm install && npm run test
+          command: npm run test:quick
   generate_pngs:
     docker:
       - image: keepnetwork/texlive:15
@@ -77,13 +93,13 @@ jobs:
           name: Generate TeX-based PNGs
           working_directory: ~/project/docs
           command: |
-            mkdir -p /tmp/docs/img
+            mkdir -p /tmp/build/docs/img
             make pngs
-            cp -r img/generated /tmp/docs/img/generated
+            cp -r img/generated /tmp/build/docs/img/generated
       - persist_to_workspace:
-          root: /tmp/docs
+          root: /tmp
           paths:
-            - ./img/generated/*.png
+            - ./build/docs/img/generated/*.png
   generate_docs_tex:
     docker:
       - image: keepnetwork/texlive:15
@@ -93,63 +109,63 @@ jobs:
           name: Generate TeX Document Files
           working_directory: ~/project/docs
           command: |
-            mkdir -p /tmp/docs
+            mkdir -p /tmp/build/docs
             make build.pdf
-            cp *.pdf /tmp/docs
+            cp *.pdf /tmp/build/docs
       - persist_to_workspace:
-          root: /tmp/docs
+          root: /tmp
           paths:
-            - ./*.pdf
+            - ./build/docs/*.pdf
   generate_docs_solidity:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
-          at: implementation
+          at: .
       - run:
           name: Generate solidity docs
           command: |
-            cd implementation && npm install
-            node_modules/.bin/truffle compile
-
-            cd docs
+            cd implementation/docs
             mkdir -p output
             node generate-api-docs.js > output/index.adoc
 
-            mkdir -p /tmp/docs
-            cp -r output /tmp/docs/solidity
+            mkdir -p /tmp/build/docs
+            cp -r output /tmp/build/docs/solidity
       - persist_to_workspace:
-          root: /tmp/docs
+          root: /tmp
           paths:
-            - solidity/*
+            - ./build/docs/solidity/*
   generate_docs_asciidoctor:
     docker:
       - image: asciidoctor/docker-asciidoctor
     steps:
       - checkout
       - attach_workspace:
-          at: ./docs
+          at: .
       - run:
           name: Generate Asciidoctor PDF/HTML Files
           working_directory: ~/project/docs
           command: |
             set -ex
             shopt -s extglob globstar nullglob
+
+            cp -r ../build/docs/img ./
+
             asciidoctor -a revdate=`date +%Y-%m-%d` --failure-level=ERROR *.adoc **/*.adoc
-            for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/build/docs/$(dirname $a); cp $a /tmp/build/docs/$(dirname $a)/; done
             set -x
             asciidoctor-pdf -a revdate=`date +%Y-%m-%d` *.adoc **/*.adoc
-            for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/docs/$(dirname $a); cp $a /tmp/docs/$(dirname $a)/; done
+            for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/build/docs/$(dirname $a); cp $a /tmp/build/docs/$(dirname $a)/; done
       - persist_to_workspace:
-          root: /tmp/docs
+          root: /tmp
           paths:
-            - ./
+            - ./build/docs
   upload_docs:
     docker:
       - image: google/cloud-sdk:slim
     steps:
       - attach_workspace:
-          at: /tmp/docs
+          at: /tmp
       - gcp-cli/initialize:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -158,7 +174,7 @@ jobs:
       - run:
           name: Upload Document Files to docs.keep.network
           command: |
-            cd /tmp/docs
+            cd /tmp/build/docs
             export DIR=$(test $CIRCLE_BRANCH != master && echo $CIRCLE_BRANCH/)
             gsutil -m cp -r * gs://docs.keep.network/tbtc/$DIR
   migrate_contracts:
@@ -167,15 +183,13 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
-      - attach_workspace:
-          at: implementation
       - run:
           name: Provision External Contract Addresses
           command: |
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
-            export KEEP_REGISTRY_CONTRACT_DATA="KeepRegistry.json"
+            export BONDED_ECDSA_KEEP_VENDOR_CONTRACT_DATA="BondedECDSAKeepVendor.json"
             implementation/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
@@ -190,54 +204,6 @@ jobs:
           root: /tmp/tbtc
           paths:
             - contracts
-  build_initcontainer:
-    executor: docker-git
-    steps:
-      - attach_workspace:
-          at: /tmp/tbtc
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - checkout
-      - run:
-          name: Run Docker build
-          command: |
-            mkdir -p /tmp/tbtc/docker-images
-            cp /tmp/tbtc/contracts/* infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
-            cd infrastructure/kube/templates/tbtc-maintainers/initcontainer/provision-tbtc-maintainers/
-            docker build \
-              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
-              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
-              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
-              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
-              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers .
-      - run:
-          name: Save tbtc-maintainers-initcontainer image
-          command: |
-            docker save -o /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-tbtc-maintainers
-      - persist_to_workspace:
-          root: /tmp/tbtc
-          paths:
-            - docker-images
-  publish_images:
-    executor: gcp-gcr/default
-    steps:
-      - attach_workspace:
-          at: /tmp/tbtc
-      - run:
-          name: Load Docker images
-          command: |
-            docker load -i /tmp/tbtc/docker-images/initcontainer-provision-tbtc-maintainers.tar
-      - gcp-gcr/gcr-auth:
-          google-project-id: GOOGLE_PROJECT_ID
-          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
-          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
-          gcloud-service-key: GCLOUD_SERVICE_KEY
-      - gcp-gcr/push-image:
-          google-project-id: GOOGLE_PROJECT_ID
-          registry-url: $GCR_REGISTRY_URL
-          image: initcontainer-provision-tbtc-maintainers
-          tag: latest
   publish_contract_data:
     executor: gcp-cli/default
     steps:
@@ -261,28 +227,34 @@ workflows:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
-      - lint_js:
+      - compile_contracts:
           requires:
             - setup_github_package_registry
-      - lint_solidity:
+      - lint:
           requires:
-            - setup_github_package_registry
+            - compile_contracts
   test:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
-      - unit_test_contracts:
+      - compile_contracts:
           requires:
             - setup_github_package_registry
+      - unit_test_contracts:
+          requires:
+            - compile_contracts
   docs:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
+      - compile_contracts:
+          requires:
+            - setup_github_package_registry
       - generate_pngs
       - generate_docs_tex
       - generate_docs_solidity:
           requires:
-            - setup_github_package_registry
+            - compile_contracts
       - generate_docs_asciidoctor:
           requires:
             - generate_docs_solidity
@@ -296,28 +268,16 @@ workflows:
     jobs:
       - setup_github_package_registry:
           context: github-package-registry
+      - compile_contracts:
+          requires:
+            - setup_github_package_registry
       - migrate_contracts:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
-            - setup_github_package_registry
-      - build_initcontainer:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - publish_images:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_initcontainer
+            - compile_contracts
       - publish_contract_data:
           filters:
             branches:
@@ -338,6 +298,9 @@ workflows:
           context: github-package-registry
           requires:
             - keep_test_approval
+      - compile_contracts:
+          requires:
+            - setup_github_package_registry
       - migrate_contracts:
           filters:
             tags:
@@ -346,26 +309,7 @@ workflows:
               ignore: /.*/
           context: keep-test
           requires:
-            - setup_github_package_registry
-      - build_initcontainer:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          context: keep-test
-          requires:
-            - migrate_contracts
-      - publish_images:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          context: keep-test
-          requires:
-            - migrate_contracts
-            - build_initcontainer
+            - compile_contracts
       - publish_contract_data:
           filters:
             tags:

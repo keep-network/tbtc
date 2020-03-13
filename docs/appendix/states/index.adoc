@@ -4,6 +4,8 @@
 
 ifndef::tbtc[]
 toc::[]
+
+:root-prefix: ../../
 endif::tbtc[]
 
 

@@ -3,7 +3,6 @@ pragma solidity ^0.5.10;
 import {TBTCDepositToken} from "./system/TBTCDepositToken.sol";
 
 contract DepositLog {
-
     /*
     TODO: review events, see what new information should be added
     Logging philosophy:
@@ -54,19 +53,31 @@ contract DepositLog {
     );
 
     // This event is fired when we enter the SETUP_FAILED state for any reason
-    event SetupFailed(address indexed _depositContractAddress, uint256 _timestamp);
+    event SetupFailed(
+        address indexed _depositContractAddress,
+        uint256 _timestamp
+    );
 
     // This event is fired when we detect an ECDSA fraud before seeing a funding proof
-    event FraudDuringSetup(address indexed _depositContractAddress, uint256 _timestamp);
+    event FraudDuringSetup(
+        address indexed _depositContractAddress,
+        uint256 _timestamp
+    );
 
     // This event is fired when we enter the ACTIVE state
     event Funded(address indexed _depositContractAddress, uint256 _timestamp);
 
     // This event is called when we enter the COURTESY_CALL state
-    event CourtesyCalled(address indexed _depositContractAddress, uint256 _timestamp);
+    event CourtesyCalled(
+        address indexed _depositContractAddress,
+        uint256 _timestamp
+    );
 
     // This event is fired when we go from COURTESY_CALL to ACTIVE
-    event ExitedCourtesyCall(address indexed _depositContractAddress, uint256 _timestamp);
+    event ExitedCourtesyCall(
+        address indexed _depositContractAddress,
+        uint256 _timestamp
+    );
 
     // This log event is fired when liquidation
     event StartedLiquidation(
@@ -122,10 +133,7 @@ contract DepositLog {
     /// @return               True if successful, else revert
     function logCreated(address _keepAddress) public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit Created(
-            msg.sender,
-            _keepAddress,
-            block.timestamp);
+        emit Created(msg.sender, _keepAddress, block.timestamp);
         return true;
     }
 
@@ -154,7 +162,8 @@ contract DepositLog {
             _utxoSize,
             _redeemerOutputScript,
             _requestedFee,
-            _outpoint);
+            _outpoint
+        );
         return true;
     }
 
@@ -164,18 +173,18 @@ contract DepositLog {
     /// @param  _r      signature r value
     /// @param  _s      signature s value
     /// @return         True if successful, else revert
-    function logGotRedemptionSignature(
-        bytes32 _digest,
-        bytes32 _r,
-        bytes32 _s
-    ) public returns (bool) {
+    function logGotRedemptionSignature(bytes32 _digest, bytes32 _r, bytes32 _s)
+        public
+        returns (bool)
+    {
         if (!approvedToLog(msg.sender)) return false;
         emit GotRedemptionSignature(
             msg.sender,
             _digest,
             _r,
             _s,
-            block.timestamp);
+            block.timestamp
+        );
         return true;
     }
 
@@ -192,7 +201,8 @@ contract DepositLog {
             msg.sender,
             _signingGroupPubkeyX,
             _signingGroupPubkeyY,
-            block.timestamp);
+            block.timestamp
+        );
         return true;
     }
 
@@ -202,9 +212,7 @@ contract DepositLog {
     /// @return     True if successful, else false
     function logSetupFailed() public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit SetupFailed(
-            msg.sender,
-            block.timestamp);
+        emit SetupFailed(msg.sender, block.timestamp);
         return true;
     }
 
@@ -214,9 +222,7 @@ contract DepositLog {
     /// @return     True if successful, else false
     function logFraudDuringSetup() public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit FraudDuringSetup(
-            msg.sender,
-            block.timestamp);
+        emit FraudDuringSetup(msg.sender, block.timestamp);
         return true;
     }
 
@@ -226,9 +232,7 @@ contract DepositLog {
     /// @return     True if successful, else false
     function logFunded() public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit Funded(
-            msg.sender,
-            block.timestamp);
+        emit Funded(msg.sender, block.timestamp);
         return true;
     }
 
@@ -238,9 +242,7 @@ contract DepositLog {
     /// @return     True if successful, else false
     function logCourtesyCalled() public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit CourtesyCalled(
-            msg.sender,
-            block.timestamp);
+        emit CourtesyCalled(msg.sender, block.timestamp);
         return true;
     }
 
@@ -250,10 +252,7 @@ contract DepositLog {
     /// @return             True if successful, else revert
     function logStartedLiquidation(bool _wasFraud) public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit StartedLiquidation(
-            msg.sender,
-            _wasFraud,
-            block.timestamp);
+        emit StartedLiquidation(msg.sender, _wasFraud, block.timestamp);
         return true;
     }
 
@@ -263,10 +262,7 @@ contract DepositLog {
     /// @return     True if successful, else false
     function logRedeemed(bytes32 _txid) public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit Redeemed(
-            msg.sender,
-            _txid,
-            block.timestamp);
+        emit Redeemed(msg.sender, _txid, block.timestamp);
         return true;
     }
 
@@ -276,9 +272,7 @@ contract DepositLog {
     /// @return     True if successful, else false
     function logLiquidated() public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit Liquidated(
-            msg.sender,
-            block.timestamp);
+        emit Liquidated(msg.sender, block.timestamp);
         return true;
     }
 
@@ -288,9 +282,7 @@ contract DepositLog {
     /// @return     True if successful, else false
     function logExitedCourtesyCall() public returns (bool) {
         if (!approvedToLog(msg.sender)) return false;
-        emit ExitedCourtesyCall(
-            msg.sender,
-            block.timestamp);
+        emit ExitedCourtesyCall(msg.sender, block.timestamp);
         return true;
     }
 }

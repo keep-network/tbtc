@@ -1,46 +1,61 @@
 // bitcoin-spv
-const BytesLib = artifacts.require('BytesLib')
-const BTCUtils = artifacts.require('BTCUtils')
-const ValidateSPV = artifacts.require('ValidateSPV')
-const CheckBitcoinSigs = artifacts.require('CheckBitcoinSigs')
+const BytesLib = artifacts.require("BytesLib")
+const BTCUtils = artifacts.require("BTCUtils")
+const ValidateSPV = artifacts.require("ValidateSPV")
+const CheckBitcoinSigs = artifacts.require("CheckBitcoinSigs")
 
 // logging
-const OutsourceDepositLogging = artifacts.require('OutsourceDepositLogging')
-const DepositLog = artifacts.require('DepositLog')
+const OutsourceDepositLogging = artifacts.require("OutsourceDepositLogging")
+const DepositLog = artifacts.require("DepositLog")
 
 // deposit
-const DepositStates = artifacts.require('DepositStates')
-const DepositUtils = artifacts.require('DepositUtils')
-const DepositFunding = artifacts.require('DepositFunding')
-const DepositRedemption = artifacts.require('DepositRedemption')
-const DepositLiquidation = artifacts.require('DepositLiquidation')
-const Deposit = artifacts.require('Deposit')
-const VendingMachine = artifacts.require('VendingMachine')
+const DepositStates = artifacts.require("DepositStates")
+const DepositUtils = artifacts.require("DepositUtils")
+const DepositFunding = artifacts.require("DepositFunding")
+const DepositRedemption = artifacts.require("DepositRedemption")
+const DepositLiquidation = artifacts.require("DepositLiquidation")
+const Deposit = artifacts.require("Deposit")
+const VendingMachine = artifacts.require("VendingMachine")
 
 // price feed
-const BTCETHPriceFeed = artifacts.require('BTCETHPriceFeed')
-const BTCUSDPriceFeed = artifacts.require('BTCUSDPriceFeed')
-const ETHUSDPriceFeed = artifacts.require('ETHUSDPriceFeed')
-const prices = require('./prices')
+const BTCETHPriceFeed = artifacts.require("BTCETHPriceFeed")
+const BTCUSDPriceFeed = artifacts.require("BTCUSDPriceFeed")
+const ETHUSDPriceFeed = artifacts.require("ETHUSDPriceFeed")
+const prices = require("./prices")
 
-const MockRelay = artifacts.require('MockRelay')
+const MockRelay = artifacts.require("MockRelay")
 
 // system
-const TBTCConstants = artifacts.require('TBTCConstants')
-const TBTCSystem = artifacts.require('TBTCSystem')
+const TBTCConstants = artifacts.require("TBTCConstants")
+const TBTCSystem = artifacts.require("TBTCSystem")
 
 // tokens
-const TBTCToken = artifacts.require('TBTCToken')
-const TBTCDepositToken = artifacts.require('TBTCDepositToken')
-const FeeRebateToken = artifacts.require('FeeRebateToken')
+const TBTCToken = artifacts.require("TBTCToken")
+const TBTCDepositToken = artifacts.require("TBTCDepositToken")
+const FeeRebateToken = artifacts.require("FeeRebateToken")
 
 // deposit factory
-const DepositFactory = artifacts.require('DepositFactory')
+const DepositFactory = artifacts.require("DepositFactory")
 
-const all = [BytesLib, BTCUtils, ValidateSPV, TBTCConstants, CheckBitcoinSigs,
-  OutsourceDepositLogging, DepositLog, DepositStates, DepositUtils,
-  DepositFunding, DepositRedemption, DepositLiquidation, Deposit, TBTCSystem,
-  BTCETHPriceFeed, VendingMachine, FeeRebateToken]
+const all = [
+  BytesLib,
+  BTCUtils,
+  ValidateSPV,
+  TBTCConstants,
+  CheckBitcoinSigs,
+  OutsourceDepositLogging,
+  DepositLog,
+  DepositStates,
+  DepositUtils,
+  DepositFunding,
+  DepositRedemption,
+  DepositLiquidation,
+  Deposit,
+  TBTCSystem,
+  BTCETHPriceFeed,
+  VendingMachine,
+  FeeRebateToken,
+]
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
@@ -67,7 +82,7 @@ module.exports = (deployer, network, accounts) => {
 
     let difficultyRelay
     // price feeds
-    if (network !== 'mainnet') {
+    if (network !== "mainnet") {
       // On mainnet, we use the MakerDAO-deployed price feeds.
       // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
       // Otherwise, we deploy our own mock price feeds, which are simpler
@@ -90,12 +105,16 @@ module.exports = (deployer, network, accounts) => {
     // TODO This should be dropped soon.
     await deployer.deploy(BTCETHPriceFeed)
 
-    if (! difficultyRelay) {
-      throw new Error('Difficulty relay not found.')
+    if (!difficultyRelay) {
+      throw new Error("Difficulty relay not found.")
     }
 
     // system
-    await deployer.deploy(TBTCSystem, BTCETHPriceFeed.address, difficultyRelay.address)
+    await deployer.deploy(
+      TBTCSystem,
+      BTCETHPriceFeed.address,
+      difficultyRelay.address,
+    )
 
     await deployer.deploy(DepositFactory, TBTCSystem.address)
 

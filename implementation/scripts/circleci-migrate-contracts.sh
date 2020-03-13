@@ -40,9 +40,9 @@ ssh utilitybox << EOF
   echo ">>>>>>FINISH Download Kube Creds FINISH>>>>>>"
 
   echo "<<<<<<START Port Forward eth-tx-node START<<<<<<"
-  echo "nohup timeout 900 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
+  echo "nohup kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &"
   echo "sleep 10s"
-  nohup timeout 900 kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
+  nohup kubectl port-forward svc/eth-tx-node 8545:8545 2>&1 > /dev/null &
   sleep 10s
   echo ">>>>>>FINISH Port Forward eth-tx-node FINISH>>>>>>"
 
@@ -53,7 +53,7 @@ ssh utilitybox << EOF
 
   echo "<<<<<<START Contract Migration START<<<<<<"
   cd /tmp/$BUILD_TAG/implementation
-  npm install
+  npm ci
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 EOF

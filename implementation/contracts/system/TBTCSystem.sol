@@ -35,7 +35,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     bool _initialized = false;
     uint256 pausedTimestamp;
-    uint256 pausedDuration = 10 days;
+    uint256 constant pausedDuration = 10 days;
 
     address public keepVendor;
     address public priceFeed;
@@ -250,6 +250,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @return Uint256 estimate.
     function createNewDepositFeeEstimate()
         external
+        view
         returns (uint256)
     {
         IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
