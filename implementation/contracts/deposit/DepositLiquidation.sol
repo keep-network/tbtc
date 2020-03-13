@@ -263,7 +263,7 @@ library DepositLiquidation {
                 uint256 split = contractEthBalance.div(2);
                 _d.pushFundsToKeepGroup(split);
                 /* solium-disable-next-line security/no-send */
-                initiator.send(split);
+                initiator.send(address(this).balance);
             }
         }
     }
