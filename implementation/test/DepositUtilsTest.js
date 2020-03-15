@@ -572,7 +572,7 @@ describe("DepositUtils", async function() {
   describe("pushFundsToKeepGroup()", async () => {
     it("calls out to the keep contract", async () => {
       const value = 10000
-      await testDeposit.send(value, {from: owner})
+      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
       await testDeposit.pushFundsToKeepGroup(value)
       const keepBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(keepBalance).to.eq.BN(new BN(value))
