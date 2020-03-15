@@ -28,7 +28,9 @@ contract Deposit is DepositFactoryAuthority {
     /* solium-disable-next-line no-empty-blocks */
     constructor () public {}
 
-    function () external payable {}
+    function () external payable {
+        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from bondedECDSAKeep");
+    }
 
     /// @notice     Get the integer representing the current state.
     /// @dev        We implement this because contracts don't handle foreign enums well.
