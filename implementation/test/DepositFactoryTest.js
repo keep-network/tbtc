@@ -1,6 +1,6 @@
-const {deployAndLinkAll} = require("../testHelpers/testDeployer.js")
+const {deployAndLinkAll} = require("./helpers/testDeployer.js")
 const {contract, web3} = require("@openzeppelin/test-environment")
-const {states} = require("../testHelpers/utils.js")
+const {states} = require("./helpers/utils.js")
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
 const {ZERO_ADDRESS} = constants
 const {expect} = require("chai")

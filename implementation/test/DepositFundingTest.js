@@ -1,9 +1,6 @@
-const {deployAndLinkAll} = require("../testHelpers/testDeployer.js")
-const {states} = require("../testHelpers/utils.js")
-const {
-  createSnapshot,
-  restoreSnapshot,
-} = require("../testHelpers/helpers/snapshot.js")
+const {deployAndLinkAll} = require("./helpers/testDeployer.js")
+const {states} = require("./helpers/utils.js")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
 const {ZERO_ADDRESS} = constants
@@ -173,8 +170,6 @@ describe("DepositFunding", async function() {
         "Opening new deposits is currently disabled.",
       )
     })
-
-    it.skip("stores payment value as funder's bond", async () => {})
   })
 
   describe("notifySignerSetupFailure", async () => {
