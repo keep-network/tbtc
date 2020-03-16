@@ -26,7 +26,9 @@ contract Deposit is DepositFactoryAuthority {
 
     // We separate the constructor from createNewDeposit to make proxy factories easier.
     /* solium-disable-next-line no-empty-blocks */
-    constructor () public {}
+    constructor () public {
+        initialize(address(0));
+    }
 
     function () external payable {}
 
