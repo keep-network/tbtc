@@ -50,8 +50,6 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         uint256 _keepSize
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
-        Deposit(masterDepositAddress).initialize(address(this));
-
         tbtcSystem = _tbtcSystem;
         tbtcToken = _tbtcToken;
         tbtcDepositToken = _depositOwnerToken;

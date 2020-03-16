@@ -96,6 +96,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _keepThreshold,
             _keepSize
         );
+        setTbtcDepositToken(_tbtcDepositToken);
         _initialized = true;
         allowNewDeposits = true;
     }

@@ -54,6 +54,7 @@ library DepositUtils {
         address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
         bytes redeemerOutputScript;  // The 20-byte redeemer PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
+        uint256 latestRedemptionFee; // the fee currently required by a redemption transaction
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
 

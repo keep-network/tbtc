@@ -1,9 +1,6 @@
-const {deployAndLinkAll} = require("../testHelpers/testDeployer.js")
-const {states} = require("../testHelpers/utils.js")
-const {
-  createSnapshot,
-  restoreSnapshot,
-} = require("../testHelpers/helpers/snapshot.js")
+const {deployAndLinkAll} = require("./helpers/testDeployer.js")
+const {states} = require("./helpers/utils.js")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, expectRevert} = require("@openzeppelin/test-helpers")
@@ -170,7 +167,7 @@ describe("DepositLiquidation", async function() {
       const notifiedTime = block.timestamp
       const initialBalance = await web3.eth.getBalance(buyer)
 
-      await testDeposit.send(value, {from: owner})
+      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
@@ -190,7 +187,8 @@ describe("DepositLiquidation", async function() {
       const value = 1000000000000
       const basePercentage = await tbtcConstants.getAuctionBasePercentage.call()
 
-      await testDeposit.send(value)
+      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+
       const initialInitiatorBalance = await web3.eth.getBalance(
         liquidationInitiator,
       )
@@ -231,7 +229,8 @@ describe("DepositLiquidation", async function() {
       const value = 1000000000000
       const basePercentage = await tbtcConstants.getAuctionBasePercentage.call()
 
-      await testDeposit.send(value)
+      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+
       const initialInitiatorBalance = await web3.eth.getBalance(
         liquidationInitiator,
       )

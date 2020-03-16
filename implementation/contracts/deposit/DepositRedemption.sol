@@ -124,6 +124,7 @@ library DepositRedemption {
         // write all request details
         _d.redeemerOutputScript = _redeemerOutputScript;
         _d.initialRedemptionFee = _requestedFee;
+        _d.latestRedemptionFee = _requestedFee;
         _d.withdrawalRequestTime = block.timestamp;
         _d.lastRequestedDigest = _sighash;
 
@@ -234,7 +235,7 @@ library DepositRedemption {
         require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
-
+        _d.latestRedemptionFee = _newOutputValue;
         // Calculate the next sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
@@ -314,7 +315,7 @@ library DepositRedemption {
         _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
         _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
-        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.initialRedemptionFee.mul(5), "Fee unexpectedly very high");
+        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.latestRedemptionFee, "Incorrect fee amount");
 
         // Transfer TBTC to signers
         distributeSignerFee(_d);

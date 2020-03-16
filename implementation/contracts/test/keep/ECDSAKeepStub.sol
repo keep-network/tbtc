@@ -72,4 +72,8 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         address(0).transfer(address(this).balance);
     }
 
+    function pushFundsFromKeep(address payable _depositAddress) public payable {
+        require(msg.value > 0, "value must be greater than 0");
+        _depositAddress.transfer(msg.value);
+    }
 }
