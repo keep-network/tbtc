@@ -400,7 +400,9 @@ describe("DepositUtils", async function() {
     })
 
     it("returns base value if no time has elapsed", async () => {
-      testDeposit.send(auctionValue, {from: accounts[0]})
+      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
+        value: auctionValue,
+      })
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
@@ -410,7 +412,9 @@ describe("DepositUtils", async function() {
     })
 
     it("returns full value if auction Duration has elapsed ", async () => {
-      testDeposit.send(auctionValue, {from: accounts[0]})
+      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
+        value: auctionValue,
+      })
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
@@ -421,7 +425,9 @@ describe("DepositUtils", async function() {
     })
 
     it("scales auction value correctly", async () => {
-      testDeposit.send(auctionValue, {from: accounts[0]})
+      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
+        value: auctionValue,
+      })
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
