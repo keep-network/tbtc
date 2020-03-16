@@ -26,7 +26,9 @@ contract Deposit is DepositFactoryAuthority {
 
     // We separate the constructor from createNewDeposit to make proxy factories easier.
     /* solium-disable-next-line no-empty-blocks */
-    constructor () public {}
+    constructor () public {
+        initialize(address(0));
+    }
 
     function () external payable {
         require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from bondedECDSAKeep");
@@ -393,40 +395,6 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _preimage
     ) public returns (bool) {
         self.provideECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
-        return true;
-    }
-
-    /// @notice                   Anyone may notify the deposit of fraud via an SPV proof.
-    /// @dev                      We strong prefer ECDSA fraud proofs.
-    /// @param  _txVersion        Transaction version number (4-byte LE).
-    /// @param  _txInputVector    All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs.
-    /// @param  _txOutputVector   All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
-    /// @param  _txLocktime       Final 4 bytes of the transaction.
-    /// @param  _merkleProof      The merkle proof of inclusion of the tx in the bitcoin block.
-    /// @param  _txIndexInBlock   The index of the tx in the Bitcoin block (0-indexed).
-    /// @param  _targetInputIndex Index of the input that spends the custodied UTXO.
-    /// @param  _bitcoinHeaders   An array of tightly-packed bitcoin headers.
-    /// @return                   True if successful, otherwise revert.
-    function provideSPVFraudProof(
-        bytes4 _txVersion,
-        bytes memory _txInputVector,
-        bytes memory _txOutputVector,
-        bytes4 _txLocktime,
-        bytes memory _merkleProof,
-        uint256 _txIndexInBlock,
-        uint8 _targetInputIndex,
-        bytes memory _bitcoinHeaders
-    ) public returns (bool) {
-        self.provideSPVFraudProof(
-            _txVersion,
-            _txInputVector,
-            _txOutputVector,
-            _txLocktime,
-            _merkleProof,
-            _txIndexInBlock,
-            _targetInputIndex,
-            _bitcoinHeaders
-        );
         return true;
     }
 

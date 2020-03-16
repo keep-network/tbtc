@@ -1,10 +1,11 @@
-const {deployAndLinkAll} = require("../testHelpers/testDeployer.js")
+const {deployAndLinkAll} = require("./helpers/testDeployer.js")
 const {
   HEADER_PROOFS,
   TX,
   LOW_WORK_HEADER,
   increaseTime,
-} = require("../testHelpers/utils.js")
+} = require("./helpers/utils.js")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -53,6 +54,7 @@ describe("DepositUtils", async function() {
   let feeRebateToken
   let testDeposit
   let ecdsaKeepStub
+  let depositUtils
 
   before(async () => {
     ;({
@@ -64,6 +66,7 @@ describe("DepositUtils", async function() {
       feeRebateToken,
       testDeposit,
       ecdsaKeepStub,
+      depositUtils,
     } = await deployAndLinkAll([], {TestDeposit: TestDepositUtils}))
 
     beneficiary = accounts[2]
@@ -178,7 +181,12 @@ describe("DepositUtils", async function() {
   })
 
   describe("checkProofFromTxId()", async () => {
+    let testDeposit
     before(async () => {
+      ;({mockRelay, testDeposit} = await deployAndLinkAll([], {
+        TestDeposit: TestDepositUtilsSPV,
+      }))
+
       await mockRelay.setCurrentEpochDifficulty(TX.difficulty)
     })
 
@@ -376,7 +384,61 @@ describe("DepositUtils", async function() {
   })
 
   describe("auctionValue()", async () => {
-    it.skip("is TODO")
+    let duration
+    let basePercentage
+    before(async () => {
+      duration = await tbtcConstants.getAuctionDuration.call()
+      basePercentage = await tbtcConstants.getAuctionBasePercentage.call()
+      auctionValue = new BN(100000000)
+    })
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("returns base value if no time has elapsed", async () => {
+      testDeposit.send(auctionValue, {from: accounts[0]})
+      const block = await web3.eth.getBlock("latest")
+
+      await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
+
+      const value = await testDeposit.auctionValue.call()
+      expect(value).to.eq.BN(auctionValue.mul(basePercentage).div(new BN(100)))
+    })
+
+    it("returns full value if auction Duration has elapsed ", async () => {
+      testDeposit.send(auctionValue, {from: accounts[0]})
+      const block = await web3.eth.getBlock("latest")
+
+      await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
+      await increaseTime(duration.toNumber())
+
+      const value = await testDeposit.auctionValue.call()
+      expect(value).to.eq.BN(auctionValue)
+    })
+
+    it("scales auction value correctly", async () => {
+      testDeposit.send(auctionValue, {from: accounts[0]})
+      const block = await web3.eth.getBlock("latest")
+
+      await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
+
+      const elapsedTime = duration.div(new BN(2))
+      const elapsedPercent = new BN(100)
+        .sub(basePercentage)
+        .mul(elapsedTime)
+        .div(duration)
+      const percentage = basePercentage.add(elapsedPercent)
+
+      // elapse half the auction time
+      await increaseTime(elapsedTime.toNumber())
+
+      const value = await testDeposit.auctionValue.call()
+      expect(value).to.eq.BN(auctionValue.mul(percentage).div(new BN(100)))
+    })
   })
 
   describe("signerFee()", async () => {
@@ -388,13 +450,14 @@ describe("DepositUtils", async function() {
 
   describe("determineCompressionPrefix()", async () => {
     it("selects 2 for even", async () => {
-      const res = await testDeposit.determineCompressionPrefix.call(
+      const res = await depositUtils.determineCompressionPrefix.call(
         "0x" + "00".repeat(32),
       )
       expect(res).to.equal("0x02")
     })
+
     it("selects 3 for odd", async () => {
-      const res = await testDeposit.determineCompressionPrefix.call(
+      const res = await depositUtils.determineCompressionPrefix.call(
         "0x" + "00".repeat(31) + "01",
       )
       expect(res).to.equal("0x03")
@@ -403,7 +466,7 @@ describe("DepositUtils", async function() {
 
   describe("compressPubkey()", async () => {
     it("returns a 33 byte array with a prefix", async () => {
-      const compressed = await testDeposit.compressPubkey.call(
+      const compressed = await depositUtils.compressPubkey.call(
         "0x" + "00".repeat(32),
         "0x" + "00".repeat(32),
       )
@@ -469,13 +532,13 @@ describe("DepositUtils", async function() {
 
   describe("bytes8LEToUint()", async () => {
     it("interprets bytes as LE uints ", async () => {
-      let res = await testDeposit.bytes8LEToUint.call("0x" + "00".repeat(8))
+      let res = await depositUtils.bytes8LEToUint.call("0x" + "00".repeat(8))
       expect(res).to.eq.BN(0)
 
-      res = await testDeposit.bytes8LEToUint.call("0x11223344")
+      res = await depositUtils.bytes8LEToUint.call("0x11223344")
       expect(res).to.eq.BN(new BN("44332211", 16))
 
-      res = await testDeposit.bytes8LEToUint.call("0x1100229933884477")
+      res = await depositUtils.bytes8LEToUint.call("0x1100229933884477")
       expect(res).to.eq.BN(new BN("7744883399220011", 16))
     })
   })
