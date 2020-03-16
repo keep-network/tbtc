@@ -13,6 +13,7 @@ import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
+import {TBTCDepositToken} from "./TBTCDepositToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -35,8 +36,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     bool _initialized = false;
     uint256 pausedTimestamp;
-    uint256 pausedDuration = 10 days;
+    uint256 constant pausedDuration = 10 days;
 
+    TBTCDepositToken tbtcDepositToken;
     address public keepVendor;
     address public priceFeed;
     address public relay;
@@ -77,7 +79,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
-
+        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         keepVendor = _keepVendor;
         VendingMachine(_vendingMachine).setExternalAddresses(
             _tbtcToken,
@@ -94,6 +96,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _keepThreshold,
             _keepSize
         );
+        setTbtcDepositToken(_tbtcDepositToken);
         _initialized = true;
         allowNewDeposits = true;
     }
@@ -266,6 +269,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         payable
         returns (address)
     {
+        require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
         IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
         IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond);

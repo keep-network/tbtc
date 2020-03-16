@@ -25,11 +25,19 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         emit SignatureRequested(_digest);
     }
 
-    function distributeETHToMembers() external payable {
-
+    function returnPartialSignerBonds() external payable {
+    // solium-disable-previous-line no-empty-blocks
     }
 
-    function distributeERC20ToMembers(address _asset, uint256 _value) external {
+    function distributeETHToMembers() external payable {
+    // solium-disable-previous-line no-empty-blocks
+    }
+
+    function distributeERC20Reward(address _asset, uint256 _value) external {
+    // solium-disable-previous-line no-empty-blocks
+    }
+
+    function distributeETHReward() external payable{
     // solium-disable-previous-line no-empty-blocks
     }
 
@@ -54,6 +62,11 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
             msg.sender.transfer(address(this).balance);
         }
     }
+
+    function closeKeep() external {
+    // solium-disable-previous-line no-empty-blocks
+    }
+
     // Functions to set data for tests.
 
     function setPublicKey(bytes memory _publicKey) public {
@@ -72,4 +85,8 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         address(0).transfer(address(this).balance);
     }
 
+    function pushFundsFromKeep(address payable _depositAddress) public payable {
+        require(msg.value > 0, "value must be greater than 0");
+        _depositAddress.transfer(msg.value);
+    }
 }

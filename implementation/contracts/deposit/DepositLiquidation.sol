@@ -95,7 +95,7 @@ library DepositLiquidation {
 
         _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
         _d.liquidationInitiator = msg.sender;
-        _d.setFraudLiquidationInProgress();
+        _d.setLiquidationInProgress();
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud.
@@ -124,64 +124,6 @@ library DepositLiquidation {
         );
         require(!_d.inEndState(), "Contract has halted");
         require(submitSignatureFraud(_d, _v, _r, _s, _signedDigest, _preimage), "Signature is not fraud");
-        startSignerFraudLiquidation(_d);
-    }
-
-    /// @notice                   Anyone may notify the deposit of fraud via an SPV proof.
-    /// @dev                      We strong prefer ECDSA fraud proofs.
-    /// @param  _d                Deposit storage pointer.
-    /// @param  _txVersion        Transaction version number (4-byte LE).
-    /// @param  _txInputVector    All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs.
-    /// @param  _txOutputVector   All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
-    /// @param  _txLocktime       Final 4 bytes of the transaction.
-    /// @param  _merkleProof      The merkle proof of inclusion of the tx in the bitcoin block.
-    /// @param  _txIndexInBlock   Transaction index in the block (0-indexed).
-    /// @param  _targetInputIndex Index of the input that spends the custodied UTXO.
-    /// @param  _bitcoinHeaders   An array of tightly-packed bitcoin headers.
-    function provideSPVFraudProof(
-        DepositUtils.Deposit storage _d,
-        bytes4 _txVersion,
-        bytes memory _txInputVector,
-        bytes memory _txOutputVector,
-        bytes4 _txLocktime,
-        bytes memory _merkleProof,
-        uint256 _txIndexInBlock,
-        uint8 _targetInputIndex,
-        bytes memory _bitcoinHeaders
-    ) public {
-        bytes32 _txId;
-        require(
-            !_d.inFunding() && !_d.inFundingFailure(),
-            "SPV Fraud proofs not valid before Active state."
-        );
-        require(
-            !_d.inSignerLiquidation(),
-            "Signer liquidation already in progress"
-        );
-        require(!_d.inEndState(), "Contract has halted");
-        require(_txInputVector.validateVin(), "invalid input vector provided");
-        require(_txOutputVector.validateVout(), "invalid output vector provided");
-
-        // DRAFT comments:
-        // we can assume this TX is witness?
-
-        _txId = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
-
-        _d.checkProofFromTxId(_txId, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
-
-        bytes memory _targetOutpoint = _txInputVector.extractInputAtIndex(_targetInputIndex).extractOutpoint();
-        require(
-            keccak256(_targetOutpoint) == keccak256(_d.utxoOutpoint),
-            "No input spending custodied UTXO found at given index"
-        );
-
-        if (_d.redeemerOutputScript.length > 0) {
-            require(
-                validateRedeemerNotPaid(_d, _txOutputVector),
-                "Found an output paying the redeemer as requested"
-            );
-        }
-
         startSignerFraudLiquidation(_d);
     }
 
@@ -256,12 +198,14 @@ library DepositLiquidation {
         }
         if (contractEthBalance > 1) {
             if (_wasFraud) {
-                initiator.transfer(contractEthBalance);
+                /* solium-disable-next-line security/no-send */
+                initiator.send(contractEthBalance);
             } else {
                 // There will always be a liquidation initiator.
                 uint256 split = contractEthBalance.div(2);
                 _d.pushFundsToKeepGroup(split);
-                initiator.transfer(split);
+                /* solium-disable-next-line security/no-send */
+                initiator.send(address(this).balance);
             }
         }
     }

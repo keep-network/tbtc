@@ -6,8 +6,8 @@
   "scripts": {
     "clean": "rm -rf build/",
     "compile": "truffle compile",
-    "test": "truffle compile && mocha --exit --recursive test --timeout 5000",
-    "test:quick": "mocha --exit --recursive test",
+    "test": "truffle compile && mocha --exit --recursive test --timeout 10000",
+    "test:quick": "mocha --exit --recursive test --timeout 10000",
     "test:debug": "NODE_ENV=test node --inspect node_modules/.bin/truffle test",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:fix": "npm run lint:fix:js && npm run lint:fix:sol",
@@ -23,7 +23,7 @@
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
   "dependencies": {
-    "@keep-network/keep-ecdsa": "0.8.0",
+    "@keep-network/keep-ecdsa": "0.9.0",
     "@summa-tx/bitcoin-spv-sol": "^2.2.0",
     "@summa-tx/relay-sol": "^1.1.0",
     "@truffle/hdwallet-provider": "^1.0.26",

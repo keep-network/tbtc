@@ -1,9 +1,6 @@
-const {deployAndLinkAll} = require("../testHelpers/testDeployer.js")
-const {states, bytes32zero, increaseTime} = require("../testHelpers/utils.js")
-const {
-  createSnapshot,
-  restoreSnapshot,
-} = require("../testHelpers/helpers/snapshot.js")
+const {deployAndLinkAll} = require("./helpers/testDeployer.js")
+const {states, bytes32zero, increaseTime} = require("./helpers/utils.js")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -743,6 +740,15 @@ describe("DepositRedemption", async function() {
         "Invalid signature",
       )
     })
+
+    it("reverts if S value is on the upper half of the secp256k1 curve's order", async () => {
+      const s =
+        "0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A1"
+      await expectRevert(
+        testDeposit.provideRedemptionSignature(0, "0x0", s),
+        "Malleable signature - s should be in the low half of secp256k1 curve's order",
+      )
+    })
   })
 
   describe("increaseRedemptionFee", async () => {
@@ -898,6 +904,7 @@ describe("DepositRedemption", async function() {
         0,
         "0x" + "11" * 32,
       )
+      await testDeposit.setLatestRedemptionFee(14544)
     })
 
     it("updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event", async () => {
