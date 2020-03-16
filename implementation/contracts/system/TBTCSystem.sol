@@ -25,6 +25,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
 
+    event LotSizesUpdateStarted(uint256[] _lotSizes, uint256 _timestamp);
+    event SignerFeeDivisorUpdateStarted(uint256 _signerFeeDivisor, uint256 _timestamp);
+    event CollateralizationThresholdsUpdateStarted(
+        uint128 _initialCollateralizedPercent,
+        uint128 _undercollateralizedThresholdPercent,
+        uint128 _severelyUndercollateralizedThresholdPercent,
+        uint256 _timestamp
+    );
+
     event LotSizesUpdated(uint256[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
     event SignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
@@ -50,6 +59,18 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint128 private undercollateralizedThresholdPercent = 125;  // percent
     uint128 private severelyUndercollateralizedThresholdPercent = 110; // percent
     uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
+
+    uint256 constant governanceTimeDelay = 6 hours;
+
+    uint256 private signerFeeDivisorChangeInitiated;
+    uint256 private lotSizesChangeInitiated;
+    uint256 private collateralizationThresholdsChangeInitiated;
+
+    uint256 private newSignerFeeDivisor;
+    uint256[] newLotSizesSatoshis;
+    uint128 private newInitialCollateralizedPercent;
+    uint128 private newUndercollateralizedThresholdPercent;
+    uint128 private newSeverelyUndercollateralizedThresholdPercent;
 
     constructor(address _priceFeed, address _relay) public {
         priceFeed = _priceFeed;
@@ -128,32 +149,116 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             pausedDuration.sub(block.timestamp.sub(pausedTimestamp));
     }
 
-    /// @notice Set the system signer fee divisor.
-    /// @param _signerFeeDivisor The signer fee divisor.
-    function setSignerFeeDivisor(uint256 _signerFeeDivisor)
-        external onlyOwner
-    {
-        require(_signerFeeDivisor > 9, "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.");
-        signerFeeDivisor = _signerFeeDivisor;
-        emit SignerFeeDivisorUpdated(_signerFeeDivisor);
-    }
-
     /// @notice Gets the system signer fee divisor.
     /// @return The signer fee divisor.
     function getSignerFeeDivisor() external view returns (uint256) { return signerFeeDivisor; }
 
+    /// @notice Set the system signer fee divisor.
+    /// @dev    This can be finalized by calling `finalizeSignerFeeDivisorUpdate`
+    ///         Anytime after `governanceTimeDelay` has elapsed.
+    /// @param _signerFeeDivisor The signer fee divisor.
+    function beginSignerFeeDivisorUpdate(uint256 _signerFeeDivisor)
+        external onlyOwner
+    {
+        require(_signerFeeDivisor > 9, "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.");
+        newSignerFeeDivisor = _signerFeeDivisor;
+        signerFeeDivisorChangeInitiated = block.timestamp;
+        emit SignerFeeDivisorUpdateStarted(_signerFeeDivisor, block.timestamp);
+    }
+
     /// @notice Set the allowed deposit lot sizes.
     /// @dev    Lot size array should always contain 10**8 satoshis (1BTC value)
+    ///         This can be finalized by calling `finalizeLotSizesUpdate`
+    ///         Anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
-    function setLotSizes(uint256[] calldata _lotSizes) external onlyOwner {
+    function beginLotSizesUpdate(uint256[] calldata _lotSizes)
+        external onlyOwner
+    {
         for( uint i = 0; i < _lotSizes.length; i++){
             if (_lotSizes[i] == 10**8){
                 lotSizesSatoshis = _lotSizes;
-                emit LotSizesUpdated(_lotSizes);
+                emit LotSizesUpdateStarted(_lotSizes, block.timestamp);
+                newLotSizesSatoshis = _lotSizes;
+                lotSizesChangeInitiated = block.timestamp;
                 return;
             }
         }
         revert("Lot size array must always contain 1BTC");
+    }
+
+    /// @notice Set the system collateralization levels
+    /// @dev    This can be finalized by calling `finalizeCollateralizationThresholdsUpdate`
+    ///         Anytime after `governanceTimeDelay` has elapsed.
+    /// @param _initialCollateralizedPercent default signing bond percent for new deposits
+    /// @param _undercollateralizedThresholdPercent first undercollateralization trigger
+    /// @param _severelyUndercollateralizedThresholdPercent second undercollateralization trigger
+    function beginCollateralizationThresholdsUpdate(
+        uint128 _initialCollateralizedPercent,
+        uint128 _undercollateralizedThresholdPercent,
+        uint128 _severelyUndercollateralizedThresholdPercent
+    ) external onlyOwner {
+        require(
+            _initialCollateralizedPercent <= 300,
+            "Initial collateralized percent must be <= 300%"
+        );
+        require(
+            _initialCollateralizedPercent > _undercollateralizedThresholdPercent,
+            "Undercollateralized threshold must be < initial collateralized percent"
+        );
+        require(
+            _undercollateralizedThresholdPercent > _severelyUndercollateralizedThresholdPercent,
+            "Severe undercollateralized threshold must be < undercollateralized threshold"
+        );
+
+        newInitialCollateralizedPercent = _initialCollateralizedPercent;
+        newUndercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
+        newSeverelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
+        collateralizationThresholdsChangeInitiated = block.timestamp;
+        emit CollateralizationThresholdsUpdateStarted(
+            _initialCollateralizedPercent,
+            _undercollateralizedThresholdPercent,
+            _severelyUndercollateralizedThresholdPercent,
+            block.timestamp
+        );
+    }
+
+    modifier onlyAfterDelay(uint256 _changeInitializedTimestamp) {
+        require(_changeInitializedTimestamp > 0, "Change not initiated");
+        require(
+            block.timestamp.sub(_changeInitializedTimestamp) >=
+                governanceTimeDelay,
+            "Timer not elapsed"
+        );
+        _;
+    }
+
+    /// @notice Finish setting the system signer fee divisor.
+    /// @dev `beginSignerFeeDivisorUpdate` must be called first, once `governanceTimeDelay`
+    ///       has passed, this function can be called to set the signer fee divisor to the
+    ///       value set in `beginSignerFeeDivisorUpdate`
+    function finalizeSignerFeeDivisorUpdate()
+        external
+        onlyOwner
+        onlyAfterDelay(signerFeeDivisorChangeInitiated)
+    {
+        signerFeeDivisor = newSignerFeeDivisor;
+        emit SignerFeeDivisorUpdated(newSignerFeeDivisor);
+        newSignerFeeDivisor = 0;
+        signerFeeDivisorChangeInitiated = 0;
+    }
+    /// @notice Finish setting the accepted system lot sizes.
+    /// @dev `beginLotSizesUpdate` must be called first, once `governanceTimeDelay`
+    ///       has passed, this function can be called to set the lot sizes to the
+    ///       value set in `beginLotSizesUpdate`
+    function finalizeLotSizesUpdate()
+        external
+        onlyOwner
+        onlyAfterDelay(lotSizesChangeInitiated) {
+
+        lotSizesSatoshis = newLotSizesSatoshis;
+        emit LotSizesUpdated(newLotSizesSatoshis);
+        lotSizesChangeInitiated = 0;
+        newLotSizesSatoshis.length = 0;
     }
 
     /// @notice Gets the allowed lot sizes
@@ -174,35 +279,29 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return false;
     }
 
-    /// @notice Set the system collateralization levels
-    /// @param _initialCollateralizedPercent default signing bond percent for new deposits
-    /// @param _undercollateralizedThresholdPercent first undercollateralization trigger
-    /// @param _severelyUndercollateralizedThresholdPercent second undercollateralization trigger
-    function setCollateralizationThresholds(
-        uint128 _initialCollateralizedPercent,
-        uint128 _undercollateralizedThresholdPercent,
-        uint128 _severelyUndercollateralizedThresholdPercent
-    ) external onlyOwner {
-        require(
-            _initialCollateralizedPercent <= 300,
-            "Initial collateralized percent must be <= 300%"
-        );
-        require(
-            _initialCollateralizedPercent > _undercollateralizedThresholdPercent,
-            "Undercollateralized threshold must be < initial collateralized percent"
-        );
-        require(
-            _undercollateralizedThresholdPercent > _severelyUndercollateralizedThresholdPercent,
-            "Severe undercollateralized threshold must be < undercollateralized threshold"
-        );
-        initialCollateralizedPercent = _initialCollateralizedPercent;
-        undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
-        severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
+    /// @notice Finish setting the system collateralization levels
+    /// @dev `beginCollateralizationThresholdsUpdate` must be called first, once `governanceTimeDelay`
+    ///       has passed, this function can be called to set the collateralization thresholds to the
+    ///       value set in `beginCollateralizationThresholdsUpdate`
+    function finalizeCollateralizationThresholdsUpdate()
+        external
+        onlyOwner
+        onlyAfterDelay(collateralizationThresholdsChangeInitiated) {
+
+        initialCollateralizedPercent = newInitialCollateralizedPercent;
+        undercollateralizedThresholdPercent = newUndercollateralizedThresholdPercent;
+        severelyUndercollateralizedThresholdPercent = newSeverelyUndercollateralizedThresholdPercent;
+
         emit CollateralizationThresholdsUpdated(
-            _initialCollateralizedPercent,
-            _undercollateralizedThresholdPercent,
-            _severelyUndercollateralizedThresholdPercent
+            newInitialCollateralizedPercent,
+            newUndercollateralizedThresholdPercent,
+            newSeverelyUndercollateralizedThresholdPercent
         );
+
+        newInitialCollateralizedPercent = 0;
+        newUndercollateralizedThresholdPercent = 0;
+        newSeverelyUndercollateralizedThresholdPercent = 0;
+        collateralizationThresholdsChangeInitiated = 0;
     }
 
     /// @notice Get the system undercollateralization level for new deposits
@@ -218,6 +317,34 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Get the system initial collateralized level for new deposits.
     function getInitialCollateralizedPercent() external view returns (uint128) {
         return initialCollateralizedPercent;
+    }
+
+    /// @notice Get the time remaining until the collateralization thresholds can be updated.
+    function getRemainingCollateralizationUpdateTime() external view returns (uint256) {
+        return getRemainingChangeTime(collateralizationThresholdsChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the lot sizes can be updated.
+    function getRemainingLotSizesUpdateTime() external view returns (uint256) {
+        return getRemainingChangeTime(lotSizesChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the signer fee divisor can be updated.
+    function geRemainingSignerFeeDivisorUpdateTime() external view returns (uint256) {
+        return getRemainingChangeTime(signerFeeDivisorChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the function parameter timer value can be updated.
+    function getRemainingChangeTime(uint256 _changeTimestamp) internal view returns (uint256){
+        require(_changeTimestamp > 0, "Update not initiated");
+        uint256 elapsed = block.timestamp.sub(_changeTimestamp);
+        return (elapsed >= governanceTimeDelay)?
+        0:
+        governanceTimeDelay.sub(elapsed);
+    }
+
+    function getGovernanceTimeDelay() public view returns (uint256) {
+        return governanceTimeDelay;
     }
 
     // Price Feed
