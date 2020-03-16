@@ -37,7 +37,15 @@ library DepositRedemption {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
         _tbtcToken.approve(_d.keepAddress, _d.signerFee());
-        _keep.distributeERC20ToMembers(_tbtcTokenAddress, _d.signerFee());
+        _keep.distributeERC20Reward(_tbtcTokenAddress, _d.signerFee());
+    }
+
+    /// @notice Closes keep associated with the deposit.
+    /// @dev Should be called when the keep is no longer needed and the signing
+    /// group can disband.
+    function closeKeep(DepositUtils.Deposit storage _d) internal {
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
+        _keep.closeKeep();
     }
 
     /// @notice Approves digest for signing by a keep.
@@ -317,8 +325,9 @@ library DepositRedemption {
 
         require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.latestRedemptionFee, "Incorrect fee amount");
 
-        // Transfer TBTC to signers
+        // Transfer TBTC to signers and close the keep.
         distributeSignerFee(_d);
+        closeKeep(_d);
 
         _d.distributeFeeRebate();
 
