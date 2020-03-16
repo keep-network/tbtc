@@ -175,7 +175,6 @@ describe("DepositFunding", async function() {
       )
     })
   })
-
   describe("notifySignerSetupFailure", async () => {
     let timer
     let owner
@@ -194,7 +193,7 @@ describe("DepositFunding", async function() {
       } = await deployAndLinkAll([], {TBTCSystemStub: TBTCSystem}))
 
       openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
-
+      await testDeposit.setKeepSetupFee(openKeepFee)
       owner = accounts[1]
       await tbtcDepositToken.forceMint(
         owner,
