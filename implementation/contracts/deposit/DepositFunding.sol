@@ -109,8 +109,8 @@ library DepositFunding {
         uint256 _seized = _d.seizeSignerBonds();
 
         /* solium-disable-next-line security/no-send */
-        _d.depositOwner().send( _d.keepSetupFee);
-        _d.pushFundsToKeepGroup(_seized.sub( _d.keepSetupFee));
+        _d.depositOwner().send(_d.keepSetupFee);
+        _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
 
         _d.setFailedSetup();
         _d.logSetupFailed();
