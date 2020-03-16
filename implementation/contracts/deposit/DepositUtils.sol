@@ -35,6 +35,7 @@ library DepositUtils {
         uint256 signerFeeDivisor;
         uint128 undercollateralizedThresholdPercent;
         uint128 severelyUndercollateralizedThresholdPercent;
+        uint256 keepSetupFee;
 
         // SET ON FRAUD
         uint256 liquidationInitiated;  // Timestamp of when liquidation starts

@@ -65,6 +65,7 @@ library DepositFunding {
         uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_system.getInitialCollateralizedPercent()).div(100);
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
+        _d.keepSetupFee = _system.createNewDepositFeeEstimate();
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementWei);
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
@@ -103,15 +104,13 @@ library DepositFunding {
             block.timestamp > _d.signingGroupRequestedAt.add(TBTCConstants.getSigningGroupFormationTimeout()),
             "Signing group formation timeout not yet elapsed"
         );
-        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
 
         // refund the deposit owner the cost to create a new keep at current price levels.
         uint256 _seized = _d.seizeSignerBonds();
-        uint256 _refund = _system.createNewDepositFeeEstimate();
 
         /* solium-disable-next-line security/no-send */
-        _d.depositOwner().send(_refund);
-        _d.pushFundsToKeepGroup(_seized.sub(_refund));
+        _d.depositOwner().send( _d.keepSetupFee);
+        _d.pushFundsToKeepGroup(_seized.sub( _d.keepSetupFee));
 
         _d.setFailedSetup();
         _d.logSetupFailed();
