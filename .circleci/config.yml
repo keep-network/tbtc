@@ -180,9 +180,16 @@ jobs:
   migrate_contracts:
     executor: docker-thesis-buildpack
     steps:
+      - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Remove Installed node_module
+          working_directory: ~/project/implementation
+          command: |
+            rm -rf node_modules
       - run:
           name: Provision External Contract Addresses
           command: |
@@ -301,6 +308,11 @@ workflows:
       - compile_contracts:
           requires:
             - setup_github_package_registry
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       - migrate_contracts:
           filters:
             tags:
