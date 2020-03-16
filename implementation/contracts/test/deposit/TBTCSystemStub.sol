@@ -26,9 +26,4 @@ contract TBTCSystemStub is TBTCSystem {
     function requestNewKeep(uint256, uint256, uint256) external payable returns (address _keepAddress) {
         return keepAddress;
     }
-
-    // override parent
-    function approvedToLog(address) public pure returns (bool) {
-        return true;
-    }
 }

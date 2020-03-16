@@ -1,7 +1,6 @@
 const {contract} = require("@openzeppelin/test-environment")
-const {constants, BN} = require("@openzeppelin/test-helpers")
+const {BN} = require("@openzeppelin/test-helpers")
 const {deploySystem} = require("./utils.js")
-const {ZERO_ADDRESS} = constants
 
 const BytesLib = contract.fromArtifact("BytesLib")
 const BTCUtils = contract.fromArtifact("BTCUtils")
