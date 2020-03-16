@@ -423,6 +423,15 @@ describe("VendingMachine", async function() {
           owner,
         ])
 
+        const success = await tbtcToken.approveAndCall.call(
+          redemptionScript.address,
+          depositValue.add(signerFee),
+          calldata,
+          {from: owner},
+        )
+
+        expect(success).to.equal(true)
+
         await tbtcToken.approveAndCall(
           redemptionScript.address,
           depositValue.add(signerFee),
@@ -495,6 +504,15 @@ describe("VendingMachine", async function() {
           _bitcoinHeaders,
         ],
       )
+
+      const success = await tbtcDepositToken.approveAndCall.call(
+        fundingScript.address,
+        tdtId,
+        calldata,
+        {from: owner},
+      )
+
+      expect(success).to.be.true
 
       await tbtcDepositToken.approveAndCall(
         fundingScript.address,
