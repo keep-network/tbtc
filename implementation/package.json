@@ -1,6 +1,6 @@
 {
-  "name": "tbtc",
-  "version": "0.7.0-pre",
+  "name": "@keep-network/tbtc",
+  "version": "0.10.0-pre",
   "description": "deposit contract for TBTC",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,7 @@
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
   "dependencies": {
-    "@keep-network/keep-ecdsa": "0.8.0",
+    "@keep-network/keep-ecdsa": "0.9.0",
     "@summa-tx/bitcoin-spv-sol": "^2.2.0",
     "@summa-tx/relay-sol": "^1.1.0",
     "@truffle/hdwallet-provider": "^1.0.26",
