@@ -54,6 +54,7 @@ library DepositUtils {
         address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
         bytes redeemerOutputScript;  // The 20-byte redeemer PKH
         uint256 initialRedemptionFee;  // the initial fee as requested
+        uint256 latestRedemptionFee; // the fee currently required by a redemption transaction
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
 
@@ -372,6 +373,7 @@ library DepositUtils {
     function seizeSignerBonds(Deposit storage _d) internal returns (uint256) {
         uint256 _preCallBalance = address(this).balance;
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
+        _keep.closeKeep();
         _keep.seizeSignerBonds();
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
@@ -395,13 +397,13 @@ library DepositUtils {
     }
 
     /// @notice             Pushes ether held by the deposit to the signer group.
-    /// @dev                Useful for returning bonds to the group, or otherwise paying them.
+    /// @dev                Ether is returned to signing group members bonds.
     /// @param  _ethValue   The amount of ether to send.
     /// @return             True if successful, otherwise revert.
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        _keep.distributeETHToMembers.value(_ethValue)();
+        _keep.returnPartialSignerBonds.value(_ethValue)();
         return true;
     }
 

@@ -1,10 +1,7 @@
-const {deployAndLinkAll} = require("../testHelpers/testDeployer.js")
-const {states} = require("../testHelpers/utils.js")
-const {AssertBalance} = require("../testHelpers/helpers/assertBalance.js")
-const {
-  createSnapshot,
-  restoreSnapshot,
-} = require("../testHelpers/helpers/snapshot.js")
+const {deployAndLinkAll} = require("./helpers/testDeployer.js")
+const {states} = require("./helpers/utils.js")
+const {AssertBalance} = require("./helpers/assertBalance.js")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -333,7 +330,7 @@ describe("VendingMachine", async function() {
     before(async () => {
       requiredBalance = await testDeposit.lotSizeTbtc.call()
 
-      await tbtcToken.zeroBalance(owner, {from: owner})
+      await tbtcToken.zeroBalance({from: owner})
       block = await web3.eth.getBlock("latest")
       await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
       await tbtcToken.resetBalance(requiredBalance, {from: owner})
@@ -468,7 +465,7 @@ describe("VendingMachine", async function() {
       await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
       await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(_signerPubkeyX, _signerPubkeyY)
-      await tbtcToken.zeroBalance(owner, {from: owner})
+      await tbtcToken.zeroBalance({from: owner})
       await tbtcDepositToken.forceMint(owner, tdtId)
     })
 

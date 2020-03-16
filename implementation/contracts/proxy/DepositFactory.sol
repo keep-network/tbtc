@@ -50,8 +50,6 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         uint256 _keepSize
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
-        Deposit(masterDepositAddress).initialize(address(this));
-
         tbtcSystem = _tbtcSystem;
         tbtcToken = _tbtcToken;
         tbtcDepositToken = _depositOwnerToken;
@@ -72,6 +70,8 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     function createDeposit (uint256 _lotSizeSatoshis) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
 
+        TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));
+
         Deposit deposit = Deposit(address(uint160(cloneAddress)));
         deposit.initialize(address(this));
         deposit.createNewDeposit.value(msg.value)(
@@ -84,8 +84,6 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
                 keepSize,
                 _lotSizeSatoshis
             );
-
-        TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));
 
         emit DepositCloneCreated(cloneAddress);
 

@@ -1,9 +1,6 @@
-const {deployAndLinkAll} = require("../testHelpers/testDeployer.js")
-const {states, bytes32zero, increaseTime} = require("../testHelpers/utils.js")
-const {
-  createSnapshot,
-  restoreSnapshot,
-} = require("../testHelpers/helpers/snapshot.js")
+const {deployAndLinkAll} = require("./helpers/testDeployer.js")
+const {states, bytes32zero, increaseTime} = require("./helpers/utils.js")
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -907,6 +904,7 @@ describe("DepositRedemption", async function() {
         0,
         "0x" + "11" * 32,
       )
+      await testDeposit.setLatestRedemptionFee(14544)
     })
 
     it("updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event", async () => {

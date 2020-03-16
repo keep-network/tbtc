@@ -183,7 +183,6 @@ library DepositFunding {
 
         // If the funding timeout has elapsed, punish the funder too!
         if (block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout())) {
-            address(0).transfer(address(this).balance);  // Burn it all down (fire emoji)
             _d.setFailedSetup();
         } else {
             /* NB: This is reuse of the variable */
