@@ -30,7 +30,9 @@ contract Deposit is DepositFactoryAuthority {
         initialize(address(0));
     }
 
-    function () external payable {}
+    function () external payable {
+        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from rom underlying keep");
+    }
 
     /// @notice     Get the integer representing the current state.
     /// @dev        We implement this because contracts don't handle foreign enums well.
