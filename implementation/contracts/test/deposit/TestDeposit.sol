@@ -90,8 +90,17 @@ contract TestDeposit is Deposit {
         self.liquidationInitiated = _liquidation;
         self.courtesyCallInitiated = _courtesy;
     }
+
     function setLiquidationInitiator(address payable _initiator) public {
         self.liquidationInitiator = _initiator;
+    }
+
+    function getLiquidationInitiator() public view returns (address) {
+        return self.liquidationInitiator;
+    }
+
+    function getLiquidationTimestamp() public view returns (uint256) {
+        return self.liquidationInitiated;
     }
 
     function getLiquidationAndCourtesyInitiated() public view returns (uint256, uint256) {
@@ -192,6 +201,14 @@ contract TestDeposit is Deposit {
 
     function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
         self.approvedDigests[_digest] = _timestamp;
+    }
+
+    function startSignerFraudLiquidation() public {
+        self.startSignerFraudLiquidation();
+    }
+
+    function startSignerAbortLiquidation() public {
+        self.startSignerAbortLiquidation();
     }
 
     // passthrough for direct testing
