@@ -37,6 +37,10 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
     // solium-disable-previous-line no-empty-blocks
     }
 
+    function distributeETHReward() external payable{
+    // solium-disable-previous-line no-empty-blocks
+    }
+
     // Functions implemented for IBondedECDSAKeep interface.
 
     function submitSignatureFraud(
