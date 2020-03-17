@@ -27,8 +27,7 @@ const _expectedUTXOoutpoint =
   "0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c00000000"
 const _outValueBytes = "0x2040351d00000000"
 
-// eslint-disable-next-line no-only-tests/no-only-tests
-describe.only("VendingMachine", async function() {
+describe("VendingMachine", async function() {
   let vendingMachine
   let mockRelay
   let tbtcSystemStub
