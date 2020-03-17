@@ -26,7 +26,7 @@ library TestTBTCConstants {
     // Liquidation Flow
     uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
     uint256 public constant AUCTION_DURATION = 24 * 60 * 60; // seconds
-    uint256 public constant AUCTION_BASE_PERCENTAGE = 90; // percents
+    uint256 public constant AUCTION_BASE_PERCENTAGE = 70; // percents
     uint256 public constant PERMITTED_FEE_BUMPS = 5; // number of times the fee can be increased
 
     function getBeneficiaryRewardDivisor() public pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
