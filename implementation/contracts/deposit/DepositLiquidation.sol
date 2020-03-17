@@ -66,8 +66,6 @@ library DepositLiquidation {
     function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(true);
 
-        // Reclaim used state for gas savings
-        _d.redemptionTeardown();
         uint256 _seized = _d.seizeSignerBonds();
 
         if (_d.auctionTBTCAmount() == 0) {
@@ -89,13 +87,23 @@ library DepositLiquidation {
     /// @param  _d      Deposit storage pointer.
     function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) internal {
         _d.logStartedLiquidation(false);
-        // Reclaim used state for gas savings
-        _d.redemptionTeardown();
         _d.seizeSignerBonds();
 
         _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
         _d.liquidationInitiator = msg.sender;
         _d.setLiquidationInProgress();
+    }
+
+    /// @notice         Starts signer liquidation due to abort or undercollateralization.
+    /// @dev            Liquidation is done by auction.
+    /// @param  _d      Deposit storage pointer.
+    function startSignerUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) internal {
+        _d.logStartedLiquidation(false);
+        _d.seizeSignerBonds();
+
+        _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+        _d.liquidationInitiator = msg.sender;
+        _d.setUndercollateralizedLiquidationInProgress();
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud.
@@ -161,6 +169,9 @@ library DepositLiquidation {
         bool _wasFraud = _d.inFraudLiquidationInProgress();
         require(_d.inSignerLiquidation(), "No active auction");
 
+        // Reclaim used state for gas savings
+        _d.redemptionTeardown();
+
         _d.setLiquidated();
         _d.logLiquidated();
 
@@ -222,7 +233,7 @@ library DepositLiquidation {
     }
 
     /// @notice     Goes from courtesy call to active.
-    /// @dev        Only callable if collateral is sufficient and the deposit is not expiring.
+    /// @dev        Only callable if collateral is sufficient.
     /// @param  _d  Deposit storage pointer.
     function exitCourtesyCall(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not currently in courtesy call");
@@ -237,7 +248,20 @@ library DepositLiquidation {
     function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
         require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
         require(getCollateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
-        startSignerAbortLiquidation(_d);
+        startSignerUndercollateralizedLiquidation(_d);
+    }
+
+    /// @notice     Goes from UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS to active.
+    /// @dev        Only callable if collateral is sufficient.
+    /// @param  _d  Deposit storage pointer.
+    function exitUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
+        require(_d.inUndercollateralizedLiquidationInProgress(), "not in UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS state");
+        require(getCollateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
+        _d.liquidationInitiated = 0;  // Store the timestamp for auction
+        _d.liquidationInitiator = address(0);
+        _d.pushFundsToKeepGroup(address(this).balance);
+        _d.setActive();
+        _d.logExitedLiquidation();
     }
 
     /// @notice     Notifies the contract that the courtesy period has elapsed.

@@ -204,7 +204,7 @@ library DepositStates {
     function setUndercollateralizedLiquidationInProgress(DepositUtils.Deposit storage _d) external {
         _d.currentState = uint8(States.UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS);
     }
-    
+
     function setLiquidated(DepositUtils.Deposit storage _d) external {
         _d.currentState = uint8(States.LIQUIDATED);
     }
