@@ -27,6 +27,7 @@ library DepositStates {
         // SIGNER LIQUIDATION FLOW
         COURTESY_CALL,
         FRAUD_LIQUIDATION_IN_PROGRESS,
+        UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS,
         LIQUIDATION_IN_PROGRESS,
         LIQUIDATED
     }
@@ -58,6 +59,7 @@ library DepositStates {
         return (
             _d.currentState == uint8(States.LIQUIDATION_IN_PROGRESS)
          || _d.currentState == uint8(States.FRAUD_LIQUIDATION_IN_PROGRESS)
+         || _d.currentState == uint8(States.UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS)
         );
     }
 
@@ -147,6 +149,10 @@ library DepositStates {
         return _d.currentState == uint8(States.LIQUIDATION_IN_PROGRESS);
     }
 
+    function inUndercollateralizedLiquidationInProgress(DepositUtils.Deposit storage _d) external view returns (bool) {
+        return _d.currentState == uint8(States.UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS);
+    }
+
     function inLiquidated(DepositUtils.Deposit storage _d) external view returns (bool) {
         return _d.currentState == uint8(States.LIQUIDATED);
     }
@@ -195,6 +201,10 @@ library DepositStates {
         _d.currentState = uint8(States.LIQUIDATION_IN_PROGRESS);
     }
 
+    function setUndercollateralizedLiquidationInProgress(DepositUtils.Deposit storage _d) external {
+        _d.currentState = uint8(States.UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS);
+    }
+    
     function setLiquidated(DepositUtils.Deposit storage _d) external {
         _d.currentState = uint8(States.LIQUIDATED);
     }
