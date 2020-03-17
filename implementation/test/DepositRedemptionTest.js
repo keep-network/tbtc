@@ -69,6 +69,7 @@ describe("DepositRedemption", async function() {
 
   beforeEach(async () => {
     await testDeposit.reset()
+    await ecdsaKeepStub.reset()
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   })
 
