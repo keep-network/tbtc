@@ -134,4 +134,11 @@ library OutsourceDepositLogging {
         DepositLog _logger = DepositLog(_d.TBTCSystem);
         _logger.logExitedCourtesyCall();
     }
+
+    /// @notice     Fires a ExitedLiquidation event.
+    /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
+    function logExitedLiquidation(DepositUtils.Deposit storage _d) external {
+        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        _logger.logExitedLiquidation();
+    }
 }
