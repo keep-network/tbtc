@@ -257,7 +257,7 @@ library DepositLiquidation {
     function exitUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
         require(_d.inUndercollateralizedLiquidationInProgress(), "Not in UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS state");
         require(getCollateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
-        _d.liquidationInitiated = 0;  // Store the timestamp for auction
+        _d.liquidationInitiated = 0;
         _d.liquidationInitiator = address(0);
         _d.pushFundsToKeepGroup(address(this).balance);
         _d.setActive();
