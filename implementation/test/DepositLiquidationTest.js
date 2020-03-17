@@ -396,6 +396,65 @@ describe("DepositLiquidation", async function() {
     })
   })
 
+  describe("exitUndercollateralizedLiquidation", async () => {
+    beforeEach(async () => {
+      const block = await web3.eth.getBlock("latest")
+      const blockTimestamp = block.timestamp
+      const notifiedTime = blockTimestamp // not expired
+      const fundedTime = blockTimestamp // not expired
+      await ecdsaKeepStub.setBondAmount(new BN("1000000000000000000000000", 10))
+      await tbtcSystemStub.setOraclePrice(new BN("1", 10))
+      await testDeposit.setState(
+        states.UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS,
+      )
+      await testDeposit.setUTXOInfo(
+        "0x" + "00".repeat(8),
+        fundedTime,
+        "0x" + "00".repeat(36),
+      )
+      await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+    })
+
+    afterEach(async () => {
+      await ecdsaKeepStub.setBondAmount(1000)
+      await tbtcSystemStub.setOraclePrice(new BN("1000000000000", 10))
+    })
+
+    it("transitions to active, and logs ExitedLiquidation", async () => {
+      const blockNumber = await web3.eth.getBlock("latest").number
+
+      await testDeposit.exitUndercollateralizedLiquidation()
+
+      const depositState = await testDeposit.getState.call()
+      expect(depositState).to.eq.BN(states.ACTIVE)
+
+      const eventList = await tbtcSystemStub.getPastEvents(
+        "ExitedLiquidation",
+        {fromBlock: blockNumber, toBlock: "latest"},
+      )
+      expect(eventList.length).to.equal(1)
+    })
+
+    it("reverts if not in UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS state", async () => {
+      await testDeposit.setState(states.START)
+
+      await expectRevert(
+        testDeposit.exitUndercollateralizedLiquidation(),
+        "Not in UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS state",
+      )
+    })
+
+    it("reverts if the deposit is still undercollateralized", async () => {
+      await tbtcSystemStub.setOraclePrice(new BN("1000000000000", 10))
+      await ecdsaKeepStub.setBondAmount(0)
+
+      await expectRevert(
+        testDeposit.exitUndercollateralizedLiquidation(),
+        "Deposit is still undercollateralized",
+      )
+    })
+  })
+
   describe("notifyUndercollateralizedLiquidation", async () => {
     let oraclePrice
     let lotSize
@@ -418,7 +477,7 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.send(1000000, {from: owner})
     })
 
-    it("executes and moves state to LIQUIDATION_IN_PROGRESS", async () => {
+    it("executes and moves state to UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS", async () => {
       // Bond value is calculated as:
       // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
       // Here we test collateralization less than severely undercollateralized
@@ -430,9 +489,11 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.setBondAmount(bondValue)
 
       await testDeposit.notifyUndercollateralizedLiquidation()
-
       const depositState = await testDeposit.getState.call()
-      expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
+
+      expect(depositState).to.eq.BN(
+        states.UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS,
+      )
       // TODO: Add validations or cover with `reverts if the deposit is not
       // severely undercollateralized` test case.
     })
