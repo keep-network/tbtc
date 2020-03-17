@@ -426,6 +426,14 @@ contract Deposit is DepositFactoryAuthority {
         return true;
     }
 
+    /// @notice     Goes from UNDERCOLLATERALIZED_LIQUIDATION_IN_PROGRESS to active.
+    /// @dev        Only callable if collateral is sufficient.
+    /// @return     True if successful, otherwise revert.
+    function exitUndercollateralizedLiquidation() public returns (bool) {
+        self.exitUndercollateralizedLiquidation();
+        return true;
+    }
+
     /// @notice     Notify the contract that the signers are undercollateralized.
     /// @dev        Calls out to the system for oracle info.
     /// @return     True if successful, otherwise revert.
