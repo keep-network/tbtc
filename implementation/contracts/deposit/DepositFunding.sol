@@ -78,15 +78,6 @@ library DepositFunding {
         return true;
     }
 
-    /// @notice     Slashes the signers partially for committing fraud before funding occurs.
-    /// @dev        Called only by notifyFraudFundingTimeout.
-    function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) internal {
-        uint256 _seized = _d.seizeSignerBonds();
-        uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
-        _d.pushFundsToKeepGroup(_seized.sub(_slash));
-        _d.depositOwner().transfer(_slash);
-    }
-
     /// @notice     Seizes signer bonds and distributes them to the funder.
     /// @dev        This is only called as part of funding fraud flow.
     function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) internal {
