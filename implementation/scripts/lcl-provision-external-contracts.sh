@@ -34,7 +34,7 @@ function fetch_bonded_ecdsa_keep_vendor_contract_address() {
     FAILED=true
   else
     echo "Found value for ${BONDED_ECDSA_KEEP_VENDOR_PROPERTY} = ${ADDRESS}"
-    sed -i -e "/${BONDED_ECDSA_KEEP_VENDOR_PROPERTY}/s/'[a-zA-Z0-9]*'/'${ADDRESS}'/" $DESTINATION_FILE
+    sed -i -e "/${BONDED_ECDSA_KEEP_VENDOR_PROPERTY}/s/\"[a-zA-Z0-9]*\"/\"${ADDRESS}\"/" $DESTINATION_FILE
   fi
 }
 
