@@ -43,9 +43,11 @@ describe("DepositFraud", async function() {
 
   describe("provideFundingECDSAFraudProof", async () => {
     let timer
+    let bond
 
     before(async () => {
       timer = await tbtcConstants.getFundingTimeout.call()
+      bond = 1000000
     })
 
     beforeEach(async () => {
@@ -55,11 +57,12 @@ describe("DepositFraud", async function() {
       await ecdsaKeepStub.setSuccess(true)
       await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
 
-      await ecdsaKeepStub.send(1000000, {from: owner})
+      await ecdsaKeepStub.send(bond, {from: owner})
     })
 
-    it("updates to awaiting fraud funding proof and logs FraudDuringSetup if the timer has not elapsed", async () => {
+    it("updates to awaiting fraud funding proof, distributes signer bond to funder, and logs FraudDuringSetup if the timer has not elapsed", async () => {
       const blockNumber = await web3.eth.getBlock("latest").number
+      const initialBalance = await web3.eth.getBalance(beneficiary)
 
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart * 5) // timer has not elapsed
 
@@ -69,6 +72,13 @@ describe("DepositFraud", async function() {
         bytes32zero,
         bytes32zero,
         "0x00",
+      )
+
+      await assertBalance.eth(ecdsaKeepStub.address, new BN(0))
+
+      await assertBalance.eth(
+        beneficiary,
+        new BN(initialBalance).add(new BN(bond)),
       )
 
       const depositState = await testDeposit.getState.call()
@@ -81,7 +91,7 @@ describe("DepositFraud", async function() {
       expect(eventList.length, "bad event length").to.equal(1)
     })
 
-    it("updates to failed, logs FraudDuringSetup, and burns value if the timer has elapsed", async () => {
+    it("updates to failed, logs FraudDuringSetup, and burns signer bond if the timer has elapsed", async () => {
       const blockNumber = await web3.eth.getBlock("latest").number
       await testDeposit.provideFundingECDSAFraudProof(
         0,
@@ -90,6 +100,8 @@ describe("DepositFraud", async function() {
         bytes32zero,
         "0x00",
       )
+
+      await assertBalance.eth(ecdsaKeepStub.address, new BN(0))
 
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.FAILED_SETUP)
