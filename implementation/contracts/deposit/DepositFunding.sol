@@ -164,6 +164,8 @@ library DepositFunding {
 
         // If the funding timeout has elapsed, punish the funder too!
         if (block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout())) {
+            uint256 _seized = _d.seizeSignerBonds();
+            address(0).transfer(_seized);
             _d.setFailedSetup();
             _d.logSetupFailed();
         } else {
