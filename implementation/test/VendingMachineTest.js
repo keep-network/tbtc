@@ -443,6 +443,31 @@ describe("VendingMachine", async function() {
         expect(eventList[0].returnValues._digest).to.equal(sighash)
       })
 
+      it("returns true on success", async () => {
+        await testDeposit.setState(states.ACTIVE)
+        await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
+        await tbtcToken.forceMint(owner, depositValue.add(signerFee))
+        await feeRebateToken.forceMint(owner, tdtId)
+        const tbtcToBtc = vendingMachine.abi.filter(
+          x => x.name == "tbtcToBtc",
+        )[0]
+        const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [
+          testDeposit.address,
+          "0x1111111100000000",
+          redeemerOutputScript,
+          owner,
+        ])
+
+        const success = await tbtcToken.approveAndCall.call(
+          redemptionScript.address,
+          depositValue.add(signerFee),
+          calldata,
+          {from: owner},
+        )
+
+        expect(success).to.equal(true)
+      })
+
       it("reverts for unknown function calls encoded in _extraData", async () => {
         const unknownFunctionSignature = "0xCAFEBABE"
         await tbtcToken.forceMint(owner, depositValue.add(signerFee))
@@ -512,6 +537,35 @@ describe("VendingMachine", async function() {
         vendingMachine.address,
       )
       expect(await feeRebateToken.ownerOf(tdtId)).to.equal(owner)
+    })
+
+    it("reverts true on success", async () => {
+      const unqualifiedDepositToTbtcABI = vendingMachine.abi.filter(
+        x => x.name == "unqualifiedDepositToTbtc",
+      )[0]
+      const calldata = web3.eth.abi.encodeFunctionCall(
+        unqualifiedDepositToTbtcABI,
+        [
+          testDeposit.address,
+          _version,
+          _txInputVector,
+          _txOutputVector,
+          _txLocktime,
+          _fundingOutputIndex,
+          _merkleProof,
+          _txIndexInBlock,
+          _bitcoinHeaders,
+        ],
+      )
+
+      const success = await tbtcDepositToken.approveAndCall.call(
+        fundingScript.address,
+        tdtId,
+        calldata,
+        {from: owner},
+      )
+
+      expect(success).to.be.true
     })
 
     it("reverts for unknown function calls encoded in _extraData", async () => {
