@@ -904,6 +904,7 @@ describe("DepositRedemption", async function() {
         0,
         "0x" + "11" * 32,
       )
+      await testDeposit.setLatestRedemptionFee(14544)
     })
 
     it("updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event", async () => {

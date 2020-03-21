@@ -67,7 +67,7 @@ module.exports = {
 
     ropsten: {
       provider: function() {
-        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://eth-tx-ropsten.test.keep.network:8545")
+        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
       },
       gas: 6721975,
       network_id: 3

@@ -153,6 +153,11 @@ contract TestDeposit is Deposit {
         self.withdrawalRequestTime = _withdrawalRequestTime;
         self.lastRequestedDigest = _lastRequestedDigest;
     }
+
+    function setLatestRedemptionFee(uint256 _latestRedemptionFee) public {
+        self.latestRedemptionFee = _latestRedemptionFee;
+    }
+
     function setRedeemerAddress(
         address payable _redeemerAddress
     ) public {
