@@ -238,4 +238,8 @@ contract TestDeposit is Deposit {
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
     }
+
+    function getAuctionBasePercentage() public view returns (uint256) {
+        return self.getAuctionBasePercentage();
+    }
 }
