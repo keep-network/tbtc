@@ -114,18 +114,6 @@ contract DepositLog {
         return tbtcDepositToken.exists(uint256(_caller));
     }
 
-    /// @notice               Sets the tbtcDepositToken contract.
-    /// @dev                  The contract is used by `approvedToLog` to check if the
-    ///                       caller is a Deposit contract. This should only be called once.
-    /// @param  _tbtcDepositTokenAddress  The address of the tbtcDepositToken.
-    function setTbtcDepositToken(address _tbtcDepositTokenAddress) public {
-        require(
-            address(tbtcDepositToken) == address(0),
-            "tbtcDepositToken is already set"
-        );
-        tbtcDepositToken = TBTCDepositToken(_tbtcDepositTokenAddress);
-    }
-
     //
     // Logging
     //
@@ -292,5 +280,17 @@ contract DepositLog {
             "Caller is not approved to log events"
         );
         emit ExitedCourtesyCall(msg.sender, block.timestamp);
+    }
+
+    /// @notice               Sets the tbtcDepositToken contract.
+    /// @dev                  The contract is used by `approvedToLog` to check if the
+    ///                       caller is a Deposit contract. This should only be called once.
+    /// @param  _tbtcDepositTokenAddress  The address of the tbtcDepositToken.
+    function setTbtcDepositToken(address _tbtcDepositTokenAddress) internal {
+        require(
+            address(tbtcDepositToken) == address(0),
+            "tbtcDepositToken is already set"
+        );
+        tbtcDepositToken = TBTCDepositToken(_tbtcDepositTokenAddress);
     }
 }
