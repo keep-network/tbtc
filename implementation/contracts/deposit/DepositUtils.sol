@@ -230,7 +230,7 @@ library DepositUtils {
         }
 
         // This should make a smooth flow from base% to 100%
-        uint256 _basePercentage = TBTCConstants.getAuctionBasePercentage();
+        uint256 _basePercentage = getAuctionBasePercentage(_d);
         uint256 _elapsedPercentage = uint256(100).sub(_basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
         uint256 _percentage = _basePercentage.add(_elapsedPercentage);
 
@@ -365,6 +365,17 @@ library DepositUtils {
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);
+    }
+
+
+    /// @notice     Get the starting percentage of the bond at auction.
+    /// @dev        This will return the same value regardless of collateral price.
+    /// @return     The percentage of the InitialCollateralizationPercent that will result
+    ///             in a 100% bond value base auction given perfect collateralization.
+    function getAuctionBasePercentage(Deposit storage _d) internal view returns (uint256) {
+        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
+        uint256 initialCollateralizedPercent = _sys.getInitialCollateralizedPercent();
+        return (10000 / initialCollateralizedPercent);
     }
 
     /// @notice     Seize the signer bond from the keep contract.
