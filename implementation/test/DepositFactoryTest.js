@@ -1,5 +1,5 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {contract, web3} = require("@openzeppelin/test-environment")
+const {contract, web3, accounts} = require("@openzeppelin/test-environment")
 const {states} = require("./helpers/utils.js")
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
 const {ZERO_ADDRESS} = constants
@@ -174,6 +174,7 @@ describe("DepositFactory", async function() {
     it("is not affected by state changes to master", async () => {
       const keep = await ECDSAKeepStub.new()
 
+      await tbtcDepositToken.forceMint(accounts[0], testDeposit.address)
       await testDeposit.createNewDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
