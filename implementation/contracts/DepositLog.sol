@@ -110,7 +110,6 @@ contract DepositLog {
     ///                     We don't require this, so deposits are not bricked if the system borks
     /// @param  _caller     The address of the calling contract
     /// @return             True if approved, otherwise false
-    /* solium-disable-next-line no-empty-blocks */
     function approvedToLog(address _caller) public view returns (bool) {
         return tbtcDepositToken.exists(uint256(_caller));
     }
