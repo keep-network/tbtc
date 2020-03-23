@@ -185,7 +185,7 @@ describe("DepositLiquidation", async function() {
       const block = await web3.eth.getBlock("latest")
       const notifiedTime = block.timestamp
       const value = 1000000000000
-      const basePercentage = await tbtcConstants.getAuctionBasePercentage.call()
+      const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
       await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
@@ -227,7 +227,7 @@ describe("DepositLiquidation", async function() {
       const notifiedTime = block.timestamp
       const liquidationInitiator = accounts[2]
       const value = 1000000000000
-      const basePercentage = await tbtcConstants.getAuctionBasePercentage.call()
+      const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
       await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
