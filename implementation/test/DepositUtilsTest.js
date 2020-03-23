@@ -383,12 +383,24 @@ describe("DepositUtils", async function() {
     })
   })
 
+  describe("getAuctionBasePercentage()", async () => {
+    it("returns correct base percentage", async () => {
+      const basePercentage = await testDeposit.getAuctionBasePercentage.call()
+
+      const initialCollateralization = await tbtcSystemStub.getInitialCollateralizedPercent()
+
+      // 10000 to avoid losing value to truncating is solidity.
+      const expecged = new BN(10000).div(initialCollateralization)
+      expect(basePercentage).to.eq.BN(expecged) // 66 for 150
+    })
+  })
+
   describe("auctionValue()", async () => {
     let duration
     let basePercentage
     before(async () => {
       duration = await tbtcConstants.getAuctionDuration.call()
-      basePercentage = await tbtcConstants.getAuctionBasePercentage.call()
+      basePercentage = await testDeposit.getAuctionBasePercentage.call()
       auctionValue = new BN(100000000)
     })
     beforeEach(async () => {
