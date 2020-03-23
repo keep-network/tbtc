@@ -47,7 +47,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
-    TBTCDepositToken tbtcDepositToken;
     address public keepVendor;
     address public priceFeed;
     address public relay;
@@ -100,7 +99,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
-        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         keepVendor = _keepVendor;
         VendingMachine(_vendingMachine).setExternalAddresses(
             _tbtcToken,
