@@ -104,12 +104,12 @@ contract DepositLog {
     // AUTH
     //
 
-    /// @notice             Checks if an address is an allowed logger
+    /// @notice             Checks if an address is an allowed logger.
     /// @dev                checks tbtcDepositToken to see if the caller represents
     ///                     an existing deposit.
-    ///                     We don't require this, so deposits are not bricked if the system borks
-    /// @param  _caller     The address of the calling contract
-    /// @return             True if approved, otherwise false
+    ///                     We don't require this, so deposits are not bricked if the system borks.
+    /// @param  _caller     The address of the calling contract.
+    /// @return             True if approved, otherwise false.
     function approvedToLog(address _caller) public view returns (bool) {
         return tbtcDepositToken.exists(uint256(_caller));
     }
@@ -130,25 +130,27 @@ contract DepositLog {
     // Logging
     //
 
-    /// @notice               Fires a Created event
-    /// @dev                  We append the sender, which is the deposit contract that called
-    /// @param  _keepAddress  The address of the associated keep
-    /// @return               True if successful, else revert
-    function logCreated(address _keepAddress) public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @notice               Fires a Created event.
+    /// @dev                  We append the sender, which is the deposit contract that called.
+    /// @param  _keepAddress  The address of the associated keep.
+    /// @return               True if successful, else revert.
+    function logCreated(address _keepAddress) public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit Created(msg.sender, _keepAddress, block.timestamp);
-        return true;
     }
 
-    /// @notice                 Fires a RedemptionRequested event
-    /// @dev                    This is the only event without an explicit timestamp
-    /// @param  _requester      The ethereum address of the requester
-    /// @param  _digest         The calculated sighash digest
-    /// @param  _utxoSize       The size of the utxo in sat
+    /// @notice                 Fires a RedemptionRequested event.
+    /// @dev                    This is the only event without an explicit timestamp.
+    /// @param  _requester      The ethereum address of the requester.
+    /// @param  _digest         The calculated sighash digest.
+    /// @param  _utxoSize       The size of the utxo in sat.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
-    /// @param  _requestedFee   The requester or bump-system specified fee
-    /// @param  _outpoint       The 36 byte outpoint
-    /// @return                 True if successful, else revert
+    /// @param  _requestedFee   The requester or bump-system specified fee.
+    /// @param  _outpoint       The 36 byte outpoint.
+    /// @return                 True if successful, else revert.
     function logRedemptionRequested(
         address _requester,
         bytes32 _digest,
@@ -156,8 +158,11 @@ contract DepositLog {
         bytes memory _redeemerOutputScript,
         uint256 _requestedFee,
         bytes memory _outpoint
-    ) public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    ) public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit RedemptionRequested(
             msg.sender,
             _requester,
@@ -167,20 +172,20 @@ contract DepositLog {
             _requestedFee,
             _outpoint
         );
-        return true;
     }
 
-    /// @notice         Fires a GotRedemptionSignature event
-    /// @dev            We append the sender, which is the deposit contract that called
-    /// @param  _digest signed digest
-    /// @param  _r      signature r value
-    /// @param  _s      signature s value
-    /// @return         True if successful, else revert
+    /// @notice         Fires a GotRedemptionSignature event.
+    /// @dev            We append the sender, which is the deposit contract that called.
+    /// @param  _digest signed digest.
+    /// @param  _r      signature r value.
+    /// @param  _s      signature s value.
     function logGotRedemptionSignature(bytes32 _digest, bytes32 _r, bytes32 _s)
         public
-        returns (bool)
     {
-        if (!approvedToLog(msg.sender)) return false;
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit GotRedemptionSignature(
             msg.sender,
             _digest,
@@ -188,104 +193,104 @@ contract DepositLog {
             _s,
             block.timestamp
         );
-        return true;
     }
 
-    /// @notice     Fires a RegisteredPubkey event
-    /// @dev        We append the sender, which is the deposit contract that called
-    ///             returns false if not approved, to prevent accidentally halting Deposit
-    /// @return     True if successful, else false
+    /// @notice     Fires a RegisteredPubkey event.
+    /// @dev        We append the sender, which is the deposit contract that called.
     function logRegisteredPubkey(
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
-    ) public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    ) public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit RegisteredPubkey(
             msg.sender,
             _signingGroupPubkeyX,
             _signingGroupPubkeyY,
             block.timestamp
         );
-        return true;
     }
 
-    /// @notice     Fires a SetupFailed event
-    /// @dev        We append the sender, which is the deposit contract that called
-    ///             returns false if not approved, to prevent accidentally halting Deposit
-    /// @return     True if successful, else false
-    function logSetupFailed() public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @notice     Fires a SetupFailed event.
+    /// @dev        We append the sender, which is the deposit contract that called.
+    function logSetupFailed() public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit SetupFailed(msg.sender, block.timestamp);
-        return true;
     }
 
-    /// @notice     Fires a FraudDuringSetup event
-    /// @dev        We append the sender, which is the deposit contract that called
-    ///             returns false if not approved, to prevent accidentally halting Deposit
-    /// @return     True if successful, else false
-    function logFraudDuringSetup() public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @notice     Fires a FraudDuringSetup event.
+    /// @dev        We append the sender, which is the deposit contract that called.
+    function logFraudDuringSetup() public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit FraudDuringSetup(msg.sender, block.timestamp);
-        return true;
     }
 
-    /// @notice     Fires a Funded event
-    /// @dev        We append the sender, which is the deposit contract that called
-    ///             returns false if not approved, to prevent accidentally halting Deposit
-    /// @return     True if successful, else false
-    function logFunded() public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @notice     Fires a Funded event.
+    /// @dev        We append the sender, which is the deposit contract that called.
+    function logFunded() public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit Funded(msg.sender, block.timestamp);
-        return true;
     }
 
-    /// @notice     Fires a CourtesyCalled event
-    /// @dev        We append the sender, which is the deposit contract that called
-    ///             returns false if not approved, to prevent accidentally halting Deposit
-    /// @return     True if successful, else false
-    function logCourtesyCalled() public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @notice     Fires a CourtesyCalled event.
+    /// @dev        We append the sender, which is the deposit contract that called.
+    function logCourtesyCalled() public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit CourtesyCalled(msg.sender, block.timestamp);
-        return true;
     }
 
-    /// @notice             Fires a StartedLiquidation event
-    /// @dev                We append the sender, which is the deposit contract that called
-    /// @param _wasFraud    True if liquidating for fraud
-    /// @return             True if successful, else revert
-    function logStartedLiquidation(bool _wasFraud) public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @notice             Fires a StartedLiquidation event.
+    /// @dev                We append the sender, which is the deposit contract that called.
+    /// @param _wasFraud    True if liquidating for fraud.
+    function logStartedLiquidation(bool _wasFraud) public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit StartedLiquidation(msg.sender, _wasFraud, block.timestamp);
-        return true;
     }
 
     /// @notice     Fires a Redeemed event
-    /// @dev        We append the sender, which is the deposit contract that called
-    ///             returns false if not approved, to prevent accidentally halting Deposit
-    /// @return     True if successful, else false
-    function logRedeemed(bytes32 _txid) public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @dev        We append the sender, which is the deposit contract that called.
+    function logRedeemed(bytes32 _txid) public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit Redeemed(msg.sender, _txid, block.timestamp);
-        return true;
     }
 
     /// @notice     Fires a Liquidated event
-    /// @dev        We append the sender, which is the deposit contract that called
-    ///             returns false if not approved, to prevent accidentally halting Deposit
-    /// @return     True if successful, else false
-    function logLiquidated() public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @dev        We append the sender, which is the deposit contract that called.
+    function logLiquidated() public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit Liquidated(msg.sender, block.timestamp);
-        return true;
     }
 
     /// @notice     Fires a ExitedCourtesyCall event
-    /// @dev        We append the sender, which is the deposit contract that called
-    ///             returns false if not approved, to prevent accidentally halting Deposit
-    /// @return     True if successful, else false
-    function logExitedCourtesyCall() public returns (bool) {
-        if (!approvedToLog(msg.sender)) return false;
+    /// @dev        We append the sender, which is the deposit contract that called.
+    function logExitedCourtesyCall() public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
         emit ExitedCourtesyCall(msg.sender, block.timestamp);
-        return true;
     }
 }
