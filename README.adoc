@@ -15,7 +15,7 @@ federated sidechains like https://blockstream.com/liquid/[Liquid],
 expanding use cases possible via today's Bitcoin network, while bringing
 superior money to other chains.
 
-This repo contains the Solidity link:implementation/[smart contracts]
+This repo contains the Solidity link:solidity/[smart contracts]
 and link:docs/[specification].
 
 toc::[]
@@ -101,7 +101,7 @@ Clone and install dependencies:
 [source,sh]
 ----
 git clone https://github.com/keep-network/tbtc
-cd tbtc/implementation
+cd tbtc/solidity
 npm install
 ----
 

@@ -12,15 +12,15 @@ toc::[]
 `
 
 let jsonFiles = [
-  "../../implementation/build/contracts/TBTCSystem.json",
-  // "../../implementation/build/contracts/TBTCConstants.json",
-  "../../implementation/build/contracts/Deposit.json",
-  "../../implementation/build/contracts/DepositStates.json",
-  "../../implementation/build/contracts/DepositFunding.json",
-  "../../implementation/build/contracts/DepositRedemption.json",
-  "../../implementation/build/contracts/DepositLiquidation.json",
-  "../../implementation/build/contracts/IBTCETHPriceFeed.json",
-  "../../implementation/build/contracts/IBondedECDSAKeep.json",
+  "../../solidity/build/contracts/TBTCSystem.json",
+  // "../../solidity/build/contracts/TBTCConstants.json",
+  "../../solidity/build/contracts/Deposit.json",
+  "../../solidity/build/contracts/DepositStates.json",
+  "../../solidity/build/contracts/DepositFunding.json",
+  "../../solidity/build/contracts/DepositRedemption.json",
+  "../../solidity/build/contracts/DepositLiquidation.json",
+  "../../solidity/build/contracts/IBTCETHPriceFeed.json",
+  "../../solidity/build/contracts/IBondedECDSAKeep.json",
 ]
 
 jsonFiles.forEach(file => {
