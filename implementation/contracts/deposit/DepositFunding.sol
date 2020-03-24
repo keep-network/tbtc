@@ -161,19 +161,10 @@ library DepositFunding {
         bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         require(_isFraud, "Signature is not fraudulent");
         _d.logFraudDuringSetup();
-
-        // If the funding timeout has elapsed, punish the funder too!
-        if (block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout())) {
-            uint256 _seized = _d.seizeSignerBonds();
-            address(0).transfer(_seized);
-            _d.setFailedSetup();
-            _d.logSetupFailed();
-        } else {
-            distributeSignerBondsToFunder(_d);
-            fundingFraudTeardown(_d);
-            _d.setFailedSetup();
-            _d.logSetupFailed();
-        }
+        distributeSignerBondsToFunder(_d);
+        fundingFraudTeardown(_d);
+        _d.setFailedSetup();
+        _d.logSetupFailed();
     }
 
     /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit.
