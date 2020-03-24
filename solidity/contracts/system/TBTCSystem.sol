@@ -202,6 +202,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Initial collateralized percent must be <= 300%"
         );
         require(
+            _initialCollateralizedPercent > 100,
+            "Initial collateralized percent must be >= 100%"
+        );
+        require(
             _initialCollateralizedPercent > _undercollateralizedThresholdPercent,
             "Undercollateralized threshold must be < initial collateralized percent"
         );
