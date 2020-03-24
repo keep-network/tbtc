@@ -25,10 +25,10 @@ EOF
 echo "<<<<<<START Prep Utility Box For Migration START<<<<<<"
 echo "ssh utilitybox rm -rf /tmp/$BUILD_TAG"
 echo "ssh utilitybox mkdir /tmp/$BUILD_TAG"
-echo "scp -r ./implementation utilitybox:/tmp/$BUILD_TAG/"
+echo "scp -r ./solidity utilitybox:/tmp/$BUILD_TAG/"
 ssh utilitybox rm -rf /tmp/$BUILD_TAG
 ssh utilitybox mkdir /tmp/$BUILD_TAG
-scp -r ./implementation utilitybox:/tmp/$BUILD_TAG/
+scp -r ./solidity utilitybox:/tmp/$BUILD_TAG/
 echo ">>>>>>FINISH Prep Utility Box For Migration FINISH>>>>>>"
 
 # Run migration
@@ -52,7 +52,7 @@ ssh utilitybox << EOF
   echo ">>>>>>FINISH Setting Contract Owner Key FINISH>>>>>>"
 
   echo "<<<<<<START Contract Migration START<<<<<<"
-  cd /tmp/$BUILD_TAG/implementation
+  cd /tmp/$BUILD_TAG/solidity
   npm ci
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
@@ -63,8 +63,8 @@ ssh utilitybox << EOF
 EOF
 
 echo "<<<<<<START Contract Copy START<<<<<<"
-echo "scp utilitybox:/tmp/$BUILD_TAG/implementation/build/contracts/* /tmp/tbtc/contracts"
-scp utilitybox:/tmp/$BUILD_TAG/implementation/build/contracts/* /tmp/tbtc/contracts
+echo "scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/tbtc/contracts"
+scp utilitybox:/tmp/$BUILD_TAG/solidity/build/contracts/* /tmp/tbtc/contracts
 echo ">>>>>>FINISH Contract Copy>>>>>>"
 
 echo "<<<<<<START Migration Dir Cleanup START<<<<<<"
