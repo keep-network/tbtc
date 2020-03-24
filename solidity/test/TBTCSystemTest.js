@@ -329,7 +329,7 @@ describe("TBTCSystem", async function() {
         expect(receipt.logs[0].args[0][1]).to.eq.BN(lotSizes[1])
         expect([
           receipt.logs[0].args[1].toString(),
-          receipt.logs[0].args[1].toString() - 1,
+          (receipt.logs[0].args[1] - 1).toString(),
         ]).to.include(block.timestamp.toString())
         expect([
           remainingTime.toString(),
@@ -435,6 +435,17 @@ describe("TBTCSystem", async function() {
             new BN("120"),
           ),
           "Initial collateralized percent must be <= 300%",
+        )
+      })
+
+      it("reverts if Initial collateralized percent < 100", async () => {
+        await expectRevert(
+          tbtcSystem.beginCollateralizationThresholdsUpdate(
+            new BN("99"),
+            new BN("130"),
+            new BN("120"),
+          ),
+          "Initial collateralized percent must be >= 100%",
         )
       })
 
