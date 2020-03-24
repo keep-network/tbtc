@@ -72,7 +72,7 @@ describe("DepositFraud", async function() {
       const block = await web3.eth.getBlock("latest")
       const blockTimestamp = block.timestamp
       fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1 // has elapsed
-      await ecdsaKeepStub.setSuccess(true)
+
       await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
 
       await ecdsaKeepStub.send(1000000, {from: owner})
@@ -441,8 +441,7 @@ describe("DepositFraud", async function() {
   describe("provideECDSAFraudProof", async () => {
     before(async () => {
       await testDeposit.setState(states.ACTIVE)
-      await ecdsaKeepStub.send(1000000, {from: owner})
-      await ecdsaKeepStub.setSuccess(true)
+      await ecdsaKeepStub.send(1000000, { from: owner })
     })
 
     beforeEach(async () => {

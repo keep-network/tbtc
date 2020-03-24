@@ -8,7 +8,7 @@ import {
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
 contract ECDSAKeepStub is IBondedECDSAKeep {
     bytes publicKey;
-    bool success;
+    bool success = true;
     uint256 bondAmount = 10000;
 
     // Notification that the keep was requested to sign a digest.
@@ -66,6 +66,10 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
     }
 
     // Functions to set data for tests.
+
+    function reset() public {
+        success = true;
+    }
 
     function setPublicKey(bytes memory _publicKey) public {
         publicKey = _publicKey;

@@ -510,7 +510,6 @@ describe("DepositRedemption", async function() {
       await tbtcToken.resetAllowance(testDeposit.address, requiredBalance, {
         from: owner,
       })
-      await ecdsaKeepStub.setSuccess(true)
     })
 
     afterEach(async () => {
@@ -797,7 +796,6 @@ describe("DepositRedemption", async function() {
         withdrawalRequestTime,
         prevSighash,
       )
-      await ecdsaKeepStub.setSuccess(true)
     })
 
     it("approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {
