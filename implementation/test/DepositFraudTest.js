@@ -43,11 +43,10 @@ describe("DepositFraud", async function() {
 
   describe("provideFundingECDSAFraudProof", async () => {
     let timer
-    let bond
+    const bond = 1000
 
     before(async () => {
       timer = await tbtcConstants.getFundingTimeout.call()
-      bond = 1000000
     })
 
     beforeEach(async () => {
