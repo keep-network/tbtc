@@ -70,6 +70,7 @@ library DepositFunding {
         _d.signerFeeDivisor = _system.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
         _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();
+        _d.initialCollateralizedPercent = _system.getInitialCollateralizedPercent();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();

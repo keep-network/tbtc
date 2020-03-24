@@ -73,6 +73,10 @@ contract TestDeposit is Deposit {
         self.undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
     }
 
+    function setInitialCollateralizedPercent(uint128 _initialCollateralizedPercent) public {
+        self.initialCollateralizedPercent = _initialCollateralizedPercent;
+    }
+
     function getUndercollateralizedThresholdPercent() public view returns (uint128) { return self.undercollateralizedThresholdPercent; }
 
     function setSeverelyUndercollateralizedThresholdPercent(uint128 _severelyUndercollateralizedThresholdPercent) public {
@@ -237,5 +241,9 @@ contract TestDeposit is Deposit {
 
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
+    }
+
+    function getAuctionBasePercentage() public view returns (uint256) {
+        return self.getAuctionBasePercentage();
     }
 }

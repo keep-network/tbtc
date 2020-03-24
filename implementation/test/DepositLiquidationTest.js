@@ -84,6 +84,7 @@ describe("DepositLiquidation", async function() {
 
     before(async () => {
       lotSize = await testDeposit.lotSizeTbtc.call()
+      await testDeposit.setInitialCollateralizedPercent(new BN(150))
       buyer = accounts[1]
     })
 
@@ -186,7 +187,7 @@ describe("DepositLiquidation", async function() {
       const block = await web3.eth.getBlock("latest")
       const notifiedTime = block.timestamp
       const value = 1000000000000
-      const basePercentage = await tbtcConstants.getAuctionBasePercentage.call()
+      const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
       await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
@@ -228,7 +229,7 @@ describe("DepositLiquidation", async function() {
       const notifiedTime = block.timestamp
       const liquidationInitiator = accounts[2]
       const value = 1000000000000
-      const basePercentage = await tbtcConstants.getAuctionBasePercentage.call()
+      const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
       await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
