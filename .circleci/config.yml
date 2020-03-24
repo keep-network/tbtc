@@ -21,12 +21,12 @@ jobs:
       - checkout
       - run:
           name: Authenticate GitHub Package Registry
-          working_directory: ~/project/implementation
+          working_directory: ~/project/solidity
           command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
       - persist_to_workspace:
           root: .
           paths:
-            - implementation/.npmrc
+            - solidity/.npmrc
 
   compile_contracts:
     executor: docker-node
@@ -38,23 +38,23 @@ jobs:
       - restore_cache:
           keys:
             # When lock file changes, use increasingly general patterns to restore cache.
-            - v1-client-npm-deps-{{ .Branch }}-{{ checksum "implementation/package-lock.json" }}
+            - v1-client-npm-deps-{{ .Branch }}-{{ checksum "solidity/package-lock.json" }}
             - v1-client-npm-deps-{{ .Branch }}-
             - v1-client-npm-deps-
-      - run: cd implementation && npm install
+      - run: cd solidity && npm install
       - save_cache:
-          key: v1-client-npm-deps-{{ .Branch }}-{{ checksum "implementation/package-lock.json" }}
+          key: v1-client-npm-deps-{{ .Branch }}-{{ checksum "solidity/package-lock.json" }}
           paths:
-            - implementation/node_modules
+            - solidity/node_modules
 
-      - run: cd implementation && node_modules/.bin/truffle compile
+      - run: cd solidity && node_modules/.bin/truffle compile
 
       # Persist for downstream use.
       - persist_to_workspace:
           root: .
           paths:
-           - implementation/node_modules
-           - implementation/build/contracts
+           - solidity/node_modules
+           - solidity/build/contracts
 
   lint:
     executor: docker-node
@@ -64,7 +64,7 @@ jobs:
           at: .
       - run:
           name: Lint Implementation
-          working_directory: ~/project/implementation
+          working_directory: ~/project/solidity
           command: |
             set -ex
             npm run lint
@@ -77,12 +77,12 @@ jobs:
       - run: sudo npm install -g ganache-cli@6.4.2
       - run:
           name: Running testrpc
-          working_directory: ~/project/implementation
+          working_directory: ~/project/solidity
           command: ganache-cli
           background: true
       - run:
           name: Run NPM tests
-          working_directory: ~/project/implementation
+          working_directory: ~/project/solidity
           command: npm run test:quick
   generate_pngs:
     docker:
@@ -125,7 +125,7 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            cd implementation/docs
+            cd solidity/docs
             mkdir -p output
             node generate-api-docs.js > output/index.adoc
 
@@ -180,9 +180,16 @@ jobs:
   migrate_contracts:
     executor: docker-thesis-buildpack
     steps:
+      - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Remove Installed node_module
+          working_directory: ~/project/solidity
+          command: |
+            rm -rf node_modules
       - run:
           name: Provision External Contract Addresses
           command: |
@@ -190,7 +197,7 @@ jobs:
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
             export BONDED_ECDSA_KEEP_VENDOR_CONTRACT_DATA="BondedECDSAKeepVendor.json"
-            implementation/scripts/circleci-provision-external-contracts.sh
+            solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
           command: |
@@ -199,7 +206,7 @@ jobs:
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
             mkdir -p /tmp/tbtc/contracts
-            implementation/scripts/circleci-migrate-contracts.sh
+            solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/tbtc
           paths:
@@ -301,6 +308,11 @@ workflows:
       - compile_contracts:
           requires:
             - setup_github_package_registry
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       - migrate_contracts:
           filters:
             tags:
