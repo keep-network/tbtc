@@ -50,10 +50,11 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
     /// @param _spender   Address of contract authorized to spend.
     /// @param _tdtId     The TDT they can spend.
     /// @param _extraData Extra information to send to the approved contract.
-    function approveAndCall(address _spender, uint256 _tdtId, bytes memory _extraData) public returns (bool success) {
+    function approveAndCall(address _spender, uint256 _tdtId, bytes memory _extraData) public returns (bool) {
         tokenRecipient spender = tokenRecipient(_spender);
         approve(_spender, _tdtId);
         spender.receiveApproval(msg.sender, _tdtId, address(this), _extraData);
+        return true;
     }
 }
 

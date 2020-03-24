@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A || -z $TRUFFLE_NETWORK ]]; then
+if [[ -z $GOOGLE_PROJECT_NAME || -z $GOOGLE_PROJECT_ID || -z $BUILD_TAG || -z $GOOGLE_REGION || -z $GOOGLE_COMPUTE_ZONE_A || -z $TRUFFLE_NETWORK || -z $TENDERLY_TOKEN || -z $ETH_NETWORK_ID ]]; then
   echo "one or more required variables are undefined"
   exit 1
 fi
@@ -56,6 +56,10 @@ ssh utilitybox << EOF
   npm ci
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
+  echo "<<<<<<START Tenderly Push START<<<<<<"
+  tenderly login --authentication-method token --token $TENDERLY_TOKEN
+  tenderly push --networks $ETH_NETWORK_ID --tag tbtc --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG
+  echo "<<<<<<FINISH Tenderly Push FINISH<<<<<<"
 EOF
 
 echo "<<<<<<START Contract Copy START<<<<<<"
