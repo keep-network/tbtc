@@ -389,9 +389,9 @@ describe("DepositUtils", async function() {
 
       const initialCollateralization = await tbtcSystemStub.getInitialCollateralizedPercent()
 
-      // 10000 to avoid losing value to truncating is solidity.
-      const expecged = new BN(10000).div(initialCollateralization)
-      expect(basePercentage).to.eq.BN(expecged) // 66 for 150
+      // 10000 to avoid losing value to truncating in solidity.
+      const expected = new BN(10000).div(initialCollateralization)
+      expect(basePercentage).to.eq.BN(expected) // 66 for 150
     })
   })
 

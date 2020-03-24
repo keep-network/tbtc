@@ -83,6 +83,7 @@ describe("DepositLiquidation", async function() {
 
     before(async () => {
       lotSize = await testDeposit.lotSizeTbtc.call()
+      await testDeposit.setInitialCollateralizedPercent(new BN(150))
       buyer = accounts[1]
     })
 
