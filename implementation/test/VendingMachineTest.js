@@ -35,7 +35,6 @@ describe("VendingMachine", async function() {
   let tbtcDepositToken
   let feeRebateToken
   let testDeposit
-  let ecdsaKeepStub
 
   let assertBalance
   let tdtId
@@ -54,7 +53,6 @@ describe("VendingMachine", async function() {
       tbtcDepositToken,
       feeRebateToken,
       testDeposit,
-      ecdsaKeepStub,
       deployed,
       redemptionScript,
       fundingScript,
@@ -337,7 +335,6 @@ describe("VendingMachine", async function() {
       await tbtcToken.resetAllowance(vendingMachine.address, requiredBalance, {
         from: owner,
       })
-      await ecdsaKeepStub.setSuccess(true)
       await testDeposit.setState(states.ACTIVE)
       await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
     })

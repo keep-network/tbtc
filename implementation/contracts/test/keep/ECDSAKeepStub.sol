@@ -1,60 +1,42 @@
 pragma solidity ^0.5.10;
 
-import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {
+    IBondedECDSAKeep
+} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 
 /// @notice Implementation of ECDSAKeep interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
 contract ECDSAKeepStub is IBondedECDSAKeep {
     bytes publicKey;
-    bool success;
+    bool success = true;
     uint256 bondAmount = 10000;
 
     // Notification that the keep was requested to sign a digest.
-    event SignatureRequested(
-        bytes32 digest
-    );
+    event SignatureRequested(bytes32 digest);
 
     // Define fallback function so the contract can accept ether.
     function() external payable {}
 
+    // Functions implemented for IBondedECDSAKeep interface.
+
     function getPublicKey() external view returns (bytes memory) {
         return publicKey;
+    }
+
+    function checkBondAmount() external view returns (uint256) {
+        return bondAmount;
     }
 
     function sign(bytes32 _digest) external {
         emit SignatureRequested(_digest);
     }
 
-    function returnPartialSignerBonds() external payable {
-    // solium-disable-previous-line no-empty-blocks
-    }
-
-    function distributeETHToMembers() external payable {
-    // solium-disable-previous-line no-empty-blocks
+    function distributeETHReward() external payable {
+        // solium-disable-previous-line no-empty-blocks
     }
 
     function distributeERC20Reward(address _asset, uint256 _value) external {
-    // solium-disable-previous-line no-empty-blocks
-    }
-
-    function distributeETHReward() external payable{
-    // solium-disable-previous-line no-empty-blocks
-    }
-
-    // Functions implemented for IBondedECDSAKeep interface.
-
-    function submitSignatureFraud(
-        uint8,
-        bytes32,
-        bytes32,
-        bytes32,
-        bytes calldata
-    ) external returns (bool){
-        return success;
-    }
-
-    function checkBondAmount() external view returns (uint256){
-        return bondAmount;
+        // solium-disable-previous-line no-empty-blocks
     }
 
     function seizeSignerBonds() external {
@@ -63,11 +45,31 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         }
     }
 
+    function returnPartialSignerBonds() external payable {
+        // solium-disable-previous-line no-empty-blocks
+    }
+
+    function submitSignatureFraud(
+        uint8,
+        bytes32,
+        bytes32,
+        bytes32,
+        bytes calldata
+    ) external returns (bool) {
+        require(success, "Signature is not fraudulent");
+
+        return success;
+    }
+
     function closeKeep() external {
-    // solium-disable-previous-line no-empty-blocks
+        // solium-disable-previous-line no-empty-blocks
     }
 
     // Functions to set data for tests.
+
+    function reset() public {
+        success = true;
+    }
 
     function setPublicKey(bytes memory _publicKey) public {
         publicKey = _publicKey;

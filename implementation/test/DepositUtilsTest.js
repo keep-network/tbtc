@@ -84,7 +84,10 @@ describe("DepositUtils", async function() {
       fullBtc,
       {value: funderBondAmount},
     )
+  })
 
+  beforeEach(async () => {
+    await ecdsaKeepStub.reset()
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   })
 
