@@ -33,6 +33,7 @@ library DepositUtils {
         uint256 lotSizeSatoshis;
         uint8 currentState;
         uint256 signerFeeDivisor;
+        uint128 initialCollateralizedPercent;
         uint128 undercollateralizedThresholdPercent;
         uint128 severelyUndercollateralizedThresholdPercent;
 
@@ -373,9 +374,7 @@ library DepositUtils {
     /// @return     The percentage of the InitialCollateralizationPercent that will result
     ///             in a 100% bond value base auction given perfect collateralization.
     function getAuctionBasePercentage(Deposit storage _d) internal view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
-        uint256 initialCollateralizedPercent = _sys.getInitialCollateralizedPercent();
-        return (10000 / initialCollateralizedPercent);
+        return uint256(10000).div(_d.initialCollateralizedPercent);
     }
 
     /// @notice     Seize the signer bond from the keep contract.
