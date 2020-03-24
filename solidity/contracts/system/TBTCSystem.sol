@@ -96,8 +96,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _tbtcDepositToken,
         address _feeRebateToken,
         address _vendingMachine,
-        uint256 _keepThreshold,
-        uint256 _keepSize
+        uint16 _keepThreshold,
+        uint16 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
         tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);

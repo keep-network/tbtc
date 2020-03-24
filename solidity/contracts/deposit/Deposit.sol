@@ -109,8 +109,8 @@ contract Deposit is DepositFactoryAuthority {
         address _TBTCDepositToken,
         address _FeeRebateToken,
         address _VendingMachine,
-        uint256 _m,
-        uint256 _n,
+        uint16 _m,
+        uint16 _n,
         uint64 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;

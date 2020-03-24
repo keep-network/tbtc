@@ -23,8 +23,8 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     address public tbtcDepositToken;
     address public feeRebateToken;
     address public vendingMachine;
-    uint256 public keepThreshold;
-    uint256 public keepSize;
+    uint16 public keepThreshold;
+    uint16 public keepSize;
 
     constructor(address _systemAddress)
         TBTCSystemAuthority(_systemAddress)
@@ -46,8 +46,8 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         address _depositOwnerToken,
         address _feeRebateToken,
         address _vendingMachine,
-        uint256 _keepThreshold,
-        uint256 _keepSize
+        uint16 _keepThreshold,
+        uint16 _keepSize
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
         tbtcSystem = _tbtcSystem;

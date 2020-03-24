@@ -52,8 +52,8 @@ library DepositFunding {
     /// @return         True if successful, otherwise revert.
     function createNewDeposit(
         DepositUtils.Deposit storage _d,
-        uint256 _m,
-        uint256 _n,
+        uint16 _m,
+        uint16 _n,
         uint64 _lotSizeSatoshis
     ) public returns (bool) {
         TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
