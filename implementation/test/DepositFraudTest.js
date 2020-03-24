@@ -441,7 +441,7 @@ describe("DepositFraud", async function() {
   describe("provideECDSAFraudProof", async () => {
     before(async () => {
       await testDeposit.setState(states.ACTIVE)
-      await ecdsaKeepStub.send(1000000, { from: owner })
+      await ecdsaKeepStub.send(1000000, {from: owner})
     })
 
     beforeEach(async () => {

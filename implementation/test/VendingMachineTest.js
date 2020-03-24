@@ -46,17 +46,17 @@ describe("VendingMachine", async function() {
 
   before(async () => {
     let deployed
-      ; ({
-        mockRelay,
-        tbtcSystemStub,
-        tbtcToken,
-        tbtcDepositToken,
-        feeRebateToken,
-        testDeposit,
-        deployed,
-        redemptionScript,
-        fundingScript,
-      } = await deployAndLinkAll())
+    ;({
+      mockRelay,
+      tbtcSystemStub,
+      tbtcToken,
+      tbtcDepositToken,
+      feeRebateToken,
+      testDeposit,
+      deployed,
+      redemptionScript,
+      fundingScript,
+    } = await deployAndLinkAll())
     vendingMachine = deployed.VendingMachine
 
     assertBalance = new AssertBalance(tbtcToken)
