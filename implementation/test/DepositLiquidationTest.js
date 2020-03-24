@@ -66,6 +66,7 @@ describe("DepositLiquidation", async function() {
       web3.utils.toBN(testDeposit.address),
     )
     await testDeposit.reset()
+    await ecdsaKeepStub.reset()
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   })
 

@@ -75,6 +75,7 @@ describe("DepositFunding", async function() {
     )
 
     await testDeposit.reset()
+    await ecdsaKeepStub.reset()
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   })
 
