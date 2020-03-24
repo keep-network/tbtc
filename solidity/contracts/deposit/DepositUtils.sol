@@ -15,6 +15,7 @@ import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 library DepositUtils {
 
     using SafeMath for uint256;
+    using SafeMath for uint64;
     using BytesLib for bytes;
     using BTCUtils for bytes;
     using BTCUtils for uint256;
@@ -30,12 +31,12 @@ library DepositUtils {
         address TBTCDepositToken;
         address FeeRebateToken;
         address VendingMachine;
-        uint256 lotSizeSatoshis;
+        uint64 lotSizeSatoshis;
         uint8 currentState;
-        uint256 signerFeeDivisor;
-        uint128 initialCollateralizedPercent;
-        uint128 undercollateralizedThresholdPercent;
-        uint128 severelyUndercollateralizedThresholdPercent;
+        uint16 signerFeeDivisor;
+        uint16 initialCollateralizedPercent;
+        uint16 undercollateralizedThresholdPercent;
+        uint16 severelyUndercollateralizedThresholdPercent;
 
         // SET ON FRAUD
         uint256 liquidationInitiated;  // Timestamp of when liquidation starts

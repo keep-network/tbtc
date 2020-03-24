@@ -67,7 +67,7 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice     Get the deposit's BTC lot size in satoshi.
     /// @return     uint256 lot size in satoshi.
-    function lotSizeSatoshis() public view returns (uint256){
+    function lotSizeSatoshis() public view returns (uint64){
         return self.lotSizeSatoshis;
     }
 
@@ -111,7 +111,7 @@ contract Deposit is DepositFactoryAuthority {
         address _VendingMachine,
         uint256 _m,
         uint256 _n,
-        uint256 _lotSizeSatoshis
+        uint64 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;

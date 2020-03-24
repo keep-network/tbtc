@@ -25,22 +25,22 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
 
-    event LotSizesUpdateStarted(uint256[] _lotSizes, uint256 _timestamp);
-    event SignerFeeDivisorUpdateStarted(uint256 _signerFeeDivisor, uint256 _timestamp);
+    event LotSizesUpdateStarted(uint64[] _lotSizes, uint256 _timestamp);
+    event SignerFeeDivisorUpdateStarted(uint16 _signerFeeDivisor, uint256 _timestamp);
     event CollateralizationThresholdsUpdateStarted(
-        uint128 _initialCollateralizedPercent,
-        uint128 _undercollateralizedThresholdPercent,
-        uint128 _severelyUndercollateralizedThresholdPercent,
+        uint16 _initialCollateralizedPercent,
+        uint16 _undercollateralizedThresholdPercent,
+        uint16 _severelyUndercollateralizedThresholdPercent,
         uint256 _timestamp
     );
 
-    event LotSizesUpdated(uint256[] _lotSizes);
+    event LotSizesUpdated(uint64[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
-    event SignerFeeDivisorUpdated(uint256 _signerFeeDivisor);
+    event SignerFeeDivisorUpdated(uint16 _signerFeeDivisor);
     event CollateralizationThresholdsUpdated(
-        uint128 _initialCollateralizedPercent,
-        uint128 _undercollateralizedThresholdPercent,
-        uint128 _severelyUndercollateralizedThresholdPercent
+        uint16 _initialCollateralizedPercent,
+        uint16 _undercollateralizedThresholdPercent,
+        uint16 _severelyUndercollateralizedThresholdPercent
     );
 
     bool _initialized = false;
@@ -54,11 +54,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
-    uint256 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
-    uint128 private initialCollateralizedPercent = 150; // percent
-    uint128 private undercollateralizedThresholdPercent = 125;  // percent
-    uint128 private severelyUndercollateralizedThresholdPercent = 110; // percent
-    uint256[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
+    uint16 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
+    uint16 private initialCollateralizedPercent = 150; // percent
+    uint16 private undercollateralizedThresholdPercent = 125;  // percent
+    uint16 private severelyUndercollateralizedThresholdPercent = 110; // percent
+    uint64[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     uint256 constant governanceTimeDelay = 6 hours;
 
@@ -66,11 +66,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 private lotSizesChangeInitiated;
     uint256 private collateralizationThresholdsChangeInitiated;
 
-    uint256 private newSignerFeeDivisor;
-    uint256[] newLotSizesSatoshis;
-    uint128 private newInitialCollateralizedPercent;
-    uint128 private newUndercollateralizedThresholdPercent;
-    uint128 private newSeverelyUndercollateralizedThresholdPercent;
+    uint16 private newSignerFeeDivisor;
+    uint64[] newLotSizesSatoshis;
+    uint16 private newInitialCollateralizedPercent;
+    uint16 private newUndercollateralizedThresholdPercent;
+    uint16 private newSeverelyUndercollateralizedThresholdPercent;
 
     constructor(address _priceFeed, address _relay) public {
         priceFeed = _priceFeed;
@@ -151,13 +151,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Gets the system signer fee divisor.
     /// @return The signer fee divisor.
-    function getSignerFeeDivisor() external view returns (uint256) { return signerFeeDivisor; }
+    function getSignerFeeDivisor() external view returns (uint16) { return signerFeeDivisor; }
 
     /// @notice Set the system signer fee divisor.
     /// @dev    This can be finalized by calling `finalizeSignerFeeDivisorUpdate`
     ///         Anytime after `governanceTimeDelay` has elapsed.
     /// @param _signerFeeDivisor The signer fee divisor.
-    function beginSignerFeeDivisorUpdate(uint256 _signerFeeDivisor)
+    function beginSignerFeeDivisorUpdate(uint16 _signerFeeDivisor)
         external onlyOwner
     {
         require(_signerFeeDivisor > 9, "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.");
@@ -171,7 +171,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///         This can be finalized by calling `finalizeLotSizesUpdate`
     ///         Anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
-    function beginLotSizesUpdate(uint256[] calldata _lotSizes)
+    function beginLotSizesUpdate(uint64[] calldata _lotSizes)
         external onlyOwner
     {
         for( uint i = 0; i < _lotSizes.length; i++){
@@ -193,9 +193,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _undercollateralizedThresholdPercent first undercollateralization trigger
     /// @param _severelyUndercollateralizedThresholdPercent second undercollateralization trigger
     function beginCollateralizationThresholdsUpdate(
-        uint128 _initialCollateralizedPercent,
-        uint128 _undercollateralizedThresholdPercent,
-        uint128 _severelyUndercollateralizedThresholdPercent
+        uint16 _initialCollateralizedPercent,
+        uint16 _undercollateralizedThresholdPercent,
+        uint16 _severelyUndercollateralizedThresholdPercent
     ) external onlyOwner {
         require(
             _initialCollateralizedPercent <= 300,
@@ -262,15 +262,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Gets the allowed lot sizes
-    /// @return Uint256 array of allowed lot sizes
-    function getAllowedLotSizes() external view returns (uint256[] memory){
+    /// @return Uint64 array of allowed lot sizes
+    function getAllowedLotSizes() external view returns (uint64[] memory){
         return lotSizesSatoshis;
     }
 
     /// @notice Check if a lot size is allowed.
     /// @param _lotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint256 _lotSizeSatoshis) external view returns (bool){
+    function isAllowedLotSize(uint64 _lotSizeSatoshis) external view returns (bool){
         for( uint i = 0; i < lotSizesSatoshis.length; i++){
             if (lotSizesSatoshis[i] == _lotSizeSatoshis){
                 return true;
@@ -305,17 +305,17 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Get the system undercollateralization level for new deposits
-    function getUndercollateralizedThresholdPercent() external view returns (uint128) {
+    function getUndercollateralizedThresholdPercent() external view returns (uint16) {
         return undercollateralizedThresholdPercent;
     }
 
     /// @notice Get the system severe undercollateralization level for new deposits
-    function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint128) {
+    function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint16) {
         return severelyUndercollateralizedThresholdPercent;
     }
 
     /// @notice Get the system initial collateralized level for new deposits.
-    function getInitialCollateralizedPercent() external view returns (uint128) {
+    function getInitialCollateralizedPercent() external view returns (uint16) {
         return initialCollateralizedPercent;
     }
 

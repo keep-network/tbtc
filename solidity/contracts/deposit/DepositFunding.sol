@@ -15,6 +15,7 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 library DepositFunding {
 
     using SafeMath for uint256;
+    using SafeMath for uint64;
     using BTCUtils for bytes;
     using BytesLib for bytes;
 
@@ -53,7 +54,7 @@ library DepositFunding {
         DepositUtils.Deposit storage _d,
         uint256 _m,
         uint256 _n,
-        uint256 _lotSizeSatoshis
+        uint64 _lotSizeSatoshis
     ) public returns (bool) {
         TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
 

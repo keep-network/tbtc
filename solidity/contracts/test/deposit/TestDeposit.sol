@@ -16,7 +16,7 @@ contract TestDeposit is Deposit {
         address _VendingMachine,
         uint256 _m,
         uint256 _n,
-        uint256 _lotSizeSatoshis
+        uint64 _lotSizeSatoshis
     ) public payable returns (bool) {
         self.TBTCSystem = _TBTCSystem;
         self.TBTCToken = _TBTCToken;
@@ -59,31 +59,31 @@ contract TestDeposit is Deposit {
 
     function getState() public view returns (uint8) { return self.currentState; }
 
-    function setSignerFeeDivisor(uint256 _signerFeeDivisor) public {
+    function setSignerFeeDivisor(uint16 _signerFeeDivisor) public {
         self.signerFeeDivisor = _signerFeeDivisor;
     }
 
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
 
-    function setLotSize(uint256 _lotSizeSatoshis) public {
+    function setLotSize(uint64 _lotSizeSatoshis) public {
         self.lotSizeSatoshis = _lotSizeSatoshis;
     }
 
-    function setUndercollateralizedThresholdPercent(uint128 _undercollateralizedThresholdPercent) public {
+    function setUndercollateralizedThresholdPercent(uint16 _undercollateralizedThresholdPercent) public {
         self.undercollateralizedThresholdPercent = _undercollateralizedThresholdPercent;
     }
 
-    function setInitialCollateralizedPercent(uint128 _initialCollateralizedPercent) public {
+    function setInitialCollateralizedPercent(uint16 _initialCollateralizedPercent) public {
         self.initialCollateralizedPercent = _initialCollateralizedPercent;
     }
 
-    function getUndercollateralizedThresholdPercent() public view returns (uint128) { return self.undercollateralizedThresholdPercent; }
+    function getUndercollateralizedThresholdPercent() public view returns (uint16) { return self.undercollateralizedThresholdPercent; }
 
-    function setSeverelyUndercollateralizedThresholdPercent(uint128 _severelyUndercollateralizedThresholdPercent) public {
+    function setSeverelyUndercollateralizedThresholdPercent(uint16 _severelyUndercollateralizedThresholdPercent) public {
         self.severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
     }
 
-    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint128) {
+    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint16) {
         return self.severelyUndercollateralizedThresholdPercent;
     }
 

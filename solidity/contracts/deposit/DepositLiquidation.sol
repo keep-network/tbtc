@@ -16,6 +16,7 @@ library DepositLiquidation {
     using BTCUtils for bytes;
     using BytesLib for bytes;
     using SafeMath for uint256;
+    using SafeMath for uint64;
 
     using DepositUtils for DepositUtils.Deposit;
     using DepositStates for DepositUtils.Deposit;
@@ -50,7 +51,7 @@ library DepositLiquidation {
 
         // Determine value of the lot in wei
         uint256 _satoshiPrice = _d.fetchBitcoinPrice();
-        uint256 _lotSizeSatoshis = _d.lotSizeSatoshis;
+        uint64 _lotSizeSatoshis = _d.lotSizeSatoshis;
         uint256 _lotValue = _lotSizeSatoshis.mul(_satoshiPrice);
 
         // Amount of wei the signers have
