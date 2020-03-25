@@ -47,10 +47,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
-    TBTCDepositToken tbtcDepositToken;
-    IBTCETHPriceFeed priceFeed;
-    IBondedECDSAKeepVendor keepVendor;
-    IRelay relay;
+    TBTCDepositToken public tbtcDepositToken;
+    IBTCETHPriceFeed public  priceFeed;
+    IBondedECDSAKeepVendor public keepVendor;
+    IRelay public relay;
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
