@@ -97,10 +97,10 @@ contract Deposit is DepositFactoryAuthority {
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this.
-    /// @param _TBTCSystem        `TBTCSystem` address. More info in `VendingMachine`.
-    /// @param _TBTCToken         `TBTCToken` address. More info in TBTCToken`.
-    /// @param _TBTCDepositToken  `TBTCDepositToken` (TDT) address. More info in `TBTCDepositToken`.
-    /// @param _FeeRebateToken    `FeeRebateToken` (FRT) address. More info in `FeeRebateToken`.
+    /// @param _TBTCSystem        `TBTCSystem` contract. More info in `VendingMachine`.
+    /// @param _TBTCToken         `TBTCToken` contract. More info in TBTCToken`.
+    /// @param _TBTCDepositToken  `TBTCDepositToken` (TDT) contract. More info in `TBTCDepositToken`.
+    /// @param _FeeRebateToken    `FeeRebateToken` (FRT) contract. More info in `FeeRebateToken`.
     /// @param _VendingMachine    `VendingMachine` address. More info in `VendingMachine`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
@@ -118,10 +118,10 @@ contract Deposit is DepositFactoryAuthority {
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
-        self.tbtcSystem = (_TBTCSystem);
-        self.tbtcToken = (_TBTCToken);
-        self.tbtcDepositToken = (_TBTCDepositToken);
-        self.feeRebateToken = (_FeeRebateToken);
+        self.tbtcSystem = _TBTCSystem;
+        self.tbtcToken = _TBTCToken;
+        self.tbtcDepositToken = _TBTCDepositToken;
+        self.feeRebateToken = _FeeRebateToken;
         self.VendingMachine = _VendingMachine;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;

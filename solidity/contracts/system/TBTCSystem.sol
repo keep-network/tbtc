@@ -14,6 +14,8 @@ import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
 import {TBTCDepositToken} from "./TBTCDepositToken.sol";
+import "./TBTCToken.sol";
+import "./FeeRebateToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -79,41 +81,41 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice        Initialize contracts
     /// @dev           Only the Deposit factory should call this, and only once.
-    /// @param _keepVendor        ECDSA keep vendor address.
-    /// @param _depositFactory    Deposit Factory address. More info in `DepositFactory`.
+    /// @param _keepVendor        ECDSA keep vendor.
+    /// @param _depositFactory    Deposit Factory. More info in `DepositFactory`.
     /// @param _masterDepositAddress  Master Deposit address. More info in `Deposit`.
-    /// @param _tbtcToken         TBTCToken address. More info in `TBTCToken`.
-    /// @param _tbtcDepositToken  TBTCDepositToken (TDT) address. More info in `TBTCDepositToken`.
-    /// @param _feeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken`.
-    /// @param _vendingMachine    Vending Machine address. More info in `VendingMachine`.
+    /// @param _tbtcToken         TBTCToken. More info in `TBTCToken`.
+    /// @param _tbtcDepositToken  TBTCDepositToken (TDT). More info in `TBTCDepositToken`.
+    /// @param _feeRebateToken    FeeRebateToken (FRT). More info in `FeeRebateToken`.
+    /// @param _vendingMachine    Vending Machine. More info in `VendingMachine`.
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size.
     function initialize(
-        address _keepVendor,
-        address _depositFactory,
+        IBondedECDSAKeepVendor _keepVendor,
+        DepositFactory _depositFactory,
         address payable _masterDepositAddress,
-        address _tbtcToken,
-        address _tbtcDepositToken,
-        address _feeRebateToken,
-        address _vendingMachine,
+        TBTCToken _tbtcToken,
+        TBTCDepositToken _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
+        VendingMachine _vendingMachine,
         uint256 _keepThreshold,
         uint256 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
-        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
-        keepVendor = IBondedECDSAKeepVendor(_keepVendor);
-        VendingMachine(_vendingMachine).setExternalAddresses(
+        tbtcDepositToken = _tbtcDepositToken;
+        keepVendor = _keepVendor;
+        _vendingMachine.setExternalAddresses(
             _tbtcToken,
             _tbtcDepositToken,
             _feeRebateToken
         );
-        DepositFactory(_depositFactory).setExternalDependencies(
+        _depositFactory.setExternalDependencies(
             _masterDepositAddress,
-            address(this),
+            TBTCSystem(address(this)),
             _tbtcToken,
             _tbtcDepositToken,
             _feeRebateToken,
-            _vendingMachine,
+            address(_vendingMachine),
             _keepThreshold,
             _keepSize
         );

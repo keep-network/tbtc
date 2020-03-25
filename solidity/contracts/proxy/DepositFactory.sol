@@ -34,28 +34,28 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
 
     /// @dev                          Set the required external variables.
     /// @param _masterDepositAddress  The address of the master deposit contract.
-    /// @param _tbtcSystem            Address of system contract.
-    /// @param _tbtcToken             Address of TBTC token contract.
-    /// @param _tbtcDepositToken      Address of the TBTC Deposit Token contract.
-    /// @param _feeRebateToken        Address of the Fee Rebate Token contract.
+    /// @param _tbtcSystem            Tbtc system contract.
+    /// @param _tbtcToken             TBTC token contract.
+    /// @param _tbtcDepositToken      TBTC Deposit Token contract.
+    /// @param _feeRebateToken        AFee Rebate Token contract.
     /// @param _vendingMachine        Address of the Vending Machine contract.
     /// @param _keepThreshold         Minimum number of honest keep members.
     /// @param _keepSize              Number of all members in a keep.
     function setExternalDependencies(
         address payable _masterDepositAddress,
-        address _tbtcSystem,
-        address _tbtcToken,
-        address _tbtcDepositToken,
-        address _feeRebateToken,
+        TBTCSystem _tbtcSystem,
+        TBTCToken _tbtcToken,
+        TBTCDepositToken _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
         address _vendingMachine,
         uint256 _keepThreshold,
         uint256 _keepSize
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
-        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
-        tbtcSystem = TBTCSystem(_tbtcSystem);
-        tbtcToken = TBTCToken(_tbtcToken);
-        feeRebateToken = FeeRebateToken(_feeRebateToken);
+        tbtcDepositToken = _tbtcDepositToken;
+        tbtcSystem = _tbtcSystem;
+        tbtcToken = _tbtcToken;
+        feeRebateToken = _feeRebateToken;
         vendingMachine = _vendingMachine;
         keepThreshold = _keepThreshold;
         keepSize = _keepSize;
