@@ -66,7 +66,7 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     /// @notice     Get the deposit's BTC lot size in satoshi.
-    /// @return     uint256 lot size in satoshi.
+    /// @return     uint64 lot size in satoshi.
     function lotSizeSatoshis() public view returns (uint64){
         return self.lotSizeSatoshis;
     }
