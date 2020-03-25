@@ -134,6 +134,7 @@ library DepositFunding {
         _d.setFailedSetup();
         _d.logSetupFailed();
 
+        _d.closeKeep();
         fundingTeardown(_d);
     }
 
