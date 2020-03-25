@@ -70,6 +70,14 @@ library DepositUtils {
         mapping (bytes32 => uint256) approvedDigests;
     }
 
+    /// @notice Closes keep associated with the deposit.
+    /// @dev Should be called when the keep is no longer needed and the signing
+    /// group can disband.
+    function closeKeep(DepositUtils.Deposit storage _d) internal {
+        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
+        _keep.closeKeep();
+    }
+
     /// @notice         Gets the current block difficulty.
     /// @dev            Calls the light relay and gets the current block difficulty.
     /// @return         The difficulty.
