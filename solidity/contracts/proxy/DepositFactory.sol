@@ -18,9 +18,9 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     // Holds the address of the deposit contract
     // which will be used as a master contract for cloning.
     address payable public masterDepositAddress;
+    TBTCDepositToken tbtcDepositToken;
     address public tbtcSystem;
     address public tbtcToken;
-    address public tbtcDepositToken;
     address public feeRebateToken;
     address public vendingMachine;
     uint256 public keepThreshold;
@@ -34,7 +34,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     /// @param _masterDepositAddress  The address of the master deposit contract.
     /// @param _tbtcSystem            Address of system contract.
     /// @param _tbtcToken             Address of TBTC token contract.
-    /// @param _depositOwnerToken     Address of the Deposit Owner Token contract.
+    /// @param _tbtcDepositToken      Address of the TBTC Deposit Token contract.
     /// @param _feeRebateToken        Address of the Fee Rebate Token contract.
     /// @param _vendingMachine        Address of the Vending Machine contract.
     /// @param _keepThreshold         Minimum number of honest keep members.
@@ -43,16 +43,16 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         address payable _masterDepositAddress,
         address _tbtcSystem,
         address _tbtcToken,
-        address _depositOwnerToken,
+        address _tbtcDepositToken,
         address _feeRebateToken,
         address _vendingMachine,
         uint256 _keepThreshold,
         uint256 _keepSize
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
+        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         tbtcSystem = _tbtcSystem;
         tbtcToken = _tbtcToken;
-        tbtcDepositToken = _depositOwnerToken;
         feeRebateToken = _feeRebateToken;
         vendingMachine = _vendingMachine;
         keepThreshold = _keepThreshold;
@@ -77,7 +77,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         deposit.createNewDeposit.value(msg.value)(
                 tbtcSystem,
                 tbtcToken,
-                tbtcDepositToken,
+                address(tbtcDepositToken),
                 feeRebateToken,
                 vendingMachine,
                 keepThreshold,
