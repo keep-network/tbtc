@@ -109,19 +109,19 @@ contract Deposit is DepositFactoryAuthority {
     ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
     /// @return             True if successful, otherwise revert.
     function createNewDeposit(
-        address _TBTCSystem,
-        address _TBTCToken,
-        address _TBTCDepositToken,
-        address _FeeRebateToken,
+        ITBTCSystem _TBTCSystem,
+        TBTCToken _TBTCToken,
+        IERC721 _TBTCDepositToken,
+        FeeRebateToken _FeeRebateToken,
         address _VendingMachine,
         uint256 _m,
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
-        self.tbtcSystem = ITBTCSystem(_TBTCSystem);
-        self.tbtcToken = TBTCToken(_TBTCToken);
-        self.tbtcDepositToken = IERC721(_TBTCDepositToken);
-        self.feeRebateToken = FeeRebateToken(_FeeRebateToken);
+        self.tbtcSystem = (_TBTCSystem);
+        self.tbtcToken = (_TBTCToken);
+        self.tbtcDepositToken = (_TBTCDepositToken);
+        self.feeRebateToken = (_FeeRebateToken);
         self.VendingMachine = _VendingMachine;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;

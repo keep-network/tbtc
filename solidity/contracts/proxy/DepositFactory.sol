@@ -3,6 +3,8 @@ pragma solidity ^0.5.10;
 import "./CloneFactory.sol";
 import "../deposit/Deposit.sol";
 import "../system/TBTCSystem.sol";
+import "../system/TBTCToken.sol";
+import "../system/FeeRebateToken.sol";
 import "../system/TBTCSystemAuthority.sol";
 import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 
@@ -19,9 +21,9 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     // which will be used as a master contract for cloning.
     address payable public masterDepositAddress;
     TBTCDepositToken tbtcDepositToken;
-    address public tbtcSystem;
-    address public tbtcToken;
-    address public feeRebateToken;
+    TBTCSystem public tbtcSystem;
+    TBTCToken public tbtcToken;
+    FeeRebateToken public feeRebateToken;
     address public vendingMachine;
     uint256 public keepThreshold;
     uint256 public keepSize;
@@ -51,9 +53,9 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
         tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
-        tbtcSystem = _tbtcSystem;
-        tbtcToken = _tbtcToken;
-        feeRebateToken = _feeRebateToken;
+        tbtcSystem = TBTCSystem(_tbtcSystem);
+        tbtcToken = TBTCToken(_tbtcToken);
+        feeRebateToken = FeeRebateToken(_feeRebateToken);
         vendingMachine = _vendingMachine;
         keepThreshold = _keepThreshold;
         keepSize = _keepSize;
@@ -77,7 +79,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         deposit.createNewDeposit.value(msg.value)(
                 tbtcSystem,
                 tbtcToken,
-                address(tbtcDepositToken),
+                tbtcDepositToken,
                 feeRebateToken,
                 vendingMachine,
                 keepThreshold,
