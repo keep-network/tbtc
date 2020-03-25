@@ -25,10 +25,10 @@ library DepositUtils {
     struct Deposit {
 
         // SET DURING CONSTRUCTION
-        address TBTCSystem;
-        address TBTCToken;
-        address TBTCDepositToken;
-        address FeeRebateToken;
+        ITBTCSystem tbtcSystem;
+        TBTCToken tbtcToken;
+        IERC721 tbtcDepositToken;
+        FeeRebateToken feeRebateToken;
         address VendingMachine;
         uint256 lotSizeSatoshis;
         uint8 currentState;
@@ -74,16 +74,14 @@ library DepositUtils {
     /// @dev            Calls the light relay and gets the current block difficulty.
     /// @return         The difficulty.
     function currentBlockDifficulty(Deposit storage _d) public view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
-        return _sys.fetchRelayCurrentDifficulty();
+        return _d.tbtcSystem.fetchRelayCurrentDifficulty();
     }
 
     /// @notice         Gets the previous block difficulty.
     /// @dev            Calls the light relay and gets the previous block difficulty.
     /// @return         The difficulty.
     function previousBlockDifficulty(Deposit storage _d) public view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
-        return _sys.fetchRelayPreviousDifficulty();
+        return _d.tbtcSystem.fetchRelayPreviousDifficulty();
     }
 
     /// @notice                     Evaluates the header difficulties in a proof.
@@ -310,8 +308,7 @@ library DepositUtils {
     /// @dev        Polls the price feed via the system contract.
     /// @return     The current price of 1 sat in wei.
     function fetchBitcoinPrice(Deposit storage _d) public view returns (uint256) {
-        ITBTCSystem _sys = ITBTCSystem(_d.TBTCSystem);
-        return _sys.fetchBitcoinPrice();
+        return _d.tbtcSystem.fetchBitcoinPrice();
     }
 
     /// @notice     Fetches the Keep's bond amount in wei.
@@ -342,10 +339,9 @@ library DepositUtils {
     /// @return         The current token holder if the Token exists.
     ///                 address(0) if the token does not exist.
     function feeRebateTokenHolder(Deposit storage _d) public view returns (address payable) {
-        FeeRebateToken _feeRebateToken = FeeRebateToken(_d.FeeRebateToken);
         address tokenHolder;
-        if(_feeRebateToken.exists(uint256(address(this)))){
-            tokenHolder = address(uint160(_feeRebateToken.ownerOf(uint256(address(this)))));
+        if(_d.feeRebateToken.exists(uint256(address(this)))){
+            tokenHolder = address(uint160(_d.feeRebateToken.ownerOf(uint256(address(this)))));
         }
         return address(uint160(tokenHolder));
     }
@@ -354,8 +350,7 @@ library DepositUtils {
     /// @dev            We cast the address to a uint256 to match the 721 standard.
     /// @return         The current deposit beneficiary.
     function depositOwner(Deposit storage _d) public view returns (address payable) {
-        IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
-        return address(uint160(_tbtcDepositToken.ownerOf(uint256(address(this)))));
+        return address(uint160(_d.tbtcDepositToken.ownerOf(uint256(address(this)))));
     }
 
     /// @notice     Deletes state after termination of redemption process.
@@ -394,16 +389,14 @@ library DepositUtils {
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner.
     /// @dev        Whenever this is called we are shutting down.
     function distributeFeeRebate(Deposit storage _d) internal {
-        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
-
         address rebateTokenHolder = feeRebateTokenHolder(_d);
 
         // We didn't escrow a rebate if the redeemer is also the Fee Rebate Token holder
         if(_d.redeemerAddress == rebateTokenHolder) return;
 
         // pay out the rebate if it is available
-        if(_tbtc.balanceOf(address(this)) >= signerFee(_d)) {
-            _tbtc.transfer(rebateTokenHolder, signerFee(_d));
+        if(_d.tbtcToken.balanceOf(address(this)) >= signerFee(_d)) {
+            _d.tbtcToken.transfer(rebateTokenHolder, signerFee(_d));
         }
     }
 
@@ -430,7 +423,7 @@ library DepositUtils {
                 return fee;
             }
         }
-        uint256 contractTbtcBalance = TBTCToken(_d.TBTCToken).balanceOf(address(this));
+        uint256 contractTbtcBalance = _d.tbtcToken.balanceOf(address(this));
         if(contractTbtcBalance < fee) {
             return fee.sub(contractTbtcBalance);
         }

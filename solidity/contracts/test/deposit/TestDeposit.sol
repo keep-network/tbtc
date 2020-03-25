@@ -1,6 +1,10 @@
 pragma solidity ^0.5.10;
 
 import {Deposit} from "../../../contracts/deposit/Deposit.sol";
+import {ITBTCSystem} from "../../interfaces/ITBTCSystem.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {TBTCToken} from "../../system/TBTCToken.sol";
+import {FeeRebateToken} from "../../system/FeeRebateToken.sol";
 
 contract TestDeposit is Deposit {
 
@@ -18,10 +22,10 @@ contract TestDeposit is Deposit {
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public payable returns (bool) {
-        self.TBTCSystem = _TBTCSystem;
-        self.TBTCToken = _TBTCToken;
-        self.TBTCDepositToken = _TBTCDepositToken;
-        self.FeeRebateToken = _FeeRebateToken;
+        self.tbtcSystem = ITBTCSystem(_TBTCSystem);
+        self.tbtcToken = TBTCToken(_TBTCToken);
+        self.tbtcDepositToken = IERC721(_TBTCDepositToken);
+        self.feeRebateToken = FeeRebateToken(_FeeRebateToken);
         self.VendingMachine = _VendingMachine;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
@@ -34,10 +38,10 @@ contract TestDeposit is Deposit {
         address _feeRebateToken,
         address _vendingMachine
     ) public {
-        self.TBTCSystem = _sys;
-        self.TBTCToken = _token;
-        self.TBTCDepositToken = _tbtcDepositToken;
-        self.FeeRebateToken = _feeRebateToken;
+        self.tbtcSystem = ITBTCSystem(_sys);
+        self.tbtcToken = TBTCToken(_token);
+        self.tbtcDepositToken = IERC721(_tbtcDepositToken);
+        self.feeRebateToken = FeeRebateToken(_feeRebateToken);
         self.VendingMachine = _vendingMachine;
     }
 

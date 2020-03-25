@@ -5,6 +5,11 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {DepositFunding} from "./DepositFunding.sol";
 import {DepositRedemption} from "./DepositRedemption.sol";
 import {DepositStates} from "./DepositStates.sol";
+import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
+import {FeeRebateToken} from "../system/FeeRebateToken.sol";
+
 import "../system/DepositFactoryAuthority.sol";
 
 /// @title  Deposit.
@@ -113,10 +118,10 @@ contract Deposit is DepositFactoryAuthority {
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
-        self.TBTCSystem = _TBTCSystem;
-        self.TBTCToken = _TBTCToken;
-        self.TBTCDepositToken = _TBTCDepositToken;
-        self.FeeRebateToken = _FeeRebateToken;
+        self.tbtcSystem = ITBTCSystem(_TBTCSystem);
+        self.tbtcToken = TBTCToken(_TBTCToken);
+        self.tbtcDepositToken = IERC721(_TBTCDepositToken);
+        self.feeRebateToken = FeeRebateToken(_FeeRebateToken);
         self.VendingMachine = _VendingMachine;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;

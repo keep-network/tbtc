@@ -55,7 +55,7 @@ library DepositFunding {
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public returns (bool) {
-        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
+        TBTCSystem _system = TBTCSystem(address(_d.tbtcSystem));
 
         require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
