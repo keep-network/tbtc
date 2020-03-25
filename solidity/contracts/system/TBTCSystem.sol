@@ -48,9 +48,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 constant pausedDuration = 10 days;
 
     TBTCDepositToken tbtcDepositToken;
-    address public keepVendor;
-    address public priceFeed;
-    address public relay;
+    IBTCETHPriceFeed priceFeed;
+    IBondedECDSAKeepVendor keepVendor;
+    IRelay relay;
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
@@ -73,8 +73,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint128 private newSeverelyUndercollateralizedThresholdPercent;
 
     constructor(address _priceFeed, address _relay) public {
-        priceFeed = _priceFeed;
-        relay = _relay;
+        priceFeed = IBTCETHPriceFeed(_priceFeed);
+        relay = IRelay(_relay);
     }
 
     /// @notice        Initialize contracts
@@ -101,7 +101,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ) external onlyOwner {
         require(!_initialized, "already initialized");
         tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
-        keepVendor = _keepVendor;
+        keepVendor = IBondedECDSAKeepVendor(_keepVendor);
         VendingMachine(_vendingMachine).setExternalAddresses(
             _tbtcToken,
             _tbtcDepositToken,
@@ -354,7 +354,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///      if the price of one satoshi is 1 ether.
     /// @return The price of one satoshi in wei.
     function fetchBitcoinPrice() external view returns (uint256) {
-        uint256 price = IBTCETHPriceFeed(priceFeed).getPrice();
+        uint256 price = priceFeed.getPrice();
         if (price == 0 || price > 10 ** 18) {
             /*
               This is if a sat is worth 0 wei, or is worth 1 ether
@@ -368,11 +368,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     // Difficulty Oracle
     // TODO: This is a workaround. It will be replaced by tbtc-difficulty-oracle.
     function fetchRelayCurrentDifficulty() external view returns (uint256) {
-        return IRelay(relay).getCurrentEpochDifficulty();
+        return relay.getCurrentEpochDifficulty();
     }
 
     function fetchRelayPreviousDifficulty() external view returns (uint256) {
-        return IRelay(relay).getPrevEpochDifficulty();
+        return relay.getPrevEpochDifficulty();
     }
 
     /// @notice Gets a fee estimate for creating a new Deposit.
@@ -382,8 +382,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         view
         returns (uint256)
     {
-        IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
-        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
+        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
         return _keepFactory.openKeepFeeEstimate();
     }
 
@@ -397,8 +396,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
-        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
+        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond);
     }
 }
