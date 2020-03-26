@@ -13,20 +13,20 @@ contract TestDeposit is Deposit {
     }
 
     function createNewDeposit(
-        ITBTCSystem _TBTCSystem,
-        TBTCToken _TBTCToken,
-        IERC721 _TBTCDepositToken,
-        FeeRebateToken _FeeRebateToken,
+        ITBTCSystem _tbtcSystem,
+        TBTCToken _tbtcToken,
+        IERC721 _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
         address _vendingMachineAddress,
         uint256 _m,
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public payable returns (bool) {
-        self.tbtcSystem = (_TBTCSystem);
-        self.tbtcToken = (_TBTCToken);
-        self.tbtcDepositToken = (_TBTCDepositToken);
-        self.feeRebateToken = (_FeeRebateToken);
-        self.VendingMachineAddress = _vendingMachineAddress;
+        self.tbtcSystem = _tbtcSystem;
+        self.tbtcToken = _tbtcToken;
+        self.tbtcDepositToken = _tbtcDepositToken;
+        self.feeRebateToken = _feeRebateToken;
+        self.vendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
     }
@@ -42,7 +42,7 @@ contract TestDeposit is Deposit {
         self.tbtcToken = TBTCToken(_token);
         self.tbtcDepositToken = IERC721(_tbtcDepositToken);
         self.feeRebateToken = FeeRebateToken(_feeRebateToken);
-        self.VendingMachineAddress = _vendingMachineAddress;
+        self.vendingMachineAddress = _vendingMachineAddress;
     }
 
     function reset() public {

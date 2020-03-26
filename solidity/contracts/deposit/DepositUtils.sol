@@ -29,7 +29,7 @@ library DepositUtils {
         TBTCToken tbtcToken;
         IERC721 tbtcDepositToken;
         FeeRebateToken feeRebateToken;
-        address VendingMachineAddress;
+        address vendingMachineAddress;
         uint256 lotSizeSatoshis;
         uint8 currentState;
         uint256 signerFeeDivisor;

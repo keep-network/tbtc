@@ -97,11 +97,11 @@ contract Deposit is DepositFactoryAuthority {
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this.
-    /// @param _TBTCSystem        `TBTCSystem` contract. More info in `VendingMachine`.
-    /// @param _TBTCToken         `TBTCToken` contract. More info in TBTCToken`.
-    /// @param _TBTCDepositToken  `TBTCDepositToken` (TDT) contract. More info in `TBTCDepositToken`.
-    /// @param _FeeRebateToken    `FeeRebateToken` (FRT) contract. More info in `FeeRebateToken`.
-    /// @param _VendingMachineAddress    `VendingMachine` address. More info in `VendingMachine`.
+    /// @param _tbtcSystem        `TBTCSystem` contract. More info in `VendingMachine`.
+    /// @param _tbtcToken         `TBTCToken` contract. More info in TBTCToken`.
+    /// @param _tbtcDepositToken  `TBTCDepositToken` (TDT) contract. More info in `TBTCDepositToken`.
+    /// @param _feeRebateToken    `FeeRebateToken` (FRT) contract. More info in `FeeRebateToken`.
+    /// @param _vendingMachineAddress    `VendingMachine` address. More info in `VendingMachine`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
     /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is required to send.
@@ -109,20 +109,20 @@ contract Deposit is DepositFactoryAuthority {
     ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
     /// @return             True if successful, otherwise revert.
     function createNewDeposit(
-        ITBTCSystem _TBTCSystem,
-        TBTCToken _TBTCToken,
-        IERC721 _TBTCDepositToken,
-        FeeRebateToken _FeeRebateToken,
-        address _VendingMachineAddress,
+        ITBTCSystem _tbtcSystem,
+        TBTCToken _tbtcToken,
+        IERC721 _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
+        address _vendingMachineAddress,
         uint256 _m,
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
-        self.tbtcSystem = _TBTCSystem;
-        self.tbtcToken = _TBTCToken;
-        self.tbtcDepositToken = _TBTCDepositToken;
-        self.feeRebateToken = _FeeRebateToken;
-        self.VendingMachineAddress = _VendingMachineAddress;
+        self.tbtcSystem = _tbtcSystem;
+        self.tbtcToken = _tbtcToken;
+        self.tbtcDepositToken = _tbtcDepositToken;
+        self.feeRebateToken = _feeRebateToken;
+        self.vendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
     }

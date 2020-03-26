@@ -59,7 +59,7 @@ library DepositRedemption {
     /// @dev Burns or transfers depending on term and supply-peg impact.
     function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
         address tdtHolder = _d.depositOwner();
-        address vendingMachineAddress = _d.VendingMachineAddress;
+        address vendingMachineAddress = _d.vendingMachineAddress;
 
         uint256 tbtcLot = _d.lotSizeTbtc();
         uint256 signerFee = _d.signerFee();
