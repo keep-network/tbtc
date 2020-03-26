@@ -111,7 +111,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
         _depositFactory.setExternalDependencies(
             _masterDepositAddress,
-            TBTCSystem(address(this)),
+            this,
             _tbtcToken,
             _tbtcDepositToken,
             _feeRebateToken,
