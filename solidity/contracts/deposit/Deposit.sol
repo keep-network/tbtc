@@ -5,6 +5,11 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {DepositFunding} from "./DepositFunding.sol";
 import {DepositRedemption} from "./DepositRedemption.sol";
 import {DepositStates} from "./DepositStates.sol";
+import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
+import {FeeRebateToken} from "../system/FeeRebateToken.sol";
+
 import "../system/DepositFactoryAuthority.sol";
 
 /// @title  Deposit.
@@ -92,11 +97,11 @@ contract Deposit is DepositFactoryAuthority {
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this.
-    /// @param _TBTCSystem        `TBTCSystem` address. More info in `VendingMachine`.
-    /// @param _TBTCToken         `TBTCToken` address. More info in TBTCToken`.
-    /// @param _TBTCDepositToken  `TBTCDepositToken` (TDT) address. More info in `TBTCDepositToken`.
-    /// @param _FeeRebateToken    `FeeRebateToken` (FRT) address. More info in `FeeRebateToken`.
-    /// @param _VendingMachine    `VendingMachine` address. More info in `VendingMachine`.
+    /// @param _tbtcSystem        `TBTCSystem` contract. More info in `VendingMachine`.
+    /// @param _tbtcToken         `TBTCToken` contract. More info in TBTCToken`.
+    /// @param _tbtcDepositToken  `TBTCDepositToken` (TDT) contract. More info in `TBTCDepositToken`.
+    /// @param _feeRebateToken    `FeeRebateToken` (FRT) contract. More info in `FeeRebateToken`.
+    /// @param _vendingMachineAddress    `VendingMachine` address. More info in `VendingMachine`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
     /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is required to send.
@@ -104,20 +109,20 @@ contract Deposit is DepositFactoryAuthority {
     ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
     /// @return             True if successful, otherwise revert.
     function createNewDeposit(
-        address _TBTCSystem,
-        address _TBTCToken,
-        address _TBTCDepositToken,
-        address _FeeRebateToken,
-        address _VendingMachine,
+        ITBTCSystem _tbtcSystem,
+        TBTCToken _tbtcToken,
+        IERC721 _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
+        address _vendingMachineAddress,
         uint256 _m,
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
-        self.TBTCSystem = _TBTCSystem;
-        self.TBTCToken = _TBTCToken;
-        self.TBTCDepositToken = _TBTCDepositToken;
-        self.FeeRebateToken = _FeeRebateToken;
-        self.VendingMachine = _VendingMachine;
+        self.tbtcSystem = _tbtcSystem;
+        self.tbtcToken = _tbtcToken;
+        self.tbtcDepositToken = _tbtcDepositToken;
+        self.feeRebateToken = _feeRebateToken;
+        self.vendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
     }

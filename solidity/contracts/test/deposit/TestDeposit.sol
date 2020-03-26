@@ -1,6 +1,10 @@
 pragma solidity ^0.5.10;
 
 import {Deposit} from "../../../contracts/deposit/Deposit.sol";
+import {ITBTCSystem} from "../../interfaces/ITBTCSystem.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {TBTCToken} from "../../system/TBTCToken.sol";
+import {FeeRebateToken} from "../../system/FeeRebateToken.sol";
 
 contract TestDeposit is Deposit {
 
@@ -9,20 +13,20 @@ contract TestDeposit is Deposit {
     }
 
     function createNewDeposit(
-        address _TBTCSystem,
-        address _TBTCToken,
-        address _TBTCDepositToken,
-        address _FeeRebateToken,
-        address _VendingMachine,
+        ITBTCSystem _tbtcSystem,
+        TBTCToken _tbtcToken,
+        IERC721 _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
+        address _vendingMachineAddress,
         uint256 _m,
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public payable returns (bool) {
-        self.TBTCSystem = _TBTCSystem;
-        self.TBTCToken = _TBTCToken;
-        self.TBTCDepositToken = _TBTCDepositToken;
-        self.FeeRebateToken = _FeeRebateToken;
-        self.VendingMachine = _VendingMachine;
+        self.tbtcSystem = _tbtcSystem;
+        self.tbtcToken = _tbtcToken;
+        self.tbtcDepositToken = _tbtcDepositToken;
+        self.feeRebateToken = _feeRebateToken;
+        self.vendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
     }
@@ -32,13 +36,13 @@ contract TestDeposit is Deposit {
         address _token,
         address _tbtcDepositToken,
         address _feeRebateToken,
-        address _vendingMachine
+        address _vendingMachineAddress
     ) public {
-        self.TBTCSystem = _sys;
-        self.TBTCToken = _token;
-        self.TBTCDepositToken = _tbtcDepositToken;
-        self.FeeRebateToken = _feeRebateToken;
-        self.VendingMachine = _vendingMachine;
+        self.tbtcSystem = ITBTCSystem(_sys);
+        self.tbtcToken = TBTCToken(_token);
+        self.tbtcDepositToken = IERC721(_tbtcDepositToken);
+        self.feeRebateToken = FeeRebateToken(_feeRebateToken);
+        self.vendingMachineAddress = _vendingMachineAddress;
     }
 
     function reset() public {

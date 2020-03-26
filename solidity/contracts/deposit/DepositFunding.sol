@@ -5,7 +5,6 @@ import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
-import {TBTCSystem} from "../system/TBTCSystem.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositStates} from "./DepositStates.sol";
@@ -55,22 +54,20 @@ library DepositFunding {
         uint256 _n,
         uint256 _lotSizeSatoshis
     ) public returns (bool) {
-        TBTCSystem _system = TBTCSystem(_d.TBTCSystem);
-
-        require(_system.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
+        require(_d.tbtcSystem.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");
-        require(_system.isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
+        require(_d.tbtcSystem.isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
 
         _d.lotSizeSatoshis = _lotSizeSatoshis;
-        uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_system.getInitialCollateralizedPercent()).div(100);
+        uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_d.tbtcSystem.getInitialCollateralizedPercent()).div(100);
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _system.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementWei);
-        _d.signerFeeDivisor = _system.getSignerFeeDivisor();
-        _d.undercollateralizedThresholdPercent = _system.getUndercollateralizedThresholdPercent();
-        _d.severelyUndercollateralizedThresholdPercent = _system.getSeverelyUndercollateralizedThresholdPercent();
-        _d.initialCollateralizedPercent = _system.getInitialCollateralizedPercent();
+        _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementWei);
+        _d.signerFeeDivisor = _d.tbtcSystem.getSignerFeeDivisor();
+        _d.undercollateralizedThresholdPercent = _d.tbtcSystem.getUndercollateralizedThresholdPercent();
+        _d.severelyUndercollateralizedThresholdPercent = _d.tbtcSystem.getSeverelyUndercollateralizedThresholdPercent();
+        _d.initialCollateralizedPercent = _d.tbtcSystem.getInitialCollateralizedPercent();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
