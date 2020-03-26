@@ -97,7 +97,6 @@ library DepositFunding {
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
-    /// @dev        We rely on the keep system to punish the signers in this case.
     /// @param  _d  Deposit storage pointer.
     function notifySignerSetupFailure(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not awaiting setup");

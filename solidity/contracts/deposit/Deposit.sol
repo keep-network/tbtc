@@ -255,7 +255,6 @@ contract Deposit is DepositFactoryAuthority {
     //
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
-    /// @dev        We rely on the keep system punishes the signers in this case.
     /// @return     True if successful, otherwise revert.
     function notifySignerSetupFailure() public returns (bool) {
         self.notifySignerSetupFailure();
