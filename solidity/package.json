@@ -1,0 +1,58 @@
+{
+  "name": "@keep-network/tbtc",
+  "version": "0.10.0-pre",
+  "description": "deposit contract for TBTC",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rm -rf build/",
+    "compile": "truffle compile",
+    "test": "truffle compile && mocha --exit --recursive test --timeout 10000",
+    "test:quick": "mocha --exit --recursive test --timeout 10000",
+    "test:debug": "NODE_ENV=test node --inspect node_modules/.bin/truffle test",
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:fix": "npm run lint:fix:js && npm run lint:fix:sol",
+    "lint:js": "eslint ${npm_package_config_eslintPaths} && prettier --list-different **/*.js",
+    "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths} && prettier --write **/*.js",
+    "lint:sol": "solium -d contracts/ && prettier --list-different **/*.sol",
+    "lint:fix:sol": "solium -d contracts/ --fix && prettier --write **/*.sol"
+  },
+  "config": {
+    "eslintPaths": "test/ migrations/"
+  },
+  "precommit": "npm run lint",
+  "author": "Satoshi Nakamoto 🤪",
+  "license": "MIT",
+  "dependencies": {
+    "@keep-network/keep-ecdsa": "0.10.0-rc",
+    "@summa-tx/bitcoin-spv-sol": "^2.2.0",
+    "@summa-tx/relay-sol": "^1.1.0",
+    "@truffle/hdwallet-provider": "^1.0.26",
+    "bn-chai": "^1.0.1",
+    "bn.js": "^4.11.8",
+    "create-hash": "^1.2.0",
+    "openzeppelin-solidity": "2.3.0",
+    "solc": "^0.5.10"
+  },
+  "devDependencies": {
+    "@openzeppelin/test-environment": "^0.1.2",
+    "@openzeppelin/test-helpers": "^0.5.4",
+    "@truffle/hdwallet-provider": "^1.0.25",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-stage-2": "^6.18.0",
+    "babel-preset-stage-3": "^6.17.0",
+    "babel-register": "^6.26.0",
+    "chai": "^4.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.2.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eth-gas-reporter": "^0.1.12",
+    "ethlint": "^1.2.4",
+    "ganache-cli": "^6.4.3",
+    "mocha": "^7.0.1",
+    "prettier": "^1.19.1",
+    "prettier-plugin-solidity": "^1.0.0-alpha.40",
+    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.1",
+    "truffle": "^5.1.13"
+  }
+}
