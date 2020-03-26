@@ -3,7 +3,6 @@ pragma solidity ^0.5.10;
 import {
     IBondedECDSAKeep
 } from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
 /// @notice Implementation of ECDSAKeep interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
@@ -36,7 +35,7 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         // solium-disable-previous-line no-empty-blocks
     }
 
-    function distributeERC20Reward(IERC20 _asset, uint256 _value) external {
+    function distributeERC20Reward(address _asset, uint256 _value) external {
         // solium-disable-previous-line no-empty-blocks
     }
 
