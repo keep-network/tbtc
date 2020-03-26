@@ -17,7 +17,7 @@ contract TestDeposit is Deposit {
         TBTCToken _TBTCToken,
         IERC721 _TBTCDepositToken,
         FeeRebateToken _FeeRebateToken,
-        address _VendingMachine,
+        address _vendingMachineAddress,
         uint256 _m,
         uint256 _n,
         uint256 _lotSizeSatoshis
@@ -26,7 +26,7 @@ contract TestDeposit is Deposit {
         self.tbtcToken = (_TBTCToken);
         self.tbtcDepositToken = (_TBTCDepositToken);
         self.feeRebateToken = (_FeeRebateToken);
-        self.VendingMachine = _VendingMachine;
+        self.VendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
     }
@@ -36,13 +36,13 @@ contract TestDeposit is Deposit {
         address _token,
         address _tbtcDepositToken,
         address _feeRebateToken,
-        address _vendingMachine
+        address _vendingMachineAddress
     ) public {
         self.tbtcSystem = ITBTCSystem(_sys);
         self.tbtcToken = TBTCToken(_token);
         self.tbtcDepositToken = IERC721(_tbtcDepositToken);
         self.feeRebateToken = FeeRebateToken(_feeRebateToken);
-        self.VendingMachine = _vendingMachine;
+        self.VendingMachineAddress = _vendingMachineAddress;
     }
 
     function reset() public {

@@ -101,7 +101,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @param _TBTCToken         `TBTCToken` contract. More info in TBTCToken`.
     /// @param _TBTCDepositToken  `TBTCDepositToken` (TDT) contract. More info in `TBTCDepositToken`.
     /// @param _FeeRebateToken    `FeeRebateToken` (FRT) contract. More info in `FeeRebateToken`.
-    /// @param _VendingMachine    `VendingMachine` address. More info in `VendingMachine`.
+    /// @param _VendingMachineAddress    `VendingMachine` address. More info in `VendingMachine`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
     /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is required to send.
@@ -113,7 +113,7 @@ contract Deposit is DepositFactoryAuthority {
         TBTCToken _TBTCToken,
         IERC721 _TBTCDepositToken,
         FeeRebateToken _FeeRebateToken,
-        address _VendingMachine,
+        address _VendingMachineAddress,
         uint256 _m,
         uint256 _n,
         uint256 _lotSizeSatoshis
@@ -122,7 +122,7 @@ contract Deposit is DepositFactoryAuthority {
         self.tbtcToken = _TBTCToken;
         self.tbtcDepositToken = _TBTCDepositToken;
         self.feeRebateToken = _FeeRebateToken;
-        self.VendingMachine = _VendingMachine;
+        self.VendingMachineAddress = _VendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
     }

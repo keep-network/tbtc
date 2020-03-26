@@ -59,7 +59,7 @@ library DepositRedemption {
     /// @dev Burns or transfers depending on term and supply-peg impact.
     function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
         address tdtHolder = _d.depositOwner();
-        address vendingMachine = _d.VendingMachine;
+        address vendingMachineAddress = _d.VendingMachineAddress;
 
         uint256 tbtcLot = _d.lotSizeTbtc();
         uint256 signerFee = _d.signerFee();
@@ -81,7 +81,7 @@ library DepositRedemption {
             // As compensation, the TDT owner is reimbursed in TBTC
             // Vending Machine-owned TDTs have been used to mint TBTC,
             // and we should always burn a full TBTC to redeem the deposit.
-            if(tdtHolder == vendingMachine){
+            if(tdtHolder == vendingMachineAddress){
                 _d.tbtcToken.burnFrom(msg.sender, tbtcLot);
             }
             // if signer fee is not escrowed, escrow and it here and send the rest to TDT owner

@@ -170,7 +170,7 @@ library DepositLiquidation {
         uint256 lotSizeTbtc = _d.lotSizeTbtc();
         require(_d.tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc, "Not enough TBTC to cover outstanding debt");
 
-        if(tdtHolder == _d.VendingMachine){
+        if(tdtHolder == _d.VendingMachineAddress){
             _d.tbtcToken.burnFrom(msg.sender, lotSizeTbtc);  // burn minimal amount to cover size
         }
         else{
