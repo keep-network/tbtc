@@ -115,7 +115,7 @@ library DepositLiquidation {
         bytes memory _preimage
     ) public {
         require(
-            !_d.inFunding() && !_d.inFundingFailure(),
+            !_d.inFunding(),
             "Use provideFundingECDSAFraudProof instead"
         );
         require(

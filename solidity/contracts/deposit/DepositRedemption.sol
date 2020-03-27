@@ -37,14 +37,6 @@ library DepositRedemption {
         _keep.distributeERC20Reward(address(_d.tbtcToken), _d.signerFee());
     }
 
-    /// @notice Closes keep associated with the deposit.
-    /// @dev Should be called when the keep is no longer needed and the signing
-    /// group can disband.
-    function closeKeep(DepositUtils.Deposit storage _d) internal {
-        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        _keep.closeKeep();
-    }
-
     /// @notice Approves digest for signing by a keep.
     /// @dev Calls given keep to sign the digest. Records a current timestamp
     /// for given digest.
@@ -321,7 +313,7 @@ library DepositRedemption {
 
         // Transfer TBTC to signers and close the keep.
         distributeSignerFee(_d);
-        closeKeep(_d);
+        _d.closeKeep();
 
         _d.distributeFeeRebate();
 

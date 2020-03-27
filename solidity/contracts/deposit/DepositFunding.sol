@@ -76,15 +76,6 @@ library DepositFunding {
         return true;
     }
 
-    /// @notice     Slashes the signers partially for committing fraud before funding occurs.
-    /// @dev        Called only by notifyFraudFundingTimeout.
-    function partiallySlashForFraudInFunding(DepositUtils.Deposit storage _d) internal {
-        uint256 _seized = _d.seizeSignerBonds();
-        uint256 _slash = _seized.div(TBTCConstants.getFundingFraudPartialSlashDivisor());
-        _d.pushFundsToKeepGroup(_seized.sub(_slash));
-        _d.depositOwner().transfer(_slash);
-    }
-
     /// @notice     Seizes signer bonds and distributes them to the funder.
     /// @dev        This is only called as part of funding fraud flow.
     function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) internal {
@@ -140,6 +131,7 @@ library DepositFunding {
         _d.setFailedSetup();
         _d.logSetupFailed();
 
+        _d.closeKeep();
         fundingTeardown(_d);
     }
 
@@ -168,84 +160,10 @@ library DepositFunding {
         bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         require(_isFraud, "Signature is not fraudulent");
         _d.logFraudDuringSetup();
-
-        // If the funding timeout has elapsed, punish the funder too!
-        if (block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout())) {
-            _d.setFailedSetup();
-        } else {
-            /* NB: This is reuse of the variable */
-            _d.fundingProofTimerStart = block.timestamp;
-            _d.setFraudAwaitingBTCFundingProof();
-        }
-    }
-
-    /// @notice     Anyone may notify the contract no funding proof was submitted during funding fraud.
-    /// @dev        This is not a funder fault. The signers have faulted, so the funder shouldn't fund.
-    /// @param  _d  Deposit storage pointer.
-    function notifyFraudFundingTimeout(DepositUtils.Deposit storage _d) public {
-        require(
-            _d.inFraudAwaitingBTCFundingProof(),
-            "Not currently awaiting fraud-related funding proof"
-        );
-        require(
-            block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFraudFundingTimeout()),
-            "Fraud funding proof timeout has not elapsed"
-        );
-        _d.setFailedSetup();
-        _d.logSetupFailed();
-
-        partiallySlashForFraudInFunding(_d);
-        fundingFraudTeardown(_d);
-    }
-
-    /// @notice                     Anyone may notify the deposit of a funding proof during funding fraud.
-    //                              We reward the funder the entire bond if this occurs.
-    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding.
-    /// @param  _d                  Deposit storage pointer.
-    /// @param _txVersion           Transaction version number (4-byte LE).
-    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs.
-    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
-    /// @param _txLocktime          Final 4 bytes of the transaction.
-    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed).
-    /// @param _merkleProof         The merkle proof of transaction inclusion in a block.
-    /// @param _txIndexInBlock      Transaction index in the block (0-indexed).
-    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first.
-    /// @return                     True if no errors are thrown.
-    function provideFraudBTCFundingProof(
-        DepositUtils.Deposit storage _d,
-        bytes4 _txVersion,
-        bytes memory _txInputVector,
-        bytes memory _txOutputVector,
-        bytes4 _txLocktime,
-        uint8 _fundingOutputIndex,
-        bytes memory _merkleProof,
-        uint256 _txIndexInBlock,
-        bytes memory _bitcoinHeaders
-    ) public returns (bool) {
-        require(_d.inFraudAwaitingBTCFundingProof(), "Not awaiting a funding proof during setup fraud");
-
-        bytes8 _valueBytes;
-        bytes memory  _utxoOutpoint;
-
-        (_valueBytes, _utxoOutpoint) = _d.validateAndParseFundingSPVProof(
-            _txVersion,
-            _txInputVector,
-            _txOutputVector,
-            _txLocktime,
-            _fundingOutputIndex,
-            _merkleProof,
-            _txIndexInBlock,
-            _bitcoinHeaders
-        );
-
-        _d.setFailedSetup();
-        _d.logSetupFailed();
-
-        // If the proof is accepted, update to failed, and distribute signer bonds
         distributeSignerBondsToFunder(_d);
         fundingFraudTeardown(_d);
-
-        return true;
+        _d.setFailedSetup();
+        _d.logSetupFailed();
     }
 
     /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit.
