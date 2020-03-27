@@ -3,6 +3,8 @@ pragma solidity ^0.5.10;
 import "./CloneFactory.sol";
 import "../deposit/Deposit.sol";
 import "../system/TBTCSystem.sol";
+import "../system/TBTCToken.sol";
+import "../system/FeeRebateToken.sol";
 import "../system/TBTCSystemAuthority.sol";
 import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 
@@ -18,11 +20,11 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     // Holds the address of the deposit contract
     // which will be used as a master contract for cloning.
     address payable public masterDepositAddress;
-    address public tbtcSystem;
-    address public tbtcToken;
-    address public tbtcDepositToken;
-    address public feeRebateToken;
-    address public vendingMachine;
+    TBTCDepositToken tbtcDepositToken;
+    TBTCSystem public tbtcSystem;
+    TBTCToken public tbtcToken;
+    FeeRebateToken public feeRebateToken;
+    address public vendingMachineAddress;
     uint256 public keepThreshold;
     uint256 public keepSize;
 
@@ -32,29 +34,29 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
 
     /// @dev                          Set the required external variables.
     /// @param _masterDepositAddress  The address of the master deposit contract.
-    /// @param _tbtcSystem            Address of system contract.
-    /// @param _tbtcToken             Address of TBTC token contract.
-    /// @param _depositOwnerToken     Address of the Deposit Owner Token contract.
-    /// @param _feeRebateToken        Address of the Fee Rebate Token contract.
-    /// @param _vendingMachine        Address of the Vending Machine contract.
+    /// @param _tbtcSystem            Tbtc system contract.
+    /// @param _tbtcToken             TBTC token contract.
+    /// @param _tbtcDepositToken      TBTC Deposit Token contract.
+    /// @param _feeRebateToken        AFee Rebate Token contract.
+    /// @param _vendingMachineAddress Address of the Vending Machine contract.
     /// @param _keepThreshold         Minimum number of honest keep members.
     /// @param _keepSize              Number of all members in a keep.
     function setExternalDependencies(
         address payable _masterDepositAddress,
-        address _tbtcSystem,
-        address _tbtcToken,
-        address _depositOwnerToken,
-        address _feeRebateToken,
-        address _vendingMachine,
+        TBTCSystem _tbtcSystem,
+        TBTCToken _tbtcToken,
+        TBTCDepositToken _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
+        address _vendingMachineAddress,
         uint256 _keepThreshold,
         uint256 _keepSize
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
+        tbtcDepositToken = _tbtcDepositToken;
         tbtcSystem = _tbtcSystem;
         tbtcToken = _tbtcToken;
-        tbtcDepositToken = _depositOwnerToken;
         feeRebateToken = _feeRebateToken;
-        vendingMachine = _vendingMachine;
+        vendingMachineAddress = _vendingMachineAddress;
         keepThreshold = _keepThreshold;
         keepSize = _keepSize;
     }
@@ -79,7 +81,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
                 tbtcToken,
                 tbtcDepositToken,
                 feeRebateToken,
-                vendingMachine,
+                vendingMachineAddress,
                 keepThreshold,
                 keepSize,
                 _lotSizeSatoshis

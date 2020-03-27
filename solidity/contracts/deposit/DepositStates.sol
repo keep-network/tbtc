@@ -13,7 +13,6 @@ library DepositStates {
         AWAITING_BTC_FUNDING_PROOF,
 
         // FAILED SETUP
-        FRAUD_AWAITING_BTC_FUNDING_PROOF,
         FAILED_SETUP,
 
         // ACTIVE
@@ -40,14 +39,6 @@ library DepositStates {
             _d.currentState == uint8(States.AWAITING_SIGNER_SETUP)
          || _d.currentState == uint8(States.AWAITING_BTC_FUNDING_PROOF)
         );
-    }
-
-    /// @notice     Check if the contract is currently in the funding faud flow.
-    /// @dev        This checks for the flow, not the SETUP_FAILED termination state.
-    /// @param _d   Deposit storage pointer.
-    /// @return     True if contract is currently in the funding fraud flow else False.
-    function inFundingFailure(DepositUtils.Deposit storage _d) public view returns (bool) {
-        return (_d.currentState == uint8(States.FRAUD_AWAITING_BTC_FUNDING_PROOF));
     }
 
     /// @notice     Check if the contract is currently in the signer liquidation flow.
@@ -111,10 +102,6 @@ library DepositStates {
         return _d.currentState == uint8(States.AWAITING_BTC_FUNDING_PROOF);
     }
 
-    function inFraudAwaitingBTCFundingProof(DepositUtils.Deposit storage _d) external view returns (bool) {
-        return _d.currentState == uint8(States.FRAUD_AWAITING_BTC_FUNDING_PROOF);
-    }
-
     function inFailedSetup(DepositUtils.Deposit storage _d) external view returns (bool) {
         return _d.currentState == uint8(States.FAILED_SETUP);
     }
@@ -157,10 +144,6 @@ library DepositStates {
 
     function setAwaitingBTCFundingProof(DepositUtils.Deposit storage _d) external {
         _d.currentState = uint8(States.AWAITING_BTC_FUNDING_PROOF);
-    }
-
-    function setFraudAwaitingBTCFundingProof(DepositUtils.Deposit storage _d) external {
-        _d.currentState = uint8(States.FRAUD_AWAITING_BTC_FUNDING_PROOF);
     }
 
     function setFailedSetup(DepositUtils.Deposit storage _d) external {

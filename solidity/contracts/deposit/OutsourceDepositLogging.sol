@@ -12,7 +12,7 @@ library OutsourceDepositLogging {
     ///                       msg.sender will be the calling Deposit's address.
     /// @param  _keepAddress  The address of the associated keep.
     function logCreated(DepositUtils.Deposit storage _d, address _keepAddress) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logCreated(_keepAddress);
     }
 
@@ -34,7 +34,7 @@ library OutsourceDepositLogging {
         uint256 _requestedFee,
         bytes memory _outpoint
     ) public { // not external to allow bytes memory output scripts
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logRedemptionRequested(
             _redeemer,
             _digest,
@@ -57,7 +57,7 @@ library OutsourceDepositLogging {
         bytes32 _r,
         bytes32 _s
     ) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logGotRedemptionSignature(
             _digest,
             _r,
@@ -72,7 +72,7 @@ library OutsourceDepositLogging {
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
     ) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logRegisteredPubkey(
             _signingGroupPubkeyX,
             _signingGroupPubkeyY);
@@ -81,28 +81,28 @@ library OutsourceDepositLogging {
     /// @notice     Fires a SetupFailed event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
     function logSetupFailed(DepositUtils.Deposit storage _d) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logSetupFailed();
     }
 
     /// @notice     Fires a FraudDuringSetup event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
     function logFraudDuringSetup(DepositUtils.Deposit storage _d) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logFraudDuringSetup();
     }
 
     /// @notice     Fires a Funded event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
     function logFunded(DepositUtils.Deposit storage _d) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logFunded();
     }
 
     /// @notice     Fires a CourtesyCalled event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
     function logCourtesyCalled(DepositUtils.Deposit storage _d) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logCourtesyCalled();
     }
 
@@ -110,28 +110,28 @@ library OutsourceDepositLogging {
     /// @dev                We append the sender, which is the deposit contract that called.
     /// @param _wasFraud    True if liquidating for fraud.
     function logStartedLiquidation(DepositUtils.Deposit storage _d, bool _wasFraud) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logStartedLiquidation(_wasFraud);
     }
 
     /// @notice     Fires a Redeemed event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
     function logRedeemed(DepositUtils.Deposit storage _d, bytes32 _txid) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logRedeemed(_txid);
     }
 
     /// @notice     Fires a Liquidated event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
     function logLiquidated(DepositUtils.Deposit storage _d) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logLiquidated();
     }
 
     /// @notice     Fires a ExitedCourtesyCall event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
     function logExitedCourtesyCall(DepositUtils.Deposit storage _d) external {
-        DepositLog _logger = DepositLog(_d.TBTCSystem);
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logExitedCourtesyCall();
     }
 }
