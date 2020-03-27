@@ -27,17 +27,17 @@ contract VendingMachine is TBTCSystemAuthority{
 
     /// @notice Set external contracts needed by the Vending Machine.
     /// @dev    Addresses are used to update the local contract instance.
-    /// @param _tbtcToken        TBTCToken address. More info in `TBTCToken`.
-    /// @param _tbtcDepositToken TBTCDepositToken (TDT) address. More info in `TBTCDepositToken`.
-    /// @param _feeRebateToken   FeeRebateToken (FRT) address. More info in `FeeRebateToken`.
+    /// @param _tbtcToken        TBTCToken contract. More info in `TBTCToken`.
+    /// @param _tbtcDepositToken TBTCDepositToken (TDT) contract. More info in `TBTCDepositToken`.
+    /// @param _feeRebateToken   FeeRebateToken (FRT) contract. More info in `FeeRebateToken`.
     function setExternalAddresses(
-        address _tbtcToken,
-        address _tbtcDepositToken,
-        address _feeRebateToken
+        TBTCToken _tbtcToken,
+        TBTCDepositToken _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken
     ) public onlyTbtcSystem {
-        tbtcToken = TBTCToken(_tbtcToken);
-        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
-        feeRebateToken = FeeRebateToken(_feeRebateToken);
+        tbtcToken = _tbtcToken;
+        tbtcDepositToken = _tbtcDepositToken;
+        feeRebateToken = _feeRebateToken;
     }
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
