@@ -14,6 +14,8 @@ import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
 import {TBTCDepositToken} from "./TBTCDepositToken.sol";
+import "./TBTCToken.sol";
+import "./FeeRebateToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -47,10 +49,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
-    TBTCDepositToken tbtcDepositToken;
-    address public keepVendor;
-    address public priceFeed;
-    address public relay;
+    IBTCETHPriceFeed public  priceFeed;
+    IBondedECDSAKeepVendor public keepVendor;
+    IRelay public relay;
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
@@ -73,47 +74,46 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint16 private newSeverelyUndercollateralizedThresholdPercent;
 
     constructor(address _priceFeed, address _relay) public {
-        priceFeed = _priceFeed;
-        relay = _relay;
+        priceFeed = IBTCETHPriceFeed(_priceFeed);
+        relay = IRelay(_relay);
     }
 
     /// @notice        Initialize contracts
     /// @dev           Only the Deposit factory should call this, and only once.
-    /// @param _keepVendor        ECDSA keep vendor address.
-    /// @param _depositFactory    Deposit Factory address. More info in `DepositFactory`.
+    /// @param _keepVendor        ECDSA keep vendor.
+    /// @param _depositFactory    Deposit Factory. More info in `DepositFactory`.
     /// @param _masterDepositAddress  Master Deposit address. More info in `Deposit`.
-    /// @param _tbtcToken         TBTCToken address. More info in `TBTCToken`.
-    /// @param _tbtcDepositToken  TBTCDepositToken (TDT) address. More info in `TBTCDepositToken`.
-    /// @param _feeRebateToken    FeeRebateToken (FRT) address. More info in `FeeRebateToken`.
-    /// @param _vendingMachine    Vending Machine address. More info in `VendingMachine`.
+    /// @param _tbtcToken         TBTCToken. More info in `TBTCToken`.
+    /// @param _tbtcDepositToken  TBTCDepositToken (TDT). More info in `TBTCDepositToken`.
+    /// @param _feeRebateToken    FeeRebateToken (FRT). More info in `FeeRebateToken`.
+    /// @param _vendingMachine    Vending Machine. More info in `VendingMachine`.
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size.
     function initialize(
-        address _keepVendor,
-        address _depositFactory,
+        IBondedECDSAKeepVendor _keepVendor,
+        DepositFactory _depositFactory,
         address payable _masterDepositAddress,
-        address _tbtcToken,
-        address _tbtcDepositToken,
-        address _feeRebateToken,
-        address _vendingMachine,
+        TBTCToken _tbtcToken,
+        TBTCDepositToken _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
+        VendingMachine _vendingMachine,
         uint16 _keepThreshold,
         uint16 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
-        tbtcDepositToken = TBTCDepositToken(_tbtcDepositToken);
         keepVendor = _keepVendor;
-        VendingMachine(_vendingMachine).setExternalAddresses(
+        _vendingMachine.setExternalAddresses(
             _tbtcToken,
             _tbtcDepositToken,
             _feeRebateToken
         );
-        DepositFactory(_depositFactory).setExternalDependencies(
+        _depositFactory.setExternalDependencies(
             _masterDepositAddress,
-            address(this),
+            this,
             _tbtcToken,
             _tbtcDepositToken,
             _feeRebateToken,
-            _vendingMachine,
+            address(_vendingMachine),
             _keepThreshold,
             _keepSize
         );
@@ -358,7 +358,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///      if the price of one satoshi is 1 ether.
     /// @return The price of one satoshi in wei.
     function fetchBitcoinPrice() external view returns (uint256) {
-        uint256 price = IBTCETHPriceFeed(priceFeed).getPrice();
+        uint256 price = priceFeed.getPrice();
         if (price == 0 || price > 10 ** 18) {
             /*
               This is if a sat is worth 0 wei, or is worth 1 ether
@@ -372,11 +372,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     // Difficulty Oracle
     // TODO: This is a workaround. It will be replaced by tbtc-difficulty-oracle.
     function fetchRelayCurrentDifficulty() external view returns (uint256) {
-        return IRelay(relay).getCurrentEpochDifficulty();
+        return relay.getCurrentEpochDifficulty();
     }
 
     function fetchRelayPreviousDifficulty() external view returns (uint256) {
-        return IRelay(relay).getPrevEpochDifficulty();
+        return relay.getPrevEpochDifficulty();
     }
 
     /// @notice Gets a fee estimate for creating a new Deposit.
@@ -386,8 +386,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         view
         returns (uint256)
     {
-        IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
-        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
+        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
         return _keepFactory.openKeepFeeEstimate();
     }
 
@@ -401,8 +400,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        IBondedECDSAKeepVendor _keepVendor = IBondedECDSAKeepVendor(keepVendor);
-        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(_keepVendor.selectFactory());
+        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond);
     }
 }

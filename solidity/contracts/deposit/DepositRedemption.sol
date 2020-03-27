@@ -31,21 +31,10 @@ library DepositRedemption {
     /// @notice     Pushes signer fee to the Keep group by transferring it to the Keep address.
     /// @dev        Approves the keep contract, then expects it to call transferFrom.
     function distributeSignerFee(DepositUtils.Deposit storage _d) internal {
-        address _tbtcTokenAddress = _d.TBTCToken;
-        TBTCToken _tbtcToken = TBTCToken(_tbtcTokenAddress);
-
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
-        _tbtcToken.approve(_d.keepAddress, _d.signerFee());
-        _keep.distributeERC20Reward(_tbtcTokenAddress, _d.signerFee());
-    }
-
-    /// @notice Closes keep associated with the deposit.
-    /// @dev Should be called when the keep is no longer needed and the signing
-    /// group can disband.
-    function closeKeep(DepositUtils.Deposit storage _d) internal {
-        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        _keep.closeKeep();
+        _d.tbtcToken.approve(_d.keepAddress, _d.signerFee());
+        _keep.distributeERC20Reward(address(_d.tbtcToken), _d.signerFee());
     }
 
     /// @notice Approves digest for signing by a keep.
@@ -61,9 +50,8 @@ library DepositRedemption {
     /// @notice Handles TBTC requirements for redemption.
     /// @dev Burns or transfers depending on term and supply-peg impact.
     function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
-        TBTCToken _tbtc = TBTCToken(_d.TBTCToken);
         address tdtHolder = _d.depositOwner();
-        address vendingMachine = _d.VendingMachine;
+        address vendingMachineAddress = _d.vendingMachineAddress;
 
         uint256 tbtcLot = _d.lotSizeTbtc();
         uint256 signerFee = _d.signerFee();
@@ -75,7 +63,7 @@ library DepositRedemption {
         }
         // if we owe > 0 & < signerfee, msg.sender is TDT owner but not FRT holder.
         if(tbtcOwed <= signerFee){
-            _tbtc.transferFrom(msg.sender, address(this), tbtcOwed);
+            _d.tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
             return;
         }
         // Redemmer always owes a full TBTC for at-term redemption.
@@ -85,17 +73,17 @@ library DepositRedemption {
             // As compensation, the TDT owner is reimbursed in TBTC
             // Vending Machine-owned TDTs have been used to mint TBTC,
             // and we should always burn a full TBTC to redeem the deposit.
-            if(tdtHolder == vendingMachine){
-                _tbtc.burnFrom(msg.sender, tbtcLot);
+            if(tdtHolder == vendingMachineAddress){
+                _d.tbtcToken.burnFrom(msg.sender, tbtcLot);
             }
             // if signer fee is not escrowed, escrow and it here and send the rest to TDT owner
-            else if(_tbtc.balanceOf(address(this)) < signerFee){
-                _tbtc.transferFrom(msg.sender, address(this), signerFee);
-                _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
+            else if(_d.tbtcToken.balanceOf(address(this)) < signerFee){
+                _d.tbtcToken.transferFrom(msg.sender, address(this), signerFee);
+                _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
             }
             // tansfer a full TBTC to TDT owner if signerFee is escrowed
             else{
-                _tbtc.transferFrom(msg.sender, tdtHolder, tbtcLot);
+                _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot);
             }
             return;
         }
@@ -162,9 +150,7 @@ library DepositRedemption {
         bytes memory _redeemerOutputScript,
         address payable _finalRecipient
     ) public {
-        IERC721 _tbtcDepositToken = IERC721(_d.TBTCDepositToken);
-
-        _tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
+        _d.tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
 
         _requestRedemption(_d, _outputValueBytes, _redeemerOutputScript, _finalRecipient);
     }
@@ -327,7 +313,7 @@ library DepositRedemption {
 
         // Transfer TBTC to signers and close the keep.
         distributeSignerFee(_d);
-        closeKeep(_d);
+        _d.closeKeep();
 
         _d.distributeFeeRebate();
 

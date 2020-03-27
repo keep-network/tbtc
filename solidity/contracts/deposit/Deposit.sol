@@ -5,6 +5,11 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {DepositFunding} from "./DepositFunding.sol";
 import {DepositRedemption} from "./DepositRedemption.sol";
 import {DepositStates} from "./DepositStates.sol";
+import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {TBTCToken} from "../system/TBTCToken.sol";
+import {FeeRebateToken} from "../system/FeeRebateToken.sol";
+
 import "../system/DepositFactoryAuthority.sol";
 
 /// @title  Deposit.
@@ -92,11 +97,11 @@ contract Deposit is DepositFactoryAuthority {
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this.
-    /// @param _TBTCSystem        `TBTCSystem` address. More info in `VendingMachine`.
-    /// @param _TBTCToken         `TBTCToken` address. More info in TBTCToken`.
-    /// @param _TBTCDepositToken  `TBTCDepositToken` (TDT) address. More info in `TBTCDepositToken`.
-    /// @param _FeeRebateToken    `FeeRebateToken` (FRT) address. More info in `FeeRebateToken`.
-    /// @param _VendingMachine    `VendingMachine` address. More info in `VendingMachine`.
+    /// @param _tbtcSystem        `TBTCSystem` contract. More info in `VendingMachine`.
+    /// @param _tbtcToken         `TBTCToken` contract. More info in TBTCToken`.
+    /// @param _tbtcDepositToken  `TBTCDepositToken` (TDT) contract. More info in `TBTCDepositToken`.
+    /// @param _feeRebateToken    `FeeRebateToken` (FRT) contract. More info in `FeeRebateToken`.
+    /// @param _vendingMachineAddress    `VendingMachine` address. More info in `VendingMachine`.
     /// @param _m           Signing group honesty threshold.
     /// @param _n           Signing group size.
     /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is required to send.
@@ -104,20 +109,20 @@ contract Deposit is DepositFactoryAuthority {
     ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
     /// @return             True if successful, otherwise revert.
     function createNewDeposit(
-        address _TBTCSystem,
-        address _TBTCToken,
-        address _TBTCDepositToken,
-        address _FeeRebateToken,
-        address _VendingMachine,
+        ITBTCSystem _tbtcSystem,
+        TBTCToken _tbtcToken,
+        IERC721 _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
+        address _vendingMachineAddress,
         uint16 _m,
         uint16 _n,
         uint64 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
-        self.TBTCSystem = _TBTCSystem;
-        self.TBTCToken = _TBTCToken;
-        self.TBTCDepositToken = _TBTCDepositToken;
-        self.FeeRebateToken = _FeeRebateToken;
-        self.VendingMachine = _VendingMachine;
+        self.tbtcSystem = _tbtcSystem;
+        self.tbtcToken = _tbtcToken;
+        self.tbtcDepositToken = _tbtcDepositToken;
+        self.feeRebateToken = _feeRebateToken;
+        self.vendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
         return true;
     }
@@ -255,7 +260,6 @@ contract Deposit is DepositFactoryAuthority {
     //
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
-    /// @dev        We rely on the keep system punishes the signers in this case.
     /// @return     True if successful, otherwise revert.
     function notifySignerSetupFailure() public returns (bool) {
         self.notifySignerSetupFailure();
@@ -294,49 +298,6 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _preimage
     ) public returns (bool) {
         self.provideFundingECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
-        return true;
-    }
-
-    /// @notice     Anyone may notify the contract no funding proof was submitted during funding fraud.
-    /// @dev        This is not a funder fault. The signers have faulted, so the funder shouldn't fund.
-    /// @return     True if successful, otherwise revert.
-    function notifyFraudFundingTimeout() public returns (bool) {
-        self.notifyFraudFundingTimeout();
-        return true;
-    }
-
-    /// @notice                     Anyone may notify the deposit of a funding proof during funding fraud.
-    //                              We reward the funder the entire bond if this occurs.
-    /// @dev                        Takes a pre-parsed transaction and calculates values needed to verify funding.
-    /// @param _txVersion           Transaction version number (4-byte LE).
-    /// @param _txInputVector       All transaction inputs prepended by the number of inputs encoded as a VarInt, max 0xFC(252) inputs.
-    /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
-    /// @param _txLocktime          Final 4 bytes of the transaction.
-    /// @param _fundingOutputIndex  Index of funding output in _txOutputVector (0-indexed).
-    /// @param _merkleProof         The merkle proof of transaction inclusion in a block.
-    /// @param _txIndexInBlock      Transaction index in the block (0-indexed).
-    /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first.
-    /// @return                     True if no errors are thrown.
-    function provideFraudBTCFundingProof(
-        bytes4 _txVersion,
-        bytes memory _txInputVector,
-        bytes memory _txOutputVector,
-        bytes4 _txLocktime,
-        uint8 _fundingOutputIndex,
-        bytes memory _merkleProof,
-        uint256 _txIndexInBlock,
-        bytes memory _bitcoinHeaders
-    ) public returns (bool) {
-        self.provideFraudBTCFundingProof(
-            _txVersion,
-            _txInputVector,
-            _txOutputVector,
-            _txLocktime,
-            _fundingOutputIndex,
-            _merkleProof,
-            _txIndexInBlock,
-            _bitcoinHeaders
-        );
         return true;
     }
 

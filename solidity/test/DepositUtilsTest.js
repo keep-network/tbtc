@@ -72,6 +72,10 @@ describe("DepositUtils", async function() {
     beneficiary = accounts[2]
 
     feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
+    tbtcDepositToken.forceMint(
+      beneficiary,
+      web3.utils.toBN(testDeposit.address),
+    )
 
     await testDeposit.createNewDeposit(
       tbtcSystemStub.address,
@@ -283,6 +287,10 @@ describe("DepositUtils", async function() {
 
       beneficiary = accounts[2]
 
+      tbtcDepositToken.forceMint(
+        beneficiary,
+        web3.utils.toBN(testDeposit.address),
+      )
       feeRebateToken.forceMint(
         beneficiary,
         web3.utils.toBN(testDeposit.address),
