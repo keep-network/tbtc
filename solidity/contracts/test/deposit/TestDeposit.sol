@@ -67,6 +67,10 @@ contract TestDeposit is Deposit {
         self.signerFeeDivisor = _signerFeeDivisor;
     }
 
+    function setKeepSetupFee(uint256 _fee) public {
+        self.keepSetupFee = _fee;
+    }
+
     function getSignerFeeDivisor() public view returns (uint256) { return self.signerFeeDivisor; }
 
     function setLotSize(uint256 _lotSizeSatoshis) public {

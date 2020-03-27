@@ -62,6 +62,7 @@ library DepositFunding {
         uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_d.tbtcSystem.getInitialCollateralizedPercent()).div(100);
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
+        _d.keepSetupFee = _d.tbtcSystem.createNewDepositFeeEstimate();
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementWei);
         _d.signerFeeDivisor = _d.tbtcSystem.getSignerFeeDivisor();
@@ -84,7 +85,6 @@ library DepositFunding {
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
-    /// @dev        We rely on the keep system to punish the signers in this case.
     /// @param  _d  Deposit storage pointer.
     function notifySignerSetupFailure(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not awaiting setup");
@@ -92,6 +92,14 @@ library DepositFunding {
             block.timestamp > _d.signingGroupRequestedAt.add(TBTCConstants.getSigningGroupFormationTimeout()),
             "Signing group formation timeout not yet elapsed"
         );
+
+        // refund the deposit owner the cost to create a new Deposit at the time the Deposit was opened.
+        uint256 _seized = _d.seizeSignerBonds();
+
+        /* solium-disable-next-line security/no-send */
+        _d.depositOwner().send(_d.keepSetupFee);
+        _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
+
         _d.setFailedSetup();
         _d.logSetupFailed();
 
