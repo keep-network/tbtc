@@ -14,7 +14,7 @@ interface ITBTCSystem {
     // passthrough requests for the oracle
     function fetchRelayCurrentDifficulty() external view returns (uint256);
     function fetchRelayPreviousDifficulty() external view returns (uint256);
-
+    function createNewDepositFeeEstimate()external view returns (uint256);
     function getInitialCollateralizedPercent() external view returns (uint128);
     function getAllowNewDeposits() external view returns (bool);
     function isAllowedLotSize(uint256 _lotSizeSatoshis) external view returns (bool);
