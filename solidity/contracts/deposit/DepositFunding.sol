@@ -93,7 +93,7 @@ library DepositFunding {
             "Signing group formation timeout not yet elapsed"
         );
 
-        // refund the deposit owner the cost to create a new keep at current price levels.
+        // refund the deposit owner the cost to create a new Deposit at the time the Deposit was opened.
         uint256 _seized = _d.seizeSignerBonds();
 
         /* solium-disable-next-line security/no-send */
