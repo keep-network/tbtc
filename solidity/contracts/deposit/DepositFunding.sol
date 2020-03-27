@@ -14,6 +14,7 @@ import {TBTCConstants} from "./TBTCConstants.sol";
 library DepositFunding {
 
     using SafeMath for uint256;
+    using SafeMath for uint64;
     using BTCUtils for bytes;
     using BytesLib for bytes;
 
@@ -50,9 +51,9 @@ library DepositFunding {
     /// @return         True if successful, otherwise revert.
     function createNewDeposit(
         DepositUtils.Deposit storage _d,
-        uint256 _m,
-        uint256 _n,
-        uint256 _lotSizeSatoshis
+        uint16 _m,
+        uint16 _n,
+        uint64 _lotSizeSatoshis
     ) public returns (bool) {
         require(_d.tbtcSystem.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
         require(_d.inStart(), "Deposit setup already requested");

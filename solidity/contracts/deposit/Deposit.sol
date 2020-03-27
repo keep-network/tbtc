@@ -71,8 +71,8 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     /// @notice     Get the deposit's BTC lot size in satoshi.
-    /// @return     uint256 lot size in satoshi.
-    function lotSizeSatoshis() public view returns (uint256){
+    /// @return     uint64 lot size in satoshi.
+    function lotSizeSatoshis() public view returns (uint64){
         return self.lotSizeSatoshis;
     }
 
@@ -114,9 +114,9 @@ contract Deposit is DepositFactoryAuthority {
         IERC721 _tbtcDepositToken,
         FeeRebateToken _feeRebateToken,
         address _vendingMachineAddress,
-        uint256 _m,
-        uint256 _n,
-        uint256 _lotSizeSatoshis
+        uint16 _m,
+        uint16 _n,
+        uint64 _lotSizeSatoshis
     ) public onlyFactory payable returns (bool) {
         self.tbtcSystem = _tbtcSystem;
         self.tbtcToken = _tbtcToken;
