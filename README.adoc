@@ -22,6 +22,7 @@ toc::[]
 
 == Getting started
 
+* Read the link:./docs/introduction-to-tbtc.md[introduction to tBTC].
 * Read the http://docs.keep.network/tbtc/[specification].
 * Consult http://docs.keep.network/tbtc/solidity/[Solidity API
 documentation].
