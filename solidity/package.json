@@ -1,8 +1,12 @@
 {
   "name": "@keep-network/tbtc",
-  "version": "0.10.0-pre",
+  "version": "0.12.0-pre",
   "description": "deposit contract for TBTC",
   "main": "index.js",
+  "files": [
+    "contracts/**/*.sol",
+    "artifacts/"
+  ],
   "scripts": {
     "clean": "rm -rf build/",
     "compile": "truffle compile",
@@ -23,7 +27,7 @@
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
   "dependencies": {
-    "@keep-network/keep-ecdsa": "0.10.0-rc",
+    "@keep-network/keep-ecdsa": ">0.12.0-pre <0.12.0-rc",
     "@summa-tx/bitcoin-spv-sol": "^2.2.0",
     "@summa-tx/relay-sol": "^1.1.0",
     "@truffle/hdwallet-provider": "^1.0.26",
