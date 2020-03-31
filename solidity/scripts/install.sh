@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
