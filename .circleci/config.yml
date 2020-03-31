@@ -15,19 +15,6 @@ executors:
     docker:
       - image: thesisco/docker-buildpack:bionic
 jobs:
-  setup_github_package_registry:
-    executor: docker-node
-    steps:
-      - checkout
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/solidity
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
-      - persist_to_workspace:
-          root: .
-          paths:
-            - solidity/.npmrc
-
   compile_contracts:
     executor: docker-node
     steps:
@@ -232,31 +219,19 @@ workflows:
   version: 2
   lint:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - compile_contracts:
-          requires:
-            - setup_github_package_registry
+      - compile_contracts
       - lint:
           requires:
             - compile_contracts
   test:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - compile_contracts:
-          requires:
-            - setup_github_package_registry
+      - compile_contracts
       - unit_test_contracts:
           requires:
             - compile_contracts
   docs:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - compile_contracts:
-          requires:
-            - setup_github_package_registry
+      - compile_contracts
       - generate_pngs
       - generate_docs_tex
       - generate_docs_solidity:
@@ -273,11 +248,7 @@ workflows:
             - generate_docs_asciidoctor
   migrate_build_publish_keep_dev:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - compile_contracts:
-          requires:
-            - setup_github_package_registry
+      - compile_contracts
       - migrate_contracts:
           filters:
             branches:
@@ -301,13 +272,9 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - setup_github_package_registry:
-          context: github-package-registry
-          requires:
-            - keep_test_approval
       - compile_contracts:
           requires:
-            - setup_github_package_registry
+            - keep_test_approval
           filters:
             tags:
               only: /^v.*/
