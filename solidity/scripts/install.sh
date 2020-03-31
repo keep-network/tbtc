@@ -3,7 +3,7 @@ set -e
 
 # Dafault inputs.
 KEEP_ETHEREUM_PASSWORD_DEFAULT="password"
-KEEP_ECDSA_PATH_DEFAULT=$(realpath -m $(dirname $0)/../../../keep-tecdsa)
+KEEP_ECDSA_PATH_DEFAULT=$(realpath -m $GOPATH/src/github.com/keep-network/keep-ecdsa)
 
 # Run script.
 LOG_START='\n\e[1;36m' # new line + bold + color
