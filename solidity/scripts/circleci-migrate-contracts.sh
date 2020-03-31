@@ -57,8 +57,13 @@ ssh utilitybox << EOF
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
   echo "<<<<<<START Tenderly Push START<<<<<<"
+  # Temporary fix for some odd push issues; OpenZeppelin contracts are
+  # referenced at two paths due to older dependencies, leading to problems
+  # resolving contracts during tenderly push.
+  ln -s node_modules/@openzeppelin @openzeppelin
   tenderly login --authentication-method token --token $TENDERLY_TOKEN
-  tenderly push --networks $ETH_NETWORK_ID --tag tbtc --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG
+  tenderly push --networks $ETH_NETWORK_ID --tag tbtc \
+    --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG || echo "tendery push failed :("
   echo "<<<<<<FINISH Tenderly Push FINISH<<<<<<"
 EOF
 
