@@ -57,12 +57,17 @@ module.exports = async function(deployer, network) {
   const btcEthPriceFeed = await BTCETHPriceFeed.deployed()
   if (network === "mainnet") {
     // Inject mainnet price feeds.
-    await btcEthPriceFeed.initialize(BTCUSDPriceFeed, ETHUSDPriceFeed)
+    await btcEthPriceFeed.initialize(
+      tbtcSystem.address,
+      BTCUSDPriceFeed,
+      ETHUSDPriceFeed,
+    )
   } else {
     // Inject mock price feeds.
     const mockBtcPriceFeed = await MockBTCUSDPriceFeed.deployed()
     const mockEthPriceFeed = await MockETHUSDPriceFeed.deployed()
     await btcEthPriceFeed.initialize(
+      tbtcSystem.address,
       mockBtcPriceFeed.address,
       mockEthPriceFeed.address,
     )
