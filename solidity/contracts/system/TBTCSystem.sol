@@ -8,6 +8,7 @@ import {VendingMachine} from "./VendingMachine.sol";
 import {DepositFactory} from "../proxy/DepositFactory.sol";
 
 import {IRelay} from "@summa-tx/relay-sol/contracts/Relay.sol";
+import "../external/IMedianizer.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
@@ -27,6 +28,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
 
+    event BtcUsdPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
+    event EthUsdPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
     event LotSizesUpdateStarted(uint64[] _lotSizes, uint256 _timestamp);
     event SignerFeeDivisorUpdateStarted(uint16 _signerFeeDivisor, uint256 _timestamp);
     event CollateralizationThresholdsUpdateStarted(
@@ -36,6 +39,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _timestamp
     );
 
+    event BtcUsdPriceFeedAdded(address _priceFeed);
+    event EthUsdPriceFeedAdded(address _priceFeed);
     event LotSizesUpdated(uint64[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
     event SignerFeeDivisorUpdated(uint16 _signerFeeDivisor);
@@ -44,6 +49,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _undercollateralizedThresholdPercent,
         uint16 _severelyUndercollateralizedThresholdPercent
     );
+
 
     bool _initialized = false;
     uint256 pausedTimestamp;
@@ -72,6 +78,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint16 private newInitialCollateralizedPercent;
     uint16 private newUndercollateralizedThresholdPercent;
     uint16 private newSeverelyUndercollateralizedThresholdPercent;
+
+    // price feed
+    uint256 priceFeedGovernanceTimeDelay = 90 days;
+    uint256 appendBtcUsdFeedTimer;
+    uint256 appendEthUsdFeedTimer;
+    IMedianizer nextEthUsdFeed;
+    IMedianizer nextBtcUsdFeed;
 
     constructor(address _priceFeed, address _relay) public {
         priceFeed = IBTCETHPriceFeed(_priceFeed);
@@ -351,6 +364,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return governanceTimeDelay;
     }
 
+    function getPriceFeedGovernanceTimeDelay() public view returns (uint256) {
+        return priceFeedGovernanceTimeDelay;
+    }
+
     // Price Feed
 
     /// @notice Get the price of one satoshi in wei.
@@ -367,6 +384,40 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             revert("System returned a bad price");
         }
         return price;
+    }
+
+    /// @notice Initialize the addition of a new BTC/USD price feed contract to the priecFeed.
+    /// @dev `FinalizeAddBtcUsdFeed` must be called to finalize.
+    function initializeAddBtcUsdFeed(IMedianizer _btcUsdFeed) external {
+        nextBtcUsdFeed = _btcUsdFeed;
+        appendBtcUsdFeedTimer = block.timestamp + priceFeedGovernanceTimeDelay;
+        emit BtcUsdPriceFeedAdditionStarted(address(_btcUsdFeed), block.timestamp);
+    }
+
+    /// @notice Initialize the addition of a new ETH?USD price feed contract to the priecFeed.
+    /// @dev `FinalizeAddBtcUsdFeed` must be called to finalize.
+    function initializeAddEthUsdFeed(IMedianizer _ethUsdFeed) external {
+        nextEthUsdFeed = _ethUsdFeed;
+        appendEthUsdFeedTimer = block.timestamp + priceFeedGovernanceTimeDelay;
+        emit EthUsdPriceFeedAdditionStarted(address(_ethUsdFeed), block.timestamp);
+    }
+
+    /// @notice Finish adding a new price feed contract to the priceFeed.
+    /// @dev `InitializeAddBtcUsdFeed` must be called first, once `appendBtcUsdFeedTimer`
+    ///       has passed, this function can be called to append a new price feed.
+    function finalizeAddBtcUsdFeed() external {
+        require(block.timestamp > appendBtcUsdFeedTimer, "Timeout not yet elapsed");
+        priceFeed.addBtcUsdFeed(nextBtcUsdFeed);
+        emit BtcUsdPriceFeedAdded(address(nextBtcUsdFeed));
+    }
+
+    /// @notice Finish adding a new price feed contract to the priceFeed.
+    /// @dev `InitializeAddEthUsdFeed` must be called first, once `appendEthUsdFeedTimer`
+    ///       has passed, this function can be called to append a new price feed.
+    function finalizeAddEthUsdFeed() external  {
+        require(block.timestamp > appendEthUsdFeedTimer, "Timeout not yet elapsed");
+        priceFeed.addEthUsdFeed(nextEthUsdFeed);
+        emit EthUsdPriceFeedAdded(address(nextEthUsdFeed));
     }
 
     // Difficulty Oracle
