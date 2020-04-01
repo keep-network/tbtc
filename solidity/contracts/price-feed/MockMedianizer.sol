@@ -16,6 +16,10 @@ contract MockMedianizer is Ownable, IMedianizer {
         return value;
     }
 
+    function peek() external view returns (uint256, bool) {
+        return (value, value > 0);
+    }
+
     function setValue(uint256 _value) external onlyOwner{
         value = _value;
     }
