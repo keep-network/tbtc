@@ -15,19 +15,6 @@ executors:
     docker:
       - image: thesisco/docker-buildpack:bionic
 jobs:
-  setup_github_package_registry:
-    executor: docker-node
-    steps:
-      - checkout
-      - run:
-          name: Authenticate GitHub Package Registry
-          working_directory: ~/project/solidity
-          command: echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> .npmrc
-      - persist_to_workspace:
-          root: .
-          paths:
-            - solidity/.npmrc
-
   compile_contracts:
     executor: docker-node
     steps:
@@ -211,6 +198,50 @@ jobs:
           root: /tmp/tbtc
           paths:
             - contracts
+  publish_npm_package:
+    executor: docker-node
+    steps:
+      - attach_workspace:
+          at: /tmp/tbtc
+      - checkout
+      - run:
+          name: Bump and publish npm package
+          working_directory: ~/project/solidity
+          command: |
+            set -x
+            mkdir -p artifacts
+            cp -r /tmp/tbtc/contracts/* artifacts/
+            name=$(jq --raw-output .name package.json)
+            version=$(jq --raw-output .version package.json)
+            preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
+
+            # Find the latest published package version matching this preid.
+            # Note that in jq, we wrap the result in an array and then flatten;
+            # this is because npm show json contains a single string if there
+            # is only one matching version, or an array if there are multiple,
+            # and we want to look at an array always.
+            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | sort | .[-1]")
+            latest_version=${latest_version:-$version}
+            if [ -z $latest_version ]; then
+              echo "Latest version calculation failed. Resolved info:"
+              echo "$name@$version ; preid $preid"
+              exit 1
+            fi
+
+            # Update package.json with the latest published package version matching this
+            # preid to prepare for bumping.
+            echo $(jq -M ".version=\"${latest_version}\"" package.json) > package.json
+
+            # Bump without doing any git work. Versioning is a build-time action for us.
+            # Consider including commit id? Would be +<commit id>.
+            npm version prerelease --preid=$preid --no-git-tag-version
+
+            # Fix resolved dependency versions.
+            npm update
+
+            # Publish to npm.
+            echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
+            npm publish --access=public
   publish_contract_data:
     executor: gcp-cli/default
     steps:
@@ -232,31 +263,19 @@ workflows:
   version: 2
   lint:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - compile_contracts:
-          requires:
-            - setup_github_package_registry
+      - compile_contracts
       - lint:
           requires:
             - compile_contracts
   test:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - compile_contracts:
-          requires:
-            - setup_github_package_registry
+      - compile_contracts
       - unit_test_contracts:
           requires:
             - compile_contracts
   docs:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - compile_contracts:
-          requires:
-            - setup_github_package_registry
+      - compile_contracts
       - generate_pngs
       - generate_docs_tex
       - generate_docs_solidity:
@@ -273,11 +292,7 @@ workflows:
             - generate_docs_asciidoctor
   migrate_build_publish_keep_dev:
     jobs:
-      - setup_github_package_registry:
-          context: github-package-registry
-      - compile_contracts:
-          requires:
-            - setup_github_package_registry
+      - compile_contracts
       - migrate_contracts:
           filters:
             branches:
@@ -285,6 +300,13 @@ workflows:
           context: keep-dev
           requires:
             - compile_contracts
+      - publish_npm_package:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - migrate_contracts
       - publish_contract_data:
           filters:
             branches:
@@ -301,13 +323,9 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - setup_github_package_registry:
-          context: github-package-registry
-          requires:
-            - keep_test_approval
       - compile_contracts:
           requires:
-            - setup_github_package_registry
+            - keep_test_approval
           filters:
             tags:
               only: /^v.*/
@@ -322,6 +340,15 @@ workflows:
           context: keep-test
           requires:
             - compile_contracts
+      - publish_npm_package:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          context: keep-test
+          requires:
+            - migrate_contracts
       - publish_contract_data:
           filters:
             tags:
