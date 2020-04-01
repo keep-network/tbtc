@@ -7,4 +7,10 @@ interface IMedianizer {
     /// @dev May revert if caller not whitelisted.
     /// @return Price (USD) with 18 decimal places.
     function read() external view returns (uint256);
+
+    /// @notice Get the current price and check if the price feed is active
+    /// @dev May revert if caller not whitelisted.
+    /// @return Price (USD) with 18 decimal places.
+    /// @return true if price is > 0, else returns false
+    function peek() external view returns (uint256, bool);
 }
