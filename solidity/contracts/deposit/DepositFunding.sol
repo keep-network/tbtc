@@ -82,7 +82,7 @@ library DepositFunding {
     /// @dev        This is only called as part of funding fraud flow.
     function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) internal {
         uint256 _seized = _d.seizeSignerBonds();
-        _d.depositOwner().transfer(_seized);  // Transfer whole amount
+        _d.depositOwner().call.value(_seized)("");  // Transfer whole amount
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
@@ -97,12 +97,12 @@ library DepositFunding {
         // refund the deposit owner the cost to create a new Deposit at the time the Deposit was opened.
         uint256 _seized = _d.seizeSignerBonds();
 
-        /* solium-disable-next-line security/no-send */
-        _d.depositOwner().send(_d.keepSetupFee);
-        _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
-
         _d.setFailedSetup();
         _d.logSetupFailed();
+
+        /* solium-disable-next-line security/no-send */
+        _d.depositOwner().call.value(_d.keepSetupFee)("");
+        _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
 
         fundingTeardown(_d);
     }

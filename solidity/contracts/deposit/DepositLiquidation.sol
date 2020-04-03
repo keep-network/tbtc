@@ -74,7 +74,7 @@ library DepositLiquidation {
         if (_d.auctionTBTCAmount() == 0) {
             // we came from the redemption flow
             _d.setLiquidated();
-            _d.redeemerAddress.transfer(_seized);
+            _d.redeemerAddress.call.value(_seized)("");
             _d.logLiquidated();
             return;
         }
@@ -180,7 +180,7 @@ library DepositLiquidation {
 
         // Distribute funds to auction buyer
         uint256 _valueToDistribute = _d.auctionValue();
-        msg.sender.transfer(_valueToDistribute);
+        msg.sender.call.value(_valueToDistribute)("");
 
         // Send any TBTC left to the Fee Rebate Token holder
         _d.distributeFeeRebate();
@@ -198,13 +198,13 @@ library DepositLiquidation {
         if (contractEthBalance > 1) {
             if (_wasFraud) {
                 /* solium-disable-next-line security/no-send */
-                initiator.send(contractEthBalance);
+                initiator.call.value(contractEthBalance)("");
             } else {
                 // There will always be a liquidation initiator.
                 uint256 split = contractEthBalance.div(2);
                 _d.pushFundsToKeepGroup(split);
                 /* solium-disable-next-line security/no-send */
-                initiator.send(address(this).balance);
+                initiator.call.value(address(this).balance)("");
             }
         }
     }
