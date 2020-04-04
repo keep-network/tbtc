@@ -1,0 +1,107 @@
+:toc: macro
+
+= tBTC Upgrades and Governance
+
+tBTC is designed to have limited governable system parameters, clear upgrade
+periods when those parameters are updated, and well-understood and
+_immutable_ parameters for open deposits. That is to say, even governable
+parameters are designed to have impact on open deposits only if deposits would
+otherwise enter a failed state.
+
+The tBTC system *does not allow contract upgrades*. The deposit contracts,
+system contract, and vending machine contract are irreversibly linked to each
+other, and any changes aside from the parameters described below require the
+deployment of a new system and social adoption of that new system as an
+alternative to the current one.
+
+There are two sets of parameters that can be changed in the tBTC system: the
+ETH-BTC price oracle and the parameters for initial deposit setup.
+Additionally, there is a short-term, single-use pause function that can be
+triggered. Last but not least, the Keep Network that provides signers for
+deposits has its own parameters. All of these are detailed below.
+
+toc::[]
+
+== Price Oracle
+
+The ETH-BTC price oracle will be operated by MakerDAO at mainnet. It is a
+single Oracle Security Module backed by a Medianizer feed sourced from
+several high-volume exchanges that are judged to have comparatively low
+amounts of wash trading. MakerDAO has a description of their oracle system
+available
+https://community-development.makerdao.com/makerdao-mcd-faqs/faqs/oracles[on
+their site].
+
+MakerDAO oracles can be unilaterally disabled by MakerDAO governance, at
+which point attempts to read from the oracle will revert. The tBTC link to the
+MakerDAO oracle has some resilience to this by allowing additional feeds to
+be added to a list, and taking the first valid return from the list of
+oracles. There are currently no plans to add oracles unless the MakerDAO
+oracle is disabled or in danger of being disabled.
+
+New oracles are available 30 days after an update has been put in, but not
+before, providing ample time for depositors who have issues with the change
+to redeem their deposits and exit back to BTC.
+
+== Deposit Parameters
+
+There are three sets of deposit parameters that are governable by the owner
+of the `TBTCSystem` contract. Updates take effect 6 hours after an update has
+been submitted, but not before. Note that the governable deposit parameters
+affect _new deposits created after the parameters take effect_. Existing
+deposits cannot have their parameters changed, and must be kept open or be
+redeemed or liquidated under the original terms they were opened at.
+
+The governable parameters are:
+
+=== Available lot sizes
+
+The available lot sizes can be updated, but must always include a 1 BTC
+lot size option. Additionally, no lot sizes are allowed below 0.001 BTC
+(100,000 satoshis) and no lot sizes are allowed above 2 BTC.
+
+=== Signer fee
+
+The signer fee, represented as a divisor of the lot size, can be updated.
+The divisor is cannot be raised above 9, meaning the signer fee can never be
+set above 10% of the lot size. There is no minimum value for the signer fee.
+
+=== Collateralization thresholds
+
+Three collateralization thresholds can be updated: the *initial
+collateralization threshold*, which is the percentage of the BTC value in ETH
+that must be put up by signers as a bond; the *undercollateralized
+threshold*, which is the percentage of BTC value in ETH at which a deposit
+can be moved into courtesy call to allow for early open redemption; and the
+*severely undercollateralized threshold*, which is the percentage of BTC
+value in ETH at which a deposit can be moved into liquidation. The initial
+collateralization percentage must be between 100% and 300%, and the values
+must maintain a relationship of _severely undercollateralized <
+undercollateralized < initial threshold_.
+
+== Emergency Pause
+
+For unexpected and urgent circumstances, the tBTC system allows a one-time, 10
+day complete pause on all new deposit creation. This pause can only be called
+by the owner of the `TBTCSystem` contract, and can be ended after 10 days by
+anyone. Only new deposits are paused; existing deposits continue to function
+under the original terms they were opened at.
+
+== Keep Network Upgrades and Governance
+
+Upgrades and governance for the Keep Network are detailed in the Keep
+https://docs.keep.network/random-beacon/#_upgrade_management[upgrade
+management documentation]. For the purposes of tBTC, the important highlights
+are:
+
+* New deposit opening is dependent on available operators willing to bond
+  according amounts of ETH. tBTC can be prevented from opening new deposits by
+  a wholesale abandonment of ETH bonding by all Keep operators.
+* It is possible for the Keep Network to deauthorize the operator contract that
+  provides signer backing via the panic button functionality. This prevents new
+  deposits from being opened. While this will also prevent the operators in
+  question from having their KEEP tokens slashed in case of ECDSA fraud, their
+  bonds remain locked for seizure, and the collateralization parameters of the
+  tBTC system ensure that the deposit is still bound to complete its
+  responsibilities or forfeit at least an equivalent ETH value to the BTC held
+  in the deposit.
