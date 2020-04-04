@@ -1,8 +1,15 @@
 {
   "name": "@keep-network/tbtc",
-  "version": "0.10.0-pre",
-  "description": "deposit contract for TBTC",
-  "main": "index.js",
+  "version": "0.13.0-pre",
+  "description": "The tBTC smart contracts implementing the TBTC trustlessly Bitcoin-backed ERC-20 token.",
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/keep-network/tbtc.git"
+  },
+  "files": [
+    "contracts/**/*.sol",
+    "artifacts/"
+  ],
   "scripts": {
     "clean": "rm -rf build/",
     "compile": "truffle compile",
@@ -22,9 +29,13 @@
   "precommit": "npm run lint",
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/keep-network/tbtc/issues"
+  },
+  "homepage": "https://tbtc.network/",
   "dependencies": {
-    "@keep-network/keep-ecdsa": "0.10.0-rc",
-    "@summa-tx/bitcoin-spv-sol": "^2.2.0",
+    "@keep-network/keep-ecdsa": ">0.13.0-pre <0.13.0-rc",
+    "@summa-tx/bitcoin-spv-sol": "^3.0.0",
     "@summa-tx/relay-sol": "^1.1.0",
     "@truffle/hdwallet-provider": "^1.0.26",
     "bn-chai": "^1.0.1",
