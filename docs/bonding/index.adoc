@@ -205,11 +205,11 @@ responsible for reporting the misbehavior (for fraud) or between the signers and
 the account that triggered liquidation (for collateralization issues).
 
 To compensate the deposit owner, the contract starts a falling-price auction
-with the seized signer bond. It offers {auction-start-percent} of the signer
-bond in exchange for the outstanding TBTC amount. The amount of bond on sale
-increases over time until someone chooses to purchase it, or the auction
-reaches 100% of the bond. The auction will remain open until a buyer is
-found.
+with the seized signer bond. It offers {liquidation-auction-start-percent} of
+the signer bond in exchange for the outstanding TBTC amount. The amount of
+bond on sale increases over time until someone chooses to purchase it, or the
+auction reaches 100% of the bond. The auction will remain open until a buyer
+is found.
 
 TBTC received during this process is sent to the deposit owner; if the owner is
 the vending machine, the vending machine MUST burn the TBTC to maintain the
@@ -245,7 +245,7 @@ the Deposit (1 BTC / 75 ETH)
 3. Liquidation is triggered and the 75 ETH is seized to buy back TBTC.
 
 4. The _Deposit_ must use the 75 ETH to purchase 1 TBTC. In an attempt to get a
-discount, it auctions {auction-start-percent} of its ETH reserves.
+discount, it auctions {liquidation-auction-start-percent} of its ETH reserves.
 
 5. An arbitrageur burns 1 TBTC at 90% of the auction and obtains 67.5 ETH. The
 liquidation of the _Deposit_ is now over.
