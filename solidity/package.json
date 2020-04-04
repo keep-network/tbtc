@@ -35,7 +35,7 @@
   "homepage": "https://tbtc.network/",
   "dependencies": {
     "@keep-network/keep-ecdsa": ">0.13.0-pre <0.13.0-rc",
-    "@summa-tx/bitcoin-spv-sol": "^2.2.0",
+    "@summa-tx/bitcoin-spv-sol": "^3.0.0",
     "@summa-tx/relay-sol": "^1.1.0",
     "@truffle/hdwallet-provider": "^1.0.26",
     "bn-chai": "^1.0.1",
