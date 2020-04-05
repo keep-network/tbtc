@@ -29,8 +29,6 @@ signature sending the underlying BTC to the requested address. After a
 signature has been published, any actor may build and submit a
 _redemption transaction_ to the Bitcoin blockchain using that signature.
 
-// TODO: document future upgrade where signers sign singleACP?
-
 [[at-term]]
 === Deposit Terms and Redemption
 
