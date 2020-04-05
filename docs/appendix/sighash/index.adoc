@@ -24,13 +24,13 @@ signer's intent with respect to them. Specifically, BIP143 sighash commits to
 the following (not in this order):
 
 1. One or All inputs
-1. None, One, or All outputs
-1. The specific prevout this signature witnesses
-1. The pubkey script or redeem script code locking that prevout
-1. The value of the prevout this signature witnesses
-1. The sequence of the input spending that prevout
-1. The transaction version
-1. The transaction locktime
+2. none, one, or all outputs
+3. The specific prevout this signature witnesses
+4. The pubkey script or redeem script code locking that prevout
+5. The value of the prevout this signature witnesses
+6. The sequence of the input spending that prevout
+7. The transaction version
+8. The transaction locktime
 
 These are committed to via the double-sha256 of an ordered bytestring. This
 digest is signed, and can be reproduced by anyone inspecting the transaction
