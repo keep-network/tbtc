@@ -24,14 +24,11 @@ to protect the supply peg, but any remainder is returned to them.
 [[fraud]]
 === Fraud
 
-The system recognizes two redundant fraud proofs: ECDSA, in which the signing
-group produces a signature on a message which was not explicitly requested,
-and SPV, in which the UTXO custodied by the signing group moves for an unknown
-reason. Intuitively, the UTXO should not be able to move without ECDSA fraud,
-however, the system accepts either proof (and may require both proofs in
-certain cases). Each proof its own limitations and security parameters. When
-fraud is detected, the system penalizes the signers by seizing their bonds and
-starting the <<bonding/index.adoc#liquidation,liquidation>> process.
+The system recognizes one type of fraud proof, ECDSA fraud proofs, in which
+the signing group produces a signature on a message which was not explicitly
+requested. When fraud is detected, the system penalizes the signers by
+seizing their bonds and starting the
+<<bonding/index.adoc#liquidation,liquidation>> process.
 
 ==== ECDSA Fraud Proofs
 
@@ -70,17 +67,3 @@ gas limit). Fortunately, Bitcoin's signature hash algorithm uses double-sha256.
 This means that the preimage to the signed digest is always 32 bytes. As such,
 verification costs never scale with transaction size, and even very large
 transactions do not evade ECDSA fraud verification.
-
-==== SPV Fraud Proofs
-
-// TODO: link SPV description
-
-The signers custody a single Bitcoin UTXO. If that UTXO moves, except at the
-direction of the system then the signers have failed to perform their duties.
-SPV Proofs of Bitcoin inclusion (as documented here) suffice to prove signer
-fault. If the coins move, and its movement was not specifically requested by
-the system, then the signers have failed in their signing duties. Compared to
-ECDSA Fraud proofs, SPV Fraud Proofs are more expensive to verify and have a
-weaker security model. The system expects SPV Fraud Proofs only rarely, and
-subjects them to much higher work requirements than SPV funding and redemption
-proofs.
