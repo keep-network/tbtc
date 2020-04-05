@@ -5,7 +5,8 @@
 ifndef::tbtc[]
 toc::[]
 
-:root-prefix: ../
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
 include::../constants.adoc[]
 endif::tbtc[]
 
@@ -79,7 +80,7 @@ group fails to produce a signature for the system when requested, and to
 bring the system into balance in cases of undercollateralization.
 
 Bonding is described in more detail in
-<<{root-prefix}bonding/index#bonding,its own section>>.
+<<bonding/index#bonding,its own section>>.
 
 ==== Distributed key generation
 
@@ -133,7 +134,7 @@ To prove a deposit, the depositor submits proof the transaction has been
 confirmed and accumulated work on the Bitcoin chain. The proof is
 verified by an on-chain simple payment verification (SPV) contract on the host
 chain. A more complete overview of cross-chain SPV systems and their security
-properties <<{root-prefix}/appendix/spv/index#,is included in the appendix>>.
+properties <<appendix/spv/index#spv,is included in the appendix>>.
 
 Light relays are a new variant of on-chain SPV developed for tBTC. They seek to
 take advantage of the compact and efficient stateless SPV proofs while relaying

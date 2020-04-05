@@ -1,9 +1,11 @@
+[#minting]
 = Minting
 
 ifndef::tbtc[]
 toc::[]
 
-:root-prefix: ../
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
 include::../constants.adoc[]
 endif::tbtc[]
 
@@ -29,12 +31,12 @@ funded until the deposit term is reached.
 Once the deposit is fully _qualified_ by submitting sufficient proof of the
 funding Bitcoin transaction, the holder of the TDT can request redemption,
 and, after paying any outstanding signing fees, be guaranteed the same UTXO
-backing the deposit. The holder of the TDT is also guaranteed compensation
-in TBTC via the signing group's bonded collateral in case of fraud or
-collateralization issues (see <<{root-prefix}/bonding/index#Liquidation>>),
+backing the deposit. The holder of the TDT is also guaranteed compensation in
+TBTC via the signing group's bonded collateral in case of fraud or
+collateralization issues (see <<bonding/index.adoc#liquidation,liquidation>>),
 and compensation in TBTC (minus signer fees) if the deposit is redeemed by
 another account after it reaches term (see the section on
-<<{root-prefix}/redemption/index#at-term, at-term redemption>>).
+<<redemption/index.adoc#at-term, at-term redemption>>).
 
 === Implications
 
@@ -125,6 +127,6 @@ provides a straightforward way to transfer it to another account for the cost of
 Burning all received TBTC allows for maintaining the supply peg not only when
 deposit ownership is transferred away from the vending machine, but also when
 the deposits that are still owned by the vending machine are liquidated or
-<<{root-prefix}/redemption/index#at-term, redeemed at term>>, since in these
-cases deposit owner compensation goes to the vending machine, which burns
-that compensation immediately.
+<<redemption/index.adoc#at-term, redeemed at term>>, since in these cases
+deposit owner compensation goes to the vending machine, which burns that
+compensation immediately.

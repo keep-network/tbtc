@@ -1,12 +1,13 @@
 :toc: macro
 
-[#bonding]
+[[bonding]]
 = Bonding
 
 ifndef::tbtc[]
 toc::[]
 
-:root-prefix: ../
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
 include::../constants.adoc[]
 endif::tbtc[]
 
@@ -105,11 +106,11 @@ If the value of ETH crosses a security threshold, open _Deposit_ s will enter
 
 === BTC price drop relative to ETH
 
-Since <<Signer Fees>> are denominated per BTC in custody (with
-overcollateralization factored in), a BTC value drop against the
-bonded asset translates in lower fees for Signers. Note that this does not
-create any issue for TBTC reserves, but it makes the system less attractive to
-signers looking to earn interest via fees on their assets.
+Since <<signer-fees/index.adoc#signer-fees,signer fees>> are denominated per
+BTC in custody (with overcollateralization factored in), a BTC value drop
+against the bonded asset translates in lower fees for Signers. Note that this
+does not create any issue for TBTC reserves, but it makes the system less
+attractive to signers looking to earn interest via fees on their assets.
 
 Signers SHOULD buy TBTC from the markets in anticipation of such overly
 overcollateralized Deposits and they SHOULD use it to redeem these positions,
@@ -186,10 +187,10 @@ Forced liquidation should be rare, as rational signers will redeem deposits
 before liquidation becomes necessary. However, the possibility of extreme
 punishment via liquidation is necessary to prevent dishonest behavior from
 signers. Liquidation may occur because because signers
-<<{root-prefix}/failure/index#abort, didn't produce a valid signature in
+<<failure/index.adoc#abort, didn't produce a valid signature in
 response to a redemption request>>, because the value of the signing
 bond dropped below the liquidation threshold, because they did not respond to
-the courtesy call, or because the signers <<{root-prefix}/failure/index#Fraud,
+the courtesy call, or because the signers <<failure/index.adoc#fraud,
 produced a fraudulent signature>>{fraudulent-signature}.
 
 The primary goal of the liquidation process is to make the deposit owner
@@ -228,7 +229,7 @@ design is for them to decide—it might be split up, stolen by a signing
 majority, or lost permanently.
 
 NOTE: If a Fee Rebate Token (FRT) has been given out to mint TBTC for a
-deposit that is liquidated (see <<{root-prefix}/minting/index,the Minting
+deposit that is liquidated (see <<minting/index.adoc#minting,the Minting
 section>>), the FRT owner is _not_ refunded
 during liquidation. The fees that were escrowed in exchange for the FRT are
 instead used to compensate the signers, and the FRT is no longer eligible for

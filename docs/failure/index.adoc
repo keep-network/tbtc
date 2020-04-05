@@ -5,7 +5,8 @@
 ifndef::tbtc[]
 toc::[]
 
-:root-prefix: ../
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
 endif::tbtc[]
 
 [[abort]]
@@ -13,13 +14,14 @@ endif::tbtc[]
 
 The system requires that critical actions like funding and redemption occur
 within a fixed time after request. Failure to do so is treated as an "abort."
-Where <<Fraud, fraud>> indicates proof positive of forbidden behavior, an
+Where <<fraud,fraud>> indicates proof positive of forbidden behavior, an
 abort typically represents a liveness failure from some participant. As such,
 while aborts are still punished, and may still result in liquidation, they are
 not punished as severely as fraud. For example, should the signers fail to
 produce a redemption signature in a timely manner, their bonds are liquidated
 to protect the supply peg, but any remainder is returned to them.
 
+[[fraud]]
 === Fraud
 
 The system recognizes two redundant fraud proofs: ECDSA, in which the signing
@@ -29,7 +31,7 @@ reason. Intuitively, the UTXO should not be able to move without ECDSA fraud,
 however, the system accepts either proof (and may require both proofs in
 certain cases). Each proof its own limitations and security parameters. When
 fraud is detected, the system penalizes the signers by seizing their bonds and
-starting the <<Liquidation>> process.
+starting the <<bonding/index.adoc#liquidation,liquidation>> process.
 
 ==== ECDSA Fraud Proofs
 

@@ -1,5 +1,6 @@
 :toc: macro
 
+[[spv]]
 = Simplified Payment Verification (SPV): A Primer
 
 ifndef::tbtc[]

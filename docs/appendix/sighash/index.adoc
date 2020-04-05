@@ -1,5 +1,6 @@
 :toc: macro
 
+[[sighash]]
 = Standardized Sighash Construction
 
 ifndef::tbtc[]
