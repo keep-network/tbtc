@@ -109,8 +109,6 @@ The requester may specify only 2 aspects of the transaction: its fee and its
 destination. All other deposit-specific information (e.g. the outpoint and
 the UTXO size) is known to the deposit contract in advance.
 
-// TODO: Link
-
 The _redemption transaction_ has 1 input (the deposit UTXO) and 1 output (the
 redemption output). It does not have change outputs, or additional inputs, as
 none are needed. It simply transfers the underlying BTC to the sole custody of
@@ -167,8 +165,6 @@ signature and that a signature on that digest was requested as part of a
 redemption process.
 
 == Allowing for Bitcoin fee adjustment
-
-// TODO: link ECDSA fraud proofs
 
 Because Bitcoin fees are determined by network congestion and other highly
 unpredictable factors, the requester may not select an appropriate fee. Signers

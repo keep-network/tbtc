@@ -81,8 +81,6 @@ large inherent cost. We argue that the system is economically secure so long as
 the cost of producing a fake proof is high and the value that can be gained by
 producing a fake proof is orders of magnitude less than that cost.
 
-// TODO: does the n add anything? can someone else improve it?
-
 The security of SPV systems also benefits from a built-in assumption of the
 Nakamoto Consensus model: that no attacker has greater than 50% of the
 hashrate. Assuming that is true, no attacker can generate Bitcoin proofs of
