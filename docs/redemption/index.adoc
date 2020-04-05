@@ -11,8 +11,6 @@ toc::[]
 include::../constants.adoc[]
 endif::tbtc[]
 
-// TODO backrefs to signing
-
 == Overview
 
 Deposits represent real Bitcoin unspent transaction outputs ("UTXOs") and are
@@ -129,16 +127,15 @@ anyone may do so if the signers do not.
 
 == Redemption proof
 
-// TODO: Link SPV proof breakdown
-
-A _redemption proof_ is an SPV proof that a _redemption transaction_ was
-confirmed by the Bitcoin blockchain. Once a request to redeem is confirmed,
-the deposit smart contract expects a _redemption proof_ within
-{redemption-proof-timeout}. To validate a _redemption proof_, the smart
-contract performs normal SPV proof verification, and additionally verifies
-that the recipient matches the requester's public key hash, and the value is
-greater than or equal `UTXO Size - highest allowed fee` (see
-<<Allowing for Bitcoin fee adjustment>> for more details).
+A _redemption proof_ is an <<appendix/spv/index.adoc#spv,SPV proof>> that a
+_redemption transaction_ was confirmed by the Bitcoin blockchain. Once a
+request to redeem is confirmed, the deposit smart contract expects a
+_redemption proof_ within {redemption-proof-timeout}. To validate a
+_redemption proof_, the smart contract performs normal SPV proof
+verification, and additionally verifies that the recipient matches the
+requester's public key hash, and the value is greater than or equal `UTXO
+Size - highest allowed fee` (see <<Allowing for Bitcoin fee adjustment>> for
+more details).
 
 Once redemption proof is confirmed, the signing fee is paid, the FRT holder
 receives their escrowed funds (if the deposit was redeemed pre-term), and the
@@ -153,13 +150,13 @@ B, and C.
 
 == Validating a signature
 
-After the redemption request is sufficiently confirmed, the signers MUST
-produce a signature on the _redemption transaction_ signature hash as
-requested. They have {signature-timeout} in which to produce either a
-signature, or a <<Redemption proof, _redemption proof_>> before being subject
-to penalties. Upon submission of a valid signature a _redemption proof_ is
-still required, but the deadline is extended to {redemption-proof-timeout} in
-total.
+After the redemption request is sufficiently confirmed,
+<<signing/index.adoc#signing,the signers MUST produce a signature>> on the
+_redemption transaction_ signature hash as requested. They have
+{signature-timeout} in which to produce either a signature, or a <<Redemption
+proof, _redemption proof_>> before being subject to penalties. Upon
+submission of a valid signature a _redemption proof_ is still required, but
+the deadline is extended to {redemption-proof-timeout} in total.
 
 As discussed <<Redemption Transaction Format, earlier>>, the host chain smart
 contract managing the deposit has all information necessary to calculate the

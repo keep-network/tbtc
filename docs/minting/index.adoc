@@ -80,11 +80,10 @@ The TBTC vending machine is a contract on the host chain that is responsible
 for minting TBTC.
 
 Any TDT representing a qualified deposit can be exchanged. Qualified deposits
-are determined by the accumulated work of their proofs. In tBTC v1, deposits are
-qualified by a fixed work requirement proven via a stateless SPV proof, set at
+are determined by the accumulated work of their proofs. In tBTC v1, deposits are qualified by a fixed work
+requirement proven via an <<appendix/spv/index.adoc#spv,SPV proof>>, set at
 6 blocks of accumulated work.
 
-// TODO link to more details in the appendix?
 // TODO be specific with the deposit timeout
 
 A TDT representing a qualified deposit is also eligible for minting fungible

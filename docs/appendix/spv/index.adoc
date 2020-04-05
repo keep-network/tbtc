@@ -8,19 +8,17 @@ toc::[]
 
 endif::tbtc[]
 
-// TODO: many refs
-
 == Overview
-
-// TODO: link funding, redemption, and fraud
 
 While a full discussion of SPV proofs is outside the scope of this document, it
 is important to develop a working understanding of their properties, as many
 system-critical processes rely on the SPV security assumptions. SPV proofs are
-used during the funding, redemption, and fraud processes to provide the host
-chain with information about the state of the remote chain. Practically
-speaking, there is no other way that the host chain can learn about the state
-or history of the remote chain.
+used during the <<docs/deposit.adoc#funding,funding>>,
+<<docs/redemption.adoc#redemption,redemption>>, and
+<<docs/failure.adoc#fraud,fraud>> processes to provide the host chain with
+information about the state of the remote chain. Practically speaking, there
+is no other way that the host chain can learn about the state or history of
+the remote chain.
 
 === Objectivity in Proof of Work
 
