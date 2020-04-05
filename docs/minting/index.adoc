@@ -82,7 +82,7 @@ for minting TBTC.
 Any TDT representing a qualified deposit can be exchanged. Qualified deposits
 are determined by the accumulated work of their proofs. In tBTC v1, deposits are qualified by a fixed work
 requirement proven via an <<appendix/spv/index.adoc#spv,SPV proof>>, set at
-6 blocks of accumulated work.
+{tx-proof-difficulty-factor} of accumulated work.
 
 // TODO be specific with the deposit timeout
 
