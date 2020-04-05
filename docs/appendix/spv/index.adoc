@@ -27,7 +27,7 @@ called "objectivity." Simply put, proof of work cannot be forged and no outside
 information is needed to check its validity. Without knowing the history of the
 chain, we can examine a Bitcoin block header and determine (probabilistically)
 how many hashes were performed to generate it. The number of hashes used to
-generate a header represents an unforgable cost inherent to that header,
+generate a header represents an unforgeable cost inherent to that header,
 independent of its context or history.
 
 Contrast this with Proof of Stake, in which the cost of generating a header is
