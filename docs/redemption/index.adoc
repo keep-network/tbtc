@@ -55,11 +55,23 @@ not during at-term redemptions.
 [[requests]]
 == Redemption Requests
 
-If the deposit is in good standing (has not been accused of fraud, or entered
-signer liquidation), only the holder of the corresponding tBTC Deposit Token
-may request redemption. To do so that person makes a _redemption request_
-transaction to the smart contract on the host chain. The _redemption request_
-includes the following:
+A redemption request can be submitted in a few cases:
+
+* If the deposit is in good standing (has not already been redeemed, has
+  not been accused of <<failure/index.adoc#fraud,fraud>>, and has not entered
+  <<bonding/index.adoc#liquidation,signer liquidation>>), pre-term, and the
+  requester holds the corresponding tBTC Deposit Token.
+* If the deposit is in good standing and is at or past <<at-term,term>>,
+  irrespective of whether the requester holds the corresponding tBTC Deopsit
+  Token.
+* If the deposit has entered <<bonding/index.adoc#pre-liquidation,courtesy
+  call>>, an undercollateralization state designed to allow closing deposits
+  before they become dangerously undercollateralized, irrespective of whether
+  the requester holds the corresponding tBTC Deposit Token.
+
+To request redemption, a requester makes a _redemption request_ transaction
+to the smart contract on the host chain. The _redemption request_ includes
+the following:
 
 1. A Bitcoin transaction fee amount
   - must be >={min-redemption-btc-fee} ({min-redemption-btc-feerate})
