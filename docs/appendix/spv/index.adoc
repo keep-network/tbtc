@@ -126,18 +126,19 @@ Anyone interested in using the state and history information in the stateless
 SPV proof's information can determine whether to accept or reject it based on
 the proof's quality.
 
-// TODO: cite Summa so much kthx
-// TODO: cite a good source on BTCRelay
-
-Stateless SPVs are relatively recent work. Their compelling advantage is
-size and cost-efficieny. A stateless SPV proof is less than 1KB, all of which
-can be discarded after validation. A relay, on the other hand, stores each
-header on-chain. This means a relay will consume linearly increasing state
-space over time. Maintenance costs are already unsustainably high, as evidenced
-by the failure of BTCRelay in December 2017. Given the already high cost of
-on-chain storage and the likely introduction of state rent in major host chain
-candidates, relying on a stateful relay seems short-sighted. A high-state
-system that is viable today may not be viable in the future.
+Stateless SPVs are relatively recent work, spearheaded by Summa and
+originally described in
+https://medium.com/summa-technology/cross-chain-auction-technical-f16710bfe69f[a
+technical post on the Summa cross-chain auction system]. Their compelling
+advantage is size and cost-efficiency. A stateless SPV proof is less than 1KB,
+all of which can be discarded after validation. A relay, on the other hand,
+stores each header on-chain. This means a relay will consume linearly
+increasing state space over time. Maintenance costs are already unsustainably
+n high, as evidenced by the failure of BTCRelay in December 2017. Given the
+already high cost of on-chain storage and the likely introduction of state
+rent in major host chain candidates, relying on a stateful relay seems
+short-sighted. A high-state system that is viable today may not be viable in
+the future.
 
 We argue that for recent transactions stateless SPV's security is equivalent
 to a relay's. An attacker would have to spend the same number of hashes to
