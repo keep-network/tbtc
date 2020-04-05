@@ -110,7 +110,7 @@ Since <<signer-fees/index.adoc#signer-fees,signer fees>> are denominated per
 BTC in custody (with overcollateralization factored in), a BTC value drop
 against the bonded asset translates in lower fees for Signers. Note that this
 does not create any issue for TBTC reserves, but it makes the system less
-attractive to signers looking to earn interest via fees on their assets.
+attractive to signers earning fees on their assets.
 
 Signers SHOULD buy TBTC from the markets in anticipation of such overly
 overcollateralized Deposits and they SHOULD use it to redeem these positions,
