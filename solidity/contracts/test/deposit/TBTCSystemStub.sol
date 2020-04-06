@@ -23,7 +23,7 @@ contract TBTCSystemStub is TBTCSystem {
         return oraclePrice;
     }
 
-    function requestNewKeep(uint256, uint256, uint256) external payable returns (address _keepAddress) {
+    function requestNewKeep(uint256, uint256, uint256, uint256) external payable returns (address _keepAddress) {
         return keepAddress;
     }
 }

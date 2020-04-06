@@ -124,6 +124,12 @@ describe("DepositFunding", async function() {
         expectedKeepAddress,
       )
 
+      const stakeLockDuration = await ecdsaKeepFactory.stakeLockDuration.call()
+      expect(
+        stakeLockDuration,
+        "stake lock duration not as expected",
+      ).not.to.eq.BN(await tbtcConstants.getDepositTerm.call())
+
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
       expect(
         signingGroupRequestedAt,
