@@ -65,7 +65,13 @@ library DepositFunding {
 
         _d.keepSetupFee = _d.tbtcSystem.createNewDepositFeeEstimate();
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementWei);
+        _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
+            _m,
+            _n,
+            _bondRequirementWei,
+            TBTCConstants.getDepositTerm()
+        );
+
         _d.signerFeeDivisor = _d.tbtcSystem.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _d.tbtcSystem.getUndercollateralizedThresholdPercent();
         _d.severelyUndercollateralizedThresholdPercent = _d.tbtcSystem.getSeverelyUndercollateralizedThresholdPercent();
