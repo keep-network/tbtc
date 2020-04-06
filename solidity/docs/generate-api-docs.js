@@ -21,6 +21,7 @@ let jsonFiles = [
   "../../solidity/build/contracts/DepositLiquidation.json",
   "../../solidity/build/contracts/IBTCETHPriceFeed.json",
   "../../solidity/build/contracts/IBondedECDSAKeep.json",
+  "../../solidity/build/contracts/ITokenRecipient.json",
 ]
 
 jsonFiles.forEach(file => {

@@ -1,8 +1,8 @@
 pragma solidity 0.5.15;
 
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol";
-import "./DepositFactoryAuthority.sol";
-
+import {ERC721Metadata} from "openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol";
+import {DepositFactoryAuthority} from "./DepositFactoryAuthority.sol";
+import {ITokenRecipient} from "../interfaces/ITokenRecipient.sol";
 
 /// @title tBTC Deposit Token for tracking deposit ownership
 /// @notice The tBTC Deposit Token, commonly referenced as the TDT, is an
@@ -14,7 +14,7 @@ import "./DepositFactoryAuthority.sol";
 ///         TBTC tokens whose value is backed 1-to-1 by the corresponding
 ///         deposit's BTC.
 /// @dev Currently, TDTs are minted using the uint256 casting of the
-///      corresponding deposit contract's address. That is, the TDTs id is
+///      corresponding deposit contract's address. That is, the TDT's id is
 ///      convertible to the deposit's address and vice versa. TDTs are minted
 ///      automatically by the factory during each deposit's initialization. See
 ///      DepositFactory.createNewDeposit() for more info on how the TDT is minted.
@@ -45,27 +45,15 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
     ///                   Set allowance for other address and notify.
     ///                   Allows `_spender` to transfer the specified TDT
     ///                   on your behalf and then ping the contract about it.
-    /// @dev              The `_spender` should implement the `tokenRecipient` interface below
-    ///                   to receive approval notifications.
-    /// @param _spender   Address of contract authorized to spend.
+    /// @dev              The `_spender` should implement the `ITokenRecipient`
+    ///                   interface below to receive approval notifications.
+    /// @param _spender   `ITokenRecipient`-conforming contract authorized to
+    ///        operate on the approved token.
     /// @param _tdtId     The TDT they can spend.
     /// @param _extraData Extra information to send to the approved contract.
-    function approveAndCall(address _spender, uint256 _tdtId, bytes memory _extraData) public returns (bool) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        approve(_spender, _tdtId);
-        spender.receiveApproval(msg.sender, _tdtId, address(this), _extraData);
+    function approveAndCall(ITokenRecipient _spender, uint256 _tdtId, bytes memory _extraData) public returns (bool) {
+        approve(address(_spender), _tdtId);
+        _spender.receiveApproval(msg.sender, _tdtId, address(this), _extraData);
         return true;
     }
-}
-
-/// @title Interface of recipient contract for approveAndCall pattern.
-/// See `FundingScript` contract for an example.
-interface tokenRecipient {
-    function receiveApproval(
-        address _from,
-        uint256 _value,
-        address _token,
-        bytes calldata
-        _extraDat
-    ) external;
 }
