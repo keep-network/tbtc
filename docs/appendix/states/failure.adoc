@@ -129,35 +129,6 @@ fraud-related state transitions in a single document.
 * *to*
 ** `FRAUD_LIQUIDATION_IN_PROGRESS`
 
-=== `provideSPVFraudProof`
-* Anyone provides a SPV proof that the Deposit UTXO has been consumed.
-  If the proof is valid at recent difficulty, it is proof of signer fraud.
-* *access control*
-** anyone
-* *args*
-** `bytes _tx`
-*** the bitcoin tx
-** `bytes _proof`
-*** the bitcoin merkle inclusion proof
-** `uint _index`
-*** the index of the leaf in the merkle tree (1-indexed, sorry)
-** `bytes _headers`
-*** the header chain, earliest first, no padding
-* *reads*
-** `bytes utxoOutpoint`
-*** check if the tx spends the deposit outpoint
-** `uint256 currentDifficulty` -- from light relay
-*** check if the proof difficulty matches bitcoin main chain
-* *from*
-** `AWAITING_SIGNER_SETUP`
-** `AWAITING_BTC_FUNDING_PROOF`
-** `ACTIVE`
-** `AWAITING_WITHDRAWAL_SIGNATURE`
-** `AWAITING_WITHDRAWAL_PROOF`
-** `SIGNER_MARGIN_CALLED`
-* *to*
-** `FRAUD_LIQUIDATION_IN_PROGRESS`
-
 === `notifyRedemptionProofTimeout`
 * Anyone may poke the contract to show that a redemption proof was not
   provided within the permissible time frame. Treated as Abort

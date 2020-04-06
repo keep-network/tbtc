@@ -105,6 +105,7 @@ The distributed key generation protocol should result in three properties:
    signed version of a given transaction to be performed on behalf of the
    signing group.
 
+[[funding]]
 == Making a deposit
 
 :sufficient-confirmations: footnote:[For tBTC v1, sufficient confirmations means 6 confirmations. Confirmation numbers \

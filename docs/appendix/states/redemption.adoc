@@ -178,16 +178,6 @@ funder bond payment.
 * *to*
 ** `LIQUIDATION_IN_PROGRESS`
 
-=== `provideSPVFraudProof` (outbound)
-// TODO: link this elsewhere
-* *access control*
-** anyone
-* *from*
-** `AWAITING_WITHDRAWAL_PROOF`
-** `AWAITING_WITHDRAWAL_SIGNATURE`
-* *to*
-** `LIQUIDATION_IN_PROGRESS`
-
 === `notifyRedemptionProofTimeout` (outbound)
 // TODO: link this elsewhere
 * *access control*
