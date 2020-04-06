@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.15;
 
 /// @title  Deposit Factory Authority
 /// @notice Contract to secure function calls to the Deposit Factory.

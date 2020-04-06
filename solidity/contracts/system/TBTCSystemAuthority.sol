@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.15;
 
 /// @title  TBTC System Authority.
 /// @notice Contract to secure function calls to the TBTC System contract.

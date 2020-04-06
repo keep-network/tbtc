@@ -41,8 +41,7 @@
     "bn-chai": "^1.0.1",
     "bn.js": "^4.11.8",
     "create-hash": "^1.2.0",
-    "openzeppelin-solidity": "2.3.0",
-    "solc": "^0.5.10"
+    "openzeppelin-solidity": "2.3.0"
   },
   "devDependencies": {
     "@openzeppelin/test-environment": "^0.1.2",
@@ -64,6 +63,7 @@
     "prettier": "^1.19.1",
     "prettier-plugin-solidity": "^1.0.0-alpha.40",
     "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.1",
-    "truffle": "^5.1.13"
+    "truffle": "^5.1.13",
+    "solc": "0.5.15"
   }
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.15;
 
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol";
 import "./VendingMachineAuthority.sol";
