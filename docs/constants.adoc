@@ -14,6 +14,9 @@
 // Deposit terms.
 :term-length: 6 months
 
+// Transaction proof requirements.
+:tx-proof-difficulty-factor: 6 blocks
+
 // Lots and signer fees.
 :tbtc-lot-size: 1 TBTC
 :btc-lot-size: 1 BTC

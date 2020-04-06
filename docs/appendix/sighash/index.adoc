@@ -1,5 +1,6 @@
 :toc: macro
 
+[[sighash]]
 = Standardized Sighash Construction
 
 ifndef::tbtc[]
@@ -7,16 +8,13 @@ toc::[]
 
 endif::tbtc[]
 
-// TODO: many refs
-
 == Overview
-
-// TODO: ref bip143
 
 For signing, Bitcoin transforms transactions using a process known as the
 SignatureHash (sighash) algorithm. The original sighash algorithm had many
 drawbacks and sharp edges. In SegWit scripts, the algorithm was changed to
-follow BIP143 (legacy addresses still use the original algorithm).
+follow https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki[BIP143]
+(legacy addresses still use the original algorithm).
 
 The goal of the sighash algorithm is to commit to selected aspects of the
 transaction in the signed digest. This prevents malleation, and indicates the
@@ -24,13 +22,13 @@ signer's intent with respect to them. Specifically, BIP143 sighash commits to
 the following (not in this order):
 
 1. One or All inputs
-1. None, One, or All outputs
-1. The specific prevout this signature witnesses
-1. The pubkey script or redeem script code locking that prevout
-1. The value of the prevout this signature witnesses
-1. The sequence of the input spending that prevout
-1. The transaction version
-1. The transaction locktime
+2. none, one, or all outputs
+3. The specific prevout this signature witnesses
+4. The pubkey script or redeem script code locking that prevout
+5. The value of the prevout this signature witnesses
+6. The sequence of the input spending that prevout
+7. The transaction version
+8. The transaction locktime
 
 These are committed to via the double-sha256 of an ordered bytestring. This
 digest is signed, and can be reproduced by anyone inspecting the transaction
@@ -68,10 +66,11 @@ Double SHA256 of the serialization of:
    7. nSequence of the input (4-byte little endian)
    8. hashOutputs (32-byte hash)
    9. nLocktime of the transaction (4-byte little endian)
-  10. sighash type of the signature (4-byte little endian)
+  10. sighash type of the signature (4-byte little endian) <1>
 ```
-
-// TODO: ref my blogpost on sighash types
+<1> See the Summa description of
+    https://medium.com/summa-technology/summa-auction-bitcoin-technical-7344096498f2#2070[different
+    sighash types] for more details on this field.
 
 Because we don't need to use timelocks in our redemption transaction, we forbid
 their usage, allowing us to immediately standardize many elements. We also
