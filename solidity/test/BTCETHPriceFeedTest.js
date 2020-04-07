@@ -1,5 +1,5 @@
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+const {contract, accounts} = require("@openzeppelin/test-environment")
 const {BN, expectRevert, constants} = require("@openzeppelin/test-helpers")
 const {ZERO_ADDRESS} = constants
 const {expect} = require("chai")
@@ -9,93 +9,66 @@ const MockMedianizer = contract.fromArtifact("MockMedianizer")
 
 describe("BTCETHPriceFeed", async function() {
   let btcEthPriceFeed
-  let btc
-  let eth
+  let btceth
 
   before(async () => {
     btcEthPriceFeed = await BTCETHPriceFeed.new()
-    btc = await MockMedianizer.new()
-    eth = await MockMedianizer.new()
+    btceth = await MockMedianizer.new()
 
-    await btcEthPriceFeed.initialize(accounts[0], btc.address, eth.address)
+    await btcEthPriceFeed.initialize(accounts[0], btceth.address)
   })
 
   describe("#getPrice", async () => {
     beforeEach(createSnapshot)
     afterEach(restoreSnapshot)
 
-    it("computes a ratio of the two medianizers", async () => {
-      const btcUsd = "7152.55"
-      const ethUsd = "142.28"
+    it("returns BTCETH price feed value", async () => {
+      const btcethPrice = "502709446162"
 
-      await btc.setValue(web3.utils.toWei(btcUsd))
-      await eth.setValue(web3.utils.toWei(ethUsd))
+      await btceth.setValue(btcethPrice)
 
       const price = await btcEthPriceFeed.getPrice()
 
-      // 7152.55 / 142.28 = 50.2709446162
-      // 50.2709446162 * 10^10
-      // 502,709,446,162 wei
-      expect(price).to.be.bignumber.equal(new BN("502709446162"))
+      expect(price).to.be.bignumber.equal(new BN(btcethPrice))
     })
 
     it("casts down each medianizer price to lower 128 bits", async () => {
-      const btcPrice =
-        "0xdef00000000000000000000000000000000000000000000000000000000004"
-      const ethPrice =
-        "0xabc00000000000000000000000000000000000000000000000000000000002"
+      const btcethPrice =
+        "0xdef00000000000000000000000000000000000000000000000000004000000"
 
-      await btc.setValue(btcPrice)
-      await eth.setValue(ethPrice)
+      await btceth.setValue(btcethPrice)
 
       const price = await btcEthPriceFeed.getPrice()
-      expect(price).to.be.bignumber.equal(new BN("20000000000"))
+      expect(price).to.be.bignumber.equal(new BN("67108864"))
     })
 
     it("Reverts if there are no active price feeds", async () => {
-      await btc.setValue(0)
-      await eth.setValue(0)
+      await btceth.setValue(0)
       await expectRevert(btcEthPriceFeed.getPrice(), "Price feed offline")
     })
 
     it("Retrieve price through array of empty feeds", async () => {
-      // set non-zero value temporarily to avoid addBtcUsdFeed/addEthUsdFeed revert
-      await btc.setValue(1)
-      await eth.setValue(1)
-      await btcEthPriceFeed.addBtcUsdFeed(btc.address, {from: accounts[0]})
-      await btcEthPriceFeed.addEthUsdFeed(eth.address, {from: accounts[0]})
-      await btc.setValue(0)
-      await eth.setValue(0)
+      // set non-zero value temporarily to avoid addBtcEthFeed revert
+      await btceth.setValue(1)
+      await btcEthPriceFeed.addBtcEthFeed(btceth.address, {from: accounts[0]})
+      await btceth.setValue(0)
 
-      // Arrays should now each contain 2 inactive price feeds, append a working one
-      const workingBtcFeed = await MockMedianizer.new()
-      const workingEthFeed = await MockMedianizer.new()
+      // Array should now contain 2 inactive price feeds, append a working one
+      const workingBtcEthFeed = await MockMedianizer.new()
+      const btcEth = "123"
 
-      const btcUsd = "7152.55"
-      const ethUsd = "142.28"
-
-      await workingBtcFeed.setValue(web3.utils.toWei(btcUsd))
-      await workingEthFeed.setValue(web3.utils.toWei(ethUsd))
-
-      await btcEthPriceFeed.addBtcUsdFeed(workingBtcFeed.address, {
-        from: accounts[0],
-      })
-      await btcEthPriceFeed.addEthUsdFeed(workingEthFeed.address, {
+      await workingBtcEthFeed.setValue(btcEth)
+      await btcEthPriceFeed.addBtcEthFeed(workingBtcEthFeed.address, {
         from: accounts[0],
       })
 
-      const activeBtcFeed = await btcEthPriceFeed.getWorkingBtcUsdFeed()
-      const activeEthFeed = await btcEthPriceFeed.getWorkingEthUsdFeed()
+      const activeBtcEthFeed = await btcEthPriceFeed.getWorkingBtcEthFeed()
       // ensure the feed we read from is indeed workingBtcFeed and workingEthFeed
-      expect(activeBtcFeed).to.equal(workingBtcFeed.address)
-      expect(activeEthFeed).to.equal(workingEthFeed.address)
+      expect(activeBtcEthFeed).to.equal(workingBtcEthFeed.address)
 
       const price = await btcEthPriceFeed.getPrice()
 
-      // 7152.55 / 142.28 = 50.2709446162
-      // 50.2709446162 * 10^10
-      // 502,709,446,162 wei
-      expect(price).to.be.bignumber.equal(new BN("502709446162"))
+      expect(price).to.be.bignumber.equal(btcEth)
     })
   })
 
@@ -107,12 +80,7 @@ describe("BTCETHPriceFeed", async function() {
       const med = await MockMedianizer.new()
 
       await expectRevert(
-        btcEthPriceFeed.addBtcUsdFeed(med.address),
-        "Caller must be tbtcSystem contract",
-      )
-
-      await expectRevert(
-        btcEthPriceFeed.addBtcUsdFeed(med.address),
+        btcEthPriceFeed.addBtcEthFeed(med.address),
         "Caller must be tbtcSystem contract",
       )
     })
@@ -121,12 +89,7 @@ describe("BTCETHPriceFeed", async function() {
       const med = await MockMedianizer.new()
 
       await expectRevert(
-        btcEthPriceFeed.addBtcUsdFeed(med.address, {from: accounts[0]}),
-        "Cannot add inactive feed",
-      )
-
-      await expectRevert(
-        btcEthPriceFeed.addEthUsdFeed(med.address, {from: accounts[0]}),
+        btcEthPriceFeed.addBtcEthFeed(med.address, {from: accounts[0]}),
         "Cannot add inactive feed",
       )
     })
@@ -137,35 +100,23 @@ describe("BTCETHPriceFeed", async function() {
     afterEach(restoreSnapshot)
 
     it("Returns first active feed", async () => {
-      const workingBtcFeed = await MockMedianizer.new()
-      const workingEthFeed = await MockMedianizer.new()
+      const workingBtcEthFeed = await MockMedianizer.new()
+      const btcEth = "123"
 
-      const btcUsd = "7152.55"
-      const ethUsd = "142.28"
-
-      await workingBtcFeed.setValue(web3.utils.toWei(btcUsd))
-      await workingEthFeed.setValue(web3.utils.toWei(ethUsd))
-
-      await btcEthPriceFeed.addBtcUsdFeed(workingBtcFeed.address, {
-        from: accounts[0],
-      })
-      await btcEthPriceFeed.addEthUsdFeed(workingEthFeed.address, {
+      await workingBtcEthFeed.setValue(btcEth)
+      await btcEthPriceFeed.addBtcEthFeed(workingBtcEthFeed.address, {
         from: accounts[0],
       })
 
-      const activeBtcFeed = await btcEthPriceFeed.getWorkingBtcUsdFeed()
-      const activeEthFeed = await btcEthPriceFeed.getWorkingEthUsdFeed()
+      const activeBtcEthFeed = await btcEthPriceFeed.getWorkingBtcEthFeed()
 
-      expect(activeBtcFeed).to.equal(workingBtcFeed.address)
-      expect(activeEthFeed).to.equal(workingEthFeed.address)
+      expect(activeBtcEthFeed).to.equal(workingBtcEthFeed.address)
     })
 
     it("Returns address(0) if no active feed found ", async () => {
-      const activeBtcFeed = await btcEthPriceFeed.getWorkingBtcUsdFeed()
-      const activeEthFeed = await btcEthPriceFeed.getWorkingEthUsdFeed()
+      const activeBtcEthFeed = await btcEthPriceFeed.getWorkingBtcEthFeed()
 
-      expect(activeBtcFeed).to.equal(ZERO_ADDRESS)
-      expect(activeEthFeed).to.equal(ZERO_ADDRESS)
+      expect(activeBtcEthFeed).to.equal(ZERO_ADDRESS)
     })
   })
 })

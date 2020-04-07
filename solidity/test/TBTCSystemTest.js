@@ -13,8 +13,6 @@ describe("TBTCSystem", async function() {
   let tbtcSystem
   let ecdsaKeepFactory
   let tdt
-  let btcMedianizer
-  let ethMedianizer
 
   before(async () => {
     const {
@@ -36,13 +34,8 @@ describe("TBTCSystem", async function() {
     ecdsaKeepFactory = ecdsaKeepFactoryStub
     tdt = tbtcDepositToken
 
-    btcMedianizer = await MockMedianizer.new()
-    ethMedianizer = await MockMedianizer.new()
-    mockBTCETHPriceFeed.initialize(
-      tbtcSystem.address,
-      btcMedianizer.address,
-      ethMedianizer.address,
-    )
+    btcEthMedianizer = await MockMedianizer.new()
+    mockBTCETHPriceFeed.initialize(tbtcSystem.address, btcEthMedianizer.address)
   })
 
   describe("requestNewKeep()", async () => {
@@ -529,7 +522,7 @@ describe("TBTCSystem", async function() {
     })
   })
 
-  describe("add BTC/USD price feed", async () => {
+  describe("add BTC/ETH price feed", async () => {
     let med
     let timer
     before(async () => {
@@ -546,71 +539,36 @@ describe("TBTCSystem", async function() {
       await restoreSnapshot()
     })
 
-    describe("initializeAddBtcUsdFeed", async () => {
-      it("initializes BTC/USD addition and emits BtcUsdPriceFeedAdditionStarted", async () => {
-        const receipt = await tbtcSystem.initializeAddBtcUsdFeed(med.address)
+    describe("initializeAddBtcEthFeed", async () => {
+      it("initializes BTC/ETH addition and emits BtcEthPriceFeedAdditionStarted", async () => {
+        const receipt = await tbtcSystem.initializeAddBtcEthFeed(med.address)
 
-        expectEvent(receipt, "BtcUsdPriceFeedAdditionStarted", {
+        expectEvent(receipt, "BtcEthPriceFeedAdditionStarted", {
           _priceFeed: med.address,
         })
       })
     })
 
-    describe("initializeAddEthUsdFeed", async () => {
-      it("initializes ETH/USD addition and emits EthUsdPriceFeedAdditionStarted", async () => {
-        const receipt = await tbtcSystem.initializeAddEthUsdFeed(med.address)
-
-        expectEvent(receipt, "EthUsdPriceFeedAdditionStarted", {
-          _priceFeed: med.address,
-        })
-      })
-    })
-
-    describe("finalizeAddBtcUsdFeed", async () => {
+    describe("finalizeAddBtcEthFeed", async () => {
       it("Reverts if no change as been initiated", async () => {
         await increaseTime(timer.toNumber() + 1)
-        await expectRevert.unspecified(tbtcSystem.finalizeAddBtcUsdFeed(), "")
+        await expectRevert.unspecified(tbtcSystem.finalizeAddBtcEthFeed(), "")
       })
 
       it("Reverts if timer has not elapsed", async () => {
-        await tbtcSystem.initializeAddBtcUsdFeed(med.address)
+        await tbtcSystem.initializeAddBtcEthFeed(med.address)
         await increaseTime(timer.toNumber() - 10)
         await expectRevert(
-          tbtcSystem.finalizeAddBtcUsdFeed(),
+          tbtcSystem.finalizeAddBtcEthFeed(),
           "Timeout not yet elapsed",
         )
       })
 
-      it("Finalizes BTC/USD addition and emits BtcUsdPriceFeedAdded", async () => {
-        await tbtcSystem.initializeAddBtcUsdFeed(med.address)
+      it("Finalizes BTC/ETH addition and emits BtcEthPriceFeedAdded", async () => {
+        await tbtcSystem.initializeAddBtcEthFeed(med.address)
         await increaseTime(timer.toNumber() + 1)
-        const receipt = await tbtcSystem.finalizeAddBtcUsdFeed()
-        expectEvent(receipt, "BtcUsdPriceFeedAdded", {
-          _priceFeed: med.address,
-        })
-      })
-    })
-
-    describe("finalizeAddEthUsdFeed", async () => {
-      it("Reverts if no change as been initiated", async () => {
-        await increaseTime(timer.toNumber() + 1)
-        await expectRevert.unspecified(tbtcSystem.finalizeAddEthUsdFeed(), "")
-      })
-
-      it("Reverts if timer has not elapsed", async () => {
-        await tbtcSystem.initializeAddEthUsdFeed(med.address)
-        await increaseTime(timer.toNumber() - 10)
-        await expectRevert(
-          tbtcSystem.finalizeAddEthUsdFeed(),
-          "Timeout not yet elapsed",
-        )
-      })
-
-      it("Finalizes ETH/USD addition and emits EthUsdPriceFeedAdded", async () => {
-        await tbtcSystem.initializeAddEthUsdFeed(med.address)
-        await increaseTime(timer.toNumber() + 1)
-        const receipt = await tbtcSystem.finalizeAddEthUsdFeed()
-        expectEvent(receipt, "EthUsdPriceFeedAdded", {
+        const receipt = await tbtcSystem.finalizeAddBtcEthFeed()
+        expectEvent(receipt, "BtcEthPriceFeedAdded", {
           _priceFeed: med.address,
         })
       })
