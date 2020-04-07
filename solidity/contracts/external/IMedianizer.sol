@@ -1,4 +1,4 @@
-pragma solidity 0.5.15;
+pragma solidity 0.5.17;
 
 /// @notice A medianizer price feed.
 /// @dev Based off the MakerDAO medianizer (https://github.com/makerdao/median)

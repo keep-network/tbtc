@@ -1,4 +1,4 @@
-pragma solidity 0.5.15;
+pragma solidity 0.5.17;
 
 import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";

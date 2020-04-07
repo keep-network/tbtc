@@ -1,4 +1,4 @@
-pragma solidity 0.5.15;
+pragma solidity 0.5.17;
 
 /// @title Interface of recipient contract for `approveAndCall` pattern.
 ///        Implementors will be able to be used in an `approveAndCall`

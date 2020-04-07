@@ -1,4 +1,4 @@
-pragma solidity 0.5.15;
+pragma solidity 0.5.17;
 
 import {DepositUtils} from "../../../contracts/deposit/DepositUtils.sol";
 import {TestDeposit} from "./TestDeposit.sol";

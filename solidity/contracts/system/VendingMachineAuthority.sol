@@ -1,4 +1,4 @@
-pragma solidity 0.5.15;
+pragma solidity 0.5.17;
 
 /// @title  Vending Machine Authority.
 /// @notice Contract to secure function calls to the Vending Machine.

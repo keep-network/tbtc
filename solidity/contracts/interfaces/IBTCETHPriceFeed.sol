@@ -1,4 +1,4 @@
-pragma solidity 0.5.15;
+pragma solidity 0.5.17;
 
 interface IBTCETHPriceFeed {
     /// @notice Get the current price of bitcoin in ether.
