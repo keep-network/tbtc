@@ -7,9 +7,6 @@ interface IBTCETHPriceFeed {
     /// @return The price of one satoshi in wei.
     function getPrice() external view returns (uint256);
 
-    /// @notice add a new BTC/USD meidanizer to the internal btcUsdFeeds array
-    function addBtcUsdFeed(IMedianizer _btcUsdFeed) external;
-
-    /// @notice add a new ETH/USD meidanizer to the internal ethUsdFeeds array
-    function addEthUsdFeed(IMedianizer _ethUsdFeed) external;
+    /// @notice add a new BTC/ETH meidanizer to the internal btcEthFeeds array
+    function addBtcEthFeed(IMedianizer _btcEthFeed) external;
 }

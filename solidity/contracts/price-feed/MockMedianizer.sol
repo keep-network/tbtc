@@ -25,10 +25,6 @@ contract MockMedianizer is Ownable, IMedianizer {
     }
 }
 
-contract BTCUSDPriceFeed is MockMedianizer {
-    // solium-disable-previous-line no-empty-blocks
-}
-
-contract ETHUSDPriceFeed is MockMedianizer {
+contract BTCETHPriceFeedMock is MockMedianizer {
     // solium-disable-previous-line no-empty-blocks
 }
