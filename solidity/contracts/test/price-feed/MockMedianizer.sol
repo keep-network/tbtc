@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../../contracts/external/IMedianizer.sol";
