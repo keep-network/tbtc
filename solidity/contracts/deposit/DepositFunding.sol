@@ -99,12 +99,11 @@ library DepositFunding {
 
         _d.setFailedSetup();
         _d.logSetupFailed();
+        fundingTeardown(_d);
 
         /* solium-disable-next-line security/no-send */
         _d.depositOwner().call.value(_d.keepSetupFee)("");
         _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
-
-        fundingTeardown(_d);
     }
 
     /// @notice             we poll the Keep contract to retrieve our pubkey.

@@ -71,6 +71,9 @@ library DepositLiquidation {
         _d.redemptionTeardown();
         uint256 _seized = _d.seizeSignerBonds();
 
+        _d.liquidationInitiator = msg.sender;
+        _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+
         if (_d.auctionTBTCAmount() == 0) {
             // we came from the redemption flow
             _d.setLiquidated();
@@ -78,9 +81,6 @@ library DepositLiquidation {
             _d.logLiquidated();
             return;
         }
-
-        _d.liquidationInitiator = msg.sender;
-        _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
 
         _d.setFraudLiquidationInProgress();
     }
@@ -167,8 +167,9 @@ library DepositLiquidation {
 
         // send the TBTC to the TDT holder. If the TDT holder is the Vending Machine, burn it to maintain the peg.
         address tdtHolder = _d.depositOwner();
-
         uint256 lotSizeTbtc = _d.lotSizeTbtc();
+        address payable initiator = _d.liquidationInitiator;
+
         require(_d.tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc, "Not enough TBTC to cover outstanding debt");
 
         if(tdtHolder == _d.vendingMachineAddress){
@@ -176,6 +177,10 @@ library DepositLiquidation {
         }
         else{
             _d.tbtcToken.transferFrom(msg.sender, tdtHolder, lotSizeTbtc);
+        }
+
+        if (initiator == address(0)){
+            initiator = address(0xdead);
         }
 
         // Distribute funds to auction buyer
@@ -190,11 +195,7 @@ library DepositLiquidation {
         // division will yield a 0 value which causes a revert; instead,
         // we simply ignore such a tiny amount and leave some wei dust in escrow
         uint256 contractEthBalance = address(this).balance;
-        address payable initiator = _d.liquidationInitiator;
 
-        if (initiator == address(0)){
-            initiator = address(0xdead);
-        }
         if (contractEthBalance > 1) {
             if (_wasFraud) {
                 /* solium-disable-next-line security/no-send */
