@@ -1,8 +1,9 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
-import "./VendingMachineAuthority.sol";
+import {ERC20} from "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import {ERC20Detailed} from "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import {VendingMachineAuthority} from "./VendingMachineAuthority.sol";
+import {ITokenRecipient} from "../interfaces/ITokenRecipient.sol";
 
 /// @title  TBTC Token.
 /// @notice This is the TBTC ERC20 contract.
@@ -46,31 +47,21 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     }
 
     /// @notice           Set allowance for other address and notify.
-    ///                   Allows `_spender` to spend no more than `_value` tokens
-    ///                   on your behalf and then ping the contract about it.
-    /// @dev              The `_spender` should implement the `tokenRecipient` interface above
-    ///                   to receive approval notifications.
+    ///                   Allows `_spender` to spend no more than `_value`
+    ///                   tokens on your behalf and then ping the contract about
+    ///                   it.
+    /// @dev              The `_spender` should implement the `ITokenRecipient`
+    ///                   interface to receive approval notifications.
     /// @param _spender   Address of contract authorized to spend.
     /// @param _value     The max amount they can spend.
     /// @param _extraData Extra information to send to the approved contract.
-    function approveAndCall(address _spender, uint256 _value, bytes memory _extraData) public returns (bool) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, address(this), _extraData);
+    /// @return true if the `_spender` was successfully approved and acted on
+    ///         the approval, false (or revert) otherwise.
+    function approveAndCall(ITokenRecipient _spender, uint256 _value, bytes memory _extraData) public returns (bool) {
+        if (approve(address(_spender), _value)) {
+            _spender.receiveApproval(msg.sender, _value, address(this), _extraData);
             return true;
         }
         return false;
     }
-}
-
-/// @title Interface of recipient contract for approveAndCall pattern.
-/// See `RedemptionScript` for an example.
-interface tokenRecipient {
-    function receiveApproval(
-        address _from,
-        uint256 _value,
-        address _token,
-        bytes calldata
-        _extraDat
-    ) external;
 }

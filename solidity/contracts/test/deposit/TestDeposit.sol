@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import {Deposit} from "../../../contracts/deposit/Deposit.sol";
 import {ITBTCSystem} from "../../interfaces/ITBTCSystem.sol";

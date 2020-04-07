@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import {DepositLog} from "../DepositLog.sol";
 import {DepositUtils} from "./DepositUtils.sol";

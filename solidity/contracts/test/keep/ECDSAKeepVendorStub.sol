@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import {IBondedECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepVendor.sol";
 

@@ -1,9 +1,9 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
-import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";

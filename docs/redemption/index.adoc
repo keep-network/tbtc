@@ -1,15 +1,15 @@
 :toc: macro
 
+[[redemption]]
 = Redemption
 
 ifndef::tbtc[]
 toc::[]
 
-:root-prefix: ../
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
 include::../constants.adoc[]
 endif::tbtc[]
-
-// TODO backrefs to signing
 
 == Overview
 
@@ -18,7 +18,7 @@ redeemable for the BTC held there. The tBTC redemption system aims to provide
 access to those BTC via a publicly verifiable process.
 
 So long as a deposit is maintained in good standing, the holder of the
-<<{root-prefix}/minting/index#,non-fungible tBTC Deposit Token>> may
+<<minting/index.adoc#minting,non-fungible tBTC Deposit Token>> may
 <<requests,request redemption>>, relinquishing their NFT and paying
 any outstanding signer fees associated with the deposit.
 
@@ -29,25 +29,23 @@ signature sending the underlying BTC to the requested address. After a
 signature has been published, any actor may build and submit a
 _redemption transaction_ to the Bitcoin blockchain using that signature.
 
-// TODO: document future upgrade where signers sign singleACP?
-
 [[at-term]]
 === Deposit Terms and Redemption
 
-As noted in the section on
-<<{root-prefix}/deposits/economics/index#term,deposit terms>>, a deposit has
-a fixed term. After that term expires, the deposit becomes unlocked from the
-deposit owner, so that it can be redeemed by any account (including, notably,
-the deposit owner account). At this point, redemption costs exactly 1 TBTC,
-with no signer fee due. If the deposit has had the signer fee
-<<{root-prefix}/minting/index#vending-machine,escrowed during TBTC minting>>,
-the signer fee is paid from escrow and the deposit owner is sent the full 1
-TBTC. If the deposit has no escrowed fee, the owner is sent the 1 TBTC used
-to redeem, less the signer fee, which is distributed to the signers.
+As noted in the section on <<deposits/economics.adoc#term,deposit terms>>, a
+deposit has a fixed term. After that term expires, the deposit becomes
+unlocked from the deposit owner, so that it can be redeemed by any account
+(including, notably, the deposit owner account). At this point, redemption
+costs exactly 1 TBTC, with no signer fee due. If the deposit has had the
+signer fee <<minting/index.adoc#vending-machine,escrowed during TBTC
+minting>>, the signer fee is paid from escrow and the deposit owner is sent
+the full 1 TBTC. If the deposit has no escrowed fee, the owner is sent the 1
+TBTC used to redeem, less the signer fee, which is distributed to the
+signers.
 
 NOTE: For the deposit owner, at term, redemption is free if there are escrowed
 fees, or costs the signer fee if there are not. This is subtly different from
-pre-term redemption, where the deposit owner must pay the signer fee _even if 
+pre-term redemption, where the deposit owner must pay the signer fee _even if
 there are escrowed fees_. The additional difference is to the Fee Rebate
 Token holder, who is rebated the signer fee during pre-term redemptions, but
 not during at-term redemptions.
@@ -55,18 +53,30 @@ not during at-term redemptions.
 [[requests]]
 == Redemption Requests
 
-If the deposit is in good standing (has not been accused of fraud, or entered
-signer liquidation), only the holder of the corresponding tBTC Deposit Token
-may request redemption. To do so that person makes a _redemption request_
-transaction to the smart contract on the host chain. The _redemption request_
-includes the following:
+A redemption request can be submitted in a few cases:
+
+* If the deposit is in good standing (has not already been redeemed, has
+  not been accused of <<failure/index.adoc#fraud,fraud>>, and has not entered
+  <<bonding/index.adoc#liquidation,signer liquidation>>), pre-term, and the
+  requester holds the corresponding tBTC Deposit Token.
+* If the deposit is in good standing and is at or past <<at-term,term>>,
+  irrespective of whether the requester holds the corresponding tBTC Deopsit
+  Token.
+* If the deposit has entered <<bonding/index.adoc#pre-liquidation,courtesy
+  call>>, an undercollateralization state designed to allow closing deposits
+  before they become dangerously undercollateralized, irrespective of whether
+  the requester holds the corresponding tBTC Deposit Token.
+
+To request redemption, a requester makes a _redemption request_ transaction
+to the smart contract on the host chain. The _redemption request_ includes
+the following:
 
 1. A Bitcoin transaction fee amount
   - must be >={min-redemption-btc-fee} ({min-redemption-btc-feerate})
 2. A public key hash (PKH) for BTC delivery
   - the 20-byte hash160 of a public key belonging to the requester
   - for security and privacy, this SHOULD be a new keypair
-3. The deposit's <<repayment amount,Repayment Amount>> in TBTC
+3. The deposit's <<repayment-amount,Repayment Amount>> in TBTC
 
 Upon receipt of the _redemption request_, the smart contract escrows the
 repayment amount, which includes the signer fee, records the receipt of the
@@ -79,7 +89,7 @@ produced could be used to both redeem the BTC and submit a signer fraud proof.
 A fraud proof created this way would appear valid to the host chain smart
 contract because it no longer has a record of the redemption request.
 
-
+[[repayment-amount]]
 == Repayment Amount
 
 :pre-term-redemption-footnote: footnote:pre-term-redemption[Pre-term deposits \
@@ -94,10 +104,11 @@ rebate (in pre-term redemptions).
 
 After all the math shakes out, the repayment amount can vary depending on the
 redeeming party, the TDT holder, the FRT holder, and the deposit's term
-state. <<{root-prefix}appendix/disbursal/index#deposit-payment-flow>> lists
-the various combinations that are possible, and the corresponding repayment
-amounts owed by the redeemer, assuming three possible parties, A, B, and C.
-It also lists out the relevant disbursal upon redemption proof.
+state. The <<appendix/disbursal/index.adoc#deposit-payment-flow,Deposit
+payment flow>> table lists the various combinations that are possible, and
+the corresponding repayment amounts owed by the redeemer, assuming three
+possible parties, A, B, and C. It also lists out the relevant disbursal upon
+redemption proof.
 
 == Redemption Transaction Format
 
@@ -108,14 +119,12 @@ The requester may specify only 2 aspects of the transaction: its fee and its
 destination. All other deposit-specific information (e.g. the outpoint and
 the UTXO size) is known to the deposit contract in advance.
 
-// TODO: Link
-
 The _redemption transaction_ has 1 input (the deposit UTXO) and 1 output (the
 redemption output). It does not have change outputs, or additional inputs, as
 none are needed. It simply transfers the underlying BTC to the sole custody of
 the requester. Its timelock and sequence numbers are set to 0 and its version
 is set to 1. Full documentation of the format and the construction of its
-sighash can be found in the <<{root-prefix}appendix/sighash,appendix>>.
+sighash can be found in the <<appendix/sighash/index.adoc#sighash,appendix>>.
 
 Because the format is simple and canonical, any observer may use publicly
 available information to build it. Once a signature has been published, it is
@@ -126,36 +135,36 @@ anyone may do so if the signers do not.
 
 == Redemption proof
 
-// TODO: Link SPV proof breakdown
-
-A _redemption proof_ is an SPV proof that a _redemption transaction_ was
-confirmed by the Bitcoin blockchain. Once a request to redeem is confirmed,
-the deposit smart contract expects a _redemption proof_ within
-{redemption-proof-timeout}. To validate a _redemption proof_, the smart
-contract performs normal SPV proof verification, and additionally verifies
-that the recipient matches the requester's public key hash, and the value is
-greater than or equal `UTXO Size - highest allowed fee` (see <<Allowing for
-Bitcoin Fee Adjustment>> for more details).
+A _redemption proof_ is an <<appendix/spv/index.adoc#spv,SPV proof>> that a
+_redemption transaction_ was confirmed by the Bitcoin blockchain. Once a
+request to redeem is confirmed, the deposit smart contract expects a
+_redemption proof_ within {redemption-proof-timeout}. To validate a
+_redemption proof_, the smart contract performs normal SPV proof
+verification, and additionally verifies that the recipient matches the
+requester's public key hash, and the value is greater than or equal `UTXO
+Size - highest allowed fee` (see <<Allowing for Bitcoin fee adjustment>> for
+more details).
 
 Once redemption proof is confirmed, the signing fee is paid, the FRT holder
 receives their escrowed funds (if the deposit was redeemed pre-term), and the
 TDT holder receives the remainder of the repayment amount. As with the
 repayment amount, the amount each of the parties receives in case of a
 successful redemption varies depending on the TDT holder, FRT holder,
-redeemer, and deposit state.
-<<{root-prefix}appendix/disbursal/index#deposit-payment-flow>> lists the
-various combinations that are possible, and the corresponding repayment
-amounts owed by the redeemer, assuming three possible parties, A, B, and C:
+redeemer, and deposit state. The
+<<appendix/disbursal/index.adoc#deposit-payment-flow,Deposit payment flow>>
+table lists the various combinations that are possible, and the corresponding
+repayment amounts owed by the redeemer, assuming three possible parties, A,
+B, and C.
 
 == Validating a signature
 
-After the redemption request is sufficiently confirmed, the signers MUST
-produce a signature on the _redemption transaction_ signature hash as
-requested. They have {signature-timeout} in which to produce either a
-signature, or a <<Redemption Proof, _redemption proof_>> before being subject
-to penalties. Upon submission of a valid signature a _redemption proof_ is
-still required, but the deadline is extended to {redemption-proof-timeout} in
-total.
+After the redemption request is sufficiently confirmed,
+<<signing/index.adoc#signing,the signers MUST produce a signature>> on the
+_redemption transaction_ signature hash as requested. They have
+{signature-timeout} in which to produce either a signature, or a <<Redemption
+proof, _redemption proof_>> before being subject to penalties. Upon
+submission of a valid signature a _redemption proof_ is still required, but
+the deadline is extended to {redemption-proof-timeout} in total.
 
 As discussed <<Redemption Transaction Format, earlier>>, the host chain smart
 contract managing the deposit has all information necessary to calculate the
@@ -165,10 +174,7 @@ request the smart contract can know both the cryptographic validity of the
 signature and that a signature on that digest was requested as part of a
 redemption process.
 
-
 == Allowing for Bitcoin fee adjustment
-
-// TODO: link ECDSA fraud proofs
 
 Because Bitcoin fees are determined by network congestion and other highly
 unpredictable factors, the requester may not select an appropriate fee. Signers

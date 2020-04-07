@@ -1,7 +1,7 @@
-[#signer-fees]
+[[signer-fees]]
 = Signer Fees
 
-Signers put their own <<Bonding,funds at risk>> to assure depositors there will
+Signers put their own <<bonding/index.adoc#bonding,funds at risk>> to assure depositors there will
 be no foul play. The bonds they put down are capital that could otherwise be
 productive, and need to earn a return relative to the risk to remain competitive
 with other opportunities.
