@@ -49,7 +49,7 @@ $ npm install @keep-network/tbtc
 
 == Usage
 
-*NOTE:* tBTC contracts require _solc_ v0.5.10 or higher. You may have to
+*NOTE:* tBTC contracts require _solc_ v0.5.17 or higher. You may have to
 https://www.trufflesuite.com/docs/truffle/reference/configuration#compiler-configuration[configure
 solc in your `truffle-config.js`].
 
@@ -58,7 +58,7 @@ them:
 
 [source,sol]
 ----
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.17;
 
 import "@keep-network/tbtc/contracts/deposit/Deposit.sol";
 
