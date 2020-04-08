@@ -402,4 +402,11 @@ contract Deposit is DepositFactoryAuthority {
         self.notifyCourtesyTimeout();
         return true;
     }
+
+    /// @notice     Pull any funds owed to msg.sender after contract has reached an end-state.
+    /// @return     True if successful, otherwise revert.
+    function withdrawFunds() public returns (bool) {
+        self.withdrawFunds();
+        return true;
+    }
 }
