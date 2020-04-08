@@ -65,6 +65,10 @@ ssh utilitybox << EOF
   tenderly push --networks $ETH_NETWORK_ID --tag tbtc \
     --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG || echo "tendery push failed :("
   echo "<<<<<<FINISH Tenderly Push FINISH<<<<<<"
+
+  # Explicitly exit, in case something a backgrounded job is trying to keep this
+  # process running.
+  exit 0
 EOF
 
 echo "<<<<<<START Contract Copy START<<<<<<"
