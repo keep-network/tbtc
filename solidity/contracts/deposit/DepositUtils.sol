@@ -399,7 +399,7 @@ library DepositUtils {
         return _postCallBalance.sub(_preCallBalance);
     }
 
-    /// @notice     Adds a given amount to an addresses withdrawal allowance.
+    /// @notice     Adds a given amount to the withdraw allowance for the address.
     /// @dev        Withdrawals can only happen when a contract is in an end-state.
     function enableWithdrawal(DepositUtils.Deposit storage _d, address _withdrawer, uint256 _amount) internal {
         _d.withdrawalAllowances[_withdrawer] = _d.withdrawalAllowances[_withdrawer].add(_amount);
@@ -422,7 +422,7 @@ library DepositUtils {
     }
 
     /// @notice     Get the caller's withdraw allowance.
-    /// @return     The caller's withdrawable allowance in wei.
+    /// @return     The caller's withdraw allowance in wei.
     function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal returns (uint256) {
         return _d.withdrawalAllowances[msg.sender];
     }

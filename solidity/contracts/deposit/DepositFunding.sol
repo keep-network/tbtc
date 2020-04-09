@@ -163,7 +163,7 @@ library DepositFunding {
         require(_isFraud, "Signature is not fraudulent");
         _d.logFraudDuringSetup();
 
-        // allow deposit owner to withdraw sized bonds after contract termination;
+        // Allow deposit owner to withdraw seized bonds after contract termination.
         uint256 _seized = _d.seizeSignerBonds();
         _d.enableWithdrawal(_d.depositOwner(), _seized);
 
