@@ -680,31 +680,38 @@ describe("DepositUtils", async function() {
       await restoreSnapshot()
     })
 
-    it("Correctly withdraws withdrawable balance at end-states", async () => {
+    it("correctly withdraws withdrawable balance at end-states", async () => {
       const endStates = [
         states.LIQUIDATED,
         states.REDEEMED,
-        states.FAILED_SETUP
+        states.FAILED_SETUP,
       ]
 
-      for(let i = 0; i < endStates.length; i++){
+      for (let i = 0; i < endStates.length; i++) {
         await createSnapshot()
         await testDeposit.setState(endStates[i])
         const value = new BN(web3.utils.toWei("0.1"))
         const beneficiary = accounts[1]
         const initialBalance = await web3.eth.getBalance(beneficiary)
 
-        await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+        await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
+          value: value,
+        })
         await testDeposit.enableWithdrawal(beneficiary, value)
-        await testDeposit.withdrawFunds({from: beneficiary})
+        const tx = await testDeposit.withdrawFunds({from: beneficiary})
+        const finalBalance = await web3.eth.getBalance(beneficiary)
 
         const withdrawable = await testDeposit.getWithdrawAllowance.call({
           from: beneficiary,
         })
-        const finalBalance = await web3.eth.getBalance(beneficiary)
+        const gasPrice = await web3.eth.getGasPrice()
+        const gasUSed = tx.receipt.cumulativeGasUsed
+        const totalTxCost = new BN(gasPrice).mul(new BN(gasUSed))
 
         expect(withdrawable).to.eq.BN(0)
-        expect(finalBalance).to.gt.BN(initialBalance)
+        expect(new BN(finalBalance).add(totalTxCost)).to.eq.BN(
+          new BN(initialBalance).add(value),
+        )
         await restoreSnapshot()
       }
     })
@@ -719,11 +726,10 @@ describe("DepositUtils", async function() {
         states.AWAITING_WITHDRAWAL_PROOF,
         states.COURTESY_CALL,
         states.FRAUD_LIQUIDATION_IN_PROGRESS,
-        states.LIQUIDATION_IN_PROGRESS
+        states.LIQUIDATION_IN_PROGRESS,
       ]
 
-      for(let i = 0; i < notEndStates.length; i++){
-
+      for (let i = 0; i < notEndStates.length; i++) {
         await testDeposit.setState(notEndStates[i])
 
         await expectRevert(
