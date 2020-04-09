@@ -226,7 +226,10 @@ describe("DepositFunding", async function() {
       const withdrawable = await testDeposit.getWithdrawAllowance.call({
         from: owner,
       })
+
+      const depositBalance = await web3.eth.getBalance(testDeposit.address)
       expect(withdrawable).to.eq.BN(new BN(openKeepFee))
+      expect(withdrawable).to.eq.BN(new BN(depositBalance))
 
       expect(
         signingGroupRequestedAt,

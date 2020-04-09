@@ -171,14 +171,19 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
-      const auctionValue = await testDeposit.auctionValue()
+      const auctionValue = await testDeposit.auctionValue.call()
 
       await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
 
+      // calculate the split of the un-purchased signer bond
+      const split = value.sub(auctionValue).div(new BN(2))
+      
       const withdrawable = await testDeposit.getWithdrawAllowance.call({
         from: buyer,
       })
-
+      const depositBalance = await web3.eth.getBalance(testDeposit.address)
+     
+      expect(depositBalance).to.eq.BN(auctionValue.add(split))
       expect(withdrawable, "buyer should have a withdrawable balance").to.eq.BN(
         auctionValue,
       )
@@ -199,6 +204,8 @@ describe("DepositLiquidation", async function() {
 
       await testDeposit.setLiquidationInitiator(liquidationInitiator)
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+
+      const auctionValue = await testDeposit.auctionValue.call()
       // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
       await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
 
@@ -216,7 +223,9 @@ describe("DepositLiquidation", async function() {
       const withdrawable = await testDeposit.getWithdrawAllowance.call({
         from: liquidationInitiator,
       })
-
+      const depositBalance = await web3.eth.getBalance(testDeposit.address)
+     
+      expect(depositBalance).to.eq.BN(auctionValue.add(new BN(split)))
       expect(new BN(split)).to.eq.BN(withdrawable)
       expect(new BN(split)).to.eq.BN(signerBalanceDiff)
     })
@@ -253,7 +262,9 @@ describe("DepositLiquidation", async function() {
       })
 
       const totalReward = (value * (100 - basePercentage)) / 100
-
+      const depositBalance = await web3.eth.getBalance(testDeposit.address)
+     
+      expect(depositBalance).to.eq.BN(new BN(value))
       expect(new BN(signerBalanceDiff)).to.eq.BN(0)
       expect(new BN(withdrawable)).to.eq.BN(totalReward)
     })
