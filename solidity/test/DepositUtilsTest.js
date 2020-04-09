@@ -680,32 +680,57 @@ describe("DepositUtils", async function() {
       await restoreSnapshot()
     })
 
-    it("Correctly withdraws withdrawable balance at end-state", async () => {
-      await testDeposit.setState(states.LIQUIDATED)
-      const value = new BN(web3.utils.toWei("0.1"))
-      const beneficiary = accounts[1]
-      const initialBalance = await web3.eth.getBalance(beneficiary)
+    it("Correctly withdraws withdrawable balance at end-states", async () => {
+      const endStates = [
+        states.LIQUIDATED,
+        states.REDEEMED,
+        states.FAILED_SETUP
+      ]
 
-      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
-      await testDeposit.enableWithdrawal(beneficiary, value)
-      await testDeposit.withdrawFunds({from: beneficiary})
+      for(let i = 0; i < endStates.length; i++){
+        await createSnapshot()
+        await testDeposit.setState(endStates[i])
+        const value = new BN(web3.utils.toWei("0.1"))
+        const beneficiary = accounts[1]
+        const initialBalance = await web3.eth.getBalance(beneficiary)
 
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
-        from: beneficiary,
-      })
-      const finalBalance = await web3.eth.getBalance(beneficiary)
+        await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+        await testDeposit.enableWithdrawal(beneficiary, value)
+        await testDeposit.withdrawFunds({from: beneficiary})
 
-      expect(withdrawable).to.eq.BN(0)
-      expect(finalBalance).to.gt.BN(initialBalance)
+        const withdrawable = await testDeposit.getWithdrawAllowance.call({
+          from: beneficiary,
+        })
+        const finalBalance = await web3.eth.getBalance(beneficiary)
+
+        expect(withdrawable).to.eq.BN(0)
+        expect(finalBalance).to.gt.BN(initialBalance)
+        await restoreSnapshot()
+      }
     })
 
     it("Reverts if not in end-state", async () => {
-      await testDeposit.setState(states.ACTIVE)
+      const notEndStates = [
+        states.START,
+        states.AWAITING_SIGNER_SETUP,
+        states.AWAITING_BTC_FUNDING_PROOF,
+        states.ACTIVE,
+        states.AWAITING_WITHDRAWAL_SIGNATURE,
+        states.AWAITING_WITHDRAWAL_PROOF,
+        states.COURTESY_CALL,
+        states.FRAUD_LIQUIDATION_IN_PROGRESS,
+        states.LIQUIDATION_IN_PROGRESS
+      ]
 
-      await expectRevert(
-        testDeposit.withdrawFunds(),
-        "Contact not yet terminated",
-      )
+      for(let i = 0; i < notEndStates.length; i++){
+
+        await testDeposit.setState(notEndStates[i])
+
+        await expectRevert(
+          testDeposit.withdrawFunds(),
+          "Contract not yet terminated",
+        )
+      }
     })
     it("Reverts if there is no available balance", async () => {
       await testDeposit.setState(states.LIQUIDATED)
