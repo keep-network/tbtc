@@ -410,7 +410,7 @@ library DepositUtils {
     function withdrawFunds(DepositUtils.Deposit storage _d) internal {
         uint256 available = _d.withdrawalAllowances[msg.sender];
 
-        require(_d.inEndState(), "Contact not yet terminated");
+        require(_d.inEndState(), "Contract not yet terminated");
         require(available > 0, "Nothing to withdraw");
         require(address(this).balance >= available, "Insufficient contract balance");
 

@@ -179,8 +179,8 @@ library DepositLiquidation {
         }
 
         // Distribute funds to auction buyer
-        uint256 _valueToDistribute = _d.auctionValue();
-        _d.enableWithdrawal(msg.sender, _valueToDistribute);
+        uint256 valueToDistribute = _d.auctionValue();
+        _d.enableWithdrawal(msg.sender, valueToDistribute);
 
         // Send any TBTC left to the Fee Rebate Token holder
         _d.distributeFeeRebate();
@@ -195,8 +195,8 @@ library DepositLiquidation {
         if (initiator == address(0)){
             initiator = address(0xdead);
         }
-        if (contractEthBalance > _valueToDistribute) {
-            uint256 remainingUnallocated = contractEthBalance.sub(_valueToDistribute);
+        if (contractEthBalance > valueToDistribute) {
+            uint256 remainingUnallocated = contractEthBalance.sub(valueToDistribute);
             if (_wasFraud) {
                 _d.enableWithdrawal(initiator, remainingUnallocated);
             } else {
