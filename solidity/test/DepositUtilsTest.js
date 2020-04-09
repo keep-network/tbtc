@@ -5,6 +5,7 @@ const {
   LOW_WORK_HEADER,
   increaseTime,
 } = require("./helpers/utils.js")
+const {states} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
@@ -639,6 +640,71 @@ describe("DepositUtils", async function() {
         testDeposit.seizeSignerBonds.call(),
         "No funds received, unexpected",
       )
+    })
+  })
+  describe("enableWithdrawal()", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("correctly adds value to withdrawalAllowances", async () => {
+      const value = new BN(10000)
+      const beneficiary = accounts[1]
+
+      await testDeposit.enableWithdrawal(accounts[1], value)
+
+      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: beneficiary,
+      })
+
+      expect(withdrawable).to.eq.BN(value)
+    })
+  })
+
+  describe("withdrawFunds()", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("Correctly withdraws withdrawable balance at end-state", async () => {
+      await testDeposit.setState(states.LIQUIDATED)
+      const value = new BN(web3.utils.toWei("0.1"))
+      const beneficiary = accounts[1]
+      const initialBalance = await web3.eth.getBalance(beneficiary)
+
+      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+      await testDeposit.enableWithdrawal(beneficiary, value)
+      await testDeposit.withdrawFunds({from: beneficiary})
+
+      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: beneficiary,
+      })
+      const finalBalance = await web3.eth.getBalance(beneficiary)
+
+      expect(withdrawable).to.eq.BN(0)
+      expect(finalBalance).to.gt.BN(initialBalance)
+    })
+
+    it("Reverts if not in end-state", async () => {
+      await testDeposit.setState(states.ACTIVE)
+
+      await expectRevert(
+        testDeposit.withdrawFunds(),
+        "Contact not yet terminated",
+      )
+    })
+    it("Reverts if there is no available balance", async () => {
+      await testDeposit.setState(states.LIQUIDATED)
+
+      await expectRevert(testDeposit.withdrawFunds(), "Nothing to withdraw")
     })
   })
 
