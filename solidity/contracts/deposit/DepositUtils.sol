@@ -66,12 +66,10 @@ library DepositUtils {
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
 
-        /// @notice Map of ETH balances an address can withdraw after contract reaches ends-state.
+        /// @dev Map of ETH balances an address can withdraw after contract reaches ends-state.
         mapping(address => uint256) withdrawalAllowances;
 
-        /// @notice Map of timestamps for transaction digests approved for signing
-        /// @dev Holds a timestamp from the moment when the transaction digest
-        /// was approved for signing
+        /// @dev Map of timestamps representing when transaction digests were approved for signing
         mapping (bytes32 => uint256) approvedDigests;
     }
 
