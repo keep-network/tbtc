@@ -410,4 +410,10 @@ contract Deposit is DepositFactoryAuthority {
         self.withdrawFunds();
         return true;
     }
+
+    /// @notice     Get caller's withdrawable allowance.
+    /// @return     The withdrawable allowance in wei.
+    function getWithdrawAllowance() public returns (uint256) {
+        return self.getWithdrawAllowance();
+    }
 }

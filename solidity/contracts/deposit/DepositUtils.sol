@@ -402,21 +402,29 @@ library DepositUtils {
     /// @notice     Adds a given amount to an addresses withdrawal allowance.
     /// @dev        Withdrawals can only happen when a contract is in an end-state.
     function enableWithdrawal(DepositUtils.Deposit storage _d, address _withdrawer, uint256 _amount) internal {
-        _d.withdrawalAllowances[_withdrawer].add(_amount);
+        _d.withdrawalAllowances[_withdrawer] = _d.withdrawalAllowances[_withdrawer].add(_amount);
     }
 
     /// @notice     Withdraw caller's allowance.
     /// @dev        Withdrawals can only happen when a contract is in an end-state.
     function withdrawFunds(DepositUtils.Deposit storage _d) internal {
+        uint256 available = _d.withdrawalAllowances[msg.sender];
+
         require(_d.inEndState(), "Contact not yet terminated");
-        require(_d.withdrawalAllowances[msg.sender] > 0, "Nothing to withdraw");
+        require(available > 0, "Nothing to withdraw");
+        require(address(this).balance >= available, "Insufficient contract balance");
 
         // zero-out to prevent reentrancy
-        uint256 available = _d.withdrawalAllowances[msg.sender];
         _d.withdrawalAllowances[msg.sender] = 0;
 
         /* solium-disable-next-line security/no-call-value */
         msg.sender.call.value(available)("");
+    }
+
+    /// @notice     Get the caller's withdraw allowance.
+    /// @return     The caller's withdrawable allowance in wei.
+    function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal returns (uint256) {
+        return _d.withdrawalAllowances[msg.sender];
     }
 
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner.
