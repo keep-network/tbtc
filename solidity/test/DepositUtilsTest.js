@@ -642,6 +642,7 @@ describe("DepositUtils", async function() {
       )
     })
   })
+
   describe("enableWithdrawal()", async () => {
     beforeEach(async () => {
       await createSnapshot()
@@ -655,13 +656,18 @@ describe("DepositUtils", async function() {
       const value = new BN(10000)
       const beneficiary = accounts[1]
 
-      await testDeposit.enableWithdrawal(accounts[1], value)
-
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
         from: beneficiary,
       })
 
-      expect(withdrawable).to.eq.BN(value)
+      await testDeposit.enableWithdrawal(accounts[1], value)
+
+      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: beneficiary,
+      })
+
+      expect(initialWithdrawable).to.eq.BN(new BN(0))
+      expect(finalWithdrawable).to.eq.BN(value)
     })
   })
 
