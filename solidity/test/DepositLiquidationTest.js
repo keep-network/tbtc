@@ -163,23 +163,25 @@ describe("DepositLiquidation", async function() {
       ).to.eq.BN(tokenCheck)
     })
 
-    it("distributes value to the buyer", async () => {
-      const value = 10000000000000000
+    it("awards withdrawable value to the buyer", async () => {
+      const value = new BN("10000000000000000")
       const block = await web3.eth.getBlock("latest")
       const notifiedTime = block.timestamp
-      const initialBalance = await web3.eth.getBalance(buyer)
 
       await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+      const auctionValue = await testDeposit.auctionValue()
+
       await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
 
-      const finalBalance = await web3.eth.getBalance(buyer)
+      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: buyer,
+      })
 
-      expect(
-        new BN(finalBalance),
-        "buyer balance should increase",
-      ).to.be.gte.BN(initialBalance)
+      expect(withdrawable, "buyer should have a withdrawable balance").to.eq.BN(
+        auctionValue,
+      )
     })
 
     it("splits funds between liquidation triggerer and signers if not fraud", async () => {
@@ -191,9 +193,6 @@ describe("DepositLiquidation", async function() {
 
       await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
-      const initialInitiatorBalance = await web3.eth.getBalance(
-        liquidationInitiator,
-      )
       const initialSignerBalance = await web3.eth.getBalance(
         ecdsaKeepStub.address,
       )
@@ -203,16 +202,10 @@ describe("DepositLiquidation", async function() {
       // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
       await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
 
-      const finalInitiatorBalance = await web3.eth.getBalance(
-        liquidationInitiator,
-      )
       const finalSignerBalance = await web3.eth.getBalance(
         ecdsaKeepStub.address,
       )
 
-      const initiatorBalanceDiff = new BN(finalInitiatorBalance).sub(
-        new BN(initialInitiatorBalance),
-      )
       const signerBalanceDiff = new BN(finalSignerBalance).sub(
         new BN(initialSignerBalance),
       )
@@ -220,7 +213,11 @@ describe("DepositLiquidation", async function() {
       const totalReward = (value * (100 - basePercentage)) / 100
       const split = totalReward / 2
 
-      expect(new BN(split)).to.eq.BN(initiatorBalanceDiff)
+      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: liquidationInitiator,
+      })
+
+      expect(new BN(split)).to.eq.BN(withdrawable)
       expect(new BN(split)).to.eq.BN(signerBalanceDiff)
     })
 
@@ -233,9 +230,6 @@ describe("DepositLiquidation", async function() {
 
       await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
 
-      const initialInitiatorBalance = await web3.eth.getBalance(
-        liquidationInitiator,
-      )
       const initialSignerBalance = await web3.eth.getBalance(
         ecdsaKeepStub.address,
       )
@@ -246,24 +240,22 @@ describe("DepositLiquidation", async function() {
       // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
       await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
 
-      const finalInitiatorBalance = await web3.eth.getBalance(
-        liquidationInitiator,
-      )
       const finalSignerBalance = await web3.eth.getBalance(
         ecdsaKeepStub.address,
       )
 
-      const initiatorBalanceDiff = new BN(finalInitiatorBalance).sub(
-        new BN(initialInitiatorBalance),
-      )
       const signerBalanceDiff = new BN(finalSignerBalance).sub(
         new BN(initialSignerBalance),
       )
 
+      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: liquidationInitiator,
+      })
+
       const totalReward = (value * (100 - basePercentage)) / 100
 
       expect(new BN(signerBalanceDiff)).to.eq.BN(0)
-      expect(new BN(initiatorBalanceDiff)).to.eq.BN(totalReward)
+      expect(new BN(withdrawable)).to.eq.BN(totalReward)
     })
   })
 
