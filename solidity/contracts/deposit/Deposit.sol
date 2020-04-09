@@ -402,4 +402,12 @@ contract Deposit is DepositFactoryAuthority {
         self.notifyCourtesyTimeout();
         return true;
     }
+
+    /// @notice     Withdraw caller's allowance.
+    /// @dev        Withdrawals can only happen when a contract is in an end-state.
+    /// @return     True if successful, otherwise revert.
+    function withdrawFunds() public returns (bool) {
+        self.withdrawFunds();
+        return true;
+    }
 }

@@ -66,6 +66,9 @@ library DepositUtils {
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
 
+        /// @notice Map of ETH balances an address can withdraw after contract reaches ends-state.
+        mapping(address => uint256) withdrawalAllowances;
+
         /// @notice Map of timestamps for transaction digests approved for signing
         /// @dev Holds a timestamp from the moment when the transaction digest
         /// was approved for signing
@@ -394,6 +397,26 @@ library DepositUtils {
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
         return _postCallBalance.sub(_preCallBalance);
+    }
+
+    /// @notice     Adds a given amount to an addresses withdrawal allowance.
+    /// @dev        Withdrawals can only happen when a contract is in an end-state.
+    function enableWithdrawal(DepositUtils.Deposit storage _d, address _withdrawer, uint256 _amount) internal {
+        _d.withdrawalAllowances[_withdrawer].add(_amount);
+    }
+
+    /// @notice     Withdraw caller's allowance.
+    /// @dev        Withdrawals can only happen when a contract is in an end-state.
+    function withdrawFunds(DepositUtils.Deposit storage _d) internal {
+        require(_d.inEndState(), "Contact not yet terminated");
+        require(_d.withdrawalAllowances[msg.sender] > 0, "Nothing to withdraw");
+
+        // zero-out to prevent reentrancy
+        uint256 available = _d.withdrawalAllowances[msg.sender];
+        _d.withdrawalAllowances[msg.sender] = 0;
+
+        /* solium-disable-next-line security/no-call-value */
+        msg.sender.call.value(available)("");
     }
 
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner.
