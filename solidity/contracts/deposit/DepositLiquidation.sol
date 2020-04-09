@@ -195,7 +195,7 @@ library DepositLiquidation {
         if (initiator == address(0)){
             initiator = address(0xdead);
         }
-        if (contractEthBalance > valueToDistribute) {
+        if (contractEthBalance > valueToDistribute + 1) {
             uint256 remainingUnallocated = contractEthBalance.sub(valueToDistribute);
             if (_wasFraud) {
                 _d.enableWithdrawal(initiator, remainingUnallocated);
