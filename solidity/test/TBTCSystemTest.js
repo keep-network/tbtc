@@ -33,7 +33,7 @@ describe("TBTCSystem", async function() {
     let openKeepFee
     const tdtOwner = accounts[1]
     const keepOwner = accounts[2]
-    const tokenStakeDuration = 123
+    const maxSecuredLifetime = 123
 
     before(async () => {
       openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
@@ -41,7 +41,7 @@ describe("TBTCSystem", async function() {
     })
 
     it("sends caller as owner to open new keep", async () => {
-      await tbtcSystem.requestNewKeep(5, 10, 0, tokenStakeDuration, {
+      await tbtcSystem.requestNewKeep(5, 10, 0, maxSecuredLifetime, {
         from: keepOwner,
         value: openKeepFee,
       })
@@ -59,7 +59,7 @@ describe("TBTCSystem", async function() {
         5,
         10,
         0,
-        tokenStakeDuration,
+        maxSecuredLifetime,
         {
           value: openKeepFee,
           from: keepOwner,
@@ -72,7 +72,7 @@ describe("TBTCSystem", async function() {
     it("forwards value to keep factory", async () => {
       const initialBalance = await web3.eth.getBalance(ecdsaKeepFactory.address)
 
-      await tbtcSystem.requestNewKeep(5, 10, 0, tokenStakeDuration, {
+      await tbtcSystem.requestNewKeep(5, 10, 0, maxSecuredLifetime, {
         value: openKeepFee,
         from: keepOwner,
       })
@@ -87,7 +87,7 @@ describe("TBTCSystem", async function() {
 
     it("reverts if caller does not match a valid TDT", async () => {
       await expectRevert(
-        tbtcSystem.requestNewKeep(5, 10, 0, tokenStakeDuration, {
+        tbtcSystem.requestNewKeep(5, 10, 0, maxSecuredLifetime, {
           value: openKeepFee,
           from: accounts[0],
         }),
@@ -97,7 +97,7 @@ describe("TBTCSystem", async function() {
 
     it("reverts if caller is the owner of a valid TDT", async () => {
       await expectRevert(
-        tbtcSystem.requestNewKeep(5, 10, 0, tokenStakeDuration, {
+        tbtcSystem.requestNewKeep(5, 10, 0, maxSecuredLifetime, {
           value: openKeepFee,
           from: tdtOwner,
         }),
