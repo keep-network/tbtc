@@ -923,7 +923,7 @@ describe("DepositRedemption", async function() {
       expect(depositState).to.eq.BN(states.REDEEMED)
 
       const requestInfo = await testDeposit.getRequestInfo.call()
-      expect(requestInfo[0]).to.equal("0x" + "11".repeat(20))
+      expect(requestInfo[0]).to.equal(ZERO_ADDRESS)
       expect(requestInfo[1]).to.equal(null)
       expect(requestInfo[4]).to.equal(bytes32zero)
 
@@ -1054,6 +1054,7 @@ describe("DepositRedemption", async function() {
     })
 
     beforeEach(async () => {
+      await createSnapshot()
       const block = await web3.eth.getBlock("latest")
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
@@ -1066,6 +1067,10 @@ describe("DepositRedemption", async function() {
         withdrawalRequestTime,
         bytes32zero,
       )
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it("reverts if not awaiting redemption signature", async () => {
@@ -1101,18 +1106,27 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("starts abort liquidation", async () => {
-      await ecdsaKeepStub.send(1000000, {from: tdtHolder})
-      await testDeposit.notifySignatureTimeout()
+    it("liquidates the deposit and allows redeemer to withdraw signer bond", async () => {
+      const signerBonds = new BN("1000000")
+      await ecdsaKeepStub.send(signerBonds, {from: tdtHolder})
+      await testDeposit.setRedeemerAddress(accounts[1])
 
+      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: accounts[1],
+      })
+
+      await testDeposit.notifySignatureTimeout()
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(bond, "Bond not seized as expected").to.eq.BN(new BN(0))
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
-      expect(
-        liquidationTime[0],
-        "liquidation timestamp not recorded",
-      ).not.to.eq.BN(0)
+      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: accounts[1],
+      })
+
+      expect(initialWithdrawable).to.eq.BN(new BN("0"))
+      expect(finalWithdrawable).to.eq.BN(signerBonds)
+      expect(liquidationTime[0], "Auction should not be initiated").to.eq.BN(0)
     })
   })
 
@@ -1124,6 +1138,7 @@ describe("DepositRedemption", async function() {
     })
 
     beforeEach(async () => {
+      await createSnapshot()
       const block = await web3.eth.getBlock("latest")
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
@@ -1136,6 +1151,10 @@ describe("DepositRedemption", async function() {
         withdrawalRequestTime,
         bytes32zero,
       )
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it("reverts if not awaiting redemption proof", async () => {
@@ -1179,18 +1198,31 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("starts abort liquidation", async () => {
-      await ecdsaKeepStub.send(1000000, {from: owner})
+    it("liquidates the deposit and allows redeemer to withdraw signer bond", async () => {
+      const signerBonds = new BN("1000000")
+      await ecdsaKeepStub.send(signerBonds, {from: owner})
+      await testDeposit.setRedeemerAddress(accounts[1])
+
+      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: accounts[1],
+      })
+
       await testDeposit.notifyRedemptionProofTimeout()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(bond, "Bond not seized as expected").to.eq.BN(new BN(0))
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
-      expect(
-        liquidationTime[0],
-        "liquidation timestamp not recorded",
-      ).not.to.eq.BN(0)
+      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: accounts[1],
+      })
+
+      expect(initialWithdrawable).to.eq.BN("0")
+      expect(finalWithdrawable).to.eq.BN(signerBonds)
+      expect(liquidationTime[0], "Auction should not be initiated").to.eq.BN(0)
     })
   })
+})
+beforeEach(async () => {
+  await createSnapshot()
 })
