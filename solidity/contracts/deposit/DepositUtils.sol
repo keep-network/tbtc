@@ -356,11 +356,11 @@ library DepositUtils {
     /// @notice     Deletes state after termination of redemption process.
     /// @dev        We keep around the redeemer address so we can pay them out.
     function redemptionTeardown(Deposit storage _d) public {
-        // don't 0 redeemerAddress because we use it to calculate auctionTBTCAmount
         _d.redeemerOutputScript = "";
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);
+        _d.redeemerAddress = address(0);
     }
 
 
