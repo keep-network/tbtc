@@ -49,10 +49,6 @@ contract TestDepositUtils is TestDeposit {
         return self.signerPKH();
     }
 
-    function auctionValue() public view returns (uint256) {
-        return self.auctionValue();
-    }
-
     function utxoSize() public view returns (uint256) {
         return self.utxoSize();
     }
@@ -83,6 +79,10 @@ contract TestDepositUtils is TestDeposit {
 
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
+    }
+
+    function enableWithdrawal(address _withdrawer, uint256 _amount) public {
+        self.enableWithdrawal(_withdrawer, _amount);
     }
 }
 

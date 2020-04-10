@@ -218,16 +218,18 @@ describe("DepositFunding", async function() {
     })
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
-      const initialFunderBalance = await web3.eth.getBalance(owner)
       const blockNumber = await web3.eth.getBlock("latest").number
-      await testDeposit.notifySignerSetupFailure()
+      await testDeposit.notifySignerSetupFailure({from: owner})
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
-      const finalFunderBalance = await web3.eth.getBalance(owner)
 
-      expect(
-        new BN(finalFunderBalance).sub(new BN(initialFunderBalance)),
-      ).to.eq.BN(openKeepFee)
+      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: owner,
+      })
+
+      const depositBalance = await web3.eth.getBalance(testDeposit.address)
+      expect(withdrawable).to.eq.BN(new BN(openKeepFee))
+      expect(withdrawable).to.eq.BN(new BN(depositBalance))
 
       expect(
         signingGroupRequestedAt,
