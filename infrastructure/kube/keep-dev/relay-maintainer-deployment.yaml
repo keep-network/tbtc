@@ -1,0 +1,107 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: relay-maintainer
+  namespace: default
+  labels:
+    keel.sh/policy: all
+    app: maintainer
+    type: relay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maintainer
+      type: relay
+  template:
+    metadata:
+      labels:
+        app: maintainer
+        type: relay
+    spec:
+
+      initContainers:
+        - name: initcontainer-provision-relay-maintainer
+          image: gcr.io/keep-dev-fe24/initcontainer-provision-relay-maintainer
+          imagePullPolicy: Always
+          env:
+
+            - name: ETH_RPC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-internal
+                  key: rpc-url
+
+            - name: ETH_NETWORK_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-internal
+                  key: network-id
+
+            - name: ETH_NETWORK_NAME
+              value: internal
+
+            - name: RELAY_MAINTAINER_ETH_ACCOUNT_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-account-info
+                  key: account-0-address
+
+            - name: RELAY_MAINTAINER_ETH_ACCOUNT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eth-account-privatekeys
+                  key: account-0
+
+            - name: CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-internal
+                  key: contract-owner-eth-account-address
+
+            - name: CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-internal
+                  key: contract-owner-eth-account-private-key
+
+            - name: BITCOIN_HOST
+              value:
+
+            - name: BITCOIN_PORT
+              value:
+
+            - name: BITCOIN_API_KEY
+              value:
+
+          volumeMounts:
+            - name: relay-maintainer-env
+              mountPath: /mnt/relay-maintainer
+          command: ['node', '/tmp/provision-relay-maintainer.js']
+
+      containers:
+        - name: relay-maintainer
+          image: gcr.io/keep-dev-fe24/relay-maintainer
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: relay-maintainer-env
+              mountPath: /mnt/relay-maintainer
+
+      volumes:
+        - name: relay-maintainer-env
+          persistentVolumeClaim:
+            claimName: relay-maintainer-env
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: relay-maintainer-env
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi
