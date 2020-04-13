@@ -2,6 +2,8 @@ const fs = require('fs')
 const Web3 = require('web3')
 const HDWalletProvider = require("@truffle/hdwallet-provider")
 
+const URL = require('url')
+
 // ETH host info
 const ethRPCUrl = process.env.ETH_RPC_URL
 const ethNetworkId = process.env.ETH_NETWORK_ID
@@ -13,8 +15,9 @@ const RelayJSON = require("@keep-network/tbtc/artifacts/Relay.json")
 const contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 const purse = contractOwnerAddress
 
+const contractOwnerPrivateKey = process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
 const contractOwnerProvider = new HDWalletProvider(
-  process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
+  contractOwnerPrivateKey,
   ethRPCUrl,
 )
 
@@ -75,14 +78,28 @@ async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
 async function createRelayMaintainerConfig() {
   const envTemplate = fs.readFileSync('/tmp/env-template', 'utf8')
 
-  const relayAddress = RelayJSON.networks[ethNetworkId].address
   const operatorKey = readKeyFromKeyFile(keyFilePath)
+  const relayContractAddress = RelayJSON.networks[ethNetworkId].address
+  const ethURL = new URL(process.env.ETH_RPC_URL)
+
+  const ethNetworkName = ""
+  const bcoinHost = ""
+  const bcoinPort = ""
+  const bcoinApiKey = ""
+  const infuraKey = ""
 
   const finalEnv =
     envTemplate
-      .replace(/^(SUMMA_RELAY_CONTRACT=).*$/, `\\1${relayAddress}`)
+      .replace(/^(SUMMA_RELAY_ETHER_HOST=).*$/, `\\1${ethURL.hostname}`)
+      .replace(/^(SUMMA_RELAY_ETHER_PORT=).*$/, `\\1${ethURL.port}`)
       .replace(/^(SUMMA_RELAY_OPERATOR_KEY=).*$/, `\\1${operatorKey}`)
-      .replace(/^(SUMMA_RELAY_BCOIN_HOST=).*$/, `\\1${operatorKey}`)
+      .replace(/^(SUMMA_RELAY_ETH_NETWORK=).*$/, `\\1${ethNetworkName}`)
+      .replace(/^(SUMMA_RELAY_ETH_CHAIN_ID=).*$/, `\\1${ethNetworkId}`)
+      .replace(/^(SUMMA_RELAY_BCOIN_HOST=).*$/, `\\1${bcoinHost}`)
+      .replace(/^(SUMMA_RELAY_BCOIN_PORT=).*$/, `\\1${bcoinPort}`)
+      .replace(/^(SUMMA_RELAY_BCOIN_API_KEY=).*$/, `\\1${bcoinApiKey}`)
+      .replace(/^(SUMMA_RELAY_INFURA_KEY=).*$/, `\\1${infuraKey}`)
+      .replace(/^(SUMMA_RELAY_CONTRACT=).*$/, `\\1${relayContractAddress}`)
 
   fs.writeFileSync('/mnt/relay-maintainer/.env', finalEnv)
   console.log('relay maintainer .env file written to /mnt/relay-maintainer/.env')
