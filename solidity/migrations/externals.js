@@ -7,7 +7,10 @@ const BondedECDSAKeepVendorAddress = "0xZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
 const ETHBTCMedianizer = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
 
+const RopstenETHBTCPriceFeed = "0xb60844D3C84C4Db77d240bC38241C93Df5f4fbF7"
+
 module.exports = {
   BondedECDSAKeepVendorAddress,
   ETHBTCMedianizer,
+  RopstenETHBTCPriceFeed,
 }
