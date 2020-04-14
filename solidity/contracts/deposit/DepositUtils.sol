@@ -1,14 +1,14 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
-import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
-import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
-import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 
@@ -66,9 +66,10 @@ library DepositUtils {
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
 
-        /// @notice Map of timestamps for transaction digests approved for signing
-        /// @dev Holds a timestamp from the moment when the transaction digest
-        /// was approved for signing
+        /// @dev Map of ETH balances an address can withdraw after contract reaches ends-state.
+        mapping(address => uint256) withdrawalAllowances;
+
+        /// @dev Map of timestamps representing when transaction digests were approved for signing
         mapping (bytes32 => uint256) approvedDigests;
     }
 
@@ -394,6 +395,34 @@ library DepositUtils {
         uint256 _postCallBalance = address(this).balance;
         require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
         return _postCallBalance.sub(_preCallBalance);
+    }
+
+    /// @notice     Adds a given amount to the withdraw allowance for the address.
+    /// @dev        Withdrawals can only happen when a contract is in an end-state.
+    function enableWithdrawal(DepositUtils.Deposit storage _d, address _withdrawer, uint256 _amount) internal {
+        _d.withdrawalAllowances[_withdrawer] = _d.withdrawalAllowances[_withdrawer].add(_amount);
+    }
+
+    /// @notice     Withdraw caller's allowance.
+    /// @dev        Withdrawals can only happen when a contract is in an end-state.
+    function withdrawFunds(DepositUtils.Deposit storage _d) internal {
+        uint256 available = _d.withdrawalAllowances[msg.sender];
+
+        require(_d.inEndState(), "Contract not yet terminated");
+        require(available > 0, "Nothing to withdraw");
+        require(address(this).balance >= available, "Insufficient contract balance");
+
+        // zero-out to prevent reentrancy
+        _d.withdrawalAllowances[msg.sender] = 0;
+
+        /* solium-disable-next-line security/no-call-value */
+        msg.sender.call.value(available)("");
+    }
+
+    /// @notice     Get the caller's withdraw allowance.
+    /// @return     The caller's withdraw allowance in wei.
+    function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal returns (uint256) {
+        return _d.withdrawalAllowances[msg.sender];
     }
 
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner.

@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/tbtc",
-  "version": "0.13.0-pre",
+  "version": "0.14.0-pre",
   "description": "The tBTC smart contracts implementing the TBTC trustlessly Bitcoin-backed ERC-20 token.",
   "repository": {
     "type": "git",
@@ -34,26 +34,23 @@
   },
   "homepage": "https://tbtc.network/",
   "dependencies": {
-    "@keep-network/keep-ecdsa": ">0.13.0-pre <0.13.0-rc",
+    "@keep-network/keep-ecdsa": ">0.14.0-pre <0.14.0-rc",
     "@summa-tx/bitcoin-spv-sol": "^3.0.0",
     "@summa-tx/relay-sol": "^1.1.0",
-    "@truffle/hdwallet-provider": "^1.0.26",
-    "bn-chai": "^1.0.1",
-    "bn.js": "^4.11.8",
-    "create-hash": "^1.2.0",
-    "openzeppelin-solidity": "2.3.0",
-    "solc": "^0.5.10"
+    "openzeppelin-solidity": "2.3.0"
   },
   "devDependencies": {
     "@openzeppelin/test-environment": "^0.1.2",
     "@openzeppelin/test-helpers": "^0.5.4",
-    "@truffle/hdwallet-provider": "^1.0.25",
+    "@truffle/hdwallet-provider": "^1.0.26",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-stage-2": "^6.18.0",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
     "chai": "^4.2.0",
+    "bn.js": "^4.11.8",
+    "bn-chai": "^1.0.1",
     "eslint": "^5.16.0",
     "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.2.0",
     "eslint-config-prettier": "^6.10.0",
@@ -64,6 +61,7 @@
     "prettier": "^1.19.1",
     "prettier-plugin-solidity": "^1.0.0-alpha.40",
     "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.1",
-    "truffle": "^5.1.13"
+    "truffle": "^5.1.13",
+    "solc": "0.5.17"
   }
 }

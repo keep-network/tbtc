@@ -1,5 +1,5 @@
 /* solium-disable function-order */
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import {IBondedECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepVendor.sol";
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
@@ -423,14 +423,20 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Request a new keep opening.
     /// @param _m Minimum number of honest keep members required to sign.
     /// @param _n Number of members in the keep.
+    /// @param _maxSecuredLifetime Duration of stake lock in seconds.
     /// @return Address of a new keep.
-    function requestNewKeep(uint256 _m, uint256 _n, uint256 _bond)
+    function requestNewKeep(
+        uint256 _m,
+        uint256 _n,
+        uint256 _bond,
+        uint256 _maxSecuredLifetime
+    )
         external
         payable
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
         IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
-        return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond);
+        return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
     }
 }

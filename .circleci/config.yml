@@ -28,7 +28,7 @@ jobs:
             - v1-client-npm-deps-{{ .Branch }}-{{ checksum "solidity/package-lock.json" }}
             - v1-client-npm-deps-{{ .Branch }}-
             - v1-client-npm-deps-
-      - run: cd solidity && npm install
+      - run: cd solidity && npm ci
       - save_cache:
           key: v1-client-npm-deps-{{ .Branch }}-{{ checksum "solidity/package-lock.json" }}
           paths:
@@ -220,7 +220,7 @@ jobs:
             # this is because npm show json contains a single string if there
             # is only one matching version, or an array if there are multiple,
             # and we want to look at an array always.
-            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | sort | .[-1]")
+            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | .[-1]")
             latest_version=${latest_version:-$version}
             if [ -z $latest_version ]; then
               echo "Latest version calculation failed. Resolved info:"

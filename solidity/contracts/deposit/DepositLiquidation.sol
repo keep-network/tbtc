@@ -1,12 +1,12 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
-import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
+import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {TBTCConstants} from "./TBTCConstants.sol";
-import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
@@ -74,7 +74,7 @@ library DepositLiquidation {
         if (_d.auctionTBTCAmount() == 0) {
             // we came from the redemption flow
             _d.setLiquidated();
-            _d.redeemerAddress.transfer(_seized);
+            _d.enableWithdrawal(_d.redeemerAddress, _seized);
             _d.logLiquidated();
             return;
         }
@@ -167,8 +167,8 @@ library DepositLiquidation {
 
         // send the TBTC to the TDT holder. If the TDT holder is the Vending Machine, burn it to maintain the peg.
         address tdtHolder = _d.depositOwner();
-
         uint256 lotSizeTbtc = _d.lotSizeTbtc();
+
         require(_d.tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc, "Not enough TBTC to cover outstanding debt");
 
         if(tdtHolder == _d.vendingMachineAddress){
@@ -179,8 +179,8 @@ library DepositLiquidation {
         }
 
         // Distribute funds to auction buyer
-        uint256 _valueToDistribute = _d.auctionValue();
-        msg.sender.transfer(_valueToDistribute);
+        uint256 valueToDistribute = _d.auctionValue();
+        _d.enableWithdrawal(msg.sender, valueToDistribute);
 
         // Send any TBTC left to the Fee Rebate Token holder
         _d.distributeFeeRebate();
@@ -195,16 +195,15 @@ library DepositLiquidation {
         if (initiator == address(0)){
             initiator = address(0xdead);
         }
-        if (contractEthBalance > 1) {
+        if (contractEthBalance > valueToDistribute + 1) {
+            uint256 remainingUnallocated = contractEthBalance.sub(valueToDistribute);
             if (_wasFraud) {
-                /* solium-disable-next-line security/no-send */
-                initiator.send(contractEthBalance);
+                _d.enableWithdrawal(initiator, remainingUnallocated);
             } else {
                 // There will always be a liquidation initiator.
-                uint256 split = contractEthBalance.div(2);
+                uint256 split = remainingUnallocated.div(2);
                 _d.pushFundsToKeepGroup(split);
-                /* solium-disable-next-line security/no-send */
-                initiator.send(address(this).balance);
+                _d.enableWithdrawal(initiator, remainingUnallocated.sub(split));
             }
         }
     }

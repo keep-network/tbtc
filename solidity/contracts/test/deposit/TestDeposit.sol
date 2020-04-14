@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import {Deposit} from "../../../contracts/deposit/Deposit.sol";
 import {ITBTCSystem} from "../../interfaces/ITBTCSystem.sol";
@@ -254,4 +254,9 @@ contract TestDeposit is Deposit {
     function getAuctionBasePercentage() public view returns (uint256) {
         return self.getAuctionBasePercentage();
     }
+
+    function auctionValue() public view returns (uint256) {
+        return self.auctionValue();
+    }
+
 }

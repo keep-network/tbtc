@@ -1,9 +1,9 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
-import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
@@ -65,7 +65,13 @@ library DepositFunding {
 
         _d.keepSetupFee = _d.tbtcSystem.createNewDepositFeeEstimate();
         /* solium-disable-next-line value-in-payable */
-        _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(_m, _n, _bondRequirementWei);
+        _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
+            _m,
+            _n,
+            _bondRequirementWei,
+            TBTCConstants.getDepositTerm()
+        );
+
         _d.signerFeeDivisor = _d.tbtcSystem.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _d.tbtcSystem.getUndercollateralizedThresholdPercent();
         _d.severelyUndercollateralizedThresholdPercent = _d.tbtcSystem.getSeverelyUndercollateralizedThresholdPercent();
@@ -76,13 +82,6 @@ library DepositFunding {
         _d.logCreated(_d.keepAddress);
 
         return true;
-    }
-
-    /// @notice     Seizes signer bonds and distributes them to the funder.
-    /// @dev        This is only called as part of funding fraud flow.
-    function distributeSignerBondsToFunder(DepositUtils.Deposit storage _d) internal {
-        uint256 _seized = _d.seizeSignerBonds();
-        _d.depositOwner().transfer(_seized);  // Transfer whole amount
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
@@ -98,7 +97,7 @@ library DepositFunding {
         uint256 _seized = _d.seizeSignerBonds();
 
         /* solium-disable-next-line security/no-send */
-        _d.depositOwner().send(_d.keepSetupFee);
+        _d.enableWithdrawal(_d.depositOwner(), _d.keepSetupFee);
         _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
 
         _d.setFailedSetup();
@@ -169,7 +168,11 @@ library DepositFunding {
         bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         require(_isFraud, "Signature is not fraudulent");
         _d.logFraudDuringSetup();
-        distributeSignerBondsToFunder(_d);
+
+        // Allow deposit owner to withdraw seized bonds after contract termination.
+        uint256 _seized = _d.seizeSignerBonds();
+        _d.enableWithdrawal(_d.depositOwner(), _seized);
+
         fundingFraudTeardown(_d);
         _d.setFailedSetup();
         _d.logSetupFailed();

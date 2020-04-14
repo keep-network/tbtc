@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -401,5 +401,19 @@ contract Deposit is DepositFactoryAuthority {
     function notifyCourtesyTimeout() public returns (bool) {
         self.notifyCourtesyTimeout();
         return true;
+    }
+
+    /// @notice     Withdraw caller's allowance.
+    /// @dev        Withdrawals can only happen when a contract is in an end-state.
+    /// @return     True if successful, otherwise revert.
+    function withdrawFunds() public returns (bool) {
+        self.withdrawFunds();
+        return true;
+    }
+
+    /// @notice     Get caller's withdraw allowance.
+    /// @return     The withdraw allowance in wei.
+    function getWithdrawAllowance() public returns (uint256) {
+        return self.getWithdrawAllowance();
     }
 }

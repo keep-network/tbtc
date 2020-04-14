@@ -1,5 +1,6 @@
 :toc: macro
 
+[[signing]]
 = Signing
 
 ifndef::tbtc[toc::[]]
@@ -53,10 +54,10 @@ Informally,
 the participants perform the following actions to sign a message:
 
 1. Produce an additive share of `k * x`, where each participant `i` holds `k_i` and `x_i`.
-1. Efficiently calculate `R = g^(1/k)` using Bar-Ilan and Beaver's inversion
+2. Efficiently calculate `R = g^(1/k)` using Bar-Ilan and Beaver's inversion
 trick, without any participant `i` revealing `k_i`, and set `r = R_x`.
-1. Each participant calculates their share of the signature: `s_i = m * k_i + r * k_i * x_i`.
-1. The threshold signature is the sum of all signatures `s_i`.
+3. Each participant calculates their share of the signature: `s_i = m * k_i + r * k_i * x_i`.
+4. The threshold signature is the sum of all signatures `s_i`.
 
 A more in-depth description of the protocol can be found in Section 4.1  and 4.2
 of the paper.
@@ -128,10 +129,10 @@ o compute, `g_0` and `g_1` generators of `G_0` and `G_1` respectively.
 . A signature on `m` is `s_i ＝ Η_0(m)^sk_i`
 . To aggregate N signatures for the same message from public keys `(pk_1, ..., pk_n)`:
     1. Compute: `(t_1, ..., t_n) = H_1(pk_1, ..., pk_n)`
-    1. Aggregated signature: `s = s_1^t_1 * ... * s_n^t_n`
+    2. Aggregated signature: `s = s_1^t_1 * ... * s_n^t_n`
 . To verify the aggregated signature against the same public keys:
     1. Compute: `(t_1, ..., t_n) = H_1(pk_1, ..., pk_n)`
     2. Compute the aggregate public key: `pk = pk_1 ^ t_1 * ... * pk_n ^ t_n`
     (independent of the message being signed))
-    2. Verify the signature: `e(g_1, s) = e(pk, H_0(m))` (requires 2 pairings
+    3. Verify the signature: `e(g_1, s) = e(pk, H_0(m))` (requires 2 pairings
     since the same message is being signed):

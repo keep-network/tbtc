@@ -1,6 +1,6 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
-import {SafeMath} from "@summa-tx/bitcoin-spv-sol/contracts/SafeMath.sol";
+import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {TBTCDepositToken} from "./TBTCDepositToken.sol";
 import {FeeRebateToken} from "./FeeRebateToken.sol";
 import {TBTCToken} from "./TBTCToken.sol";

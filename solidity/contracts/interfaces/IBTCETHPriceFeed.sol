@@ -1,4 +1,5 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
+
 import "../external/IMedianizer.sol";
 
 interface IBTCETHPriceFeed {

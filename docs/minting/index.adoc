@@ -1,9 +1,11 @@
+[#minting]
 = Minting
 
 ifndef::tbtc[]
 toc::[]
 
-:root-prefix: ../
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
 include::../constants.adoc[]
 endif::tbtc[]
 
@@ -29,12 +31,12 @@ funded until the deposit term is reached.
 Once the deposit is fully _qualified_ by submitting sufficient proof of the
 funding Bitcoin transaction, the holder of the TDT can request redemption,
 and, after paying any outstanding signing fees, be guaranteed the same UTXO
-backing the deposit. The holder of the TDT is also guaranteed compensation
-in TBTC via the signing group's bonded collateral in case of fraud or
-collateralization issues (see <<{root-prefix}/bonding/index#Liquidation>>),
+backing the deposit. The holder of the TDT is also guaranteed compensation in
+TBTC via the signing group's bonded collateral in case of fraud or
+collateralization issues (see <<bonding/index.adoc#liquidation,liquidation>>),
 and compensation in TBTC (minus signer fees) if the deposit is redeemed by
 another account after it reaches term (see the section on
-<<{root-prefix}/redemption/index#at-term, at-term redemption>>).
+<<redemption/index.adoc#at-term, at-term redemption>>).
 
 === Implications
 
@@ -57,10 +59,6 @@ There are a few non-obvious implications to a UTXO-specific non-fungible token.
    parties. With this functionality, depositors wouldn't necessarily need to
    monitor the Bitcoin blockchain.
 
-// TODO incentivize this - we want maintainers to be submitting proofs when
-// depositors walk away
-// TODO third-party proof flow in the appendix
-// TODO link to the redemption process
 // TODO can a deposit be challenged if its proof is re-orged? it appears there's
 // no need, but the fungible TBTC vending machine will need to be smart with
 // deposits
@@ -78,21 +76,15 @@ The TBTC vending machine is a contract on the host chain that is responsible
 for minting TBTC.
 
 Any TDT representing a qualified deposit can be exchanged. Qualified deposits
-are determined by the accumulated work of their proofs. In tBTC v1, deposits are
-qualified by a fixed work requirement proven via a stateless SPV proof, set at
-6 blocks of accumulated work.
-
-// TODO link to more details in the appendix?
-// TODO be specific with the deposit timeout
+are determined by the accumulated work of their proofs. In tBTC v1, deposits are qualified by a fixed work
+requirement proven via an <<appendix/spv/index.adoc#spv,SPV proof>>, set at
+{tx-proof-difficulty-factor} of accumulated work.
 
 A TDT representing a qualified deposit is also eligible for minting fungible
 TBTC. Minting TBTC is optional; depositors can stick with their TDTs, which
 will be valid for the lifetime of a maintained deposit. Note that if a holder
 of the TDT wants to make a transaction with a different value than the lot
 size, they must mint TBTC, since the tBTC Deposit Token itself is non fungible.
-
-// TODO NB if a deposit is liquidated, the NFT can stick around and be backed by
-// the liquid token
 
 The holder of a qualified TDT may exchange that TDT for a newly minted
 {tbtc-lot-size}, less the requisite {signer-fee} signing fee. To reflect the
@@ -125,6 +117,6 @@ provides a straightforward way to transfer it to another account for the cost of
 Burning all received TBTC allows for maintaining the supply peg not only when
 deposit ownership is transferred away from the vending machine, but also when
 the deposits that are still owned by the vending machine are liquidated or
-<<{root-prefix}/redemption/index#at-term, redeemed at term>>, since in these
-cases deposit owner compensation goes to the vending machine, which burns
-that compensation immediately.
+<<redemption/index.adoc#at-term, redeemed at term>>, since in these cases
+deposit owner compensation goes to the vending machine, which burns that
+compensation immediately.

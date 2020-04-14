@@ -61,6 +61,7 @@ ssh utilitybox << EOF
   # referenced at two paths due to older dependencies, leading to problems
   # resolving contracts during tenderly push.
   ln -s node_modules/@openzeppelin @openzeppelin
+  ln -s node_modules/@summa-tx @summa-tx
   tenderly login --authentication-method token --token $TENDERLY_TOKEN
   tenderly push --networks $ETH_NETWORK_ID --tag tbtc \
     --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG || echo "tendery push failed :("

@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity 0.5.17;
 
 import {TBTCSystem} from "../../../contracts/system/TBTCSystem.sol";
 
@@ -23,7 +23,7 @@ contract TBTCSystemStub is TBTCSystem {
         return oraclePrice;
     }
 
-    function requestNewKeep(uint256, uint256, uint256) external payable returns (address _keepAddress) {
+    function requestNewKeep(uint256, uint256, uint256, uint256) external payable returns (address _keepAddress) {
         return keepAddress;
     }
 }
