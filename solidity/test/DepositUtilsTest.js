@@ -5,6 +5,7 @@ const {
   LOW_WORK_HEADER,
   increaseTime,
 } = require("./helpers/utils.js")
+const {states} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
@@ -639,6 +640,108 @@ describe("DepositUtils", async function() {
         testDeposit.seizeSignerBonds.call(),
         "No funds received, unexpected",
       )
+    })
+  })
+
+  describe("enableWithdrawal()", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("correctly adds value to withdrawalAllowances", async () => {
+      const value = new BN(10000)
+      const beneficiary = accounts[1]
+
+      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: beneficiary,
+      })
+
+      await testDeposit.enableWithdrawal(accounts[1], value)
+
+      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: beneficiary,
+      })
+
+      expect(initialWithdrawable).to.eq.BN(new BN(0))
+      expect(finalWithdrawable).to.eq.BN(value)
+    })
+  })
+
+  describe("withdrawFunds()", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("correctly withdraws withdrawable balance at end-states", async () => {
+      const endStates = [
+        states.LIQUIDATED,
+        states.REDEEMED,
+        states.FAILED_SETUP,
+      ]
+
+      for (let i = 0; i < endStates.length; i++) {
+        await createSnapshot()
+        await testDeposit.setState(endStates[i])
+        const value = new BN(web3.utils.toWei("0.1"))
+        const beneficiary = accounts[1]
+        const initialBalance = await web3.eth.getBalance(beneficiary)
+
+        await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
+          value: value,
+        })
+        await testDeposit.enableWithdrawal(beneficiary, value)
+        const tx = await testDeposit.withdrawFunds({from: beneficiary})
+        const finalBalance = await web3.eth.getBalance(beneficiary)
+
+        const withdrawable = await testDeposit.getWithdrawAllowance.call({
+          from: beneficiary,
+        })
+        const gasPrice = await web3.eth.getGasPrice()
+        const gasUSed = tx.receipt.cumulativeGasUsed
+        const totalTxCost = new BN(gasPrice).mul(new BN(gasUSed))
+
+        expect(withdrawable).to.eq.BN(0)
+        expect(new BN(finalBalance).add(totalTxCost)).to.eq.BN(
+          new BN(initialBalance).add(value),
+        )
+        await restoreSnapshot()
+      }
+    })
+
+    it("Reverts if not in end-state", async () => {
+      const notEndStates = [
+        states.START,
+        states.AWAITING_SIGNER_SETUP,
+        states.AWAITING_BTC_FUNDING_PROOF,
+        states.ACTIVE,
+        states.AWAITING_WITHDRAWAL_SIGNATURE,
+        states.AWAITING_WITHDRAWAL_PROOF,
+        states.COURTESY_CALL,
+        states.FRAUD_LIQUIDATION_IN_PROGRESS,
+        states.LIQUIDATION_IN_PROGRESS,
+      ]
+
+      for (let i = 0; i < notEndStates.length; i++) {
+        await testDeposit.setState(notEndStates[i])
+
+        await expectRevert(
+          testDeposit.withdrawFunds(),
+          "Contract not yet terminated",
+        )
+      }
+    })
+    it("Reverts if there is no available balance", async () => {
+      await testDeposit.setState(states.LIQUIDATED)
+
+      await expectRevert(testDeposit.withdrawFunds(), "Nothing to withdraw")
     })
   })
 

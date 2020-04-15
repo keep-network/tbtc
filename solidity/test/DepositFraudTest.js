@@ -56,7 +56,6 @@ describe("DepositFraud", async function() {
 
     it("updates to awaiting fraud funding proof, distributes signer bond to funder, and logs FraudDuringSetup", async () => {
       const blockNumber = await web3.eth.getBlock("latest").number
-      const initialBalance = await web3.eth.getBalance(beneficiary)
 
       await testDeposit.provideFundingECDSAFraudProof(
         0,
@@ -67,11 +66,12 @@ describe("DepositFraud", async function() {
       )
 
       await assertBalance.eth(ecdsaKeepStub.address, new BN(0))
+      await assertBalance.eth(testDeposit.address, new BN(bond))
 
-      await assertBalance.eth(
-        beneficiary,
-        new BN(initialBalance).add(new BN(bond)),
-      )
+      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: beneficiary,
+      })
+      expect(withdrawable).to.eq.BN(new BN(bond))
 
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.FAILED_SETUP)
@@ -156,7 +156,6 @@ describe("DepositFraud", async function() {
 
       const currentBond = await web3.eth.getBalance(ecdsaKeepStub.address)
       const block = await web3.eth.getBlock("latest")
-      const initialBalance = await web3.eth.getBalance(owner)
       await testDeposit.startSignerFraudLiquidation()
 
       const events = await tbtcSystemStub.getPastEvents("Liquidated", {
@@ -164,10 +163,10 @@ describe("DepositFraud", async function() {
         toBlock: "latest",
       })
 
-      await assertBalance.eth(
-        owner,
-        new BN(initialBalance).add(new BN(currentBond)),
-      )
+      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: owner,
+      })
+      expect(withdrawable).to.eq.BN(new BN(currentBond))
 
       expect(events[0].returnValues[0]).to.equal(testDeposit.address)
 

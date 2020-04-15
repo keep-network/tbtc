@@ -254,4 +254,9 @@ contract TestDeposit is Deposit {
     function getAuctionBasePercentage() public view returns (uint256) {
         return self.getAuctionBasePercentage();
     }
+
+    function auctionValue() public view returns (uint256) {
+        return self.auctionValue();
+    }
+
 }
