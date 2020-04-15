@@ -10,7 +10,11 @@ const TBTCDepositToken = artifacts.require("TBTCDepositToken")
 const FeeRebateToken = artifacts.require("FeeRebateToken")
 const VendingMachine = artifacts.require("VendingMachine")
 
-const {BondedECDSAKeepVendorAddress, ETHBTCMedianizer} = require("./externals")
+const {
+  BondedECDSAKeepVendorAddress,
+  ETHBTCMedianizer,
+  RopstenETHBTCPriceFeed,
+} = require("./externals")
 
 module.exports = async function(deployer, network) {
   // Don't enact this setup during unit testing.
@@ -53,6 +57,9 @@ module.exports = async function(deployer, network) {
   if (network === "mainnet") {
     // Inject mainnet price feeds.
     await satWeiPriceFeed.initialize(tbtcSystem.address, ETHBTCMedianizer)
+  } else if (network === "ropsten") {
+    // Inject medianizer intermediary.
+    await satWeiPriceFeed.initialize(tbtcSystem.address, RopstenETHBTCPriceFeed)
   } else {
     // Inject mock price feeds.
     const mockSatWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
