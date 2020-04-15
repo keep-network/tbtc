@@ -21,8 +21,6 @@ const contractOwnerProvider = new HDWalletProvider(
   ethRPCUrl,
 )
 
-const operatorKeyFile = process.env.RELAY_MAINTAINER_ETH_KEYFILE_PATH
-
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -42,7 +40,7 @@ async function provisionRelayMaintainer() {
   console.log('###########  Provisioning relay maintainer! ###########')
 
   console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`)
-  const operatorAddress = readAddressFromKeyFile(operatorKeyFile)
+  const operatorAddress = process.env.RELAY_MAINTAINER_ETH_ACCOUNT_ADDRESS
 
   console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`)
   await fundOperator(operatorAddress, purse, '10')
@@ -51,12 +49,6 @@ async function provisionRelayMaintainer() {
   await createRelayMaintainerConfig()
 
   console.log("\n########### keep-ecdsa Provisioning Complete! ###########")
-}
-
-function readAddressFromKeyFile(keyFilePath) {
-  const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'))
-
-  return web3.utils.toHex(keyFile.address)
 }
 
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
@@ -78,7 +70,7 @@ async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
 async function createRelayMaintainerConfig() {
   const envTemplate = fs.readFileSync('/tmp/env-template', 'utf8')
 
-  const operatorKey = readKeyFromKeyFile(keyFilePath)
+  const operatorKey = process.env.RELAY_MAINTAINER_ETH_ACCOUNT_PRIVATE_KEY
   const relayContractAddress = RelayJSON.networks[ethNetworkId].address
   const ethURL = new URL(process.env.ETH_RPC_URL)
 
