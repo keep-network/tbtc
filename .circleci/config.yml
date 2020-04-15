@@ -335,37 +335,37 @@ workflows:
     jobs:
       - compile_contracts
       - migrate_contracts:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - compile_contracts
       - publish_npm_package:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - migrate_contracts
       - publish_contract_data:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - migrate_contracts
       - build_relay_maintainer_initcontainer:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - publish_npm_package
       - publish_relay_maintainer_initcontainer:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - publish_npm_package
