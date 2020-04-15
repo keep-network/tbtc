@@ -355,6 +355,20 @@ workflows:
           context: keep-dev
           requires:
             - migrate_contracts
+      - build_relay_maintainer_initcontainer:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - publish_npm_package
+      - publish_relay_maintainer_initcontainer:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - publish_npm_package
   migrate_build_publish_keep_test:
     jobs:
       - keep_test_approval:
