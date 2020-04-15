@@ -1,7 +1,7 @@
 const TBTCSystem = artifacts.require("TBTCSystem")
 
-const BTCETHPriceFeed = artifacts.require("BTCETHPriceFeed")
-const MockBTCETHPriceFeed = artifacts.require("BTCETHPriceFeedMock")
+const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
+const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
 
 const DepositFactory = artifacts.require("DepositFactory")
 const Deposit = artifacts.require("Deposit")
@@ -10,7 +10,7 @@ const TBTCDepositToken = artifacts.require("TBTCDepositToken")
 const FeeRebateToken = artifacts.require("FeeRebateToken")
 const VendingMachine = artifacts.require("VendingMachine")
 
-const {BondedECDSAKeepVendorAddress, BTCETHMedianizer} = require("./externals")
+const {BondedECDSAKeepVendorAddress, ETHBTCMedianizer} = require("./externals")
 
 module.exports = async function(deployer, network) {
   // Don't enact this setup during unit testing.
@@ -49,16 +49,16 @@ module.exports = async function(deployer, network) {
   console.log("TBTCSystem initialized!")
 
   // Price feed.
-  const btcEthPriceFeed = await BTCETHPriceFeed.deployed()
+  const satWeiPriceFeed = await SatWeiPriceFeed.deployed()
   if (network === "mainnet") {
     // Inject mainnet price feeds.
-    await btcEthPriceFeed.initialize(tbtcSystem.address, BTCETHMedianizer)
+    await satWeiPriceFeed.initialize(tbtcSystem.address, ETHBTCMedianizer)
   } else {
     // Inject mock price feeds.
-    const mockBtcEthPriceFeed = await MockBTCETHPriceFeed.deployed()
-    await btcEthPriceFeed.initialize(
+    const mockSatWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
+    await satWeiPriceFeed.initialize(
       tbtcSystem.address,
-      mockBtcEthPriceFeed.address,
+      mockSatWeiPriceFeed.address,
     )
   }
 }

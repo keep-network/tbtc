@@ -25,6 +25,6 @@ contract MockMedianizer is Ownable, IMedianizer {
     }
 }
 
-contract BTCETHPriceFeedMock is MockMedianizer {
+contract ETHBTCPriceFeedMock is MockMedianizer {
     // solium-disable-previous-line no-empty-blocks
 }

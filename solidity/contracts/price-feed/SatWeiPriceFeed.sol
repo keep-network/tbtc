@@ -1,0 +1,88 @@
+pragma solidity 0.5.17;
+
+import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../external/IMedianizer.sol";
+import "../interfaces/ISatWeiPriceFeed.sol";
+
+/// @notice Bitcoin-Ether price feed.
+/// @dev Based on the ratio of BTC/USD and ETH/USD.
+contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
+    using SafeMath for uint256;
+
+    bool private _initialized = false;
+    address internal tbtcSystemAddress;
+
+    IMedianizer[] private ethBtcFeeds;
+
+    constructor() public {
+    // solium-disable-previous-line no-empty-blocks
+    }
+
+    /// @notice Initialises the addresses of the BTC/ETH price feeds.
+    /// @param _ETHBTCPriceFeed The ETHBTC price feed address.
+    function initialize(
+        address _tbtcSystemAddress,
+        IMedianizer _ETHBTCPriceFeed
+    )
+        external onlyOwner
+    {
+        require(!_initialized, "Already initialized.");
+        tbtcSystemAddress = _tbtcSystemAddress;
+        ethBtcFeeds.push(_ETHBTCPriceFeed);
+        _initialized = true;
+    }
+
+    /// @notice Get the current price of satoshi in wei.
+    /// @dev This does not account for any 'Flippening' event.
+    /// @return The price of one satoshi in wei.
+    function getPrice()
+        external view returns (uint256)
+    {
+        bool ethBtcActive;
+        uint256 ethBtc;
+
+        for(uint i = 0; i < ethBtcFeeds.length; i++){
+            (ethBtc, ethBtcActive) = ethBtcFeeds[i].peek();
+            if(ethBtcActive) {
+                break;
+            }
+        }
+
+        require(ethBtcActive, "Price feed offline");
+
+        // convert eth/btc to sat/wei
+        // We typecast down to uint128, because the first 128 bits of
+        // the medianizer value is unrelated to the price.
+        return uint256(10**28).div(uint256(uint128(ethBtc)));
+    }
+
+    /// @notice Get the first active Medianizer contract from the ethBtcFeeds array.
+    /// @return The address of the first Active Medianizer. address(0) if none found
+    function getWorkingEthBtcFeed() external view returns (address){
+        bool ethBtcActive;
+
+        for(uint i = 0; i < ethBtcFeeds.length; i++){
+            (, ethBtcActive) = ethBtcFeeds[i].peek();
+            if(ethBtcActive) {
+                return address(ethBtcFeeds[i]);
+            }
+        }
+        return address(0);
+    }
+
+    /// @notice Add _ethBtcFeed to internal ethBtcFeeds array.
+    /// @dev IMedianizer must be active in order to add.
+    function addEthBtcFeed(IMedianizer _ethBtcFeed) external onlyTbtcSystem {
+        bool ethBtcActive;
+        (, ethBtcActive) = _ethBtcFeed.peek();
+        require(ethBtcActive, "Cannot add inactive feed");
+        ethBtcFeeds.push(_ethBtcFeed);
+    }
+
+    /// @notice Function modifier ensures modified function is only called by tbtcSystemAddress.
+    modifier onlyTbtcSystem(){
+        require(msg.sender == tbtcSystemAddress, "Caller must be tbtcSystem contract");
+        _;
+    }
+}

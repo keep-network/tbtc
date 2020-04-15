@@ -18,7 +18,7 @@ const Deposit = artifacts.require("Deposit")
 const VendingMachine = artifacts.require("VendingMachine")
 
 // price feed
-const MockBTCETHPriceFeed = artifacts.require("BTCETHPriceFeedMock")
+const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
 const prices = require("./prices")
 
 const MockRelay = artifacts.require("MockRelay")
@@ -50,7 +50,7 @@ const all = [
   DepositLiquidation,
   Deposit,
   TBTCSystem,
-  BTCETHPriceFeed,
+  SatWeiPriceFeed,
   VendingMachine,
   FeeRebateToken,
 ]
@@ -85,9 +85,9 @@ module.exports = (deployer, network, accounts) => {
       // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
       // Otherwise, we deploy our own mock price feeds, which are simpler
       // to maintain.
-      await deployer.deploy(MockBTCETHPriceFeed)
-      const btcEthPriceFeed = await MockBTCETHPriceFeed.deployed()
-      await btcEthPriceFeed.setValue(prices.BTCETH)
+      await deployer.deploy(MockSatWeiPriceFeed)
+      const satWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
+      await satWeiPriceFeed.setValue(prices.satwei)
 
       // On mainnet, we use the Summa-provided relay; see
       // https://github.com/summa-tx/relays . On testnet, we use a local mock.
@@ -96,7 +96,7 @@ module.exports = (deployer, network, accounts) => {
     }
 
     // TODO This should be dropped soon.
-    await deployer.deploy(BTCETHPriceFeed)
+    await deployer.deploy(SatWeiPriceFeed)
 
     if (!difficultyRelay) {
       throw new Error("Difficulty relay not found.")
@@ -105,7 +105,7 @@ module.exports = (deployer, network, accounts) => {
     // system
     await deployer.deploy(
       TBTCSystem,
-      BTCETHPriceFeed.address,
+      SatWeiPriceFeed.address,
       difficultyRelay.address,
     )
 

@@ -11,7 +11,7 @@ import {IRelay} from "@summa-tx/relay-sol/contracts/Relay.sol";
 import "../external/IMedianizer.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
-import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
+import {ISatWeiPriceFeed} from "../interfaces/ISatWeiPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
 import {TBTCDepositToken} from "./TBTCDepositToken.sol";
@@ -28,7 +28,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
 
-    event BtcEthPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
+    event EthBtcPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
     event LotSizesUpdateStarted(uint64[] _lotSizes, uint256 _timestamp);
     event SignerFeeDivisorUpdateStarted(uint16 _signerFeeDivisor, uint256 _timestamp);
     event CollateralizationThresholdsUpdateStarted(
@@ -38,7 +38,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _timestamp
     );
 
-    event BtcEthPriceFeedAdded(address _priceFeed);
+    event EthBtcPriceFeedAdded(address _priceFeed);
     event LotSizesUpdated(uint64[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
     event SignerFeeDivisorUpdated(uint16 _signerFeeDivisor);
@@ -53,7 +53,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
-    IBTCETHPriceFeed public  priceFeed;
+    ISatWeiPriceFeed public  priceFeed;
     IBondedECDSAKeepVendor public keepVendor;
     IRelay public relay;
 
@@ -79,11 +79,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     // price feed
     uint256 priceFeedGovernanceTimeDelay = 90 days;
-    uint256 appendBtcEthFeedTimer;
-    IMedianizer nextBtcEthFeed;
+    uint256 appendEthBtcFeedTimer;
+    IMedianizer nextEthBtcFeed;
 
     constructor(address _priceFeed, address _relay) public {
-        priceFeed = IBTCETHPriceFeed(_priceFeed);
+        priceFeed = ISatWeiPriceFeed(_priceFeed);
         relay = IRelay(_relay);
     }
 
@@ -382,21 +382,21 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return price;
     }
 
-    /// @notice Initialize the addition of a new BTC/ETH price feed contract to the priecFeed.
-    /// @dev `FinalizeAddBtcEthFeed` must be called to finalize.
-    function initializeAddBtcEthFeed(IMedianizer _btcEthFeed) external {
-        nextBtcEthFeed = _btcEthFeed;
-        appendBtcEthFeedTimer = block.timestamp + priceFeedGovernanceTimeDelay;
-        emit BtcEthPriceFeedAdditionStarted(address(_btcEthFeed), block.timestamp);
+    /// @notice Initialize the addition of a new ETH/BTC price feed contract to the priecFeed.
+    /// @dev `FinalizeAddEthBtcFeed` must be called to finalize.
+    function initializeAddEthBtcFeed(IMedianizer _ethBtcFeed) external {
+        nextEthBtcFeed = _ethBtcFeed;
+        appendEthBtcFeedTimer = block.timestamp + priceFeedGovernanceTimeDelay;
+        emit EthBtcPriceFeedAdditionStarted(address(_ethBtcFeed), block.timestamp);
     }
 
     /// @notice Finish adding a new price feed contract to the priceFeed.
-    /// @dev `InitializeAddBtcEthFeed` must be called first, once `appendBtcEthFeedTimer`
+    /// @dev `InitializeAddEthBtcFeed` must be called first, once `appendEthBtcFeedTimer`
     ///       has passed, this function can be called to append a new price feed.
-    function finalizeAddBtcEthFeed() external {
-        require(block.timestamp > appendBtcEthFeedTimer, "Timeout not yet elapsed");
-        priceFeed.addBtcEthFeed(nextBtcEthFeed);
-        emit BtcEthPriceFeedAdded(address(nextBtcEthFeed));
+    function finalizeAddEthBtcFeed() external {
+        require(block.timestamp > appendEthBtcFeedTimer, "Timeout not yet elapsed");
+        priceFeed.addEthBtcFeed(nextEthBtcFeed);
+        emit EthBtcPriceFeedAdded(address(nextEthBtcFeed));
     }
 
     // Difficulty Oracle
