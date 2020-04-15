@@ -368,7 +368,7 @@ workflows:
           #     only: master
           context: keep-dev
           requires:
-            - publish_npm_package
+            - build_relay_maintainer_initcontainer
   migrate_build_publish_keep_test:
     jobs:
       - keep_test_approval:
