@@ -258,6 +258,47 @@ jobs:
           command: |
             cd /tmp/tbtc/contracts
             gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/tbtc
+  build_relay_maintainer_initcontainer:
+    executor: docker-git
+    steps:
+      - attach_workspace:
+          at: /tmp/relay-maintainer
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Run Docker build
+          command: |
+            cd infrastructure/kube/templates/relay-maintainer/initcontainer/provision-relay-maintainer
+            docker build \
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer .
+      - run:
+          name: Save initcontainer-provision-relay-maintainer image
+          command: |
+            docker save -o /tmp/relay-maintainer/docker-images/initcontainer-provision-relay-maintainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer
+      - persist_to_workspace:
+          root: /tmp/relay-maintainer
+          paths:
+            - docker-images
+  publish_relay_maintainer_initcontainer:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/relay-maintainer
+      - run:
+          name: Load Docker images
+          command: |
+            docker load -i /tmp/relay-maintainer/docker-images/initcontainer-provision-relay-maintainer.tar
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: initcontainer-provision-relay-maintainer
+          tag: latest
 
 workflows:
   version: 2
