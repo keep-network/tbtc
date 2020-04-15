@@ -61,9 +61,12 @@ library DepositLiquidation {
         return (_bondValue.mul(100).div(_lotValue));
     }
 
-    /// @notice           Starts signer liquidation due to abort, undercollateralization, or fraud
-    /// @dev              Liquidation is done by auction.
-    /// @param _wasFraud  Boolean checking liquidation cause. True if fraud, false otherwise.
+    /// @dev              Starts signer liquidation by seizing signer bonds.
+    ///                   If the deposit is currently being redeemed, the redeemer
+    ///                   receives the full bond value; otherwise, a falling price auction
+    ///                   begins to buy 1 TBTC in exchange for a portion of the seized bonds;
+    ///                   see purchaseSignerBondsAtAuction().
+    /// @param _wasFraud  True if liquidation is being started due to fraud, false if for any other reason.
     /// @param _d         Deposit storage pointer.
     function startLiquidation(DepositUtils.Deposit storage _d, bool _wasFraud) internal {
         _d.logStartedLiquidation(_wasFraud);
