@@ -71,21 +71,21 @@ library DepositLiquidation {
     function startLiquidation(DepositUtils.Deposit storage _d, bool _wasFraud) internal {
         _d.logStartedLiquidation(_wasFraud);
 
-        uint256 _seized = _d.seizeSignerBonds();
+        uint256 seized = _d.seizeSignerBonds();
+        address redeemerAddress = _d.redeemerAddress;
+
+        // Reclaim used state for gas savings
+        _d.redemptionTeardown();
 
         // if we come from the redemption flow we shouldn't go to auction.
         // Instead give the signer bonds to redeemer
         if (_d.inRedemption()) {
             _d.setLiquidated();
-            _d.enableWithdrawal(_d.redeemerAddress, _seized);
+            _d.enableWithdrawal(redeemerAddress, seized);
             _d.logLiquidated();
-            // Reclaim used state for gas savings
-            _d.redemptionTeardown();
             return;
         }
 
-        // Reclaim used state for gas savings
-        _d.redemptionTeardown();
         _d.liquidationInitiator = msg.sender;
         _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
 
