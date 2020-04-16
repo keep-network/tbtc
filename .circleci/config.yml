@@ -269,7 +269,7 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            cd infrastructure/kube/templates/relay-maintainer/initcontainer/provision-relay-maintainer
+            cd infrastructure/kube/templates/relay-maintainer/initcontainer
             docker build \
               -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer .
       - run:
