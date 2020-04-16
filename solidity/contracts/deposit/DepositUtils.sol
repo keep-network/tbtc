@@ -260,17 +260,6 @@ library DepositUtils {
         return lotSizeTbtc(_d).div(_d.signerFeeDivisor);
     }
 
-    /// @notice     Determines the amount of TBTC accepted in the auction.
-    /// @dev        If redeemerAddress is non-0, that means we came from redemption, and no auction should happen.
-    /// @return     The amount of TBTC that must be paid at auction for the signer's bond.
-    function auctionTBTCAmount(Deposit storage _d) public view returns (uint256) {
-        if (_d.redeemerAddress == address(0)) {
-            return lotSizeTbtc(_d);
-        } else {
-            return 0;
-        }
-    }
-
     /// @notice             Determines the prefix to the compressed public key.
     /// @dev                The prefix encodes the parity of the Y coordinate.
     /// @param  _pubkeyY    The Y coordinate of the public key.
@@ -367,11 +356,11 @@ library DepositUtils {
     /// @notice     Deletes state after termination of redemption process.
     /// @dev        We keep around the redeemer address so we can pay them out.
     function redemptionTeardown(Deposit storage _d) public {
-        // don't 0 redeemerAddress because we use it to calculate auctionTBTCAmount
         _d.redeemerOutputScript = "";
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);
+        _d.redeemerAddress = address(0);
     }
 
 
