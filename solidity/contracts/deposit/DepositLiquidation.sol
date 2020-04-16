@@ -61,20 +61,27 @@ library DepositLiquidation {
         return (_bondValue.mul(100).div(_lotValue));
     }
 
-    /// @notice         Starts signer liquidation due to fraud.
-    /// @dev            Liquidation is done by auction.
-    /// @param  _d      Deposit storage pointer.
-    function startSignerFraudLiquidation(DepositUtils.Deposit storage _d) internal {
-        _d.logStartedLiquidation(true);
+    /// @dev              Starts signer liquidation by seizing signer bonds.
+    ///                   If the deposit is currently being redeemed, the redeemer
+    ///                   receives the full bond value; otherwise, a falling price auction
+    ///                   begins to buy 1 TBTC in exchange for a portion of the seized bonds;
+    ///                   see purchaseSignerBondsAtAuction().
+    /// @param _wasFraud  True if liquidation is being started due to fraud, false if for any other reason.
+    /// @param _d         Deposit storage pointer.
+    function startLiquidation(DepositUtils.Deposit storage _d, bool _wasFraud) internal {
+        _d.logStartedLiquidation(_wasFraud);
+
+        uint256 seized = _d.seizeSignerBonds();
+        address redeemerAddress = _d.redeemerAddress;
 
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
-        uint256 _seized = _d.seizeSignerBonds();
 
-        if (_d.auctionTBTCAmount() == 0) {
-            // we came from the redemption flow
+        // if we come from the redemption flow we shouldn't go to auction.
+        // Instead give the signer bonds to redeemer
+        if (_d.inRedemption()) {
             _d.setLiquidated();
-            _d.enableWithdrawal(_d.redeemerAddress, _seized);
+            _d.enableWithdrawal(redeemerAddress, seized);
             _d.logLiquidated();
             return;
         }
@@ -82,21 +89,12 @@ library DepositLiquidation {
         _d.liquidationInitiator = msg.sender;
         _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
 
-        _d.setFraudLiquidationInProgress();
-    }
-
-    /// @notice         Starts signer liquidation due to abort or undercollateralization.
-    /// @dev            Liquidation is done by auction.
-    /// @param  _d      Deposit storage pointer.
-    function startSignerAbortLiquidation(DepositUtils.Deposit storage _d) internal {
-        _d.logStartedLiquidation(false);
-        // Reclaim used state for gas savings
-        _d.redemptionTeardown();
-        _d.seizeSignerBonds();
-
-        _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
-        _d.liquidationInitiator = msg.sender;
-        _d.setLiquidationInProgress();
+        if(_wasFraud){
+            _d.setFraudLiquidationInProgress();
+        }
+        else{
+            _d.setLiquidationInProgress();
+        }
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud.
@@ -125,7 +123,8 @@ library DepositLiquidation {
         );
         require(!_d.inEndState(), "Contract has halted");
         require(submitSignatureFraud(_d, _v, _r, _s, _signedDigest, _preimage), "Signature is not fraud");
-        startSignerFraudLiquidation(_d);
+
+        startLiquidation(_d, true);
     }
 
     /// @notice                 Search _txOutputVector for output paying the redeemer.
@@ -235,7 +234,7 @@ library DepositLiquidation {
     function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
         require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
         require(getCollateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
-        startSignerAbortLiquidation(_d);
+        startLiquidation(_d, false);
     }
 
     /// @notice     Notifies the contract that the courtesy period has elapsed.
@@ -244,6 +243,6 @@ library DepositLiquidation {
     function notifyCourtesyTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
         require(block.timestamp >= _d.courtesyCallInitiated.add(TBTCConstants.getCourtesyCallTimeout()), "Courtesy period has not elapsed");
-        startSignerAbortLiquidation(_d);
+        startLiquidation(_d, false);
     }
 }
