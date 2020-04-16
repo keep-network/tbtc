@@ -97,7 +97,7 @@ contract Deposit is DepositFactoryAuthority {
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this.
-    /// @param _tbtcSystem        `TBTCSystem` contract. More info in `VendingMachine`.
+    /// @param _tbtcSystem        `TBTCSystem` contract. More info in `TBTCSystem`.
     /// @param _tbtcToken         `TBTCToken` contract. More info in TBTCToken`.
     /// @param _tbtcDepositToken  `TBTCDepositToken` (TDT) contract. More info in `TBTCDepositToken`.
     /// @param _feeRebateToken    `FeeRebateToken` (FRT) contract. More info in `FeeRebateToken`.

@@ -1,10 +1,10 @@
 pragma solidity 0.5.17;
 
-contract MockBTCETHPriceFeed{
+contract MockSatWeiPriceFeed{
 
     uint256 private price;
 
-    /// @notice Get the current price of bitcoin in ether.
+    /// @notice Get the current price of satoshi in wei.
     /// @return The price of one satoshi in wei.
     function getPrice()
         external view returns (uint256)

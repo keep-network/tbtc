@@ -6,6 +6,8 @@ const {BN, expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
+const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
+const MockMedianizer = contract.fromArtifact("MockMedianizer")
 
 describe("TBTCSystem", async function() {
   let tbtcSystem
@@ -17,16 +19,23 @@ describe("TBTCSystem", async function() {
       tbtcSystemStub,
       ecdsaKeepFactoryStub,
       tbtcDepositToken,
+      mockSatWeiPriceFeed,
     } = await deployAndLinkAll(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
       // test TBTCSystem itself.
-      {TBTCSystemStub: TBTCSystem},
+      {
+        TBTCSystemStub: TBTCSystem,
+        MockSatWeiPriceFeed: SatWeiPriceFeed,
+      },
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
     ecdsaKeepFactory = ecdsaKeepFactoryStub
     tdt = tbtcDepositToken
+
+    ethBtcMedianizer = await MockMedianizer.new()
+    mockSatWeiPriceFeed.initialize(tbtcSystem.address, ethBtcMedianizer.address)
   })
 
   describe("requestNewKeep()", async () => {
@@ -516,6 +525,59 @@ describe("TBTCSystem", async function() {
           tbtcSystem.finalizeCollateralizationThresholdsUpdate(),
           "Change not initiated",
         )
+      })
+    })
+  })
+
+  describe("add ETH/BTC price feed", async () => {
+    let med
+    let timer
+    before(async () => {
+      med = await MockMedianizer.new()
+      await med.setValue(1000)
+      timer = await tbtcSystem.getPriceFeedGovernanceTimeDelay.call()
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    describe("initializeAddEthBtcFeed", async () => {
+      it("initializes ETH/BTC addition and emits EthBtcPriceFeedAdditionStarted", async () => {
+        const receipt = await tbtcSystem.initializeAddEthBtcFeed(med.address)
+
+        expectEvent(receipt, "EthBtcPriceFeedAdditionStarted", {
+          _priceFeed: med.address,
+        })
+      })
+    })
+
+    describe("finalizeAddEthBtcFeed", async () => {
+      it("Reverts if no change as been initiated", async () => {
+        await increaseTime(timer.toNumber() + 1)
+        await expectRevert.unspecified(tbtcSystem.finalizeAddEthBtcFeed(), "")
+      })
+
+      it("Reverts if timer has not elapsed", async () => {
+        await tbtcSystem.initializeAddEthBtcFeed(med.address)
+        await increaseTime(timer.toNumber() - 10)
+        await expectRevert(
+          tbtcSystem.finalizeAddEthBtcFeed(),
+          "Timeout not yet elapsed",
+        )
+      })
+
+      it("Finalizes ETH/BTC addition and emits EthBtcPriceFeedAdded", async () => {
+        await tbtcSystem.initializeAddEthBtcFeed(med.address)
+        await increaseTime(timer.toNumber() + 1)
+        const receipt = await tbtcSystem.finalizeAddEthBtcFeed()
+        expectEvent(receipt, "EthBtcPriceFeedAdded", {
+          _priceFeed: med.address,
+        })
       })
     })
   })
