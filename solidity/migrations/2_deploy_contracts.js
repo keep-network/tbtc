@@ -128,6 +128,11 @@ module.exports = (deployer, network, accounts) => {
 
       await deployer.deploy(Relay, genesis, height, epochStart)
       difficultyRelay = await Relay.deployed()
+    } else if (network == "keep_dev") {
+      const {genesis, height, epochStart} = bitcoinTest
+
+      await deployer.deploy(Relay, genesis, height, epochStart)
+      difficultyRelay = await Relay.deployed()
     } else {
       await deployer.deploy(MockRelay)
       difficultyRelay = await MockRelay.deployed()
