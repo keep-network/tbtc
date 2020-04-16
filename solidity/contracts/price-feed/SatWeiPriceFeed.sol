@@ -5,8 +5,8 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../external/IMedianizer.sol";
 import "../interfaces/ISatWeiPriceFeed.sol";
 
-/// @notice Bitcoin-Ether price feed.
-/// @dev Based on the ratio of BTC/USD and ETH/USD.
+/// @notice satoshi/wei price feed.
+/// @dev Used ETH/USD medianizer values converted to sat/wei.
 contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
     using SafeMath for uint256;
 
@@ -19,7 +19,8 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
     // solium-disable-previous-line no-empty-blocks
     }
 
-    /// @notice Initialises the addresses of the BTC/ETH price feeds.
+    /// @notice Initialises the addresses of the ETHBTC price feeds.
+    /// @param _tbtcSystemAddress Address of the `TBTCSystem` contract. Used for access control.
     /// @param _ETHBTCPriceFeed The ETHBTC price feed address.
     function initialize(
         address _tbtcSystemAddress,
@@ -33,7 +34,7 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
         _initialized = true;
     }
 
-    /// @notice Get the current price of satoshi in wei.
+    /// @notice Get the current price of 1 satoshi in wei.
     /// @dev This does not account for any 'Flippening' event.
     /// @return The price of one satoshi in wei.
     function getPrice()
