@@ -261,14 +261,13 @@ jobs:
   build_relay_maintainer_initcontainer:
     executor: docker-git
     steps:
-      - attach_workspace:
-          at: /tmp/relay-maintainer
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
       - run:
           name: Run Docker build
           command: |
+            mkdir -p /tmp/relay-maintainer/docker-images
             cd infrastructure/kube/templates/relay-maintainer/initcontainer
             docker build \
               -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer .
