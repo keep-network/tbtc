@@ -259,7 +259,7 @@ jobs:
             cd /tmp/tbtc/contracts
             gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/tbtc
   build_relay_maintainer_initcontainer:
-    executor: docker-git
+    executor: docker-thesis-buildpack
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
@@ -269,6 +269,7 @@ jobs:
           command: |
             mkdir -p /tmp/relay-maintainer/docker-images
             cd infrastructure/kube/templates/relay-maintainer/initcontainer
+            npm upgrade @keep-network/tbtc
             docker build \
               -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer .
       - run:
