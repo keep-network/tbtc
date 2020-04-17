@@ -76,7 +76,7 @@ async function createRelayMaintainerConfig() {
   const ethNetworkName = process.env.ETH_NETWORK_NAME
   const bcoinHost = process.env.BITCOIN_HOST
   const bcoinPort = process.env.BITCOIN_PORT
-  const bcoinApiKey = ""
+  const bcoinApiKey = process.env.BITCOIN_API_KEY
   const infuraKey = ""
 
   const finalEnv =
