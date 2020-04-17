@@ -2,7 +2,7 @@ const fs = require('fs')
 const Web3 = require('web3')
 const HDWalletProvider = require("@truffle/hdwallet-provider")
 
-const URL = require('url')
+const { URL } = require('url')
 
 // ETH host info
 const ethRPCUrl = process.env.ETH_RPC_URL
