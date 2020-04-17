@@ -67,13 +67,10 @@ spec:
                   key: contract-owner-eth-account-private-key
 
             - name: BITCOIN_HOST
-              value: http://tbtc:cwYsQLaQli6gQq68@helm-tbtc-bitcoind.tbtc.svc.cluster.local
+              value: tbtc:VddO0hOvxxx@helm-bitcoind.tbtc.svc.cluster.local
 
             - name: BITCOIN_PORT
-              value: 8332
-
-            - name: BITCOIN_API_KEY
-              value: ''
+              value: '8332'
 
           volumeMounts:
             - name: relay-maintainer-env
