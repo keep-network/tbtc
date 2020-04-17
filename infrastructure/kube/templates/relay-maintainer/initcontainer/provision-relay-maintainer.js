@@ -81,16 +81,16 @@ async function createRelayMaintainerConfig() {
 
   const finalEnv =
     envTemplate
-      .replace(/^(SUMMA_RELAY_ETHER_HOST=).*$/, `\\1${ethURL.hostname}`)
-      .replace(/^(SUMMA_RELAY_ETHER_PORT=).*$/, `\\1${ethURL.port}`)
-      .replace(/^(SUMMA_RELAY_OPERATOR_KEY=).*$/, `\\1${operatorKey}`)
-      .replace(/^(SUMMA_RELAY_ETH_NETWORK=).*$/, `\\1${ethNetworkName}`)
-      .replace(/^(SUMMA_RELAY_ETH_CHAIN_ID=).*$/, `\\1${ethNetworkId}`)
-      .replace(/^(SUMMA_RELAY_BCOIN_HOST=).*$/, `\\1${bcoinHost}`)
-      .replace(/^(SUMMA_RELAY_BCOIN_PORT=).*$/, `\\1${bcoinPort}`)
-      .replace(/^(SUMMA_RELAY_BCOIN_API_KEY=).*$/, `\\1${bcoinApiKey}`)
-      .replace(/^(SUMMA_RELAY_INFURA_KEY=).*$/, `\\1${infuraKey}`)
-      .replace(/^(SUMMA_RELAY_CONTRACT=).*$/, `\\1${relayContractAddress}`)
+      .replace(/^(SUMMA_RELAY_ETHER_HOST=).*$/m, `$1${ethURL.hostname}`)
+      .replace(/^(SUMMA_RELAY_ETHER_PORT=).*$/m, `$1${ethURL.port}`)
+      .replace(/^(SUMMA_RELAY_OPERATOR_KEY=).*$/m, `$1${operatorKey}`)
+      .replace(/^(SUMMA_RELAY_ETH_NETWORK=).*$/m, `$1${ethNetworkName}`)
+      .replace(/^(SUMMA_RELAY_ETH_CHAIN_ID=).*$/m, `$1${ethNetworkId}`)
+      .replace(/^(SUMMA_RELAY_BCOIN_HOST=).*$/m, `$1${bcoinHost}`)
+      .replace(/^(SUMMA_RELAY_BCOIN_PORT=).*$/m, `$1${bcoinPort}`)
+      .replace(/^(SUMMA_RELAY_BCOIN_API_KEY=).*$/m, `$1${bcoinApiKey}`)
+      .replace(/^(SUMMA_RELAY_INFURA_KEY=).*$/m, `$1${infuraKey}`)
+      .replace(/^(SUMMA_RELAY_CONTRACT=).*$/m, `$1${relayContractAddress}`)
 
   fs.writeFileSync('/mnt/relay-maintainer/.env', finalEnv)
   console.log('relay maintainer .env file written to /mnt/relay-maintainer/.env')
