@@ -73,9 +73,9 @@ async function createRelayMaintainerConfig() {
   const relayContractAddress = RelayJSON.networks[ethNetworkId].address
   const ethURL = new URL(process.env.ETH_RPC_URL)
 
-  const ethNetworkName = ""
-  const bcoinHost = ""
-  const bcoinPort = ""
+  const ethNetworkName = process.env.ETH_NETWORK_NAME
+  const bcoinHost = process.env.BITCOIN_HOST
+  const bcoinPort = process.env.BITCOIN_PORT
   const bcoinApiKey = ""
   const infuraKey = ""
 
