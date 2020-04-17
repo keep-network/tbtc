@@ -259,7 +259,7 @@ jobs:
             cd /tmp/tbtc/contracts
             gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/tbtc
   build_relay_maintainer_initcontainer:
-    executor: docker-thesis-buildpack
+    executor: docker-node
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
