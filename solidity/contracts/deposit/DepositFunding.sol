@@ -128,7 +128,8 @@ library DepositFunding {
     }
 
     /// @notice     Anyone may notify the contract that the funder has failed to send BTC.
-    /// @dev        This is considered a funder fault, and we revoke their bond.
+    /// @dev        This is considered a funder fault, and the funder's payment
+    ///             for opening the deposit is not refunded.
     /// @param  _d  Deposit storage pointer.
     function notifyFundingTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingBTCFundingProof(), "Funding timeout has not started");
