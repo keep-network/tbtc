@@ -9,13 +9,13 @@ library TBTCConstants {
     uint256 public constant BENEFICIARY_FEE_DIVISOR = 1000;  // 1/1000 = 10 bps = 0.1% = 0.001
     uint256 public constant SATOSHI_MULTIPLIER = 10 ** 10; // multiplier to convert satoshi to TBTC token units
     uint256 public constant DEPOSIT_TERM_LENGTH = 180 * 24 * 60 * 60; // 180 days in seconds
-    uint256 public constant TX_PROOF_DIFFICULTY_FACTOR = 1; // TODO: decreased for testing, original value: `6`
+    uint256 public constant TX_PROOF_DIFFICULTY_FACTOR = 6; // confirmations on the Bitcoin chain
 
     // Redemption Flow
     uint256 public constant REDEMPTION_SIGNATURE_TIMEOUT = 2 * 60 * 60;  // seconds
     uint256 public constant INCREASE_FEE_TIMER = 4 * 60 * 60;  // seconds
     uint256 public constant REDEMPTION_PROOF_TIMEOUT = 6 * 60 * 60;  // seconds
-    uint256 public constant MINIMUM_REDEMPTION_FEE = 150; // satoshi TODO: decreased for testing, set it back original value `2000`
+    uint256 public constant MINIMUM_REDEMPTION_FEE = 2000; // satoshi
 
     // Funding Flow
     uint256 public constant FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
