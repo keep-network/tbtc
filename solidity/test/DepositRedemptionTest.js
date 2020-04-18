@@ -517,7 +517,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("updates state successfully and fires a RedemptionRequested event", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
@@ -542,7 +542,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("updates state successfully and fires a RedemptionRequested event from COURTESY_CALL state", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testDeposit.setState(states.COURTESY_CALL)
@@ -645,7 +645,7 @@ describe("DepositRedemption", async function() {
         assert.fail(`cannot approve digest: ${err}`)
       })
 
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       // Check if ECDSAKeep has been called and event emitted.
       const eventList = await ecdsaKeepStub.getPastEvents(
@@ -700,7 +700,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("updates the state and logs GotRedemptionSignature", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.setSigningGroupPublicKey(pubkeyX, pubkeyY)
       await testDeposit.setRequestInfo(
@@ -799,7 +799,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.increaseRedemptionFee(
         previousOutputBytes,
         newOutputBytes,
@@ -907,7 +907,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideRedemptionProof(
         _version,

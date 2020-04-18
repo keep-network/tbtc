@@ -55,7 +55,7 @@ describe("DepositFraud", async function() {
     })
 
     it("updates to awaiting fraud funding proof, distributes signer bond to funder, and logs FraudDuringSetup", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideFundingECDSAFraudProof(
         0,

@@ -95,7 +95,7 @@ describe("DepositFunding", async function() {
     it("runs and updates state and fires a created event", async () => {
       const expectedKeepAddress = "0x0000000000000000000000000000000000000007"
 
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.createNewDeposit(
         tbtcSystemStub.address,
@@ -224,7 +224,7 @@ describe("DepositFunding", async function() {
     })
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.notifySignerSetupFailure({from: owner})
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
@@ -295,7 +295,7 @@ describe("DepositFunding", async function() {
     })
 
     it("updates the pubkey X and Y, changes state, and logs RegisteredPubkey", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.retrieveSignerPubkey()
 
       const signingGroupPublicKey = await testDeposit.getSigningGroupPublicKey.call()
@@ -360,8 +360,8 @@ describe("DepositFunding", async function() {
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
     })
 
-    it("updates the state to failed setup, deconstes funding info, and logs SetupFailed", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+    it("updates the state to failed setup, deconsts funding info, and logs SetupFailed", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.notifyFundingTimeout()
 
@@ -403,7 +403,7 @@ describe("DepositFunding", async function() {
     })
 
     it("updates to active, stores UTXO info, deconstes funding info, logs Funded", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideBTCFundingProof(
         _version,
@@ -498,7 +498,7 @@ describe("DepositFunding", async function() {
     })
 
     it("updates to active, stores UTXO info, deconstes funding info, logs Funded", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideBTCFundingProof(
         _versionLegacy,

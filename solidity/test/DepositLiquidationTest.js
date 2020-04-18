@@ -99,7 +99,7 @@ describe("DepositLiquidation", async function() {
     })
 
     it("sets state to liquidated, logs Liquidated, ", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.purchaseSignerBondsAtAuction({from: owner})
 
@@ -292,7 +292,7 @@ describe("DepositLiquidation", async function() {
     })
 
     it("sets courtesy call state, sets the timestamp, and logs CourtesyCalled", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       // Bond value is calculated as:
       // `bondValue = collateralization * (lotSize * oraclePrice) / 100`
@@ -367,7 +367,7 @@ describe("DepositLiquidation", async function() {
     })
 
     it("transitions to active, and logs ExitedCourtesyCall", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.exitCourtesyCall()
 
