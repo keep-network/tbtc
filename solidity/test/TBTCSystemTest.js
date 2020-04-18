@@ -278,10 +278,17 @@ describe("TBTCSystem", async function() {
         )
       })
 
-      it("reverts if fee divisor is smaller than 10", async () => {
+      it("reverts if fee divisor is smaller than or equal to 9", async () => {
         await expectRevert(
           tbtcSystem.beginSignerFeeDivisorUpdate(new BN("9")),
           "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.",
+        )
+      })
+
+      it("reverts if fee divisor is greater than or equal to 2000", async () => {
+        await expectRevert(
+          tbtcSystem.beginSignerFeeDivisorUpdate(new BN("2000")),
+          "Signer fee divisor must be less than 2000, for a signer fee that is > 5bps.",
         )
       })
     })

@@ -169,7 +169,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function beginSignerFeeDivisorUpdate(uint16 _signerFeeDivisor)
         external onlyOwner
     {
-        require(_signerFeeDivisor > 9, "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.");
+        require(
+            _signerFeeDivisor > 9,
+            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%."
+        );
+        require(
+            _signerFeeDivisor < 2000,
+            "Signer fee divisor must be less than 2000, for a signer fee that is > 5bps."
+        );
+
         newSignerFeeDivisor = _signerFeeDivisor;
         signerFeeDivisorChangeInitiated = block.timestamp;
         emit SignerFeeDivisorUpdateStarted(_signerFeeDivisor, block.timestamp);
