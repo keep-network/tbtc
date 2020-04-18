@@ -53,7 +53,7 @@ contract DepositLog {
         uint256 _timestamp
     );
 
-    // This event is fired when we enter the SETUP_FAILED state for any reason
+    // This event is fired when we enter the FAILED_SETUP state for any reason
     event SetupFailed(
         address indexed _depositContractAddress,
         uint256 _timestamp
