@@ -206,7 +206,8 @@ describe("DepositLiquidation", async function() {
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
 
       const auctionValue = await testDeposit.auctionValue.call()
-      // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
+      // Buy auction immediately. No scaling takes place. Auction value is base
+      // percentage of signer bond.
       await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
 
       const finalSignerBalance = await web3.eth.getBalance(

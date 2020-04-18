@@ -484,7 +484,7 @@ describe("DepositFunding", async function() {
     const _signerPubkeyYLegacy =
       "0x76f80a7d522ea754db0e25ca43fdacfd1f313e4dc2765e2dfcc18fb3d63a66c4"
 
-    const _expectedUTXOoutpointLegacy =
+    const _expectedUTXOutpointLegacy =
       "0x0ee73932b031135c57e3d8f53db8ed5c97e6023a3e4980ea465f1aa2962d17b200000000"
     // const _outputValue = 996219000;
     const _outValueBytesLegacy = "0x7818613b00000000"
@@ -499,7 +499,7 @@ describe("DepositFunding", async function() {
       await ecdsaKeepStub.send(1000000, {from: accounts[0]})
     })
 
-    it("updates to active, stores UTXO info, deconstes funding info, logs Funded", async () => {
+    it("updates to active, stores UTXO info, deconsts funding info, logs Funded", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideBTCFundingProof(
@@ -515,7 +515,7 @@ describe("DepositFunding", async function() {
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
       expect(UTXOInfo[0]).to.eql(_outValueBytesLegacy)
-      expect(UTXOInfo[2]).to.eql(_expectedUTXOoutpointLegacy)
+      expect(UTXOInfo[2]).to.eql(_expectedUTXOutpointLegacy)
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
       expect(signingGroupRequestedAt).to.eq.BN(
