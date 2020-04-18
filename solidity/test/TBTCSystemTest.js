@@ -326,7 +326,12 @@ describe("TBTCSystem", async function() {
   })
 
   describe("update lot sizes", async () => {
-    const lotSizes = [new BN(10 ** 8), new BN(10 ** 6)]
+    const lotSizes = [
+      new BN(10 ** 8), // required
+      new BN(10 ** 6),
+      new BN(10 ** 9), // upper bound
+      new BN(50 * 10 ** 3), // lower bound
+    ]
     describe("beginLotSizesUpdate", async () => {
       it("executes and emits a LotSizesUpdateStarted event", async () => {
         const testSizes = [new BN(10 ** 8), new BN(10 ** 6)]
@@ -364,15 +369,31 @@ describe("TBTCSystem", async function() {
         const lotSizes = []
         await expectRevert(
           tbtcSystem.beginLotSizesUpdate(lotSizes),
-          "Lot size array must always contain 1BTC",
+          "Lot size array must always contain 1 BTC",
         )
       })
 
-      it("reverts if lot size array does not contain a 1BTC lot size", async () => {
+      it("reverts if lot size array does not contain a 1 BTC lot size", async () => {
         const lotSizes = [10 ** 7]
         await expectRevert(
           tbtcSystem.beginLotSizesUpdate(lotSizes),
-          "Lot size array must always contain 1BTC",
+          "Lot size array must always contain 1 BTC",
+        )
+      })
+
+      it("reverts if lot size array contains a lot size < 0.0005 BTC", async () => {
+        const lotSizes = [10 ** 7, 10 ** 8, 5 * 10 ** 3 - 1]
+        await expectRevert(
+          tbtcSystem.beginLotSizesUpdate(lotSizes),
+          "Lot sizes less than 0.0005 BTC are not allowed",
+        )
+      })
+
+      it("reverts if lot size array contains a lot size > 10 BTC", async () => {
+        const lotSizes = [10 ** 7, 10 ** 9 + 1, 10 ** 8]
+        await expectRevert(
+          tbtcSystem.beginLotSizesUpdate(lotSizes),
+          "Lot sizes greater than 10 BTC are not allowed",
         )
       })
     })
