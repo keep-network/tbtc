@@ -144,6 +144,29 @@ library DepositFunding {
         fundingTeardown(_d);
     }
 
+    /// @notice Requests a funder abort for a failed-funding deposit; that is,
+    ///         requests return of a sent UTXO to `_abortOutputScript`. This can
+    ///         be used for example when a UTXO is sent that is the wrong size
+    ///         for the lot. Must be called after setup fails for any reason,
+    ///         and imposes no requirement or incentive on the signing group to
+    ///         return the UTXO.
+    /// @dev This is a self-admitted funder fault, and should only be callable
+    ///      by the TDT holder.
+    /// @param _d Deposit storage pointer.
+    /// @param _abortOutputScript The output script the funder wishes to request
+    ///        a return of their UTXO to.
+    function requestFunderAbort(
+        DepositUtils.Deposit storage _d,
+        bytes memory _abortOutputScript
+    ) public {
+        require(
+            _d.inFailedSetup(),
+            "The deposit has not failed funding"
+        );
+
+        _d.logFunderRequestedAbort(_abortOutputScript);
+    }
+
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud during funding.
     /// @dev                    Calls out to the keep to verify if there was fraud.
     /// @param  _d              Deposit storage pointer.

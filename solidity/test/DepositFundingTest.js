@@ -186,7 +186,6 @@ describe("DepositFunding", async function() {
     let timer
     let owner
     let openKeepFee
-    before(async () => {})
 
     before(async () => {
       ;({
@@ -391,6 +390,58 @@ describe("DepositFunding", async function() {
         testDeposit.notifyFundingTimeout(),
         "Funding timeout has not elapsed",
       )
+    })
+  })
+
+  describe("requestFunderAbort", async () => {
+    let timer
+    let owner
+
+    before(async () => {
+      timer = await tbtcConstants.getFundingTimeout.call()
+      owner = accounts[1]
+      await tbtcDepositToken.forceMint(
+        owner,
+        web3.utils.toBN(testDeposit.address),
+      )
+    })
+
+    beforeEach(async () => {
+      const block = await web3.eth.getBlock("latest")
+      const blockTimestamp = block.timestamp
+      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
+
+      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
+    })
+
+    it("fails if the deposit has not failed setup", () => {
+      expectRevert(
+        testDeposit.requestFunderAbort("0x1234", {from: owner}),
+        "The deposit has not failed funding",
+      )
+    })
+
+    it("emits a FunderAbortRequested event", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
+      await testDeposit.notifyFundingTimeout()
+
+      const outputScript = "0x012345"
+      await testDeposit.requestFunderAbort(outputScript, {from: owner})
+
+      const eventList = await tbtcSystemStub.getPastEvents(
+        "FunderAbortRequested",
+        {
+          fromBlock: blockNumber,
+          toBlock: "latest",
+        },
+      )
+      expect(eventList.length).to.equal(1)
+      expect(eventList[0].name == "FunderAbortRequested")
+      expect(eventList[0].returnValues).to.contain({
+        _depositContractAddress: testDeposit.address,
+        _abortOutputScript: outputScript,
+      })
     })
   })
 
