@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bcoin
+  namespace: default
+  labels:
+    app: bitcoin-node
+    type: bcoin
+spec:
+  replicas: 1
+  serviceName: tbtc-electrumx-server
+  volumeClaimTemplates:
+  - metadata:
+      name: bcoin-data
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 40Gi
+  selector:
+    matchLabels:
+      app: bitcoin-node
+      type: bcoin
+  template:
+    metadata:
+      labels:
+        app: bitcoin-node
+        type: bcoin
+    spec:
+      containers:
+      - name: bcoin
+        image: gcr.io/keep-dev-fe24/bcoin
+        ports:
+          - containerPort: 18332
+          - containerPort: 18333
+        env:
+          - name: BCOIN_NETWORK
+            value: testnet
+          - name: BCOIN_HTTP_HOST
+            value: '0.0.0.0'
+          - name: BCOIN_HTTP_PORT
+            value: '18332'
+          - name: BCOIN_PORT
+            value: '18333'
+          - name: BCOIN_LOG_LEVEL
+            value: info
+          - name: BCOIN_PREFIX
+            value: /mnt/.bcoin
+          - name: BCOIN_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: bcoin
+                key: http-api-key
+        volumeMounts:
+          - name: bcoin-data
+            mountPath: /mnt/.bcoin
+        command:
+          ["bcoin"]
+      volumes:
+      - name: bcoin-data
+        persistentVolumeClaim:
+          claimName: bcoin-data
