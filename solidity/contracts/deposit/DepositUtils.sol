@@ -119,7 +119,6 @@ library DepositUtils {
         require(_observedDiff != ValidateSPV.getErrInvalidChain(), "Invalid headers chain");
         require(_observedDiff != ValidateSPV.getErrLowWork(), "Insufficient work in a header");
 
-        /* TODO: make this better than 6 */
         require(
             _observedDiff >= _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),
             "Insufficient accumulated difficulty in header chain"
@@ -147,7 +146,6 @@ library DepositUtils {
                 _txIndexInBlock
             ),
             "Tx merkle proof is not valid for provided header and txId");
-        // TODO: Update for variable confirmation requirements via Vending Machine.
         evaluateProofDifficulty(_d, _bitcoinHeaders);
     }
 
