@@ -55,7 +55,7 @@ library DepositUtils {
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
         address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
-        bytes redeemerOutputScript;  // The 20-byte redeemer PKH
+        bytes redeemerOutputScript;  // The redeemer output script
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 latestRedemptionFee; // the fee currently required by a redemption transaction
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
