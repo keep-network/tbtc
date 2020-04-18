@@ -405,7 +405,9 @@ describe("DepositFunding", async function() {
     it("updates to active, stores UTXO info, deconstes funding info, logs Funded", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await testDeposit.provideBTCFundingProof(
+      const {
+        receipt: {blockNumber: proofBlock},
+      } = await testDeposit.provideBTCFundingProof(
         _version,
         _txInputVector,
         _txOutputVector,
@@ -415,7 +417,7 @@ describe("DepositFunding", async function() {
         _txIndexInBlock,
         _bitcoinHeaders,
       )
-      const expectedFundedAt = (await web3.eth.getBlock("latest")).timestamp
+      const expectedFundedAt = (await web3.eth.getBlock(proofBlock)).timestamp
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
       expect(UTXOInfo[0]).to.equal(_outValueBytes)

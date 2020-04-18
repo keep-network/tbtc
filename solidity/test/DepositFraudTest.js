@@ -130,9 +130,10 @@ describe("DepositFraud", async function() {
     })
 
     it("executes and emits StartedLiquidation event", async () => {
-      const block = await web3.eth.getBlock("latest")
-
-      await testDeposit.startLiquidation(true, {from: owner})
+      const {
+        receipt: {blockNumber: liquidationBlock},
+      } = await testDeposit.startLiquidation(true, {from: owner})
+      const block = await web3.eth.getBlock(liquidationBlock)
 
       const events = await tbtcSystemStub.getPastEvents("StartedLiquidation", {
         fromBlock: block.number,
@@ -156,8 +157,10 @@ describe("DepositFraud", async function() {
       await testDeposit.setState(states.AWAITING_WITHDRAWAL_SIGNATURE)
 
       const currentBond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      const block = await web3.eth.getBlock("latest")
-      await testDeposit.startLiquidation(true)
+      const {
+        receipt: {blockNumber: liquidationBlock},
+      } = await testDeposit.startLiquidation(true)
+      const block = await web3.eth.getBlock(liquidationBlock)
 
       const events = await tbtcSystemStub.getPastEvents("Liquidated", {
         fromBlock: block.number,
@@ -192,9 +195,10 @@ describe("DepositFraud", async function() {
     })
 
     it("executes and emits StartedLiquidation event", async () => {
-      const block = await web3.eth.getBlock("latest")
-
-      await testDeposit.startLiquidation(false, {from: owner})
+      const {
+        receipt: {blockNumber: liquidationBlock},
+      } = await testDeposit.startLiquidation(false, {from: owner})
+      const block = await web3.eth.getBlock(liquidationBlock)
 
       const events = await tbtcSystemStub.getPastEvents("StartedLiquidation", {
         fromBlock: block.number,
