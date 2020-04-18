@@ -36,7 +36,7 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     function () external payable {
-        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from rom underlying keep");
+        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from underlying keep");
     }
 
     /// @notice     Get the integer representing the current state.

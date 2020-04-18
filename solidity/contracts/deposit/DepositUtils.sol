@@ -440,7 +440,7 @@ library DepositUtils {
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
-    ///                     is this deposit's TDT owner.
+    ///                     is this deposit's TDT holder.
     /// @param _redeemer    The assumed owner of the deposit's TDT.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
@@ -467,7 +467,7 @@ library DepositUtils {
         if (depositOwner(_d) == _redeemer && !inCourtesy) {
             return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
         }
-        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL");
+        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
         return lotSizeTbtc(_d);
     }
 }
