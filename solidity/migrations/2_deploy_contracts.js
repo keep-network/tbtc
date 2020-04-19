@@ -25,6 +25,7 @@ const MockRelay = artifacts.require("MockRelay")
 
 // system
 const TBTCConstants = artifacts.require("TBTCConstants")
+const TBTCDevelopmentConstants = artifacts.require("TBTCDevelopmentConstants")
 const TBTCSystem = artifacts.require("TBTCSystem")
 
 // tokens
@@ -57,6 +58,11 @@ const all = [
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
+    if (network == "keep_dev" || network == "local") {
+      // For keep_dev and local, replace constants with testnet constants.
+      all[all.indexOf(TBTCConstants)] = TBTCDevelopmentConstants
+    }
+
     // bitcoin-spv
     await deployer.deploy(BytesLib)
     await deployer.link(BytesLib, all)
