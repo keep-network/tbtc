@@ -74,9 +74,11 @@ async function createRelayMaintainerConfig() {
   const ethURL = new URL(process.env.ETH_RPC_URL)
 
   const ethNetworkName = process.env.ETH_NETWORK_NAME
+  // Do not include the protocol for BITCOIN_HOST.
+  // It's added on by the app.
   const bcoinHost = process.env.BITCOIN_HOST
   const bcoinPort = process.env.BITCOIN_PORT
-  const bcoinApiKey = ""
+  const bcoinApiKey = process.env.BITCOIN_API_KEY
   const infuraKey = ""
 
   const finalEnv =
