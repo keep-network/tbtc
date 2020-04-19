@@ -413,3 +413,21 @@ workflows:
           context: keep-test
           requires:
             - migrate_contracts
+      - build_relay_maintainer_initcontainer:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          context: keep-test
+          requires:
+            - publish_npm_package
+      - publish_relay_maintainer_initcontainer:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          context: keep-test
+          requires:
+            - build_relay_maintainer_initcontainer
