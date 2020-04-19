@@ -1,7 +1,6 @@
 pragma solidity 0.5.17;
 
 library TBTCConstants {
-
     // This is intended to make it easy to update system params
     // During testing swap this out with another constats contract
 

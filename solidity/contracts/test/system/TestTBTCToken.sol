@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "../../../contracts/system/TBTCToken.sol";
 
-contract TestToken is TBTCToken{
+contract TestTBTCToken is TBTCToken{
 
     constructor(address _vendingMachine)
         TBTCToken(_vendingMachine)

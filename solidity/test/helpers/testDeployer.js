@@ -15,7 +15,7 @@ const DepositLiquidation = contract.fromArtifact("DepositLiquidation")
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
 const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
 const ECDSAKeepVendorStub = contract.fromArtifact("ECDSAKeepVendorStub")
-const TestToken = contract.fromArtifact("TestToken")
+const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 const MockRelay = contract.fromArtifact("MockRelay")
 const MockSatWeiPriceFeed = contract.fromArtifact("MockSatWeiPriceFeed")
 const TBTCSystemStub = contract.fromArtifact("TBTCSystemStub")
@@ -136,7 +136,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     ecdsaKeepFactoryStub.address,
   )
 
-  const tbtcToken = await TestToken.new(vendingMachine.address)
+  const tbtcToken = await TestTBTCToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
 
   const tbtcDepositToken = deployed.TBTCDepositToken

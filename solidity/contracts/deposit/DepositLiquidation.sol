@@ -6,7 +6,7 @@ import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedEC
 import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCConstants} from "../system/TBTCConstants.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";

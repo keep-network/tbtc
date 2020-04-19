@@ -7,7 +7,7 @@ import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedEC
 import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {DepositStates} from "./DepositStates.sol";
-import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCConstants} from "../system/TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
