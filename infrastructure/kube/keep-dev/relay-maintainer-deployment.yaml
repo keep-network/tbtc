@@ -66,11 +66,17 @@ spec:
                   name: eth-network-internal
                   key: contract-owner-eth-account-private-key
 
-            - name: BITCOIN_HOST
-              value: tbtc:VddO0hOvxxx@helm-bitcoind.tbtc.svc.cluster.local
+            - name: BCOIN_HOST
+              value: bcoin.default.svc.cluster.local
 
-            - name: BITCOIN_PORT
-              value: '8332'
+            - name: BCOIN_PORT
+              value: '18332'
+
+            - name: BCOIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: bcoin
+                  key: http-api-key
 
           volumeMounts:
             - name: relay-maintainer-env
