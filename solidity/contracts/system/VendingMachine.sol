@@ -4,8 +4,7 @@ import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {TBTCDepositToken} from "./TBTCDepositToken.sol";
 import {FeeRebateToken} from "./FeeRebateToken.sol";
 import {TBTCToken} from "./TBTCToken.sol";
-import {TBTCConstants} from "../deposit/TBTCConstants.sol";
-import {DepositUtils} from "../deposit/DepositUtils.sol";
+import {TBTCConstants} from "./TBTCConstants.sol";
 import "../deposit/Deposit.sol";
 import "./TBTCSystemAuthority.sol";
 

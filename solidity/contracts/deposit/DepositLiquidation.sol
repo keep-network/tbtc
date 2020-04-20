@@ -6,7 +6,7 @@ import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedEC
 import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
-import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCConstants} from "../system/TBTCConstants.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
@@ -138,7 +138,7 @@ library DepositLiquidation {
     ) internal view returns (bool){
         bytes memory _output;
         uint256 _offset = 1;
-        uint256 _permittedFeeBumps = TBTCConstants.getPermittedFeeBumps();  /* TODO: can we refactor withdrawal flow to improve this? */
+        uint256 _permittedFeeBumps = TBTCConstants.getPermittedFeeBumps();
         uint256 _requiredOutputValue = _d.utxoSize().sub((_d.initialRedemptionFee.mul((_permittedFeeBumps.add(1)))));
 
         uint8 _numOuts = uint8(_txOutputVector.slice(0, 1)[0]);

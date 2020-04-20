@@ -52,7 +52,6 @@ contract RedemptionScript {
         // By default, `address.call`  will catch any revert messages.
         // Converting the `returnData` to a string will effectively forward any revert messages.
         // https://ethereum.stackexchange.com/questions/69133/forward-revert-message-from-low-level-solidity-call
-        // TODO: there's some noisy couple bytes at the beginning of the converted string, maybe the ABI-coded length?
         require(success, string(returnData));
     }
 }

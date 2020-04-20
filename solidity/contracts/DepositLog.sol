@@ -5,7 +5,6 @@ import {TBTCDepositToken} from "./system/TBTCDepositToken.sol";
 
 contract DepositLog {
     /*
-    TODO: review events, see what new information should be added
     Logging philosophy:
       Every state transition should fire a log
       That log should have ALL necessary info for off-chain actors
