@@ -58,7 +58,7 @@ const all = [
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
-    if (network == "keep_dev" || network == "local") {
+    if (network == "keep_dev" || network == "development") {
       // For keep_dev and local, replace constants with testnet constants.
       all[all.indexOf(TBTCConstants)] = TBTCDevelopmentConstants
     }
