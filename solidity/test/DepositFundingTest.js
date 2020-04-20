@@ -95,7 +95,7 @@ describe("DepositFunding", async function() {
     it("runs and updates state and fires a created event", async () => {
       const expectedKeepAddress = "0x0000000000000000000000000000000000000007"
 
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.createNewDeposit(
         tbtcSystemStub.address,
@@ -223,7 +223,7 @@ describe("DepositFunding", async function() {
     })
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.notifySignerSetupFailure({from: owner})
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
@@ -294,7 +294,7 @@ describe("DepositFunding", async function() {
     })
 
     it("updates the pubkey X and Y, changes state, and logs RegisteredPubkey", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.retrieveSignerPubkey()
 
       const signingGroupPublicKey = await testDeposit.getSigningGroupPublicKey.call()
@@ -359,8 +359,8 @@ describe("DepositFunding", async function() {
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
     })
 
-    it("updates the state to failed setup, deconstes funding info, and logs SetupFailed", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+    it("updates the state to failed setup, deconsts funding info, and logs SetupFailed", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.notifyFundingTimeout()
 
@@ -454,9 +454,11 @@ describe("DepositFunding", async function() {
     })
 
     it("updates to active, stores UTXO info, deconstes funding info, logs Funded", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
-      await testDeposit.provideBTCFundingProof(
+      const {
+        receipt: {blockNumber: proofBlock},
+      } = await testDeposit.provideBTCFundingProof(
         _version,
         _txInputVector,
         _txOutputVector,
@@ -466,7 +468,7 @@ describe("DepositFunding", async function() {
         _txIndexInBlock,
         _bitcoinHeaders,
       )
-      const expectedFundedAt = (await web3.eth.getBlock("latest")).timestamp
+      const expectedFundedAt = (await web3.eth.getBlock(proofBlock)).timestamp
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
       expect(UTXOInfo[0]).to.equal(_outValueBytes)
@@ -533,7 +535,7 @@ describe("DepositFunding", async function() {
     const _signerPubkeyYLegacy =
       "0x76f80a7d522ea754db0e25ca43fdacfd1f313e4dc2765e2dfcc18fb3d63a66c4"
 
-    const _expectedUTXOoutpointLegacy =
+    const _expectedUTXOutpointLegacy =
       "0x0ee73932b031135c57e3d8f53db8ed5c97e6023a3e4980ea465f1aa2962d17b200000000"
     // const _outputValue = 996219000;
     const _outValueBytesLegacy = "0x7818613b00000000"
@@ -548,8 +550,8 @@ describe("DepositFunding", async function() {
       await ecdsaKeepStub.send(1000000, {from: accounts[0]})
     })
 
-    it("updates to active, stores UTXO info, deconstes funding info, logs Funded", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+    it("updates to active, stores UTXO info, deconsts funding info, logs Funded", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideBTCFundingProof(
         _versionLegacy,
@@ -564,7 +566,7 @@ describe("DepositFunding", async function() {
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
       expect(UTXOInfo[0]).to.eql(_outValueBytesLegacy)
-      expect(UTXOInfo[2]).to.eql(_expectedUTXOoutpointLegacy)
+      expect(UTXOInfo[2]).to.eql(_expectedUTXOutpointLegacy)
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
       expect(signingGroupRequestedAt).to.eq.BN(

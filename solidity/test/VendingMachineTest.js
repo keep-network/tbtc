@@ -250,7 +250,7 @@ describe("VendingMachine", async function() {
       await tbtcDepositToken.approve(vendingMachine.address, tdtId, {
         from: owner,
       })
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await vendingMachine.unqualifiedDepositToTbtc(
         testDeposit.address,
@@ -347,7 +347,7 @@ describe("VendingMachine", async function() {
       await restoreSnapshot()
     })
     it("successfully redeems via wrapper", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       // the fee is ~12,297,829,380 BTC
@@ -406,7 +406,7 @@ describe("VendingMachine", async function() {
         await tbtcToken.forceMint(owner, depositValue.add(signerFee))
         await feeRebateToken.forceMint(owner, tdtId)
 
-        const blockNumber = await web3.eth.getBlock("latest").number
+        const blockNumber = await web3.eth.getBlockNumber()
 
         await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
