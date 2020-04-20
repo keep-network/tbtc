@@ -1,7 +1,5 @@
 pragma solidity 0.5.17;
 
-import { TBTCConstants } from "./TBTCConstants.sol";
-
 /// @title TBTCDevelopmentConstants
 /// @notice Constants for development testnet usages; tuned for testing and
 ///         faster iteration rather than security. These should NOT be deployed
