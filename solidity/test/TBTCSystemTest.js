@@ -335,30 +335,31 @@ describe("TBTCSystem", async function() {
     describe("beginLotSizesUpdate", async () => {
       it("executes and emits a LotSizesUpdateStarted event", async () => {
         const testSizes = [new BN(10 ** 8), new BN(10 ** 6)]
-        const block = await web3.eth.getBlock("latest")
-        const receipt = await tbtcSystem.beginLotSizesUpdate(testSizes)
-        expectEvent(receipt, "LotSizesUpdateStarted", {})
-        expect(receipt.logs[0].args[0][0]).to.eq.BN(testSizes[0])
-        expect(receipt.logs[0].args[0][1]).to.eq.BN(testSizes[1])
-        expect([
-          receipt.logs[0].args[1].toString(),
-          receipt.logs[0].args[1].toString() - 1,
-        ]).to.include(block.timestamp.toString())
+        const truffleReceipt = await tbtcSystem.beginLotSizesUpdate(testSizes)
+        const {
+          receipt: {blockNumber: updateStartBlock},
+        } = truffleReceipt
+        const block = await web3.eth.getBlock(updateStartBlock)
+
+        expectEvent(truffleReceipt, "LotSizesUpdateStarted", {
+          _timestamp: new BN(block.timestamp),
+        })
+        expect(truffleReceipt.logs[0].args[0][0]).to.eq.BN(testSizes[0])
+        expect(truffleReceipt.logs[0].args[0][1]).to.eq.BN(testSizes[1])
       })
 
       it("overrides previous update and resets timer", async () => {
-        const block = await web3.eth.getBlock("latest")
-        const receipt = await tbtcSystem.beginLotSizesUpdate(lotSizes)
+        const truffleReceipt = await tbtcSystem.beginLotSizesUpdate(lotSizes)
+        const {
+          receipt: {blockNumber: updateStartBlock},
+        } = truffleReceipt
+        const block = await web3.eth.getBlock(updateStartBlock)
         const remainingTime = await tbtcSystem.getRemainingLotSizesUpdateTime.call()
         const totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
 
-        expectEvent(receipt, "LotSizesUpdateStarted", {})
-        expect(receipt.logs[0].args[0][0]).to.eq.BN(lotSizes[0])
-        expect(receipt.logs[0].args[0][1]).to.eq.BN(lotSizes[1])
-        expect([
-          receipt.logs[0].args[1].toString(),
-          (receipt.logs[0].args[1] - 1).toString(),
-        ]).to.include(block.timestamp.toString())
+        expect(truffleReceipt.logs[0].args[0][0]).to.eq.BN(lotSizes[0])
+        expect(truffleReceipt.logs[0].args[0][1]).to.eq.BN(lotSizes[1])
+        expect(truffleReceipt.logs[0].args[1]).to.eq.BN(block.timestamp)
         expect([
           remainingTime.toString(),
           remainingTime.toString() - 1,

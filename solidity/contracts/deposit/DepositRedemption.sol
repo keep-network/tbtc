@@ -10,7 +10,7 @@ import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedEC
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCConstants} from "../system/TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 
@@ -57,11 +57,11 @@ library DepositRedemption {
         uint256 signerFee = _d.signerFee();
         uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(_d.redeemerAddress);
 
-        // if we owe 0 TBTC, msg.sender is TDT owner and FRT holder.
+        // if we owe 0 TBTC, msg.sender is TDT holder and FRT holder.
         if(tbtcOwed == 0){
             return;
         }
-        // if we owe > 0 & < signerfee, msg.sender is TDT owner but not FRT holder.
+        // if we owe > 0 & < signerfee, msg.sender is TDT holder but not FRT holder.
         if(tbtcOwed <= signerFee){
             _d.tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
             return;
@@ -70,18 +70,18 @@ library DepositRedemption {
         if(tbtcOwed == tbtcLot){
             // the TDT holder has exclusive redemption rights to a UXTO up until the deposit’s term.
             // At that point, we open it up so anyone may redeem it.
-            // As compensation, the TDT owner is reimbursed in TBTC
+            // As compensation, the TDT holder is reimbursed in TBTC
             // Vending Machine-owned TDTs have been used to mint TBTC,
             // and we should always burn a full TBTC to redeem the deposit.
             if(tdtHolder == vendingMachineAddress){
                 _d.tbtcToken.burnFrom(msg.sender, tbtcLot);
             }
-            // if signer fee is not escrowed, escrow and it here and send the rest to TDT owner
+            // if signer fee is not escrowed, escrow and it here and send the rest to TDT holder
             else if(_d.tbtcToken.balanceOf(address(this)) < signerFee){
                 _d.tbtcToken.transferFrom(msg.sender, address(this), signerFee);
                 _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
             }
-            // tansfer a full TBTC to TDT owner if signerFee is escrowed
+            // tansfer a full TBTC to TDT holder if signerFee is escrowed
             else{
                 _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot);
             }
@@ -155,7 +155,7 @@ library DepositRedemption {
         _requestRedemption(_d, _outputValueBytes, _redeemerOutputScript, _finalRecipient);
     }
 
-    /// @notice                     Only TDT owner can request redemption,
+    /// @notice                     Only TDT holder can request redemption,
     ///                             unless Deposit is expired or in COURTESY_CALL.
     /// @dev                        The redeemer specifies details about the Bitcoin redemption transaction.
     /// @param  _d                  Deposit storage pointer.

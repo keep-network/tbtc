@@ -7,7 +7,7 @@ import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedEC
 import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {DepositStates} from "./DepositStates.sol";
-import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCConstants} from "../system/TBTCConstants.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
@@ -55,7 +55,7 @@ library DepositUtils {
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
         address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
-        bytes redeemerOutputScript;  // The 20-byte redeemer PKH
+        bytes redeemerOutputScript;  // The redeemer output script
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 latestRedemptionFee; // the fee currently required by a redemption transaction
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
@@ -119,7 +119,6 @@ library DepositUtils {
         require(_observedDiff != ValidateSPV.getErrInvalidChain(), "Invalid headers chain");
         require(_observedDiff != ValidateSPV.getErrLowWork(), "Insufficient work in a header");
 
-        /* TODO: make this better than 6 */
         require(
             _observedDiff >= _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),
             "Insufficient accumulated difficulty in header chain"
@@ -147,7 +146,6 @@ library DepositUtils {
                 _txIndexInBlock
             ),
             "Tx merkle proof is not valid for provided header and txId");
-        // TODO: Update for variable confirmation requirements via Vending Machine.
         evaluateProofDifficulty(_d, _bitcoinHeaders);
     }
 
@@ -405,12 +403,16 @@ library DepositUtils {
         _d.withdrawalAllowances[msg.sender] = 0;
 
         /* solium-disable-next-line security/no-call-value */
-        msg.sender.call.value(available)("");
+        (bool ok,) = msg.sender.call.value(available)("");
+        require(
+            ok,
+            "Failed to send withdrawal allowance to sender"
+        );
     }
 
     /// @notice     Get the caller's withdraw allowance.
     /// @return     The caller's withdraw allowance in wei.
-    function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal returns (uint256) {
+    function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal view returns (uint256) {
         return _d.withdrawalAllowances[msg.sender];
     }
 
@@ -440,7 +442,7 @@ library DepositUtils {
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
-    ///                     is this deposit's TDT owner.
+    ///                     is this deposit's TDT holder.
     /// @param _redeemer    The assumed owner of the deposit's TDT.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
@@ -467,7 +469,7 @@ library DepositUtils {
         if (depositOwner(_d) == _redeemer && !inCourtesy) {
             return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
         }
-        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL");
+        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
         return lotSizeTbtc(_d);
     }
 }

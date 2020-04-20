@@ -85,6 +85,16 @@ library OutsourceDepositLogging {
         _logger.logSetupFailed();
     }
 
+    /// @notice     Fires a FunderAbortRequested event.
+    /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
+    function logFunderRequestedAbort(
+        DepositUtils.Deposit storage _d,
+        bytes memory _abortOutputScript
+    ) public {
+        DepositLog _logger = DepositLog(address(_d.tbtcSystem));
+        _logger.logFunderRequestedAbort(_abortOutputScript);
+    }
+
     /// @notice     Fires a FraudDuringSetup event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
     function logFraudDuringSetup(DepositUtils.Deposit storage _d) external {
