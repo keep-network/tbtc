@@ -28,4 +28,12 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
     function setOpenKeepFeeEstimate(uint256 _fee) external {
         feeEstimate = _fee;
     }
+
+    function getKeepAddress() external view returns (address){
+        return keepAddress;
+    }
+
+    function setKeepAddress(address _keepAddress) external {
+        keepAddress = _keepAddress;
+    }
 }
