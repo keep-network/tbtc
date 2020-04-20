@@ -10,7 +10,7 @@ import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedEC
 import {DepositUtils} from "./DepositUtils.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCConstants} from "../system/TBTCConstants.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 
