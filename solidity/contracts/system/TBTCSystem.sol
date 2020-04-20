@@ -356,7 +356,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         governanceTimeDelay.sub(elapsed);
     }
 
-    function getGovernanceTimeDelay() public view returns (uint256) {
+    function getGovernanceTimeDelay() public pure returns (uint256) {
         return governanceTimeDelay;
     }
 

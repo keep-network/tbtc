@@ -33,9 +33,8 @@ contract RedemptionScript {
     /// @dev Implements the approveAndCall receiver interface.
     /// @param _from The owner of the token who approved them for transfer.
     /// @param _amount Approved TBTC amount for the transfer.
-    /// @param _token Token contract address.
     /// @param _extraData Encoded function call to `VendingMachine.tbtcToBtc`.
-    function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
+    function receiveApproval(address _from, uint256 _amount, address, bytes memory _extraData) public {
         tbtcToken.transferFrom(_from, address(this), _amount);
         tbtcToken.approve(address(vendingMachine), _amount);
 

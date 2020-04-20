@@ -61,12 +61,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: sudo npm install -g ganache-cli@6.4.2
-      - run:
-          name: Running testrpc
-          working_directory: ~/project/solidity
-          command: ganache-cli
-          background: true
       - run:
           name: Run NPM tests
           working_directory: ~/project/solidity

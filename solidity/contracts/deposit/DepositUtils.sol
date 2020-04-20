@@ -403,12 +403,16 @@ library DepositUtils {
         _d.withdrawalAllowances[msg.sender] = 0;
 
         /* solium-disable-next-line security/no-call-value */
-        msg.sender.call.value(available)("");
+        (bool ok,) = msg.sender.call.value(available)("");
+        require(
+            ok,
+            "Failed to send withdrawal allowance to sender"
+        );
     }
 
     /// @notice     Get the caller's withdraw allowance.
     /// @return     The caller's withdraw allowance in wei.
-    function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal returns (uint256) {
+    function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal view returns (uint256) {
         return _d.withdrawalAllowances[msg.sender];
     }
 
