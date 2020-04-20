@@ -124,7 +124,7 @@ library DepositLiquidation {
             "Signer liquidation already in progress"
         );
         require(!_d.inEndState(), "Contract has halted");
-        require(submitSignatureFraud(_d, _v, _r, _s, _signedDigest, _preimage), "Signature is not fraud");
+        submitSignatureFraud(_d, _v, _r, _s, _signedDigest, _preimage);
         startSignerFraudLiquidation(_d);
     }
 
