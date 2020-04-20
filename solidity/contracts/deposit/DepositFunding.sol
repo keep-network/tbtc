@@ -9,7 +9,7 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCConstants} from "../system/TBTCConstants.sol";
 
 library DepositFunding {
 

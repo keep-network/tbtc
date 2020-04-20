@@ -373,10 +373,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function fetchBitcoinPrice() external view returns (uint256) {
         uint256 price = priceFeed.getPrice();
         if (price == 0 || price > 10 ** 18) {
-            /*
-              This is if a sat is worth 0 wei, or is worth 1 ether
-              TODO: what should this behavior be?
-            */
+            // This is if a sat is worth 0 wei, or is worth >1 ether. Revert at
+            // once.
             revert("System returned a bad price");
         }
         return price;
@@ -400,7 +398,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     // Difficulty Oracle
-    // TODO: This is a workaround. It will be replaced by tbtc-difficulty-oracle.
     function fetchRelayCurrentDifficulty() external view returns (uint256) {
         return relay.getCurrentEpochDifficulty();
     }
