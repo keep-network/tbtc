@@ -63,7 +63,7 @@ library DepositFunding {
         uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_d.tbtcSystem.getInitialCollateralizedPercent()).div(100);
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
-        _d.keepSetupFee = _d.tbtcSystem.createNewDepositFeeEstimate();
+        _d.keepSetupFee = _d.tbtcSystem.getNewDepositFeeEstimate();
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
             _m,
