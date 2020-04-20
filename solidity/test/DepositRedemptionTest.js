@@ -210,11 +210,11 @@ describe("DepositRedemption", async function() {
     it("reverts if deposit is pre-term and redeemer is not Deposit owner", async () => {
       await expectRevert(
         testDeposit.getRedemptionTbtcRequirement.call(accounts[1]),
-        "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL",
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
       )
     })
 
-    it("returns full TBTC if we are at-term and caller is not TDT owner", async () => {
+    it("returns full TBTC if we are at-term and caller is not TDT holder", async () => {
       await increaseTime(depositTerm.toNumber())
       await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
         from: owner,
@@ -226,7 +226,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(depositValue)
     })
 
-    it("returns SignerFee if we are at-term, caller is TDT owner, and fee is not escrowed", async () => {
+    it("returns SignerFee if we are at-term, caller is TDT holder, and fee is not escrowed", async () => {
       await increaseTime(depositTerm.toNumber())
 
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
@@ -235,7 +235,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
-    it("returns zero if we are at-term, caller is TDT owner and signer fee is escrowed", async () => {
+    it("returns zero if we are at-term, caller is TDT holder and signer fee is escrowed", async () => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await increaseTime(depositTerm.toNumber())
 
@@ -309,7 +309,7 @@ describe("DepositRedemption", async function() {
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
 
-    it("burns 1 TBTC if deposit is in COURTESY_CALL and TDT owner is the Vending Machine", async () => {
+    it("burns 1 TBTC if deposit is in COURTESY_CALL and TDT holder is the Vending Machine", async () => {
       const {
         receipt: {blockNumber: transferBlock},
       } = await tbtcDepositToken.transferFrom(
@@ -377,7 +377,7 @@ describe("DepositRedemption", async function() {
       expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
     })
 
-    it("transfers 1 TBTC to TDT owner if deposit is in COURTESY_CALL and fee is escrowed", async () => {
+    it("transfers 1 TBTC to TDT holder if deposit is in COURTESY_CALL and fee is escrowed", async () => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await testDeposit.setState(states.COURTESY_CALL)
 
@@ -641,7 +641,7 @@ describe("DepositRedemption", async function() {
           "0x" + "33".repeat(20),
           {from: owner},
         ),
-        "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL",
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
       )
     })
   })

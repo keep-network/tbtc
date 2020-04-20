@@ -55,7 +55,7 @@ library DepositUtils {
 
         // INITIALLY WRITTEN BY REDEMPTION FLOW
         address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
-        bytes redeemerOutputScript;  // The 20-byte redeemer PKH
+        bytes redeemerOutputScript;  // The redeemer output script
         uint256 initialRedemptionFee;  // the initial fee as requested
         uint256 latestRedemptionFee; // the fee currently required by a redemption transaction
         uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
@@ -442,7 +442,7 @@ library DepositUtils {
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
-    ///                     is this deposit's TDT owner.
+    ///                     is this deposit's TDT holder.
     /// @param _redeemer    The assumed owner of the deposit's TDT.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
@@ -469,7 +469,7 @@ library DepositUtils {
         if (depositOwner(_d) == _redeemer && !inCourtesy) {
             return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
         }
-        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL");
+        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
         return lotSizeTbtc(_d);
     }
 }

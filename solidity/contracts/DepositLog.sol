@@ -52,10 +52,19 @@ contract DepositLog {
         uint256 _timestamp
     );
 
-    // This event is fired when we enter the SETUP_FAILED state for any reason
+    // This event is fired when we enter the FAILED_SETUP state for any reason
     event SetupFailed(
         address indexed _depositContractAddress,
         uint256 _timestamp
+    );
+
+    // This event is fired when a funder requests funder abort after
+    // FAILED_SETUP has been reached. Funder abort is a voluntary signer action
+    // to return UTXO(s) that were sent to a signer-controlled wallet despite
+    // the funding proofs having failed.
+    event FunderAbortRequested(
+        address indexed _depositContractAddress,
+        bytes _abortOutputScript
     );
 
     // This event is fired when we detect an ECDSA fraud before seeing a funding proof
@@ -208,6 +217,16 @@ contract DepositLog {
             "Caller is not approved to log events"
         );
         emit SetupFailed(msg.sender, block.timestamp);
+    }
+
+    /// @notice     Fires a FunderAbortRequested event.
+    /// @dev        We append the sender, which is the deposit contract that called.
+    function logFunderRequestedAbort(bytes memory _abortOutputScript) public {
+        require(
+            approvedToLog(msg.sender),
+            "Caller is not approved to log events"
+        );
+        emit FunderAbortRequested(msg.sender, _abortOutputScript);
     }
 
     /// @notice     Fires a FraudDuringSetup event.

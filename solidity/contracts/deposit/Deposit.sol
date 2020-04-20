@@ -36,7 +36,7 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     function () external payable {
-        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from rom underlying keep");
+        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from underlying keep");
     }
 
     /// @notice     Get the integer representing the current state.
@@ -280,6 +280,27 @@ contract Deposit is DepositFactoryAuthority {
     function notifyFundingTimeout() public returns (bool) {
         self.notifyFundingTimeout();
         return true;
+    }
+
+    /// @notice Requests a funder abort for a failed-funding deposit; that is,
+    ///         requests the return of a sent UTXO to _abortOutputScript. It
+    ///         imposes no requirements on the signing group. Signers should
+    ///         send their UTXO to the requested output script, but do so at
+    ///         their discretion and with no penalty for failing to do so. This
+    ///         can be used for example when a UTXO is sent that is the wrong
+    ///         size for the lot.
+    /// @dev This is a self-admitted funder fault, and is only be callable by
+    ///      the TDT holder. This function emits the FunderAbortRequested event,
+    ///      but stores no additional state.
+    /// @param _abortOutputScript The output script the funder wishes to request
+    ///        a return of their UTXO to.
+    function requestFunderAbort(bytes memory _abortOutputScript) public {
+        require(
+            self.depositOwner() == msg.sender,
+            "Only TDT holder can request funder abort"
+        );
+
+        self.requestFunderAbort(_abortOutputScript);
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud during funding.
