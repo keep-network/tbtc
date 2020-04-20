@@ -20,6 +20,7 @@ const VendingMachine = artifacts.require("VendingMachine")
 // price feed
 const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
 const prices = require("./prices")
+const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
 const MockRelay = artifacts.require("MockRelay")
 
