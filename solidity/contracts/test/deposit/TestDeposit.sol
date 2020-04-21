@@ -123,10 +123,6 @@ contract TestDeposit is Deposit {
         self.keepAddress = _keepAddress;
     }
 
-    function getKeepAddress() public view returns (address) {
-        return self.keepAddress;
-    }
-
     function setSigningGroupRequestedAt(uint256 _signingGroupRequestedAt) public {
         self.signingGroupRequestedAt = _signingGroupRequestedAt;
     }
