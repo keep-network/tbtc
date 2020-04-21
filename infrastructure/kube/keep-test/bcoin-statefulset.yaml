@@ -9,7 +9,7 @@ metadata:
     type: bcoin
 spec:
   replicas: 1
-  serviceName: tbtc-electrumx-server
+  serviceName: bcoin
   volumeClaimTemplates:
   - metadata:
       name: bcoin-data
