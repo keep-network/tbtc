@@ -63,7 +63,7 @@ library DepositFunding {
         uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_d.tbtcSystem.getInitialCollateralizedPercent()).div(100);
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
-        _d.keepSetupFee = _d.tbtcSystem.createNewDepositFeeEstimate();
+        _d.keepSetupFee = _d.tbtcSystem.getNewDepositFeeEstimate();
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
             _m,
@@ -165,8 +165,7 @@ library DepositFunding {
             "Signer fraud during funding flow only available while awaiting funding"
         );
 
-        bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
-        require(_isFraud, "Signature is not fraudulent");
+        _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         _d.logFraudDuringSetup();
 
         // Allow deposit owner to withdraw seized bonds after contract termination.
