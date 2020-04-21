@@ -39,7 +39,9 @@ contract FundingScript {
 
         // Verify _extraData is a call to unqualifiedDepositToTbtc.
         bytes4 functionSignature;
-        assembly { functionSignature := mload(add(_extraData, 0x20)) }
+        assembly {
+            functionSignature := and(mload(add(_extraData, 0x20)), not(0xff))
+        }
         require(
             functionSignature == vendingMachine.unqualifiedDepositToTbtc.selector,
             "Bad _extraData signature. Call must be to unqualifiedDepositToTbtc."

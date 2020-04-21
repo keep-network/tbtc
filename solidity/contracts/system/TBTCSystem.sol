@@ -427,7 +427,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Gets a fee estimate for creating a new Deposit.
     /// @return Uint256 estimate.
-    function createNewDepositFeeEstimate()
+    function getNewDepositFeeEstimate()
         external
         view
         returns (uint256)

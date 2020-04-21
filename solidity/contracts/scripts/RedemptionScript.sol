@@ -40,7 +40,9 @@ contract RedemptionScript {
 
         // Verify _extraData is a call to tbtcToBtc.
         bytes4 functionSignature;
-        assembly { functionSignature := mload(add(_extraData, 0x20)) }
+        assembly {
+            functionSignature := and(mload(add(_extraData, 0x20)), not(0xff))
+        }
         require(
             functionSignature == vendingMachine.tbtcToBtc.selector,
             "Bad _extraData signature. Call must be to tbtcToBtc."

@@ -252,6 +252,47 @@ jobs:
           command: |
             cd /tmp/tbtc/contracts
             gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/tbtc
+  build_relay_maintainer_initcontainer:
+    executor: docker-node
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
+      - run:
+          name: Run Docker build
+          command: |
+            mkdir -p /tmp/relay-maintainer/docker-images
+            cd infrastructure/kube/templates/relay-maintainer/initcontainer
+            npm upgrade @keep-network/tbtc
+            docker build \
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer:$DOCKER_IMAGE_TAG .
+      - run:
+          name: Save initcontainer-provision-relay-maintainer image
+          command: |
+            docker save -o /tmp/relay-maintainer/docker-images/initcontainer-provision-relay-maintainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer:$DOCKER_IMAGE_TAG
+      - persist_to_workspace:
+          root: /tmp/relay-maintainer
+          paths:
+            - docker-images
+  publish_relay_maintainer_initcontainer:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/relay-maintainer
+      - run:
+          name: Load Docker images
+          command: |
+            docker load -i /tmp/relay-maintainer/docker-images/initcontainer-provision-relay-maintainer.tar
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: initcontainer-provision-relay-maintainer
+          tag: $DOCKER_IMAGE_TAG
 
 workflows:
   version: 2
@@ -286,28 +327,42 @@ workflows:
             - generate_docs_asciidoctor
   migrate_build_publish_keep_dev:
     jobs:
-      - compile_contracts
-      - migrate_contracts:
-          filters:
-            branches:
-              only: master
+      #- compile_contracts
+      #- migrate_contracts:
+      #    # filters:
+      #    #   branches:
+      #    #     only: master
+      #    context: keep-dev
+      #    requires:
+      #      - compile_contracts
+      #- publish_npm_package:
+      #    # filters:
+      #    #   branches:
+      #    #     only: master
+      #    context: keep-dev
+      #    requires:
+      #      - migrate_contracts
+      #- publish_contract_data:
+      #    # filters:
+      #    #   branches:
+      #    #     only: master
+      #    context: keep-dev
+      #    requires:
+      #      - migrate_contracts
+      - build_relay_maintainer_initcontainer:
+          # filters:
+          #   branches:
+          #     only: master
+          context: keep-dev
+          #requires:
+          #  - publish_npm_package
+      - publish_relay_maintainer_initcontainer:
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
-            - compile_contracts
-      - publish_npm_package:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - publish_contract_data:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
+            - build_relay_maintainer_initcontainer
   migrate_build_publish_keep_test:
     jobs:
       - keep_test_approval:
@@ -352,3 +407,21 @@ workflows:
           context: keep-test
           requires:
             - migrate_contracts
+      - build_relay_maintainer_initcontainer:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          context: keep-test
+          requires:
+            - publish_npm_package
+      - publish_relay_maintainer_initcontainer:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          context: keep-test
+          requires:
+            - build_relay_maintainer_initcontainer
