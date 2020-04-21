@@ -399,7 +399,7 @@ describe("DepositUtils", async function() {
     it("returns correct base percentage", async () => {
       const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
-      const initialCollateralization = await tbtcSystemStub.getInitialCollateralizedPercent()
+      const initialCollateralization = await testDeposit.getInitialCollateralizedPercent()
 
       // 10000 to avoid losing value to truncating in solidity.
       const expected = new BN(10000).div(initialCollateralization)
