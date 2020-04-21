@@ -16,15 +16,15 @@ contract MockMedianizer is Ownable, IMedianizer {
         return value;
     }
 
+    function peek() external view returns (uint256, bool) {
+        return (value, value > 0);
+    }
+
     function setValue(uint256 _value) external onlyOwner{
         value = _value;
     }
 }
 
-contract BTCUSDPriceFeed is MockMedianizer {
-    // solium-disable-previous-line no-empty-blocks
-}
-
-contract ETHUSDPriceFeed is MockMedianizer {
+contract ETHBTCPriceFeedMock is MockMedianizer {
     // solium-disable-previous-line no-empty-blocks
 }

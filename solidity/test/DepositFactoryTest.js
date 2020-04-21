@@ -17,7 +17,7 @@ describe("DepositFactory", async function() {
   describe("createDeposit()", async () => {
     let depositFactory
     let ecdsaKeepFactoryStub
-    let mockBTCETHPriceFeed
+    let mockSatWeiPriceFeed
 
     before(async () => {
       // To properly test createDeposit, we deploy the real Deposit contract and
@@ -57,12 +57,12 @@ describe("DepositFactory", async function() {
       ;({
         ecdsaKeepFactoryStub,
         depositFactory,
-        mockBTCETHPriceFeed,
+        mockSatWeiPriceFeed,
       } = await deployAndLinkAll([], {
         TestDeposit: Deposit,
         TBTCSystemStub: TBTCSystem,
       }))
-      await mockBTCETHPriceFeed.setPrice(new BN("1000000000000", 10))
+      await mockSatWeiPriceFeed.setPrice(new BN("1000000000000", 10))
 
       await depositFactory.createDeposit(fullBtc, {value: openKeepFee})
       expect(

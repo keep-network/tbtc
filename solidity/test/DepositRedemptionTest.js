@@ -210,11 +210,11 @@ describe("DepositRedemption", async function() {
     it("reverts if deposit is pre-term and redeemer is not Deposit owner", async () => {
       await expectRevert(
         testDeposit.getRedemptionTbtcRequirement.call(accounts[1]),
-        "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL",
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
       )
     })
 
-    it("returns full TBTC if we are at-term and caller is not TDT owner", async () => {
+    it("returns full TBTC if we are at-term and caller is not TDT holder", async () => {
       await increaseTime(depositTerm.toNumber())
       await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
         from: owner,
@@ -226,7 +226,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(depositValue)
     })
 
-    it("returns SignerFee if we are at-term, caller is TDT owner, and fee is not escrowed", async () => {
+    it("returns SignerFee if we are at-term, caller is TDT holder, and fee is not escrowed", async () => {
       await increaseTime(depositTerm.toNumber())
 
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
@@ -235,7 +235,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
-    it("returns zero if we are at-term, caller is TDT owner and signer fee is escrowed", async () => {
+    it("returns zero if we are at-term, caller is TDT holder and signer fee is escrowed", async () => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await increaseTime(depositTerm.toNumber())
 
@@ -276,11 +276,12 @@ describe("DepositRedemption", async function() {
         from: frtHolder,
       })
 
-      block = await web3.eth.getBlock("latest")
-      await testDeposit.performRedemptionTBTCTransfers()
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers()
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events.length).to.equal(0)
@@ -294,11 +295,12 @@ describe("DepositRedemption", async function() {
       await tbtcToken.resetAllowance(testDeposit.address, signerFee, {
         from: owner,
       })
-      block = await web3.eth.getBlock("latest")
 
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
 
@@ -307,20 +309,21 @@ describe("DepositRedemption", async function() {
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
 
-    it("burns 1 TBTC if deposit is in COURTESY_CALL and TDT owner is the Vending Machine", async () => {
-      await tbtcDepositToken.transferFrom(
+    it("burns 1 TBTC if deposit is in COURTESY_CALL and TDT holder is the Vending Machine", async () => {
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await tbtcDepositToken.transferFrom(
         owner,
         vendingMachine.address,
         tdtId,
         {from: owner},
       )
-      block = await web3.eth.getBlock("latest")
       await testDeposit.setState(states.COURTESY_CALL)
 
       await testDeposit.performRedemptionTBTCTransfers({from: owner})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
 
@@ -341,10 +344,12 @@ describe("DepositRedemption", async function() {
       })
       block = await web3.eth.getBlock("latest")
 
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events[0].returnValues.from).to.equal(owner)
@@ -353,13 +358,14 @@ describe("DepositRedemption", async function() {
     })
 
     it("escrows fee and sends correct TBTC if Deposit is in COURTESY_CALL and fee is not escrowed", async () => {
-      block = await web3.eth.getBlock("latest")
       await testDeposit.setState(states.COURTESY_CALL)
 
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
 
@@ -371,15 +377,16 @@ describe("DepositRedemption", async function() {
       expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
     })
 
-    it("transfers 1 TBTC to TDT owner if deposit is in COURTESY_CALL and fee is escrowed", async () => {
+    it("transfers 1 TBTC to TDT holder if deposit is in COURTESY_CALL and fee is escrowed", async () => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await testDeposit.setState(states.COURTESY_CALL)
-      block = await web3.eth.getBlock("latest")
 
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events[0].returnValues.from).to.equal(owner)
@@ -392,12 +399,13 @@ describe("DepositRedemption", async function() {
       await tbtcToken.resetAllowance(testDeposit.address, signerFee, {
         from: owner,
       })
-      block = await web3.eth.getBlock("latest")
 
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events[0].returnValues.from).to.equal(tdtHolder)
@@ -417,12 +425,13 @@ describe("DepositRedemption", async function() {
       await tbtcToken.resetAllowance(testDeposit.address, depositValue, {
         from: owner,
       })
-      block = await web3.eth.getBlock("latest")
 
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events.length).to.equal(1)
@@ -438,12 +447,13 @@ describe("DepositRedemption", async function() {
       })
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await increaseTime(depositTerm.toNumber())
-      block = await web3.eth.getBlock("latest")
 
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events.length).to.equal(1)
@@ -461,12 +471,13 @@ describe("DepositRedemption", async function() {
       await tbtcToken.resetAllowance(testDeposit.address, depositValue, {
         from: owner,
       })
-      block = await web3.eth.getBlock("latest")
 
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events.length).to.equal(2)
@@ -517,7 +528,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("updates state successfully and fires a RedemptionRequested event", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
@@ -542,7 +553,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("updates state successfully and fires a RedemptionRequested event from COURTESY_CALL state", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testDeposit.setState(states.COURTESY_CALL)
@@ -574,14 +585,16 @@ describe("DepositRedemption", async function() {
       await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
       // the fee is ~12,297,829,380 BTC
-      await testDeposit.requestRedemption(
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.requestRedemption(
         "0x1111111100000000",
         redeemerOutputScript,
         {from: owner},
       )
 
       const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: block.number,
+        fromBlock: transferBlock,
         toBlock: "latest",
       })
       const event = events[0]
@@ -628,7 +641,7 @@ describe("DepositRedemption", async function() {
           "0x" + "33".repeat(20),
           {from: owner},
         ),
-        "Only TDT owner can redeem unless deposit is at-term or in COURTESY_CALL",
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
       )
     })
   })
@@ -645,7 +658,7 @@ describe("DepositRedemption", async function() {
         assert.fail(`cannot approve digest: ${err}`)
       })
 
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       // Check if ECDSAKeep has been called and event emitted.
       const eventList = await ecdsaKeepStub.getPastEvents(
@@ -700,7 +713,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("updates the state and logs GotRedemptionSignature", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.setSigningGroupPublicKey(pubkeyX, pubkeyY)
       await testDeposit.setRequestInfo(
@@ -799,7 +812,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.increaseRedemptionFee(
         previousOutputBytes,
         newOutputBytes,
@@ -907,7 +920,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideRedemptionProof(
         _version,
@@ -923,7 +936,7 @@ describe("DepositRedemption", async function() {
       expect(depositState).to.eq.BN(states.REDEEMED)
 
       const requestInfo = await testDeposit.getRequestInfo.call()
-      expect(requestInfo[0]).to.equal("0x" + "11".repeat(20))
+      expect(requestInfo[0]).to.equal(ZERO_ADDRESS)
       expect(requestInfo[1]).to.equal(null)
       expect(requestInfo[4]).to.equal(bytes32zero)
 
@@ -1054,6 +1067,7 @@ describe("DepositRedemption", async function() {
     })
 
     beforeEach(async () => {
+      await createSnapshot()
       const block = await web3.eth.getBlock("latest")
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
@@ -1066,6 +1080,10 @@ describe("DepositRedemption", async function() {
         withdrawalRequestTime,
         bytes32zero,
       )
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it("reverts if not awaiting redemption signature", async () => {
@@ -1101,18 +1119,27 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("starts abort liquidation", async () => {
-      await ecdsaKeepStub.send(1000000, {from: tdtHolder})
-      await testDeposit.notifySignatureTimeout()
+    it("liquidates the deposit and allows redeemer to withdraw signer bond", async () => {
+      const signerBonds = new BN("1000000")
+      await ecdsaKeepStub.send(signerBonds, {from: tdtHolder})
+      await testDeposit.setRedeemerAddress(accounts[1])
 
+      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: accounts[1],
+      })
+
+      await testDeposit.notifySignatureTimeout()
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(bond, "Bond not seized as expected").to.eq.BN(new BN(0))
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
-      expect(
-        liquidationTime[0],
-        "liquidation timestamp not recorded",
-      ).not.to.eq.BN(0)
+      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: accounts[1],
+      })
+
+      expect(initialWithdrawable).to.eq.BN(new BN("0"))
+      expect(finalWithdrawable).to.eq.BN(signerBonds)
+      expect(liquidationTime[0], "Auction should not be initiated").to.eq.BN(0)
     })
   })
 
@@ -1124,6 +1151,7 @@ describe("DepositRedemption", async function() {
     })
 
     beforeEach(async () => {
+      await createSnapshot()
       const block = await web3.eth.getBlock("latest")
       const blockTimestamp = block.timestamp
       withdrawalRequestTime = blockTimestamp - timer.toNumber() - 1
@@ -1136,6 +1164,10 @@ describe("DepositRedemption", async function() {
         withdrawalRequestTime,
         bytes32zero,
       )
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it("reverts if not awaiting redemption proof", async () => {
@@ -1179,18 +1211,31 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("starts abort liquidation", async () => {
-      await ecdsaKeepStub.send(1000000, {from: owner})
+    it("liquidates the deposit and allows redeemer to withdraw signer bond", async () => {
+      const signerBonds = new BN("1000000")
+      await ecdsaKeepStub.send(signerBonds, {from: owner})
+      await testDeposit.setRedeemerAddress(accounts[1])
+
+      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: accounts[1],
+      })
+
       await testDeposit.notifyRedemptionProofTimeout()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(bond, "Bond not seized as expected").to.eq.BN(new BN(0))
 
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
-      expect(
-        liquidationTime[0],
-        "liquidation timestamp not recorded",
-      ).not.to.eq.BN(0)
+      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
+        from: accounts[1],
+      })
+
+      expect(initialWithdrawable).to.eq.BN("0")
+      expect(finalWithdrawable).to.eq.BN(signerBonds)
+      expect(liquidationTime[0], "Auction should not be initiated").to.eq.BN(0)
     })
   })
+})
+beforeEach(async () => {
+  await createSnapshot()
 })

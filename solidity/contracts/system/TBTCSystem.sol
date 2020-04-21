@@ -8,9 +8,10 @@ import {VendingMachine} from "./VendingMachine.sol";
 import {DepositFactory} from "../proxy/DepositFactory.sol";
 
 import {IRelay} from "@summa-tx/relay-sol/contracts/Relay.sol";
+import "../external/IMedianizer.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
-import {IBTCETHPriceFeed} from "../interfaces/IBTCETHPriceFeed.sol";
+import {ISatWeiPriceFeed} from "../interfaces/ISatWeiPriceFeed.sol";
 import {DepositLog} from "../DepositLog.sol";
 
 import {TBTCDepositToken} from "./TBTCDepositToken.sol";
@@ -27,6 +28,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
 
+    event EthBtcPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
     event LotSizesUpdateStarted(uint64[] _lotSizes, uint256 _timestamp);
     event SignerFeeDivisorUpdateStarted(uint16 _signerFeeDivisor, uint256 _timestamp);
     event CollateralizationThresholdsUpdateStarted(
@@ -36,6 +38,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _timestamp
     );
 
+    event EthBtcPriceFeedAdded(address _priceFeed);
     event LotSizesUpdated(uint64[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
     event SignerFeeDivisorUpdated(uint16 _signerFeeDivisor);
@@ -45,11 +48,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _severelyUndercollateralizedThresholdPercent
     );
 
+
     bool _initialized = false;
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
-    IBTCETHPriceFeed public  priceFeed;
+    ISatWeiPriceFeed public  priceFeed;
     IBondedECDSAKeepVendor public keepVendor;
     IRelay public relay;
 
@@ -73,8 +77,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint16 private newUndercollateralizedThresholdPercent;
     uint16 private newSeverelyUndercollateralizedThresholdPercent;
 
+    // price feed
+    uint256 priceFeedGovernanceTimeDelay = 90 days;
+    uint256 appendEthBtcFeedTimer;
+    IMedianizer nextEthBtcFeed;
+
     constructor(address _priceFeed, address _relay) public {
-        priceFeed = IBTCETHPriceFeed(_priceFeed);
+        priceFeed = ISatWeiPriceFeed(_priceFeed);
         relay = IRelay(_relay);
     }
 
@@ -160,30 +169,49 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function beginSignerFeeDivisorUpdate(uint16 _signerFeeDivisor)
         external onlyOwner
     {
-        require(_signerFeeDivisor > 9, "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.");
+        require(
+            _signerFeeDivisor > 9,
+            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%."
+        );
+        require(
+            _signerFeeDivisor < 2000,
+            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%."
+        );
+
         newSignerFeeDivisor = _signerFeeDivisor;
         signerFeeDivisorChangeInitiated = block.timestamp;
         emit SignerFeeDivisorUpdateStarted(_signerFeeDivisor, block.timestamp);
     }
 
     /// @notice Set the allowed deposit lot sizes.
-    /// @dev    Lot size array should always contain 10**8 satoshis (1BTC value)
+    /// @dev    Lot size array should always contain 10**8 satoshis (1 BTC) and
+    ///         cannot contain values less than 50000 satoshis (0.0005 BTC) or
+    ///         greater than 10**9 satoshis (10 BTC).
     ///         This can be finalized by calling `finalizeLotSizesUpdate`
-    ///         Anytime after `governanceTimeDelay` has elapsed.
+    ///         anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
     function beginLotSizesUpdate(uint64[] calldata _lotSizes)
         external onlyOwner
     {
-        for( uint i = 0; i < _lotSizes.length; i++){
-            if (_lotSizes[i] == 10**8){
-                lotSizesSatoshis = _lotSizes;
-                emit LotSizesUpdateStarted(_lotSizes, block.timestamp);
-                newLotSizesSatoshis = _lotSizes;
-                lotSizesChangeInitiated = block.timestamp;
-                return;
+        bool hasSingleBitcoin = false;
+        for (uint i = 0; i < _lotSizes.length; i++) {
+            if (_lotSizes[i] == 10**8) {
+                hasSingleBitcoin = true;
+            } else if (_lotSizes[i] < 50 * 10**3) {
+                // Failed the minimum requirement, break on out.
+                revert("Lot sizes less than 0.0005 BTC are not allowed");
+            } else if (_lotSizes[i] > 10 * 10**8) {
+                // Failed the maximum requirement, break on out.
+                revert("Lot sizes greater than 10 BTC are not allowed");
             }
         }
-        revert("Lot size array must always contain 1BTC");
+
+        require(hasSingleBitcoin, "Lot size array must always contain 1 BTC");
+
+        lotSizesSatoshis = _lotSizes;
+        emit LotSizesUpdateStarted(_lotSizes, block.timestamp);
+        newLotSizesSatoshis = _lotSizes;
+        lotSizesChangeInitiated = block.timestamp;
     }
 
     /// @notice Set the system collateralization levels
@@ -347,8 +375,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         governanceTimeDelay.sub(elapsed);
     }
 
-    function getGovernanceTimeDelay() public view returns (uint256) {
+    function getGovernanceTimeDelay() public pure returns (uint256) {
         return governanceTimeDelay;
+    }
+
+    function getPriceFeedGovernanceTimeDelay() public view returns (uint256) {
+        return priceFeedGovernanceTimeDelay;
     }
 
     // Price Feed
@@ -360,17 +392,31 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function fetchBitcoinPrice() external view returns (uint256) {
         uint256 price = priceFeed.getPrice();
         if (price == 0 || price > 10 ** 18) {
-            /*
-              This is if a sat is worth 0 wei, or is worth 1 ether
-              TODO: what should this behavior be?
-            */
+            // This is if a sat is worth 0 wei, or is worth >1 ether. Revert at
+            // once.
             revert("System returned a bad price");
         }
         return price;
     }
 
+    /// @notice Initialize the addition of a new ETH/BTC price feed contract to the priecFeed.
+    /// @dev `FinalizeAddEthBtcFeed` must be called to finalize.
+    function initializeAddEthBtcFeed(IMedianizer _ethBtcFeed) external {
+        nextEthBtcFeed = _ethBtcFeed;
+        appendEthBtcFeedTimer = block.timestamp + priceFeedGovernanceTimeDelay;
+        emit EthBtcPriceFeedAdditionStarted(address(_ethBtcFeed), block.timestamp);
+    }
+
+    /// @notice Finish adding a new price feed contract to the priceFeed.
+    /// @dev `InitializeAddEthBtcFeed` must be called first, once `appendEthBtcFeedTimer`
+    ///       has passed, this function can be called to append a new price feed.
+    function finalizeAddEthBtcFeed() external {
+        require(block.timestamp > appendEthBtcFeedTimer, "Timeout not yet elapsed");
+        priceFeed.addEthBtcFeed(nextEthBtcFeed);
+        emit EthBtcPriceFeedAdded(address(nextEthBtcFeed));
+    }
+
     // Difficulty Oracle
-    // TODO: This is a workaround. It will be replaced by tbtc-difficulty-oracle.
     function fetchRelayCurrentDifficulty() external view returns (uint256) {
         return relay.getCurrentEpochDifficulty();
     }

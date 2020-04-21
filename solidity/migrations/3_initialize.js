@@ -1,8 +1,7 @@
 const TBTCSystem = artifacts.require("TBTCSystem")
 
-const BTCETHPriceFeed = artifacts.require("BTCETHPriceFeed")
-const MockBTCUSDPriceFeed = artifacts.require("BTCUSDPriceFeed")
-const MockETHUSDPriceFeed = artifacts.require("ETHUSDPriceFeed")
+const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
+const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
 
 const DepositFactory = artifacts.require("DepositFactory")
 const Deposit = artifacts.require("Deposit")
@@ -13,8 +12,8 @@ const VendingMachine = artifacts.require("VendingMachine")
 
 const {
   BondedECDSAKeepVendorAddress,
-  BTCUSDPriceFeed,
-  ETHUSDPriceFeed,
+  ETHBTCMedianizer,
+  RopstenETHBTCPriceFeed,
 } = require("./externals")
 
 module.exports = async function(deployer, network) {
@@ -54,17 +53,19 @@ module.exports = async function(deployer, network) {
   console.log("TBTCSystem initialized!")
 
   // Price feed.
-  const btcEthPriceFeed = await BTCETHPriceFeed.deployed()
+  const satWeiPriceFeed = await SatWeiPriceFeed.deployed()
   if (network === "mainnet") {
     // Inject mainnet price feeds.
-    await btcEthPriceFeed.initialize(BTCUSDPriceFeed, ETHUSDPriceFeed)
+    await satWeiPriceFeed.initialize(tbtcSystem.address, ETHBTCMedianizer)
+  } else if (network === "ropsten") {
+    // Inject medianizer intermediary.
+    await satWeiPriceFeed.initialize(tbtcSystem.address, RopstenETHBTCPriceFeed)
   } else {
     // Inject mock price feeds.
-    const mockBtcPriceFeed = await MockBTCUSDPriceFeed.deployed()
-    const mockEthPriceFeed = await MockETHUSDPriceFeed.deployed()
-    await btcEthPriceFeed.initialize(
-      mockBtcPriceFeed.address,
-      mockEthPriceFeed.address,
+    const mockSatWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
+    await satWeiPriceFeed.initialize(
+      tbtcSystem.address,
+      mockSatWeiPriceFeed.address,
     )
   }
 }

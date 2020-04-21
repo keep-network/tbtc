@@ -15,9 +15,9 @@ const DepositLiquidation = contract.fromArtifact("DepositLiquidation")
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
 const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
 const ECDSAKeepVendorStub = contract.fromArtifact("ECDSAKeepVendorStub")
-const TestToken = contract.fromArtifact("TestToken")
+const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 const MockRelay = contract.fromArtifact("MockRelay")
-const MockBTCETHPriceFeed = contract.fromArtifact("MockBTCETHPriceFeed")
+const MockSatWeiPriceFeed = contract.fromArtifact("MockSatWeiPriceFeed")
 const TBTCSystemStub = contract.fromArtifact("TBTCSystemStub")
 const TBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
 const FeeRebateToken = contract.fromArtifact("TestFeeRebateToken")
@@ -31,11 +31,11 @@ const FundingScript = contract.fromArtifact("FundingScript")
 const TEST_DEPOSIT_DEPLOY = [
   {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
   {name: "MockRelay", contract: MockRelay},
-  {name: "MockBTCETHPriceFeed", contract: MockBTCETHPriceFeed},
+  {name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed},
   {
     name: "TBTCSystemStub",
     contract: TBTCSystemStub,
-    constructorParams: ["MockBTCETHPriceFeed", "MockRelay"],
+    constructorParams: ["MockSatWeiPriceFeed", "MockRelay"],
   },
   {
     name: "DepositFactory",
@@ -136,7 +136,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     ecdsaKeepFactoryStub.address,
   )
 
-  const tbtcToken = await TestToken.new(vendingMachine.address)
+  const tbtcToken = await TestTBTCToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
 
   const tbtcDepositToken = deployed.TBTCDepositToken
@@ -144,7 +144,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   const depositUtils = deployed.DepositUtils
   const ecdsaKeepStub = deployed.ECDSAKeepStub
   const depositFactory = deployed.DepositFactory
-  const mockBTCETHPriceFeed = deployed.MockBTCETHPriceFeed
+  const mockSatWeiPriceFeed = deployed.MockSatWeiPriceFeed
   const redemptionScript = await RedemptionScript.new(
     vendingMachine.address,
     tbtcToken.address,
@@ -186,7 +186,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   return {
     tbtcConstants,
     mockRelay,
-    mockBTCETHPriceFeed,
+    mockSatWeiPriceFeed,
     tbtcSystemStub,
     tbtcToken,
     tbtcDepositToken,

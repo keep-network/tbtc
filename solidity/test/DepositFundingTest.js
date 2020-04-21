@@ -95,7 +95,7 @@ describe("DepositFunding", async function() {
     it("runs and updates state and fires a created event", async () => {
       const expectedKeepAddress = "0x0000000000000000000000000000000000000007"
 
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.createNewDeposit(
         tbtcSystemStub.address,
@@ -186,7 +186,6 @@ describe("DepositFunding", async function() {
     let timer
     let owner
     let openKeepFee
-    before(async () => {})
 
     before(async () => {
       ;({
@@ -224,7 +223,7 @@ describe("DepositFunding", async function() {
     })
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.notifySignerSetupFailure({from: owner})
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
@@ -295,7 +294,7 @@ describe("DepositFunding", async function() {
     })
 
     it("updates the pubkey X and Y, changes state, and logs RegisteredPubkey", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.retrieveSignerPubkey()
 
       const signingGroupPublicKey = await testDeposit.getSigningGroupPublicKey.call()
@@ -360,8 +359,8 @@ describe("DepositFunding", async function() {
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
     })
 
-    it("updates the state to failed setup, deconstes funding info, and logs SetupFailed", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+    it("updates the state to failed setup, deconsts funding info, and logs SetupFailed", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.notifyFundingTimeout()
 
@@ -394,6 +393,58 @@ describe("DepositFunding", async function() {
     })
   })
 
+  describe("requestFunderAbort", async () => {
+    let timer
+    let owner
+
+    before(async () => {
+      timer = await tbtcConstants.getFundingTimeout.call()
+      owner = accounts[1]
+      await tbtcDepositToken.forceMint(
+        owner,
+        web3.utils.toBN(testDeposit.address),
+      )
+    })
+
+    beforeEach(async () => {
+      const block = await web3.eth.getBlock("latest")
+      const blockTimestamp = block.timestamp
+      fundingProofTimerStart = blockTimestamp - timer.toNumber() - 1
+
+      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
+    })
+
+    it("fails if the deposit has not failed setup", () => {
+      expectRevert(
+        testDeposit.requestFunderAbort("0x1234", {from: owner}),
+        "The deposit has not failed funding",
+      )
+    })
+
+    it("emits a FunderAbortRequested event", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
+      await testDeposit.notifyFundingTimeout()
+
+      const outputScript = "0x012345"
+      await testDeposit.requestFunderAbort(outputScript, {from: owner})
+
+      const eventList = await tbtcSystemStub.getPastEvents(
+        "FunderAbortRequested",
+        {
+          fromBlock: blockNumber,
+          toBlock: "latest",
+        },
+      )
+      expect(eventList.length).to.equal(1)
+      expect(eventList[0].name == "FunderAbortRequested")
+      expect(eventList[0].returnValues).to.contain({
+        _depositContractAddress: testDeposit.address,
+        _abortOutputScript: outputScript,
+      })
+    })
+  })
+
   describe("provideBTCFundingProof", async () => {
     beforeEach(async () => {
       await mockRelay.setCurrentEpochDifficulty(currentDifficulty)
@@ -403,9 +454,11 @@ describe("DepositFunding", async function() {
     })
 
     it("updates to active, stores UTXO info, deconstes funding info, logs Funded", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
-      await testDeposit.provideBTCFundingProof(
+      const {
+        receipt: {blockNumber: proofBlock},
+      } = await testDeposit.provideBTCFundingProof(
         _version,
         _txInputVector,
         _txOutputVector,
@@ -415,7 +468,7 @@ describe("DepositFunding", async function() {
         _txIndexInBlock,
         _bitcoinHeaders,
       )
-      const expectedFundedAt = (await web3.eth.getBlock("latest")).timestamp
+      const expectedFundedAt = (await web3.eth.getBlock(proofBlock)).timestamp
 
       const UTXOInfo = await testDeposit.getUTXOInfo.call()
       expect(UTXOInfo[0]).to.equal(_outValueBytes)
@@ -460,6 +513,81 @@ describe("DepositFunding", async function() {
         ),
         "Not awaiting funding",
       )
+    })
+  })
+
+  describe("provideBTCFundingProof Legacy", async () => {
+    const currentDifficultyLegacy = 6113
+    const _versionLegacy = "0x01000000"
+    const _txInputVectorLegacy =
+      "0x01f3002663bbdfe1a0c02bafe6ad6bdc713902bbe678bdffd7e0a77972a4a6c4b2000000006b483045022100dfaa9366f2fd5a233e8029ae2f73e31dd75d85ef8970a74145c3128c0463cd9e0220739c9a57f1266d835b39f3f10d5df77d855ed4110ded0443584f4b7835c6167c012102b6ec2e4df2062066b685fd5cfe47f33c54b29a79a87ba20fcdb66f0b87170006ffffffff"
+    const _txOutputVectorLegacy =
+      "0x027818613b000000001976a914a29c9701293e838fc01ca1c13b010e42cf53242388aca08601000000000017a91414ea6747c79c9c7388eca6c029e6cc81b5e0951c87"
+    const _txLocktimeLegacy = "0x00000000"
+    const _fundingOutputIndexLegacy = 0
+    const _merkleProofLegacy =
+      "0x0efe91abb6a919b0f89c4c785460e2c2e50b57f3d9eb8da0885c26b02ddb50cb"
+    const _txIndexInBlockLegacy = 1
+    const _bitcoinHeadersLegacy =
+      "0x03000000a3ecf52cf38b65970661436cab0b9813543fa949ac7b27db901ee402000000009873fc6b41300fb93957dc4fdec91f72f12e698bc5648a5c57623878a173002e2a9f9e5560b80a1baa34e3b5030000000d801f1aab80f52ca35e510df974c96901d1471c4eec0a377f570700000000004696408b572b53ed3df66479a4a3f69c5b6585daa3778d905483993dfad29360eda39e55ffff001d046ef73b0300000020cfaa259c8e375766f74be88525c7d1e41430d42a13844249a4f70300000000e9929e791caffe690fbb9406d06ef9376604bbf380dde84f64e98b5943e1a400039f9e5560b80a1b0e17707d03000000f818ca6e20d44ecb355e0897bd14eb50dcc35145f8d7554ebf2c040000000000ffe8e2da3ed2ae815e5948cef4addf32f7c599427a7d87e39d8c063c4dd30368cca39e55ffff001de8319459030000005b45b4375c101d7a95764cfda6e6f7b40246867cd54e89855b73200100000000fc074723d089d5338b65800707544f509bf111bc4d17a2b0353978319145fc5a459f9e5560b80a1b3fd1c3d2030000001cfc4d39d6ce1bebb6511ecb2039bb6fc26016eafb4d1e010be8020000000000e00725a1bca5411e7072970dccee9eeab802ca6c9cbcccd8a0aa39c40251bcbd02a49e55ffff001dd247f8d203000000cf778c9ea94a7f0eb51b06c29e65386f55efca5f3714c535b6e68703000000004bb0084076f57bce7a03f74da9d8784979ea0dbeefcce590ebd62d246b20bd6ab5a39e5560b80a1bbd5c1c1403000000e24a5e009fe23639a71f1024c6590abf3e2ffbe0ac92a43207ee0200000000007f740aa5ae4ea28ec5a3bd29151f3d053e10bb0489eb9a53b3f41604d05bfbccdaa39e5560b80a1bf27e379a03000000020b75077b8f84f296ee015471e7d99b0a57ff92acfb7739f62909000000000028cc108626e3c6f6fa12228c927b1ebec587b570bf085dcd24b63bb9b730c569eea39e5560b80a1b17793fc8"
+    const _signerPubkeyXLegacy =
+      "0x85134688b6be6f0fd93ce6a7f7904e9dba2b22bf3cc65c0feb5067b60cf5d821"
+    const _signerPubkeyYLegacy =
+      "0x76f80a7d522ea754db0e25ca43fdacfd1f313e4dc2765e2dfcc18fb3d63a66c4"
+
+    const _expectedUTXOutpointLegacy =
+      "0x0ee73932b031135c57e3d8f53db8ed5c97e6023a3e4980ea465f1aa2962d17b200000000"
+    // const _outputValue = 996219000;
+    const _outValueBytesLegacy = "0x7818613b00000000"
+
+    beforeEach(async () => {
+      await mockRelay.setCurrentEpochDifficulty(currentDifficultyLegacy)
+      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
+      await testDeposit.setSigningGroupPublicKey(
+        _signerPubkeyXLegacy,
+        _signerPubkeyYLegacy,
+      )
+      await ecdsaKeepStub.send(1000000, {from: accounts[0]})
+    })
+
+    it("updates to active, stores UTXO info, deconsts funding info, logs Funded", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
+
+      await testDeposit.provideBTCFundingProof(
+        _versionLegacy,
+        _txInputVectorLegacy,
+        _txOutputVectorLegacy,
+        _txLocktimeLegacy,
+        _fundingOutputIndexLegacy,
+        _merkleProofLegacy,
+        _txIndexInBlockLegacy,
+        _bitcoinHeadersLegacy,
+      )
+
+      const UTXOInfo = await testDeposit.getUTXOInfo.call()
+      expect(UTXOInfo[0]).to.eql(_outValueBytesLegacy)
+      expect(UTXOInfo[2]).to.eql(_expectedUTXOutpointLegacy)
+
+      const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
+      expect(signingGroupRequestedAt).to.eq.BN(
+        0,
+        "signingGroupRequestedAt not deconsted",
+      )
+
+      const fundingProofTimerStart = await testDeposit.getFundingProofTimerStart.call()
+      expect(fundingProofTimerStart).to.eq.BN(
+        0,
+        "fundingProofTimerStart not deconsted",
+      )
+
+      const depositState = await testDeposit.getState.call()
+      expect(depositState).to.eq.BN(states.ACTIVE)
+
+      const eventList = await tbtcSystemStub.getPastEvents("Funded", {
+        fromBlock: blockNumber,
+        toBlock: "latest",
+      })
+      expect(eventList.length).to.eql(1)
     })
   })
 })

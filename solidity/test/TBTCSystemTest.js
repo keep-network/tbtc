@@ -6,6 +6,8 @@ const {BN, expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
+const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
+const MockMedianizer = contract.fromArtifact("MockMedianizer")
 
 describe("TBTCSystem", async function() {
   let tbtcSystem
@@ -17,16 +19,23 @@ describe("TBTCSystem", async function() {
       tbtcSystemStub,
       ecdsaKeepFactoryStub,
       tbtcDepositToken,
+      mockSatWeiPriceFeed,
     } = await deployAndLinkAll(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
       // test TBTCSystem itself.
-      {TBTCSystemStub: TBTCSystem},
+      {
+        TBTCSystemStub: TBTCSystem,
+        MockSatWeiPriceFeed: SatWeiPriceFeed,
+      },
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
     ecdsaKeepFactory = ecdsaKeepFactoryStub
     tdt = tbtcDepositToken
+
+    ethBtcMedianizer = await MockMedianizer.new()
+    mockSatWeiPriceFeed.initialize(tbtcSystem.address, ethBtcMedianizer.address)
   })
 
   describe("requestNewKeep()", async () => {
@@ -269,10 +278,17 @@ describe("TBTCSystem", async function() {
         )
       })
 
-      it("reverts if fee divisor is smaller than 10", async () => {
+      it("reverts if fee divisor is smaller than or equal to 9", async () => {
         await expectRevert(
           tbtcSystem.beginSignerFeeDivisorUpdate(new BN("9")),
           "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.",
+        )
+      })
+
+      it("reverts if fee divisor is greater than or equal to 2000", async () => {
+        await expectRevert(
+          tbtcSystem.beginSignerFeeDivisorUpdate(new BN("2000")),
+          "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%.",
         )
       })
     })
@@ -310,34 +326,40 @@ describe("TBTCSystem", async function() {
   })
 
   describe("update lot sizes", async () => {
-    const lotSizes = [new BN(10 ** 8), new BN(10 ** 6)]
+    const lotSizes = [
+      new BN(10 ** 8), // required
+      new BN(10 ** 6),
+      new BN(10 ** 9), // upper bound
+      new BN(50 * 10 ** 3), // lower bound
+    ]
     describe("beginLotSizesUpdate", async () => {
       it("executes and emits a LotSizesUpdateStarted event", async () => {
         const testSizes = [new BN(10 ** 8), new BN(10 ** 6)]
-        const block = await web3.eth.getBlock("latest")
-        const receipt = await tbtcSystem.beginLotSizesUpdate(testSizes)
-        expectEvent(receipt, "LotSizesUpdateStarted", {})
-        expect(receipt.logs[0].args[0][0]).to.eq.BN(testSizes[0])
-        expect(receipt.logs[0].args[0][1]).to.eq.BN(testSizes[1])
-        expect([
-          receipt.logs[0].args[1].toString(),
-          receipt.logs[0].args[1].toString() - 1,
-        ]).to.include(block.timestamp.toString())
+        const truffleReceipt = await tbtcSystem.beginLotSizesUpdate(testSizes)
+        const {
+          receipt: {blockNumber: updateStartBlock},
+        } = truffleReceipt
+        const block = await web3.eth.getBlock(updateStartBlock)
+
+        expectEvent(truffleReceipt, "LotSizesUpdateStarted", {
+          _timestamp: new BN(block.timestamp),
+        })
+        expect(truffleReceipt.logs[0].args[0][0]).to.eq.BN(testSizes[0])
+        expect(truffleReceipt.logs[0].args[0][1]).to.eq.BN(testSizes[1])
       })
 
       it("overrides previous update and resets timer", async () => {
-        const block = await web3.eth.getBlock("latest")
-        const receipt = await tbtcSystem.beginLotSizesUpdate(lotSizes)
+        const truffleReceipt = await tbtcSystem.beginLotSizesUpdate(lotSizes)
+        const {
+          receipt: {blockNumber: updateStartBlock},
+        } = truffleReceipt
+        const block = await web3.eth.getBlock(updateStartBlock)
         const remainingTime = await tbtcSystem.getRemainingLotSizesUpdateTime.call()
         const totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
 
-        expectEvent(receipt, "LotSizesUpdateStarted", {})
-        expect(receipt.logs[0].args[0][0]).to.eq.BN(lotSizes[0])
-        expect(receipt.logs[0].args[0][1]).to.eq.BN(lotSizes[1])
-        expect([
-          receipt.logs[0].args[1].toString(),
-          (receipt.logs[0].args[1] - 1).toString(),
-        ]).to.include(block.timestamp.toString())
+        expect(truffleReceipt.logs[0].args[0][0]).to.eq.BN(lotSizes[0])
+        expect(truffleReceipt.logs[0].args[0][1]).to.eq.BN(lotSizes[1])
+        expect(truffleReceipt.logs[0].args[1]).to.eq.BN(block.timestamp)
         expect([
           remainingTime.toString(),
           remainingTime.toString() - 1,
@@ -348,15 +370,31 @@ describe("TBTCSystem", async function() {
         const lotSizes = []
         await expectRevert(
           tbtcSystem.beginLotSizesUpdate(lotSizes),
-          "Lot size array must always contain 1BTC",
+          "Lot size array must always contain 1 BTC",
         )
       })
 
-      it("reverts if lot size array does not contain a 1BTC lot size", async () => {
+      it("reverts if lot size array does not contain a 1 BTC lot size", async () => {
         const lotSizes = [10 ** 7]
         await expectRevert(
           tbtcSystem.beginLotSizesUpdate(lotSizes),
-          "Lot size array must always contain 1BTC",
+          "Lot size array must always contain 1 BTC",
+        )
+      })
+
+      it("reverts if lot size array contains a lot size < 0.0005 BTC", async () => {
+        const lotSizes = [10 ** 7, 10 ** 8, 5 * 10 ** 3 - 1]
+        await expectRevert(
+          tbtcSystem.beginLotSizesUpdate(lotSizes),
+          "Lot sizes less than 0.0005 BTC are not allowed",
+        )
+      })
+
+      it("reverts if lot size array contains a lot size > 10 BTC", async () => {
+        const lotSizes = [10 ** 7, 10 ** 9 + 1, 10 ** 8]
+        await expectRevert(
+          tbtcSystem.beginLotSizesUpdate(lotSizes),
+          "Lot sizes greater than 10 BTC are not allowed",
         )
       })
     })
@@ -516,6 +554,59 @@ describe("TBTCSystem", async function() {
           tbtcSystem.finalizeCollateralizationThresholdsUpdate(),
           "Change not initiated",
         )
+      })
+    })
+  })
+
+  describe("add ETH/BTC price feed", async () => {
+    let med
+    let timer
+    before(async () => {
+      med = await MockMedianizer.new()
+      await med.setValue(1000)
+      timer = await tbtcSystem.getPriceFeedGovernanceTimeDelay.call()
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    describe("initializeAddEthBtcFeed", async () => {
+      it("initializes ETH/BTC addition and emits EthBtcPriceFeedAdditionStarted", async () => {
+        const receipt = await tbtcSystem.initializeAddEthBtcFeed(med.address)
+
+        expectEvent(receipt, "EthBtcPriceFeedAdditionStarted", {
+          _priceFeed: med.address,
+        })
+      })
+    })
+
+    describe("finalizeAddEthBtcFeed", async () => {
+      it("Reverts if no change as been initiated", async () => {
+        await increaseTime(timer.toNumber() + 1)
+        await expectRevert.unspecified(tbtcSystem.finalizeAddEthBtcFeed(), "")
+      })
+
+      it("Reverts if timer has not elapsed", async () => {
+        await tbtcSystem.initializeAddEthBtcFeed(med.address)
+        await increaseTime(timer.toNumber() - 10)
+        await expectRevert(
+          tbtcSystem.finalizeAddEthBtcFeed(),
+          "Timeout not yet elapsed",
+        )
+      })
+
+      it("Finalizes ETH/BTC addition and emits EthBtcPriceFeedAdded", async () => {
+        await tbtcSystem.initializeAddEthBtcFeed(med.address)
+        await increaseTime(timer.toNumber() + 1)
+        const receipt = await tbtcSystem.finalizeAddEthBtcFeed()
+        expectEvent(receipt, "EthBtcPriceFeedAdded", {
+          _priceFeed: med.address,
+        })
       })
     })
   })
