@@ -169,30 +169,49 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function beginSignerFeeDivisorUpdate(uint16 _signerFeeDivisor)
         external onlyOwner
     {
-        require(_signerFeeDivisor > 9, "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.");
+        require(
+            _signerFeeDivisor > 9,
+            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%."
+        );
+        require(
+            _signerFeeDivisor < 2000,
+            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%."
+        );
+
         newSignerFeeDivisor = _signerFeeDivisor;
         signerFeeDivisorChangeInitiated = block.timestamp;
         emit SignerFeeDivisorUpdateStarted(_signerFeeDivisor, block.timestamp);
     }
 
     /// @notice Set the allowed deposit lot sizes.
-    /// @dev    Lot size array should always contain 10**8 satoshis (1BTC value)
+    /// @dev    Lot size array should always contain 10**8 satoshis (1 BTC) and
+    ///         cannot contain values less than 50000 satoshis (0.0005 BTC) or
+    ///         greater than 10**9 satoshis (10 BTC).
     ///         This can be finalized by calling `finalizeLotSizesUpdate`
-    ///         Anytime after `governanceTimeDelay` has elapsed.
+    ///         anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
     function beginLotSizesUpdate(uint64[] calldata _lotSizes)
         external onlyOwner
     {
-        for( uint i = 0; i < _lotSizes.length; i++){
-            if (_lotSizes[i] == 10**8){
-                lotSizesSatoshis = _lotSizes;
-                emit LotSizesUpdateStarted(_lotSizes, block.timestamp);
-                newLotSizesSatoshis = _lotSizes;
-                lotSizesChangeInitiated = block.timestamp;
-                return;
+        bool hasSingleBitcoin = false;
+        for (uint i = 0; i < _lotSizes.length; i++) {
+            if (_lotSizes[i] == 10**8) {
+                hasSingleBitcoin = true;
+            } else if (_lotSizes[i] < 50 * 10**3) {
+                // Failed the minimum requirement, break on out.
+                revert("Lot sizes less than 0.0005 BTC are not allowed");
+            } else if (_lotSizes[i] > 10 * 10**8) {
+                // Failed the maximum requirement, break on out.
+                revert("Lot sizes greater than 10 BTC are not allowed");
             }
         }
-        revert("Lot size array must always contain 1BTC");
+
+        require(hasSingleBitcoin, "Lot size array must always contain 1 BTC");
+
+        lotSizesSatoshis = _lotSizes;
+        emit LotSizesUpdateStarted(_lotSizes, block.timestamp);
+        newLotSizesSatoshis = _lotSizes;
+        lotSizesChangeInitiated = block.timestamp;
     }
 
     /// @notice Set the system collateralization levels
