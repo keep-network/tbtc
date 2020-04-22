@@ -18,7 +18,7 @@ spec:
       accessModes: [ReadWriteOnce]
       resources:
         requests:
-          storage: 300Gi
+          storage: 450Gi
   selector:
     matchLabels:
       app: bitcoin-node
