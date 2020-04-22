@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bcoin
+  namespace: default
+  labels:
+    app: bitcoin-node
+    type: bcoin
+spec:
+  replicas: 2
+  serviceName: bcoin
+  volumeClaimTemplates:
+  - metadata:
+      name: bcoin-data
+    spec:
+      storageClassName: bcoin
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 300Gi
+  selector:
+    matchLabels:
+      app: bitcoin-node
+      type: bcoin
+  template:
+    metadata:
+      labels:
+        app: bitcoin-node
+        type: bcoin
+    spec:
+      containers:
+      - name: bcoin
+        image:  gcr.io/keep-prd-210b/bcoin
+        ports:
+          - containerPort: 8332
+          - containerPort: 8333
+        env:
+          - name: BCOIN_NETWORK
+            value: main
+          - name: BCOIN_HTTP_HOST
+            value: '0.0.0.0'
+          - name: BCOIN_HTTP_PORT
+            value: '8332'
+          - name: BCOIN_PORT
+            value: '8333'
+          - name: BCOIN_LOG_LEVEL
+            value: info
+          - name: BCOIN_PREFIX
+            value: /mnt/.bcoin
+          - name: BCOIN_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: bcoin
+                key: http-api-key
+        volumeMounts:
+          - name: bcoin-data
+            mountPath: /mnt/.bcoin
+        command:
+          ["bcoin"]
+      volumes:
+      - name: bcoin-data
+        persistentVolumeClaim:
+          claimName: bcoin-data
