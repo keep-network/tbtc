@@ -9,7 +9,7 @@ import {DepositUtils} from "./DepositUtils.sol";
 import {DepositLiquidation} from "./DepositLiquidation.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
-import {TBTCConstants} from "./TBTCConstants.sol";
+import {TBTCConstants} from "../system/TBTCConstants.sol";
 
 library DepositFunding {
 
@@ -63,7 +63,7 @@ library DepositFunding {
         uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_d.tbtcSystem.getInitialCollateralizedPercent()).div(100);
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
-        _d.keepSetupFee = _d.tbtcSystem.createNewDepositFeeEstimate();
+        _d.keepSetupFee = _d.tbtcSystem.getNewDepositFeeEstimate();
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
             _m,
@@ -128,7 +128,8 @@ library DepositFunding {
     }
 
     /// @notice     Anyone may notify the contract that the funder has failed to send BTC.
-    /// @dev        This is considered a funder fault, and we revoke their bond.
+    /// @dev        This is considered a funder fault, and the funder's payment
+    ///             for opening the deposit is not refunded.
     /// @param  _d  Deposit storage pointer.
     function notifyFundingTimeout(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingBTCFundingProof(), "Funding timeout has not started");
@@ -141,6 +142,29 @@ library DepositFunding {
 
         _d.closeKeep();
         fundingTeardown(_d);
+    }
+
+    /// @notice Requests a funder abort for a failed-funding deposit; that is,
+    ///         requests return of a sent UTXO to `_abortOutputScript`. This can
+    ///         be used for example when a UTXO is sent that is the wrong size
+    ///         for the lot. Must be called after setup fails for any reason,
+    ///         and imposes no requirement or incentive on the signing group to
+    ///         return the UTXO.
+    /// @dev This is a self-admitted funder fault, and should only be callable
+    ///      by the TDT holder.
+    /// @param _d Deposit storage pointer.
+    /// @param _abortOutputScript The output script the funder wishes to request
+    ///        a return of their UTXO to.
+    function requestFunderAbort(
+        DepositUtils.Deposit storage _d,
+        bytes memory _abortOutputScript
+    ) public {
+        require(
+            _d.inFailedSetup(),
+            "The deposit has not failed funding"
+        );
+
+        _d.logFunderRequestedAbort(_abortOutputScript);
     }
 
     /// @notice                 Anyone can provide a signature that was not requested to prove fraud during funding.
@@ -165,8 +189,7 @@ library DepositFunding {
             "Signer fraud during funding flow only available while awaiting funding"
         );
 
-        bool _isFraud = _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
-        require(_isFraud, "Signature is not fraudulent");
+        _d.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
         _d.logFraudDuringSetup();
 
         // Allow deposit owner to withdraw seized bonds after contract termination.

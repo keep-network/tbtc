@@ -55,7 +55,7 @@ describe("DepositFraud", async function() {
     })
 
     it("updates to awaiting fraud funding proof, distributes signer bond to funder, and logs FraudDuringSetup", async () => {
-      const blockNumber = await web3.eth.getBlock("latest").number
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideFundingECDSAFraudProof(
         0,
@@ -114,7 +114,7 @@ describe("DepositFraud", async function() {
     })
   })
 
-  describe("startSignerFraudLiquidation", async () => {
+  describe("startLiquidation - fraud", async () => {
     let signerBond
     before(async () => {
       signerBond = 10000000
@@ -130,9 +130,10 @@ describe("DepositFraud", async function() {
     })
 
     it("executes and emits StartedLiquidation event", async () => {
-      const block = await web3.eth.getBlock("latest")
-
-      await testDeposit.startSignerFraudLiquidation({from: owner})
+      const {
+        receipt: {blockNumber: liquidationBlock},
+      } = await testDeposit.startLiquidation(true, {from: owner})
+      const block = await web3.eth.getBlock(liquidationBlock)
 
       const events = await tbtcSystemStub.getPastEvents("StartedLiquidation", {
         fromBlock: block.number,
@@ -153,10 +154,13 @@ describe("DepositFraud", async function() {
     it("liquidates immediately with bonds going to the redeemer if we came from the redemption flow", async () => {
       // setting redeemer address suggests we are coming from redemption flow
       testDeposit.setRedeemerAddress(owner)
+      await testDeposit.setState(states.AWAITING_WITHDRAWAL_SIGNATURE)
 
       const currentBond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      const block = await web3.eth.getBlock("latest")
-      await testDeposit.startSignerFraudLiquidation()
+      const {
+        receipt: {blockNumber: liquidationBlock},
+      } = await testDeposit.startLiquidation(true)
+      const block = await web3.eth.getBlock(liquidationBlock)
 
       const events = await tbtcSystemStub.getPastEvents("Liquidated", {
         fromBlock: block.number,
@@ -175,7 +179,7 @@ describe("DepositFraud", async function() {
     })
   })
 
-  describe("startSignerAbortLiquidation", async () => {
+  describe("startLiquidation - not fraud", async () => {
     let signerBond
     before(async () => {
       signerBond = 10000000
@@ -191,9 +195,10 @@ describe("DepositFraud", async function() {
     })
 
     it("executes and emits StartedLiquidation event", async () => {
-      const block = await web3.eth.getBlock("latest")
-
-      await testDeposit.startSignerAbortLiquidation({from: owner})
+      const {
+        receipt: {blockNumber: liquidationBlock},
+      } = await testDeposit.startLiquidation(false, {from: owner})
+      const block = await web3.eth.getBlock(liquidationBlock)
 
       const events = await tbtcSystemStub.getPastEvents("StartedLiquidation", {
         fromBlock: block.number,

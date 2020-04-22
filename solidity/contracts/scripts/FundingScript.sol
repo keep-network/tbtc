@@ -32,15 +32,16 @@ contract FundingScript {
     /// @dev Implements the approveAndCall receiver interface.
     /// @param _from The owner of the token who approved them for transfer.
     /// @param _tokenId Approved TDT for the transfer.
-    /// @param _token Token contract address.
     /// @param _extraData Encoded function call to `VendingMachine.unqualifiedDepositToTbtc`.
-    function receiveApproval(address _from, uint256 _tokenId, address _token, bytes memory _extraData) public {
+    function receiveApproval(address _from, uint256 _tokenId, address, bytes memory _extraData) public {
         tbtcDepositToken.transferFrom(_from, address(this), _tokenId);
         tbtcDepositToken.approve(address(vendingMachine), _tokenId);
 
         // Verify _extraData is a call to unqualifiedDepositToTbtc.
         bytes4 functionSignature;
-        assembly { functionSignature := mload(add(_extraData, 0x20)) }
+        assembly {
+            functionSignature := and(mload(add(_extraData, 0x20)), not(0xff))
+        }
         require(
             functionSignature == vendingMachine.unqualifiedDepositToTbtc.selector,
             "Bad _extraData signature. Call must be to unqualifiedDepositToTbtc."

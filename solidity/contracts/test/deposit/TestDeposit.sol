@@ -215,12 +215,8 @@ contract TestDeposit is Deposit {
         self.approvedDigests[_digest] = _timestamp;
     }
 
-    function startSignerFraudLiquidation() public {
-        self.startSignerFraudLiquidation();
-    }
-
-    function startSignerAbortLiquidation() public {
-        self.startSignerAbortLiquidation();
+    function startLiquidation(bool _wasFraud) public {
+        self.startLiquidation(_wasFraud);
     }
 
     // passthrough for direct testing

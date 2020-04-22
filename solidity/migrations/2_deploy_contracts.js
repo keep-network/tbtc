@@ -18,10 +18,9 @@ const Deposit = artifacts.require("Deposit")
 const VendingMachine = artifacts.require("VendingMachine")
 
 // price feed
-const BTCETHPriceFeed = artifacts.require("BTCETHPriceFeed")
-const BTCUSDPriceFeed = artifacts.require("BTCUSDPriceFeed")
-const ETHUSDPriceFeed = artifacts.require("ETHUSDPriceFeed")
+const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
 const prices = require("./prices")
+const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
 // Bitcoin difficulty relays.
 const Relay = artifacts.require("@summa-tx/relay-sol/contracts/Relay")
@@ -29,6 +28,7 @@ const MockRelay = artifacts.require("MockRelay")
 
 // system
 const TBTCConstants = artifacts.require("TBTCConstants")
+const TBTCDevelopmentConstants = artifacts.require("TBTCDevelopmentConstants")
 const TBTCSystem = artifacts.require("TBTCSystem")
 
 // tokens
@@ -47,7 +47,6 @@ const all = [
   BytesLib,
   BTCUtils,
   ValidateSPV,
-  TBTCConstants,
   CheckBitcoinSigs,
   OutsourceDepositLogging,
   DepositLog,
@@ -58,7 +57,7 @@ const all = [
   DepositLiquidation,
   Deposit,
   TBTCSystem,
-  BTCETHPriceFeed,
+  SatWeiPriceFeed,
   VendingMachine,
   FeeRebateToken,
 ]
@@ -81,6 +80,15 @@ const bitcoinTest = {
 
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
+    let constantsContract = TBTCConstants
+    if (network == "keep_dev" || network == "development") {
+      // For keep_dev and development, replace constants with testnet constants.
+      // Masquerade as TBTCConstants like a sinister fellow.
+      TBTCDevelopmentConstants._json.contractName = "TBTCConstants"
+      constantsContract = TBTCDevelopmentConstants
+    }
+    all.push(constantsContract)
+
     // bitcoin-spv
     await deployer.deploy(BytesLib)
     await deployer.link(BytesLib, all)
@@ -95,8 +103,8 @@ module.exports = (deployer, network, accounts) => {
     await deployer.link(CheckBitcoinSigs, all)
 
     // constants
-    await deployer.deploy(TBTCConstants)
-    await deployer.link(TBTCConstants, all)
+    await deployer.deploy(constantsContract)
+    await deployer.link(constantsContract, all)
 
     // logging
     await deployer.deploy(OutsourceDepositLogging)
@@ -105,18 +113,13 @@ module.exports = (deployer, network, accounts) => {
     let difficultyRelay
     // price feeds
     if (network !== "mainnet") {
-      // On mainnet, we use the MakerDAO-deployed price feeds.
+      // On mainnet, we use the MakerDAO-deployed price feed.
       // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
       // Otherwise, we deploy our own mock price feeds, which are simpler
       // to maintain.
-      await deployer.deploy(BTCUSDPriceFeed)
-      await deployer.deploy(ETHUSDPriceFeed)
-
-      const btcPriceFeed = await BTCUSDPriceFeed.deployed()
-      const ethPriceFeed = await ETHUSDPriceFeed.deployed()
-
-      await btcPriceFeed.setValue(web3.utils.toWei(prices.BTCUSD))
-      await ethPriceFeed.setValue(web3.utils.toWei(prices.ETHUSD))
+      await deployer.deploy(MockSatWeiPriceFeed)
+      const satWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
+      await satWeiPriceFeed.setValue(prices.satwei)
     }
 
     // On mainnet and Ropsten, we use the Summa-built, Keep-operated relay;
@@ -142,8 +145,7 @@ module.exports = (deployer, network, accounts) => {
       difficultyRelay = await MockRelay.deployed()
     }
 
-    // TODO This should be dropped soon.
-    await deployer.deploy(BTCETHPriceFeed)
+    await deployer.deploy(SatWeiPriceFeed)
 
     if (!difficultyRelay) {
       throw new Error("Difficulty relay not found.")
@@ -152,7 +154,7 @@ module.exports = (deployer, network, accounts) => {
     // system
     await deployer.deploy(
       TBTCSystem,
-      BTCETHPriceFeed.address,
+      SatWeiPriceFeed.address,
       difficultyRelay.address,
     )
 

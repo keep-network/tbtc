@@ -19,7 +19,7 @@ let jsonFiles = [
   "../../solidity/build/contracts/DepositFunding.json",
   "../../solidity/build/contracts/DepositRedemption.json",
   "../../solidity/build/contracts/DepositLiquidation.json",
-  "../../solidity/build/contracts/IBTCETHPriceFeed.json",
+  "../../solidity/build/contracts/ISatWeiPriceFeed.json",
   "../../solidity/build/contracts/IBondedECDSAKeep.json",
   "../../solidity/build/contracts/ITokenRecipient.json",
 ]

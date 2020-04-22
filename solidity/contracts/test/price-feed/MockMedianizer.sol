@@ -6,7 +6,7 @@ import "../../../contracts/external/IMedianizer.sol";
 /// @notice A mock implementation of a medianizer price oracle
 /// @dev This is used in the Keep testnets only. Mainnet uses the MakerDAO medianizer.
 contract MockMedianizer is Ownable, IMedianizer {
-    uint256 private value;
+    uint128 private value;
 
     constructor() public {
     // solium-disable-previous-line no-empty-blocks
@@ -16,7 +16,11 @@ contract MockMedianizer is Ownable, IMedianizer {
         return value;
     }
 
-    function setValue(uint256 _value) external onlyOwner {
+    function peek() external view returns (uint256, bool) {
+        return (value, value > 0);
+    }
+
+    function setValue(uint128 _value) external onlyOwner {
         value = _value;
     }
 }

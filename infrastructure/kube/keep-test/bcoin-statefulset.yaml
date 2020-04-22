@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: bcoin
-        image: gcr.io/keep-dev-fe24/bcoin
+        image: gcr.io/keep-test-f3e0/bcoin
         ports:
           - containerPort: 18332
           - containerPort: 18333
