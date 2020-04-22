@@ -39,6 +39,10 @@ const FeeRebateToken = artifacts.require("FeeRebateToken")
 // deposit factory
 const DepositFactory = artifacts.require("DepositFactory")
 
+// scripts
+const FundingScript = artifacts.require("FundingScript")
+const RedemptionScript = artifacts.require("RedemptionScript")
+
 const all = [
   BytesLib,
   BTCUtils,
@@ -180,5 +184,20 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(TBTCToken, VendingMachine.address)
     await deployer.deploy(TBTCDepositToken, DepositFactory.address)
     await deployer.deploy(FeeRebateToken, VendingMachine.address)
+
+    // scripts
+    await deployer.deploy(
+      FundingScript,
+      VendingMachine.address,
+      TBTCToken.address,
+      TBTCDepositToken.address,
+      FeeRebateToken.address,
+    )
+    await deployer.deploy(
+      RedemptionScript,
+      VendingMachine.address,
+      TBTCToken.address,
+      FeeRebateToken.address,
+    )
   })
 }
