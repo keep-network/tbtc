@@ -48,11 +48,20 @@ contract RedemptionScript {
             "Bad _extraData signature. Call must be to tbtcToBtc."
         );
 
+        // We capture the `returnData` in order to forward any nested revert message
+        // from the contract call.
+        // solium-disable-next-line security/no-low-level-calls
         (bool success, bytes memory returnData) = address(vendingMachine).call(_extraData);
-        // solium-disable-previous-line security/no-low-level-calls
-        // By default, `address.call`  will catch any revert messages.
-        // Converting the `returnData` to a string will effectively forward any revert messages.
-        // https://ethereum.stackexchange.com/questions/69133/forward-revert-message-from-low-level-solidity-call
-        require(success, string(returnData));
+
+        string memory revertMessage;
+        assembly {
+            // A revert message is ABI-encoded as a call to Error(string).
+            // Slicing the Error() signature (4 bytes) and Data offset (4 bytes)
+            // leaves us with a pre-encoded string.
+            // We also slice off the ABI-coded length of returnData (32).
+            revertMessage := add(returnData, 0x44)
+        }
+
+        require(success, revertMessage);
     }
 }
