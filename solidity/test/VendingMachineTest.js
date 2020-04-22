@@ -465,6 +465,33 @@ describe("VendingMachine", async function() {
         expect(success).to.equal(true)
       })
 
+      it("forwards nested revert error messages", async () => {
+        await testDeposit.setState(states.ACTIVE)
+        await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
+        await tbtcToken.forceMint(owner, depositValue.add(signerFee))
+        await feeRebateToken.forceMint(owner, tdtId)
+        const tbtcToBtc = vendingMachine.abi.filter(
+          x => x.name == "tbtcToBtc",
+        )[0]
+        const nonexistentDeposit = "0000000000000000000000000000000000000000"
+        const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [
+          nonexistentDeposit,
+          "0x1111111100000000",
+          redeemerOutputScript,
+          owner,
+        ])
+
+        await expectRevert(
+          tbtcToken.approveAndCall(
+            redemptionScript.address,
+            depositValue.add(signerFee),
+            calldata,
+            {from: owner},
+          ),
+          "tBTC Deposit Token does not exist",
+        )
+      })
+
       it("reverts for unknown function calls encoded in _extraData", async () => {
         const unknownFunctionSignature = "0xCAFEBABE"
         await tbtcToken.forceMint(owner, depositValue.add(signerFee))
