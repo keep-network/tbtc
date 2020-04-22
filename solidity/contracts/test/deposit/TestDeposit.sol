@@ -243,6 +243,9 @@ contract TestDeposit is Deposit {
         return self.withdrawalRequestTime;
     }
 
+    function getCollateralizationPercentage() public view returns (uint256) {
+        return self.getCollateralizationPercentage();
+    }
     function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
         return self.pushFundsToKeepGroup(_ethValue);
     }
