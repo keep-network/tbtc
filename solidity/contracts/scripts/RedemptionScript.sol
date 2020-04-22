@@ -50,6 +50,7 @@ contract RedemptionScript {
 
         // We capture the `returnData` in order to forward any nested revert message
         // from the contract call.
+        // solium-disable-next-line security/no-low-level-calls
         (bool success, bytes memory returnData) = address(vendingMachine).call(_extraData);
 
         string memory revertMessage;

@@ -592,6 +592,39 @@ describe("VendingMachine", async function() {
       expect(success).to.be.true
     })
 
+    it("forwards nested revert error messages", async () => {
+      const unqualifiedDepositToTbtcABI = vendingMachine.abi.filter(
+        x => x.name == "unqualifiedDepositToTbtc",
+      )[0]
+      const calldata = web3.eth.abi.encodeFunctionCall(
+        unqualifiedDepositToTbtcABI,
+        [
+          testDeposit.address,
+          _version,
+          _txInputVector,
+          _txOutputVector,
+          _txLocktime,
+          _fundingOutputIndex,
+          _merkleProof,
+          _txIndexInBlock,
+          _bitcoinHeaders,
+        ],
+      )
+
+      // To make the funding call fail.
+      await testDeposit.setState(states.ACTIVE)
+
+      await expectRevert(
+        tbtcDepositToken.approveAndCall.call(
+          fundingScript.address,
+          tdtId,
+          calldata,
+          {from: owner},
+        ),
+        "Not awaiting funding",
+      )
+    })
+
     it("reverts for unknown function calls encoded in _extraData", async () => {
       const unknownFunctionSignature = "0xCAFEBABE"
 
