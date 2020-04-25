@@ -575,9 +575,9 @@ describe("TBTCSystem", async function() {
       await restoreSnapshot()
     })
 
-    describe("initializeAddEthBtcFeed", async () => {
+    describe("beginAddEthBtcFeed", async () => {
       it("initializes ETH/BTC addition and emits EthBtcPriceFeedAdditionStarted", async () => {
-        const receipt = await tbtcSystem.initializeAddEthBtcFeed(med.address)
+        const receipt = await tbtcSystem.beginAddEthBtcFeed(med.address)
 
         expectEvent(receipt, "EthBtcPriceFeedAdditionStarted", {
           _priceFeed: med.address,
@@ -592,7 +592,7 @@ describe("TBTCSystem", async function() {
       })
 
       it("Reverts if timer has not elapsed", async () => {
-        await tbtcSystem.initializeAddEthBtcFeed(med.address)
+        await tbtcSystem.beginAddEthBtcFeed(med.address)
         await increaseTime(timer.toNumber() - 10)
         await expectRevert(
           tbtcSystem.finalizeAddEthBtcFeed(),
@@ -601,7 +601,7 @@ describe("TBTCSystem", async function() {
       })
 
       it("Finalizes ETH/BTC addition and emits EthBtcPriceFeedAdded", async () => {
-        await tbtcSystem.initializeAddEthBtcFeed(med.address)
+        await tbtcSystem.beginAddEthBtcFeed(med.address)
         await increaseTime(timer.toNumber() + 1)
         const receipt = await tbtcSystem.finalizeAddEthBtcFeed()
         expectEvent(receipt, "EthBtcPriceFeedAdded", {
