@@ -50,11 +50,20 @@ contract FundingScript {
         // Call the VendingMachine.
         // We could explictly encode the call to vending machine, but this would
         // involve manually parsing _extraData and allocating variables.
-        (bool success, bytes memory returnData) = address(vendingMachine).call(
-            // solium-disable-previous-line security/no-low-level-calls
-            _extraData
-        );
-        require(success, string(returnData));
+        // We capture the `returnData` in order to forward any nested revert message
+        // from the contract call.
+        (bool success, bytes memory returnData) = address(vendingMachine).call(_extraData);
+
+        string memory revertMessage;
+        assembly {
+            // A revert message is ABI-encoded as a call to Error(string).
+            // Slicing the Error() signature (4 bytes) and Data offset (4 bytes)
+            // leaves us with a pre-encoded string.
+            // We also slice off the ABI-coded length of returnData (32).
+            revertMessage := add(returnData, 0x44)
+        }
+
+        require(success, revertMessage);
 
         // Transfer the TBTC and feeRebateToken to the user.
         tbtcToken.transfer(_from, tbtcToken.balanceOf(address(this)));
