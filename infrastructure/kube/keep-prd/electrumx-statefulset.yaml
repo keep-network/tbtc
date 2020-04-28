@@ -8,7 +8,7 @@ metadata:
     app: bitcoin
     type: electrumx
 spec:
-  replicas: 1
+  replicas: 2
   serviceName: electrumx
   volumeClaimTemplates:
   - metadata:
@@ -65,12 +65,12 @@ spec:
         volumeMounts:
           - name: electrumx-data
             mountPath: /mnt/electrum/data
-          - name: cloudflare-origin-cert
+          - name: tbtc-network-cloudflare-origin-cert
             mountPath: /mnt/electrum/cert
       volumes:
       - name: electrumx-data
         persistentVolumeClaim:
           claimName: electrumx-data
-      - name: cloudflare-origin-cert
+      - name: tbtc-network-cloudflare-origin-cert
         secret:
-          secretName: cloudflare-origin-cert
+          secretName: tbtc-network-cloudflare-origin-cert
