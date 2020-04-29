@@ -85,14 +85,8 @@ contract TestDeposit is Deposit {
         self.initialCollateralizedPercent = _initialCollateralizedPercent;
     }
 
-    function getUndercollateralizedThresholdPercent() public view returns (uint16) { return self.undercollateralizedThresholdPercent; }
-
     function setSeverelyUndercollateralizedThresholdPercent(uint16 _severelyUndercollateralizedThresholdPercent) public {
         self.severelyUndercollateralizedThresholdPercent = _severelyUndercollateralizedThresholdPercent;
-    }
-
-    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint16) {
-        return self.severelyUndercollateralizedThresholdPercent;
     }
 
     function setLiquidationAndCourtesyInitated(
@@ -121,10 +115,6 @@ contract TestDeposit is Deposit {
 
     function setKeepAddress(address _keepAddress) public {
         self.keepAddress = _keepAddress;
-    }
-
-    function getKeepAddress() public view returns (address) {
-        return self.keepAddress;
     }
 
     function setSigningGroupRequestedAt(uint256 _signingGroupRequestedAt) public {

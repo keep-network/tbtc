@@ -401,7 +401,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Initialize the addition of a new ETH/BTC price feed contract to the priecFeed.
     /// @dev `FinalizeAddEthBtcFeed` must be called to finalize.
-    function initializeAddEthBtcFeed(IMedianizer _ethBtcFeed) external {
+    function beginAddEthBtcFeed(IMedianizer _ethBtcFeed)
+        external
+        onlyOwner {
         nextEthBtcFeed = _ethBtcFeed;
         appendEthBtcFeedTimer = block.timestamp + priceFeedGovernanceTimeDelay;
         emit EthBtcPriceFeedAdditionStarted(address(_ethBtcFeed), block.timestamp);
@@ -410,7 +412,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Finish adding a new price feed contract to the priceFeed.
     /// @dev `InitializeAddEthBtcFeed` must be called first, once `appendEthBtcFeedTimer`
     ///       has passed, this function can be called to append a new price feed.
-    function finalizeAddEthBtcFeed() external {
+    function finalizeAddEthBtcFeed()
+        external
+        onlyOwner {
         require(block.timestamp > appendEthBtcFeedTimer, "Timeout not yet elapsed");
         priceFeed.addEthBtcFeed(nextEthBtcFeed);
         emit EthBtcPriceFeedAdded(address(nextEthBtcFeed));
