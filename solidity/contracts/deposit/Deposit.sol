@@ -394,7 +394,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @notice Get the current collateralization level for this Deposit.
     /// @dev    This value represents the percentage of the backing BTC value the signers
     ///         currently must hold as bond.
-    /// @return The severe collateralization level for this deposit.
+    /// @return The current collateralization level for this deposit.
     function getCollateralizationPercentage() public view returns (uint256) {
         return self.getCollateralizationPercentage();
     }
@@ -410,7 +410,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev    This collateralization level is semi-critical. If the collateralization level falls
     ///         below this percentage the Deposit can get courtesy-called. This value represents the percentage
     ///         of the backing BTC value the signers must hold as bond in order to not be undercollateralized.
-    /// @return The severe collateralization level for this deposit.
+    /// @return The undercollateralized level for this deposit.
     function getUndercollateralizedThresholdPercent() public view returns (uint16) {
         return self.undercollateralizedThresholdPercent;
     }
@@ -419,7 +419,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev    This collateralization level is critical. If the collateralization level falls
     ///         below this percentage the Deposit can get liquidated. This value represents the percentage
     ///         of the backing BTC value the signers must hold as bond in order to not be severely undercollateralized.
-    /// @return The severe collateralization level for this deposit.
+    /// @return The severely undercollateralized level for this deposit.
     function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint16) {
         return self.severelyUndercollateralizedThresholdPercent;
     }
