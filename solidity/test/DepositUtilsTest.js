@@ -424,9 +424,8 @@ describe("DepositUtils", async function() {
     })
 
     it("returns base value if no time has elapsed", async () => {
-      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
-        value: auctionValue,
-      })
+      await testDeposit.send(auctionValue, {from: accounts[8]})
+
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
@@ -436,9 +435,8 @@ describe("DepositUtils", async function() {
     })
 
     it("returns full value if auction Duration has elapsed ", async () => {
-      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
-        value: auctionValue,
-      })
+      await testDeposit.send(auctionValue, {from: accounts[8]})
+
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
@@ -449,9 +447,8 @@ describe("DepositUtils", async function() {
     })
 
     it("scales auction value correctly", async () => {
-      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
-        value: auctionValue,
-      })
+      await testDeposit.send(auctionValue, {from: accounts[8]})
+
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
@@ -694,9 +691,8 @@ describe("DepositUtils", async function() {
         const beneficiary = accounts[1]
         const initialBalance = await web3.eth.getBalance(beneficiary)
 
-        await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
-          value: value,
-        })
+        await testDeposit.send(value, {from: accounts[8]})
+
         await testDeposit.enableWithdrawal(beneficiary, value)
         const tx = await testDeposit.withdrawFunds({from: beneficiary})
         const finalBalance = await web3.eth.getBalance(beneficiary)
@@ -767,7 +763,7 @@ describe("DepositUtils", async function() {
   describe("pushFundsToKeepGroup()", async () => {
     it("calls out to the keep contract", async () => {
       const value = 10000
-      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+      await testDeposit.send(value, {from: accounts[8]})
       await testDeposit.pushFundsToKeepGroup(value)
       const keepBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(keepBalance).to.eq.BN(new BN(value))
