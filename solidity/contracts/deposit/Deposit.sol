@@ -36,7 +36,8 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     function () external payable {
-        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from underlying keep");
+        // Contract supports basic ETH transfers only.
+        require(msg.data.length == 0, "Deposit contract was called with unknown function selector.");
     }
 
     /// @notice     Get the keep contract address associated with the Deposit.
