@@ -265,11 +265,11 @@ jobs:
             cd infrastructure/kube/templates/relay-maintainer/initcontainer
             npm upgrade @keep-network/tbtc
             docker build \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer:$DOCKER_IMAGE_TAG .
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer .
       - run:
           name: Save initcontainer-provision-relay-maintainer image
           command: |
-            docker save -o /tmp/relay-maintainer/docker-images/initcontainer-provision-relay-maintainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer:$DOCKER_IMAGE_TAG
+            docker save -o /tmp/relay-maintainer/docker-images/initcontainer-provision-relay-maintainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-relay-maintainer
       - persist_to_workspace:
           root: /tmp/relay-maintainer
           paths:
@@ -292,7 +292,7 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-relay-maintainer
-          tag: $DOCKER_IMAGE_TAG
+          tag: latest
 
 workflows:
   version: 2
