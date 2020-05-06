@@ -424,6 +424,14 @@ contract Deposit is DepositFactoryAuthority {
         return self.severelyUndercollateralizedThresholdPercent;
     }
 
+    /// @notice     Calculates the amount of value at auction right now.
+    /// @dev        We calculate the % of the auction that has elapsed, then scale the value up.
+    /// @param _d   Deposit storage pointer.
+    /// @return     The value in wei to distribute in the auction at the current time.
+    function auctionValue(Deposit storage _d) public view returns (uint256) {
+        return self.auctionValue();
+    }
+
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
     /// @dev        For interface, reading auctionValue will give a past value. the current is better.
     /// @return     True if successful, revert otherwise.
