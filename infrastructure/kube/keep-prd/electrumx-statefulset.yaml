@@ -1,0 +1,76 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: electrumx
+  namespace: default
+  labels:
+    app: bitcoin
+    type: electrumx
+spec:
+  replicas: 2
+  serviceName: electrumx
+  volumeClaimTemplates:
+  - metadata:
+      name: electrumx-data
+    spec:
+      storageClassName: electrumx
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 450Gi
+  selector:
+    matchLabels:
+      app: bitcoin
+      type: electrumx
+  template:
+    metadata:
+      labels:
+        app: bitcoin
+        type: electrumx
+    spec:
+      containers:
+      - name: electrumx-server
+        image: lukechilds/electrumx:v1.14.0
+        ports:
+          - containerPort: 443
+          - containerPort: 8080
+          - containerPort: 8443
+          - containerPort: 8000
+        # Full list of env vars: https://electrumx.readthedocs.io/en/latest/environment.html
+        env:
+          - name: DB_DIRECTORY
+            value: /mnt/electrum/data
+          - name: SSL_CERTFILE
+            value: /mnt/electrum/cert/tls.crt
+          - name: SSL_KEYFILE
+            value: /mnt/electrum/cert/tls.key
+          - name: DAEMON_URL
+            valueFrom:
+              secretKeyRef:
+                name: bcoin
+                key: bcoin-url
+          - name: SERVICES
+            value: ssl://:443,ws://:8080,wss://:8443,rpc://localhost:8000
+          - name: COIN
+            value: BitcoinSegwit
+          - name: NET
+            value: mainnet
+          - name: COST_SOFT_LIMIT
+            value: '0'
+          - name: COST_HARD_LIMIT
+            value: '0'
+          - name: LOG_LEVEL
+            value: debug
+        volumeMounts:
+          - name: electrumx-data
+            mountPath: /mnt/electrum/data
+          - name: tbtc-network-cloudflare-origin-cert
+            mountPath: /mnt/electrum/cert
+      volumes:
+      - name: electrumx-data
+        persistentVolumeClaim:
+          claimName: electrumx-data
+      - name: tbtc-network-cloudflare-origin-cert
+        secret:
+          secretName: tbtc-network-cloudflare-origin-cert

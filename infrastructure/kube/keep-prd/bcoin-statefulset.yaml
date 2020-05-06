@@ -8,16 +8,17 @@ metadata:
     app: bitcoin-node
     type: bcoin
 spec:
-  replicas: 1
+  replicas: 2
   serviceName: bcoin
   volumeClaimTemplates:
   - metadata:
       name: bcoin-data
     spec:
+      storageClassName: bcoin
       accessModes: [ReadWriteOnce]
       resources:
         requests:
-          storage: 40Gi
+          storage: 450Gi
   selector:
     matchLabels:
       app: bitcoin-node
@@ -30,19 +31,19 @@ spec:
     spec:
       containers:
       - name: bcoin
-        image: gcr.io/keep-dev-fe24/bcoin
+        image:  gcr.io/keep-prd-210b/bcoin
         ports:
-          - containerPort: 18332
-          - containerPort: 18333
+          - containerPort: 8332
+          - containerPort: 8333
         env:
           - name: BCOIN_NETWORK
-            value: testnet
+            value: main
           - name: BCOIN_HTTP_HOST
             value: '0.0.0.0'
           - name: BCOIN_HTTP_PORT
-            value: '18332'
+            value: '8332'
           - name: BCOIN_PORT
-            value: '18333'
+            value: '8333'
           - name: BCOIN_LOG_LEVEL
             value: info
           - name: BCOIN_PREFIX
