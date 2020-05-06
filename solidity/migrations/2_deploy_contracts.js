@@ -24,6 +24,7 @@ const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
 // Bitcoin difficulty relays.
 const Relay = artifacts.require("@summa-tx/relay-sol/contracts/Relay")
+const TestnetRelay = artifacts.require("@summa-tx/relay-sol/contracts/TestnetRelay")
 const MockRelay = artifacts.require("MockRelay")
 
 // system
@@ -130,14 +131,11 @@ module.exports = (deployer, network, accounts) => {
 
       await deployer.deploy(Relay, genesis, height, epochStart)
       difficultyRelay = await Relay.deployed()
-    } else if (network == "ropsten") {
-      await deployer.deploy(MockRelay)
-      difficultyRelay = await MockRelay.deployed()
-    } else if (network == "keep_dev") {
+    } else if (network == "keep_dev" || "ropsten") {
       const {genesis, height, epochStart} = bitcoinTest
 
-      await deployer.deploy(Relay, genesis, height, epochStart)
-      difficultyRelay = await Relay.deployed()
+      await deployer.deploy(TestnetRelay, genesis, height, epochStart)
+      difficultyRelay = await TestnetRelay.deployed()
     } else {
       await deployer.deploy(MockRelay)
       difficultyRelay = await MockRelay.deployed()
