@@ -426,9 +426,8 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice     Calculates the amount of value at auction right now.
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up.
-    /// @param _d   Deposit storage pointer.
     /// @return     The value in wei to distribute in the auction at the current time.
-    function auctionValue(Deposit storage _d) public view returns (uint256) {
+    function auctionValue() public view returns (uint256) {
         return self.auctionValue();
     }
 
