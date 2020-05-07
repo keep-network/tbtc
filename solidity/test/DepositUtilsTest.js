@@ -117,7 +117,7 @@ describe("DepositUtils", async function() {
         web3.eth.sendTransaction({
           from: accounts[0],
           to: testDeposit.address,
-          data: "0xdecaf",
+          data: "0xbaddecaf",
         }),
         "Deposit contract was called with unknown function selector.",
       )
