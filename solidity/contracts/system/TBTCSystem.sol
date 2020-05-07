@@ -255,12 +255,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
     }
 
-    modifier onlyAfterDelay(uint256 _changeInitializedTimestamp) {
+
+    modifier onlyAfterGovernanceDelay(
+        uint256 _changeInitializedTimestamp,
+        uint256 _delay
+    ) {
         require(_changeInitializedTimestamp > 0, "Change not initiated");
         require(
-            block.timestamp.sub(_changeInitializedTimestamp) >=
-                governanceTimeDelay,
-            "Timer not elapsed"
+            block.timestamp.sub(_changeInitializedTimestamp) >= _delay,
+            "Governance delay has not elapsed"
         );
         _;
     }
@@ -272,7 +275,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function finalizeSignerFeeDivisorUpdate()
         external
         onlyOwner
-        onlyAfterDelay(signerFeeDivisorChangeInitiated)
+        onlyAfterGovernanceDelay(signerFeeDivisorChangeInitiated, governanceTimeDelay)
     {
         signerFeeDivisor = newSignerFeeDivisor;
         emit SignerFeeDivisorUpdated(newSignerFeeDivisor);
@@ -286,7 +289,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function finalizeLotSizesUpdate()
         external
         onlyOwner
-        onlyAfterDelay(lotSizesChangeInitiated) {
+        onlyAfterGovernanceDelay(lotSizesChangeInitiated, governanceTimeDelay) {
 
         lotSizesSatoshis = newLotSizesSatoshis;
         emit LotSizesUpdated(newLotSizesSatoshis);
@@ -319,7 +322,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function finalizeCollateralizationThresholdsUpdate()
         external
         onlyOwner
-        onlyAfterDelay(collateralizationThresholdsChangeInitiated) {
+        onlyAfterGovernanceDelay(
+            collateralizationThresholdsChangeInitiated,
+            governanceTimeDelay
+        ) {
 
         initialCollateralizedPercent = newInitialCollateralizedPercent;
         undercollateralizedThresholdPercent = newUndercollateralizedThresholdPercent;
