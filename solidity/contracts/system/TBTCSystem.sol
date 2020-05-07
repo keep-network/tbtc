@@ -1,7 +1,6 @@
 /* solium-disable function-order */
 pragma solidity 0.5.17;
 
-import {IBondedECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepVendor.sol";
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
 import {VendingMachine} from "./VendingMachine.sol";
@@ -19,6 +18,7 @@ import "./TBTCToken.sol";
 import "./FeeRebateToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./KeepFactoryStrategy.sol";
 
 /// @title  TBTC System.
 /// @notice This contract acts as a central point for access control,
@@ -27,6 +27,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
+    using KeepFactoryStrategy for KeepFactoryStrategy.Storage;
 
     event EthBtcPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
     event LotSizesUpdateStarted(uint64[] _lotSizes, uint256 _timestamp);
@@ -54,8 +55,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 constant pausedDuration = 10 days;
 
     ISatWeiPriceFeed public  priceFeed;
-    IBondedECDSAKeepVendor public keepVendor;
     IRelay public relay;
+
+    KeepFactoryStrategy.Storage keepFactoryStrategy;
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
@@ -89,7 +91,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice        Initialize contracts
     /// @dev           Only the Deposit factory should call this, and only once.
-    /// @param _keepVendor        ECDSA keep vendor.
+    /// @param _keepFactory       ECDSA keep factory.
     /// @param _depositFactory    Deposit Factory. More info in `DepositFactory`.
     /// @param _masterDepositAddress  Master Deposit address. More info in `Deposit`.
     /// @param _tbtcToken         TBTCToken. More info in `TBTCToken`.
@@ -99,7 +101,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size.
     function initialize(
-        IBondedECDSAKeepVendor _keepVendor,
+        IBondedECDSAKeepFactory _keepFactory,
         DepositFactory _depositFactory,
         address payable _masterDepositAddress,
         TBTCToken _tbtcToken,
@@ -110,7 +112,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
-        keepVendor = _keepVendor;
+
+        keepFactoryStrategy.regularFactory = _keepFactory;
+
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
             _tbtcDepositToken,
@@ -436,7 +440,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         view
         returns (uint256)
     {
-        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
+        IBondedECDSAKeepFactory _keepFactory = keepFactoryStrategy.chooseFactory(address(this));
         return _keepFactory.openKeepFeeEstimate();
     }
 
@@ -456,7 +460,26 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
+        IBondedECDSAKeepFactory _keepFactory = keepFactoryStrategy.chooseFactory(address(this));
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
+    }
+
+    /// @notice Sets the address of fully backed ECDSA keep factory.
+    /// @dev Beware! Can be called only once!
+    /// @param _fullyBackedFactory Address of the factory.
+    function setFullyBackedFactory(
+        address _fullyBackedFactory
+    ) external onlyOwner {
+        require(
+            address(keepFactoryStrategy.fullyBackedFactory) == address(0),
+            "Fully backed factory address already set"
+        );
+
+        require(
+            address(_fullyBackedFactory) != address(0),
+            "Invalid address"
+        );
+
+        keepFactoryStrategy.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
     }
 }
