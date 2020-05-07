@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
+import "./IKeepFactorySelector.sol";
 
 library KeepFactoryStrategy {
 
@@ -8,9 +9,14 @@ library KeepFactoryStrategy {
         IBondedECDSAKeepFactory regularFactory;
 
         IBondedECDSAKeepFactory fullyBackedFactory;
+
+        IKeepFactorySelector factorySelector;
     }
 
-    function chooseFactory(
+    /// @notice Selects the right keep factory for the given application.
+    /// @param _application Application address.
+    /// @return Selected keep factory.
+    function selectFactory(
         Storage storage _self,
         address _application
     ) public view returns (IBondedECDSAKeepFactory) {
@@ -19,25 +25,17 @@ library KeepFactoryStrategy {
             "Regular factory address must be set"
         );
 
-        if (address(_self.fullyBackedFactory) == address(0)) {
+        if (
+            address(_self.fullyBackedFactory) == address(0) ||
+            address(_self.factorySelector) == address(0)
+        ) {
             return _self.regularFactory;
         }
 
-        uint256 regularFactoryWeight = _self.regularFactory.getSortitionPoolWeight(_application);
-        uint256 fullyBackedFactoryWeight = _self.fullyBackedFactory.getSortitionPoolWeight(_application);
-
-        if (shouldUseRegularFactory(regularFactoryWeight, fullyBackedFactoryWeight)) {
-            return _self.regularFactory;
-        } else {
-            return _self.fullyBackedFactory;
-        }
-    }
-
-    function shouldUseRegularFactory(
-        uint256 _regularFactoryWeight,
-        uint256 _fullyBackedFactoryWeight
-    ) internal view returns (bool) {
-        // TODO: Implementation of the actual strategy.
-        return true;
+        return _self.factorySelector.selectFactory(
+            _application,
+            _self.regularFactory,
+            _self.fullyBackedFactory
+        );
     }
 }

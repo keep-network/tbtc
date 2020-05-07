@@ -19,6 +19,7 @@ import "./FeeRebateToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./KeepFactoryStrategy.sol";
+import "./IKeepFactorySelector.sol";
 
 /// @title  TBTC System.
 /// @notice This contract acts as a central point for access control,
@@ -440,7 +441,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         view
         returns (uint256)
     {
-        IBondedECDSAKeepFactory _keepFactory = keepFactoryStrategy.chooseFactory(address(this));
+        IBondedECDSAKeepFactory _keepFactory = keepFactoryStrategy.selectFactory(address(this));
         return _keepFactory.openKeepFeeEstimate();
     }
 
@@ -460,14 +461,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        IBondedECDSAKeepFactory _keepFactory = keepFactoryStrategy.chooseFactory(address(this));
+        IBondedECDSAKeepFactory _keepFactory = keepFactoryStrategy.selectFactory(address(this));
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
     }
 
-    /// @notice Sets the address of fully backed ECDSA keep factory.
-    /// @dev Beware! Can be called only once!
+    /// @notice Sets the address of the fully backed ECDSA keep factory.
+    /// @dev Beware, can be called only once!
     /// @param _fullyBackedFactory Address of the factory.
-    function setFullyBackedFactory(
+    function setFullyBackedKeepFactory(
         address _fullyBackedFactory
     ) external onlyOwner {
         require(
@@ -481,5 +482,24 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
 
         keepFactoryStrategy.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
+    }
+
+    /// @notice Sets the address of the keep factory selector contract.
+    /// @dev Beware, can be called only once!
+    /// @param _factorySelector Address of the keep factory selector contract.
+    function setKeepFactorySelector(
+        address _factorySelector
+    ) external onlyOwner {
+        require(
+            address(keepFactoryStrategy.factorySelector) == address(0),
+            "Factory selector contract address already set"
+        );
+
+        require(
+            address(_factorySelector) != address(0),
+            "Invalid address"
+        );
+
+        keepFactoryStrategy.factorySelector = IKeepFactorySelector(_factorySelector);
     }
 }
