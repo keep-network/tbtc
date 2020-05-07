@@ -96,6 +96,34 @@ describe("DepositUtils", async function() {
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   })
 
+  describe("Deposit fallback", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("Does not revert when receiving value directly (no msg.data)", async () => {
+      // receive value from different contract
+      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: 10})
+      // receive value from direct send
+      await testDeposit.send(10)
+    })
+
+    it("Reverts if Deposit is called with unknown function selector", async () => {
+      await expectRevert(
+        web3.eth.sendTransaction({
+          from: accounts[0],
+          to: testDeposit.address,
+          data: "0xdecaf",
+        }),
+        "Deposit contract was called with unknown function selector.",
+      )
+    })
+  })
+
   describe("currentBlockDifficulty()", async () => {
     it("calls out to the system", async () => {
       const blockDifficulty = await testDeposit.currentBlockDifficulty.call()
