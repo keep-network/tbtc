@@ -1,7 +1,7 @@
 const TBTCSystem = artifacts.require("TBTCSystem")
 
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
-const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
+const ETHBTCPriceFeedMock = artifacts.require("ETHBTCPriceFeedMock")
 
 const DepositFactory = artifacts.require("DepositFactory")
 const Deposit = artifacts.require("Deposit")
@@ -58,14 +58,24 @@ module.exports = async function(deployer, network) {
     // Inject mainnet price feeds.
     await satWeiPriceFeed.initialize(tbtcSystem.address, ETHBTCMedianizer)
   } else if (network === "ropsten") {
-    // Inject medianizer intermediary.
-    await satWeiPriceFeed.initialize(tbtcSystem.address, RopstenETHBTCPriceFeed)
-  } else {
-    // Inject mock price feeds.
-    const mockSatWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
+    // Inject mock price feed as base.
+    const ethBtcPriceFeedMock = await ethBtcPriceFeedMock.deployed()
     await satWeiPriceFeed.initialize(
       tbtcSystem.address,
-      mockSatWeiPriceFeed.address,
+      ethBtcPriceFeedMock.address,
+    )
+
+    // Add medianizer intermediary.
+    await satWeiPriceFeed.addEthBtcFeed(RopstenETHBTCPriceFeed)
+    // Disable mock feed so medianizer intermediary is active feed until we
+    // choose to muck with the price.
+    await ethBtcPriceFeedMock.setValue(0)
+  } else {
+    // Inject mock price feeds.
+    const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
+    await satWeiPriceFeed.initialize(
+      tbtcSystem.address,
+      ethBtcPriceFeedMock.address,
     )
   }
 }
