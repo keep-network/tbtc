@@ -29,6 +29,7 @@ const MockRelay = artifacts.require("MockRelay")
 // system
 const TBTCConstants = artifacts.require("TBTCConstants")
 const TBTCDevelopmentConstants = artifacts.require("TBTCDevelopmentConstants")
+const KeepFactoryStrategy = artifacts.require("KeepFactoryStrategy")
 const TBTCSystem = artifacts.require("TBTCSystem")
 
 // tokens
@@ -148,6 +149,9 @@ module.exports = (deployer, network, accounts) => {
     if (!difficultyRelay) {
       throw new Error("Difficulty relay not found.")
     }
+
+    await deployer.deploy(KeepFactoryStrategy)
+    await deployer.link(KeepFactoryStrategy, TBTCSystem)
 
     // system
     await deployer.deploy(
