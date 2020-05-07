@@ -36,6 +36,7 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     function () external payable {
+        require(msg.data.length == 0, "Deposit contract was called with unknown function selector.");
     }
 
     /// @notice     Get the keep contract address associated with the Deposit.
