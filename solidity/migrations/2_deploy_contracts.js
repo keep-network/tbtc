@@ -18,7 +18,7 @@ const Deposit = artifacts.require("Deposit")
 const VendingMachine = artifacts.require("VendingMachine")
 
 // price feed
-const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
+const ETHBTCPriceFeedMock = artifacts.require("ETHBTCPriceFeedMock")
 const prices = require("./prices")
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
@@ -120,9 +120,9 @@ module.exports = (deployer, network, accounts) => {
       // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
       // Otherwise, we deploy our own mock price feeds, which are simpler
       // to maintain.
-      await deployer.deploy(MockSatWeiPriceFeed)
-      const satWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
-      await satWeiPriceFeed.setValue(prices.satwei)
+      await deployer.deploy(ETHBTCPriceFeedMock)
+      const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
+      await ethBtcPriceFeedMock.setValue(prices.satwei)
     }
 
     // On mainnet and Ropsten, we use the Summa-built, Keep-operated relay;

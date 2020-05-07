@@ -1,7 +1,7 @@
 const TBTCSystem = artifacts.require("TBTCSystem")
 
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
-const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
+const ETHBTCPriceFeedMock = artifacts.require("ETHBTCPriceFeedMock")
 
 const DepositFactory = artifacts.require("DepositFactory")
 const Deposit = artifacts.require("Deposit")
@@ -62,10 +62,10 @@ module.exports = async function(deployer, network) {
     await satWeiPriceFeed.initialize(tbtcSystem.address, RopstenETHBTCPriceFeed)
   } else {
     // Inject mock price feeds.
-    const mockSatWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
+    const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
     await satWeiPriceFeed.initialize(
       tbtcSystem.address,
-      mockSatWeiPriceFeed.address,
+      ethBtcPriceFeedMock.address,
     )
   }
 }
