@@ -59,7 +59,7 @@ module.exports = async function(deployer, network) {
     await satWeiPriceFeed.initialize(tbtcSystem.address, ETHBTCMedianizer)
   } else if (network === "ropsten") {
     // Inject mock price feed as base.
-    const ethBtcPriceFeedMock = await ethBtcPriceFeedMock.deployed()
+    const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
     await satWeiPriceFeed.initialize(
       tbtcSystem.address,
       ethBtcPriceFeedMock.address,
