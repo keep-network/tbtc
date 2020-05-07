@@ -80,8 +80,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     // price feed
     uint256 priceFeedGovernanceTimeDelay = 90 days;
-    uint256 appendEthBtcFeedTimer;
-    IMedianizer nextEthBtcFeed;
+    uint256 ethBtcPriceFeedAdditionInitiated;
+    IMedianizer nextEthBtcPriceFeed;
 
     constructor(address _priceFeed, address _relay) public {
         priceFeed = ISatWeiPriceFeed(_priceFeed);
@@ -255,6 +255,18 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
     }
 
+    /// @notice Add a new ETH/BTC price feed contract to the priecFeed.
+    /// @dev This can be finalized by calling `finalizeEthBtcPriceFeedAddition`
+    ///      anytime after `priceFeedGovernanceTimeDelay` has elapsed.
+    function beginEthBtcPriceFeedAddition(IMedianizer _ethBtcPriceFeed) external onlyOwner {
+        bool ethBtcActive;
+        (, ethBtcActive) = _ethBtcPriceFeed.peek();
+        require(ethBtcActive, "Cannot add inactive feed");
+
+        nextEthBtcPriceFeed = _ethBtcPriceFeed;
+        ethBtcPriceFeedAdditionInitiated = block.timestamp;
+        emit EthBtcPriceFeedAdditionStarted(address(_ethBtcPriceFeed), block.timestamp);
+    }
 
     modifier onlyAfterGovernanceDelay(
         uint256 _changeInitializedTimestamp,
@@ -343,6 +355,27 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         collateralizationThresholdsChangeInitiated = 0;
     }
 
+    /// @notice Finish adding a new price feed contract to the priceFeed.
+    /// @dev `beginEthBtcPriceFeedAddition` must be called first; once
+    ///      `ethBtcPriceFeedAdditionInitiated` has passed, this function can be
+    ///      called to append a new price feed.
+    function finalizeEthBtcPriceFeedAddition()
+            external
+            onlyOwner
+            onlyAfterGovernanceDelay(
+                ethBtcPriceFeedAdditionInitiated,
+                priceFeedGovernanceTimeDelay
+            ) {
+        // This process interacts with external contracts, so
+        // Checks-Effects-Interactions it.
+        IMedianizer _nextEthBtcPriceFeed = nextEthBtcPriceFeed;
+        nextEthBtcPriceFeed = IMedianizer(0);
+        ethBtcPriceFeedAdditionInitiated = 0;
+
+        priceFeed.addEthBtcFeed(_nextEthBtcPriceFeed);
+
+        emit EthBtcPriceFeedAdded(address(_nextEthBtcPriceFeed));
+    }
     /// @notice Get the system undercollateralization level for new deposits
     function getUndercollateralizedThresholdPercent() external view returns (uint16) {
         return undercollateralizedThresholdPercent;
@@ -404,27 +437,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             revert("System returned a bad price");
         }
         return price;
-    }
-
-    /// @notice Initialize the addition of a new ETH/BTC price feed contract to the priecFeed.
-    /// @dev `FinalizeAddEthBtcFeed` must be called to finalize.
-    function beginAddEthBtcFeed(IMedianizer _ethBtcFeed)
-        external
-        onlyOwner {
-        nextEthBtcFeed = _ethBtcFeed;
-        appendEthBtcFeedTimer = block.timestamp + priceFeedGovernanceTimeDelay;
-        emit EthBtcPriceFeedAdditionStarted(address(_ethBtcFeed), block.timestamp);
-    }
-
-    /// @notice Finish adding a new price feed contract to the priceFeed.
-    /// @dev `InitializeAddEthBtcFeed` must be called first, once `appendEthBtcFeedTimer`
-    ///       has passed, this function can be called to append a new price feed.
-    function finalizeAddEthBtcFeed()
-        external
-        onlyOwner {
-        require(block.timestamp > appendEthBtcFeedTimer, "Timeout not yet elapsed");
-        priceFeed.addEthBtcFeed(nextEthBtcFeed);
-        emit EthBtcPriceFeedAdded(address(nextEthBtcFeed));
     }
 
     // Difficulty Oracle
