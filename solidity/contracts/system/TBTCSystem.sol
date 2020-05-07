@@ -8,6 +8,7 @@ import {VendingMachine} from "./VendingMachine.sol";
 import {DepositFactory} from "../proxy/DepositFactory.sol";
 
 import {IRelay} from "@summa-tx/relay-sol/contracts/Relay.sol";
+import "@summa-tx/relay-sol/contracts/TestnetRelay.sol";
 import "../external/IMedianizer.sol";
 
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
