@@ -18,7 +18,7 @@ import "./TBTCToken.sol";
 import "./FeeRebateToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./KeepFactoryStrategy.sol";
+import "./KeepFactorySelection.sol";
 import "./IKeepFactorySelector.sol";
 
 /// @title  TBTC System.
@@ -28,7 +28,7 @@ import "./IKeepFactorySelector.sol";
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
-    using KeepFactoryStrategy for KeepFactoryStrategy.Storage;
+    using KeepFactorySelection for KeepFactorySelection.Storage;
 
     event EthBtcPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
     event LotSizesUpdateStarted(uint64[] _lotSizes, uint256 _timestamp);
@@ -58,7 +58,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ISatWeiPriceFeed public  priceFeed;
     IRelay public relay;
 
-    KeepFactoryStrategy.Storage keepFactoryStrategy;
+    KeepFactorySelection.Storage keepFactorySelection;
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
@@ -114,7 +114,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
-        keepFactoryStrategy.regularFactory = _keepFactory;
+        keepFactorySelection.regularFactory = _keepFactory;
 
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
@@ -441,7 +441,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         view
         returns (uint256)
     {
-        IBondedECDSAKeepFactory _keepFactory = keepFactoryStrategy.selectFactory();
+        IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactory();
         return _keepFactory.openKeepFeeEstimate();
     }
 
@@ -461,7 +461,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        IBondedECDSAKeepFactory _keepFactory = keepFactoryStrategy.selectFactory();
+        IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactory();
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
     }
 
@@ -472,7 +472,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _fullyBackedFactory
     ) external onlyOwner {
         require(
-            address(keepFactoryStrategy.fullyBackedFactory) == address(0),
+            address(keepFactorySelection.fullyBackedFactory) == address(0),
             "Fully backed factory address already set"
         );
 
@@ -481,7 +481,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Invalid address"
         );
 
-        keepFactoryStrategy.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
+        keepFactorySelection.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
     }
 
     /// @notice Sets the address of the keep factory selector contract.
@@ -491,7 +491,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _factorySelector
     ) external onlyOwner {
         require(
-            address(keepFactoryStrategy.factorySelector) == address(0),
+            address(keepFactorySelection.factorySelector) == address(0),
             "Factory selector contract address already set"
         );
 
@@ -500,6 +500,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Invalid address"
         );
 
-        keepFactoryStrategy.factorySelector = IKeepFactorySelector(_factorySelector);
+        keepFactorySelection.factorySelector = IKeepFactorySelector(_factorySelector);
     }
 }
