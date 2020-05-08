@@ -671,4 +671,94 @@ describe("TBTCSystem", async function() {
       )
     })
   })
+
+  describe("setFullyBackedKeepFactory", async () => {
+    const address = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE";
+    const otherAddress = "0xFFCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE";
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("can be called only once", async () => {
+      await tbtcSystem.setFullyBackedKeepFactory(address)
+
+      await expectRevert(
+          tbtcSystem.setFullyBackedKeepFactory(address),
+          "Fully backed factory address already set."
+      )
+
+      await expectRevert(
+          tbtcSystem.setFullyBackedKeepFactory(otherAddress),
+          "Fully backed factory address already set."
+      )
+    })
+
+    it("can be called only by the owner", async () => {
+      await expectRevert(
+          tbtcSystem.setFullyBackedKeepFactory(address, {from: accounts[1]}),
+          "Ownable: caller is not the owner."
+      )
+
+      await tbtcSystem.setFullyBackedKeepFactory(address)
+    })
+
+    it("can be called only with a proper address", async () => {
+      await expectRevert(
+          tbtcSystem.setFullyBackedKeepFactory(
+              "0x0000000000000000000000000000000000000000"
+          ),
+          "Invalid address"
+      )
+    })
+  })
+
+  describe("setKeepFactorySelector", async () => {
+    const address = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE";
+    const otherAddress = "0xFFCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE";
+
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("can be called only once", async () => {
+      await tbtcSystem.setKeepFactorySelector(address)
+
+      await expectRevert(
+          tbtcSystem.setKeepFactorySelector(address),
+          "Factory selector contract address already set."
+      )
+
+      await expectRevert(
+          tbtcSystem.setKeepFactorySelector(otherAddress),
+          "Factory selector contract address already set."
+      )
+    })
+
+    it("can be called only by the owner", async () => {
+      await expectRevert(
+          tbtcSystem.setKeepFactorySelector(address, {from: accounts[1]}),
+          "Ownable: caller is not the owner."
+      )
+
+      await tbtcSystem.setKeepFactorySelector(address)
+    })
+
+    it("can be called only with a proper address", async () => {
+      await expectRevert(
+          tbtcSystem.setKeepFactorySelector(
+              "0x0000000000000000000000000000000000000000"
+          ),
+          "Invalid address"
+      )
+    })
+  })
 })
