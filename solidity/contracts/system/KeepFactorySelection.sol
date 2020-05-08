@@ -2,15 +2,17 @@ pragma solidity 0.5.17;
 
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
-/// @title Keep factory selector.
-/// @notice Selects an appropriate keep factory.
+/// @title Bonded ECDSA keep factory selection strategy.
+/// @notice The strategy defines the algorithm for selecting a factory. tBTC
+/// uses two bonded ECDSA keep factories, selecting one of them for each new
+/// deposit being opened.
 interface KeepFactorySelector {
 
-    /// @notice Selects keep factory.
+    /// @notice Selects keep factory for the new deposit.
     /// @param _seed Request seed.
-    /// @param _regularFactory Regular keep factory.
-    /// @param _fullyBackedFactory Fully backed keep factory.
-    /// @return Selected keep factory.
+    /// @param _regularFactory Regular, KEEP-stake based keep factory.
+    /// @param _fullyBackedFactory Fully backed, ETH-stake based keep factory.
+    /// @return The selected keep factory.
     function selectFactory(
         uint256 _seed,
         IBondedECDSAKeepFactory _regularFactory,
@@ -18,7 +20,11 @@ interface KeepFactorySelector {
     ) external view returns (IBondedECDSAKeepFactory);
 }
 
-
+/// @title Bonded ECDSA keep factory selection library.
+/// @notice tBTC uses two bonded ECDSA keep factories: one based on KEEP stake
+/// and ETH bond, and another based on ETH stake and ETH bond. The library holds
+/// a reference to both factories as well as a reference to a selection strategy
+/// deciding which factory to choose for the new deposit being opened.
 library KeepFactorySelection {
 
     struct Storage {
@@ -28,10 +34,10 @@ library KeepFactorySelection {
         // Currently selected factory.
         IBondedECDSAKeepFactory selectedFactory;
 
-        // Regular ECDSA keep factory.
+        // Regular ECDSA keep factory: KEEP stake and ETH bond.
         IBondedECDSAKeepFactory regularFactory;
 
-        // Fully backed ECDSA keep factory.
+        // Fully backed ECDSA keep factory: ETH stake and ETH bond.
         IBondedECDSAKeepFactory fullyBackedFactory;
 
         // Keep factory selector.
@@ -56,11 +62,11 @@ library KeepFactorySelection {
     function selectFactoryAndRefresh(
         Storage storage _self
     ) public returns (IBondedECDSAKeepFactory) {
-        IBondedECDSAKeepFactory currentlySelectedFactory = selectFactory(_self);
+        IBondedECDSAKeepFactory factory = selectFactory(_self);
 
         refreshFactory(_self);
 
-        return currentlySelectedFactory;
+        return factory;
     }
 
     /// @notice Performs selection of new keep factory.
@@ -79,7 +85,7 @@ library KeepFactorySelection {
             keccak256(abi.encodePacked(address(this), _self.refreshRequestCounter))
         );
 
-        _self.selectedFactory =  _self.factorySelector.selectFactory(
+        _self.selectedFactory = _self.factorySelector.selectFactory(
             seed,
             _self.regularFactory,
             _self.fullyBackedFactory
