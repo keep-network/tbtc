@@ -18,11 +18,6 @@ library KeepFactoryStrategy {
     function selectFactory(
         Storage storage _self
     ) public view returns (IBondedECDSAKeepFactory) {
-        require(
-            address(_self.regularFactory) != address(0),
-            "Regular factory address must be set"
-        );
-
         if (
             address(_self.fullyBackedFactory) == address(0) ||
             address(_self.factorySelector) == address(0)
