@@ -7,10 +7,12 @@ import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IB
 interface IKeepFactorySelector {
 
     /// @notice Selects keep factory.
+    /// @param _seed Request seed.
     /// @param _regularFactory Regular keep factory.
     /// @param _fullyBackedFactory Fully backed keep factory.
     /// @return Selected keep factory.
     function selectFactory(
+        uint256 _seed,
         IBondedECDSAKeepFactory _regularFactory,
         IBondedECDSAKeepFactory _fullyBackedFactory
     ) external view returns (IBondedECDSAKeepFactory);

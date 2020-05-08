@@ -462,7 +462,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactory();
+        IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
     }
 
