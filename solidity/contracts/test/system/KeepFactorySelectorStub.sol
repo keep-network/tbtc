@@ -7,7 +7,6 @@ contract KeepFactorySelectorStub is IKeepFactorySelector {
     bool internal regularMode = true;
 
     function selectFactory(
-        address _application,
         IBondedECDSAKeepFactory _regularFactory,
         IBondedECDSAKeepFactory _fullyBackedFactory
     ) external view returns (IBondedECDSAKeepFactory) {

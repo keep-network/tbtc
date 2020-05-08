@@ -13,12 +13,10 @@ library KeepFactoryStrategy {
         IKeepFactorySelector factorySelector;
     }
 
-    /// @notice Selects the right keep factory for the given application.
-    /// @param _application Application address.
+    /// @notice Selects the right keep factory.
     /// @return Selected keep factory.
     function selectFactory(
-        Storage storage _self,
-        address _application
+        Storage storage _self
     ) public view returns (IBondedECDSAKeepFactory) {
         require(
             address(_self.regularFactory) != address(0),
@@ -33,7 +31,6 @@ library KeepFactoryStrategy {
         }
 
         return _self.factorySelector.selectFactory(
-            _application,
             _self.regularFactory,
             _self.fullyBackedFactory
         );
