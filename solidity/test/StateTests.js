@@ -1,20 +1,20 @@
 const states = require('./states/deposit.js')
 const { deployAndLinkAll } = require('./helpers/fullDeployer.js')
 const { runStatePath } = require('./states/run.js')
+const { expect } = require('chai')
 
-describe.only("tBTC states", async () => {
-    it("when verifying paths", async () => {
-        const setup = async () => {
-            const deployed = await deployAndLinkAll()
-
-            return deployed
-        }
-
+describe.only("tBTC states", async function() {
+    before(async () => {
         await runStatePath(
+            this, // pass the mocha suite to properly set tests up
             states,
-            await setup(),
+            await deployAndLinkAll(),
             "start",
             "awaitingSignerSetup",
         )
+    })
+
+    it("should have run all the other tests", async () => {
+        expect(true)
     })
 })
