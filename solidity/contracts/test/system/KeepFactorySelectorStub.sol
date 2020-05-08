@@ -1,8 +1,8 @@
 pragma solidity 0.5.17;
 
-import "../../system/IKeepFactorySelector.sol";
+import "../../system/KeepFactorySelection.sol";
 
-contract KeepFactorySelectorStub is IKeepFactorySelector {
+contract KeepFactorySelectorStub is KeepFactorySelector {
 
     bool internal regularMode = true;
 

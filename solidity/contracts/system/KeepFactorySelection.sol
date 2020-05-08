@@ -1,7 +1,23 @@
 pragma solidity 0.5.17;
 
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
-import "./IKeepFactorySelector.sol";
+
+/// @title Keep factory selector.
+/// @notice Selects an appropriate keep factory.
+interface KeepFactorySelector {
+
+    /// @notice Selects keep factory.
+    /// @param _seed Request seed.
+    /// @param _regularFactory Regular keep factory.
+    /// @param _fullyBackedFactory Fully backed keep factory.
+    /// @return Selected keep factory.
+    function selectFactory(
+        uint256 _seed,
+        IBondedECDSAKeepFactory _regularFactory,
+        IBondedECDSAKeepFactory _fullyBackedFactory
+    ) external view returns (IBondedECDSAKeepFactory);
+}
+
 
 library KeepFactorySelection {
 
@@ -19,7 +35,7 @@ library KeepFactorySelection {
         IBondedECDSAKeepFactory fullyBackedFactory;
 
         // Keep factory selector.
-        IKeepFactorySelector factorySelector;
+        KeepFactorySelector factorySelector;
     }
 
     /// @notice Returns the currently selected keep factory.

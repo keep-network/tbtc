@@ -20,7 +20,6 @@ import "./FeeRebateToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./KeepFactorySelection.sol";
-import "./IKeepFactorySelector.sol";
 
 /// @title  TBTC System.
 /// @notice This contract acts as a central point for access control,
@@ -501,6 +500,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Invalid address"
         );
 
-        keepFactorySelection.factorySelector = IKeepFactorySelector(_factorySelector);
+        keepFactorySelection.factorySelector = KeepFactorySelector(_factorySelector);
     }
 }
