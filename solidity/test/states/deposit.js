@@ -79,21 +79,12 @@ module.exports = {
             }
         },
         // TODO What can't happen here?
+        failNext: {}
     },
     awaitingSignerSetup: {
         name: "awaitingSignerSetup",
         dependencies: {
             bondAmount: System.expectedBond,
-        },
-        failNext: {
-            "signerSetupFailure too early": {
-                transition: async ({ deposit }) => {
-                    return {
-                        state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
-                    }
-                }
-            }
         },
         next: {
             awaitingFundingProof: {
@@ -130,6 +121,17 @@ module.exports = {
                     }
                 }
             }
-        }
+        },
+        // TODO What can't happen here?
+        failNext: {
+            "signerSetupFailure too early": {
+                transition: async ({ deposit }) => {
+                    return {
+                        state: "signerSetupFailure",
+                        tx: deposit.notifySignerSetupFailure(),
+                    }
+                }
+            }
+        },
     }
 }

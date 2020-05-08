@@ -2,6 +2,8 @@ const {BN} = require("@openzeppelin/test-helpers")
 const {web3} = require("@openzeppelin/test-environment")
 const {increaseTime} = require("../helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const Test = require('mocha/lib/test')
+const Suite = require('mocha/lib/suite')
 
 async function asyncReduce(array, reducer, initialValue) {
     return array.reduce(
@@ -89,25 +91,35 @@ const runner = {
             ...resolved,
         }
     },
-    verifyStateTransitions: async (baseState, stateDefinition) => {
+    verifyStateTransitions: async (mochaSuite, baseState, stateDefinition) => {
         const resolvedInitialState =
             await runner.resolveDependencies(baseState, stateDefinition.dependencies)
 
-        for (let [_, { transition, after, expect }] of Object.entries(stateDefinition.next)) {
-            await createSnapshot()
-            if (after) {
-                await increaseTime((await after(resolvedInitialState)).add(new BN(1)))
-            }
-            const transitionResult = await transition(resolvedInitialState)
-            const receipt = await transitionResult.tx.then(_ => resolveAllLogs(_.receipt, resolvedInitialState))
-            if (expect) {
-                await expect(
-                    resolvedInitialState,
-                    receipt,
-                    await runner.resolveResults(resolvedInitialState, transitionResult),
-                )
-            }
-            await restoreSnapshot()
+        const stateSuite = Suite.create(
+            mochaSuite,
+            `should transition from ${stateDefinition.name}`,
+        )
+        for (let [nextStateName, { transition, after, expect }] of
+                Object.entries(stateDefinition.next)) {
+            stateSuite.addTest(new Test(
+                `to ${nextStateName}`,
+                async () => {
+                    await createSnapshot()
+                    if (after) {
+                        await increaseTime((await after(resolvedInitialState)).add(new BN(1)))
+                    }
+                    const transitionResult = await transition(resolvedInitialState)
+                    const receipt = await transitionResult.tx.then(_ => resolveAllLogs(_.receipt, resolvedInitialState))
+                    if (expect) {
+                        await expect(
+                            resolvedInitialState,
+                            receipt,
+                            await runner.resolveResults(resolvedInitialState, transitionResult),
+                        )
+                    }
+                    await restoreSnapshot()
+                }
+            ))
         }
     },
     advanceToState: async (baseState, stateDefinition, nextStateName) => {
@@ -123,6 +135,7 @@ const runner = {
         return await runner.resolveResults(resolvedInitialState, transitionResult)
     },
     runStatePath: async (
+        mochaSuite,
         stateDefinitions,
         baseState,
         firstStateName,
@@ -131,7 +144,7 @@ const runner = {
         return asyncReduce(
             path.concat([null]),
             async ({ previousState, definition }, nextStateName) => {
-                await runner.verifyStateTransitions(previousState, definition)
+                await runner.verifyStateTransitions(mochaSuite, previousState, definition)
 
                 // Terminating condition.
                 if (nextStateName !== null) {
