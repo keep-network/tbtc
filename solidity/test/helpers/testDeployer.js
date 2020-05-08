@@ -17,6 +17,7 @@ const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
 const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 const MockRelay = contract.fromArtifact("MockRelay")
 const MockSatWeiPriceFeed = contract.fromArtifact("MockSatWeiPriceFeed")
+const KeepFactoryStrategy = contract.fromArtifact("KeepFactoryStrategy")
 const TBTCSystemStub = contract.fromArtifact("TBTCSystemStub")
 const TBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
 const FeeRebateToken = contract.fromArtifact("TestFeeRebateToken")
@@ -28,6 +29,7 @@ const RedemptionScript = contract.fromArtifact("RedemptionScript")
 const FundingScript = contract.fromArtifact("FundingScript")
 
 const TEST_DEPOSIT_DEPLOY = [
+  {name: "KeepFactoryStrategy", contract: KeepFactoryStrategy},
   {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
   {name: "MockRelay", contract: MockRelay},
   {name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed},
