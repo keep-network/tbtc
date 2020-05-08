@@ -10,11 +10,7 @@ const TBTCDepositToken = artifacts.require("TBTCDepositToken")
 const FeeRebateToken = artifacts.require("FeeRebateToken")
 const VendingMachine = artifacts.require("VendingMachine")
 
-const {
-  BondedECDSAKeepVendorAddress,
-  ETHBTCMedianizer,
-  RopstenETHBTCPriceFeed,
-} = require("./externals")
+const {BondedECDSAKeepVendorAddress, ETHBTCMedianizer} = require("./externals")
 
 module.exports = async function(deployer, network) {
   // Don't enact this setup during unit testing.
@@ -57,21 +53,8 @@ module.exports = async function(deployer, network) {
   if (network === "mainnet") {
     // Inject mainnet price feeds.
     await satWeiPriceFeed.initialize(tbtcSystem.address, ETHBTCMedianizer)
-  } else if (network === "ropsten") {
-    // Inject mock price feed as base.
-    const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
-    await satWeiPriceFeed.initialize(
-      tbtcSystem.address,
-      ethBtcPriceFeedMock.address,
-    )
-
-    // Add medianizer intermediary.
-    await satWeiPriceFeed.addEthBtcFeed(RopstenETHBTCPriceFeed)
-    // Disable mock feed so medianizer intermediary is active feed until we
-    // choose to muck with the price.
-    await ethBtcPriceFeedMock.setValue(0)
   } else {
-    // Inject mock price feeds.
+    // Inject mock price feed as base.
     const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
     await satWeiPriceFeed.initialize(
       tbtcSystem.address,
