@@ -41,20 +41,30 @@ library KeepFactorySelection {
         IBondedECDSAKeepFactory ethStakeFactory;
     }
 
-    /// @notice Returns the currently selected keep factory.
-    /// @return Selected keep factory.
+    /// @notice Returns the selected keep factory.
+    /// This function guarantees that the same factory is returned for every
+    /// call until selectFactoryAndRefresh is executed. This lets to evaluate
+    /// open keep fee estimate on the same factory that will be used later for
+    /// opening a new keep (fee estimate and open keep requests are two
+    /// separate calls).
+    /// @return Selected keep factory. The same vale will be returned for every
+    /// call of this function until selectFactoryAndRefresh is executed.
     function selectFactory(
         Storage storage _self
     ) public view returns (IBondedECDSAKeepFactory) {
         if (address(_self.selectedFactory) == address(0)) {
-            return _self.keepStakeFactory;
+            return _self.keepStakeFactory; // TODO: we can use a setter
         }
 
         return _self.selectedFactory;
     }
 
-    /// @notice Returns the currently selected keep factory and
-    /// performs selection of the new factory.
+    /// @notice Returns the selected keep factory and refreshes the choice
+    /// for the next select call. The value returned by this function has been
+    /// evaluated during the previous call. This lets to return the same value
+    /// from selectFactory and selectFactoryAndRefresh, thus, allowing to use
+    /// the same factory for which open keep fee estimate was evaluated (fee
+    /// estimate and open keep requests are two separate calls).
     /// @return Selected keep factory.
     function selectFactoryAndRefresh(
         Storage storage _self
@@ -65,12 +75,18 @@ library KeepFactorySelection {
         return factory;
     }
 
-    /// @notice Performs selection of new keep factory.
+    /// @notice Refreshes the keep factory choice. If either ETH-stake factory
+    /// or selection strategy is not set, KEEP-stake factory is selected.
+    /// Otherwise, calls selection strategy providing addresses of both
+    /// factories to make a choice. Additionally, passes the selection seed
+    /// evaluated from the current request counter value.
     function refreshFactory(Storage storage _self) internal {
         if (
             address(_self.ethStakeFactory) == address(0) ||
             address(_self.factorySelector) == address(0)
         ) {
+            // KEEP-stake factory is guaranteed to be there. If the selection
+            // can not be performed, this is the default choice.
             _self.selectedFactory = _self.keepStakeFactory;
             return;
         }
