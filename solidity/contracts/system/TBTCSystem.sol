@@ -92,7 +92,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice        Initialize contracts
     /// @dev           Only the Deposit factory should call this, and only once.
-    /// @param _keepFactory       ECDSA keep factory.
+    /// @param _defaultKeepFactory       ECDSA keep factory backed by KEEP stake.
     /// @param _depositFactory    Deposit Factory. More info in `DepositFactory`.
     /// @param _masterDepositAddress  Master Deposit address. More info in `Deposit`.
     /// @param _tbtcToken         TBTCToken. More info in `TBTCToken`.
@@ -102,7 +102,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size.
     function initialize(
-        IBondedECDSAKeepFactory _keepFactory,
+        IBondedECDSAKeepFactory _defaultKeepFactory,
         DepositFactory _depositFactory,
         address payable _masterDepositAddress,
         TBTCToken _tbtcToken,
@@ -114,7 +114,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
-        keepFactorySelection.initialize(_keepFactory);
+        keepFactorySelection.initialize(_defaultKeepFactory);
 
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
