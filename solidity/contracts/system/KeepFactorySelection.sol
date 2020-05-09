@@ -85,4 +85,44 @@ library KeepFactorySelection {
             _self.ethStakeFactory
         );
     }
+
+    /// @notice Sets the address of the fully backed ECDSA keep factory.
+    /// @dev Beware, can be called only once!
+    /// @param _fullyBackedFactory Address of the factory.
+    function setFullyBackedKeepFactory(
+        Storage storage _self,
+        address _fullyBackedFactory
+    ) internal {
+        require(
+            address(_self.ethStakeFactory) == address(0),
+            "Fully backed factory address already set"
+        );
+
+        require(
+            address(_fullyBackedFactory) != address(0),
+            "Invalid address"
+        );
+
+        _self.ethStakeFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
+    }
+
+    /// @notice Sets the address of the keep factory selector contract.
+    /// @dev Beware, can be called only once!
+    /// @param _factorySelector Address of the keep factory selector contract.
+    function setKeepFactorySelector(
+         Storage storage _self,
+        address _factorySelector
+    ) internal {
+        require(
+            address(_self.factorySelector) == address(0),
+            "Factory selector contract address already set"
+        );
+
+        require(
+            address(_factorySelector) != address(0),
+            "Invalid address"
+        );
+
+        _self.factorySelector = KeepFactorySelector(_factorySelector);
+    }
 }

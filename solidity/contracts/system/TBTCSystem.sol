@@ -471,17 +471,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function setFullyBackedKeepFactory(
         address _fullyBackedFactory
     ) external onlyOwner {
-        require(
-            address(keepFactorySelection.ethStakeFactory) == address(0),
-            "Fully backed factory address already set"
-        );
-
-        require(
-            address(_fullyBackedFactory) != address(0),
-            "Invalid address"
-        );
-
-        keepFactorySelection.ethStakeFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
+        keepFactorySelection.setFullyBackedKeepFactory(_fullyBackedFactory);
     }
 
     /// @notice Sets the address of the keep factory selector contract.
@@ -490,16 +480,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function setKeepFactorySelector(
         address _factorySelector
     ) external onlyOwner {
-        require(
-            address(keepFactorySelection.factorySelector) == address(0),
-            "Factory selector contract address already set"
-        );
-
-        require(
-            address(_factorySelector) != address(0),
-            "Invalid address"
-        );
-
-        keepFactorySelection.factorySelector = KeepFactorySelector(_factorySelector);
+        keepFactorySelection.setKeepFactorySelector(_factorySelector);
     }
 }
