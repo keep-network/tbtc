@@ -105,6 +105,89 @@ function increaseTime(duration) {
   })
 }
 
+/**
+ * Uses the ABIs of all contracts in the `contractContainer` to resolve any
+ * events they may have emitted into the given `receipt`'s logs. Typically
+ * Truffle only resolves the events on the calling contract; this function
+ * resolves all of the ones that can be resolved.
+ *
+ * @param {TruffleReceipt} receipt The receipt of a contract function call
+ *        submission.
+ * @param {ContractContainer} contractContainer An object that contains
+ *        properties that are TruffleContracts. Not all properties in the
+ *        container need be contracts, nor do all contracts need to have events
+ *        in the receipt.
+ *
+ * @return {TruffleReceipt} The receipt, with its `logs` property updated to
+ *         include all resolved logs.
+ */
+function resolveAllLogs(receipt, contractContainer) {
+    const contracts =
+        Object
+            .entries(contractContainer)
+            .map(([, value]) => value)
+            .filter(_ => _.contract && _.address)
+
+    const { resolved: resolvedLogs } = contracts.reduce(
+        ({ raw, resolved }, contract) => {
+            const events = contract.contract._jsonInterface.filter(_ => _.type === "event")
+            const contractLogs = raw.filter(_ => _.address == contract.address)
+
+            const decoded = contractLogs.map(log => {
+                const event = events.find(_ => log.topics.includes(_.signature))
+                const decoded = web3.eth.abi.decodeLog(
+                    event.inputs,
+                    log.data,
+                    log.topics.slice(1)
+                )
+
+                return {
+                    ...log,
+                    event: event.name,
+                    args: decoded,
+                }
+            })
+
+            return {
+                raw: raw.filter(_ => _.address != contract.address),
+                resolved: resolved.concat(decoded),
+            }
+        },
+        { raw: receipt.rawLogs, resolved: [] },
+    )
+
+    return {
+        ...receipt,
+        logs: resolvedLogs,
+    }
+}
+
+/**
+ * Similar to array.reduce, but accumulates promises instead of non-promises and
+ * ensures that each step in the reduction waits on the previous one. Standard
+ * reduces with async functions fire all the functions at once and require
+ * explicit internal waits in the reducer; this function pulls that out and
+ * correctly invokes each step of the reducer after the previous one's promise
+ * has settled.
+ *
+ * @typeparam T The type of object in the array.
+ * @typeparam A The type of object the reducer accumulates.
+ * @param {T[]} array The array to reduce over.
+ * @param {(A, T)=>A)} reducer The reducer that combines values of type T into
+ *        an accumulator of type A.
+ * @param {A} initialValue The initial value for the reduce, passed as the first
+ *        parameter to the first call to the reducer.
+ */
+async function asyncReduce(array, reducer, initialValue) {
+    return array.reduce(
+        async (previousValue, nextValue) => {
+            const realPrev = await previousValue
+            return reducer(realPrev, nextValue)
+        },
+        initialValue,
+    )
+}
+
 module.exports = {
   address0: "0x" + "00".repeat(20),
   bytes32zero: "0x" + "00".repeat(32),
@@ -116,4 +199,6 @@ module.exports = {
   increaseTime: increaseTime,
   TX: tx,
   HEADER_PROOFS: headerChains.map(chainToProofBytes),
+  resolveAllLogs,
+  asyncReduce,
 }
