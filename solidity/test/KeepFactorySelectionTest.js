@@ -168,6 +168,33 @@ describe("KeepFactorySelection", async () => {
         keepStakeFactory.address,
       )
     })
+
+    // ETH stake factory set.
+    // Selection strategy set.
+    it("returns the factory selected before refreshing", async () => {
+      await keepFactorySelection.setFullyBackedKeepFactory(
+        ethStakeFactory.address,
+      )
+      await keepFactorySelection.setKeepFactorySelector(
+        keepFactorySelector.address,
+      )
+
+      await keepFactorySelector.setDefaultMode()
+
+      // refresh the choice; it should be the default factory now
+      await keepFactorySelection.selectFactoryAndRefresh()
+
+      await keepFactorySelector.setFullyBackedMode()
+
+      // although the strategy selects fully-backed factory, selectFactoryAndRefresh
+      // should return the factory based on the previous choice (before it
+      // refreshed)
+      const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
+      await keepFactorySelection.selectFactoryAndRefresh()
+      expect(selected, "unexpected factory selected").to.equal(
+        keepStakeFactory.address,
+      )
+    })
   })
 
   describe("setFullyBackedKeepFactory", async () => {
