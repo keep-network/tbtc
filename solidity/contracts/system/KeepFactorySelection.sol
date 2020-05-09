@@ -10,13 +10,13 @@ interface KeepFactorySelector {
 
     /// @notice Selects keep factory for the new deposit.
     /// @param _seed Request seed.
-    /// @param _regularFactory Regular, KEEP-stake based keep factory.
-    /// @param _fullyBackedFactory Fully backed, ETH-stake based keep factory.
+    /// @param _keepStakeFactory Regular, KEEP-stake based keep factory.
+    /// @param _ethStakeFactory Fully backed, ETH-stake based keep factory.
     /// @return The selected keep factory.
     function selectFactory(
         uint256 _seed,
-        IBondedECDSAKeepFactory _regularFactory,
-        IBondedECDSAKeepFactory _fullyBackedFactory
+        IBondedECDSAKeepFactory _keepStakeFactory,
+        IBondedECDSAKeepFactory _ethStakeFactory
     ) external view returns (IBondedECDSAKeepFactory);
 }
 
@@ -28,20 +28,17 @@ interface KeepFactorySelector {
 library KeepFactorySelection {
 
     struct Storage {
-        // Refresh requests counter;
-        uint256 refreshRequestCounter;
+        uint256 requestCounter;
 
-        // Currently selected factory.
         IBondedECDSAKeepFactory selectedFactory;
 
-        // Regular ECDSA keep factory: KEEP stake and ETH bond.
-        IBondedECDSAKeepFactory regularFactory;
+        KeepFactorySelector factorySelector;
+
+        // Standard ECDSA keep factory: KEEP stake and ETH bond.
+        IBondedECDSAKeepFactory keepStakeFactory;
 
         // Fully backed ECDSA keep factory: ETH stake and ETH bond.
-        IBondedECDSAKeepFactory fullyBackedFactory;
-
-        // Keep factory selector.
-        KeepFactorySelector factorySelector;
+        IBondedECDSAKeepFactory ethStakeFactory;
     }
 
     /// @notice Returns the currently selected keep factory.
@@ -50,7 +47,7 @@ library KeepFactorySelection {
         Storage storage _self
     ) public view returns (IBondedECDSAKeepFactory) {
         if (address(_self.selectedFactory) == address(0)) {
-            return _self.regularFactory;
+            return _self.keepStakeFactory;
         }
 
         return _self.selectedFactory;
@@ -63,7 +60,6 @@ library KeepFactorySelection {
         Storage storage _self
     ) public returns (IBondedECDSAKeepFactory) {
         IBondedECDSAKeepFactory factory = selectFactory(_self);
-
         refreshFactory(_self);
 
         return factory;
@@ -72,23 +68,21 @@ library KeepFactorySelection {
     /// @notice Performs selection of new keep factory.
     function refreshFactory(Storage storage _self) internal {
         if (
-            address(_self.fullyBackedFactory) == address(0) ||
+            address(_self.ethStakeFactory) == address(0) ||
             address(_self.factorySelector) == address(0)
         ) {
-            _self.selectedFactory = _self.regularFactory;
+            _self.selectedFactory = _self.keepStakeFactory;
             return;
         }
 
-        _self.refreshRequestCounter++;
-
+        _self.requestCounter++;
         uint256 seed = uint256(
-            keccak256(abi.encodePacked(address(this), _self.refreshRequestCounter))
+            keccak256(abi.encodePacked(address(this), _self.requestCounter))
         );
-
         _self.selectedFactory = _self.factorySelector.selectFactory(
             seed,
-            _self.regularFactory,
-            _self.fullyBackedFactory
+            _self.keepStakeFactory,
+            _self.ethStakeFactory
         );
     }
 }

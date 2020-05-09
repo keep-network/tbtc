@@ -114,7 +114,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
-        keepFactorySelection.regularFactory = _keepFactory;
+        keepFactorySelection.keepStakeFactory = _keepFactory;
 
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
@@ -472,7 +472,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _fullyBackedFactory
     ) external onlyOwner {
         require(
-            address(keepFactorySelection.fullyBackedFactory) == address(0),
+            address(keepFactorySelection.ethStakeFactory) == address(0),
             "Fully backed factory address already set"
         );
 
@@ -481,7 +481,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Invalid address"
         );
 
-        keepFactorySelection.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
+        keepFactorySelection.ethStakeFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
     }
 
     /// @notice Sets the address of the keep factory selector contract.
