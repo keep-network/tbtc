@@ -466,17 +466,27 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Sets the address of the fully backed ECDSA keep factory.
-    /// @dev Beware, can be called only once!
-    /// @param _fullyBackedFactory Address of the factory.
+    /// TBTCSystem uses two factories: the default one - using KEEP stake and
+    /// another using ETH-stake. When ETH-stake (fully backed) factory is not
+    /// set, KEEP-stake factory is the default choice. When both factories are
+    /// set, as well as keep factory selection strategy, TBTCSystem load
+    /// balances between two factories based on the selection strategy choices.
+    /// @dev Can be called only one time!
+    /// @param _fullyBackedFactory Address of the ETH-stake-based factory.
     function setFullyBackedKeepFactory(
         address _fullyBackedFactory
     ) external onlyOwner {
         keepFactorySelection.setFullyBackedKeepFactory(_fullyBackedFactory);
     }
 
-    /// @notice Sets the address of the keep factory selector contract.
-    /// @dev Beware, can be called only once!
-    /// @param _factorySelector Address of the keep factory selector contract.
+    /// @notice Sets the address of the keep factory selection strategy.
+    /// TBTCSystem uses two factories: the default one - using KEEP stake and
+    /// another using ETH-stake. When ETH-stake (fully backed) factory is not
+    /// set, KEEP-stake factory is the default choice. When both factories are
+    /// set, as well as keep factory selection strategy, TBTCSystem load
+    /// balances between two factories based on the selection strategy choices.
+    /// @dev Can be called only one time!
+    /// @param _factorySelector Address of the keep factory selection strategy.
     function setKeepFactorySelector(
         address _factorySelector
     ) external onlyOwner {
