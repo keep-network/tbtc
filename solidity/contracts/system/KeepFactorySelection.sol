@@ -116,9 +116,15 @@ library KeepFactorySelection {
         );
     }
 
-    /// @notice Sets the address of the fully backed ECDSA keep factory.
-    /// @dev Beware, can be called only once!
-    /// @param _fullyBackedFactory Address of the factory.
+    /// @notice Sets the address of the fully backed, ETH-stake based keep
+    /// factory. KeepFactorySelection can work without the fully-backed keep
+    /// factory set, always selecting the default KEEP-stake-based factory.
+    /// Once both fully-backed keep factory and factory selection strategy are
+    /// set, KEEP-stake-based factory is no longer the default choice and it is
+    /// up to the selection strategy to decide which factory should be chosen.
+    /// @dev Can be called only one time!
+    /// @param _fullyBackedFactory Address of the fully-backed, ETH-stake based
+    /// keep factory.
     function setFullyBackedKeepFactory(
         Storage storage _self,
         address _fullyBackedFactory
@@ -135,18 +141,22 @@ library KeepFactorySelection {
         _self.ethStakeFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
     }
 
-    /// @notice Sets the address of the keep factory selector contract.
-    /// @dev Beware, can be called only once!
-    /// @param _factorySelector Address of the keep factory selector contract.
+    /// @notice Sets the address of the keep factory selection strategy contract.
+    /// KeepFactorySelection can work without the keep factory selection
+    /// strategy set, always selecting the default KEEP-stake-based factory.
+    /// Once both fully-backed keep factory and factory selection strategy are
+    /// set, KEEP-stake-based factory is no longer the default choice and it is
+    /// up to the selection strategy to decide which factory should be chosen.
+    /// @dev Can be called only one time!
+    /// @param _factorySelector Address of the keep factory selection strategy.
     function setKeepFactorySelector(
-         Storage storage _self,
+        Storage storage _self,
         address _factorySelector
     ) internal {
         require(
             address(_self.factorySelector) == address(0),
-            "Factory selector contract address already set"
+            "Factory selector already set"
         );
-
         require(
             address(_factorySelector) != address(0),
             "Invalid address"
