@@ -23,7 +23,7 @@ const prices = require("./prices")
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
 // Bitcoin difficulty relays.
-const Relay = artifacts.require("@summa-tx/relay-sol/contracts/OnDemandSPV")
+const OnDemandSPV = artifacts.require("@summa-tx/relay-sol/contracts/OnDemandSPV")
 const TestnetRelay = artifacts.require(
   "@summa-tx/relay-sol/contracts/TestnetRelay",
 )
@@ -131,8 +131,8 @@ module.exports = (deployer, network, accounts) => {
     if (network === "mainnet") {
       const {genesis, height, epochStart} = bitcoinMain
 
-      await deployer.deploy(Relay, genesis, height, epochStart, 0)
-      difficultyRelay = await Relay.deployed()
+      await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
+      difficultyRelay = await OnDemandSPV.deployed()
     } else if (network == "keep_dev" || "ropsten") {
       const {genesis, height, epochStart} = bitcoinTest
 
