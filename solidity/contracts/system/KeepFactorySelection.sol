@@ -35,10 +35,28 @@ library KeepFactorySelection {
         KeepFactorySelector factorySelector;
 
         // Standard ECDSA keep factory: KEEP stake and ETH bond.
+        // Guaranteed to be set for initialized factory.
         IBondedECDSAKeepFactory keepStakeFactory;
 
         // Fully backed ECDSA keep factory: ETH stake and ETH bond.
         IBondedECDSAKeepFactory ethStakeFactory;
+    }
+
+    /// @notice Initializes the library with the default KEEP-stake-based
+    /// factory. The default factory is guaranteed to be set and this function
+    /// must be called when creating contract using this library.
+    /// @dev This function can be called only one time.
+    function initialize(
+        Storage storage _self,
+        IBondedECDSAKeepFactory _defaultFactory
+    ) internal {
+        require(
+            address(_self.keepStakeFactory) == address(0),
+            "Already initialized"
+        );
+
+        _self.keepStakeFactory = IBondedECDSAKeepFactory(_defaultFactory);
+        _self.selectedFactory = _self.keepStakeFactory;
     }
 
     /// @notice Returns the selected keep factory.
@@ -52,10 +70,6 @@ library KeepFactorySelection {
     function selectFactory(
         Storage storage _self
     ) public view returns (IBondedECDSAKeepFactory) {
-        if (address(_self.selectedFactory) == address(0)) {
-            return _self.keepStakeFactory; // TODO: we can use a setter
-        }
-
         return _self.selectedFactory;
     }
 
@@ -111,9 +125,8 @@ library KeepFactorySelection {
     ) internal {
         require(
             address(_self.ethStakeFactory) == address(0),
-            "Fully backed factory address already set"
+            "Fully backed factory already set"
         );
-
         require(
             address(_fullyBackedFactory) != address(0),
             "Invalid address"

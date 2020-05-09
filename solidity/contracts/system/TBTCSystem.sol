@@ -114,7 +114,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ) external onlyOwner {
         require(!_initialized, "already initialized");
 
-        keepFactorySelection.keepStakeFactory = _keepFactory;
+        keepFactorySelection.initialize(_keepFactory);
 
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
