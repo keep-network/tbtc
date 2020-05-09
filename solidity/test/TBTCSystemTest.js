@@ -12,9 +12,9 @@ const MockMedianizer = contract.fromArtifact("MockMedianizer")
 describe("TBTCSystem", async function() {
   let tbtcSystem
   let ecdsaKeepFactory
-  let fullyBackedEcdsaKeepFactory
-  let keepFactorySelector
   let tdt
+
+  const nonSystemOwner = accounts[3]
 
   before(async () => {
     const {
@@ -119,166 +119,6 @@ describe("TBTCSystem", async function() {
         "Caller must be a Deposit contract",
       )
     })
-  })
-
-  describe("requestNewKeep() - keep factory strategy", async () => {
-    const tdtOwner = accounts[1]
-    const keepOwner = accounts[2]
-    const maxSecuredLifetime = 123
-
-    before(async () => {
-      await tdt.forceMint(tdtOwner, web3.utils.toBN(keepOwner))
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
-    it(
-      "opens a keep using regular factory if " +
-        "fully backed factory is not set",
-      async () => {
-        const openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
-
-        const keepAddress = await tbtcSystem.requestNewKeep.call(
-          5,
-          10,
-          0,
-          maxSecuredLifetime,
-          {
-            from: keepOwner,
-            value: openKeepFee,
-          },
-        )
-
-        const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
-        expect(expectedKeepAddress, "incorrect keep address").to.equal(
-          keepAddress,
-        )
-      },
-    )
-
-    it(
-      "opens a keep using regular factory if " +
-        "fully backed factory is set but " +
-        "keep factory selector is not",
-      async () => {
-        await tbtcSystem.setFullyBackedKeepFactory(
-          fullyBackedEcdsaKeepFactory.address,
-        )
-
-        const openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
-
-        const keepAddress = await tbtcSystem.requestNewKeep.call(
-          5,
-          10,
-          0,
-          maxSecuredLifetime,
-          {
-            from: keepOwner,
-            value: openKeepFee,
-          },
-        )
-
-        const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
-        expect(expectedKeepAddress, "incorrect keep address").to.equal(
-          keepAddress,
-        )
-      },
-    )
-
-    it(
-      "opens a keep using regular factory if " +
-        "fully backed factory is not set but " +
-        "keep factory selector is",
-      async () => {
-        await tbtcSystem.setKeepFactorySelector(keepFactorySelector.address)
-
-        const openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
-
-        const keepAddress = await tbtcSystem.requestNewKeep.call(
-          5,
-          10,
-          0,
-          maxSecuredLifetime,
-          {
-            from: keepOwner,
-            value: openKeepFee,
-          },
-        )
-
-        const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
-        expect(expectedKeepAddress, "incorrect keep address").to.equal(
-          keepAddress,
-        )
-      },
-    )
-
-    it(
-      "opens a keep using regular factory " + "returned by the selector",
-      async () => {
-        await tbtcSystem.setFullyBackedKeepFactory(
-          fullyBackedEcdsaKeepFactory.address,
-        )
-
-        await tbtcSystem.setKeepFactorySelector(keepFactorySelector.address)
-
-        await keepFactorySelector.setRegularMode()
-
-        const openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
-
-        const keepAddress = await tbtcSystem.requestNewKeep.call(
-          5,
-          10,
-          0,
-          maxSecuredLifetime,
-          {
-            from: keepOwner,
-            value: openKeepFee,
-          },
-        )
-
-        const expectedKeepAddress = await ecdsaKeepFactory.keepAddress.call()
-        expect(expectedKeepAddress, "incorrect keep address").to.equal(
-          keepAddress,
-        )
-      },
-    )
-
-    it(
-      "opens a keep using fully backed factory " + "returned by the selector",
-      async () => {
-        await tbtcSystem.setFullyBackedKeepFactory(
-          fullyBackedEcdsaKeepFactory.address,
-        )
-
-        await tbtcSystem.setKeepFactorySelector(keepFactorySelector.address)
-
-        await keepFactorySelector.setFullyBackedMode()
-
-        const openKeepFee = await fullyBackedEcdsaKeepFactory.openKeepFeeEstimate.call()
-
-        const keepAddress = await tbtcSystem.requestNewKeep.call(
-          5,
-          10,
-          0,
-          maxSecuredLifetime,
-          {
-            from: keepOwner,
-            value: openKeepFee,
-          },
-        )
-
-        const expectedKeepAddress = await fullyBackedEcdsaKeepFactory.keepAddress.call()
-        expect(expectedKeepAddress, "incorrect keep address").to.equal(
-          keepAddress,
-        )
-      },
-    )
   })
 
   describe("geRemainingSignerFeeDivisorUpdateTime", async () => {
@@ -438,7 +278,7 @@ describe("TBTCSystem", async function() {
       it("reverts if msg.sender != owner", async () => {
         await expectRevert.unspecified(
           tbtcSystem.beginSignerFeeDivisorUpdate(newFee, {
-            from: accounts[1],
+            from: nonSystemOwner,
           }),
           "",
         )
@@ -797,7 +637,7 @@ describe("TBTCSystem", async function() {
 
     it("reverts if msg.sender is not owner", async () => {
       await expectRevert(
-        tbtcSystem.emergencyPauseNewDeposits({from: accounts[1]}),
+        tbtcSystem.emergencyPauseNewDeposits({from: nonSystemOwner}),
         "Ownable: caller is not the owner",
       )
     })
@@ -839,92 +679,30 @@ describe("TBTCSystem", async function() {
   })
 
   describe("setFullyBackedKeepFactory", async () => {
-    const address = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
-    const otherAddress = "0xFFCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
-    it("can be called only once", async () => {
-      await tbtcSystem.setFullyBackedKeepFactory(address)
-
-      await expectRevert(
-        tbtcSystem.setFullyBackedKeepFactory(address),
-        "Fully backed factory address already set.",
-      )
-
-      await expectRevert(
-        tbtcSystem.setFullyBackedKeepFactory(otherAddress),
-        "Fully backed factory address already set.",
-      )
-    })
+    const factory = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
 
     it("can be called only by the owner", async () => {
       await expectRevert(
-        tbtcSystem.setFullyBackedKeepFactory(address, {from: accounts[1]}),
+        tbtcSystem.setFullyBackedKeepFactory(factory, {from: nonSystemOwner}),
         "Ownable: caller is not the owner.",
       )
 
-      await tbtcSystem.setFullyBackedKeepFactory(address)
-    })
-
-    it("can be called only with a proper address", async () => {
-      await expectRevert(
-        tbtcSystem.setFullyBackedKeepFactory(
-          "0x0000000000000000000000000000000000000000",
-        ),
-        "Invalid address",
-      )
+      await tbtcSystem.setFullyBackedKeepFactory(factory)
+      // ok, no reverts
     })
   })
 
   describe("setKeepFactorySelector", async () => {
-    const address = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
-    const otherAddress = "0xFFCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
-    it("can be called only once", async () => {
-      await tbtcSystem.setKeepFactorySelector(address)
-
-      await expectRevert(
-        tbtcSystem.setKeepFactorySelector(address),
-        "Factory selector contract address already set.",
-      )
-
-      await expectRevert(
-        tbtcSystem.setKeepFactorySelector(otherAddress),
-        "Factory selector contract address already set.",
-      )
-    })
+    const selector = "0xFFCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
 
     it("can be called only by the owner", async () => {
       await expectRevert(
-        tbtcSystem.setKeepFactorySelector(address, {from: accounts[1]}),
+        tbtcSystem.setKeepFactorySelector(selector, {from: nonSystemOwner}),
         "Ownable: caller is not the owner.",
       )
 
-      await tbtcSystem.setKeepFactorySelector(address)
-    })
-
-    it("can be called only with a proper address", async () => {
-      await expectRevert(
-        tbtcSystem.setKeepFactorySelector(
-          "0x0000000000000000000000000000000000000000",
-        ),
-        "Invalid address",
-      )
+      await tbtcSystem.setKeepFactorySelector(selector)
+      // ok, no reverts
     })
   })
 })
