@@ -23,7 +23,7 @@ const prices = require("./prices")
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
 // Bitcoin difficulty relays.
-const Relay = artifacts.require("@summa-tx/relay-sol/contracts/Relay")
+const Relay = artifacts.require("@summa-tx/relay-sol/contracts/OnDemandSPV")
 const TestnetRelay = artifacts.require(
   "@summa-tx/relay-sol/contracts/TestnetRelay",
 )
