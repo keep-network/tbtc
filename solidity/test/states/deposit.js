@@ -1,6 +1,14 @@
+// @ts-check
 const {BN, expectEvent} = require("@openzeppelin/test-helpers")
 const {accounts} = require("@openzeppelin/test-environment")
 const {expect} = require("chai")
+
+/** @typedef {any} BN */
+/** @typedef { import("./run.js").StateDefinition<object> } StateDefinition */
+/** @typedef { import("./run.js").TruffleReceipt } TruffleReceipt */
+/** @typedef { import("./run.js").StateTransitionResolver<any,any> } StateTransitionResolver */
+/** @typedef { import("./run.js").StateTransitionResult } StateTransitionResult */
+/** @typedef { import("./run.js").StateTransitionResolvers } StateTransitionResolvers */
 
 const publicKey =
     "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1"
@@ -42,6 +50,7 @@ const opener = accounts[0],
       redeemer = accounts[1],
       liquidator = accounts[2]
 
+/** @type Object.<string,StateDefinition> */
 module.exports = {
     start: {
         name: "start",
@@ -54,7 +63,9 @@ module.exports = {
                 transition: async ({ DepositFactory, lotSize, feeEstimate }) => {
                     return {
                         state: "awaitingSignerSetup",
+                        /** @type TruffleReceipt */
                         tx: DepositFactory.createDeposit(lotSize, { value: feeEstimate }),
+                        /** @type StateTransitionResolver */
                         resolveDeposit: ({ Deposit }, receipt) => {
                             const depositAddress =
                                 receipt.logs
