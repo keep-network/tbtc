@@ -20,8 +20,6 @@ describe("TBTCSystem", async function() {
     const {
       tbtcSystemStub,
       ecdsaKeepFactoryStub,
-      fullyBackedEcdsaKeepFactoryStub,
-      keepFactorySelectorStub,
       tbtcDepositToken,
       mockSatWeiPriceFeed,
     } = await deployAndLinkAll(
@@ -36,8 +34,6 @@ describe("TBTCSystem", async function() {
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
     ecdsaKeepFactory = ecdsaKeepFactoryStub
-    fullyBackedEcdsaKeepFactory = fullyBackedEcdsaKeepFactoryStub
-    keepFactorySelector = keepFactorySelectorStub
     tdt = tbtcDepositToken
 
     ethBtcMedianizer = await MockMedianizer.new()
