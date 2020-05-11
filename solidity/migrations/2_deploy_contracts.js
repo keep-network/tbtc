@@ -23,7 +23,9 @@ const prices = require("./prices")
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
 // Bitcoin difficulty relays.
-const Relay = artifacts.require("@summa-tx/relay-sol/contracts/Relay")
+const OnDemandSPV = artifacts.require(
+  "@summa-tx/relay-sol/contracts/OnDemandSPV",
+)
 const TestnetRelay = artifacts.require(
   "@summa-tx/relay-sol/contracts/TestnetRelay",
 )
@@ -32,6 +34,7 @@ const MockRelay = artifacts.require("MockRelay")
 // system
 const TBTCConstants = artifacts.require("TBTCConstants")
 const TBTCDevelopmentConstants = artifacts.require("TBTCDevelopmentConstants")
+const KeepFactorySelection = artifacts.require("KeepFactorySelection")
 const TBTCSystem = artifacts.require("TBTCSystem")
 
 // tokens
@@ -131,8 +134,8 @@ module.exports = (deployer, network, accounts) => {
     if (network === "mainnet") {
       const {genesis, height, epochStart} = bitcoinMain
 
-      await deployer.deploy(Relay, genesis, height, epochStart, 0)
-      difficultyRelay = await Relay.deployed()
+      await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
+      difficultyRelay = await OnDemandSPV.deployed()
     } else if (network == "keep_dev" || "ropsten") {
       const {genesis, height, epochStart} = bitcoinTest
 
@@ -148,6 +151,9 @@ module.exports = (deployer, network, accounts) => {
     if (!difficultyRelay) {
       throw new Error("Difficulty relay not found.")
     }
+
+    await deployer.deploy(KeepFactorySelection)
+    await deployer.link(KeepFactorySelection, TBTCSystem)
 
     // system
     await deployer.deploy(

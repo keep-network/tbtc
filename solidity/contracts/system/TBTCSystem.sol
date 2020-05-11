@@ -1,7 +1,6 @@
 /* solium-disable function-order */
 pragma solidity 0.5.17;
 
-import {IBondedECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepVendor.sol";
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
 import {VendingMachine} from "./VendingMachine.sol";
@@ -20,6 +19,7 @@ import "./TBTCToken.sol";
 import "./FeeRebateToken.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./KeepFactorySelection.sol";
 
 /// @title  TBTC System.
 /// @notice This contract acts as a central point for access control,
@@ -28,6 +28,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     using SafeMath for uint256;
+    using KeepFactorySelection for KeepFactorySelection.Storage;
 
     event EthBtcPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
     event LotSizesUpdateStarted(uint64[] _lotSizes, uint256 _timestamp);
@@ -55,8 +56,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 constant pausedDuration = 10 days;
 
     ISatWeiPriceFeed public  priceFeed;
-    IBondedECDSAKeepVendor public keepVendor;
     IRelay public relay;
+
+    KeepFactorySelection.Storage keepFactorySelection;
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
@@ -90,7 +92,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice        Initialize contracts
     /// @dev           Only the Deposit factory should call this, and only once.
-    /// @param _keepVendor        ECDSA keep vendor.
+    /// @param _defaultKeepFactory       ECDSA keep factory backed by KEEP stake.
     /// @param _depositFactory    Deposit Factory. More info in `DepositFactory`.
     /// @param _masterDepositAddress  Master Deposit address. More info in `Deposit`.
     /// @param _tbtcToken         TBTCToken. More info in `TBTCToken`.
@@ -100,7 +102,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size.
     function initialize(
-        IBondedECDSAKeepVendor _keepVendor,
+        IBondedECDSAKeepFactory _defaultKeepFactory,
         DepositFactory _depositFactory,
         address payable _masterDepositAddress,
         TBTCToken _tbtcToken,
@@ -111,7 +113,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _keepSize
     ) external onlyOwner {
         require(!_initialized, "already initialized");
-        keepVendor = _keepVendor;
+
+        keepFactorySelection.initialize(_defaultKeepFactory);
+
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
             _tbtcDepositToken,
@@ -157,6 +161,34 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return (block.timestamp.sub(pausedTimestamp) >= pausedDuration)?
             0:
             pausedDuration.sub(block.timestamp.sub(pausedTimestamp));
+    }
+
+    /// @notice Sets the address of the fully backed ECDSA keep factory.
+    /// TBTCSystem uses two factories: the default one - using KEEP stake and
+    /// another using ETH-stake. When ETH-stake (fully backed) factory is not
+    /// set, KEEP-stake factory is the default choice. When both factories are
+    /// set, as well as keep factory selection strategy, TBTCSystem load
+    /// balances between two factories based on the selection strategy choices.
+    /// @dev Can be called only one time!
+    /// @param _fullyBackedFactory Address of the ETH-stake-based factory.
+    function setFullyBackedKeepFactory(
+        address _fullyBackedFactory
+    ) external onlyOwner {
+        keepFactorySelection.setFullyBackedKeepFactory(_fullyBackedFactory);
+    }
+
+    /// @notice Sets the address of the keep factory selection strategy.
+    /// TBTCSystem uses two factories: the default one - using KEEP stake and
+    /// another using ETH-stake. When ETH-stake (fully backed) factory is not
+    /// set, KEEP-stake factory is the default choice. When both factories are
+    /// set, as well as keep factory selection strategy, TBTCSystem load
+    /// balances between two factories based on the selection strategy choices.
+    /// @dev Can be called only one time!
+    /// @param _factorySelector Address of the keep factory selection strategy.
+    function setKeepFactorySelector(
+        address _factorySelector
+    ) external onlyOwner {
+        keepFactorySelection.setKeepFactorySelector(_factorySelector);
     }
 
     /// @notice Set the system signer fee divisor.
@@ -466,7 +498,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         view
         returns (uint256)
     {
-        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
+        IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactory();
         return _keepFactory.openKeepFeeEstimate();
     }
 
@@ -486,7 +518,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        IBondedECDSAKeepFactory _keepFactory = IBondedECDSAKeepFactory(keepVendor.selectFactory());
+        IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
     }
 
