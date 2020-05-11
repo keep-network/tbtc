@@ -28,4 +28,10 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
     function setOpenKeepFeeEstimate(uint256 _fee) external {
         feeEstimate = _fee;
     }
+
+    function getSortitionPoolWeight(
+        address _application
+    ) external view returns (uint256 poolWeight) {
+        return 100000;
+    }
 }
