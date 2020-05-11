@@ -14,6 +14,8 @@ describe("TBTCSystem", async function() {
   let ecdsaKeepFactory
   let tdt
 
+  const nonSystemOwner = accounts[3]
+
   before(async () => {
     const {
       tbtcSystemStub,
@@ -272,7 +274,7 @@ describe("TBTCSystem", async function() {
       it("reverts if msg.sender != owner", async () => {
         await expectRevert.unspecified(
           tbtcSystem.beginSignerFeeDivisorUpdate(newFee, {
-            from: accounts[1],
+            from: nonSystemOwner,
           }),
           "",
         )
@@ -631,7 +633,7 @@ describe("TBTCSystem", async function() {
 
     it("reverts if msg.sender is not owner", async () => {
       await expectRevert(
-        tbtcSystem.emergencyPauseNewDeposits({from: accounts[1]}),
+        tbtcSystem.emergencyPauseNewDeposits({from: nonSystemOwner}),
         "Ownable: caller is not the owner",
       )
     })
@@ -669,6 +671,34 @@ describe("TBTCSystem", async function() {
         tbtcSystem.emergencyPauseNewDeposits(),
         "emergencyPauseNewDeposits can only be called once",
       )
+    })
+  })
+
+  describe("setFullyBackedKeepFactory", async () => {
+    const factory = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
+
+    it("can be called only by the owner", async () => {
+      await expectRevert(
+        tbtcSystem.setFullyBackedKeepFactory(factory, {from: nonSystemOwner}),
+        "Ownable: caller is not the owner.",
+      )
+
+      await tbtcSystem.setFullyBackedKeepFactory(factory)
+      // ok, no reverts
+    })
+  })
+
+  describe("setKeepFactorySelector", async () => {
+    const selector = "0xFFCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
+
+    it("can be called only by the owner", async () => {
+      await expectRevert(
+        tbtcSystem.setKeepFactorySelector(selector, {from: nonSystemOwner}),
+        "Ownable: caller is not the owner.",
+      )
+
+      await tbtcSystem.setKeepFactorySelector(selector)
+      // ok, no reverts
     })
   })
 })
