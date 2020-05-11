@@ -195,7 +195,7 @@ describe("TBTCSystem", async function() {
       if (!fn) {
         console.error(`${prefix}${change}${suffix}`)
       }
-      return await fn.apply(tbtcSystem, params)
+      return fn.apply(tbtcSystem, params)
     }
 
     describe(`when updating ${property}`, async () => {
@@ -236,7 +236,6 @@ describe("TBTCSystem", async function() {
         it("reverts if msg.sender != owner", async () => {
           await expectRevert.unspecified(
             invoke("begin", "", goodParameters.concat([{from: accounts[1]}])),
-            "",
           )
         })
 
