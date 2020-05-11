@@ -362,12 +362,12 @@ describe("TBTCSystem", async function() {
         "smaller than or equal to 9": {
           parameters: [9],
           error:
-            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.",
+            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%",
         },
         "greater than or equal to 2000": {
           parameters: [2000],
           error:
-            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%.",
+            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%",
         },
       },
       verifyFinalization: async (receipt, setDivisor) => {
@@ -396,11 +396,11 @@ describe("TBTCSystem", async function() {
       badInitializationTests: {
         "array is empty": {
           parameters: [[]],
-          error: "Lot size array must always contain 1 BTC.",
+          error: "Lot size array must always contain 1 BTC",
         },
         "array does not contain a 1 BTC lot size": {
           parameters: [[10 ** 7]],
-          error: "Lot size array must always contain 1 BTC.",
+          error: "Lot size array must always contain 1 BTC",
         },
         "array contains a lot size < 0.0005 BTC": {
           parameters: [[10 ** 7, 10 ** 8, 5 * 10 ** 3 - 1]],
@@ -418,6 +418,7 @@ describe("TBTCSystem", async function() {
         lotSizes.forEach((_, i) => expect(_).to.eq.BN(setLotSizes[i]))
       },
     })
+
     governanceTest({
       property: "collateralization thresholds",
       change: "CollateralizationThresholdsUpdate",
@@ -432,11 +433,11 @@ describe("TBTCSystem", async function() {
       badInitializationTests: {
         "contain initial collateralized percent > 300": {
           parameters: [301, 130, 120],
-          error: "a",
+          error: "Initial collateralized percent must be <= 300%",
         },
         "contain initial collateralized percent < 100": {
           parameters: [99, 130, 120],
-          error: "b",
+          error: "Initial collateralized percent must be >= 100%",
         },
         "contain undercollateralized threshold > initial collateralized percent": {
           parameters: [150, 160, 120],
