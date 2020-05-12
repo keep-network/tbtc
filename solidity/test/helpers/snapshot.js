@@ -43,7 +43,7 @@ const { web3 } = require('@openzeppelin/test-environment')
 
 
 const snapshotIdsStack = []
-async function createSnapshot() {
+async function createSnapshot(push) {
   const snapshotId = await new Promise((res, rej) => {
     web3.currentProvider.send({
       jsonrpc: '2.0',
@@ -55,11 +55,15 @@ async function createSnapshot() {
     })
   })
 
-  snapshotIdsStack.push(snapshotId)
+  if (push !== false) {
+    snapshotIdsStack.push(snapshotId)
+  }
+
+  return snapshotId
 }
 
-async function restoreSnapshot() {
-  const snapshotId = snapshotIdsStack.pop()
+async function restoreSnapshot(forcedSnapshotId) {
+  const snapshotId = forcedSnapshotId || snapshotIdsStack.pop()
 
   try {
     await new Promise((res, rej) => {
