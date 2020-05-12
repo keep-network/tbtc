@@ -65,6 +65,7 @@ const System = {
         START: new BN(0),
         AWAITING_SIGNER_SETUP: new BN(1),
         AWAITING_BTC_FUNDING_PROOF: new BN(2),
+        FAILED_SETUP: new BN(3),
         ACTIVE: new BN(4),
         AWAITING_WITHDRAWAL_SIGNATURE: new BN(5),
         AWAITING_WITHDRAWAL_PROOF: new BN(6),
