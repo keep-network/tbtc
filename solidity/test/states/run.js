@@ -111,7 +111,7 @@ const StateRunner = {
     },
     /**
      * Takes a start state and a transition result, which can be an arbitrary
-     * object but most include a `tx` property that contains the Truffle
+     * object but must include a `tx` property that contains the Truffle
      * transaction transitioning the contract from one state to the next, and
      * invokes resolver functions in that result to update the start state with
      * new properties.
@@ -182,32 +182,51 @@ const StateRunner = {
      * Given a mocha suite, a base state, and the definition for that state's
      * future transitions,
      *
-     * @param {MochaSuite} mochaSuite
-     * @param {object} baseState
+     * @param {Promise<object>} baseStatePromise Promise to the base state for
+     *        these tessts, after any prior state transitions.
      * @param {StateDefinition<BaseState>} stateDefinition
      *
      * @template BaseState The current state.
      */
-    verifyStateTransitions: async (mochaSuite, baseState, stateDefinition) => {
-        const resolvedInitialState =
-            await StateRunner.resolveDependencies(baseState, stateDefinition.dependencies)
+    setUpStateTests: (baseStatePromise, stateDefinition) => {
+        // These all resolve promises in the async before hook. This ensures
+        // this test's setup runs after any previous tests AND state transitions
+        // have completed.
+        let baseState
+        let resolvedInitialState
+        let testPromiseResolver
 
-        const stateSuite = Suite.create(
-            mochaSuite,
-            `should transition from ${stateDefinition.name}`,
-        )
-        for (let [nextStateName, { transition, after, expect }] of
-                Object.entries(stateDefinition.next)) {
-            // @ts-ignore This is marked private in mocha but here we are.
-            stateSuite.addTest(new Test(
-                `to ${nextStateName}`,
-                async () => {
-                    await createSnapshot()
+        // We resolve this promise below to indicate to the caller that all
+        // tests here have completed. Here, capture the resolver function for
+        // that purpose.
+        const testsCompletePromise = new Promise((resolve) => {
+            testPromiseResolver = resolve
+        })
+
+        describe(`should transition from ${stateDefinition.name}`, () => {
+            before(async () => {
+                baseState = await baseStatePromise
+                resolvedInitialState =
+                    await StateRunner.resolveDependencies(
+                        baseState,
+                        stateDefinition.dependencies,
+                    )
+            })
+            beforeEach(async () => { await createSnapshot() })
+            afterEach(async () => { await restoreSnapshot() })
+            // After all tests have run, resolve the test promise so that the
+            // next state transition can take place.
+            after(() => testPromiseResolver())
+
+            for (let [nextStateName, { transition, after, expect }] of
+                    Object.entries(stateDefinition.next)) {
+                it(`to ${nextStateName}`, async () => {
                     if (after) {
                         await increaseTime((await after(resolvedInitialState)).add(new BN(1)))
                     }
                     const transitionResult = await transition(resolvedInitialState)
                     const receipt = await transitionResult.tx.then(_ => resolveAllLogs(_.receipt, resolvedInitialState))
+
                     if (expect) {
                         await expect(
                             resolvedInitialState,
@@ -215,66 +234,73 @@ const StateRunner = {
                             await StateRunner.resolveResults(resolvedInitialState, transitionResult),
                         )
                     }
-                    await restoreSnapshot()
-                }
-            ))
-        }
+                })
+            }
+        })
+
+        return testsCompletePromise
     },
     /**
      * Advances from the given `baseState` to the given `nextStateName`, using
      * `stateDefinition` to resolve dependencies and find the transition to the
      * next state.
      *
-     * @param {object} baseState
+     * @param {Promise<object>} baseStatePromise
      * @param {StateDefinition<object>} stateDefinition
      * @param {string} nextStateName
      *
      * @return {Promise<object>} The state produced by the transition to
      *         `nextStateName`.
      */
-    advanceToState: async (baseState, stateDefinition, nextStateName) => {
+    advanceToState: async (baseStatePromise, stateDefinition, nextStateName) => {
+        const baseState = await baseStatePromise
         const resolvedInitialState =
             await StateRunner.resolveDependencies(baseState, stateDefinition.dependencies)
-
 
         const { transition, after } = stateDefinition.next[nextStateName]
         if (after) {
             await increaseTime((await after(resolvedInitialState)).add(new BN(1)))
         }
         const transitionResult = await transition(resolvedInitialState)
-        return await StateRunner.resolveResults(resolvedInitialState, transitionResult)
+
+        const resolved = await StateRunner.resolveResults(resolvedInitialState, transitionResult)
+        return resolved
     },
     /**
      * Runs a state path.
      *
-     * @param {MochaSuite} mochaSuite
      * @param {Object.<string,StateDefinition<object>>} stateDefinitions
      * @param {object} baseState
      * @param {string} firstStateName
      * @param {...string} path
      */
-    runStatePath: async (
-        mochaSuite,
+    runStatePath: (
         stateDefinitions,
         baseState,
         firstStateName,
         ...path
     ) => {
-        return asyncReduce(
-            path.concat([null]),
-            async ({ previousState, definition }, nextStateName) => {
-                await StateRunner.verifyStateTransitions(mochaSuite, previousState, definition)
+        return path.concat([null]).reduce(
+            ({ currentState, definition }, nextStateName) => {
+                const stateTestsPromise = StateRunner.setUpStateTests(
+                    currentState,
+                    definition,
+                )
 
                 // Terminating condition.
                 if (nextStateName !== null) {
                     return {
-                        previousState: await StateRunner.advanceToState(previousState, definition, nextStateName),
+                        currentState: stateTestsPromise.then(() => StateRunner.advanceToState(
+                            currentState,
+                            definition,
+                            nextStateName
+                        )),
                         definition: stateDefinitions[nextStateName],
                     }
                 }
             },
             {
-                previousState: baseState,
+                currentState: Promise.resolve(baseState),
                 definition: stateDefinitions[firstStateName],
             },
         )
