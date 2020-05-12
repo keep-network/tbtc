@@ -3,7 +3,7 @@ const {BN, expectEvent} = require("@openzeppelin/test-helpers")
 const {accounts} = require("@openzeppelin/test-environment")
 const {expect} = require("chai")
 
-const {fundingTx} = require("../helpers/utils.js")
+const {testnetFundingTx, redemptionValues} = require("../helpers/utils.js")
 
 /** @typedef {any} BN */
 /** @typedef { import("./run.js").StateDefinition<object> } StateDefinition */
@@ -18,7 +18,7 @@ const System = {
     },
     feeEstimate: async ({ TBTCSystem }) => TBTCSystem.getNewDepositFeeEstimate(),
     setEcdsaKey: async ({ ECDSAKeepStub }) => {
-        ECDSAKeepStub.setPublicKey(fundingTx.concatenatedKeys)
+        ECDSAKeepStub.setPublicKey(testnetFundingTx.concatenatedKeys)
     },
     setUpBond: async ({ ECDSAKeepStub, bondAmount }) => {
         ECDSAKeepStub.send(bondAmount)
@@ -35,11 +35,18 @@ const System = {
         )
     },
     fundingDifficulty: async () => {
-        return fundingTx.difficulty
+        return testnetFundingTx.difficulty
     },
     setDifficulty: async ({ MockRelay, difficulty }) => {
         await MockRelay.setCurrentEpochDifficulty(difficulty)
     },
+    setRedemptionBalance: async ({ tbtcToken, deposit }) => {
+        const lotSize = await deposit.lotSizeSatoshis()
+        const lotSizeWei = lotSize.mul(new BN(10).pow(new BN(10)))
+        await tbtcToken.resetBalance(lotSizeWei)
+        await tbtcToken.resetAllowance(deposit.address, lotSizeWei)
+    },
+
     States: {
         START: new BN(0),
         AWAITING_SIGNER_SETUP: new BN(1),
@@ -120,8 +127,8 @@ module.exports = {
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "RegisteredPubkey", {
                         _depositContractAddress: deposit.address,
-                        _signingGroupPubkeyX: fundingTx.signerPubkeyX,
-                        _signingGroupPubkeyY: fundingTx.signerPubkeyY,
+                        _signingGroupPubkeyX: testnetFundingTx.signerPubkeyX,
+                        _signingGroupPubkeyY: testnetFundingTx.signerPubkeyY,
                     })
                     expect(await deposit.getCurrentState()).to.eq.BN(
                         System.States.AWAITING_BTC_FUNDING_PROOF
@@ -168,14 +175,14 @@ module.exports = {
                     return {
                         state: "active",
                         tx: deposit.provideBTCFundingProof(
-                            fundingTx.version,
-                            fundingTx.txInputVector,
-                            fundingTx.txOutputVector,
-                            fundingTx.txLocktime,
-                            fundingTx.fundingOutputIndex,
-                            fundingTx.merkleProof,
-                            fundingTx.txIndexInBlock,
-                            fundingTx.bitcoinHeaders,
+                            testnetFundingTx.version,
+                            testnetFundingTx.txInputVector,
+                            testnetFundingTx.txOutputVector,
+                            testnetFundingTx.txLocktime,
+                            testnetFundingTx.fundingOutputIndex,
+                            testnetFundingTx.merkleProof,
+                            testnetFundingTx.txIndexInBlock,
+                            testnetFundingTx.bitcoinHeaders,
                           )
                     }
                 },
@@ -183,6 +190,33 @@ module.exports = {
                     expectEvent(receipt, "Funded")
                     expect(await deposit.getCurrentState()).to.eq.BN(
                         System.States.ACTIVE
+                    )
+                },
+            },
+        },
+        // TODO What can't happen here?
+        failNext: {}
+    },
+    active: {
+        name: "active",
+        dependencies: {},
+        next: {
+            awaitingWithdrawalSignature: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setRedemptionBalance(state)
+                    return {
+                        state: "active",
+                        tx: deposit.requestRedemption(
+                            redemptionValues.valueBytes,
+                            redemptionValues.redeemerOutputScript,
+                          )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "RedemptionRequested")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.AWAITING_WITHDRAWAL_SIGNATURE
                     )
                 },
             },

@@ -10,5 +10,6 @@ describe.only("tBTC states", () => {
         "start",
         "awaitingSignerSetup",
         "awaitingFundingProof",
+        "active",
     )
 })
