@@ -11,6 +11,7 @@ describe.only("tBTC states", async function() {
             await deployAndLinkAll(),
             "start",
             "awaitingSignerSetup",
+            "awaitingFundingProof",
         )
     })
 
