@@ -43,6 +43,15 @@ const System = {
         START: new BN(0),
         AWAITING_SIGNER_SETUP: new BN(1),
         AWAITING_BTC_FUNDING_PROOF: new BN(2),
+        FAILED_SETUP: new BN(3),
+        ACTIVE: new BN(4),
+        AWAITING_WITHDRAWAL_SIGNATURE: new BN(5),
+        AWAITING_WITHDRAWAL_PROOF: new BN(6),
+        REDEEMED: new BN(7),
+        COURTESY_CALL: new BN(8),
+        FRAUD_LIQUIDATION_IN_PROGRESS: new BN(9),
+        LIQUIDATION_IN_PROGRESS: new BN(10),
+        LIQUIDATED: new BN(11),
     }
 }
 
