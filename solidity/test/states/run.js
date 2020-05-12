@@ -185,24 +185,29 @@ const StateRunner = {
      * @param {MochaSuite} mochaSuite
      * @param {object} baseState
      * @param {StateDefinition<BaseState>} stateDefinition
+     * @param {string} nextStateName
      *
      * @template BaseState The current state.
      */
-    verifyStateTransitions: async (mochaSuite, baseState, stateDefinition) => {
+    verifyStateTransitions: async (mochaSuite, snapshotId, baseState, stateDefinition, testStateName) => {
         const resolvedInitialState =
             await StateRunner.resolveDependencies(baseState, stateDefinition.dependencies)
 
         const stateSuite = Suite.create(
             mochaSuite,
             `should transition from ${stateDefinition.name}`,
-        )
+        ).beforeEach(async () => {
+            await restoreSnapshot(snapshotId)
+            // We have to re-snapshot to properly capture for the next restore.
+            snapshotId = await createSnapshot(false)
+        })
         for (let [nextStateName, { transition, after, expect }] of
                 Object.entries(stateDefinition.next)) {
+if (testStateName != nextStateName) continue
             // @ts-ignore This is marked private in mocha but here we are.
             stateSuite.addTest(new Test(
                 `to ${nextStateName}`,
                 async () => {
-                    await createSnapshot()
                     if (after) {
                         await increaseTime((await after(resolvedInitialState)).add(new BN(1)))
                     }
@@ -215,7 +220,6 @@ const StateRunner = {
                             await StateRunner.resolveResults(resolvedInitialState, transitionResult),
                         )
                     }
-                    await restoreSnapshot()
                 }
             ))
         }
@@ -263,7 +267,10 @@ const StateRunner = {
         return asyncReduce(
             path.concat([null]),
             async ({ previousState, definition }, nextStateName) => {
-                await StateRunner.verifyStateTransitions(mochaSuite, previousState, definition)
+                // Capture snapshot immediately for use in tests.
+                let snapshotId = await createSnapshot(false)
+
+                await StateRunner.verifyStateTransitions(mochaSuite, snapshotId, previousState, definition, nextStateName)
 
                 // Terminating condition.
                 if (nextStateName !== null) {
