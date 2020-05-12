@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: electrumx
+  namespace: default
+  labels:
+    app: bitcoin
+    type: electrumx
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.223.16.19
+  ports:
+  - port: 443
+    targetPort: 443
+    name: ssl
+  - port: 8080
+    targetPort: 8080
+    name: ws
+  - port: 8443
+    targetPort: 8443
+    name: wss
+  - port: 8000
+    targetPort: 8000
+    name: rpc
+  selector:
+    app: bitcoin
+    type: electrumx
