@@ -23,6 +23,7 @@ spec:
         - name: relay-maintainer
           image: gcr.io/keep-prd-210b/relay-maintainer:v1.0.0
           imagePullPolicy: Always
+          command: ["python", "maintainer/header_forwarder/h.py"]
           env:
             - name: SUMMA_RELAY_ETHER_HOST
               valueFrom:
@@ -67,7 +68,7 @@ spec:
                   key: http-api-key
 
             - name: SUMMA_RELAY_CONTRACT
-              value: ''
+              value: '0xaA1D2805a0fA2DB185A99EDa43637d3169b240f7'
 
 
 
