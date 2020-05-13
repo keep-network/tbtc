@@ -1,8 +1,9 @@
 // @ts-check
 const {BN, expectEvent} = require("@openzeppelin/test-helpers")
+const {accounts} = require("@openzeppelin/test-environment")
 const {expect} = require("chai")
 
-const {fundingTx} = require("../helpers/utils.js")
+const {depositRoundTrip} = require("../helpers/utils.js")
 
 /** @typedef {any} BN */
 /** @typedef { import("./run.js").StateDefinition<object> } StateDefinition */
@@ -11,13 +12,17 @@ const {fundingTx} = require("../helpers/utils.js")
 /** @typedef { import("./run.js").StateTransitionResult } StateTransitionResult */
 /** @typedef { import("./run.js").StateTransitionResolvers } StateTransitionResolvers */
 
+const opener = accounts[0]
+// const redeemer = accounts[1]
+// const liquidator = accounts[2]
+
 const System = {
     lotSizes: async ({ TBTCSystem }) => {
         return (await TBTCSystem.getAllowedLotSizes())[0]
     },
     feeEstimate: async ({ TBTCSystem }) => TBTCSystem.getNewDepositFeeEstimate(),
     setEcdsaKey: async ({ ECDSAKeepStub }) => {
-        ECDSAKeepStub.setPublicKey(fundingTx.concatenatedKeys)
+        ECDSAKeepStub.setPublicKey(depositRoundTrip.signerPubkey.concatenated)
     },
     setUpBond: async ({ ECDSAKeepStub, bondAmount }) => {
         ECDSAKeepStub.send(bondAmount)
@@ -34,10 +39,20 @@ const System = {
         )
     },
     fundingDifficulty: async () => {
-        return fundingTx.difficulty
+        return depositRoundTrip.fundingTx.difficulty
     },
     setDifficulty: async ({ MockRelay, difficulty }) => {
         await MockRelay.setCurrentEpochDifficulty(difficulty)
+    },
+    setAndApproveRedemptionBalance: async ({ TestTBTCToken, deposit }) => {
+        const redemptionRequirement = 
+            await deposit.getRedemptionTbtcRequirement(opener)
+        await TestTBTCToken.forceMint(
+            opener,
+            // Let's just play it safe.
+            redemptionRequirement,
+        )
+        await TestTBTCToken.approve(deposit.address, redemptionRequirement, { from: opener })
     },
     States: {
         START: new BN(0),
@@ -55,10 +70,6 @@ const System = {
     }
 }
 
-// const opener = accounts[0]
-// const redeemer = accounts[1]
-// const liquidator = accounts[2]
-
 /** @type Object.<string,StateDefinition> */
 module.exports = {
     start: {
@@ -72,7 +83,13 @@ module.exports = {
                 transition: async ({ DepositFactory, lotSize, feeEstimate }) => {
                     return {
                         state: "awaitingSignerSetup",
-                        tx: DepositFactory.createDeposit(lotSize, { value: feeEstimate }),
+                        tx: DepositFactory.createDeposit(
+                            lotSize,
+                            {
+                                value: feeEstimate,
+                                from: opener,
+                            }
+                        ),
                         resolveDeposit: ({ Deposit }, receipt) => {
                             const depositAddress =
                                 receipt.logs
@@ -84,7 +101,7 @@ module.exports = {
                         }
                     }
                 },
-                expect: async (_, receipt, { ECDSAKeepStub, deposit }) => {
+                expect: async (_, receipt, { TBTCDepositToken, ECDSAKeepStub, deposit }) => {
                     expectEvent(receipt, "DepositCloneCreated", {
                         depositCloneAddress: deposit.address,
                     })
@@ -92,7 +109,12 @@ module.exports = {
                         _depositContractAddress: deposit.address,
                         _keepAddress: ECDSAKeepStub.address,
                     })
-                    expect(await deposit.getCurrentState()).to.eq.BN(System.States.AWAITING_SIGNER_SETUP)
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.AWAITING_SIGNER_SETUP
+                    )
+                    expect(await TBTCDepositToken.ownerOf(deposit.address)).to.equal(
+                        opener,
+                    )
                 }
             }
         },
@@ -119,8 +141,8 @@ module.exports = {
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "RegisteredPubkey", {
                         _depositContractAddress: deposit.address,
-                        _signingGroupPubkeyX: fundingTx.signerPubkeyX,
-                        _signingGroupPubkeyY: fundingTx.signerPubkeyY,
+                        _signingGroupPubkeyX: depositRoundTrip.signerPubkey.x,
+                        _signingGroupPubkeyY: depositRoundTrip.signerPubkey.y,
                     })
                     expect(await deposit.getCurrentState()).to.eq.BN(
                         System.States.AWAITING_BTC_FUNDING_PROOF
@@ -167,21 +189,51 @@ module.exports = {
                     return {
                         state: "active",
                         tx: deposit.provideBTCFundingProof(
-                            fundingTx.version,
-                            fundingTx.txInputVector,
-                            fundingTx.txOutputVector,
-                            fundingTx.txLocktime,
-                            fundingTx.fundingOutputIndex,
-                            fundingTx.merkleProof,
-                            fundingTx.txIndexInBlock,
-                            fundingTx.bitcoinHeaders,
-                          )
+                            depositRoundTrip.fundingTx.version,
+                            depositRoundTrip.fundingTx.txInputVector,
+                            depositRoundTrip.fundingTx.txOutputVector,
+                            depositRoundTrip.fundingTx.txLocktime,
+                            depositRoundTrip.fundingTx.fundingOutputIndex,
+                            depositRoundTrip.fundingTx.merkleProof,
+                            depositRoundTrip.fundingTx.txIndexInBlock,
+                            depositRoundTrip.fundingTx.bitcoinHeaders,
+                        )
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "Funded")
                     expect(await deposit.getCurrentState()).to.eq.BN(
                         System.States.ACTIVE
+                    )
+                },
+            },
+        },
+        // TODO What can't happen here?
+        failNext: {}
+    },
+    active: {
+        name: "active",
+        dependencies: {
+        },
+        next: {
+            awaitingWithdrawalSignature: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setAndApproveRedemptionBalance(state)
+
+                    return {
+                        state: "active",
+                        tx: deposit.requestRedemption(
+                            depositRoundTrip.redemptionTx.outputValueBytes,
+                            depositRoundTrip.redemptionTx.outputScript,
+                            { from: opener },
+                        )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "RedemptionRequested")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.AWAITING_WITHDRAWAL_SIGNATURE
                     )
                 },
             },

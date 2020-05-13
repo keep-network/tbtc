@@ -9,5 +9,6 @@ describe("tBTC states", () => {
     "start",
     "awaitingSignerSetup",
     "awaitingFundingProof",
+    "active",
   )
 })
