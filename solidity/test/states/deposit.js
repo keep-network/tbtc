@@ -3,6 +3,8 @@ const {BN, expectEvent} = require("@openzeppelin/test-helpers")
 const {accounts} = require("@openzeppelin/test-environment")
 const {expect} = require("chai")
 
+const {fundingTx} = require("../helpers/utils.js")
+
 /** @typedef {any} BN */
 /** @typedef { import("./run.js").StateDefinition<object> } StateDefinition */
 /** @typedef { import("./run.js").TruffleReceipt } TruffleReceipt */
@@ -10,20 +12,13 @@ const {expect} = require("chai")
 /** @typedef { import("./run.js").StateTransitionResult } StateTransitionResult */
 /** @typedef { import("./run.js").StateTransitionResolvers } StateTransitionResolvers */
 
-const publicKey =
-    "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1"
-const publicKeyX =
-    "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
-const publicKeyY =
-    "0x385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1"
-
 const System = {
     lotSizes: async ({ TBTCSystem }) => {
         return (await TBTCSystem.getAllowedLotSizes())[0]
     },
     feeEstimate: async ({ TBTCSystem }) => TBTCSystem.getNewDepositFeeEstimate(),
     setEcdsaKey: async ({ ECDSAKeepStub }) => {
-        ECDSAKeepStub.setPublicKey(publicKey)
+        ECDSAKeepStub.setPublicKey(fundingTx.concatenatedKeys)
     },
     setUpBond: async ({ ECDSAKeepStub, bondAmount }) => {
         ECDSAKeepStub.send(bondAmount)
@@ -38,6 +33,12 @@ const System = {
         return lotSize.mul(await TBTCSystem.fetchBitcoinPrice()).mul(
             initial.div(new BN(100))
         )
+    },
+    fundingDifficulty: async () => {
+        return fundingTx.difficulty
+    },
+    setDifficulty: async ({ MockRelay, difficulty }) => {
+        await MockRelay.setCurrentEpochDifficulty(difficulty)
     },
     States: {
         START: new BN(0),
@@ -55,9 +56,9 @@ const System = {
     }
 }
 
-const opener = accounts[0],
-      redeemer = accounts[1],
-      liquidator = accounts[2]
+// const opener = accounts[0]
+// const redeemer = accounts[1]
+// const liquidator = accounts[2]
 
 /** @type Object.<string,StateDefinition> */
 module.exports = {
@@ -72,9 +73,7 @@ module.exports = {
                 transition: async ({ DepositFactory, lotSize, feeEstimate }) => {
                     return {
                         state: "awaitingSignerSetup",
-                        /** @type TruffleReceipt */
                         tx: DepositFactory.createDeposit(lotSize, { value: feeEstimate }),
-                        /** @type StateTransitionResolver */
                         resolveDeposit: ({ Deposit }, receipt) => {
                             const depositAddress =
                                 receipt.logs
@@ -121,8 +120,8 @@ module.exports = {
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "RegisteredPubkey", {
                         _depositContractAddress: deposit.address,
-                        _signingGroupPubkeyX: publicKeyX,
-                        _signingGroupPubkeyY: publicKeyY,
+                        _signingGroupPubkeyX: fundingTx.signerPubkeyX,
+                        _signingGroupPubkeyY: fundingTx.signerPubkeyY,
                     })
                     expect(await deposit.getCurrentState()).to.eq.BN(
                         System.States.AWAITING_BTC_FUNDING_PROOF
@@ -153,5 +152,42 @@ module.exports = {
                 }
             }
         },
-    }
+    },
+    awaitingFundingProof: {
+        name: "awaitingFundingProof",
+        dependencies: {
+            bondAmount: System.expectedBond,
+            difficulty: System.fundingDifficulty,
+        },
+        next: {
+            active: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setDifficulty(state)
+
+                    return {
+                        state: "active",
+                        tx: deposit.provideBTCFundingProof(
+                            fundingTx.version,
+                            fundingTx.txInputVector,
+                            fundingTx.txOutputVector,
+                            fundingTx.txLocktime,
+                            fundingTx.fundingOutputIndex,
+                            fundingTx.merkleProof,
+                            fundingTx.txIndexInBlock,
+                            fundingTx.bitcoinHeaders,
+                          )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "Funded")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.ACTIVE
+                    )
+                },
+            },
+        },
+        // TODO What can't happen here?
+        failNext: {}
+    },
 }
