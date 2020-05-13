@@ -214,7 +214,10 @@ describe("DepositUtils", async function() {
     const _fundingOutputIndex = 0
 
     it("correctly returns valuebytes", async () => {
-      await testDeposit.setPubKey(fundingTx.signerPubkeyX, fundingTx.signerPubkeyY)
+      await testDeposit.setPubKey(
+        fundingTx.signerPubkeyX,
+        fundingTx.signerPubkeyY,
+      )
       const valueBytes = await testDeposit.findAndParseFundingOutput.call(
         _txOutputVector,
         _fundingOutputIndex,
@@ -281,7 +284,10 @@ describe("DepositUtils", async function() {
         {value: funderBondAmount},
       )
 
-      await testDeposit.setPubKey(fundingTx.signerPubkeyX, fundingTx.signerPubkeyY)
+      await testDeposit.setPubKey(
+        fundingTx.signerPubkeyX,
+        fundingTx.signerPubkeyY,
+      )
       await mockRelay.setCurrentEpochDifficulty(fundingTx.difficulty)
     })
 
@@ -479,7 +485,10 @@ describe("DepositUtils", async function() {
 
   describe("signerPubkey()", async () => {
     it("returns the concatenated signer X and Y coordinates", async () => {
-      await testDeposit.setPubKey(fundingTx.signerPubkeyX, fundingTx.signerPubkeyY)
+      await testDeposit.setPubKey(
+        fundingTx.signerPubkeyX,
+        fundingTx.signerPubkeyY,
+      )
       const signerPubkey = await testDeposit.signerPubkey.call()
       expect(signerPubkey).to.equal(fundingTx.concatenatedKeys)
     })
@@ -494,7 +503,10 @@ describe("DepositUtils", async function() {
   describe("signerPKH()", async () => {
     it("returns the concatenated signer X and Y coordinates", async () => {
       const expectedSignerPKH = "0xa99c23add58e3d0712278b2873c3c0bd21657115"
-      await testDeposit.setPubKey(fundingTx.signerPubkeyX, fundingTx.signerPubkeyX)
+      await testDeposit.setPubKey(
+        fundingTx.signerPubkeyX,
+        fundingTx.signerPubkeyX,
+      )
       const signerPKH = await testDeposit.signerPKH.call()
       expect(signerPKH).to.equal(expectedSignerPKH)
     })

@@ -1,5 +1,10 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {states, bytes32zero, increaseTime, fundingTx} = require("./helpers/utils.js")
+const {
+  states,
+  bytes32zero,
+  increaseTime,
+  fundingTx,
+} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
@@ -16,7 +21,8 @@ const {expect} = require("chai")
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 describe("DepositRedemption", async function() {
-  const redeemerOutputScript = "0x16001486e7303082a6a21d5837176bc808bf4828371ab6"
+  const redeemerOutputScript =
+    "0x16001486e7303082a6a21d5837176bc808bf4828371ab6"
 
   let tbtcConstants
   let mockRelay
@@ -995,14 +1001,20 @@ describe("DepositRedemption", async function() {
 
     it("reverts if bad input vector is provided", async () => {
       await expectRevert(
-        testDeposit.redemptionTransactionChecks("0x00", fundingTx.txOutputVector),
+        testDeposit.redemptionTransactionChecks(
+          "0x00",
+          fundingTx.txOutputVector,
+        ),
         "invalid input vector provided",
       )
     })
 
     it("reverts if bad output vector is provided", async () => {
       await expectRevert(
-        testDeposit.redemptionTransactionChecks(fundingTx.txInputVector, "0x00"),
+        testDeposit.redemptionTransactionChecks(
+          fundingTx.txInputVector,
+          "0x00",
+        ),
         "invalid output vector provided",
       )
     })
