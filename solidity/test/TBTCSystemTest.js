@@ -17,7 +17,8 @@ describe("TBTCSystem", async function() {
   let ethBtcMedianizer
   let badEthBtcMedianizer
   let newEthBtcMedianizer
-  const NEW_PRICE_FEED_VALUE = 1234123412344
+
+  const medianizerValue = 100000000000
 
   const nonSystemOwner = accounts[3]
 
@@ -43,13 +44,13 @@ describe("TBTCSystem", async function() {
     satWeiPriceFeed = mockSatWeiPriceFeed
 
     ethBtcMedianizer = await MockMedianizer.new()
-    await ethBtcMedianizer.setValue(100000000000)
+    await ethBtcMedianizer.setValue(medianizerValue)
     satWeiPriceFeed.initialize(tbtcSystem.address, ethBtcMedianizer.address)
 
     badEthBtcMedianizer = await MockMedianizer.new()
     await badEthBtcMedianizer.setValue(0)
     newEthBtcMedianizer = await MockMedianizer.new()
-    await newEthBtcMedianizer.setValue(NEW_PRICE_FEED_VALUE)
+    await newEthBtcMedianizer.setValue(1)
   })
 
   describe("requestNewKeep()", async () => {
@@ -126,6 +127,29 @@ describe("TBTCSystem", async function() {
         }),
         "Caller must be a Deposit contract",
       )
+    })
+  })
+
+  describe("when fetching Bitcoin price", async () => {
+    const tdtOwner = accounts[1]
+    const keepOwner = accounts[2]
+
+    it("should revert if the caller does not have an associated TDT", async () => {
+      await expectRevert(
+        tbtcSystem.fetchBitcoinPrice(),
+        "Caller must be a Deposit contract",
+      )
+    })
+
+    it("should give the price if the caller does have an associated TDT", async () => {
+      await tdt.forceMint(tdtOwner, web3.utils.toBN(keepOwner))
+      const priceFeedValue = new BN(10)
+        .pow(new BN(28))
+        .div(new BN(medianizerValue))
+
+      expect(
+        await tbtcSystem.fetchBitcoinPrice.call({from: keepOwner}),
+      ).to.eq.BN(priceFeedValue)
     })
   })
 
@@ -587,7 +611,6 @@ describe("TBTCSystem", async function() {
           parameters: [badEthBtcMedianizer.address],
           error: "Cannot add inactive feed",
         },
-        // finalization
       },
       verifyFinalization: async (receipt, newFeedAddress) => {
         // disable current feed

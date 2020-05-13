@@ -483,10 +483,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Get the price of one satoshi in wei.
-    /// @dev Reverts if the price of one satoshi is 0 wei, or
-    ///      if the price of one satoshi is 1 ether.
+    /// @dev Reverts if the price of one satoshi is 0 wei, or if the price of
+    ///      one satoshi is 1 ether. Can only be called by a deposit with minted
+    ///      TDT.
     /// @return The price of one satoshi in wei.
     function fetchBitcoinPrice() external view returns (uint256) {
+        require(
+            tbtcDepositToken.exists(uint256(msg.sender)),
+            "Caller must be a Deposit contract"
+        );
+
         uint256 price = priceFeed.getPrice();
         if (price == 0 || price > 10 ** 18) {
             // This is if a sat is worth 0 wei, or is worth >1 ether. Revert at
