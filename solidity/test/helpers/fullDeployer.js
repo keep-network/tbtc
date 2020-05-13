@@ -133,7 +133,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   )
   await ecdsaKeepFactoryStub.setKeepAddress(deployed.ECDSAKeepStub.address)
 
-  const tbtcToken = await TestTBTCToken.new(vendingMachine.address)
+  const TestTBTCTokenInstance = await TestTBTCToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
 
   const tbtcDepositToken = deployed.TBTCDepositToken
@@ -147,7 +147,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     ecdsaKeepVendorStub.address,
     depositFactory.address,
     testDeposit.address,
-    tbtcToken.address,
+    TestTBTCTokenInstance.address,
     tbtcDepositToken.address,
     feeRebateToken.address,
     vendingMachine.address,
@@ -157,9 +157,9 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
 
   return Object.assign({}, deployed, {
     Deposit,
+    TestTBTCToken: TestTBTCTokenInstance,
     mockRelay,
     mockSatWeiPriceFeed,
-    tbtcToken,
     tbtcDepositToken,
     feeRebateToken,
     ecdsaKeepFactoryStub,
