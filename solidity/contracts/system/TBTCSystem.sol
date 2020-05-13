@@ -39,6 +39,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _severelyUndercollateralizedThresholdPercent,
         uint256 _timestamp
     );
+    event KeepFactorySingleShotUpdateStarted(
+        address _factorySelector,
+        address _ethBackedFactory,
+        uint256 _timestamp
+    );
+
 
     event EthBtcPriceFeedAdded(address _priceFeed);
     event LotSizesUpdated(uint64[] _lotSizes);
@@ -49,13 +55,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _undercollateralizedThresholdPercent,
         uint16 _severelyUndercollateralizedThresholdPercent
     );
-
+    event KeepFactorySingleShotUpdated(
+        address _factorySelector,
+        address _ethBackedFactory
+    );
 
     bool _initialized = false;
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
-    ISatWeiPriceFeed public  priceFeed;
+    ISatWeiPriceFeed public priceFeed;
     IRelay public relay;
 
     KeepFactorySelection.Storage keepFactorySelection;
@@ -73,12 +82,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 private signerFeeDivisorChangeInitiated;
     uint256 private lotSizesChangeInitiated;
     uint256 private collateralizationThresholdsChangeInitiated;
+    uint256 private keepFactorySingleShotUpdateInitiated;
 
     uint16 private newSignerFeeDivisor;
     uint64[] newLotSizesSatoshis;
     uint16 private newInitialCollateralizedPercent;
     uint16 private newUndercollateralizedThresholdPercent;
     uint16 private newSeverelyUndercollateralizedThresholdPercent;
+    address private newFactorySelector;
+    address private newEthBackedFactory;
 
     // price feed
     uint256 priceFeedGovernanceTimeDelay = 90 days;
@@ -163,34 +175,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             pausedDuration.sub(block.timestamp.sub(pausedTimestamp));
     }
 
-    /// @notice Sets the address of the fully backed ECDSA keep factory.
-    /// TBTCSystem uses two factories: the default one - using KEEP stake and
-    /// another using ETH-stake. When ETH-stake (fully backed) factory is not
-    /// set, KEEP-stake factory is the default choice. When both factories are
-    /// set, as well as keep factory selection strategy, TBTCSystem load
-    /// balances between two factories based on the selection strategy choices.
-    /// @dev Can be called only one time!
-    /// @param _fullyBackedFactory Address of the ETH-stake-based factory.
-    function setFullyBackedKeepFactory(
-        address _fullyBackedFactory
-    ) external onlyOwner {
-        keepFactorySelection.setFullyBackedKeepFactory(_fullyBackedFactory);
-    }
-
-    /// @notice Sets the address of the keep factory selection strategy.
-    /// TBTCSystem uses two factories: the default one - using KEEP stake and
-    /// another using ETH-stake. When ETH-stake (fully backed) factory is not
-    /// set, KEEP-stake factory is the default choice. When both factories are
-    /// set, as well as keep factory selection strategy, TBTCSystem load
-    /// balances between two factories based on the selection strategy choices.
-    /// @dev Can be called only one time!
-    /// @param _factorySelector Address of the keep factory selection strategy.
-    function setKeepFactorySelector(
-        address _factorySelector
-    ) external onlyOwner {
-        keepFactorySelection.setKeepFactorySelector(_factorySelector);
-    }
-
     /// @notice Set the system signer fee divisor.
     /// @dev    This can be finalized by calling `finalizeSignerFeeDivisorUpdate`
     ///         Anytime after `governanceTimeDelay` has elapsed.
@@ -200,11 +184,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     {
         require(
             _signerFeeDivisor > 9,
-            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%."
+            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%"
         );
         require(
             _signerFeeDivisor < 2000,
-            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%."
+            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%"
         );
 
         newSignerFeeDivisor = _signerFeeDivisor;
@@ -279,6 +263,51 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _initialCollateralizedPercent,
             _undercollateralizedThresholdPercent,
             _severelyUndercollateralizedThresholdPercent,
+            block.timestamp
+        );
+    }
+
+    /// @notice Sets the address of the ETH-only-backed ECDSA keep factory and
+    ///         the selection strategy that will choose between it and the
+    ///         default KEEP-backed factory for new deposits. When the
+    ///         ETH-only-backed factory and strategy are set, TBTCSystem load
+    ///         balances between two factories based on the selection strategy.
+    /// @dev It can be finalized by calling `finalizeKeepFactorySingleShotUpdate`
+    ///      any time after `governanceTimeDelay` has elapsed. This can be
+    ///      called more than once until finalized to reset the values and
+    ///      timer, but it can only be finalized once!
+    /// @param _factorySelector Address of the keep factory selection strategy.
+    /// @param _ethBackedFactory Address of the ETH-stake-based factory.
+    function beginKeepFactorySingleShotUpdate(
+        address _factorySelector,
+        address _ethBackedFactory
+    )
+        external onlyOwner
+    {
+        require(
+            // Either an update is in progress,
+            keepFactorySingleShotUpdateInitiated != 0 ||
+            // or we're trying to start a fresh one, in which case we must not
+            // have an already-finalized one (indicated by newEthBackedFactory
+            // being set).
+            newEthBackedFactory == address(0),
+            "Keep factory data can only be updated once"
+        );
+        require(
+            _factorySelector != address(0),
+            "Factory selector must be a nonzero address"
+        );
+        require(
+            _ethBackedFactory != address(0),
+            "ETH-backed factory must be a nonzero address"
+        );
+
+        newFactorySelector = _factorySelector;
+        newEthBackedFactory = _ethBackedFactory;
+        keepFactorySingleShotUpdateInitiated = block.timestamp;
+        emit KeepFactorySingleShotUpdateStarted(
+            _factorySelector,
+            _ethBackedFactory,
             block.timestamp
         );
     }
@@ -363,6 +392,35 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         newUndercollateralizedThresholdPercent = 0;
         newSeverelyUndercollateralizedThresholdPercent = 0;
         collateralizationThresholdsChangeInitiated = 0;
+    }
+
+    /// @notice Finish setting the address of the ETH-only-backed ECDSA keep
+    ///         factory and the selection strategy that will choose between it
+    ///         and the default KEEP-backed factory for new deposits.
+    /// @dev `beginKeepFactorySingleShotUpdate` must be called first; once
+    ///      `governanceTimeDelay` has passed, this function can be called to
+    ///      set the collateralization thresholds to the value set in
+    ///      `beginKeepFactorySingleShotUpdate`.
+    function finalizeKeepFactorySingleShotUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            keepFactorySingleShotUpdateInitiated,
+            governanceTimeDelay
+        ) {
+
+        keepFactorySelection.setKeepFactorySelector(newFactorySelector);
+        keepFactorySelection.setFullyBackedKeepFactory(newEthBackedFactory);
+
+        emit KeepFactorySingleShotUpdated(
+            newFactorySelector,
+            newEthBackedFactory
+        );
+
+        keepFactorySingleShotUpdateInitiated = 0;
+        newFactorySelector = address(0);
+        // Keep newEthBackedFactory set as a marker that the update has already
+        // occurred.
     }
 
     /// @notice Finish adding a new price feed contract to the priceFeed.
@@ -467,6 +525,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function getRemainingCollateralizationThresholdsUpdateTime() external view returns (uint256) {
         return getRemainingChangeTime(
             collateralizationThresholdsChangeInitiated,
+            governanceTimeDelay
+        );
+    }
+
+    /// @notice Get the time remaining until the Keep ETH-only-backed ECDSA keep
+    ///         factory and the selection strategy that will choose between it
+    ///         and the KEEP-backed factory can be updated.
+    function getRemainingKeepFactorySingleShotUpdateTime() external view returns (uint256) {
+        return getRemainingChangeTime(
+            keepFactorySingleShotUpdateInitiated,
             governanceTimeDelay
         );
     }

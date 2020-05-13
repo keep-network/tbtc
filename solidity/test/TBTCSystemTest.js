@@ -353,6 +353,71 @@ describe("TBTCSystem", async function() {
     })
   })
 
+  describe("when trying to update Keep factory info more than once", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("pauses new deposit creation", async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
+
+      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(false)
+    })
+
+    it("does not revert if beginKeepFactorySingleShotUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+
+      // Should not revert.
+      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+    })
+
+    it("reverts if finalizeKeepFactorySingleShotUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
+      await increaseTime(finalizationTime.toNumber() + 1) // 10 days
+      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+
+      await expectRevert(
+        tbtcSystem.beginKeepFactorySingleShotUpdate(
+          "0x0000000000000000000000000000000000000001",
+          "0x0000000000000000000000000000000000000002",
+        ),
+        "Keep factory data can only be updated once",
+      )
+    })
+
+    it("reverts if finalizeKeepFactorySingleShotUpdate is called twice", async () => {
+      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
+      await increaseTime(finalizationTime.toNumber() + 1) // 10 days
+      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+
+      await expectRevert(
+        tbtcSystem.finalizeKeepFactorySingleShotUpdate(),
+        "Change not initiated",
+      )
+    })
+  })
+
   before(async () => {
     governanceTest({
       property: "signer fee",
@@ -362,12 +427,12 @@ describe("TBTCSystem", async function() {
         "smaller than or equal to 9": {
           parameters: [9],
           error:
-            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.",
+            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%",
         },
         "greater than or equal to 2000": {
           parameters: [2000],
           error:
-            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%.",
+            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%",
         },
       },
       verifyFinalization: async (receipt, setDivisor) => {
@@ -396,11 +461,11 @@ describe("TBTCSystem", async function() {
       badInitializationTests: {
         "array is empty": {
           parameters: [[]],
-          error: "Lot size array must always contain 1 BTC.",
+          error: "Lot size array must always contain 1 BTC",
         },
         "array does not contain a 1 BTC lot size": {
           parameters: [[10 ** 7]],
-          error: "Lot size array must always contain 1 BTC.",
+          error: "Lot size array must always contain 1 BTC",
         },
         "array contains a lot size < 0.0005 BTC": {
           parameters: [[10 ** 7, 10 ** 8, 5 * 10 ** 3 - 1]],
@@ -418,6 +483,7 @@ describe("TBTCSystem", async function() {
         lotSizes.forEach((_, i) => expect(_).to.eq.BN(setLotSizes[i]))
       },
     })
+
     governanceTest({
       property: "collateralization thresholds",
       change: "CollateralizationThresholdsUpdate",
@@ -432,11 +498,11 @@ describe("TBTCSystem", async function() {
       badInitializationTests: {
         "contain initial collateralized percent > 300": {
           parameters: [301, 130, 120],
-          error: "a",
+          error: "Initial collateralized percent must be <= 300%",
         },
         "contain initial collateralized percent < 100": {
           parameters: [99, 130, 120],
-          error: "b",
+          error: "Initial collateralized percent must be >= 100%",
         },
         "contain undercollateralized threshold > initial collateralized percent": {
           parameters: [150, 160, 120],
@@ -474,7 +540,41 @@ describe("TBTCSystem", async function() {
     })
 
     governanceTest({
-      property: "adding an ETHBTC feeds",
+      property: "keep factory single-shot update",
+      change: "KeepFactorySingleShotUpdate",
+      goodParametersWithName: [
+        {
+          name: "_factorySelector",
+          value: "0x0000000000000000000000000000000000000001",
+        },
+        {
+          name: "_ethBackedFactory",
+          value: "0x0000000000000000000000000000000000000002",
+        },
+      ],
+      badInitializationTests: {
+        "factory selector is unset": {
+          parameters: [
+            "0x0000000000000000000000000000000000000000",
+            "0x0000000000000000000000000000000000000000",
+          ],
+          error: "Factory selector must be a nonzero address",
+        },
+      },
+      verifyFinalization: async (
+        receipt,
+        setFactorySelector,
+        setEthBackedFactory,
+      ) => {
+        expectEvent(receipt, "KeepFactorySingleShotUpdated", {
+          _factorySelector: setFactorySelector,
+          _ethBackedFactory: setEthBackedFactory,
+        })
+      },
+    })
+
+    governanceTest({
+      property: "the ETHBTC feeds with a new entry",
       change: "EthBtcPriceFeedAddition",
       timeDelayGetter: "getPriceFeedGovernanceTimeDelay",
       goodParametersWithName: [
@@ -507,34 +607,6 @@ describe("TBTCSystem", async function() {
           error: "Cannot add inactive feed",
         },
       },
-    })
-  })
-
-  describe("setFullyBackedKeepFactory", async () => {
-    const factory = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
-
-    it("can be called only by the owner", async () => {
-      await expectRevert(
-        tbtcSystem.setFullyBackedKeepFactory(factory, {from: nonSystemOwner}),
-        "Ownable: caller is not the owner.",
-      )
-
-      await tbtcSystem.setFullyBackedKeepFactory(factory)
-      // ok, no reverts
-    })
-  })
-
-  describe("setKeepFactorySelector", async () => {
-    const selector = "0xFFCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
-
-    it("can be called only by the owner", async () => {
-      await expectRevert(
-        tbtcSystem.setKeepFactorySelector(selector, {from: nonSystemOwner}),
-        "Ownable: caller is not the owner.",
-      )
-
-      await tbtcSystem.setKeepFactorySelector(selector)
-      // ok, no reverts
     })
   })
 })
