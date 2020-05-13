@@ -155,9 +155,8 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     1,
   )
 
-  return {
+  return Object.assign({}, deployed, {
     Deposit,
-    ...deployed,
     mockRelay,
     mockSatWeiPriceFeed,
     tbtcToken,
@@ -165,7 +164,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     feeRebateToken,
     ecdsaKeepFactoryStub,
     ecdsaKeepStub,
-  }
+  })
 }
 
 module.exports.deployAndLinkAll = deployAndLinkAll

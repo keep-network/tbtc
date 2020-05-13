@@ -98,14 +98,11 @@ const StateRunner = {
      */
     resolveDependencies: async (baseState, dependencies) => {
         const resolved = {}
-        for (let [name, resolver] of Object.entries(dependencies)) {
+        for (const [name, resolver] of Object.entries(dependencies)) {
             resolved[name] = await resolver(baseState)
         }
 
-        return {
-            ...baseState,
-            ...resolved,
-        }
+        return Object.assign({}, baseState, resolved)
     },
     /**
      * Takes a start state and a transition result, which can be an arbitrary
@@ -171,10 +168,7 @@ const StateRunner = {
             }
         }
 
-        return {
-            ...initialState,
-            ...resolved,
-        }
+        return Object.assign({}, initialState, resolved)
     },
     /**
      * Given a mocha suite, a base state, and the definition for that state's
@@ -216,7 +210,7 @@ const StateRunner = {
             // next state transition can take place.
             after(() => testPromiseResolver())
 
-            for (let [nextStateName, { transition, after, expect }] of
+            for (const [nextStateName, { transition, after, expect }] of
                     Object.entries(stateDefinition.next)) {
                 it(`to ${nextStateName}`, async () => {
                     if (after) {
