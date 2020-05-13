@@ -20,7 +20,7 @@ contract TestFeeRebateToken is FeeRebateToken {
     }
 
     /// @dev             Delete a feeRebateToken. This function is used to
-    ///                  to test cases where the existance of an FRT impacts test outcomes.
+    ///                  test cases where the existence of an FRT impacts test outcomes.
     ///                  Must be called my the token owner.
     /// @param _frtId    The Fee Rebate Token ID.
     function burn(uint256 _frtId) public {
