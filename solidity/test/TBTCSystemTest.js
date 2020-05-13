@@ -13,6 +13,7 @@ describe("TBTCSystem", async function() {
   let tbtcSystem
   let ecdsaKeepFactory
   let tdt
+  let satWeiPriceFeed
   let ethBtcMedianizer
   let badEthBtcMedianizer
   let newEthBtcMedianizer
@@ -39,10 +40,11 @@ describe("TBTCSystem", async function() {
     tbtcSystem = tbtcSystemStub
     ecdsaKeepFactory = ecdsaKeepFactoryStub
     tdt = tbtcDepositToken
+    satWeiPriceFeed = mockSatWeiPriceFeed
 
     ethBtcMedianizer = await MockMedianizer.new()
     await ethBtcMedianizer.setValue(100000000000)
-    mockSatWeiPriceFeed.initialize(tbtcSystem.address, ethBtcMedianizer.address)
+    satWeiPriceFeed.initialize(tbtcSystem.address, ethBtcMedianizer.address)
 
     badEthBtcMedianizer = await MockMedianizer.new()
     await badEthBtcMedianizer.setValue(0)
@@ -592,8 +594,8 @@ describe("TBTCSystem", async function() {
         await ethBtcMedianizer.setValue(0)
 
         // check new feed
-        expect(await tbtcSystem.fetchBitcoinPrice()).to.eq.BN(
-          new BN(10).pow(new BN(28)).div(new BN(NEW_PRICE_FEED_VALUE)),
+        expect(await satWeiPriceFeed.getWorkingEthBtcFeed()).to.equal(
+          newEthBtcMedianizer.address,
         )
 
         expectEvent(receipt, "EthBtcPriceFeedAdded", {

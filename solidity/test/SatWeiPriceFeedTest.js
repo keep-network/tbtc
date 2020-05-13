@@ -22,6 +22,17 @@ describe("SatWeiPriceFeed", async function() {
     beforeEach(createSnapshot)
     afterEach(restoreSnapshot)
 
+    it("does not allow direct access for anyone other than TBTC system", async () => {
+      await ethbtc.setValue(1) // make sure the feed is active
+
+      await expectRevert(
+        satWeiPriceFeed.getPrice.call(),
+        "Caller must be tbtcSystem contract",
+      )
+
+      await satWeiPriceFeed.getPrice.call({from: accounts[0]})
+    })
+
     it("returns correct satwei price feed value", async () => {
       const ethusd = new BN(150)
       const btcusd = new BN(7000)
@@ -30,12 +41,12 @@ describe("SatWeiPriceFeed", async function() {
 
       await ethbtc.setValue(ethbtcPrice)
 
-      const price = await satWeiPriceFeed.getPrice()
+      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
       const expectedSatWeiPrice = btcusd
         .mul(new BN(10).pow(new BN(10)))
         .div(ethusd)
 
-      expect(new BN(price)).to.be.bignumber.equal(new BN(expectedSatWeiPrice))
+      expect(new BN(price)).to.eq.BN(new BN(expectedSatWeiPrice))
     })
 
     it("casts down medianizer input price to lower 128 bits", async () => {
@@ -44,15 +55,18 @@ describe("SatWeiPriceFeed", async function() {
 
       await ethbtc.setValue(ethbtcPrice)
 
-      const price = await satWeiPriceFeed.getPrice()
+      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
       const expectedSatWei = new BN(10).pow(new BN(28)).div(new BN("67108864"))
 
-      expect(price).to.be.bignumber.equal(expectedSatWei)
+      expect(price).to.eq.BN(expectedSatWei)
     })
 
     it("Reverts if there are no active price feeds", async () => {
       await ethbtc.setValue(0)
-      await expectRevert(satWeiPriceFeed.getPrice(), "Price feed offline")
+      await expectRevert(
+        satWeiPriceFeed.getPrice.call({from: accounts[0]}),
+        "Price feed offline",
+      )
     })
 
     it("Retrieve price through array of empty feeds", async () => {
@@ -74,10 +88,10 @@ describe("SatWeiPriceFeed", async function() {
       // ensure the feed we read from is indeed workingBtcFeed and workingEthFeed
       expect(activeEthBtcFeed).to.equal(workingEthBtcFeed.address)
 
-      const price = await satWeiPriceFeed.getPrice()
+      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
       const expectedSatWei = new BN(10).pow(new BN(28)).div(new BN(ethBtc))
 
-      expect(price).to.be.bignumber.equal(expectedSatWei)
+      expect(price).to.eq.BN(expectedSatWei)
     })
   })
 
