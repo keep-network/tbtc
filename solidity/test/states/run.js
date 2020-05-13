@@ -104,6 +104,9 @@ const StateRunner = {
 
         return Object.assign({}, baseState, resolved)
     },
+    // We use some fancy TypeScript in our JSDoc types and the ESLint JSDoc
+    // syntax validator no likey.
+    // eslint-disable-next-line valid-jsdoc
     /**
      * Takes a start state and a transition result, which can be an arbitrary
      * object but must include a `tx` property that contains the Truffle
@@ -155,7 +158,7 @@ const StateRunner = {
             await transitionResult.tx
                 .then(_ => resolveAllLogs(_.receipt, initialState))
         const resolved = {}
-        for (let [property, resolver] of Object.entries(transitionResult)) {
+        for (const [property, resolver] of Object.entries(transitionResult)) {
             if (property.startsWith("resolve")) {
                 let resolvedProperty = property.replace(/^resolve/, '')
                 resolvedProperty =
@@ -177,6 +180,10 @@ const StateRunner = {
      * @param {Promise<object>} baseStatePromise Promise to the base state for
      *        these tessts, after any prior state transitions.
      * @param {StateDefinition<BaseState>} stateDefinition
+     * 
+     * @return {Promise<void>} A promise to the completion of the tests set up
+     *         by this function. It will be resolved after tests have finished
+     *         running, and allows the chaining of future state tests.
      *
      * @template BaseState The current state.
      */
@@ -265,6 +272,9 @@ const StateRunner = {
      * @param {object} baseState
      * @param {string} firstStateName
      * @param {...string} path
+     * 
+     * @return {Promise<void>} A promise to the full completion of all tests
+     *         in the state path.
      */
     runStatePath: (
         stateDefinitions,
@@ -289,13 +299,15 @@ const StateRunner = {
                         )),
                         definition: stateDefinitions[nextStateName],
                     }
+                } else {
+                    return { currentState, definition }
                 }
             },
             {
                 currentState: Promise.resolve(baseState),
                 definition: stateDefinitions[firstStateName],
             },
-        )
+        ).currentState
     }
 }
 
