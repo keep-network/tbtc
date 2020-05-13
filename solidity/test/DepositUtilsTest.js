@@ -499,7 +499,7 @@ describe("DepositUtils", async function() {
   describe("signerFee()", async () => {
     it("returns a derived constant", async () => {
       const signerFee = await testDeposit.signerFee.call()
-      expect(signerFee).to.eq.BN(5000000000000000)
+      expect(signerFee).to.eq.BN(500000000000000)
     })
   })
 
