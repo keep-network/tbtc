@@ -161,32 +161,6 @@ function resolveAllLogs(receipt, contractContainer) {
     }
 }
 
-/**
- * Similar to array.reduce, but accumulates promises instead of non-promises and
- * ensures that each step in the reduction waits on the previous one. Standard
- * reduces with async functions fire all the functions at once and require
- * explicit internal waits in the reducer; this function pulls that out and
- * correctly invokes each step of the reducer after the previous one's promise
- * has settled.
- *
- * @typeparam T The type of object in the array.
- * @typeparam A The type of object the reducer accumulates.
- * @param {T[]} array The array to reduce over.
- * @param {(A, T)=>A)} reducer The reducer that combines values of type T into
- *        an accumulator of type A.
- * @param {A} initialValue The initial value for the reduce, passed as the first
- *        parameter to the first call to the reducer.
- */
-async function asyncReduce(array, reducer, initialValue) {
-    return array.reduce(
-        async (previousValue, nextValue) => {
-            const realPrev = await previousValue
-            return reducer(realPrev, nextValue)
-        },
-        initialValue,
-    )
-}
-
 // real tx from mainnet bitcoin, interpreted as funding tx
 // tx source: https://www.blockchain.com/btc/tx/7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f
 const fundingTx = {
@@ -260,5 +234,4 @@ module.exports = {
   fundingTx,
   legacyFundingTx,
   resolveAllLogs,
-  asyncReduce,
 }
