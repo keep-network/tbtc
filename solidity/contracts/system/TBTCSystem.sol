@@ -62,7 +62,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
-    uint16 private signerFeeDivisor = 200; // 1/200 == 50bps == 0.5% == 0.005
+    uint16 private signerFeeDivisor = 2000; // 1/2000 == 5bps == 0.05% == 0.0005
     uint16 private initialCollateralizedPercent = 150; // percent
     uint16 private undercollateralizedThresholdPercent = 125;  // percent
     uint16 private severelyUndercollateralizedThresholdPercent = 110; // percent
