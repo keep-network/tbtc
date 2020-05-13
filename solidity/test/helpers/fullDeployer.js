@@ -1,5 +1,4 @@
 const {contract} = require("@openzeppelin/test-environment")
-const {BN} = require("@openzeppelin/test-helpers")
 const {deploySystem} = require("./utils.js")
 
 const Deposit = contract.fromArtifact("Deposit")
@@ -121,8 +120,6 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   }
 
   const deployed = await deploySystem(deployment)
-
-  const tbtcConstants = deployed.TBTCConstants
 
   const vendingMachine = deployed.VendingMachine
 
