@@ -159,10 +159,9 @@ function resolveAllLogs(receipt, contractContainer) {
         { raw: receipt.rawLogs, resolved: [] },
     )
 
-    return {
-        ...receipt,
+    return Object.assign({}, receipt, {
         logs: resolvedLogs,
-    }
+    })
 }
 
 /**
