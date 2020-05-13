@@ -1,6 +1,5 @@
 // @ts-check
 const {BN, expectEvent} = require("@openzeppelin/test-helpers")
-const {accounts} = require("@openzeppelin/test-environment")
 const {expect} = require("chai")
 
 const {fundingTx} = require("../helpers/utils.js")
