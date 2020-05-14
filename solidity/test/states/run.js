@@ -2,6 +2,7 @@
 const {BN} = require("@openzeppelin/test-helpers")
 const {increaseTime, resolveAllLogs} = require("../helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {expect} = require("chai")
 
 /** @typedef { import("mocha/lib/suite") } MochaSuite */
 /** @typedef {object} TruffleReceipt */
@@ -37,6 +38,10 @@ const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
  * @template TransitionedState Transitioned state after the transition.
  */
 /**
+ * @typedef {(initialState: InitialState, error: Error)=>Promise<any>} StateTransitionFailureExpectation
+ * @template InitialState Starting state of the transition.
+ */
+/**
  * @typedef {Object<string,StateDependencyResolver<any,any>>} StateDependencies
  */
 /**
@@ -47,6 +52,9 @@ const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
  *           from this state to another.
  * @property {StateTransitionExpectation<any,any>} expect A function that verifies the
  *           transition from the `transition` property via mocha expectations.
+ * @property {StateTransitionFailureExpectation<any>} expectError A function
+ *           that verifies an error from a transition from the `transition`
+ *           property via mocha expectations.
  */
 /**
  * @typedef {Object<string,StateTransitionDefinition>} StateTransitionDefinitions
@@ -188,56 +196,123 @@ const StateRunner = {
      * @template BaseState The current state.
      */
     setUpStateTests: (baseStatePromise, stateDefinition) => {
-        // These all resolve promises in the async before hook. This ensures
-        // this test's setup runs after any previous tests AND state transitions
-        // have completed.
+        // These are used to resolve promises in the async before hook. This
+        // ensures this test's setup runs after any previous tests AND state
+        // transitions have completed.
         let baseState
         let resolvedInitialState
-        let testPromiseResolver
 
-        // We resolve this promise below to indicate to the caller that all
-        // tests here have completed. Here, capture the resolver function for
+        // We resolve these promises below to indicate to the caller that all
+        // tests here have completed. Here, capture the resolver functions for
         // that purpose.
-        const testsCompletePromise = new Promise((resolve) => {
-            testPromiseResolver = resolve
+        /** @type {()=>void} */
+        let positiveTestsCompleted
+        /** @type {()=>void} */
+        let negativeTestsCompleted
+        const positiveTestsCompletePromise = new Promise((resolve) => {
+            positiveTestsCompleted = resolve
+        })
+        const negativeTestsCompletePromise = new Promise((resolve) => {
+            negativeTestsCompleted = resolve
         })
 
-        describe(`should transition from ${stateDefinition.name}`, () => {
-            before(async () => {
-                baseState = await baseStatePromise
-                resolvedInitialState =
-                    await StateRunner.resolveDependencies(
-                        baseState,
-                        stateDefinition.dependencies,
-                    )
-            })
-            beforeEach(async () => { await createSnapshot() })
-            afterEach(async () => { await restoreSnapshot() })
-            // After all tests have run, resolve the test promise so that the
-            // next state transition can take place.
-            after(() => testPromiseResolver())
-
-            for (const [nextStateName, { transition, after, expect }] of
-                    Object.entries(stateDefinition.next)) {
-                it(`to ${nextStateName}`, async () => {
-                    if (after) {
-                        await increaseTime((await after(resolvedInitialState)).add(new BN(1)))
-                    }
-                    const transitionResult = await transition(resolvedInitialState)
-                    const receipt = await transitionResult.tx.then(_ => resolveAllLogs(_.receipt, resolvedInitialState))
-
-                    if (expect) {
-                        await expect(
-                            resolvedInitialState,
-                            receipt,
-                            await StateRunner.resolveResults(resolvedInitialState, transitionResult),
+        const expectedSuccesses = Object.entries(stateDefinition.next || {})
+        if (expectedSuccesses.length) {
+            describe(`should transition from ${stateDefinition.name}`, () => {
+                before(async () => {
+                    baseState = await baseStatePromise
+                    resolvedInitialState =
+                        await StateRunner.resolveDependencies(
+                            baseState,
+                            stateDefinition.dependencies,
                         )
-                    }
                 })
-            }
-        })
+                beforeEach(async () => { await createSnapshot() })
+                afterEach(async () => { await restoreSnapshot() })
+                // After all tests have run, resolve the test promise so that the
+                // next state transition can take place.
+                after(() => positiveTestsCompleted())
 
-        return testsCompletePromise
+                for (const [nextStateName, { transition, after, expect }] of
+                        Object.entries(stateDefinition.next)) {
+                    it(`to ${nextStateName}`, async () => {
+                        if (after) {
+                            await increaseTime((await after(resolvedInitialState)).add(new BN(1)))
+                        }
+                        const transitionResult = await transition(resolvedInitialState)
+                        const receipt = await transitionResult.tx.then(_ => resolveAllLogs(_.receipt, resolvedInitialState))
+
+                        if (expect) {
+                            await expect(
+                                resolvedInitialState,
+                                receipt,
+                                await StateRunner.resolveResults(resolvedInitialState, transitionResult),
+                            )
+                        }
+                    })
+                }
+            })
+        } else {
+            positiveTestsCompleted()
+        }
+
+        const expectedFailures = Object.entries(stateDefinition.failNext || {})
+        if (expectedFailures.length > 0) {
+            describe(`should NOT transition from ${stateDefinition.name}`, () => {
+                before(async () => {
+                    // Wait for positive tests to complete so our snapshots don't
+                    // walk all over each other.
+                    // await positiveTestsCompletePromise
+                    baseState = await baseStatePromise
+                    resolvedInitialState =
+                        await StateRunner.resolveDependencies(
+                            baseState,
+                            stateDefinition.dependencies,
+                        )
+                })
+                beforeEach(async () => { await createSnapshot() })
+                afterEach(async () => { await restoreSnapshot() })
+                // After all tests have run, resolve the test promise so that the
+                // next state transition can take place.
+                after(() => negativeTestsCompleted())
+
+                for (const [nextStateName, { transition, after, expectError }] of expectedFailures) {
+                    it(`to ${nextStateName}`, async () => {
+                        try {
+                            if (after) {
+                                await increaseTime((await after(resolvedInitialState)).add(new BN(1)))
+                            }
+                            const transitionResult = await transition(resolvedInitialState)
+
+                            const tx = await transitionResult.tx
+
+                            expect.fail(
+                                "Transition should have failed but succeeded " +
+                                `with events: ${
+                                    JSON.stringify(
+                                        resolveAllLogs(
+                                            tx.receipt,
+                                            resolvedInitialState
+                                        ).logs.map(({ event, args }) => ({ event, args }))
+                                    )
+                                }`)
+                        } catch (e) {
+                            if (e.message.match(/Transition should have failed\./)) {
+                                throw e
+                            } else {
+                                await expectError(resolvedInitialState, e)
+                            }
+                        }
+                    })
+                }
+            })
+        } else {
+            negativeTestsCompleted()
+        }
+
+        // Settle when the negative tests promise does; note that negative tests
+        // will only run after positive tests do.
+        return positiveTestsCompletePromise.then(() => negativeTestsCompletePromise)
     },
     /**
      * Advances from the given `baseState` to the given `nextStateName`, using
