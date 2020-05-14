@@ -897,6 +897,11 @@ describe("DepositRedemption", async function() {
 
   describe("provideRedemptionProof", async () => {
     beforeEach(async () => {
+      // Mint the signer fee so we don't try to transfer nonexistent tokens eh.
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        await testDeposit.signerFee(),
+      )
       await mockRelay.setCurrentEpochDifficulty(fundingTx.difficulty)
       await testDeposit.setUTXOInfo(
         fundingTx.prevoutValueBytes,
