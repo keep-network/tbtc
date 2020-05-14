@@ -652,7 +652,7 @@ describe("TBTCSystem", async function() {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
-      await increaseTime(term.toNumber()) // 10 days
+      await increaseTime(term) // 10 days
       await tbtcSystem.resumeNewDeposits()
       const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
@@ -662,7 +662,7 @@ describe("TBTCSystem", async function() {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
-      await increaseTime(term.toNumber()) // 10 days
+      await increaseTime(term) // 10 days
       tbtcSystem.resumeNewDeposits()
 
       await expectRevert(

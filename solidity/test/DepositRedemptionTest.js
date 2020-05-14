@@ -223,7 +223,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("returns full TBTC if we are at-term and caller is not TDT holder", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
       await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
         from: owner,
       })
@@ -235,7 +235,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("returns SignerFee if we are at-term, caller is TDT holder, and fee is not escrowed", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
 
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
@@ -245,7 +245,7 @@ describe("DepositRedemption", async function() {
 
     it("returns zero if we are at-term, caller is TDT holder and signer fee is escrowed", async () => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
 
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
@@ -422,7 +422,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
       await tbtcDepositToken.transferFrom(
         tdtHolder,
         vendingMachine.address,
@@ -449,12 +449,12 @@ describe("DepositRedemption", async function() {
     })
 
     it("sends 1 TBTC to Deposit Token owner if deposit is at-term and fee is escrowed", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
       await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
         from: owner,
       })
       await tbtcToken.forceMint(testDeposit.address, signerFee)
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
 
       const {
         receipt: {blockNumber: transferBlock},
@@ -471,7 +471,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("escrows fee and sends correct TBTC if Deposit is at-term and fee is not escrowed", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
       await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
         from: owner,
       })
