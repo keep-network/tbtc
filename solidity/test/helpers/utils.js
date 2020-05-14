@@ -111,6 +111,26 @@ function increaseTime(duration) {
   })
 }
 
+function getCurrentTime() {
+  const id = Date.now()
+
+  return new Promise((resolve, reject) => {
+    web3.currentProvider.send(
+      {
+        jsonrpc: "2.0",
+        method: "eth_getBlockByNumber",
+        params: ['latest', true],
+        id: id,
+      },
+      (err1, { result: tx }) => {
+        if (err1) return reject(err1)
+
+        resolve(parseInt(tx.timestamp))
+      },
+    )
+  })
+}
+
 /**
  * Uses the ABIs of all contracts in the `contractContainer` to resolve any
  * events they may have emitted into the given `receipt`'s logs. Typically
@@ -303,8 +323,9 @@ module.exports = {
   LOW_WORK_HEADER: lowWorkHeader,
   deploySystem: deploySystem,
   HEADER_CHAINS: headerChains,
-  increaseTime: increaseTime,
-  expectEvent: expectEvent,
+  increaseTime,
+  getCurrentTime,
+  expectEvent,
   TX: tx,
   HEADER_PROOFS: headerChains.map(chainToProofBytes),
   fundingTx,
