@@ -3,6 +3,7 @@ pragma solidity 0.5.17;
 import {
     IBondedECDSAKeep
 } from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {TestTBTCToken} from "../system/TestTBTCToken.sol";
 
 /// @notice Implementation of ECDSAKeep interface used in tests only
 /// @dev This is a stub used in tests, so we don't have to call actual ECDSAKeep
@@ -36,7 +37,7 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
     }
 
     function distributeERC20Reward(address _asset, uint256 _value) external {
-        // solium-disable-previous-line no-empty-blocks
+        TestTBTCToken(_asset).transferFrom(msg.sender, address(this), _value);
     }
 
     function seizeSignerBonds() external {
