@@ -31,6 +31,9 @@ const System = {
     signerSetupTimeout: async ({ TBTCConstants }) => {
         return await TBTCConstants.getSigningGroupFormationTimeout()
     },
+    beforeSignerSetupTimeout: async (state) => {
+        return (await System.signerSetupTimeout(state)).sub(new BN(10))
+    },
     expectedBond: async ({ TBTCSystem, deposit }) => {
         const lotSize = await deposit.lotSizeSatoshis()
         const initial = await TBTCSystem.getInitialCollateralizedPercent()
@@ -162,16 +165,46 @@ module.exports = {
                 }
             }
         },
-        // TODO What can't happen here?
         failNext: {
             "signerSetupFailure too early": {
-                transition: async ({ deposit }) => {
+                dependencies: {
+                    bondAmount: System.expectedBond,
+                },
+                after: System.beforeSignerSetupTimeout,
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+
                     return {
                         state: "signerSetupFailure",
                         tx: deposit.notifySignerSetupFailure(),
                     }
+                },
+                expectError: async (_, error) => {
+                    expect(error.message).to.match(
+                        /Signing group formation timeout not yet elapsed/
+                    )
                 }
-            }
+            },
+            "signerSetupFailure when no bond is available": {
+                dependencies: {
+                    bondAmount: System.expectedBond,
+                },
+                after: System.signerSetupTimeout,
+                transition: async (state) => {
+                    const { deposit } = state
+
+                    return {
+                        state: "signerSetupFailure",
+                        tx: deposit.notifySignerSetupFailure(),
+                    }
+                },
+                expectError: async (_, error) => {
+                    expect(error.message).to.match(
+                        /No funds received, unexpected/
+                    )
+                }
+            },
         },
     },
     awaitingFundingProof: {
@@ -209,7 +242,19 @@ module.exports = {
             },
         },
         // TODO What can't happen here?
-        failNext: {}
+        failNext: {
+            "signerSetupFailure after signer group formation": {
+                transition: async ({ deposit }) => {
+                    return {
+                        state: "signerSetupFailure",
+                        tx: deposit.notifySignerSetupFailure(),
+                    }
+                },
+                expectError: async (_, error) => {
+                    expect(error.message).to.match(/Not awaiting setup/)
+                }
+            },
+        }
     },
     active: {
         name: "active",
