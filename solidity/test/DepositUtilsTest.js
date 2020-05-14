@@ -770,6 +770,14 @@ describe("DepositUtils", async function() {
   })
 
   describe("distributeFeeRebate()", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
     it("checks that beneficiary is rewarded", async () => {
       // min an arbitrary reward value to the funding contract
       const reward = await testDeposit.signerFee.call()
@@ -785,6 +793,22 @@ describe("DepositUtils", async function() {
         finalTokenBalance,
         "tokens not rewarded to beneficiary correctly",
       ).to.eq.BN(tokenCheck)
+    })
+
+    it("does not revert if feeRebateToken does not exist and balance > signerFee", async () => {
+      feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
+        from: beneficiary,
+      })
+      // min an arbitrary reward value to the funding contract
+      const reward = await testDeposit.signerFee.call()
+      await tbtcToken.forceMint(testDeposit.address, reward)
+
+      const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
+
+      await testDeposit.distributeFeeRebate()
+
+      const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
+      expect(initialTokenBalance).to.eq.BN(finalTokenBalance)
     })
   })
 
