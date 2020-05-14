@@ -447,7 +447,7 @@ describe("DepositUtils", async function() {
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
-      await increaseTime(duration.toNumber())
+      await increaseTime(duration)
 
       const value = await testDeposit.auctionValue.call()
       expect(value).to.eq.BN(auctionValue)
@@ -468,7 +468,7 @@ describe("DepositUtils", async function() {
       const percentage = basePercentage.add(elapsedPercent)
 
       // elapse half the auction time
-      await increaseTime(elapsedTime.toNumber())
+      await increaseTime(elapsedTime)
 
       const value = await testDeposit.auctionValue.call()
       expect(value).to.eq.BN(auctionValue.mul(percentage).div(new BN(100)))
