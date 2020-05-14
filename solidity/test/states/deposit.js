@@ -24,6 +24,7 @@ const System = {
     setEcdsaKey: async ({ ECDSAKeepStub }) => {
         ECDSAKeepStub.setPublicKey(depositRoundTrip.signerPubkey.concatenated)
     },
+
     setUpBond: async ({ ECDSAKeepStub, bondAmount }) => {
         ECDSAKeepStub.send(bondAmount)
         ECDSAKeepStub.setBondAmount(bondAmount)
@@ -37,9 +38,8 @@ const System = {
     expectedBond: async ({ TBTCSystem, deposit }) => {
         const lotSize = await deposit.lotSizeSatoshis()
         const initial = await TBTCSystem.getInitialCollateralizedPercent()
-        return lotSize.mul(await TBTCSystem.fetchBitcoinPrice()).mul(
-            initial.div(new BN(100))
-        )
+        const price = await TBTCSystem.fetchBitcoinPrice()
+        return price.mul(lotSize).mul(initial).div(new BN(100))
     },
     fundingDifficulty: async () => {
         return depositRoundTrip.fundingTx.difficulty
@@ -48,7 +48,7 @@ const System = {
         await MockRelay.setCurrentEpochDifficulty(difficulty)
     },
     setAndApproveRedemptionBalance: async ({ TestTBTCToken, deposit }) => {
-        const redemptionRequirement = 
+        const redemptionRequirement =
             await deposit.getRedemptionTbtcRequirement(opener)
         await TestTBTCToken.forceMint(
             opener,
@@ -56,6 +56,27 @@ const System = {
             redemptionRequirement,
         )
         await TestTBTCToken.approve(deposit.address, redemptionRequirement, { from: opener })
+    },
+    setWellCollateralized: async ({ deposit, ECDSAKeepStub, mockSatWeiPriceFeed }) => {
+        const bondAmount = await ECDSAKeepStub.checkBondAmount()
+        const lotSize = await deposit.lotSizeSatoshis()
+        const initial = await deposit.getInitialCollateralizedPercent()
+        const wellCollateralized = bondAmount.div(lotSize.mul(initial).div(new BN(100)))
+        await mockSatWeiPriceFeed.setPrice(wellCollateralized)
+    },
+    setUndercollateralized: async ({ deposit, ECDSAKeepStub, mockSatWeiPriceFeed }) => {
+        const bondAmount = await ECDSAKeepStub.checkBondAmount()
+        const lotSize = await deposit.lotSizeSatoshis()
+        const under = await deposit.getUndercollateralizedThresholdPercent()
+        const undercollateralized = bondAmount.div(lotSize.mul(under.sub(new BN(1))).div(new BN(100)))
+        await mockSatWeiPriceFeed.setPrice(undercollateralized)
+    },
+    setSeverelyUndercollateralized: async ({ deposit, ECDSAKeepStub, mockSatWeiPriceFeed }) => {
+        const bondAmount = await ECDSAKeepStub.checkBondAmount()
+        const lotSize = await deposit.lotSizeSatoshis()
+        const severe = await deposit.getSeverelyUndercollateralizedThresholdPercent()
+        const severelyUndercollateralized = bondAmount.div(lotSize.mul(severe.sub(new BN(1))).div(new BN(100)))
+        await mockSatWeiPriceFeed.setPrice(severelyUndercollateralized)
     },
     States: {
         START: new BN(0),
@@ -259,6 +280,7 @@ module.exports = {
     active: {
         name: "active",
         dependencies: {
+            bondAmount: System.expectedBond,
         },
         next: {
             awaitingWithdrawalSignature: {
@@ -282,8 +304,103 @@ module.exports = {
                     )
                 },
             },
+            courtesyCall: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    await System.setUndercollateralized(state)
+
+                    return {
+                        state: "courtesyCall",
+                        tx: deposit.notifyCourtesyCall()
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "CourtesyCalled")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.COURTESY_CALL
+                    )
+                },
+            },
+            liquidationInProgress: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    await System.setSeverelyUndercollateralized(state)
+                    return {
+                        state: "liquidatinInProgress",
+                        tx: deposit.notifyUndercollateralizedLiquidation()
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "StartedLiquidation")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.LIQUIDATION_IN_PROGRESS
+                    )
+                },
+            },
         },
         // TODO What can't happen here?
         failNext: {}
     },
+    awaitingWithdrawalSignature: {
+        name: "awaitingWithdrawalSignature",
+        dependencies: {
+        },
+        next: {
+            redeemed: {
+                transition: async (state) => {
+                    const { deposit } = state
+
+                    return {
+                        state: "redeemed",
+                        tx: deposit.provideRedemptionProof(
+                            depositRoundTrip.redemptionTx.version,
+                            depositRoundTrip.redemptionTx.txInputVector,
+                            depositRoundTrip.redemptionTx.txOutputVector,
+                            depositRoundTrip.redemptionTx.txLocktime,
+                            depositRoundTrip.redemptionTx.merkleProof,
+                            depositRoundTrip.redemptionTx.txIndexInBlock,
+                            depositRoundTrip.redemptionTx.bitcoinHeaders,
+                          )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "Redeemed")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.REDEEMED
+                    )
+                },
+            },
+        },
+        // TODO What can't happen here?
+        failNext: {}
+    },
+    courtesyCall: {
+        name: "courtesyCall",
+        dependencies: {
+            bondAmount: System.expectedBond,
+        },
+        next: {
+            active: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    await System.setWellCollateralized(state)
+                    return {
+                        state: "active",
+                        tx: deposit.exitCourtesyCall()
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "ExitedCourtesyCall")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.ACTIVE
+                    )
+                },
+            },
+        },
+        // TODO What can't happen here?
+        failNext: {}
+    }
 }
