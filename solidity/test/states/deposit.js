@@ -3,7 +3,7 @@ const {BN, expectEvent} = require("@openzeppelin/test-helpers")
 const {accounts} = require("@openzeppelin/test-environment")
 const {expect} = require("chai")
 
-const {depositRoundTrip} = require("../helpers/utils.js")
+const {depositRoundTrip, bytes32zero} = require("../helpers/utils.js")
 
 /** @typedef {any} BN */
 /** @typedef { import("./run.js").StateDefinition<object> } StateDefinition */
@@ -14,7 +14,7 @@ const {depositRoundTrip} = require("../helpers/utils.js")
 
 const opener = accounts[0]
 // const redeemer = accounts[1]
-// const liquidator = accounts[2]
+const liquidator = accounts[2]
 
 const System = {
     lotSizes: async ({ TBTCSystem }) => {
@@ -24,7 +24,15 @@ const System = {
     setEcdsaKey: async ({ ECDSAKeepStub }) => {
         ECDSAKeepStub.setPublicKey(depositRoundTrip.signerPubkey.concatenated)
     },
-
+    courtesyTimeout: async ({ TBTCConstants }) => {
+        return await TBTCConstants.getCourtesyCallTimeout()
+    },
+    fundingTimeout: async ({ TBTCConstants }) => {
+        return await TBTCConstants.getFundingTimeout()
+    },
+    signatureTimeout: async ({ TBTCConstants }) => {
+        return await TBTCConstants.getSignatureTimeout()
+    },
     setUpBond: async ({ ECDSAKeepStub, bondAmount }) => {
         ECDSAKeepStub.send(bondAmount)
         ECDSAKeepStub.setBondAmount(bondAmount)
@@ -44,6 +52,9 @@ const System = {
     fundingDifficulty: async () => {
         return depositRoundTrip.fundingTx.difficulty
     },
+    fastForward: async () => {
+
+    },
     setDifficulty: async ({ MockRelay, difficulty }) => {
         await MockRelay.setCurrentEpochDifficulty(difficulty)
     },
@@ -56,6 +67,12 @@ const System = {
             redemptionRequirement,
         )
         await TestTBTCToken.approve(deposit.address, redemptionRequirement, { from: opener })
+    },
+    setAndApproveLiquidationBalance: async ({ TestTBTCToken, deposit }) => {
+        const lotSize = await deposit.lotSizeSatoshis()
+        const requirement = lotSize.mul(new BN(10).pow(new BN(10)))
+        await TestTBTCToken.forceMint(liquidator, requirement)
+        await TestTBTCToken.approve(deposit.address, requirement, { from: liquidator })
     },
     setWellCollateralized: async ({ deposit, ECDSAKeepStub, mockSatWeiPriceFeed }) => {
         const bondAmount = await ECDSAKeepStub.checkBondAmount()
@@ -183,6 +200,12 @@ module.exports = {
                         state: "signerSetupFailure",
                         tx: deposit.notifySignerSetupFailure(),
                     }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "SetupFailed")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.FAILED_SETUP
+                    )
                 }
             }
         },
@@ -258,6 +281,47 @@ module.exports = {
                     expectEvent(receipt, "Funded")
                     expect(await deposit.getCurrentState()).to.eq.BN(
                         System.States.ACTIVE
+                    )
+                },
+            },
+            failedSetup_timeout: {
+                after: System.fundingTimeout,
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setDifficulty(state)
+
+                    return {
+                        state: "failedSetup",
+                        tx: deposit.notifyFundingTimeout()
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "SetupFailed")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.FAILED_SETUP
+                    )
+                },
+            },
+            failedSetup_ECDSAFraud: {
+                after: System.fundingTimeout,
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    return {
+                        state: "fraudLiquidation",
+                        tx: deposit.provideFundingECDSAFraudProof(
+                            0,
+                            bytes32zero,
+                            bytes32zero,
+                            bytes32zero,
+                            "0x00"
+                        )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "SetupFailed")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.FAILED_SETUP
                     )
                 },
             },
@@ -339,6 +403,28 @@ module.exports = {
                     )
                 },
             },
+            liquidationInProgress_fraud: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    return {
+                        state: "liquidatinInProgress",
+                        tx: deposit.provideECDSAFraudProof(
+                            0,
+                            bytes32zero,
+                            bytes32zero,
+                            bytes32zero,
+                            "0x00"
+                        )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "StartedLiquidation")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.FRAUD_LIQUIDATION_IN_PROGRESS
+                    )
+                },
+            },
         },
         // TODO What can't happen here?
         failNext: {}
@@ -372,6 +458,23 @@ module.exports = {
                     )
                 },
             },
+            liquidated: {
+                after: System.signatureTimeout,
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    return {
+                        state: "liquidatinInProgress",
+                        tx: deposit.notifySignatureTimeout()
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "StartedLiquidation")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.LIQUIDATED
+                    )
+                },
+            },
         },
         // TODO What can't happen here?
         failNext: {}
@@ -399,8 +502,121 @@ module.exports = {
                     )
                 },
             },
+            liquidationInProgress: {
+                after: System.courtesyTimeout,
+                transition: async (state) => {
+                    const { deposit } = state
+
+                    return {
+                        state: "liquidationInProgress",
+                        tx: deposit.notifyCourtesyTimeout()
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "StartedLiquidation")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.LIQUIDATION_IN_PROGRESS
+                    )
+                },
+            },
+            liquidationInProgress_fraud: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    return {
+                        state: "liquidatinInProgress",
+                        tx: deposit.provideECDSAFraudProof(
+                            0,
+                            bytes32zero,
+                            bytes32zero,
+                            bytes32zero,
+                            "0x00"
+                        )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "StartedLiquidation")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.FRAUD_LIQUIDATION_IN_PROGRESS
+                    )
+                },
+            },
         },
         // TODO What can't happen here?
         failNext: {}
+    },
+    liquidationInProgress: {
+        name: "liquidationInProgress",
+        dependencies: {
+            bondAmount: System.expectedBond,
+        },
+        next: {
+            liquidated: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setAndApproveLiquidationBalance(state)
+                    return {
+                        state: "liquidated",
+                        tx: deposit.purchaseSignerBondsAtAuction({from: liquidator})
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "Liquidated")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.LIQUIDATED
+                    )
+                },
+            },
+        },
+        failNext: {
+            "active after liquidation started": {
+                transition: async ({ deposit }) => {
+                    return {
+                        state: "active",
+                        tx: deposit.exitCourtesyCall(),
+                    }
+                },
+                expectError: async (_, error) => {
+                    expect(error.message).to.match(/Not currently in courtesy call./)
+                }
+            },
+        }
+    },
+    liquidationInProgress_fraud: {
+        name: "liquidationInProgress_fraud",
+        dependencies: {
+            bondAmount: System.expectedBond,
+        },
+        next: {
+            liquidated: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setAndApproveLiquidationBalance(state)
+                    return {
+                        state: "liquidated",
+                        tx: deposit.purchaseSignerBondsAtAuction({from: liquidator})
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "Liquidated")
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.LIQUIDATED
+                    )
+                },
+            },
+        },
+        failNext: {
+            "active after fraud liquidation started": {
+                transition: async ({ deposit }) => {
+                    return {
+                        state: "active",
+                        tx: deposit.exitCourtesyCall(),
+                    }
+                },
+                expectError: async (_, error) => {
+                    expect(error.message).to.match(/Not currently in courtesy call./)
+                }
+            },
+        }
     }
 }
