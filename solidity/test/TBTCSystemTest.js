@@ -455,10 +455,10 @@ describe("TBTCSystem", async function() {
           error:
             "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%",
         },
-        "greater than or equal to 2000": {
-          parameters: [2000],
+        "greater than or equal to 5000": {
+          parameters: [5000],
           error:
-            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%",
+            "Signer fee divisor must be less than 5000, for a signer fee that is > 0.02%",
         },
       },
       verifyFinalization: async (receipt, setDivisor) => {
