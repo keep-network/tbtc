@@ -186,8 +186,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%"
         );
         require(
-            _signerFeeDivisor < 2000,
-            "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%"
+            _signerFeeDivisor < 5000,
+            "Signer fee divisor must be less than 5000, for a signer fee that is > 0.02%"
         );
 
         newSignerFeeDivisor = _signerFeeDivisor;
