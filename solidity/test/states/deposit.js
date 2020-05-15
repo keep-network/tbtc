@@ -52,9 +52,6 @@ const System = {
     fundingDifficulty: async () => {
         return depositRoundTrip.fundingTx.difficulty
     },
-    fastForward: async () => {
-
-    },
     setDifficulty: async ({ MockRelay, difficulty }) => {
         await MockRelay.setCurrentEpochDifficulty(difficulty)
     },
