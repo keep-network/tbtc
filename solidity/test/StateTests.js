@@ -14,7 +14,7 @@ describe("tBTC states", () => {
       "awaitingWithdrawalSignature",
     )
   })
-  describe("Courtesy-Active", () => {
+  describe("Courtesy -> Active & liquidation", () => {
     runStatePath(
       states,
       deployAndLinkAll(),
@@ -23,6 +23,30 @@ describe("tBTC states", () => {
       "awaitingFundingProof",
       "active",
       "courtesyCall",
+      "liquidationInProgress",
+    )
+  })
+  describe("Courtesy -> Active & liquidation_fraud", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "courtesyCall",
+      "liquidationInProgress_fraud",
+    )
+  })
+  describe("Undercollateralized Liquidation", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "liquidationInProgress",
     )
   })
 })
