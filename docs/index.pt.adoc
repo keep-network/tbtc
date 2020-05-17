@@ -1,1 +1,38 @@
+:toc: macro
+:toclevels: 4
+:title-page:
+:tbtc:
 
+// Blank root prefix since this is the root doc.
+:root-prefix:
+
+include::constants.adoc[]
+
+= tBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
+
+ifndef::release[]
+.DRAFT
+****
+NOTE: This document is a rough draft. The contents may be inaccurate, not fully
+fleshed out, and are certainly not final.
+****
+endif::[]
+
+toc::[]
+
+[abstract]
+.Abstract
+--
+--
+
+== Overview
+
+== Conventions
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in https://tools.ietf.org/html/rfc2119[RFC 2119].
+
+== A note on naming
+
+The system, in its entirety, is called "tBTC". In this document and throughout
+the project, the fungible Bitcoin-backed token is called "TBTC" to distinguish
+it from the rest of the project, and strongly suggest an eventual ticker.
