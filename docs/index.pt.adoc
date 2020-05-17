@@ -8,13 +8,12 @@
 
 include::constants.adoc[]
 
-= tBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
+= tBTC: Um token ERC-20 resgatável e descentralizado, apoiado por BTC
 
 ifndef::release[]
 .DRAFT
 ****
-NOTE: This document is a rough draft. The contents may be inaccurate, not fully
-fleshed out, and are certainly not final.
+NOTE: Este documento é um rascunho. O conteúdo pode ser impreciso, não totalmente desenvolvido e certamente não é definitivo.
 ****
 endif::[]
 
@@ -25,29 +24,24 @@ toc::[]
 --
 --
 
-== Overview
+== Visão geral
 
-== Conventions
+== Convenções
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in https://tools.ietf.org/html/rfc2119[RFC 2119].
+As palavras-chave tais como "DEVEM", "NÃO DEVEM", "NECESSÁRIO",  "RECOMENDADO", "PODE", "NÃO PODE" e "OPCIONAL" neste documento são para ser interpretado como descrito em https://tools.ietf.org/html/rfc2119[RFC 2119].
 
-== A note on naming
+== Uma observação sobre a nomeação
 
-The system, in its entirety, is called "tBTC". In this document and throughout
-the project, the fungible Bitcoin-backed token is called "TBTC" to distinguish
-it from the rest of the project, and strongly suggest an eventual ticker.
+O sistema, na sua totalidade, é chamado "tBTC". Neste documento e em todo o projeto, o token fungível suportado por Bitcoin é chamado "TBTC" para distinguir do resto do projeto e sugerir fortemente um eventual ticker.
 
-Further discussion can be found on
+Discussões adicionais podem ser encontradas em 
 https://github.com/keep-network/tbtc/issues/17[Github].
 
-== Prior Work
+== Trabalho prévio
 
-Prior efforts toward a cross-chain Bitcoin peg are well-known. A Bitcoin peg is
-desirable for sidechains- functionality and scalability extensions to the
-conservatively upgraded main Bitcoin blockchain. Due to early interest in
-sidechains, a number of pegged Bitcoin approaches predate Ethereum.
+Os esforços anteriores em direção a um bitcoin multi-blockchain (cross-chain) são bem conhecidos. Uma pegada de Bitcoin é desejável para sidechains - para extensões de funcionalidade e escalabilidade para a conservadoramente atualizada blockchain principal do Bitcoin. Devido ao interesse precoce em sidechains, existem várias abordagens de Bitcoin peg, anteriores ao Ethereum.
 
-=== Centralized, Provable, Redeemable
+=== Centralizado, Provável, Resgatável
 
 Two solutions in the wild today provide centralized pegs that rely on trusted
 third parties based on variants of the "federated peg" model.
