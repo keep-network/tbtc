@@ -325,37 +325,14 @@ workflows:
           requires:
             - generate_docs_tex
             - generate_docs_asciidoctor
-  migrate_build_publish_keep_dev:
+  build_publish_keep_dev:
     jobs:
       - compile_contracts
-      - migrate_contracts:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - compile_contracts
-      - publish_npm_package:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - publish_contract_data:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
       - build_relay_maintainer_initcontainer:
           filters:
             branches:
               only: master
           context: keep-dev
-          requires:
-            - publish_npm_package
       - publish_relay_maintainer_initcontainer:
           filters:
             branches:
