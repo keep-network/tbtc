@@ -64,6 +64,7 @@ library DepositFunding {
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
         _d.keepSetupFee = _d.tbtcSystem.getNewDepositFeeEstimate();
+
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
             _m,
@@ -71,6 +72,8 @@ library DepositFunding {
             _bondRequirementWei,
             TBTCConstants.getDepositTerm()
         );
+
+        require(_d.fetchBondAmount() >= _d.keepSetupFee, "Insufficient signer bonds to cover setup fee");
 
         _d.signerFeeDivisor = _d.tbtcSystem.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _d.tbtcSystem.getUndercollateralizedThresholdPercent();
