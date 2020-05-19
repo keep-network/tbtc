@@ -11,7 +11,7 @@ const TestDeposit = contract.fromArtifact("TestDeposit")
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
 
 describe("DepositFactory", async function() {
-  const openKeepFee = new BN("123456") // set in ECDAKeepFactory
+  let openKeepFee
   const fullBtc = 100000000
 
   describe("createDeposit()", async () => {
@@ -22,11 +22,22 @@ describe("DepositFactory", async function() {
     before(async () => {
       // To properly test createDeposit, we deploy the real Deposit contract and
       // make sure we don't get hit by the ACL hammer.
-      ;({depositFactory} = await deployAndLinkAll([], {
+      ;({
+        depositFactory,
+        tbtcSystemStub,
+        ecdsaKeepStub,
+        ecdsaKeepFactoryStub,
+      } = await deployAndLinkAll([], {
         TestDeposit: Deposit,
       }))
+      openKeepFee = await tbtcSystemStub.getNewDepositFeeEstimate()
     })
+
     it("creates new clone instances", async () => {
+      await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
+      await ecdsaKeepStub.send(openKeepFee)
+      await ecdsaKeepStub.setBondAmount(openKeepFee)
+
       const blockNumber = await web3.eth.getBlockNumber()
 
       await depositFactory.createDeposit(fullBtc, {value: openKeepFee})
@@ -62,6 +73,8 @@ describe("DepositFactory", async function() {
         TestDeposit: Deposit,
         TBTCSystemStub: TBTCSystem,
       }))
+      await ecdsaKeepFactoryStub.setKeepAddress(ecdsaKeepStub.address)
+
       await mockSatWeiPriceFeed.setPrice(new BN("1000000000000", 10))
 
       await depositFactory.createDeposit(fullBtc, {value: openKeepFee})
@@ -72,6 +85,8 @@ describe("DepositFactory", async function() {
     })
 
     it("reverts if insufficient fee is provided", async () => {
+      await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
+
       const badOpenKeepFee = openKeepFee.sub(new BN("1"))
       await expectRevert(
         depositFactory.createDeposit(fullBtc, {value: badOpenKeepFee}),
@@ -99,7 +114,10 @@ describe("DepositFactory", async function() {
         tbtcDepositToken,
         testDeposit,
         depositFactory,
+        ecdsaKeepStub,
+        ecdsaKeepFactoryStub,
       } = await deployAndLinkAll([]))
+      openKeepFee = await tbtcSystemStub.getNewDepositFeeEstimate()
     })
 
     it("is not affected by state changes to other clone", async () => {
@@ -107,8 +125,14 @@ describe("DepositFactory", async function() {
       const keep2 = await ECDSAKeepStub.new()
       const blockNumber = await web3.eth.getBlockNumber()
 
+      await tbtcSystemStub.setKeepAddress(keep1.address)
+      await keep1.send(openKeepFee)
+      await keep1.setBondAmount(openKeepFee)
       await depositFactory.createDeposit(fullBtc, {value: openKeepFee})
 
+      await tbtcSystemStub.setKeepAddress(keep2.address)
+      await keep2.send(openKeepFee)
+      await keep2.setBondAmount(openKeepFee)
       await depositFactory.createDeposit(fullBtc, {value: openKeepFee})
 
       const eventList = await depositFactory.getPastEvents(
