@@ -71,6 +71,7 @@ describe("DepositFunding", async function() {
       ecdsaKeepFactoryStub,
     } = await deployAndLinkAll())
 
+    await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
     ecdsaKeepFactory = ecdsaKeepFactoryStub
     beneficiary = accounts[4]
     await tbtcDepositToken.forceMint(
@@ -93,7 +94,11 @@ describe("DepositFunding", async function() {
 
   describe("createNewDeposit", async () => {
     it("runs and updates state and fires a created event", async () => {
-      const expectedKeepAddress = "0x0000000000000000000000000000000000000007"
+      const expectedKeepAddress = ecdsaKeepStub.address
+      const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+      await ecdsaKeepStub.send(depositFee)
+      await ecdsaKeepStub.setBondAmount(depositFee)
 
       const blockNumber = await web3.eth.getBlockNumber()
 
@@ -143,6 +148,27 @@ describe("DepositFunding", async function() {
       })
       expect(eventList[0].returnValues._keepAddress).to.equal(
         expectedKeepAddress,
+      )
+    })
+
+    it("reverts if bond is insufficient to cover a deposit creation fee refund", async () => {
+      const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+      await ecdsaKeepStub.send(depositFee - 1)
+      await ecdsaKeepStub.setBondAmount(depositFee - 1)
+
+      await expectRevert(
+        testDeposit.createNewDeposit.call(
+          tbtcSystemStub.address,
+          tbtcToken.address,
+          tbtcDepositToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          1, // m
+          1,
+          fullBtc,
+        ),
+        "Insufficient signer bonds to cover setup fee",
       )
     })
 
@@ -209,9 +235,11 @@ describe("DepositFunding", async function() {
     })
 
     beforeEach(async () => {
+      await createSnapshot()
+
       const block = await web3.eth.getBlock("latest")
       const blockTimestamp = block.timestamp
-      const value = openKeepFee + 100
+      const value = openKeepFee
 
       await ecdsaKeepStub.send(value)
 
@@ -220,6 +248,10 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.AWAITING_SIGNER_SETUP)
 
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
