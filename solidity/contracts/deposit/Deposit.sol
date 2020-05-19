@@ -36,7 +36,7 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     function () external payable {
-        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from underlying keep");
+        require(msg.data.length == 0, "Deposit contract was called with unknown function selector.");
     }
 
     /// @notice     Get the keep contract address associated with the Deposit.
@@ -422,6 +422,13 @@ contract Deposit is DepositFactoryAuthority {
     /// @return The severely undercollateralized level for this deposit.
     function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint16) {
         return self.severelyUndercollateralizedThresholdPercent;
+    }
+
+    /// @notice     Calculates the amount of value at auction right now.
+    /// @dev        We calculate the % of the auction that has elapsed, then scale the value up.
+    /// @return     The value in wei to distribute in the auction at the current time.
+    function auctionValue() public view returns (uint256) {
+        return self.auctionValue();
     }
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.

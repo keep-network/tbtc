@@ -421,8 +421,10 @@ library DepositUtils {
     function distributeFeeRebate(Deposit storage _d) internal {
         address rebateTokenHolder = feeRebateTokenHolder(_d);
 
-        // We didn't escrow a rebate if the redeemer is also the Fee Rebate Token holder
-        if(_d.redeemerAddress == rebateTokenHolder) return;
+        // exit the function if there is nobody to send the rebate to
+        if(rebateTokenHolder == address(0)){
+            return;
+        }
 
         // pay out the rebate if it is available
         if(_d.tbtcToken.balanceOf(address(this)) >= signerFee(_d)) {

@@ -18,17 +18,23 @@ const Deposit = artifacts.require("Deposit")
 const VendingMachine = artifacts.require("VendingMachine")
 
 // price feed
-const MockSatWeiPriceFeed = artifacts.require("ETHBTCPriceFeedMock")
+const ETHBTCPriceFeedMock = artifacts.require("ETHBTCPriceFeedMock")
 const prices = require("./prices")
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
 // Bitcoin difficulty relays.
-const Relay = artifacts.require("@summa-tx/relay-sol/contracts/Relay")
+const OnDemandSPV = artifacts.require(
+  "@summa-tx/relay-sol/contracts/OnDemandSPV",
+)
+const TestnetRelay = artifacts.require(
+  "@summa-tx/relay-sol/contracts/TestnetRelay",
+)
 const MockRelay = artifacts.require("MockRelay")
 
 // system
 const TBTCConstants = artifacts.require("TBTCConstants")
 const TBTCDevelopmentConstants = artifacts.require("TBTCDevelopmentConstants")
+const KeepFactorySelection = artifacts.require("KeepFactorySelection")
 const TBTCSystem = artifacts.require("TBTCSystem")
 
 // tokens
@@ -64,18 +70,18 @@ const all = [
 
 const bitcoinMain = {
   genesis:
-    "0x00000020d208b5e50a8d3bd3a87f7a238e3f196621d0f9ffb5f302000000000000000000ee3af51ad3643a8a109935b45d9ca32b1003cda41df39dd75a17e13ba13aff4211aa585d39301c174a8ead73",
-  height: 590588,
+    "0x00006020dd02d03c03dbc1f41312a6940e89919ce67fbf99a20307000000000000000000260d70e7ae07c80db07fbf29d09ec1a86d4f788e58098189a6f9021236572a7dd99eb15e397a11178294a823",
+  height: 629070,
   epochStart:
-    "0x704de08dc5329269011b878835be108a8202a93a0a2a1c000000000000000000",
+    "0x459ec50d4ea62a89da04eb1ef3e352ec740bca50e8a808000000000000000000",
 }
 
 const bitcoinTest = {
   genesis:
-    "0x0000ff3ffc663e3a0b12b4cc2c05a425bdaf51922ce090acd8fa3a8a180300000000000084080b23fc40476d284da49fedaea9f7cee3aba33a8bad1347fa54740a29f02752b4c45dfcff031a279c2b3a",
-  height: 1607272,
+    "0x0000c0205d1103efc13e6647977e3d65f253c3e762451e9ca9b920517d000000000000008442a07bcde3292a888277ea6337ba5bbdfa808ae01535846f19d843144c8f60478bb15e7b41011a88be5d36",
+  height: 1723030,
   epochStart:
-    "0x84a9ec3b82556297ea36d1377901ecaef0bb5a5cf683f9f05103000000000000",
+    "0xe2657f702faa9470815005305c45b4be2271c22ade1348e6fe00000000000000",
 }
 
 module.exports = (deployer, network, accounts) => {
@@ -117,9 +123,9 @@ module.exports = (deployer, network, accounts) => {
       // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
       // Otherwise, we deploy our own mock price feeds, which are simpler
       // to maintain.
-      await deployer.deploy(MockSatWeiPriceFeed)
-      const satWeiPriceFeed = await MockSatWeiPriceFeed.deployed()
-      await satWeiPriceFeed.setValue(prices.satwei)
+      await deployer.deploy(ETHBTCPriceFeedMock)
+      const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
+      await ethBtcPriceFeedMock.setValue(prices.satwei)
     }
 
     // On mainnet and Ropsten, we use the Summa-built, Keep-operated relay;
@@ -128,16 +134,13 @@ module.exports = (deployer, network, accounts) => {
     if (network === "mainnet") {
       const {genesis, height, epochStart} = bitcoinMain
 
-      await deployer.deploy(Relay, genesis, height, epochStart)
-      difficultyRelay = await Relay.deployed()
-    } else if (network == "ropsten") {
-      await deployer.deploy(MockRelay)
-      difficultyRelay = await MockRelay.deployed()
-    } else if (network == "keep_dev") {
+      await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
+      difficultyRelay = await OnDemandSPV.deployed()
+    } else if (network == "keep_dev" || "ropsten") {
       const {genesis, height, epochStart} = bitcoinTest
 
-      await deployer.deploy(Relay, genesis, height, epochStart)
-      difficultyRelay = await Relay.deployed()
+      await deployer.deploy(TestnetRelay, genesis, height, epochStart, 0)
+      difficultyRelay = await TestnetRelay.deployed()
     } else {
       await deployer.deploy(MockRelay)
       difficultyRelay = await MockRelay.deployed()
@@ -148,6 +151,9 @@ module.exports = (deployer, network, accounts) => {
     if (!difficultyRelay) {
       throw new Error("Difficulty relay not found.")
     }
+
+    await deployer.deploy(KeepFactorySelection)
+    await deployer.link(KeepFactorySelection, TBTCSystem)
 
     // system
     await deployer.deploy(

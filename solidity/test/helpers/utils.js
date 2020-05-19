@@ -1,8 +1,12 @@
 const headerChains = require("./headerchains.json")
 const tx = require("./tx.json")
 const createHash = require("create-hash")
-const BN = require("bn.js")
 const {web3} = require("@openzeppelin/test-environment")
+
+const ozHelpers = require("@openzeppelin/test-helpers")
+const {BN} = ozHelpers
+const ozExpectEvent = ozHelpers.expectEvent
+const {expect} = require("chai")
 
 // Header with insufficient work. It's used for negative scenario tests when we
 // want to validate invalid header which hash (work) doesn't meet requirement of
@@ -105,6 +109,40 @@ function increaseTime(duration) {
   })
 }
 
+/**
+ * Wrapper for OpenZeppelin's expectEvent helper that deals with array-of-BN
+ * parameters.
+ *
+ * @param {TxReceipt} receipt The receipt to check for the specified event.
+ * @param {string} eventName The name of the event to look for.
+ * @param {object} parameters The parameters to look for in the event; unlike
+ *         OpenZeppelin's default version, parameters may have an array-of-BN
+ *         value and they will be properly validated.
+ */
+function expectEvent(receipt, eventName, parameters) {
+  const bnArrayParameterNames = []
+  for (const [parameterName, parameterValue] of Object.entries(parameters)) {
+    if (web3.utils.isBN(parameterValue[0])) {
+      bnArrayParameterNames.push(parameterName)
+    }
+  }
+
+  // Use OpenZeppelin helper for all non-array-of-BN parameters.
+  const withoutBnArray = Object.assign({}, parameters)
+  bnArrayParameterNames.forEach(_ => delete withoutBnArray[_])
+  ozExpectEvent(receipt, eventName, withoutBnArray)
+
+  if (bnArrayParameterNames.length > 0) {
+    // Check array-of-BN parameters in nested fashion, directly.
+    const log = receipt.logs.find(_ => _.event == eventName)
+    bnArrayParameterNames.forEach(paramName => {
+      log.args[paramName].forEach((bn, i) => {
+        expect(bn).to.eq.BN(parameters[paramName][i])
+      })
+    })
+  }
+}
+
 module.exports = {
   address0: "0x" + "00".repeat(20),
   bytes32zero: "0x" + "00".repeat(32),
@@ -114,6 +152,7 @@ module.exports = {
   deploySystem: deploySystem,
   HEADER_CHAINS: headerChains,
   increaseTime: increaseTime,
+  expectEvent: expectEvent,
   TX: tx,
   HEADER_PROOFS: headerChains.map(chainToProofBytes),
 }

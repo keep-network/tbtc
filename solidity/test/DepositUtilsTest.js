@@ -96,6 +96,34 @@ describe("DepositUtils", async function() {
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
   })
 
+  describe("Deposit fallback", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("Does not revert when receiving value directly (no msg.data)", async () => {
+      // receive value from different contract
+      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: 10})
+      // receive value from direct send
+      await testDeposit.send(10)
+    })
+
+    it("Reverts if Deposit is called with unknown function selector", async () => {
+      await expectRevert(
+        web3.eth.sendTransaction({
+          from: accounts[0],
+          to: testDeposit.address,
+          data: "0xbaddecaf",
+        }),
+        "Deposit contract was called with unknown function selector.",
+      )
+    })
+  })
+
   describe("currentBlockDifficulty()", async () => {
     it("calls out to the system", async () => {
       const blockDifficulty = await testDeposit.currentBlockDifficulty.call()
@@ -424,9 +452,8 @@ describe("DepositUtils", async function() {
     })
 
     it("returns base value if no time has elapsed", async () => {
-      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
-        value: auctionValue,
-      })
+      await testDeposit.send(auctionValue, {from: accounts[8]})
+
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
@@ -436,9 +463,8 @@ describe("DepositUtils", async function() {
     })
 
     it("returns full value if auction Duration has elapsed ", async () => {
-      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
-        value: auctionValue,
-      })
+      await testDeposit.send(auctionValue, {from: accounts[8]})
+
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
@@ -449,9 +475,8 @@ describe("DepositUtils", async function() {
     })
 
     it("scales auction value correctly", async () => {
-      ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
-        value: auctionValue,
-      })
+      await testDeposit.send(auctionValue, {from: accounts[8]})
+
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setLiquidationAndCourtesyInitated(block.timestamp, 0)
@@ -474,7 +499,7 @@ describe("DepositUtils", async function() {
   describe("signerFee()", async () => {
     it("returns a derived constant", async () => {
       const signerFee = await testDeposit.signerFee.call()
-      expect(signerFee).to.eq.BN(5000000000000000)
+      expect(signerFee).to.eq.BN(500000000000000)
     })
   })
 
@@ -694,9 +719,8 @@ describe("DepositUtils", async function() {
         const beneficiary = accounts[1]
         const initialBalance = await web3.eth.getBalance(beneficiary)
 
-        await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {
-          value: value,
-        })
+        await testDeposit.send(value, {from: accounts[8]})
+
         await testDeposit.enableWithdrawal(beneficiary, value)
         const tx = await testDeposit.withdrawFunds({from: beneficiary})
         const finalBalance = await web3.eth.getBalance(beneficiary)
@@ -746,6 +770,14 @@ describe("DepositUtils", async function() {
   })
 
   describe("distributeFeeRebate()", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
     it("checks that beneficiary is rewarded", async () => {
       // min an arbitrary reward value to the funding contract
       const reward = await testDeposit.signerFee.call()
@@ -762,12 +794,28 @@ describe("DepositUtils", async function() {
         "tokens not rewarded to beneficiary correctly",
       ).to.eq.BN(tokenCheck)
     })
+
+    it("does not revert if feeRebateToken does not exist and balance > signerFee", async () => {
+      feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
+        from: beneficiary,
+      })
+      // min an arbitrary reward value to the funding contract
+      const reward = await testDeposit.signerFee.call()
+      await tbtcToken.forceMint(testDeposit.address, reward)
+
+      const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
+
+      await testDeposit.distributeFeeRebate()
+
+      const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
+      expect(initialTokenBalance).to.eq.BN(finalTokenBalance)
+    })
   })
 
   describe("pushFundsToKeepGroup()", async () => {
     it("calls out to the keep contract", async () => {
       const value = 10000
-      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+      await testDeposit.send(value, {from: accounts[8]})
       await testDeposit.pushFundsToKeepGroup(value)
       const keepBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(keepBalance).to.eq.BN(new BN(value))

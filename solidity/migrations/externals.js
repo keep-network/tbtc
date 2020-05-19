@@ -1,6 +1,6 @@
 // Configuration for addresses of externally deployed smart contracts
 // prettier-ignore
-const BondedECDSAKeepVendorAddress = "0xZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+const BondedECDSAKeepFactoryAddress = "0xZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ"
 
 // Medianized price feeds.
 // These are deployed and maintained by Maker.
@@ -10,7 +10,7 @@ const ETHBTCMedianizer = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
 const RopstenETHBTCPriceFeed = "0xe9046e086137d2c0ffe60035391f6d7b4ec16733"
 
 module.exports = {
-  BondedECDSAKeepVendorAddress,
+  BondedECDSAKeepFactoryAddress,
   ETHBTCMedianizer,
   RopstenETHBTCPriceFeed,
 }

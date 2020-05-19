@@ -13,9 +13,17 @@ contract TestFeeRebateToken is FeeRebateToken {
     ///                  Mints a token and assigns it to an account.
     ///                  Uses the internal _mint function.
     /// @param _account  The account that will receive the token.
-    /// @param _tdtId    The tBTC Deposit Token ID. This is the Deposit address cast to a uint256.
-    function forceMint(address _account, uint256 _tdtId) public returns (bool) {
-        _mint(_account, _tdtId);
+    /// @param _frtId    The Fee Rebate Token ID.
+    function forceMint(address _account, uint256 _frtId) public returns (bool) {
+        _mint(_account, _frtId);
         return true;
+    }
+
+    /// @dev             Delete a feeRebateToken. This function is used to
+    ///                  test cases where the existence of an FRT impacts test outcomes.
+    ///                  Must be called my the token owner.
+    /// @param _frtId    The Fee Rebate Token ID.
+    function burn(uint256 _frtId) public {
+        _burn(msg.sender, _frtId);
     }
 }
