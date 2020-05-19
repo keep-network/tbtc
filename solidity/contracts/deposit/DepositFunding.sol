@@ -99,9 +99,11 @@ library DepositFunding {
         // refund the deposit owner the cost to create a new Deposit at the time the Deposit was opened.
         uint256 _seized = _d.seizeSignerBonds();
 
-        /* solium-disable-next-line security/no-send */
-        _d.enableWithdrawal(_d.depositOwner(), _d.keepSetupFee);
-        _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
+        if(_seized >= _d.keepSetupFee){
+            /* solium-disable-next-line security/no-send */
+            _d.enableWithdrawal(_d.depositOwner(), _d.keepSetupFee);
+            _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
+        }
 
         _d.setFailedSetup();
         _d.logSetupFailed();
