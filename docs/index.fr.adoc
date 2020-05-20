@@ -1,0 +1,189 @@
+:toc: macro
+:toclevels: 4
+:title-page:
+:tbtc:
+
+// Blank root prefix since this is the root doc.
+:root-prefix:
+
+include::constants.adoc[]
+
+= tBTC : Un jeton décentralisé de type ERC-20 garanti par dépôt et échangeable contre du BTC
+
+ifndef::release[]
+.ÉBAUCHE
+****
+NOTE: Ce document est une ébauche. Le contenu peut être inexact, des détails peuvent manquer, et est sujet à modifications futures.
+****
+endif::[]
+
+toc::[]
+
+[abstract]
+.Résumé
+--
+--
+
+== Vue d'ensemble
+
+== Conventions
+
+Les mots clés "DOIT", "NE DOIT PAS", "OBLIGATOIRE", "DEVRA", "NE DEVRA PAS", "DEVRAIT", "NE DEVRAIT PAS", "RECOMMANDÉ", "NON RECOMMANDÉE", "PEUT" et "OPTIONNELLE" dans ce document sont là pour être interprétés comme décrits dans la https://tools.ietf.org/html/rfc2119[RFC 2119].
+
+== Concernant la nomenclature
+
+Le système dans son ensemble est appelé "tBTC". Dans ce document et dans l'ensemble du projet, le jeton fongible garanti par dépôt de Bitcoin est appelé "TBTC" pour le distinguer du reste du projet. On recommande fotement l'utilisation de ce nom comme futur symbole.
+
+Des discussions supplémentaires peuvent être trouvées sur 
+https://github.com/keep-network/tbtc/issues/17[Github].
+
+== État de l'art
+
+Les travaux existant concernant l'implémentation d'une monnaie rattachée au Bitcoin sur d'autres blockchain sont connus. L'existence d'un jeton indexé au Bitcoin est une caractéristique désirable des sidechains ou chaînes parallèles, ces extensions de fonctionnalité et d'extensibilité de la chaîne principale Bitcoin, rarement mise à jour de manière significative. L'intérêt pour les sidechains ayant débuté très tôt, une multitude d'approches existent pour réaliser cette indexation, dont certaines précèdent les début de la blockchain Ethereum.
+
+=== Centralisé, vérifiable, échangeable
+
+Il y a deux solutions dans la nature qui fournissent aujourd'hui une indexation centralisée du Bitcoin reposant sur la confiance en des tiers parties et se basant sur des variante du modèle "d'indexation fédérée". 
+
+Dans le cas d'une indexation fédérée, un portefeuille à signatures multiples (multisig) est utilisé pour verrouiller des Bitcoins. Une autre blockchain émet alors des jetons représentant ces Bitcoin. Il est attendu des signataires du multisig qu'ils valident la sidechain et autorisent la destruction de certains de jetons émis en échange d'un retrait de Bitcoin en suivant les règles de la sidechain.
+
+https://blockstream.com/liquid/[Liquid], une sidechain
+https://blockstream.com/[Blockstream], est un réseau de règlement inter-échanges basé sur le modèle d'indexation fédérée. Des Bitcoin sont verrouillés  dans un multisig de 15 signataires, tous des échanges ou des participants autorisés par Blockstream. Ces signataires valident la sidechain en suivant une approche que l'équipe appelle une "fédération forte" dans laquelle une majorité vote pour signer les blocs et autorise les retraits vers la blockchain principale.
+
+https://wbtc.network[WBTC] est un jeton ERC-20 suivant une approche similaire. Le jeton est une partie d'un effort plus large appelé "Jetons emballés" our "Wrapped Tokens"/
+
+[quote, Livre blanc du projet Wrapped Tokens]
+____
+Wrapped tokens suit un modèle centralisé mais repose sur un consortium de plusieurs institutions chacune avec son rôle dans le réseau plutôt qu'une unique institution.
+____
+
+Le consortium WBTC vote sur l'ajout ou le retrait de dépositaires gestionnaires des réserves de Bitcoin. Chaque dépositaire est en possession d'un portefeuille Bitcoin multisig et est en contrôle de toutes les clés. Les dépositaires peuvent déplacer le Bitcoin en leur possession comme ils le souhaitent et sont responsable de l'émission de WBTC sur la plateforme Ethereum.
+
+L'ensemble des dépositaires se comporte dans les faits comme un système d'indexation fédérée traditionnel. En revanche, plutôt que de demandé à une majorité de siner les retraits de Bitcoin, un seul membre peut retirer sa portion de Bitcoin des réserves à tout moment.
+
+==== Compromis
+
+Ces approches ont quelques avantages très nets :
+
+* Elles offrent une indexation efficace du Bitcoin sur d'autres blockcahins 
+* Les réserves garantissant les jetons indexés peuvent être vérifiées sur la blockchain à tout moment.
+* Les deux approches utilisent un mécanisme simple, ce qui diminue la probabilité de défaillances ainsi que le coût opérationnel.
+
+Il y a en revanche des inconvénients. Le plus évident est que ces systèmes dépendent d'un modèle de confiance incompatible avec l'éthos du Bitcoin.
+
+Les dépositaires doivent être considérés comme fiables, soit en tant que groupe comme dans le modèle de Liquid, soit individuellement comme dans le modèle Wrapped tokens. Un dépositaire malveillant peut bloquer les retraits voir dans certain cas conspirer pour s'enfuir avec les fonds. Les dépositaires peuvent aussi être contraints par des gouvernements, pirates, ou d'autres forces externes à altérer les réserves malgré leurs bonnes intentions.
+
+=== Décentralisé, Synthétique, Non Échangeable
+
+Une des alternatives à une indexation centralisée est la création d'un actif synthétique décentralisé.
+ 
+https://makerdao.com/whitepaper/[MakerDAO] est une approche populaire sur la blockchain Ethereum avec le stablecoin Dai (NdT: "stablecoin", littéralement "devise stable", fait référence à une cryptomonnaie dont la valeur ne fluctue pas relativement à un autre actif).
+
+Dai est un jeton indexé de manière synthétique au dollar américain. De l'Ether est verrouillé dans des réserves. Couplé à un flux de prix robuste et un ensemble de mécanismes de stabilité, ces réserves permettent de maintenir l'indexation du Dai même dans des conditions périlleuses.
+
+Bien que Maker n'ait pas déployé un actif synthétique pour le Bitcoin, le même réseau que celui maintenant Dai pourrait facilement être déployé pour un produit similaire.
+
+==== Compromis
+
+Le plus grand avantage d'une indexation synthétique est sa flexiblité. Le jeton synthétique n'a pas besoinde suivre les règles de gouvernance de l'actif sous-jacent, pour le meilleur et pour le pire.
+
+Par exemple, un jeton synthétique peut "gonfler" la circulation de l'actif sous-jacent, ce qui peut s'avérer indésirable pour certains systèmes financiers, et se retourner contre une monnaie comme le Bitcoin dont l'une des caractéristiques est justement une circulation limitée.
+
+En dépit de la possibilité de réutiliser le réseau Maker, le lancement d'un tel actif synthétique comporte d'autres risques. Une indexation synthétique à une actif aussi instable que le Bitcoin garanti par une réserve entièrement constituée d'un Ether tout aussi instable, voilà qui constitue un mélange explosif.
+
+== Objectifs de conception
+
+Le but de tBTC est de créer un jeton ERC-20 qui maintienne la propriété la plus importante du Bitcoin - celle d'être une monnaie forte à la circulation limitée. 
+
+Pour maintenir cette propriété, tBTC doit vérifier les conditions suivantes :
+
+* Résistance à la censure et à la saisie dans toute jurisdiction
+* Résistnace à l'inflation. Des TBTC ne peuvent être émis qu'une fois une preuve de dépôt de BTC correspondant.
+* Résistant aux effets de levier. L'existance de tBTC ne doit pas permettre l'émission inter-chaîne d'actifs synthétiques supplémentaires indexés au Bitcoin. Nous ne pouvons pas empêcher quelqu'un de lancer un actif synthétique, mais le projet tBTC ne doit pas artificiellement augmenter la circulation de BTC.
+* Sans intermédiaire, dans le même sens que pour le Bitcoin. La seule rente doit venir de la participation minimale des signataires pour sécuriser le réseau, comme le font les mineurs pour le réseau Bitcoin.
+* Échangeable. La possibilité d'échanger librement le titre provisoire contre le dépôt le garantissant est ce qui distingue une monnaie indexée de la monnaie fiduciaire ou "fiat money". La circulation monétaire de TBTC est toujours garantie par une quantité égale de BTC en réserve. Cela signifie que pour chaque jeton en circulation, 1 BTC a été retiré de la circulation.
+
+Ensemble, ces propriétés garantissent une indexation stricte sur la masse monétaire entre les différentes blockchain et permettent de s'approcher au maximum du statut de monnaie "forte" qu'un actif indexé au Bitcoin pourrait atteindre.
+
+En particulier, ces propriétés ne requiert pas une indexation sur le prix artificiel comme cela est souvent le cas avec  les projets de stablecoin -- elles reposent plutôt sur une indexation à la masse monétaire.
+
+== Première intuition : un protocole à signataire unique 
+
+Pour comprendre comment on pourrait développer un protocole et un jeton satisfaisant ces exigences, on considère une variante simplifiée à plusieurs degrés de liberté qui pourrait théoriquement faire l'affaire.
+
+Imaginons un acteur hors de la blockchain appelé le `Signer`; un contrat Ethereum implémentant l'interface ERC-20 `PeggedBitcoin` (NdT: "Pegged bicoin" signifie littéralement "Bitcoin indexé") avec le symbole
+`PBTC`; et un autre contrat appelé `PeggedBitcoinReserve` ayant la permission d'émettre et détruite des 
+`PBTC`.
+
+Un autre acteur hors de la blockchain, `Depositor`, souhaite émettre un jeton sur le contrat
+`PeggedBitcoin`. `Depositor` demande au contrat  `PeggedBitcoinReserve`
+d'accepter un dépôt de 1 BTC. `PeggedBitcoinReserve` attend que `Signer` reconnaisse ce dépôt et renvoie une nouvelle adresse BTC arpès avoir déposé sur le contrat `PeggedBitcoinReserve` une caution en ETH de 150% la valeur du Bitcoin déposé. `Depositor`
+envoie 1 BTC à l'adresse BTC générée et en fournit une preuve au contrat
+`PeggedBitcoinReserve` - ce contrat émet alors 1 `PBTC` et en envoie 0.99 à
+`Depositor` et .01 à `Signer` comme frais d'opération.
+
+Les retraits se déroulent dans le sens inverse- n'importe quel participant peut envoyer 1 `PBTC` à
+`PeggedBitcoinReserve` en plus d'une adresse Bitcoin. `Signer` paye 1 BTC moins les frais de transaction Bitcoin et fournit une preuve de paiement au contrat `PeggedBitcoinReserve` qui détruit alors 1 `PBTC`,
+maintenant ainsi une garanti par dépôt des `PBTC` à un ratio 1:1. `Signer` est maintenant libre de retirer sa caution du contrat `PeggedBitcoinReserve`.
+
+===  Failles
+
+Bien que ce design simple soit séduisant, il ignore certaines des difficultés les plus importantes, comme par exemple la vérification efficace de transactions Bitcoin sur la machine virtuelle Ethereum (EthereumVM) ou encore l'implémentation d'un flux de prix fiable.
+
+Il est aussi basé sur une solution de mise en dépôt très précaire.
+
+Tout d'abord, le protocole repose sur un seul signataire. Si la valeur des dépôt dépasser la valeur de la caution déposée par `Signer` rien ne l'empêche de fuir avec les BTC. `Signer` peut aussi décider de censurer certains retraits ou y être forcé, ce qui enlève au système toute propriété de résistance à la censure ou à la saisie.
+
+Deuxièmement, le protocole repose sur un unique *hot wallet* (NdT: expession désignant un portefeuille dont la clé privée cryptographique apparaît en clair sur un appareil connecté à internet au moment de signer une transaction). Si la capitalisation de
+`PBTC` augmente, le risque lié au piratage de ce portefeuille augmente considérablement.
+
+Enfin, le protocole ne compartimente pas les défaillances. Si un problème a lieu avec un seul dpôt ou retrait, cela pourrait affecter toute la circulation monétaire de `PeggedBitcoin`, bloquant ainsi les futurs dépôts et retraits.
+
+== Architecture système : conception d'un protocole multi-portefeuilles et multi-signataires robuste
+
+La suite de ce document se consacre à la spécification d'un protocole qui comble ces failles, fournissant ainsi un actif garanti par Bitcoin sur la blockchain Ethereum qui soit robuste et sûr.
+
+De manière simple, cela signifie que le protocole décrit doit :
+
+* avoir une architecture à plusieurs portefeuilles
+* avec de nombreux signataires répartis géographiquement
+* ce qui retire tout point unique de défaillance
+
+Ce protocole doit également prévenir certains des effets secondaires de ces exigences et résoudre les difficultés ignorées dans notre example à un signataire, comme par exemple : le paiement à plusieurs signataires, un système de caution plus complexe, une méthode de détection et de gestion d'un déficit de caution des signataires, un système de preuve des transactions Bitcoin, et une prise en charge robuste des défaillances sur les deux blockchains.
+
+Certains des composants nécessaires à ce protocole sont décrits en dehors de ce document et on supposera leur existence acquise. En particulier, on suppose l'existence des éléments suivants :
+
+* un "jeton de travail" bien distribué et utilisé pour la sélection des signataires
+* une balise aléatoire pour la sélection des signataires
+* un protocole efficace de génération de clés cryptographiques sur la courbe elliptique secp26k1  
+* un protocole efficace de signature à seuil ECDSA multipartite sur la courbe elliptique secp256k1
+
+Ces éléments sont implémentés par le https://keep.network[réseau Keep]. Leur importance est décrite dans les sections qui suivent.
+
+L'architecture est séparée en plusieurs composantes :
+
+* Dépôts et sélectin des signataires
+* Caution et flux de prix 
+* Émission
+* Frais de signataires
+* Signature
+* Défaillance de portefeuille
+* Retrait
+
+include::deposits/index.adoc[leveloffset=+2]
+
+include::bonding/index.adoc[leveloffset=+2]
+
+include::price-feed/index.adoc[leveloffset=+2]
+
+include::minting/index.adoc[leveloffset=+2]
+
+include::signer-fees/index.adoc[leveloffset=+2]
+
+include::signing/index.adoc[leveloffset=+2]
+
+include::failure/index.adoc[leveloffset=+2]
+
+include::redemption/index.adoc[leveloffset=+2]
+
+include::appendix/index.adoc[leveloffset=+2]
