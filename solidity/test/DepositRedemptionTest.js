@@ -1,5 +1,10 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {states, bytes32zero, increaseTime} = require("./helpers/utils.js")
+const {
+  states,
+  bytes32zero,
+  increaseTime,
+  fundingTx,
+} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
@@ -16,6 +21,9 @@ const {expect} = require("chai")
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 describe("DepositRedemption", async function() {
+  const redeemerOutputScript =
+    "0x16001486e7303082a6a21d5837176bc808bf4828371ab6"
+
   let tbtcConstants
   let mockRelay
   let tbtcSystemStub
@@ -215,7 +223,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("returns full TBTC if we are at-term and caller is not TDT holder", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
       await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
         from: owner,
       })
@@ -227,7 +235,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("returns SignerFee if we are at-term, caller is TDT holder, and fee is not escrowed", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
 
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
@@ -237,7 +245,7 @@ describe("DepositRedemption", async function() {
 
     it("returns zero if we are at-term, caller is TDT holder and signer fee is escrowed", async () => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
 
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
@@ -414,7 +422,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
       await tbtcDepositToken.transferFrom(
         tdtHolder,
         vendingMachine.address,
@@ -441,12 +449,12 @@ describe("DepositRedemption", async function() {
     })
 
     it("sends 1 TBTC to Deposit Token owner if deposit is at-term and fee is escrowed", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
       await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
         from: owner,
       })
       await tbtcToken.forceMint(testDeposit.address, signerFee)
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
 
       const {
         receipt: {blockNumber: transferBlock},
@@ -463,7 +471,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("escrows fee and sends correct TBTC if Deposit is at-term and fee is not escrowed", async () => {
-      await increaseTime(depositTerm.toNumber())
+      await increaseTime(depositTerm)
       await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
         from: owner,
       })
@@ -504,6 +512,8 @@ describe("DepositRedemption", async function() {
     const valueBytes = "0x1111111111111111"
     const keepPubkeyX = "0x" + "33".repeat(32)
     const keepPubkeyY = "0x" + "44".repeat(32)
+    // Override redeemer output script for this test.
+    // No real reason here, it's just how we derived the below values.
     const redeemerOutputScript = "0x160014" + "33".repeat(20)
     let requiredBalance
 
@@ -773,6 +783,9 @@ describe("DepositRedemption", async function() {
     // nextSighash preimage is:
     // 010000003fc8fd9fada5a3573744477d5e35b0d4d0645e42285e3dec25aac02078db0f838cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb93333333333333333333333333333333333333333333333333333333333333333333333331976a9145eb9b5e445db673f0ed8935d18cd205b214e518788acffffffffffffffff0000000044bf045101f1d83d0f2e017a73bb85857f25137c31cc7382ef363c909659f55a0000000001000000
 
+    // Override redeemer output script for this test.
+    // No real reason here, it's just how we derived the below values.
+    const redeemerOutputScript = "0x160014" + "33".repeat(20)
     const prevSighash =
       "0xd94b6f3bf19147cc3305ef202d6bd64f9b9a12d4d19cc2d8c7f93ef58fc8fffe"
     const nextSighash =
@@ -784,7 +797,6 @@ describe("DepositRedemption", async function() {
     const newOutputBytes = "0x0100feffffffffff"
     const initialFee = 0xffff
     const outpoint = "0x" + "33".repeat(36)
-    const redeemerOutputScript = "0x160014" + "33".repeat(20)
     let feeIncreaseTimer
 
     before(async () => {
@@ -884,30 +896,18 @@ describe("DepositRedemption", async function() {
   })
 
   describe("provideRedemptionProof", async () => {
-    // real tx from mainnet bitcoin
-    const currentDiff = 6353030562983
-    // const txid = '0x7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f'
-    const txidLE =
-      "0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c"
-    const _version = "0x01000000"
-    const _txInputVector = `0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff`
-    const _txOutputVector =
-      "0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6"
-    const _txLocktime = "0x4ec10800"
-    const proof =
-      "0x886f7da48f4ccfe49283c678dedb376c89853ba46d9a297fe39e8dd557d1f8deb0fb1a28c03f71b267f3a33459b2566975b1653a1238947ed05edca17ef64181b1f09d858a6e25bae4b0e245993d4ea77facba8ed0371bb9b8a6724475bcdc9edf9ead30b61cf6714758b7c93d1b725f86c2a66a07dd291ef566eaa5a59516823d57fd50557f1d938cc2fb61fe0e1acee6f9cb618a9210688a2965c52feabee66d660a5e7f158e363dc464fca2bb1cc856173366d5d20b5cd513a3aab8ebc5be2bd196b783b8773af2472abcea3e32e97938283f7b454769aa1c064c311c3342a755029ee338664999bd8d432080eafae3ca86b52ad2e321e9e634a46c1bd0d174e38bcd4c59a0f0a78c5906c015ef4daf6beb0500a59f4cae00cd46069ce60db2182e74561028e4462f59f639c89b8e254602d6ad9c212b7c2af5db9275e48c467539c6af678d6f09214182df848bd79a06df706f7c3fddfdd95e6f27326c6217ee446543a443f82b711f48c173a769ae8d1e92a986bc76fca732f088bbe049"
-    const index = 129
-    const headerChain =
-      "0x00e0ff3fd877ad23af1d0d3e0eb6a700d85b692975dacd36e47b1b00000000000000000095ba61df5961d7fa0a45cd7467e11f20932c7a0b74c59318e86581c6b509554876f6c65c114e2c17e42524d300000020994d3802da5adf80345261bcff2eb87ab7b70db786cb0000000000000000000003169efc259f6e4b5e1bfa469f06792d6f07976a098bff2940c8e7ed3105fdc5eff7c65c114e2c170c4dffc30000c020f898b7ea6a405728055b0627f53f42c57290fe78e0b91900000000000000000075472c91a94fa2aab73369c0686a58796949cf60976e530f6eb295320fa15a1b77f8c65c114e2c17387f1df00000002069137421fc274aa2c907dbf0ec4754285897e8aa36332b0000000000000000004308f2494b702c40e9d61991feb7a15b3be1d73ce988e354e52e7a4e611bd9c2a2f8c65c114e2c1740287df200000020ab63607b09395f856adaa69d553755d9ba5bd8d15da20a000000000000000000090ea7559cda848d97575cb9696c8e33ba7f38d18d5e2f8422837c354aec147839fbc65c114e2c175cf077d6000000200ab3612eac08a31a8fb1d9b5397f897db8d26f6cd83a230000000000000000006f4888720ecbf980ff9c983a8e2e60ad329cc7b130916c2bf2300ea54e412a9ed6fcc65c114e2c17d4fbb88500000020d3e51560f77628a26a8fad01c88f98bd6c9e4bc8703b180000000000000000008e2c6e62a1f4d45dd03be1e6692df89a4e3b1223a4dbdfa94cca94c04c22049992fdc65c114e2c17463edb5e"
-    const outpoint =
-      "0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000"
-    const prevoutValueBytes = "0xf078351d00000000"
-    const redeemerOutputScript =
-      "0x16001486e7303082a6a21d5837176bc808bf4828371ab6"
-
     beforeEach(async () => {
-      await mockRelay.setCurrentEpochDifficulty(currentDiff)
-      await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
+      // Mint the signer fee so we don't try to transfer nonexistent tokens eh.
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        await testDeposit.signerFee(),
+      )
+      await mockRelay.setCurrentEpochDifficulty(fundingTx.difficulty)
+      await testDeposit.setUTXOInfo(
+        fundingTx.prevoutValueBytes,
+        0,
+        fundingTx.prevoutOutpoint,
+      )
       await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
       await testDeposit.setRequestInfo(
         "0x" + "11".repeat(20),
@@ -923,13 +923,13 @@ describe("DepositRedemption", async function() {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideRedemptionProof(
-        _version,
-        _txInputVector,
-        _txOutputVector,
-        _txLocktime,
-        proof,
-        index,
-        headerChain,
+        fundingTx.version,
+        fundingTx.txInputVector,
+        fundingTx.txOutputVector,
+        fundingTx.txLocktime,
+        fundingTx.merkleProof,
+        fundingTx.txIndexInBlock,
+        fundingTx.bitcoinHeaders,
       )
 
       const depositState = await testDeposit.getState.call()
@@ -944,7 +944,7 @@ describe("DepositRedemption", async function() {
         fromBlock: blockNumber,
         toBlock: "latest",
       })
-      expect(eventList[0].returnValues._txid).to.equal(txidLE)
+      expect(eventList[0].returnValues._txid).to.equal(fundingTx.txidLE)
     })
 
     it("reverts if not in the redemption flow", async () => {
@@ -952,13 +952,13 @@ describe("DepositRedemption", async function() {
 
       await expectRevert(
         testDeposit.provideRedemptionProof(
-          _version,
-          _txInputVector,
-          _txOutputVector,
-          _txLocktime,
-          proof,
-          index,
-          headerChain,
+          fundingTx.version,
+          fundingTx.txInputVector,
+          fundingTx.txOutputVector,
+          fundingTx.txLocktime,
+          fundingTx.merkleProof,
+          fundingTx.txIndexInBlock,
+          fundingTx.bitcoinHeaders,
         ),
         "Redemption proof only allowed from redemption flow",
       )
@@ -967,13 +967,13 @@ describe("DepositRedemption", async function() {
     it("reverts if the merkle proof is not validated successfully", async () => {
       await expectRevert(
         testDeposit.provideRedemptionProof(
-          _version,
-          _txInputVector,
-          _txOutputVector,
-          _txLocktime,
-          proof,
+          fundingTx.version,
+          fundingTx.txInputVector,
+          fundingTx.txOutputVector,
+          fundingTx.txLocktime,
+          fundingTx.merkleProof,
           0,
-          headerChain,
+          fundingTx.bitcoinHeaders,
         ),
         "Tx merkle proof is not valid for provided header",
       )
@@ -981,18 +981,12 @@ describe("DepositRedemption", async function() {
   })
 
   describe("redemptionTransactionChecks", async () => {
-    const _txInputVector = `0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff`
-    const _txOutputVector =
-      "0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6"
-    const outputValue = 490029088
-    const outpoint =
-      "0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000"
-    const prevoutValueBytes = "0xf078351d00000000"
-    const redeemerOutputScript =
-      "0x16001486e7303082a6a21d5837176bc808bf4828371ab6"
-
     beforeEach(async () => {
-      await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
+      await testDeposit.setUTXOInfo(
+        fundingTx.prevoutValueBytes,
+        0,
+        fundingTx.prevoutOutpoint,
+      )
       await testDeposit.setRequestInfo(
         "0x" + "11".repeat(20),
         redeemerOutputScript,
@@ -1004,37 +998,43 @@ describe("DepositRedemption", async function() {
 
     it("returns the output value", async () => {
       const redemptionChecks = await testDeposit.redemptionTransactionChecks.call(
-        _txInputVector,
-        _txOutputVector,
+        fundingTx.txInputVector,
+        fundingTx.txOutputVector,
       )
-      expect(redemptionChecks).to.eq.BN(new BN(outputValue))
+      expect(redemptionChecks).to.eq.BN(new BN(fundingTx.outputValue))
     })
 
     it("reverts if bad input vector is provided", async () => {
       await expectRevert(
-        testDeposit.redemptionTransactionChecks("0x00", _txOutputVector),
+        testDeposit.redemptionTransactionChecks(
+          "0x00",
+          fundingTx.txOutputVector,
+        ),
         "invalid input vector provided",
       )
     })
 
     it("reverts if bad output vector is provided", async () => {
       await expectRevert(
-        testDeposit.redemptionTransactionChecks(_txInputVector, "0x00"),
+        testDeposit.redemptionTransactionChecks(
+          fundingTx.txInputVector,
+          "0x00",
+        ),
         "invalid output vector provided",
       )
     })
 
     it("reverts if the tx spends the wrong utxo", async () => {
       await testDeposit.setUTXOInfo(
-        prevoutValueBytes,
+        fundingTx.prevoutValueBytes,
         0,
         "0x" + "33".repeat(36),
       )
 
       await expectRevert(
         testDeposit.redemptionTransactionChecks.call(
-          _txInputVector,
-          _txOutputVector,
+          fundingTx.txInputVector,
+          fundingTx.txOutputVector,
         ),
         "Tx spends the wrong UTXO",
       )
@@ -1051,8 +1051,8 @@ describe("DepositRedemption", async function() {
 
       await expectRevert(
         testDeposit.redemptionTransactionChecks.call(
-          _txInputVector,
-          _txOutputVector,
+          fundingTx.txInputVector,
+          fundingTx.txOutputVector,
         ),
         "Tx sends value to wrong pubkeyhash",
       )
