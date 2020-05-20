@@ -4,6 +4,7 @@ const {deploySystem} = require("./utils.js")
 const Deposit = contract.fromArtifact("Deposit")
 const BytesLib = contract.fromArtifact("BytesLib")
 const BTCUtils = contract.fromArtifact("BTCUtils")
+const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
 const ValidateSPV = contract.fromArtifact("ValidateSPV")
 const CheckBitcoinSigs = contract.fromArtifact("CheckBitcoinSigs")
 const OutsourceDepositLogging = contract.fromArtifact("OutsourceDepositLogging")
@@ -14,7 +15,6 @@ const DepositRedemption = contract.fromArtifact("DepositRedemption")
 const DepositLiquidation = contract.fromArtifact("DepositLiquidation")
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
 const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
-const ECDSAKeepVendorStub = contract.fromArtifact("ECDSAKeepVendorStub")
 const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 const MockRelay = contract.fromArtifact("MockRelay")
 const MockSatWeiPriceFeed = contract.fromArtifact("MockSatWeiPriceFeed")
@@ -30,6 +30,7 @@ const TEST_DEPOSIT_DEPLOY = [
   {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
   {name: "MockRelay", contract: MockRelay},
   {name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed},
+  {name: "KeepFactorySelection", contract: KeepFactorySelection},
   {
     name: "TBTCSystem",
     contract: TBTCSystem,
@@ -128,9 +129,6 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
 
   const tbtcSystem = deployed.TBTCSystem
   const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
-  const ecdsaKeepVendorStub = await ECDSAKeepVendorStub.new(
-    ecdsaKeepFactoryStub.address,
-  )
   await ecdsaKeepFactoryStub.setKeepAddress(deployed.ECDSAKeepStub.address)
 
   const TestTBTCTokenInstance = await TestTBTCToken.new(vendingMachine.address)
@@ -144,7 +142,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   await mockSatWeiPriceFeed.setPrice(100000000)
 
   await tbtcSystem.initialize(
-    ecdsaKeepVendorStub.address,
+    ecdsaKeepFactoryStub.address,
     depositFactory.address,
     testDeposit.address,
     TestTBTCTokenInstance.address,
