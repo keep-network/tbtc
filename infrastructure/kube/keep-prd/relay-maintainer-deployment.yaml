@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: relay-maintainer
-          image: gcr.io/keep-prd-210b/relay-maintainer:more-more-gas
+          image: gcr.io/keep-prd-210b/relay-maintainer:gas-attack
           imagePullPolicy: Always
           command: ["python", "maintainer/header_forwarder/h.py"]
           env:
