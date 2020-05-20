@@ -38,7 +38,7 @@ const System = {
     expectedBond: async ({ TBTCSystem, deposit }) => {
         const lotSize = await deposit.lotSizeSatoshis()
         const initial = await TBTCSystem.getInitialCollateralizedPercent()
-        const price = await TBTCSystem.fetchBitcoinPrice()
+        const price = await TBTCSystem.fetchBitcoinPrice({ from: deposit.address })
         return price.mul(lotSize).mul(initial).div(new BN(100))
     },
     fundingDifficulty: async () => {
