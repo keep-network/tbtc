@@ -132,7 +132,7 @@ library DepositLiquidation {
     /// @param  _d              Deposit storage pointer.
     /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
     /// @return                 False if output paying redeemer was found, true otherwise.
-    function validateRedeemerNotPaid(
+    function tPaid(
         DepositUtils.Deposit storage _d,
         bytes memory _txOutputVector
     ) internal view returns (bool){

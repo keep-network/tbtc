@@ -5,7 +5,7 @@ const { BN, expectRevert } = require("@openzeppelin/test-helpers")
 const { expect } = require("chai")
 
 describe("Integration -- Redemption-proof timeout", async function () {
-  const fee = new BN("500000000000000")
+  const fee = new BN("50000000000000")
   const depositInitiator = accounts[1]
   let testDeposit
 

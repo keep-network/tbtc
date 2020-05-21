@@ -222,7 +222,7 @@ describe("DepositLiquidation", async function() {
       const block = await web3.eth.getBlock("latest")
       const notifiedTime = block.timestamp
 
-      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+      await testDeposit.send(value, {from: accounts[8]})
 
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       const auctionValue = await testDeposit.auctionValue.call()
@@ -235,6 +235,7 @@ describe("DepositLiquidation", async function() {
       const withdrawable = await testDeposit.getWithdrawAllowance.call({
         from: buyer,
       })
+
       const depositBalance = await web3.eth.getBalance(testDeposit.address)
 
       expect(depositBalance).to.eq.BN(auctionValue.add(split))
@@ -250,7 +251,7 @@ describe("DepositLiquidation", async function() {
       const value = 1000000000000
       const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
-      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+      await testDeposit.send(value, {from: accounts[8]})
 
       const initialSignerBalance = await web3.eth.getBalance(
         ecdsaKeepStub.address,
@@ -292,7 +293,7 @@ describe("DepositLiquidation", async function() {
       const value = 1000000000000
       const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
-      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: value})
+      await testDeposit.send(value, {from: accounts[8]})
 
       const initialSignerBalance = await web3.eth.getBalance(
         ecdsaKeepStub.address,

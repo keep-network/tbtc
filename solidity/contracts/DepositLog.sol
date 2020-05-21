@@ -175,11 +175,9 @@ contract DepositLog {
     /// @param  _digest signed digest.
     /// @param  _r      signature r value.
     /// @param  _s      signature s value.
-    function logGotRedemptionSignature(
-        bytes32 _digest,
-        bytes32 _r,
-        bytes32 _s
-    ) public {
+    function logGotRedemptionSignature(bytes32 _digest, bytes32 _r, bytes32 _s)
+        public
+    {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"

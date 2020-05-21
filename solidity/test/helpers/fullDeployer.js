@@ -1,9 +1,10 @@
 const {contract} = require("@openzeppelin/test-environment")
-const {BN} = require("@openzeppelin/test-helpers")
 const {deploySystem} = require("./utils.js")
 
+const Deposit = contract.fromArtifact("Deposit")
 const BytesLib = contract.fromArtifact("BytesLib")
 const BTCUtils = contract.fromArtifact("BTCUtils")
+const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
 const ValidateSPV = contract.fromArtifact("ValidateSPV")
 const CheckBitcoinSigs = contract.fromArtifact("CheckBitcoinSigs")
 const OutsourceDepositLogging = contract.fromArtifact("OutsourceDepositLogging")
@@ -17,39 +18,36 @@ const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
 const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 const MockRelay = contract.fromArtifact("MockRelay")
 const MockSatWeiPriceFeed = contract.fromArtifact("MockSatWeiPriceFeed")
-const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
-const TBTCSystemStub = contract.fromArtifact("TBTCSystemStub")
+const TBTCSystem = contract.fromArtifact("TBTCSystem")
 const TBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
 const FeeRebateToken = contract.fromArtifact("TestFeeRebateToken")
 const DepositFactory = contract.fromArtifact("DepositFactory")
 const VendingMachine = contract.fromArtifact("VendingMachine")
-const TestTBTCConstants = contract.fromArtifact("TestTBTCConstants")
+const TBTCConstants = contract.fromArtifact("TBTCConstants")
 const TestDeposit = contract.fromArtifact("TestDeposit")
-const RedemptionScript = contract.fromArtifact("RedemptionScript")
-const FundingScript = contract.fromArtifact("FundingScript")
 
 const TEST_DEPOSIT_DEPLOY = [
-  {name: "KeepFactorySelection", contract: KeepFactorySelection},
   {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
   {name: "MockRelay", contract: MockRelay},
   {name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed},
+  {name: "KeepFactorySelection", contract: KeepFactorySelection},
   {
-    name: "TBTCSystemStub",
-    contract: TBTCSystemStub,
+    name: "TBTCSystem",
+    contract: TBTCSystem,
     constructorParams: ["MockSatWeiPriceFeed", "MockRelay"],
   },
   {
     name: "DepositFactory",
     contract: DepositFactory,
-    constructorParams: ["TBTCSystemStub"],
+    constructorParams: ["TBTCSystem"],
   },
   {
     name: "VendingMachine",
     contract: VendingMachine,
-    constructorParams: ["TBTCSystemStub"],
+    constructorParams: ["TBTCSystem"],
   },
   {name: "DepositStates", contract: DepositStates},
-  {name: "TBTCConstants", contract: TestTBTCConstants}, // note the name
+  {name: "TBTCConstants", contract: TBTCConstants}, // note the name
   {name: "DepositUtils", contract: DepositUtils},
   {name: "DepositRedemption", contract: DepositRedemption},
   {name: "DepositLiquidation", contract: DepositLiquidation},
@@ -103,6 +101,7 @@ const TEST_DEPOSIT_DEPLOY = [
  *    - feeRebateToken
  *    - testDeposit
  *    - depositUtils
+ *    - keepVendorStub
  *    - ecdsaKeepStub
  *    - depositFactory
  *    Additionally, the object contains a `deployed` property that holds
@@ -123,56 +122,30 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
 
   const deployed = await deploySystem(deployment)
 
-  const tbtcConstants = deployed.TBTCConstants
-
   const vendingMachine = deployed.VendingMachine
 
   const mockRelay = deployed.MockRelay
   await mockRelay.setPrevEpochDifficulty(1)
 
-  const tbtcSystemStub = deployed.TBTCSystemStub
+  const tbtcSystem = deployed.TBTCSystem
   const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
+  await ecdsaKeepFactoryStub.setKeepAddress(deployed.ECDSAKeepStub.address)
 
-  const tbtcToken = await TestTBTCToken.new(vendingMachine.address)
+  const TestTBTCTokenInstance = await TestTBTCToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
 
   const tbtcDepositToken = deployed.TBTCDepositToken
   const feeRebateToken = deployed.FeeRebateToken
-  const depositUtils = deployed.DepositUtils
   const ecdsaKeepStub = deployed.ECDSAKeepStub
   const depositFactory = deployed.DepositFactory
   const mockSatWeiPriceFeed = deployed.MockSatWeiPriceFeed
-  const redemptionScript = await RedemptionScript.new(
-    vendingMachine.address,
-    tbtcToken.address,
-    feeRebateToken.address,
-  )
-  const fundingScript = await FundingScript.new(
-    vendingMachine.address,
-    tbtcToken.address,
-    tbtcDepositToken.address,
-    feeRebateToken.address,
-  )
-  if (testDeposit.setExteriorAddresses) {
-    // Test setup if this is in fact a TestDeposit. If it's been substituted
-    // with e.g. Deposit, we don't set it up.
-    await testDeposit.setExteriorAddresses(
-      tbtcSystemStub.address,
-      tbtcToken.address,
-      tbtcDepositToken.address,
-      feeRebateToken.address,
-      vendingMachine.address,
-    )
+  await mockSatWeiPriceFeed.setPrice(100000000)
 
-    await testDeposit.setKeepAddress(ecdsaKeepStub.address)
-    await testDeposit.setLotSize(new BN("100000000"))
-  }
-
-  await tbtcSystemStub.initialize(
+  await tbtcSystem.initialize(
     ecdsaKeepFactoryStub.address,
     depositFactory.address,
     testDeposit.address,
-    tbtcToken.address,
+    TestTBTCTokenInstance.address,
     tbtcDepositToken.address,
     feeRebateToken.address,
     vendingMachine.address,
@@ -180,23 +153,16 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     1,
   )
 
-  return {
-    tbtcConstants,
+  return Object.assign({}, deployed, {
+    Deposit,
+    TestTBTCToken: TestTBTCTokenInstance,
     mockRelay,
     mockSatWeiPriceFeed,
-    tbtcSystemStub,
-    tbtcToken,
     tbtcDepositToken,
     feeRebateToken,
-    testDeposit,
-    depositUtils,
     ecdsaKeepFactoryStub,
     ecdsaKeepStub,
-    depositFactory,
-    deployed,
-    redemptionScript,
-    fundingScript,
-  }
+  })
 }
 
 module.exports.deployAndLinkAll = deployAndLinkAll

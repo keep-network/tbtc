@@ -8,9 +8,6 @@ const { URL } = require('url')
 const ethRPCUrl = process.env.ETH_RPC_URL
 const ethNetworkId = process.env.ETH_NETWORK_ID
 
-// Relay contract info
-const RelayJSON = require("@keep-network/tbtc/artifacts/Relay.json")
-
 // Contract owner info
 const contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 const purse = contractOwnerAddress
@@ -70,7 +67,7 @@ async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
 async function createRelayMaintainerConfig() {
   const envTemplate = fs.readFileSync('/tmp/env-template', 'utf8')
 
-  const relayContractAddress = RelayJSON.networks[ethNetworkId].address
+  const relayContractAddress = process.env.RELAY_CONTRACT_ADDRESS
   const ethURL = new URL(process.env.ETH_RPC_URL)
 
   const ethNetworkName = process.env.ETH_NETWORK_NAME

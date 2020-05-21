@@ -1,8 +1,8 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {increaseTime} = require("./helpers/utils.js")
+const {increaseTime, expectEvent} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {BN, expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
+const {BN, expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
@@ -13,6 +13,14 @@ describe("TBTCSystem", async function() {
   let tbtcSystem
   let ecdsaKeepFactory
   let tdt
+  let satWeiPriceFeed
+  let ethBtcMedianizer
+  let badEthBtcMedianizer
+  let newEthBtcMedianizer
+
+  const medianizerValue = 100000000000
+
+  const nonSystemOwner = accounts[3]
 
   before(async () => {
     const {
@@ -33,9 +41,16 @@ describe("TBTCSystem", async function() {
     tbtcSystem = tbtcSystemStub
     ecdsaKeepFactory = ecdsaKeepFactoryStub
     tdt = tbtcDepositToken
+    satWeiPriceFeed = mockSatWeiPriceFeed
 
     ethBtcMedianizer = await MockMedianizer.new()
-    mockSatWeiPriceFeed.initialize(tbtcSystem.address, ethBtcMedianizer.address)
+    await ethBtcMedianizer.setValue(medianizerValue)
+    satWeiPriceFeed.initialize(tbtcSystem.address, ethBtcMedianizer.address)
+
+    badEthBtcMedianizer = await MockMedianizer.new()
+    await badEthBtcMedianizer.setValue(0)
+    newEthBtcMedianizer = await MockMedianizer.new()
+    await newEthBtcMedianizer.setValue(1)
   })
 
   describe("requestNewKeep()", async () => {
@@ -115,501 +130,193 @@ describe("TBTCSystem", async function() {
     })
   })
 
-  describe("geRemainingSignerFeeDivisorUpdateTime", async () => {
-    let totalDelay
+  describe("when fetching Bitcoin price", async () => {
+    const tdtOwner = accounts[1]
+    const keepOwner = accounts[2]
 
-    before(async () => {
-      totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
-    it("reverts if update has not been initiated", async () => {
+    it("should revert if the caller does not have an associated TDT", async () => {
       await expectRevert(
-        tbtcSystem.geRemainingSignerFeeDivisorUpdateTime.call(),
-        "Update not initiated",
+        tbtcSystem.fetchBitcoinPrice(),
+        "Caller must be a Deposit contract",
       )
     })
 
-    it("returns total delay if no time has passed ", async () => {
-      await tbtcSystem.beginSignerFeeDivisorUpdate(new BN("200"))
-      const remaining = await tbtcSystem.geRemainingSignerFeeDivisorUpdateTime.call()
-      expect(remaining).to.eq.BN(totalDelay)
-    })
+    it("should give the price if the caller does have an associated TDT", async () => {
+      await tdt.forceMint(tdtOwner, web3.utils.toBN(keepOwner))
+      const priceFeedValue = new BN(10)
+        .pow(new BN(28))
+        .div(new BN(medianizerValue))
 
-    it("returns the correct remaining time", async () => {
-      await tbtcSystem.beginSignerFeeDivisorUpdate(new BN("200"))
-      const expectedRemaining = 100
-      await increaseTime(totalDelay.toNumber() - expectedRemaining)
-
-      const remaining = await tbtcSystem.geRemainingSignerFeeDivisorUpdateTime.call()
-      expect([expectedRemaining, expectedRemaining + 1]).to.include.toString(
-        remaining.toNumber(),
-      )
+      expect(
+        await tbtcSystem.fetchBitcoinPrice.call({from: keepOwner}),
+      ).to.eq.BN(priceFeedValue)
     })
   })
 
-  describe("getRemainingLotSizesUpdateTime", async () => {
-    let totalDelay
-    const lotSizes = [new BN(10 ** 8), new BN(10 ** 6)]
+  function governanceTest({
+    property,
+    change,
+    timeDelayGetter,
+    goodParametersWithName,
+    badInitializationTests,
+    verifyFinalization,
+    badFinalizationTests,
+  }) {
+    timeDelayGetter = timeDelayGetter || "getGovernanceTimeDelay"
+    badInitializationTests = badInitializationTests || {}
+    badFinalizationTests = badFinalizationTests || {}
 
-    before(async () => {
-      totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
-    })
+    function parametersAsList(parametersWithName) {
+      const parametersList = []
+      for (let i = 0; i < parametersWithName.length; ++i) {
+        parametersList[i] = parametersWithName[i].value
+      }
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
+      return parametersList
+    }
+    function parametersAsObject(parametersWithName) {
+      const parametersObject = []
+      for (let i = 0; i < parametersWithName.length; ++i) {
+        parametersObject[parametersWithName[i].name] =
+          parametersWithName[i].value
+      }
 
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
+      return parametersObject
+    }
 
-    it("reverts if update has not been initiated", async () => {
-      await expectRevert(
-        tbtcSystem.getRemainingLotSizesUpdateTime.call(),
-        "Update not initiated",
-      )
-    })
+    function tweakParameters(parametersWithName) {
+      const newParametersWithName = []
 
-    it("returns total delay if no time has passed ", async () => {
-      await tbtcSystem.beginLotSizesUpdate(lotSizes)
-      const remaining = await tbtcSystem.getRemainingLotSizesUpdateTime.call()
-      expect(remaining).to.eq.BN(totalDelay)
-    })
+      for (let i = 0; i < parametersWithName.length; ++i) {
+        const {name, value} = parametersWithName[i]
+        let updatedValue = value
+        if (value instanceof BN) {
+          updatedValue = value.add(new BN(1))
+        } else if (typeof value == "number") {
+          updatedValue = value + 1
+        } else if (value instanceof String && value.startsWith("0x")) {
+          // Assume address, generate one.
+          updatedValue = "0x"
+          for (let j = 0; j < 20; ++i) {
+            updatedValue += (
+              "0" + Math.floor(Math.random() * 255).toString("hex")
+            ).substr(-2)
+          }
+        }
 
-    it("returns the correct remaining time", async () => {
-      await tbtcSystem.beginLotSizesUpdate(lotSizes)
-      const expectedRemaining = 100
-      await increaseTime(totalDelay.toNumber() - expectedRemaining)
+        newParametersWithName.push({name: name, value: updatedValue})
+      }
 
-      const remaining = await tbtcSystem.getRemainingLotSizesUpdateTime.call()
-      expect([expectedRemaining, expectedRemaining + 1]).to.include.toString(
-        remaining.toNumber(),
-      )
-    })
-  })
+      return [
+        parametersAsObject(newParametersWithName),
+        parametersAsList(newParametersWithName),
+      ]
+    }
 
-  describe("getRemainingCollateralizationUpdateTime", async () => {
-    let totalDelay
+    const goodParameters = parametersAsList(goodParametersWithName)
+    const goodParametersByName = parametersAsObject(goodParametersWithName)
 
-    before(async () => {
-      totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
-    })
+    async function invoke(prefix, suffix, params) {
+      const fn = tbtcSystem[`${prefix || ""}${change}${suffix || ""}`]
+      if (!fn) {
+        console.error(`${prefix}${change}${suffix}`)
+      }
+      return fn.apply(tbtcSystem, params)
+    }
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
-
-    it("reverts if update has not been initiated", async () => {
-      await expectRevert(
-        tbtcSystem.getRemainingCollateralizationUpdateTime.call(),
-        "Update not initiated",
-      )
-    })
-
-    it("returns total delay if no time has passed ", async () => {
-      await tbtcSystem.beginCollateralizationThresholdsUpdate(
-        new BN("150"),
-        new BN("130"),
-        new BN("120"),
-      )
-      const remaining = await tbtcSystem.getRemainingCollateralizationUpdateTime.call()
-      expect(remaining).to.eq.BN(totalDelay)
-    })
-
-    it("returns the correct remaining time", async () => {
-      await tbtcSystem.beginCollateralizationThresholdsUpdate(
-        new BN("150"),
-        new BN("130"),
-        new BN("120"),
-      )
-      const expectedRemaining = 100
-      await increaseTime(totalDelay.toNumber() - expectedRemaining)
-
-      const remaining = await tbtcSystem.getRemainingCollateralizationUpdateTime.call()
-      expect([expectedRemaining, expectedRemaining + 1]).to.include.toString(
-        remaining.toNumber(),
-      )
-    })
-  })
-
-  describe("update signer fee", async () => {
-    describe("beginSignerFeeDivisorUpdate", async () => {
-      const newFee = new BN("201")
-      it("executes and fires SignerFeeDivisorUpdateStarted event", async () => {
-        receipt = await tbtcSystem.beginSignerFeeDivisorUpdate(new BN("200"))
-
-        expectEvent(receipt, "SignerFeeDivisorUpdateStarted", {
-          _signerFeeDivisor: new BN("200"),
-        })
+    describe(`when updating ${property}`, async () => {
+      beforeEach(async () => {
+        await createSnapshot()
       })
 
-      it("overrides previous update and resets timer", async () => {
-        receipt = await tbtcSystem.beginSignerFeeDivisorUpdate(newFee)
-        const remainingTime = await tbtcSystem.geRemainingSignerFeeDivisorUpdateTime.call()
-        const totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
-
-        expectEvent(receipt, "SignerFeeDivisorUpdateStarted", {
-          _signerFeeDivisor: newFee,
-        })
-        expect([
-          remainingTime.toString(),
-          remainingTime.toString() - 1,
-        ]).to.include(totalDelay.toString())
+      afterEach(async () => {
+        await restoreSnapshot()
       })
 
-      it("reverts if msg.sender != owner", async () => {
-        await expectRevert.unspecified(
-          tbtcSystem.beginSignerFeeDivisorUpdate(newFee, {
-            from: accounts[1],
-          }),
-          "",
-        )
-      })
+      describe("when initiating the update", async () => {
+        it("executes and fires the update start event", async () => {
+          const receipt = await invoke("begin", "", goodParameters)
 
-      it("reverts if fee divisor is smaller than or equal to 9", async () => {
-        await expectRevert(
-          tbtcSystem.beginSignerFeeDivisorUpdate(new BN("9")),
-          "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%.",
-        )
-      })
-
-      it("reverts if fee divisor is greater than or equal to 2000", async () => {
-        await expectRevert(
-          tbtcSystem.beginSignerFeeDivisorUpdate(new BN("2000")),
-          "Signer fee divisor must be less than 2000, for a signer fee that is > 0.05%.",
-        )
-      })
-    })
-
-    describe("finalizeSignerFeeDivisorUpdate", async () => {
-      it("reverts if the governance timer has not elapsed", async () => {
-        await expectRevert(
-          tbtcSystem.finalizeSignerFeeDivisorUpdate(),
-          "Timer not elapsed",
-        )
-      })
-
-      it("updates signer fee and fires SignerFeeDivisorUpdated event", async () => {
-        const remainingTime = await tbtcSystem.geRemainingSignerFeeDivisorUpdateTime()
-
-        await increaseTime(remainingTime.toNumber() + 1)
-
-        receipt = await tbtcSystem.finalizeSignerFeeDivisorUpdate()
-
-        const signerFeeDivisor = await tbtcSystem.getSignerFeeDivisor.call()
-
-        expectEvent(receipt, "SignerFeeDivisorUpdated", {
-          _signerFeeDivisor: new BN("201"),
-        })
-        expect(signerFeeDivisor).to.eq.BN(new BN("201"))
-      })
-
-      it("reverts if a change has not been initiated", async () => {
-        await expectRevert(
-          tbtcSystem.finalizeSignerFeeDivisorUpdate(),
-          "Change not initiated",
-        )
-      })
-    })
-  })
-
-  describe("update lot sizes", async () => {
-    const lotSizes = [
-      new BN(10 ** 8), // required
-      new BN(10 ** 6),
-      new BN(10 ** 9), // upper bound
-      new BN(50 * 10 ** 3), // lower bound
-    ]
-    describe("beginLotSizesUpdate", async () => {
-      it("executes and emits a LotSizesUpdateStarted event", async () => {
-        const testSizes = [new BN(10 ** 8), new BN(10 ** 6)]
-        const truffleReceipt = await tbtcSystem.beginLotSizesUpdate(testSizes)
-        const {
-          receipt: {blockNumber: updateStartBlock},
-        } = truffleReceipt
-        const block = await web3.eth.getBlock(updateStartBlock)
-
-        expectEvent(truffleReceipt, "LotSizesUpdateStarted", {
-          _timestamp: new BN(block.timestamp),
-        })
-        expect(truffleReceipt.logs[0].args[0][0]).to.eq.BN(testSizes[0])
-        expect(truffleReceipt.logs[0].args[0][1]).to.eq.BN(testSizes[1])
-      })
-
-      it("overrides previous update and resets timer", async () => {
-        const truffleReceipt = await tbtcSystem.beginLotSizesUpdate(lotSizes)
-        const {
-          receipt: {blockNumber: updateStartBlock},
-        } = truffleReceipt
-        const block = await web3.eth.getBlock(updateStartBlock)
-        const remainingTime = await tbtcSystem.getRemainingLotSizesUpdateTime.call()
-        const totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
-
-        expect(truffleReceipt.logs[0].args[0][0]).to.eq.BN(lotSizes[0])
-        expect(truffleReceipt.logs[0].args[0][1]).to.eq.BN(lotSizes[1])
-        expect(truffleReceipt.logs[0].args[1]).to.eq.BN(block.timestamp)
-        expect([
-          remainingTime.toString(),
-          remainingTime.toString() - 1,
-        ]).to.include(totalDelay.toString())
-      })
-
-      it("reverts if lot size array is empty", async () => {
-        const lotSizes = []
-        await expectRevert(
-          tbtcSystem.beginLotSizesUpdate(lotSizes),
-          "Lot size array must always contain 1 BTC",
-        )
-      })
-
-      it("reverts if lot size array does not contain a 1 BTC lot size", async () => {
-        const lotSizes = [10 ** 7]
-        await expectRevert(
-          tbtcSystem.beginLotSizesUpdate(lotSizes),
-          "Lot size array must always contain 1 BTC",
-        )
-      })
-
-      it("reverts if lot size array contains a lot size < 0.0005 BTC", async () => {
-        const lotSizes = [10 ** 7, 10 ** 8, 5 * 10 ** 3 - 1]
-        await expectRevert(
-          tbtcSystem.beginLotSizesUpdate(lotSizes),
-          "Lot sizes less than 0.0005 BTC are not allowed",
-        )
-      })
-
-      it("reverts if lot size array contains a lot size > 10 BTC", async () => {
-        const lotSizes = [10 ** 7, 10 ** 9 + 1, 10 ** 8]
-        await expectRevert(
-          tbtcSystem.beginLotSizesUpdate(lotSizes),
-          "Lot sizes greater than 10 BTC are not allowed",
-        )
-      })
-    })
-
-    describe("finalizeLotSizesUpdate", async () => {
-      it("reverts if the governance timer has not elapsed", async () => {
-        await expectRevert(
-          tbtcSystem.finalizeLotSizesUpdate(),
-          "Timer not elapsed",
-        )
-      })
-
-      it("updates lot sizes and fires LotSizesUpdated event", async () => {
-        const remainingTime = await tbtcSystem.getRemainingLotSizesUpdateTime()
-
-        await increaseTime(remainingTime.toNumber() + 1)
-
-        receipt = await tbtcSystem.finalizeLotSizesUpdate()
-
-        const currentLotSizes = await tbtcSystem.getAllowedLotSizes.call()
-
-        expectEvent(receipt, "LotSizesUpdated", {})
-        expect(receipt.logs[0].args._lotSizes[0]).to.eq.BN(lotSizes[0])
-        expect(receipt.logs[0].args._lotSizes[1]).to.eq.BN(lotSizes[1])
-        expect(currentLotSizes[0]).to.eq.BN(lotSizes[0])
-        expect(currentLotSizes[1]).to.eq.BN(lotSizes[1])
-      })
-
-      it("reverts if a change has not been initiated", async () => {
-        await expectRevert(
-          tbtcSystem.finalizeLotSizesUpdate(),
-          "Change not initiated",
-        )
-      })
-    })
-  })
-
-  describe("update collateralization thresholds", async () => {
-    const initialPercent = new BN("150")
-    const undercollateralizedPercent = new BN("130")
-    const severelyUndercollateralizedPercent = new BN("120")
-    describe("beginCollateralizationThresholdsUpdate", async () => {
-      it("executes and fires CollateralizationThresholdsUpdateStarted event", async () => {
-        receipt = await tbtcSystem.beginCollateralizationThresholdsUpdate(
-          new BN("213"),
-          new BN("156"),
-          new BN("128"),
-        )
-
-        expectEvent(receipt, "CollateralizationThresholdsUpdateStarted", {
-          _initialCollateralizedPercent: new BN("213"),
-          _undercollateralizedThresholdPercent: new BN("156"),
-          _severelyUndercollateralizedThresholdPercent: new BN("128"),
-        })
-      })
-
-      it("overrides previous update and resets timer", async () => {
-        receipt = await tbtcSystem.beginCollateralizationThresholdsUpdate(
-          initialPercent,
-          undercollateralizedPercent,
-          severelyUndercollateralizedPercent,
-        )
-
-        const remainingTime = await tbtcSystem.getRemainingCollateralizationUpdateTime.call()
-        const totalDelay = await tbtcSystem.getGovernanceTimeDelay.call()
-
-        expectEvent(receipt, "CollateralizationThresholdsUpdateStarted", {
-          _initialCollateralizedPercent: initialPercent,
-          _undercollateralizedThresholdPercent: undercollateralizedPercent,
-          _severelyUndercollateralizedThresholdPercent: severelyUndercollateralizedPercent,
-        })
-        expect([
-          remainingTime.toString(),
-          remainingTime.toString() - 1,
-        ]).to.include(totalDelay.toString())
-      })
-
-      it("reverts if Initial collateralized percent > 300", async () => {
-        await expectRevert(
-          tbtcSystem.beginCollateralizationThresholdsUpdate(
-            new BN("301"),
-            new BN("130"),
-            new BN("120"),
-          ),
-          "Initial collateralized percent must be <= 300%",
-        )
-      })
-
-      it("reverts if Initial collateralized percent < 100", async () => {
-        await expectRevert(
-          tbtcSystem.beginCollateralizationThresholdsUpdate(
-            new BN("99"),
-            new BN("130"),
-            new BN("120"),
-          ),
-          "Initial collateralized percent must be >= 100%",
-        )
-      })
-
-      it("reverts if Undercollateralized threshold > initial collateralize percent", async () => {
-        await expectRevert(
-          tbtcSystem.beginCollateralizationThresholdsUpdate(
-            new BN("150"),
-            new BN("160"),
-            new BN("120"),
-          ),
-          "Undercollateralized threshold must be < initial collateralized percent",
-        )
-      })
-
-      it("reverts if Severe undercollateralized threshold > undercollateralized threshold", async () => {
-        await expectRevert(
-          tbtcSystem.beginCollateralizationThresholdsUpdate(
-            new BN("150"),
-            new BN("130"),
-            new BN("131"),
-          ),
-          "Severe undercollateralized threshold must be < undercollateralized threshold",
-        )
-      })
-    })
-
-    describe("finalizeCollateralizationThresholdsUpdate", async () => {
-      it("reverts if the governance timer has not elapsed", async () => {
-        await expectRevert(
-          tbtcSystem.finalizeCollateralizationThresholdsUpdate(),
-          "Timer not elapsed",
-        )
-      })
-
-      it("updates collateralization thresholds and fires CollateralizationThresholdsUpdated event", async () => {
-        const remainingTime = await tbtcSystem.getRemainingCollateralizationUpdateTime()
-
-        await increaseTime(remainingTime.toNumber() + 1)
-
-        receipt = await tbtcSystem.finalizeCollateralizationThresholdsUpdate()
-
-        const initial = await tbtcSystem.getInitialCollateralizedPercent.call()
-        const undercollateralized = await tbtcSystem.getUndercollateralizedThresholdPercent.call()
-        const severelyUndercollateralized = await tbtcSystem.getSeverelyUndercollateralizedThresholdPercent.call()
-
-        expectEvent(receipt, "CollateralizationThresholdsUpdated", {
-          _initialCollateralizedPercent: initialPercent,
-          _undercollateralizedThresholdPercent: undercollateralizedPercent,
-          _severelyUndercollateralizedThresholdPercent: severelyUndercollateralizedPercent,
+          expectEvent(receipt, `${change}Started`, goodParametersByName)
         })
 
-        expect(initialPercent).to.eq.BN(initial)
-        expect(undercollateralizedPercent).to.eq.BN(undercollateralized)
-        expect(severelyUndercollateralizedPercent).to.eq.BN(
-          severelyUndercollateralized,
-        )
+        it("overrides previous update and resets timer", async () => {
+          await invoke("begin", "", goodParameters)
+          await increaseTime(50)
+
+          const governanceTime = await tbtcSystem[timeDelayGetter].call()
+
+          const [updatedParametersByName, updatedParameters] = tweakParameters(
+            goodParametersWithName,
+          )
+          const receipt = await invoke("begin", "", updatedParameters)
+          const remainingTime = await invoke("getRemaining", "Time")
+
+          expectEvent(receipt, `${change}Started`, updatedParametersByName)
+          expect([
+            remainingTime.toString(),
+            remainingTime.toString() - 1,
+          ]).to.include(governanceTime.toString())
+        })
+
+        it("reverts if msg.sender != owner", async () => {
+          await expectRevert.unspecified(
+            invoke("begin", "", goodParameters.concat([{from: accounts[1]}])),
+          )
+        })
+
+        for (const [scenario, props] of Object.entries(
+          badInitializationTests,
+        )) {
+          const {parameters, error} = props
+
+          it(`reverts when ${scenario}`, async () => {
+            await expectRevert(invoke("begin", "", parameters), error)
+          })
+        }
       })
 
-      it("reverts if a change has not been initiated", async () => {
-        await expectRevert(
-          tbtcSystem.finalizeCollateralizationThresholdsUpdate(),
-          "Change not initiated",
-        )
-      })
-    })
-  })
+      describe("when finalizing the update", async () => {
+        it("reverts if the governance timer has not elapsed", async () => {
+          await invoke("begin", "", goodParameters)
 
-  describe("add ETH/BTC price feed", async () => {
-    let med
-    let timer
-    before(async () => {
-      med = await MockMedianizer.new()
-      await med.setValue(1000)
-      timer = await tbtcSystem.getPriceFeedGovernanceTimeDelay.call()
-    })
+          await expectRevert(
+            invoke("finalize"),
+            "Governance delay has not elapsed.",
+          )
+        })
 
-    beforeEach(async () => {
-      await createSnapshot()
-    })
+        it("reverts if a change has not been initiated", async () => {
+          await expectRevert(invoke("finalize"), "Change not initiated.")
+        })
 
-    afterEach(async () => {
-      await restoreSnapshot()
-    })
+        for (const [scenario, props] of Object.entries(badFinalizationTests)) {
+          const {beforeFinalizing, parameters, error} = props
 
-    describe("initializeAddEthBtcFeed", async () => {
-      it("initializes ETH/BTC addition and emits EthBtcPriceFeedAdditionStarted", async () => {
-        const receipt = await tbtcSystem.initializeAddEthBtcFeed(med.address)
+          it(`reverts when ${scenario}`, async () => {
+            await invoke("begin", "", parameters)
+            const remainingTime = await invoke("getRemaining", "Time")
+            await increaseTime(remainingTime.toNumber() + 1)
 
-        expectEvent(receipt, "EthBtcPriceFeedAdditionStarted", {
-          _priceFeed: med.address,
+            if (beforeFinalizing) {
+              await beforeFinalizing()
+            }
+
+            await expectRevert(invoke("finalize"), error)
+          })
+        }
+
+        it(`updates ${property} and fires event if the governance timer has elapsed`, async () => {
+          await invoke("begin", "", goodParameters)
+          const remainingTime = await invoke("getRemaining", "Time")
+          await increaseTime(remainingTime.toNumber() + 1)
+
+          const receipt = await invoke("finalize")
+          await verifyFinalization(receipt, ...goodParameters)
         })
       })
     })
-
-    describe("finalizeAddEthBtcFeed", async () => {
-      it("Reverts if no change as been initiated", async () => {
-        await increaseTime(timer.toNumber() + 1)
-        await expectRevert.unspecified(tbtcSystem.finalizeAddEthBtcFeed(), "")
-      })
-
-      it("Reverts if timer has not elapsed", async () => {
-        await tbtcSystem.initializeAddEthBtcFeed(med.address)
-        await increaseTime(timer.toNumber() - 10)
-        await expectRevert(
-          tbtcSystem.finalizeAddEthBtcFeed(),
-          "Timeout not yet elapsed",
-        )
-      })
-
-      it("Finalizes ETH/BTC addition and emits EthBtcPriceFeedAdded", async () => {
-        await tbtcSystem.initializeAddEthBtcFeed(med.address)
-        await increaseTime(timer.toNumber() + 1)
-        const receipt = await tbtcSystem.finalizeAddEthBtcFeed()
-        expectEvent(receipt, "EthBtcPriceFeedAdded", {
-          _priceFeed: med.address,
-        })
-      })
-    })
-  })
+  }
 
   describe("emergencyPauseNewDeposits", async () => {
     let term
@@ -631,7 +338,7 @@ describe("TBTCSystem", async function() {
 
     it("reverts if msg.sender is not owner", async () => {
       await expectRevert(
-        tbtcSystem.emergencyPauseNewDeposits({from: accounts[1]}),
+        tbtcSystem.emergencyPauseNewDeposits({from: nonSystemOwner}),
         "Ownable: caller is not the owner",
       )
     })
@@ -652,7 +359,7 @@ describe("TBTCSystem", async function() {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
-      await increaseTime(term.toNumber()) // 10 days
+      await increaseTime(term) // 10 days
       await tbtcSystem.resumeNewDeposits()
       const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
@@ -662,13 +369,269 @@ describe("TBTCSystem", async function() {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
-      await increaseTime(term.toNumber()) // 10 days
+      await increaseTime(term) // 10 days
       tbtcSystem.resumeNewDeposits()
 
       await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits(),
         "emergencyPauseNewDeposits can only be called once",
       )
+    })
+  })
+
+  describe("when trying to update Keep factory info more than once", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("pauses new deposit creation", async () => {
+      await tbtcSystem.emergencyPauseNewDeposits()
+
+      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(false)
+    })
+
+    it("does not revert if beginKeepFactorySingleShotUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+
+      // Should not revert.
+      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+    })
+
+    it("reverts if finalizeKeepFactorySingleShotUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
+      await increaseTime(finalizationTime.toNumber() + 1) // 10 days
+      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+
+      await expectRevert(
+        tbtcSystem.beginKeepFactorySingleShotUpdate(
+          "0x0000000000000000000000000000000000000001",
+          "0x0000000000000000000000000000000000000002",
+        ),
+        "Keep factory data can only be updated once",
+      )
+    })
+
+    it("reverts if finalizeKeepFactorySingleShotUpdate is called twice", async () => {
+      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
+      await increaseTime(finalizationTime.toNumber() + 1) // 10 days
+      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+
+      await expectRevert(
+        tbtcSystem.finalizeKeepFactorySingleShotUpdate(),
+        "Change not initiated",
+      )
+    })
+  })
+
+  before(async () => {
+    governanceTest({
+      property: "signer fee",
+      change: "SignerFeeDivisorUpdate",
+      goodParametersWithName: [{name: "_signerFeeDivisor", value: new BN(200)}],
+      badInitializationTests: {
+        "smaller than or equal to 9": {
+          parameters: [9],
+          error:
+            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%",
+        },
+        "greater than or equal to 5000": {
+          parameters: [5000],
+          error:
+            "Signer fee divisor must be less than 5000, for a signer fee that is > 0.02%",
+        },
+      },
+      verifyFinalization: async (receipt, setDivisor) => {
+        expectEvent(receipt, "SignerFeeDivisorUpdated", {
+          _signerFeeDivisor: setDivisor,
+        })
+
+        expect(await tbtcSystem.getSignerFeeDivisor()).to.eq.BN(setDivisor)
+      },
+    })
+
+    governanceTest({
+      property: "lot sizes",
+      change: "LotSizesUpdate",
+      goodParametersWithName: [
+        {
+          name: "_lotSizes",
+          value: [
+            new BN(10 ** 8), // required
+            new BN(10 ** 6),
+            new BN(10 ** 9), // upper bound
+            new BN(50 * 10 ** 3), // lower bound
+          ],
+        },
+      ],
+      badInitializationTests: {
+        "array is empty": {
+          parameters: [[]],
+          error: "Lot size array must always contain 1 BTC",
+        },
+        "array does not contain a 1 BTC lot size": {
+          parameters: [[10 ** 7]],
+          error: "Lot size array must always contain 1 BTC",
+        },
+        "array contains a lot size < 0.0005 BTC": {
+          parameters: [[10 ** 7, 10 ** 8, 5 * 10 ** 3 - 1]],
+          error: "Lot sizes less than 0.0005 BTC are not allowed",
+        },
+        "array contains a lot size > 10 BTC": {
+          parameters: [[10 ** 7, 10 ** 9 + 1, 10 ** 8]],
+          error: "Lot sizes greater than 10 BTC are not allowed",
+        },
+      },
+      verifyFinalization: async (receipt, setLotSizes) => {
+        expectEvent(receipt, "LotSizesUpdated", {_lotSizes: setLotSizes})
+
+        const lotSizes = await tbtcSystem.getAllowedLotSizes()
+        lotSizes.forEach((_, i) => expect(_).to.eq.BN(setLotSizes[i]))
+      },
+    })
+
+    governanceTest({
+      property: "collateralization thresholds",
+      change: "CollateralizationThresholdsUpdate",
+      goodParametersWithName: [
+        {name: "_initialCollateralizedPercent", value: new BN(213)},
+        {name: "_undercollateralizedThresholdPercent", value: new BN(156)},
+        {
+          name: "_severelyUndercollateralizedThresholdPercent",
+          value: new BN(128),
+        },
+      ],
+      badInitializationTests: {
+        "contain initial collateralized percent > 300": {
+          parameters: [301, 130, 120],
+          error: "Initial collateralized percent must be <= 300%",
+        },
+        "contain initial collateralized percent < 100": {
+          parameters: [99, 130, 120],
+          error: "Initial collateralized percent must be >= 100%",
+        },
+        "contain undercollateralized threshold > initial collateralized percent": {
+          parameters: [150, 160, 120],
+          error:
+            "Undercollateralized threshold must be < initial collateralized percent",
+        },
+        "contain severe undercollateralized threshold > undercollateralized threshold": {
+          parameters: [150, 130, 131],
+          error:
+            "Severe undercollateralized threshold must be < undercollateralized threshold",
+        },
+      },
+      verifyFinalization: async (
+        receipt,
+        setInitial,
+        setUnder,
+        setSeverelyUnder,
+      ) => {
+        expectEvent(receipt, "CollateralizationThresholdsUpdated", {
+          _initialCollateralizedPercent: setInitial,
+          _undercollateralizedThresholdPercent: setUnder,
+          _severelyUndercollateralizedThresholdPercent: setSeverelyUnder,
+        })
+
+        expect(await tbtcSystem.getInitialCollateralizedPercent()).to.eq.BN(
+          setInitial,
+        )
+        expect(
+          await tbtcSystem.getUndercollateralizedThresholdPercent(),
+        ).to.eq.BN(setUnder)
+        expect(
+          await tbtcSystem.getSeverelyUndercollateralizedThresholdPercent(),
+        ).to.eq.BN(setSeverelyUnder)
+      },
+    })
+
+    governanceTest({
+      property: "keep factory single-shot update",
+      change: "KeepFactorySingleShotUpdate",
+      goodParametersWithName: [
+        {
+          name: "_factorySelector",
+          value: "0x0000000000000000000000000000000000000001",
+        },
+        {
+          name: "_ethBackedFactory",
+          value: "0x0000000000000000000000000000000000000002",
+        },
+      ],
+      badInitializationTests: {
+        "factory selector is unset": {
+          parameters: [
+            "0x0000000000000000000000000000000000000000",
+            "0x0000000000000000000000000000000000000000",
+          ],
+          error: "Factory selector must be a nonzero address",
+        },
+      },
+      verifyFinalization: async (
+        receipt,
+        setFactorySelector,
+        setEthBackedFactory,
+      ) => {
+        expectEvent(receipt, "KeepFactorySingleShotUpdated", {
+          _factorySelector: setFactorySelector,
+          _ethBackedFactory: setEthBackedFactory,
+        })
+      },
+    })
+
+    governanceTest({
+      property: "the ETHBTC feeds with a new entry",
+      change: "EthBtcPriceFeedAddition",
+      timeDelayGetter: "getPriceFeedGovernanceTimeDelay",
+      goodParametersWithName: [
+        {name: "_priceFeed", value: newEthBtcMedianizer.address},
+      ],
+      badInitializationTests: {
+        "adding inactive feed": {
+          parameters: [badEthBtcMedianizer.address],
+          error: "Cannot add inactive feed",
+        },
+      },
+      verifyFinalization: async (receipt, newFeedAddress) => {
+        // disable current feed
+        await ethBtcMedianizer.setValue(0)
+
+        // check new feed
+        expect(await satWeiPriceFeed.getWorkingEthBtcFeed()).to.equal(
+          newEthBtcMedianizer.address,
+        )
+
+        expectEvent(receipt, "EthBtcPriceFeedAdded", {
+          _priceFeed: newFeedAddress,
+        })
+      },
+      badFinalizationTests: {
+        "finalizing inactive feed": {
+          parameters: [newEthBtcMedianizer.address],
+          beforeFinalizing: async () => newEthBtcMedianizer.setValue(0),
+          error: "Cannot add inactive feed",
+        },
+      },
     })
   })
 })

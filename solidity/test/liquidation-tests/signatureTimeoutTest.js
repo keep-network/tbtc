@@ -7,7 +7,7 @@ const { expect } = require("chai")
 describe("Integration -- Signature-timeout", async function () {
   const lotSize = "10000000";
   const lotSizeTbtc = new BN("10000000000").mul(new BN(lotSize));
-  const fee = new BN("500000000000000")
+  const fee = new BN("50000000000000")
   const depositInitiator = accounts[1]
   let testDeposit
 

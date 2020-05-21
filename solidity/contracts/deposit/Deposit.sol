@@ -36,7 +36,14 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     function () external payable {
-        require(msg.sender == self.keepAddress, "Deposit contract can only receive ETH from underlying keep");
+        require(msg.data.length == 0, "Deposit contract was called with unknown function selector.");
+    }
+
+    /// @notice     Get the keep contract address associated with the Deposit.
+    /// @dev        The keep contract address is saved on Deposit initialization.
+    /// @return     Address of the Keep contract.
+    function getKeepAddress() public view returns (address) {
+        return self.keepAddress;
     }
 
     /// @notice     Get the integer representing the current state.
@@ -383,6 +390,46 @@ contract Deposit is DepositFactoryAuthority {
     //
     // LIQUIDATION
     //
+
+    /// @notice Get the current collateralization level for this Deposit.
+    /// @dev    This value represents the percentage of the backing BTC value the signers
+    ///         currently must hold as bond.
+    /// @return The current collateralization level for this deposit.
+    function getCollateralizationPercentage() public view returns (uint256) {
+        return self.getCollateralizationPercentage();
+    }
+
+    /// @notice Get the initial collateralization level for this Deposit.
+    /// @dev    This value represents the percentage of the backing BTC value the signers hold initially.
+    /// @return The initial collateralization level for this deposit.
+    function getInitialCollateralizedPercent() public view returns (uint16) {
+        return self.initialCollateralizedPercent;
+    }
+
+    /// @notice Get the undercollateralization level for this Deposit.
+    /// @dev    This collateralization level is semi-critical. If the collateralization level falls
+    ///         below this percentage the Deposit can get courtesy-called. This value represents the percentage
+    ///         of the backing BTC value the signers must hold as bond in order to not be undercollateralized.
+    /// @return The undercollateralized level for this deposit.
+    function getUndercollateralizedThresholdPercent() public view returns (uint16) {
+        return self.undercollateralizedThresholdPercent;
+    }
+
+    /// @notice Get the severe undercollateralization level for this Deposit.
+    /// @dev    This collateralization level is critical. If the collateralization level falls
+    ///         below this percentage the Deposit can get liquidated. This value represents the percentage
+    ///         of the backing BTC value the signers must hold as bond in order to not be severely undercollateralized.
+    /// @return The severely undercollateralized level for this deposit.
+    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint16) {
+        return self.severelyUndercollateralizedThresholdPercent;
+    }
+
+    /// @notice     Calculates the amount of value at auction right now.
+    /// @dev        We calculate the % of the auction that has elapsed, then scale the value up.
+    /// @return     The value in wei to distribute in the auction at the current time.
+    function auctionValue() public view returns (uint256) {
+        return self.auctionValue();
+    }
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
     /// @dev        For interface, reading auctionValue will give a past value. the current is better.
