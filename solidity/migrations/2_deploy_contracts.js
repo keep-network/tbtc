@@ -136,7 +136,7 @@ module.exports = (deployer, network, accounts) => {
 
       await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
       difficultyRelay = await OnDemandSPV.deployed()
-    } else if (network == "keep_dev" || "ropsten") {
+    } else if (network == "keep_dev" || network == "ropsten") {
       const {genesis, height, epochStart} = bitcoinTest
 
       await deployer.deploy(TestnetRelay, genesis, height, epochStart, 0)
