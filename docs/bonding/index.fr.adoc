@@ -1,0 +1,143 @@
+:toc: macro
+
+[[bonding]]
+= Dépôt de caution
+
+ifndef::tbtc[]
+toc::[]
+
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
+include::../constants.adoc[]
+endif::tbtc[]
+
+Comme les signataires peuvent conspirer pour censurer les retrait ou voler les fonds, une caution est demandée aux signataires pour chaque dépôt.
+
+À la différence du "jeton de travail" KEEP utilisé pour sélectionner les signataires, la caution doit être déposée sous la forme d'un actif ayant une capitalisation élevée et une grande liquidité. Cette restriction augmente le coût d'une attaque basée sur une manipulation des places d'échange.
+
+Le fait que les signataires soient cautionnaires des dépôts permet d'offrir un recours aux utilisateurs à l'origine des dépôts en cas de collusion. Un groupe de signataires qui ne signe pas dans le temps d'expiration perd sa caution. Un groupe de signataires dont on peut prouver qu'ils a signé des données non autorisées perd également sa caution et risque de perdre sa mise de jetons de travail.
+
+== Caution acceptable 
+
+Deux jetons semblent être des choix évidents pour un usage comme caution de signataires - TBTC et le jeton de travail KEEP. Lors de la phase de lancement du réseau cependant, aucun n'est approprié du fait d'une liquidité trop faible.
+
+Comme les cautions doivent être libellées en un actif largement échangé pour prévenir les manipulations de marchés, le prochain choix évidents erst le jeton natif de la blockchain hôte au système. Pour tBTC v1, il s'agit d'ETH. Alors que l'écosystème mature, d'autres options pourront être envisagées pour les devises utiliser comme cautions, bien que cela implique peut-être une implémentation plus complexe.
+
+== Mesurer la sécurité du système
+
+Pour des raisons de sécurité, il est clair que les cautions des signataires doivent être proportionelles à la taille d'un _dépôt_ donné. Pour garantir une espérance négative pour des signataires malveillants, le montant perdu pour cause de mauvais comportement doit être strictement plus élevé que le montant gagné. Supposant qu'une taille de lot de {btc-lot-size}, un taux de change constant entre le BTC et l'actif utilisé comme caution et un groupe de signataires fonctionnant sur la base de M-sur-N signatures, la caution minimale requise par signataire est `({btc-lot-size})/M`, libellé en l'actif sous caution, soit l'ETH dans le cas de référence.
+
+[example]
+Considérons un _dépôt_ de 1 BTC garanti par un groupe de 3-sur5 signataires. Dans le pire des cas,  3 signataires peuvent être malveillants et tenter de voler le dépôt ce qui leur rapporterait 1/3 de BTC. Il en résulte que les 5 signataires doivent mettre sous caution 0.33 BTC chacun, libellé en ETH.
+
+NOTE: Pour tBTC v1, des limites concernant l'imputabilité dans le protocole de signature conduisent à un groupe de signataires de type 3-sur-3. Il en résulte que la caution par signataire sera de
+{extra-collateral} par {btc-lot-size} par signataire, aboutissant à une caution totale à hauteur de
+{total-collateral} (voir la section suivante sur les 
+<<overcollateralization>>). En réglant le problème d'imputabilité dans les versions futures, le montant des cautions pourra être diminué.
+
+== Fluctuations du prix des devises
+
+La discussion ci-dessus suppose que le taux de change entre BTC est ETH est constant. En réalité, ce taux est sujet à de fortes fluctuations.
+
+[[overcollateralization]]
+=== Chute du prix d'un ETH en BTC
+
+Si la valeur d'un ETH en BTC baisse rapidement, la valeur en dollar des ETH déposés en caution par les signataires peut devenir plus faible que la valeur en dollar des BTC qu'ils garantissent, ce qui veut dire qu'un acteur malveillant aurait une espérance positive.
+
+Afin de prévenir cette situation, la caution des signataires est surdimensionnée à hauteur de 
+{extra-collateral} pour atteindre un montant total de caution de {total-collateral} la valeur des Bitcoin dépôsés.
+
+[example]
+**Sans surdimensionnement :** 
+Supposons que chaque BTC vaut 10 000$ et que chaque ETH vaut 200$. Les signataires doivent déposer 50 ETH pour garantir un dépôt d'1 BTC. Si le prix de la paire ETH/BTC sur le marché chute brutalement de 25% pour atteindre 150$ tandis que la valeur en dollar d'un BTC reste stable, ces 50 ETH valent maintenant 7 500$, ce qui veut dire  que les signataires pourraient voler le dépôt et en tirer un profit de 2500$. 
+
+[example]
+**Avec surdimensionnement :** Supposons une situation identique à la différence que les signataires déposent une caution de 75 ETH (150% de 50) pour garantir le dépôt. Le prix fluctue de la même manière que dans l'exemple précédent. Les 75 ETH valent maintenant 11 250$, ce qui reste supérieur à la valeur en dollar d'un BTC. Les signataires ont maintenant plus à perdre en se comportant de manière malveillante que leurs potentiels gains.
+
+Dans le cas général, une caution totale de {total-collateral} (`3/2 * 100%`) assure que le comportement rationnel des signataires est dans l'intérêt des utilisateurs de la plateforme dans la limite d'une variation de prix de 33% (`(1 - 2/3) * 100%`) de l'actif sous caution (libellé en l'actif déposé). Une augmentation de ce pourcentage permettrait de rendre le système plus robuste mais résulterait en un coût d'opportunité plus élevé pour les signataires, coût qui devrait être compensé par des frais prélevés aux utilisateurs.
+
+Si la valeur des ETH passe en dessous d'un certain seuil de sécurité, les dépôts ouverts entreraient dans une phase de
+<<pre-liquidation, pré-liquidation>>, suivie d'une <<liquidation, liquidation>>.
+
+// TODO insert a little historical analysis for a decent starting number
+
+
+=== Chute du prix d'un BTC en ETH 
+
+Comme les <<signer-fees/index.adoc#signer-fees,frais de signataires>> sont libellés en portion des BTC sous caution (avec le surdimensionement de la caution pris en compte), une chute du prix du BTC par rapport à l'actif sous caution se traduit en des frais de transaction plus faibles. Cela ne cause pas de problème pour les réserves de TBTC, mais le système tBTC devient moins attractif pour les signataires qui souhaitent maximiser la rentabilité de leurs fonds.
+
+Les signataires DEVRAIENT acheter des TBTC sur le marché en prévision d'un tel surdimensionnement des dépôts et DEVRAIENT les utiliser pour racheter des ETH afin de récupérer des liquidités qui permettront de garantir d'autres dépôts. Une autre possibilité serait de permettre aux signataires de rééquilibrer leurs cautions pour revenir aux {total-collateral} requis. Cependant, cela implique une plus grande complexité du système et n'est donc pas la solution retenue pour le lancement initial.
+
+[example]
+Supposons que chaque BTC vaut 10 000$ et que chaque ETH vaut 200$. Les signataires doivent déposer 75 ETH pour garantir un dépôt d'1 BTC. Les signataires s'attendent à gagner des frais de transactions à hauteur de 5 points de base pour un dépôt de 10 000$ garanti par une caution de 15 000$, soit $5. Le prix d'un ETH augmente de 25% pour atteindre 250$ tandis que le BTC garde la même valeur. Les signataires gagnent toujours 5$ par BTC dont ils sont dépositaires mais leurs 75 ETH valent maintenant 18 750$ (soit un surdimensionnement de la caution de 187.5%). 5 points de base devraient alors valoir 9.375$. Un signataire retire un dépôt en payant 1.005 TBTC, récupérant ainsi 1 BTC et déverrouillant la caution des signataires de 75 ETH.  Les signataires ayant déposé une caution significativement surdimensionnée ont maintenant des liquidités en ETH qu'ils peuvent utiliser pour émettre de nouveaux TBTC avec une caution nécessaire maintenant plus faible.
+
+//NOTE DE TRADUCTION : L'EXEMPLE CI-DESSUS VA ÊTRE MODIFIÉ. SURVEILLER LES PR.
+
+== Un flux de prix robuste
+
+Contrairement aux schémas populaires de stablecoin synthétiques, le système tBTC ne fait aucun effort pour stabiliser le prix d'un TBTC en BTC: le prix d'un TBTC sera fixé par le marché. Le but est plutôt de s'assurer que la circulation monétaire de TBTC est strictement inférieure au total des dépôts de BTC.
+
+C'est pour cette raison que la seule relation dont le système doit se soucier est la relation entre la valeur de l'actif utilisé pour la caution par les signataires et la valeur des BTC.
+
+Pour tBTC v1, il est question du prix d'un ETH en BTC. Comme il s'agit d'une seule paire d'actifs, tBTC utilisera initialement un simple 
+<<price-feed/index.adoc#price-feed,flux de prix>>.
+
+== Sous-dimensionnement
+
+// TODO explain the undercollateralization curve
+[[pre-liquidation]]
+=== Pré-liquidation : un rappel de courtoisie
+
+Lorsque le premier seuil de caution de {pre-liquidation-threshold} est atteint, un _dépôt_ entre en phase de préliquidation. La pré-liquidation indique aux signataires qu'ils devraient clôre le dépôt, sans quoi ils seront automatiquement liquidés à la fin de cette phase. Si le _dépôt_ n'est pas clôturé dans mes {pre-liquidation-period}, ou si la caution garantissant le dépôt chute en dessous de la limite de {liquidation-threshold} du montant du dépôt, la liquidation est déclenchée. Cela donne une raison aux signataires de clotûrer la position avant que la caution ne couvre plus le dépôt. Il est également possible que le ratio ETHBTC ré-augmente de façon à ce que les cautions soient de nouveaux surdimensionnés à hauteur de {pre-liquidation-threshold}
+dans la limite des {pre-liquidation-period}, auquel cas le  _dépôt_ est garanti correctement et sort de la phase de pré-liquidation.
+
+Des futures versions plus complexes du mécanisme de liquidation pourraient être déployées. Pour la version initiale, il semblait plus prudent de choisir un mécanisme simple avec des pénalités importantes en cas de sous-dimensionnement de la caution. Par ailleurs, en encourageant le retrait des dépôts garantis par des cautions fortement sous-dimensionnées ou sur-dimensionnées, on évite aux signataires d'être en position longue par rapport à l'ETH pendant de longues durées.
+
+[[liquidation]]
+=== Liquidation
+
+:fraudulent-signature: footnote:[Les signatures frauduleusessont des signatures qui ne sont pas autorisées \
+explicitement par e système tBTC. Le système n'autorise des retraits \
+ou signatures lorsqu'un utilisateur a lancé un processus de retrait.]
+
+:vm-deposit-owner: footnote:[Notons que pour les dépôts ayant été utilisés pour garantir des TBTC \
+avec le Distributeur, l'utilisateur à l'origine du dépôt est lui même le Distributeur. \
+En dédommageant cet utilisateur, le système s'assure donc que \
+la circulation monétaire de TBTC correspond aux BTC garantissant les dépôts.]
+
+Les liquidations forcées devraient être rare comme les signataires rationnels clôtureront les dépôts avant que la liquidation ne soit nécessaire. En revanche, la possibilité de conséquences extrêmement punitives est nécessaire pour prévenir tout comportement malhonnête. Une liquidation pourrait se produire dans si les signataires <<failure/index.adoc#abort, ne produisent pas une signature valide en réponse d'une demande de retrait>>, la valeur de la caution des signataires tombe en dessous du seuil de liquidation, si ils ne répondent pas au rappel de courtoisie, ou si les signataires <<failure/index.adoc#fraud,
+produisent une signature frauduleuse>>{fraudulent-signature}.
+
+Le but principal du processus de liquidation est de dédommager l'utilisateur à l'origine du dépôt si il perd son argent à cause d'un comportement incorrect des signataires ou à causes de forces externes qui auraient compromis la sécurité du dépôt.{vm-deposit-owner}. Le but secondaire est de sanctionner le plus possible les comportements incorrects lorsqu'un tel comportement peut être prouvé.
+
+L'actif en possession du système ayant le plus de valeur est la caution des signataires. En conséquence, le processus de liquidation saisit la caution du signataire pour tenter de compenser l'utilisateur à l'origine du dépôt. Toute caution de signataire restante après que l'utilisateur soit dédommagé est donnée au compte responsable du signalement du maubais comportement ou entre les signataires et le compte ayant déclenché la liquidation (pour des raisons de caution insuffisante).
+
+Pour dédommager l'utilisateur à l'origine du dépôt, le contrat commence une enchère inversée hollandaise portant sur la caution saisie. L'enchère offre initialement {liquidation-auction-start-percent} de la caution des signataires en échange du montant en TBTC impayé. La portion de la caution mise en vente augment jusqu'à ce que quelque choisisse de l'acheter ou que le montant atteigne 100% de la caution. L'enchère reste ouverte jusqu'à ce qu'un acheteur soit trouvé.
+
+Les TBTC reçus lors de ce processus sont envoyés au propriétaire du dépôt; si le propriétaire du dépôt est le Distributeur, le Distributeur DOIT détruire les TBTC pour maintenir l'indexation stricte sur la masse monétaire du Bitcoin. Si il reste une partie de la caution après liquidation, deux choses peuvent se produire :
+
+* Dans le cas d'une liquidation causée par  **une aution sous-dimensionnée ou une interruption**, la caution restante est partagée en parts égales entre le compte ayant déclenché la liquidation  et les signataires.
+* Dans le cas où la liquidation est due à une **fraude**, la caution restante revient intégralement au compte ayant déclenché la liquidation en prouvant la fraude.
+
+À la fin de la liquidation, les signataies n'ayant pas répondu aux requêtes ou s'étant comportés de manière incorrect sont en contrôle des BTC déposés. Le choix revient au groupe de signataires de décider ce qu'ils vont faire de ces BTC. Ils pourraient se les partager, être volés par une majorité de signataires, ou perdus à jamais.
+
+NOTE: Si un Jeton Gratuit de Réduction, ou "Free Rebate Token" (FRT) a été remis pour l'émission de TBTC correspondant à un dépôt liquidé (voir <<minting/index.adoc#minting, la section sur  l'émission>>), le détenteur de FRT n'est _pas_ dédommagé au cours de la liquidation. Les frais qui étaient retenus en échange du FRT sont utilisés pour dédommager les signataires et le FRT n'est pas éligible pour un dédommagement.
+
+[example]
+--
+1. Les signataires sont dépositaires d'1 BTC garanti par 75 ETH à un prix de 0.02 BTC par ETH (de telle sorte que 75 ETH = 1.5 BTC pour une caution dimensionnée à 150% ).
+
+2. Le cours de l'ETH chute pour atteindre 0.01333 BTC par ETH. Les 75 ETH ne couvrent maintenant plus que 100% du dépît (1 BTC / 75 ETH).
+
+3. La liquidation est déclenchée et les 75 ETH sont saisies pour acheter des TBTC.
+
+4. Le _Dépôt_ doit utiliser les 75 ETH pour acheter 1 BTC. Pour essayer d'avoir une réduction, une enchère démarre ne concernant que {liquidation-auction-start-percent} des réserves en ETH.
+
+5. Un arbitragiste détruit 1 TBTC lorsque l'enchère atteint 90% de la caution et obtient 67.5 ETH. La liquidation du contrat de dépôt est maintenant terminée.
+
+6. La moitié des 7.5 ETH restant est répartie entre les signataires (s'ils avaient commis une faute, il ne recevraient rien) et l'autre moitié est donnée au compte qui a déclenché le processus de liquidation sur le contrat intelligent Ethereum. À ce stade, le contrat de dépôt est marqué comme clôturé. Notons que le détenteur de FRT n'est pas dédommagé lors de cette liquidation.
+
+7. Facultativement, les N signataires se coordonnent et arrive à un accord sur la répartition du dépôt de 1 BTC en leur posession.
+--
+
+//NOTE DE TRADUCTION : IL FAUT SUREMENT CHANGER "le _dépôt_" pour le remplacer par "Le contrat de dépôt".
