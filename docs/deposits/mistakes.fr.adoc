@@ -1,0 +1,25 @@
+= Erreurs lors d'un dépôt
+
+Le système est conçu pour fonctionner sur la base de tailles de lots prédéfinies pour tous les _Dépôts_. Ces tailles sont des paramètres systèmes. **Les utilisateurs effectuant des dépôts devraient envoyer le montant exactement correspondant au lot sélectionné lors du transfert initial ou s'attendre à perdre des fonds.** Comme le système ne peut pas forcer les utilisateurs à envoyer un montant spécifique, le cas idéal serait que le système s'occupe gracieusement des trop percçus et paiements insuffisants. Les trop perçus et paiements insuffisants impactent principalement le dimensionnement de la caution du dépôt. Le système interprète tout trop-perçu ou paiement insuffisant comme une faute de l'utilisateur et lui impute ses coûts.
+
+== Paiement insuffisant 
+
+Permettre des paiements insuffisants sur le contrat de dépôt résulterait en un surdimensionnement trop important de la caution des signataires. Pour empêcher cela, le système n'accepte pas les preuves de financement d'un montant inférieur à la taille de lot (initiallement `1.0 BTC`). Cela implique qu'un utilisateur envoyant moins que `1.0
+BTC` dans la transaction de financement du dépôt ne recevra aucun TBTC en retour et abandonnera les BTC envoyés aux signataires. Les signataires peuvent débloquer les fonds et se les répartir après que le contrat de dépôt soit clotûré sur la blockchain (voir
+<<UTXO multiples>> pour une discussion complète).
+
+== Trop-perçus
+
+À l'opposé, les trop-perçus résulteraient en un sous-dimensionnement (par raport à la cible de 150%) de la caution des signatires. Lorsque le contrat reçoit un trop-perçu, le système accepte la preuve de financement mais n'émet que les TBTC correspondant à la taille du lot spécifié.
+
+Dans un marché efficace, ce dépôt sera immédiatement retiré puisque le demandeur de retrait s'attend à récupérer l'excédent comme arbitrage.
+
+Example: Un utilisateur fournissant une preuve d'un dépôt de `1.6 BTC` dans un système avec une taille de dépôt de `1.0 BTC` ne déclenchera l'émission que de `1.0 TBTC`. Un utilisateur détruisant `1.0 TBTC` pourra obtenir le dépôt de `1.6 BTC`.
+
+L'utilisateur à l'origine du dépôt devrait remarquer cette erreur imémdiatement et tenter de détruire ses TBTC pour récupérer l'excédent. Sinon, il renonce à l'excédent qui reviendra à d'autres participants.
+
+== UTXOs multiples
+
+Un pourrait envoyer plusieus UTXOs à l'adresse du groupe de signataires. Cela pourrait résulter en ue erreur humaine ou logiciel. Malheuresement, renvoyer les fonds à l'utilisateur à l'origine du dépôt imposerait une complexité et des coût des transactions significatifs pour les contrats sur la blockchain puisque chaque UTXO devrait être vérifié par des preuves SPV et une signature explicitement autorisée. Par ailleurs, il faudrait développer un mécanisme économique forçant la signature de chaque transaction sans connaître la valeur totale des UTXOs. Pour cette raison, le système reconnaît uniquement le premier UTXO dont la valeur est supérieure ou égale à celle de la taille du lot. Tout autre UTXO est perdu pour l'utilisateur. Il est donc impératif que les utilisateurs déposant des Bitcoins dans le système envoie un seul UTXO de la taille appropriée.
+
+un example particulèrement dommageable est celui d'un utilisateur naïf demandant un dépôt. S'il envoie par erreur la moitié de la taille de lot en une transaction et l'autre moitié dans une autre, les deux UTXO seraient perdus. **Il s'agit d'un écueil majeur pour les utilisateurs voulant déposer des BTC. Ceci doit être soigneusement mis en évidence par l'interface graphique puisque que des pertes de fonds importantes sont possibles.**
