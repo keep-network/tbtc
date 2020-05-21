@@ -1,0 +1,30 @@
+:toc: macro
+
+= Économie des dépôts
+
+ifndef::tbtc[]
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
+include::../constants.adoc[]
+endif::tbtc[]
+
+Les signataires ne sont pas altruistes - ils sont payés pour des services qu'ils fournissent.
+
+Les frais de signataires doivent toujours être payés ou mis en séquestre en avance. À cette fin, les frais de signataires doivent être <<minting/index.adoc#minting, garantis par l'émission des TBTC>>, et les dépôts doivent avoir une durée de vie prévisible.
+
+Un traitement détaillé des frais de signataires peut être trouvé 
+<<signer-fees/index.adoc#signer-fees,dans la section correspondante>>.
+
+
+[[term]]
+== Durée
+
+Des dépôts à durée déterminée permettent de calculer les frais de signataires par dépôt plus facilement. Une durée standard de 6 mois permet aux utilisateurs effectuant des dépôts de budgéter les frais et les signataires sauront pour combien de temps leurs cautions seront inaccessibles.
+
+//NOTE DE TRADUCTION : LE PARAGRAPHE CI-DESSOUS N EST PAS CLAIR DU TOUT EN ANGLAIS DONC LA TRADUCTION EST EXTREMEMENT APPROXIMATIVE
+
+Les utilisateurs qui n'ont pas besoin d'accéder à leurs dépôts à l'avenir peuvent transmettre les coûts du système aux demandeurs de retraits éventuels et/ou demander un libellage autre que les tailles de dépôt ou demander de la fongibilité. Ces utilisateurs peuvent demander un jeton non-fongible, un Jeton Gratuit de Réduction ou "Free Rebate Token" (FRC) qui offre une réduction au moment du retrait du dépôt par un autre utilisateur. Le mécnisme de réduction <<minting/index.adoc#minting,
+est expliqué plus en détail dans la partie concernant l'émission des jetons>>.
+
+À la fin de la période de dépôt, le dépôt peut être retiré par n'importe qui, y compris les signataires eux même, et le possesseur du dépôt devra alors des frais aux signataires. Ce mécanisme est examiné en détail dans 
+<<redemption/index.adoc#redemption,la section sur le retrait>>.
