@@ -1,0 +1,31 @@
+:toc: macro
+
+= Gestion des pannes
+
+ifndef::tbtc[]
+toc::[]
+
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
+endif::tbtc[]
+
+[[abort]]
+== Interruptions / Vivacité
+
+Le système impose que des actions critiques telles que le financement d'un dépôt ou le retrait se produisent dans la limite d'un temps imparti après la requête. Un manquement est considéré comme une interruption. Une <<fraud,fraude>> fait référence à une preuve formelle d'un comportement interdit. Une interruption fait référence à une panne d'un ou plusieurs participants. Bien que de telles interruptions soient punies et qu'elles puissent aboutir à la liquidation des responsables, la pénalité n'est pas aussi sévère que dans le cas d'une fraude. Par exemple, si les signataires échouent à produire une signature pour un retrait dans le temps imparti, leur caution est liquitée pour assurer l'indexation sur la masse monétaire, mais le montant restant leur est retourné.
+
+[[fraud]]
+=== Fraude
+
+Le système reconnaît un type de preuve de fraude, les preuves de fraude ECDSA. Ces fraudes correspondent à une situation dans laquelle les signataires ont produit une signature pour un message qui n'a pas été demandé de manière explicite. Lorsque la fraude est détectée, le système pénalise les signataires en confisquant leurs cautions et en entamant le processus de
+<<bonding/index.adoc#liquidation,liquidation>>.
+
+==== Preuves de fraudes ECDSA 
+
+Les signataires d'un groupe contrôlent une paire de clés asymétriques ECDSA. Ils peuvent produire une signature correspondant à la clé publique en collaborant. Les signataires sont chargés de produire certaines signatures (e.g. la signature d'une transaction de retrait lors du processus de retrait). Toute signature correspondant à la clé publique des signataires mais n'ayant pas été demandées est considérée comme une fraude.
+
+Une preuve de fraude ECDSA est simplement constituée d'une signature correspondant à la clé publique des signataires, le hachage du message signé, et l'antécédent de ce hachage. Si l'antécédent correspond bien au hachage et que la signature associée au hachage est valide, mais que le hachage n'a pas été explicitement demandé par le système, on peut être certain que l'ensemble des signataires n'est plus fiable. Il est important de noter qu'il n'est pas possible d'éviter la vérification de la relation entre antécédent et hachage. Étant donné une clé publique, il est toujours possible de générer une signature correspondant à une clé privée avant de sélectionner un hachage associé. En d'autres terms, n'importe qui peut produire une signature qui semble valide pour un message arbitraire. Seule la vérification de l'existence de l'antécédent (en vérifiant sa relation avec le hachage signé) peut empêcher cette attaque, puisqu'un attaquant ne peut pas inverser la fonction de hachage pour contrefaire cette relation. 
+
+Le système peut vérifier toute signature générée par les signataires. En revanche, la capacité de la blockchain hôte impose des limites pratiques. par example, seuls certaines fonctions de hachage sont disponibles sur Ethereum, il n'est donc pas possible de vérifier les hachages produits par de telles fonctions. Par exemple, il n'est pas possible de vérifier les signatures du réseau Decred puisque celui-ci utilise la fonction de hachage blake256. Des signataires membres d'un réseau hébergé par la blockchain Ethereum peuvent produire des signatures pour des transactions Decred frauduleuses sans qu'il soit possible de les sanctionner.
+
+Toutes les blockchains imposent un coût sur la base de la taille des données d'entrée. Le coût d'une vérification dépend donc de la longueur de l'antécédent. Cela signifie que vérifier les signatures portant sur un antécédent très long pourrait ne pas être faisable économiquement, ou qu'une tentative aboutirait à un dépassement des limites du système (e.g. la limite de gas par bloc de la blockchain Ethereum). Heureusement, les signatures Bitcoin utilisent un algorithme de double hachage sha256. Cela signifie que le résultat du hachage fait toujours 32 bits. Le coût de vérification des signatures n'augmente donc pas avec la taille des transactions. Même les transactions de grande taille n'échappent pas au système de vérification de fraude ECDSA.
