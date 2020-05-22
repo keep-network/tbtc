@@ -23,6 +23,25 @@ toc::[]
 [abstract]
 .Abstract
 --
+The tBTC system is a design for a decentralized, 1-to-1 redeemable token
+supply-pegged to BTC. The described design can be implemented on a
+smart-contract-enabled host chain that supports custom tokens and a subset of
+functionality needed to prove certain properties of Bitcoin transactions.
+This spec in particular assumes the host chain is Ethereum. The peg is
+implemented using an approach dubbed a bonded, multifederated peg, in which a
+randomly chosen subset of a larger network of signing nodes is chosen to back
+individual deposits requested by users wishing to mint TBTC tokens on the host
+chain. The chosen signers use a threshold ECDSA protocol to generate a Bitcoin
+wallet without any single signer having access to the corresponding private key,
+and bond an amount of the host chain's native token (ETH for Ethereum) that
+ensures their behavior in the system remains honest, at risk of losing their
+bond in case of dishonesty or undercollateralization. A smart contract on the
+host chain mediates the deposit's lifecycle, including opening deposits,
+collateralization, signer fraud, and redemption. Redemption allows for a deposit
+to have its held BTC withdrawn on the Bitcoin chain, and pays signers.
+Additional mechanisms are described to properly incentivize a fixed term for
+deposits to ensure signer compensation and to allow signer exit in case of
+impending undercollateralization.
 --
 
 == Overview
