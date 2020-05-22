@@ -1,0 +1,89 @@
+:toc: macro
+
+= Dépôts 
+
+ifndef::tbtc[]
+toc::[]
+
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
+include::../constants.adoc[]
+endif::tbtc[]
+
+== Vue d'ensemble
+
+tBTC fournit un mécanisme de création de TBTC, un jeton garanti par dépôt de Bitcoin à un ratio de 1 pour 1 et hébergé sur une _blockchain hôte_ autre que celle du Bitcoin. Un utilisateur souhaitant émettre du TBTC envoient une <<request,requête>> au système tBTC pour qu'il leur fournisse une adresse de portefeuille Bitcoin. Le système
+<<signer-selection,choisit alors un ensemble de _signataires_>> dont la tâche est de générer une paire de clés asymétriques et de la donner au système. L'utilisateur intéressé devient alors un _déposant_ en envoyant du Bitcoin au portefeuille généré (une discussion sur le montant à envoyer est disponible dans la section sur les <<Lots,lots>>). Les dépôts ne peuvent être assurés gratuitement : les signataires doivent fournir une caution en ETH pour assurer un comportement honnête (voir la section sur
+l'<<Économie des dépôts>>). Le dépôt payé avec des frais de signataires couvrant une _durée_ de dépôt permettant le retrait exclusif du dépôt par son possesseur. Ce point est détaillé dans la section sur <<term,la durée de dépôt.>>.
+
+Chacune de ces étapes est illustrée dans le diagramme ci-dessous et détaillée dans les sections suivandes.
+
+image::{root-prefix}img/generated/initiate-deposit.png[]
+
+[[request]]
+== Demande de dépôt
+
+Le point de départ de l'acquisition de TBTC est la génération d'une _demande de dépôt_. Cette requête démarre par une transaction vers un contrat intelligent de la chaîne hôte du système tBTC. Elle signale au système qu'un groupe de signataires doit être formé pour créer un portefeuille. La demande de dépôt comprend une petite caution libellé en le jeton natif à la blockchain pour garantir la création du groupe de signataires. Cette caution est remboursée lorsqu'un dépôt est effectué dans le portefeuille généré par les signataires. 
+
+[[signer-selection]]
+=== Sélection des signataires
+
+Une fois la demande de dépôt reçue, le groupe de signataires est créé en sélectionnant aléatoirement un des signataires qui deviennent dépositaires d'un portefeuille Bitcoin. Il s'agit d'un processus en plusieurs étapes décrit dans le diagramme ci-dessous.footnote:[Le systèmme tBTC n'intervient que dans une moindre mesure à cette étape. Le plus gros du travail de coordination est exécuté par un système secondaire responsable de la génération de nombres aléatoires, du stockage des données privées, et du calcul multipartite nécessaire pour assurer les propriétés de sécurité du système. Dans ce diagramme, ce rôle est joué par le réseau Keep, décrit dans http://keep.network/whitepaper[le livre blanc correspondant]. La balise aléatoire Keep est décrite plus en détails dans le 
+http://docs.keep.network/random-beacon/["Yellowpaper" [NdT : document technique].]
+
+image::{root-prefix}img/generated/signing-group-creation.png[]
+
+Lorsqu'une requête est reçue pour la création d'un groupe de signataires, le système tBTC demande la génération d'un nombre aléatoire depuis une balise aléatoire décentralisée et sûre.footnote:[Un système ne peut pas être plus décentralisé que sont composant le plus centralisé. La balise doit donc être décentraisée pour assurer la décentralisation voulue pour le système tBTC dans son ensemble.]
+Le nombre aléatoire obtenu est utilisé pour sélectionner un groupe de signataires dans le vivier de candidats éligibles. Enfin, ces signataires se coordonnent autour d'un algortihme de génération de clé distribué qui résulte en une clé publique ECDSA pour le groupe. Cette clé peut alors être utilisée pour créer un portefeuille Bitcoin dont l'adresse est publiée sur la blockchain hôte. Ceci complète l'étape de sélection des signataires.
+
+==== Caution des signataires
+
+Avant que les signataires sélectionnés n'exécutent l'algorithme de génération de clé, ils doivent accepter de faire partie du groupe de signataires en déposant une caution (la _caution de signataires_) libellé en le jeton natif à la blockchain hôte. Cette caution est utilisée pour pénaliser les membres du groupe si des données non autorisées sont signeés une fois la clé générée. Elle est aussi utilisée pour pénaliser un membre donné du groupe si la génération de clé échoue à cause de son mauvais comportement, si le groupe de signataires ne produit pas de signatures lorsque le système le lui demande, ou pour équilibrer le système en cas de sous-dimensionnement de la caution.
+
+Plus de détails sur le système de caution sont donnés
+<<bonding/index#bonding,dans la section correspondante.>>.
+
+==== Génération de clé distribuée 
+
+:threshold-signature: footnote:[Les signatures à seuil permettent à un groupe de N  \
+signataires de générer une clé publique à partir d'un ensemble de parties de clé privée avec lesquelles \
+un sous-ensemble de M signataires peut créer des signatures au nom du groupe. Pour \
+tBTC v1, les groupes de signataires sont des groupes 3-parmi-3, c'est à dire que ce sont des groupes de 3 signataires \
+qui nécessitent la collaboration des 3 signataires pour créer des signatures au nom du groupe.]
+
+Voici quelques notes sur l'algorithme de génération de clé distribué suivi par le groupe de signataire. Cet algorithme devrait avoir trois propriétés :
+
+1. Le groupe de signataires dans son ensemble devrait obtenir une _clé publique ECDSA_ qui sera paratagée sur la blockchain hôte et correspondra au portefeuille Bicoin posséder par le groupe de signataires.
+2. Chaque membre du groupe de signataires doit avoir une _partie de clé privée à seuil ECDSA_{threshold-signature} qui peut être utilisée pour n'importe quelle transaction impliquant le portefeuille des signataires.
+3. Chaque membre du groupe devrait pouvoir combiner un nombre de parties de signatures au dessus d'un certainseuil pour produire une transaction signée à exécuter au nom du groupe.
+
+[[funding]]
+== Faire un dépôt
+
+:sufficient-confirmations: footnote:[Pour tBTC v1, suffisamment confirmé signifie 6 confirmations. Un nombre de confirmations requises variables est évalué pour tBTC v2, se basant notamment sur le transféré.]
+
+Une fois que le système tBTC a géénré une adresse pour la demande de dépôt, le _déposant_ peut envoyer une transaction sur le réseau Bitcoin transférant des BTC depuis son propre protefeuille jusqu'à l'adresse du groupe de signataires. Une fois la transaction suffisamment confirmée{sufficient-confirmations} dans la blockchain Bitcoin, le déposant doit envoyer une transaction sur la blockchain hôte pour prouver que le contrat de dépôt a bien été financé.
+
+Le seul lien entre la blockchain Bitcoin et la chaîne hôte est le système tBTC qui exécute un enseble de contrats intelligents sur la chaîne hôte. C'est pourquoi la transaction Bitcoin envoyée par le déposant doit être prouvée au système tBTC avant que ce dernier n'autorise le déposant à se comporter come si le transfert avait eu lieu avec succès. Si une preuve de dépôt est acceptée par le système, la caution de dépôt est remboursée au dépôsant. Si une preuve n'est pas reçue dans la limite du temps imparti, le groupe de signataires est dissout et le système garde la caution pour la distibuer aux membres de ce dernier.
+
+=== Relais légers
+
+Pour prouver un dépôt, le déposant doit soumettre une preuve que la transaction a bien été confirmé et a accumulé suffisament de travail sur la blockchain Bitcoin. La preuve est vérifiée par un contrat de Single Payment Verification (SPV) [NdT : "Simple Vérification de Paiement"] sur la blockchain hôte. Une vue d'ensemble plus complète des systèmes SPV inter-chaînes et de leurs propriéts de sécurité est <<appendix/spv/index#spv,est inclue en annexe>>.
+
+Les relais légers sont une nouvelle variance de SPV s'exécutant sur la blockchain Ethereum spécialement développée pour tBTC. Ils tirent partie des preuves SPV sans état efficaces et succintes, tout en relayant suffisamment d'information pour que l'on puisse garantir que chaque preuve est récente.
+Pour ce faire, nous exploitons la fonctionnalité d'ajustement de la difficulté du protocole Bitcoin. Le protocole Bitcoin ajuste la difficulté tous les 2016 blocs sur la base de l'horodatage des premier et dernier blocs de cetet séquence (une erreur dans le client Satoshi cause l'exclusion d'une durée interblock dans le calcul de la difficulté). Le changement est déterministe et compris dans une gamme de tolérance. 
+
+Un relai léger ne garde pas en mémoire chaque en-tête de bloc. Seule une partie d'une en-tête issue d'un bloc proche d'un changement de difficulté est gardée en mémoire pour avoir connaissance de la difficulté de l'epoch de 2016 blocs en cours. Cette partie d'en-tête est validée par la preuve de travail objective inclue en vérifiant : la difficulté de l'epoch actuelle, que le changement a bien lieu à l'indice attendu, et que la nouvelle difficulté correspond à celle attendue en suivant l'algorithme d'ajustement de difficulté actuel du système Bitcoin. Aucune autre information sur l'état du système Bitcoin n'est requise. 
+
+La connaissance de la difficulté actuelle permet aux preuves SPV de mieux garantir que la transaction prouvée est bien une récente.Toute preuve SPV nouvellement générée doit inclure la difficulté dans la chaîne en-tête et cette difficulté est connue de tous les participants en avance. 
+//NOTE DE TRADUCTION : A REVOIR PLUS TARD, PARAGRAPHE ORIGINAL PAS CLAIR DU TOUT  
+Les mineurs en possession de X % de la puissance de calcul ont une probabilité de X %  d'être responsables de l'ajustement de difficulté, c'est à dire qu'ils ont X % de chance de pouvoir prédire la nouvelle difficulté deux semaines en avance (en générant une preuve erronnée avant de modifier la difficulté pour la rendre valide). Ce raisonnement peut se généraliser : cela représente une probabilité de `(X /100)^t` de prédire le changement de difficulté `t` périodes d'ajustement en avance (`2t` semaines). Par conséquent, l'usage de relais légers offre des garanties de sécurité plus fortes aux preuves SPV si une étape de vérification supplémentaire est mise en oeuvre puisque même un acteur disposant d'une part importante de la puissance de calcul de la blockchain Bitcoin ont une faible chance de pouvoir créer des preuves erronnées.
+
+== Lots
+
+Les dépôts sont gérés en _lots_ de taille fixée. Chaque dépôt doit par conséquent avoir la même taille : {btc-lot-size}. Ainsi, un déposant soumettant sa <<Proof of deposit, preuve de dépôt>> doit prouver avoir déposé
+{btc-lot-size} dans le portefeuille du groupe de signataires. Si un déposant veut déposer plus que la taille de lot, il devra effectuer plusieurs dépôts. Cela permet à chaque dépôt d'être géré par un groupe designataires différent ce qui simplifie le système de caution et améliore la résistance du système à la défaillance de groupes de signataires, qu'ils soient malveillants ou non.
+
+include::./mistakes.adoc[leveloffset=+1]
+
+include::./economics.adoc[leveloffset=+1]
