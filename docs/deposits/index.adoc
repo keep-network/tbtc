@@ -118,17 +118,20 @@ signer selection phase.
 ==== Signer bonding
 
 Before the selected members of a signing group can perform distributed key
-generation, they must agree to become members of the signing group by putting up
-a bond (the _signer bond_) in the native token of the host chain. This bond
-is used to penalize the members of the signing group if an unauthorized piece
-of data is signed by the signing group once distributed key generation is
-complete; it is also used to penalize a given member if the distributed key
-generation fails due to an attributed misbehavior of that member, if the signing
-group fails to produce a signature for the system when requested, and to
-bring the system into balance in cases of undercollateralization.
+generation, they MUST put up a bond (the _signer bond_) in the native token
+of the host chain. This bond is used to penalize the members of the signing
+group if an unauthorized piece of data is signed by the signing group once
+distributed key generation is complete; it is also used to penalize a given
+member if the distributed key generation fails due to an attributed
+misbehavior of that member, if the signing group fails to produce a signature
+for the system when requested, and to bring the system into balance in cases
+of undercollateralization. The signers must have enough bond available to
+back a deposit in order to be chosen for the signing group, and the bond
+SHOULD be acquired by the deposit in the same transaction that chooses the
+signers.
 
-Bonding is described in more detail in
-<<bonding/index#bonding,its own section>>.
+Bonding is described in more detail in <<bonding/index#bonding,its own
+section>>.
 
 ==== Distributed key generation
 
