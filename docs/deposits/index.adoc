@@ -56,11 +56,12 @@ sequenceDiagram
 == Deposit request
 
 The starting point for acquiring TBTC is generating a _deposit request_. This
-request is a transaction to a smart contract on tBTC's host chain.
-signals that the sender requires a signing group backed wallet Because signing
-groups are not free to create, deposit requests include a small bond in the host
-chain's native token to cover the creation of the signing group. The bond is
-refunded when a successful deposit is made to the generated wallet.
+request is a transaction to a smart contract on tBTC's host chain, and
+signals that the sender requires a signing group backed wallet, mediated by a
+_deposit_. Because signing groups have an inherent creation cost, deposit
+requests charge a small payment in the host chain's native token to cover the
+creation of the signing group. This payment can be refunded if the signing
+group fails to generate and publish a public key after a timeout.
 
 [[signer-selection]]
 === Signer selection
@@ -135,6 +136,7 @@ a subset M of the signers can create signatures on behalf of the group. For \
 tBTC v1, signing groups are 3-of-3, meaning they are groups of 3 signers that \
 require all 3 signers to collaborate to create signatures on behalf of the \
 group.]
+
 Some small notes about the distributed key generation a signing group undergoes.
 The distributed key generation protocol should result in three properties:
 
@@ -153,26 +155,30 @@ The distributed key generation protocol should result in three properties:
 [[funding]]
 == Making a deposit
 
-:sufficient-confirmations: footnote:[For tBTC v1, sufficient confirmations means 6 confirmations. Confirmation numbers \
-that are variable, particularly in response to volume of deposits that are \
-opened, are part of the discussion for tBTC v2.]
+:sufficient-confirmations: footnote:[For tBTC v1, sufficient confirmations \
+means 6 confirmations. Confirmation numbers that are variable, particularly \
+in response to volume of deposits that are opened, are part of the discussion \
+for tBTC v2.]
 
 Once the tBTC system has a wallet address available for a given deposit request,
 the _depositor_ can broadcast a Bitcoin transaction sending BTC from a wallet
 they control to the wallet address for the signing group. Once the transaction
 has been sufficiently confirmed{sufficient-confirmations} by the Bitcoin
 chain, the depositor has to issue a transaction to the host chain proving
-that the _Deposit_ has been funded.
+that the _deposit_ has been funded.
 
 The only link between the Bitcoin chain and the host chain is the tBTC system,
 which runs as a set of smart contracts on the host chain. As such, the Bitcoin
 transaction issued by the depositor has to be proven to the tBTC system before
 the tBTC system allows the depositor to behave as if they have successfully
-deposited their BTC into the signer wallet. When a deposit proof is accepted
-by the system, the deposit bond is refunded to the depositor. If a deposit
-proof is not received within a given timeout window, the signing group will
-disband and the system will seize the bond's value, making it available to the
-signing group members to reclaim.
+deposited their BTC into the signer wallet. If the signing group fails to
+provide a public key within a given timeout window (the _signing group formation
+timeout_), the _depositor_ can notify the deposit that this has occurred to
+receive their deposit payment back, taken out of the bonds that the signers put
+up as part of the signing group selection process. If a deposit proof is not
+received within a given timeout window (the _deposit funding timeout_), the
+signing group can notify the deposit that this has occurred to disband the
+group and return the members' bonds.
 
 === Light Relays
 
