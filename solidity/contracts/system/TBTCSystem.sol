@@ -63,6 +63,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
+    TBTCToken public tbtcToken;
+
     ISatWeiPriceFeed public priceFeed;
     IRelay public relay;
 
@@ -142,13 +144,56 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _keepThreshold,
             _keepSize
         );
+        tbtcToken = _tbtcToken;
         setTbtcDepositToken(_tbtcDepositToken);
         initializedTimestamp = block.timestamp;
         allowNewDeposits = true;
     }
 
-    /// @notice gets whether new deposits are allowed.
-    function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
+    /// @notice returns whether new deposits should be allowed.
+    function getAllowNewDeposits() external view returns (bool) {
+        if (initializedTimestamp == 0 || !allowNewDeposits) {
+            return false;
+        }
+
+        uint256 age = block.timestamp - initializedTimestamp;
+
+        uint256 supply = tbtcToken.totalSupply();
+        uint256 bufferedSupply = supply.add(getMaxLotSize().mul(10 ** 10));
+
+        if(age < 1 days) {
+            return bufferedSupply < 2 * 10 ** 18;
+        }
+
+        if (age < 30 days) {
+            return bufferedSupply < 100 * 10 ** 18;
+        }
+
+        if (age < 60 days) {
+            return bufferedSupply < 250 * 10 ** 18;
+        }
+
+        if (age < 90 days) {
+            return bufferedSupply < 500 * 10 ** 18;
+        }
+
+        if (age < 120 days) {
+            return bufferedSupply < 1000 * 10 ** 18;
+        }
+
+        return allowNewDeposits;
+    }
+
+    // @notice get the largest lot size currently enabled for deposits.
+    function getMaxLotSize() public view returns (uint256) {
+        uint256 max = 0;
+        for (uint i = 0; i<lotSizesSatoshis.length; i++) {
+            if (lotSizesSatoshis[i] > max) {
+                max = lotSizesSatoshis[i];
+            }
+        }
+        return max;
+    }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
     function emergencyPauseNewDeposits() external onlyOwner returns (bool) {

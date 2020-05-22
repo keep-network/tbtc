@@ -22,7 +22,7 @@ describe("DepositFactory", async function() {
     before(async () => {
       // To properly test createDeposit, we deploy the real Deposit contract and
       // make sure we don't get hit by the ACL hammer.
-      ;({depositFactory} = await deployAndLinkAll([], {
+      ({depositFactory} = await deployAndLinkAll([], {
         TestDeposit: Deposit,
       }))
     })
