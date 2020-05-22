@@ -30,7 +30,27 @@ the section on <<term,the deposit term>>.
 Each of these steps is shown in the diagram below and discussed in subsequent
 sections.
 
-image::{root-prefix}img/generated/initiate-deposit.png[]
+[mermaid,initiate-deposit,svg,theme=neutral]
+.....
+sequenceDiagram
+   participant btc as Bitcoin
+   participant user as User
+   participant tbtc as tBTC System
+   participant host as Host Chain
+
+   user ->> host: Request Deposit Creation
+   host -->> user: assign deposit owner NFT (TDT)
+   host -->> tbtc: Create Signing Group (event)
+
+   tbtc ->> host: public wallet address
+
+   user ->> btc: send deposit to signing group
+   btc -->> user: mine multiple blocks
+   user ->> host: prove deposit to block
+
+   user ->> host: exchange TDT
+   host -->> tbtc: mint and assign TBTC
+.....
 
 [[request]]
 == Deposit request
@@ -56,7 +76,31 @@ network, described in http://keep.network/whitepaper[its whitepaper]. The Keep
 Random Beacon is described in more detail in the
 http://docs.keep.network/random-beacon/[Keep Random Beacon yellowpaper].]
 
-image::{root-prefix}img/generated/signing-group-creation.png[]
+[mermaid,signing-group-creation,svg,theme=neutral]
+.....
+sequenceDiagram
+   participant user as User
+   participant tbtc as tBTC System
+   participant deposit as Deposit Contract
+   participant keep as ECDSA Keep
+   participant beacon as Keep Random Beacon
+   participant host as Host Chain
+
+   user ->> tbtc: request deposit
+   tbtc ->> deposit: create new deposit
+   deposit ->> keep: request signing group
+   keep -->> deposit: id
+   keep -->> user: id
+   keep ->> beacon: request random seed
+   beacon --x keep: seed (async)
+   keep ->> keep: create signing group
+   keep ->> host: broadcast group public key
+   host -->> user: group public key available (event)
+   user ->> deposit: get deposit address
+   deposit ->> keep: get public key
+   deposit ->> deposit: convert public key to address
+   deposit -->> user: address (event)
+.....
 
 When a request comes in to create a signing group, the tBTC system requests a
 random seed from a secure decentralized random beacon.footnote:[A system is only
