@@ -106,12 +106,14 @@ sequenceDiagram
 When a request comes in to create a signing group, the tBTC system requests a
 random seed from a secure decentralized random beacon.footnote:[A system is only
 as decentralized as its most centralized component, so the beacon must be
-decentralized to achieve proper decentralization of the tBTC system as a whole.]
-The resulting random seed is used to randomly select signing group members from
-the eligible pool of signers. Finally, these signers coordinate a distributed
-key generation protocol that results in a public ECDSA key for the group, which
-is used to produce a wallet address that is then published to the host chain.
-This completes the signer selection phase.
+decentralized to achieve proper decentralization of the tBTC system as a whole;
+however, note that tBTC is designed to be resilient even if the same entity
+controls all signers in a signing group.] The resulting random seed is used
+to randomly select signing group members from the eligible pool of signers.
+Finally, these signers coordinate a distributed key generation protocol that
+results in a public ECDSA key for the group, which is used to produce a
+wallet address that is then published to the host chain. This completes the
+signer selection phase.
 
 ==== Signer bonding
 
