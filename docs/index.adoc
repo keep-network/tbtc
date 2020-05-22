@@ -48,16 +48,19 @@ impending undercollateralization.
 
 == Conventions
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in https://tools.ietf.org/html/rfc2119[RFC 2119].
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
+interpreted as described in https://tools.ietf.org/html/rfc2119[RFC 2119].
 
 == A note on naming
 
 The system, in its entirety, is called "tBTC". In this document and throughout
 the project, the fungible Bitcoin-backed token is called "TBTC" to distinguish
-it from the rest of the project, and strongly suggest an eventual ticker.
+it from the rest of the project. This approach is also reflected in the Ethereum
+ERC-20 token contract.
 
-Further discussion can be found on
-https://github.com/keep-network/tbtc/issues/17[Github].
+Further discussion can be found in
+https://github.com/keep-network/tbtc/issues/17[the relevant Github issue].
 
 == Prior Work
 

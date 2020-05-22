@@ -12,19 +12,20 @@ endif::tbtc[]
 
 == Overview
 
-tBTC provides a mechanism for creating a token, TBTC, on a non-Bitcoin _host
-chain_ (in tBTC v1, this host chain is Ethereum), that is 1-to-1 backed by
-bitcoin. Parties interested in minting TBTC <<request,request>> that
-the tBTC system provide them with a Bitcoin wallet address. The system
-<<signer-selection,selects a set of _signers_>>, which are tasked with
-generating a private/public keypair and furnishing it to the system. The
-interested party then becomes a _depositor_ by sending bitcoin to the wallet
-(the amount of required bitcoin is discussed separately in the section on
-<<Lots,lots>>). The deposit cannot be maintained for free, as deposits require
-signers to put up an ETH bond to guarantee good behavior (see the section on
-<<Deposit economics>>). To cover these costs, the deposit is paid for by
-signing fees that cover a set _term_ of deposit redemption exclusivity for
-the deposit owner, discussed separately in the section on <<term,terms>>.
+The tBTC system provides a mechanism for creating a token, TBTC, on a
+non-Bitcoin _host chain_ (in tBTC v1, the first host chain is Ethereum), that
+is 1-to-1 backed by bitcoin. Parties interested in minting TBTC
+<<request,request>> that the system provide them with a Bitcoin wallet
+address. The system <<signer-selection,selects a set of _signers_>>, which
+are tasked with generating a private/public keypair and furnishing it to the
+system. The interested party then becomes a _depositor_ by sending bitcoin to
+the wallet (the amount of required bitcoin is discussed separately in the
+section on <<Lots,lots>>). The deposit cannot be maintained for free, as
+deposits require signers to put up an ETH bond to guarantee good behavior
+(see the section on <<Deposit economics,deposit economics>>). To cover these
+costs, the deposit is paid for by signing fees that cover a set _term_ of
+deposit redemption exclusivity for the deposit owner, discussed separately in
+the section on <<term,the deposit term>>.
 
 Each of these steps is shown in the diagram below and discussed in subsequent
 sections.
