@@ -1,0 +1,72 @@
+[#minting]
+= Émission
+
+ifndef::tbtc[]
+toc::[]
+
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
+include::../constants.adoc[]
+endif::tbtc[]
+
+== Vue d'ensemble
+
+Le processus d'émission de TBTC n'est pas confondu avec le processus de dépôt de Bitcoin.
+
+En séparant l'émission en deux phases - un dépôt 0-confirmation aboutissant à la création d'un jeton non fongible, puis une preuve additionnelle permettant l'échange du jeton non fongible contre un TBTC fongible - un équilibre est trouvé entre une forte garantie de sécurité face aux réorganisations de la blockchain Bitcoin et une meilleure expérience utilisateur avec des cas d'usage plus flexibles.
+
+// TODO insert diagram
+
+== Émission du Jeton de Dépôt tBTC non fongible
+
+Après qu'un dépôt ait été demandé et un groupe de signataires formé, un déposant reçoit immédiatement un jeton non fongible corresponsant spécifiquement à ce dépôt appelé le Jeton de Dépôt tBTC ou _tBTC Deposit Token (TDT)_ en anglais. Ce jeton accorde à son destinataire la propriété du dépôt. Cette propriété indique un droit exclusif de retrait du dépôt de son financement jusqu'à la fin de la durée de dépôt.
+
+Une fois le dépôt entièrement _qualifié_ par la soumission d'une preuve suffisante de la transaction de financement en Bitcoin, le détenteur de TDT peut demander un retrait et être sûr d'obtenir le même UTXO que celui du dépôt original après avoir payé les frais de signataires dus. Le détenteur de TDT a aussi la garantie d'un dédommagement par la caution du groupe de signataires en cas de fraude ou de soucis de dimensionnement de la caution (voir <<bonding/index.adoc#liquidation,liquidation>>) ainsi qu'un dédommagement en TBTC (moins les frais de signataires) si le dépôt est retiré par un autre compte après qu'il arrive à son terme. (voir la section sur
+<<redemption/index.adoc#at-term, le retrait à terme>>).
+
+=== Conséquences
+
+L'existence d'un jeton non fongible correspondant de manière unique à un UTXO a quelques conséquences non triviales.
+
+1.  Toute attaque contre le dépôt garantissant le TDT ne devrait impacter que le détenteur du jeton plutôt que l'ensemble de la masse monétaire. Une attaque contre un dépôt spécifique pourrait être une réorganisation de la blockchain Bitcoin / double dépense, une attaque de déni de service, un signataire malveillant, ou un sous-dimensionnement de la caution de dépôt.
+
+2.  Tout bénéficiaire d'un TDT doit évaluer le risque du jeton selon son propre jugement. Chaque jeton peut être associé à sa propre probabilité de réorganisation de blockchain. Le détenteur du dépôt peut librement transférer son TDT, par exemple lors d'un échange ou en l'utilisant comme caution dans un autre système avec mise en garde à l'acheteur.
+
+3.  Les TDTs peuvent idéalement être utilisés comme des "notes" secrètes de taille fixe comme tout autre méthode d'amélioration de la protection des données privées sur la chaîne hôte.
+
+4. Ce système permet de déléguer la preuve de travail SPV à un tiers. Avec cette fonctionnalité, le déposant n'a pas forcément besoin de surveiller la blockchain Bitcoin.
+
+
+// TODO can a deposit be challenged if its proof is re-orged? it appears there's
+// no need, but the fungible TBTC vending machine will need to be smart with
+// deposits
+
+
+== Émission du jeton fongible TBTC
+
+Une fois qu'un dépôt a accumulé suffisamment de travail, il devient éligible à l'échange contre un jeton fongible TBTC. Le contrat responsable de ce processus est appelé le "distributeur".
+
+
+[[vending-machine]]
+=== Le distributeur de TBTC
+
+Le distributeur de TBTC est un contrat sur la chaîne hôte responsable de l'émission de TBTC.
+
+Tout TDT représentant un dépôt qualifé peut être échangé. Le travail accumulé indiqué par leurs preuves SPV qualifie les dépôts. Dans tBTC v1, les dépôts sont qualifiés par une exigence de travail fixée communiquée par une <<appendix/spv/index.adoc#spv,preuve SPV>>. La quantité de travail requise est fixée à 
+{tx-proof-difficulty-factor} de travail accumulé.
+
+Un TDT représentant un dépôt qualifié est aussi éligible pour l'émission d'un TBTC fongible. L'émission de TBTC est optionnelle ; les déposants peuvent choisir de garder leurs TDTs qui restent valides pour la durée de vie du dépôt. Notons que le jeton étant non fongible, si un détenteur de TDT souhaite effectuer une transaction d'une valeur différente de celle de la taille de lot du dépôt, ils doivent émettre du TBTC. 
+
+Le détenteur d'un TDT qualifié peut échanger ce TDT contre 
+{tbtc-lot-size} nouvellement émis, moins les {signer-fee} de frais de signataires. Afin de refléter le fait que le détenteur de TDT est moins susceptible d'être intéressé par le retrait du dépôt associé, les frais de signataires sont envoyés contrat de dépôt et y sont retenus à partir de l'émission de TBTC.  
+
+En échangeant ou en utilisant ses jetons comme caution par ailleurs, le détenteur de TDT renonce à ses droits de retrait exclusifs. Il reçoit donc un jeton non fongible appelé Jeton de Réduction de Frais _Fee Rebate Token_ ou _FRT_. Ce jeton accorde un droit à une réduction de frais si le dépôt est retiré par un tiers parti avant son expiration. Dans le rare cas où un TDT est utilisé pour émettre des TBTC, récupéré auprès du distributeur et soumis de nouveau au distributeur avant l'expiration du dépôt, les frais de signataires ne sont mis en dépôt que la première fois. Comme des frais de signataires ne sont pas mis en dépôts la deuxième fois qu'un TDT est échangé auprès du distributeur, aucun FRT n'est émis non plus à ce moment; le FRT émis la première fois reste valide.  
+
+=== Échange d'un TBTC contre un TDT
+
+Tout TDT dont le distributeur est en possession peut être échangé contre un TBTC. Le distributeur DOIT détruire tout TBTC reçu.
+
+Ce mécanisme a pour effet de permettre aux dépôt "déverrouillés" d'être "verrouillés" en avance pour un futur retrait. En fait, l'émission de TBTC n'est qu'un cas particulier de verrouillage : le TDT utilisé pour émettre un TBTC est verrouillé dans le distributeur, ce qui fournit un moyen simple de le transférer vers un autre compte au prix de 1 TBTC.
+
+La destruction de tout TBTC reçu permet le maintien de l'indexation stricte sur la masse monétaire non seulement quand la propriété du dépôt est transférée depuis le distributeur, mais aussi lorsque les dépôts toujours sous la possession du distributeur sont liquidés ou 
+<<redemption/index.adoc#at-term, retirés à leur terme>>, puisque dans ces cas le dédommagement du propriétaire du dépôt revient au distributeur qui la détruit directement. 
