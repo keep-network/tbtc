@@ -35,11 +35,12 @@ image::{root-prefix}img/generated/initiate-deposit.png[]
 == Deposit request
 
 The starting point for acquiring TBTC is generating a _deposit request_. This
-request is a transaction to a smart contract on tBTC's host chain.
-signals that the sender requires a signing group backed wallet Because signing
-groups are not free to create, deposit requests include a small bond in the host
-chain's native token to cover the creation of the signing group. The bond is
-refunded when a successful deposit is made to the generated wallet.
+request is a transaction to a smart contract on tBTC's host chain, which
+signals that the sender requires a signing group backed wallet.
+Signing groups are not free to create. Therefore deposit requests include a
+small bond in the host chain's native token to cover the creation of the
+signing group. The bond is refunded when a successful deposit is made to the
+generated wallet.
 
 [[signer-selection]]
 === Signer selection
@@ -71,13 +72,18 @@ This completes the signer selection phase.
 
 Before the selected members of a signing group can perform distributed key
 generation, they must agree to become members of the signing group by putting up
-a bond (the _signer bond_) in the native token of the host chain. This bond
-is used to penalize the members of the signing group if an unauthorized piece
-of data is signed by the signing group once distributed key generation is
-complete; it is also used to penalize a given member if the distributed key
-generation fails due to an attributed misbehavior of that member, if the signing
-group fails to produce a signature for the system when requested, and to
-bring the system into balance in cases of undercollateralization.
+a bond (the _signer bond_) in the native token of the host chain.
+This bond is used to penalize:
+
+- members of the signing group if an unauthorized piece of data is signed by
+  the signing group after distributed key generation is complete
+- a member if they cause the distributed key generation to fail and failure can
+  be attributed to them misbehavior of that member
+- the signing group if it fails to produce a signature for the system when
+  requested
+
+And additionally to bring the system into balance in cases of
+undercollateralization.
 
 Bonding is described in more detail in
 <<bonding/index#bonding,its own section>>.
@@ -91,7 +97,7 @@ tBTC v1, signing groups are 3-of-3, meaning they are groups of 3 signers that \
 require all 3 signers to collaborate to create signatures on behalf of the \
 group.]
 Some small notes about the distributed key generation a signing group undergoes.
-The distributed key generation protocol should result in three properties:
+The distributed key generation protocol should have three properties:
 
 1. The signing group as a whole should have an _ECDSA public key_, which will be
    shared on the host chain and will correspond to the Bitcoin wallet
@@ -131,9 +137,9 @@ signing group members to reclaim.
 
 === Light Relays
 
-To prove a deposit, the depositor submits proof the transaction has been
-confirmed and accumulated work on the Bitcoin chain. The proof is
-verified by an on-chain simple payment verification (SPV) contract on the host
+To prove a deposit, the depositor submits proof that the transaction was
+included in a valid Bitcoin block with sufficient work. The proof is verified
+by an on-chain simple payment verification (SPV) contract on the host
 chain. A more complete overview of cross-chain SPV systems and their security
 properties <<appendix/spv/index#spv,is included in the appendix>>.
 
@@ -172,7 +178,7 @@ proofs.
 
 == Lots
 
-Deposits will be managed in fixed-size _lots_. Each deposit therefore will
+Deposits will be managed in fixed-size _lots_. Therefore, each deposit will
 have to be of the same amount: {btc-lot-size}. Thus, a depositor submitting
 their <<Proof of deposit,proof of deposit>> must prove that they deposited
 {btc-lot-size} into the deposit's signing group wallet. If a depositor wants to

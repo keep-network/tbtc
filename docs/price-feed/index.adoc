@@ -8,8 +8,8 @@ ifndef::tbtc[toc::[]]
 
 The price feed is an integral part of the system, ensuring sufficient
 collateral backs all tBTC signers. For tBTC v1, the feed will be built on a
-https://developer.makerdao.com/feeds/[https://docs.makerdao.com/smart-contract-modules/oracle-module/oracle-security-module-osm-detailed-documentation[ETHBTC
-Oracle Security Module] from MakerDAO, currently operated by MakerDAO.
+https://docs.makerdao.com/smart-contract-modules/oracle-module/oracle-security-module-osm-detailed-documentation[ETHBTC Oracle Security Module]
+from MakerDAO, currently operated by MakerDAO.
 
 The minimal price feed design is specified completely by the interface below:
 

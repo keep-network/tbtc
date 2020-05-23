@@ -42,7 +42,7 @@ other participants.
 A faulty depositor may send multiple UTXOs to the signer group address. This
 may be the result of human or software error. Unfortunately, returning the
 funds to the depositor would impose significant on-chain complexity and gas
-fees, as each UTXO would need to be proven via SPV, and a signature on it
+fees. Each UTXO would need to be proven via SPV and a signature on it
 explicitly authorized. In addition, we would have to develop mechanisms to
 economically compel signers to sign each transaction despite the fact that the
 total value of the UTXOs is not known. As such, the system accepts only the

@@ -87,7 +87,7 @@ of the TDT wants to make a transaction with a different value than the lot
 size, they must mint TBTC, since the tBTC Deposit Token itself is non fungible.
 
 The holder of a qualified TDT may exchange that TDT for a newly minted
-{tbtc-lot-size}, less the requisite {signer-fee} signing fee. To reflect the
+{tbtc-lot-size}, minus the requisite {signer-fee} signing fee. To reflect the
 reduced guarantee of the TDT holder's interest in redeeming the specific
 deposit, the signing fee is sent to the deposit to be held in escrow at the
 time of TBTC minting.
