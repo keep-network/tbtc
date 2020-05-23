@@ -187,21 +187,21 @@ group and return the members' bonds.
 
 === Light Relays
 
-To prove a deposit, the depositor submits proof the transaction has been
-confirmed and accumulated work on the Bitcoin chain. The proof is
-verified by an on-chain simple payment verification (SPV) contract on the host
-chain. A more complete overview of cross-chain SPV systems and their security
-properties <<appendix/spv/index#spv,is included in the appendix>>.
+To prove a deposit, the depositor submits proof that the transaction has been
+confirmed and accumulated work on the Bitcoin chain. The proof is verified by
+a simple payment verification (SPV) smart contract on the host chain. A more
+complete overview of cross-chain SPV systems and their security properties is
+included in <<appendix/spv/index#spv,the SPV appendix>>.
 
 Light relays are a new variant of on-chain SPV developed for tBTC. They seek to
 take advantage of the compact and efficient stateless SPV proofs while relaying
-enough information to provide each stateless proof with some recency guarantee.
-We achieve this by taking advantage of the difficulty adjustment feature of
-Bitcoin's protocol. Bitcoin adjusts difficulty every 2016 blocks, based on
-timestamps of the first and last block in that period (due to an off-by-one
-error in the Satoshi client, one interblock period is excluded from the
-difficulty calculation). The change is deterministic and within some tolerance
-may be set by the miner of the last block.
+enough information to provide each stateless proof with some additional recency
+guarantee. We achieve this by taking advantage of the difficulty adjustment
+feature of Bitcoin's protocol. Bitcoin adjusts difficulty every 2016 blocks,
+based on timestamps of the first and last block in that period (due to an
+off-by-one error in the Satoshi client, one interblock period is excluded from
+the difficulty calculation). The change is deterministic and within some
+tolerance may be set by the miner of the last block.
 
 A light relay does not store every block header. Instead it stores only a slice
 of headers around the difficulty adjustment event and records the difficulty
@@ -212,19 +212,19 @@ the slice, and that the new difficulty conforms to Bitcoin's adjustment
 algorithm. In other words, our light relay tracks only Bitcoin's current
 difficulty, and no other information about its state.
 
-Knowing the current difficulty gives stateless SPV proofs stronger recency
-assurances. Any newly-generated stateless SPV must include that difficulty in
-its header chain. And that difficulty is not known to any party in advance.
-Miners with an `n`-fraction (as usual, `n >= 2` due to the 51% assumption) of
-the hashrate have a `1/n` chance of being allowed to set the difficulty, and
-thus have a `1/n` chance of being able to successfully predict it 2 weeks in
-advance (by generating fake proofs, and then setting the difficulty such that
-they appear valid). Generalized, this is a `1/n^t^` chance of successfully
-predicting difficulty `t` adjustment periods (`2t` weeks) in advance. Therefore
-the use of the light relay provides stronger security properties to stateless
-SPV proofs when used as an additional validation step, as even entities with
-significant mining resources have a greatly reduced chance of creating fake
-proofs.
+Knowing the current difficulty gives basic stateless SPV proofs additional,
+stronger recency assurances. Any newly-generated stateless SPV must include that
+difficulty in its header chain, and that difficulty is not known to any party in
+advance. Miners with an `n`-fraction (as usual, `n >= 2` due to the 51%
+assumption) of the hashrate have a `1/n` chance of being allowed to set the
+difficulty, and thus have a `1/n` chance of being able to successfully predict
+it 2 weeks in advance (by generating fake proofs, and then setting the
+difficulty such that they appear valid). Generalized, this is a `1/n^t^` chance
+of successfully predicting difficulty `t` adjustment periods (`2t` weeks) in
+advance. Therefore the use of the light relay provides stronger security
+properties to stateless SPV proofs when used as an additional validation step,
+as even entities with significant mining resources have a greatly reduced chance
+of creating fake proofs.
 
 == Lots
 
