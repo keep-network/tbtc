@@ -1,0 +1,57 @@
+:toc: macro
+
+[#bonding]
+= Futur travail 
+
+ifndef::tbtc[toc::[]]
+
+Cette section décrit des améliorations possibles au protocole tBTC pour le rendre polus efficace en capital et plus sûr.
+
+== Utilisatation de TBTC à la place d'ETH pour la caution des signataires
+
+Comme décrit précédemment, le système demande une caution d'une valeur de 1.5 BTC en ETH pour chaque BTC déposé. Ce surdimensionnement initial de la caution est utilisé pour prévenir un sous-dimensionnement dans le cas où de larges variations dy prix de d'un ETH se produiraient. Cela signifie que pour chaque `1 TBTC` émis requiert une valeur totale de `2.5 BTC` verrouillée (2.5x la valeur d'un TBTC).
+
+Comme le but du système est de s'assurer que la liquidité en TBTC n'excède jamais la quantité de BTC en dépôt, ce coût en capital peut être réduit en permettant d'utiliser `1 TBTC` pour garantir l'émission d'un autre TBTC, sans se préoccuper du prix relatif d'un TBTC et d'un BTC. Dans le cas d'un comportement malveillant de la part d'un signataire, 1 TBTC est saisi et détruit, maintenant ainsi l'indexation sur la masse monétaire. La masse monétaire de TBTC sera initialement amorcée grâce à l'utilisation d'ETH comme caution et le système deviendra plus efficace en capital lorsque des TBTC pourront être utilisés pour garantir l'émission d'autres TBTC. 
+
+[example]
+=====
+Supposons qu'il y a 10 BTC en dépôt et une masse monétaire de 10 TBTC et 9.95 TBTC liquides (à cause des frais de transaction) garantie par des ETH d'une valeur de 15 BTC.
+
+En utilisant  9 TBTC comme caution, 9 autres TBTC peuvent être émis, conduisant à une masse monétaire totale de 19 TBTC garantis par 9 TBTC et des ETH d'une valeur de 15 BTC.
+
+Dans ce cas, 9.95 TBTC sont liquides tandis que 10.05 sont verrouillés comme cautions. Si 9 TBTC sont de nouveaux utilisés comme garantie, la liquidité en TBTC serait réduite à 9.9 mais la masse monétaire totale serait de 28 TBTC.
+
+En suivant cet example de manière itérative, l'efficacité en capital du système (Masse monétaire de TBTC / Cautions hors circulation) approche les 100% de asymptotiquement ce qui constitue une amélioration significative comparé aux 66% obtenus en n'utilisant que de l'ETH.
+
+Ce mécanisme améliorer l'efficacité du capital en réduisant la liquidité en TBTC. Ce cycle vertueux peut être maintenu avec des frais de signataires adaptés. On s'attend à ce que les signataires voulant être exposés à l'ETH continueront à utiliser de l'ETH comme caution, ce qui augmentera la liquidité en TBTC. Le diagrmamme suivant indique comment la liquidité en TBTC et l'efficacité du capital évoluent dans l'exemple précédent à mesure que la masse monétaire totale de TBTC approche 100. Notons que lorsque l'on recommence à utiliser des ETH pour garantir les TBTC au-delà de 100 TBTC, la liquidité augmente aux dépens de l'efficacité du capital.
+
+// full data: https://docs.google.com/spreadsheets/d/1rG9XS6xJbulltwKBMfszfkHeqG5Bl6JboIpIjO1Qn3Q/edit#gid=0
+image::tbtc_bonds.png[]
+=====
+
+Notons que chaque dépôt génère un rendement en frais de signataires sur la base de la taille de lot et **non sur la base de la taill de la caution**.  Du point de vue des frais de signataires, le surdimensionnement de la caution implique qu'un dépôt garanti par des ETH génère moins de frais par unité de valeur en BTC d'ETH verrouillé par rapport à un dépôt garanti par des TBTC.  
+
+[example]
+====
+1 TBTC est émis en garantissant un dépôt avec 75 ETH (valeur en ETH de 1.5 BTC). Par an, 0.005 TBTC sont payés aux signataires, résultant en `0.005/1.5 = 0.003
+TBTC` en revenu par unité de valeur en BTC d'ETH verrouillée. Si des TBTC étaient utilisés pour garantir le dépôt, la caution serait de 1 TBTC, générant ainsi `0.005/1 = 0.005 TBTC` par unité de valeur en BTC de TBTC verrouillé, ce qui est plus grand que dans le cas de l'ETH. 
+
+Dans la prochaine section, nous explorons des approches pouvant potentiellement maximiser le revenu des signataires en tirant partie de produits de finance décentralisée tels que les prêts ou les systèmes de tenue des marchés.
+
+====
+
+== Optimisation des bénéfices que les signataires touchent sur leur caution
+
+Comme expliqué précédemment, l'indexation des TBTC sur la masse monétaire de BTC est maintenue de manière sûre grâce à des mécanismes se reposant sur le surdimensionnement de la caution que les signataires déposent pour garantir les dépôts. Les signataires sont récompensés par des link:../signer-fees/index.adoc[frais] libellés en TBTC. Ces frais devraient être suffisament séduisants pour encourager les signataires à verrouiller des ETH ou des BTC sans exposer les utilisateurs du système à des coûts trop élevés, ceux-ci voulant au contraire minimiser les frais. 
+
+Comme récemment illustré par 
+link:https://www.reddit.com/r/MakerDAO/comments/b5zgdl/no_loss_lottery_with_dai/[le lotterie sans perte
+Lottery], il est possible d'exploiter l'écosystème de "finance décentralisée" pour convertir des jeux à somme nulle en jeux à somme positive. 
+
+En suivant cette approche, on peut envisager d'utiliser les cautions de signataires sur des plateformes de prêt ou de tenue de marché telles que link:compound.finance[Compound Finance] ou
+link:uniswap.io[Uniswap]. Cela signifie que les signataires feraient des bénéfices en plus des frais générés approximativement sans risque par unité de caution utilisée.
+
+Ces avantages sont obtenus aux dépens d'une plus grande complexité concernant la saisie des cautions (dans le cas où elles ne sont pas disponibles car sous le contrôle de la plateforme choisie). Une telle dépendance sur des applications tierces pourrait également induire un risque majeur, ce genre de fonctionnalité devrait donc pouvoir être mise à jour (sur la base d'un
+link:https://github.com/keep-network/tbtc/issues/119[jeton de gouvernance spécifique la plateforme tBTC]) voir désactivée pour prendre en compte toute faille potentielle dans les contrats externes.
+
+Enfin, chaque signataire devrait pouvoir choisir la plateforme sur laquelle sa caution sera utilisée pour augmenter son revenu en fonction de son profil de risque. Les signataires qui ne veulent pas s'exposer au risque d'applications tierces devraient pouvoir refuser que leur caution soit prêtée.
