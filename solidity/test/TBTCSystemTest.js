@@ -388,13 +388,6 @@ describe("TBTCSystem", async function() {
       await restoreSnapshot()
     })
 
-    it("pauses new deposit creation", async () => {
-      await tbtcSystem.emergencyPauseNewDeposits()
-
-      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
-      expect(allowNewDeposits).to.equal(false)
-    })
-
     it("does not revert if beginKeepFactorySingleShotUpdate has already been called", async () => {
       await tbtcSystem.beginKeepFactorySingleShotUpdate(
         "0x0000000000000000000000000000000000000001",
