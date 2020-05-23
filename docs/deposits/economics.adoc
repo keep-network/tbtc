@@ -12,26 +12,26 @@ endif::tbtc[]
 Signers aren't altruists—they are paid for the service they provide.
 
 Signer fees should always be paid or escrowed up front. To achieve this, signer
-fees must be <<minting/index.adoc#minting,guaranteed by minting>>, and
-deposits must have predictable lifetimes.
+fees must be <<minting/index.adoc#minting,guaranteed by minting>>, and deposits
+must have predictable lifetimes.
 
 A detailed treatment of signer fees can be found in
-<<signer-fees/index.adoc#signer-fees,their own section>>.
-
+<<signer-fees/index.adoc#signer-fees,its own section>>.
 
 [[term]]
 == Terms
 
 Fixed-term deposits mean signer fees can easily be calculated per deposit. A
-standard term of {term-length} means depositors can budget for fees, and
-signers will know how long their bonds will be inaccessible.
+standard term of {term-length} means depositors can budget for fees, and signers
+will know how long their bonds will be inaccessible.
 
 Depositors that don't need future access to their deposit might prefer to
 pass the costs of the system to eventual redeemers and/or want denomination
 beyond the BTC lot size or fungibility. These depositors can opt to receive a
-non-fungible Fee Rebate Token which pays a fee rebate at the deposit's
-redemption by another user. The rebate mechanism is <<minting/index.adoc#minting,
-explained further in the discussion around minting>>.
+non-fungible Fee Rebate Token which pays a fee rebate at the time of a deposit's
+(pre-term) redemption by another user. The rebate mechanism is
+<<minting/index.adoc#minting, explained further in the discussion around
+minting>>.
 
 At the end of the deposit term, the deposit can be redeemed by anyone including
 the signers themselves, with signer fees owed by the deposit owner. This
