@@ -1,57 +1,71 @@
 = Mistakes making a deposit
 
-The system is designed to function with a predefined lot size for all _Deposits_
-which is given as a system parameter. **Depositors should send the exact lot
-amount of BTC in the funding transaction, or expect loss of funds.**
+The system is designed to function with a few predefined lot sizes for all
+deposits, which are given as system parameter. **Depositors should send the
+exact lot amount of BTC in the funding transaction, or expect loss of funds.**
 Since it is not possible for the system to force users into sending any specific
 amount, ideally the the system would gracefully handle overpayment and
 underpayment. The primary impact of overpayment and underpayment is on the
-``Deposit``'s collateralization ratio. We treat overpayment and underpayment
-as faulty depositor behavior, and pass on the associated costs to the
-depositor.
-
-== Underpayment
-
-Allowing underpayment on `Deposit` would result in over-bonded signers. To
-prevent this, the system will not accept funding proofs of less than the lot
-size (`1.0 BTC` initially). This implies that the a user that sends less than `1.0
-BTC` in the funding transaction does not receive any TBTC, and forfeits the BTC
-locked in the funding transactions to the Signers. The Signers can unlock and
-evenly split the funds in the transaction after the _Deposit_ is resolved on-chain (see
-<<Multiple UTXOs>> for a full discussion).
+specific deposit's collateralization ratio. The system treats overpayment and
+underpayment as faulty depositor behavior, and passes on the associated costs
+to the depositor.
 
 == Overpayment
 
-Overpayment, in contrast, would result in under-bonded signers. When overfunding
-occurs, the system accepts the funding proof, but mints TBTC according to the
-regular lot size.
+Allowing overpayment on a given deposit would result in under-bonded signers.
+When overfunding occurs, the system accepts the funding proof, but mints TBTC
+according to the regular lot size.
 
-In an efficient market, this _Deposit_ will be immediately redeemed,
-as the redeemer expects to take the overfunded amount as arbitrage.
+In an efficient market, a deposit that has been overfunded in this way should be
+immediately redeemed by the depositor to regain the missing value. If the
+depositor instead chooses to mint TBTC off of it and thus unlock it (see the
+section on <<minting/index.adoc#minting,minting>>), the deposit should be
+immediately redeemed by another actor, as the redeemer should expect to take the
+overfunded amount as arbitrage.
 
-Example: A user providing a funding proof for `1.6 BTC` in a system
-with lot size of `1 BTC` mints only `1.0 TBTC`. Any user that burns `1.0 TBTC`
-is able to claim the `1.6 BTC` _Deposit_.
+[example]
+A user providing a funding proof for 1.6 BTC for a deposit with lot size of
+1 BTC mints only 1.0 TBTC. Any user that burns 1.0 TBTC is then able to claim
+the 1.6 BTC deposit and redeem its contained UTXO, making a profit of roughly
+0.6 BTC.
 
-A depositor should notice this and immediately try to burn their TBTC to reclaim
-the amount. If not, the depositor effectively forfeits the overfunded value to
-other participants.
+== Underpayment
+
+Allowing underpayment on a given deposit, in contrast, would result in
+over-bonded signers. To prevent this, the system will not accept funding proofs
+of less than the specific deposit's lot size. This implies that the a user that
+sends less than the deposit lot size in the funding transaction does not receive
+_any_ TBTC, and forfeits the BTC locked in the funding transactions to the
+signing group. The signing group can, after the _deposit funding timeout_,
+notify the deposit that it has not been funded, get its funds back, and the
+signing group can then unlock and evenly split the funds in the transaction
+after the deposit is resolved on-chain.
 
 == Multiple UTXOs
 
-A faulty depositor may send multiple UTXOs to the signer group address. This
-may be the result of human or software error. Unfortunately, returning the
-funds to the depositor would impose significant on-chain complexity and gas
-fees, as each UTXO would need to be proven via SPV, and a signature on it
-explicitly authorized. In addition, we would have to develop mechanisms to
-economically compel signers to sign each transaction despite the fact that the
-total value of the UTXOs is not known. As such, the system accepts only the
-first UTXO greater than the deposit lot size. All other BTC sent to the signing
-group is forfeit. Therefore it is imperative that depositors send only a single
-UTXO of an appropriate size.
+A faulty depositor may also send more than one UTXO to the signer group address,
+whether due to human or software error. Unfortunately, returning the funds to
+the depositor would impose significant on-chain complexity and gas fees, as each
+UTXO would need to be proven via SPV, and a signature on it explicitly
+authorized. In addition, we would have to develop mechanisms to economically
+compel signers to sign each transaction despite the fact that the total value of
+the UTXOs is not known. As such, the system accepts only the first UTXO greater
+than the deposit lot size. All other BTC sent to the signing group is forfeit.
+Therefore it is imperative that depositors send only a single UTXO of an
+appropriate size.
 
-As a particularly damaging example, consider a naive human depositor. If she
-mistakenly sends half the lot size in one transaction and half in another, both
+[example]
+As a particularly damaging example, consider a naive human depositor. If they
+mistakenly send half the lot size in one transaction and half in another, both
 UTXOs would be forfeit. **This represents a serious pitfall for depositors that
-must be carefully addressed by the user interface since significant loss of
+must be carefully addressed by the user interface, since significant loss of
 funds can occur.**
+
+== Requesting a funder abort
+
+The system includes a small escape hatch for underfunded or multi-UTXO
+scenarios: after the deposit is marked as having timed out in funding, the
+depositor can request a _funder abort_. This request includes a Bitcoin address
+to send the underfunded UTXO back to the depositor. This escape hatch relies
+entirely on signer honesty, and the system cannot provide an economic guarantee
+to the depositor that they will get their Bitcoin back.
