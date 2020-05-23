@@ -1,0 +1,37 @@
+[env.theorem]
+:toc: macro
+
+[#price-feed]
+= Flux de prix
+
+ifndef::tbtc[toc::[]]
+
+Le flux de pris est une partie intégrante du système qui assure que la caution des signataires tBTC est dimensionnée correctement. Pour tBTC v1, ce flux sera construit sur un 
+https://docs.makerdao.com/smart-contract-modules/oracle-module/oracle-security-module-osm-detailed-documentation[ETHBTC Oracle Security Module] de MakerDAO, actuellement géré par MakerDAO.
+
+Le design minimal du flux de prix est entièrement spécifié par l'interface ci-dessoous :
+
+[source,solidity]
+----
+interface PriceFeed {
+    function getPrice() external view returns (uint128);
+    function updatePrice(uint128 price) public;
+}
+----
+
+Il est principalement utilisé pour calculer la valeur des lots de dépôt Bitcoin en Ether.
+
+
+== Encodage du prix
+
+Un Bitcoin a 8 décimales, la plus petite unité étant un satoshi. On a donc que 100 000 000 satoshis = 1 bitcoin. 
+Un Ether a lui 18 décimales, la plus petite unité étant le wei. On a donc 1 000 000 000 000 000 000 wei = 1 ether.
+
+Pour exprimer le prix du Bitcoin en Ether, il nous faut utiliser un ratio indiquant le nombre de wei correspondant à un satoshi. Une construction simple est d'utiliser `x` wei = 1 satoshi. Ainsi, un appel à la fonction `getPrice` lorsque 32.32 ETH = 1 BTC (juin 2019) renvoie la valeur 323 200 000 000 wei.
+
+En revanche, si 1 wei vaut plus que 1 sat, le prix ne peut plus être encodé avec précision. Ce scénario de "flippening" (NdT: tiré d'une expression populaire désignant le moment où la capitalisation d'Ethereum dépasserait celle du Bitcoin) dans lequel 1 Ether vaudrait 10,000,000,000 fois plus qu'1 BTC nous semble improbable au court terme. Plutôt que d'optimiser prématurément en incorporant un ratio à deux entiers de `x` wei pour `y` satoshi, changeant ainsi la sémantique des fonctions à appeler, nous laissons ce problème ouvert comme un exercice pour un système de gouvernance futur.
+
+== Design futur
+
+Le flux de prix est une partie intégrante de la sécurité du système tBTC. À l'avenir, il sera principalement gouverné par l'écosystème tBTC. La première mise à jour se concentrera sur l'incorporation d'un nouveau mécanisme de flux de prix se basant sur des enchères inversées appelé "flux sans prix" ("priceless feed"). 
+
