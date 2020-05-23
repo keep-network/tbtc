@@ -156,35 +156,40 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             return false;
         }
 
-        uint256 age = block.timestamp - initializedTimestamp;
-
         uint256 supply = tbtcToken.totalSupply();
         uint256 bufferedSupply = supply.add(getMaxLotSize().mul(10 ** 10));
 
+        return bufferedSupply <= getMaxSupply() && allowNewDeposits;
+    }
+
+    // @notice get the maximum TBTC token supply in BTC * 10 ** 18
+    function getMaxSupply() public view returns (uint256) {
+        uint256 age = block.timestamp - initializedTimestamp;
+
         if(age < 1 days) {
-            return bufferedSupply < 2 * 10 ** 18;
+            return 2 * 10 ** 18;
         }
 
         if (age < 30 days) {
-            return bufferedSupply < 100 * 10 ** 18;
+            return 100 * 10 ** 18;
         }
 
         if (age < 60 days) {
-            return bufferedSupply < 250 * 10 ** 18;
+            return 250 * 10 ** 18;
         }
 
         if (age < 90 days) {
-            return bufferedSupply < 500 * 10 ** 18;
+            return 500 * 10 ** 18;
         }
 
         if (age < 120 days) {
-            return bufferedSupply < 1000 * 10 ** 18;
+            return 1000 * 10 ** 18;
         }
 
-        return allowNewDeposits;
+        return 21000000 * 10 ** 18;
     }
 
-    // @notice get the largest lot size currently enabled for deposits.
+    // @notice get the largest lot size currently enabled for deposits, in satoshis
     function getMaxLotSize() public view returns (uint256) {
         uint256 max = 0;
         for (uint i = 0; i<lotSizesSatoshis.length; i++) {
