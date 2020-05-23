@@ -228,14 +228,24 @@ of creating fake proofs.
 
 == Lots
 
-Deposits will be managed in fixed-size _lots_. Each deposit therefore will
-have to be of the same amount: {btc-lot-size}. Thus, a depositor submitting
-their <<Proof of deposit,proof of deposit>> must prove that they deposited
-{btc-lot-size} into the deposit's signing group wallet. If a depositor wants to
-deposit more than the lot size, they will need to create multiple deposit
-requests and fund multiple deposits. This allows each deposit to be backed by
-a different signing group, both simplifying the bonding of signing groups and
-improving the resilience of the system to signing group failure, malicious or not.
+When creating a deposit, the deposit's _lot size_ must be specified. The tBTC
+system supports a governable set of available lot sizes, guaranteeing only that
+at least 1 BTC lot sizes will be available. v1 will launch with four available
+lot sizes: 0.002 BTC, 0.01 BTC, 0.1 BTC, 0.2 BTC, 0.5 BTC, and 1 BTC. Deposit
+requesters may only create deposits in one of those lot sizes, and the lot sizes
+only allow minting their corresponding amount of TBTC. If a depositor wants to
+deposit more than the maximum lot size the system supports, they will need to
+create multiple deposit requests and fund multiple deposits.
+
+For simplicity's sake, the rest of this spec is written with the assumption that
+deposits of {btc-lot-size} are being opened; however, anything dependent on lot
+size (such as signing fees) will be defined as a value proportional to the
+lot size.
+
+Limited lot sizes with a max cap allow each deposit to be backed by a
+different signing group, both simplifying the bonding of signing groups and
+improving the resilience of the system to signing group failure, malicious or
+not.
 
 include::./mistakes.adoc[leveloffset=+1]
 
