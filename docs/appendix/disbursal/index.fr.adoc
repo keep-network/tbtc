@@ -1,0 +1,61 @@
+ifndef::tbtc[]
+:root-prefix: ../../
+include::../../constants.adoc[]
+endif::tbtc[]
+
+= Redemption Payment and Disbursal Scenarios
+
+:pre-term-redemption-footnote: footnote:pre-term-redemption[Les dépôts n'étant pas arrivés à leur terme \
+ne peuvent être retirés que par le détenteur des TDT associés.]
+
+Pour une taille de lot de {btc-lot-size} correspondant à {tbtc-lot-size} et des frais de signataires de {signer-fee} ({signer-fee-basis-points} points de base), le tableau suivant décrit les montants déboursés à chaque participant au moment du retrait pours des dépôts arrivés ou non à leur terme, en fonction de qui détient le TDT et le FRT et de qui initie le retrait. Trois participants sont inclus dans le tableau - A, B, and
+C — et les scénarios listés couvrent les situations où un même participant détient les deux jetons et initie le retrait, où les différents participants ont chacun un rôle distinct, et les possibilités intermédiaires.
+
+[#deposit-payment-flow,%header,cols="1,1,1,1,1,1a"]
+.Deposit payment flow
+|===
+| État d'expiration du dépôt | Détenteur de TDT | Détenteur de FRT | Demandeur de retrait | Montant de remboursement | Montant déboursé
+
+| Non expiré      | A          | -          | A        | {signer-fee}
+  | A:: {btc-lot-size}
+    signataires:: {signer-fee}
+| Non expiré      | A          | -          | B        | _N/A_{pre-term-redemption-footnote} | _N/A_
+| Non expiré      | A          | A          | A        | 0
+  | A:: {btc-lot-size}
+    signataires:: {signer-fee}
+| Non expiré      | A          | B          | A        | {signer-fee}
+  | A:: {btc-lot-size}
+    signataires:: {signer-fee}
+    B:: {signer-fee} (entiercé)
+| Non expiré      | A          | B          | C        | _N/A_ | _N/A_
+
+| Expiré       | A          | -          | A        | {signer-fee}
+  | A:: {btc-lot-size}
+    signataires:: {signer-fee}
+| Expiré      | A          | -          | B        | {tbtc-lot-size}
+  | B:: {btc-lot-size}
+    signataires:: {signer-fee}
+    A:: {tbtc-lot-size-less-signer-fee}
+| Expiré       | A          | A          | A        | 0
+  | A:: {btc-lot-size}
+    signataires:: {signer-fee} (entiercé)
+| Expiré      | A          | B          | A        | 0
+  | A:: {btc-lot-size}
+    signataires:: {signer-fee} (entiercé)
+    B:: 0
+| Expiré       | A          | B          | B        | {tbtc-lot-size}
+  | B:: {btc-lot-size}
+    signataires:: {signer-fee} (entiercé)
+    A:: {tbtc-lot-size}
+| Expiré       | A          | A          | B        | {tbtc-lot-size}
+  | B:: {btc-lot-size}
+    signataires:: {signer-fee} (entiercé)
+    A:: {tbtc-lot-size-less-signer-fee}
+| Expiré       | A          | B          | C        | {tbtc-lot-size}
+  | C:: {btc-lot-size}
+    signataires:: {signer-fee} (entiercé)
+    B:: 0
+    A:: {tbtc-lot-size}
+|===
+
+Ntons que tous ces scénarios peuvent être conceptualisés en considérant que le détenteur de TDT reçoit le 1 TBTC utilisé pour retirer le dépôt; lorsque le détenteur de TDT retire son propre dépôt, on peut considérer qu'il reçoit le TBTC de lui-même donc il doit simplement moins. De manière analogue, le détenteur de FRT reçoit toujours les fonds entiercés lorsque le retrait est effectué avant l'expiration du dépôt, donc dans les cas où le demandeur de retrait détient le FRT, il ne doit simplement pas de frais de signataires au moment du retrait.
