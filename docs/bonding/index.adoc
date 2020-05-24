@@ -40,31 +40,31 @@ complex implementation.
 == Measuring security
 
 Clearly, security concerns require signing bonds that are proportional to the
-size of a _Deposit_. To maintain a negative expected value from signers
+lot size of a deposit. To maintain a negative expected value from signers
 colluding, the amount forfeited by misbehaving signers must be strictly
 greater than the amount they have to gain. Assuming a lot size of {btc-lot-size},
 constant exchange rate between BTC and the bonded asset, and a M-of-N group
-of signers backing a _Deposit_, the minimum collateral for each signer is
-`({btc-lot-size})/M`, denominated in the asset being bonded, ETH in the base
-case.
+of signers backing a deposit, the minimum collateral for each signer is
+`({btc-lot-size})/M`, denominated in the asset being bonded (ETH in the base
+case).
 
 [example]
-Consider a 1 BTC _Deposit_ backed by a 3-of-5 group of Signers. In the worse
-case, 3 of the signers can be malicious and try to steal the deposit, which
-would net them each 1/3 BTC. As a result, all 5 Signers must bond 0.33 BTC
-each, denominated in ETH.
+Consider a 1 BTC deposit backed by a 3-of-5 group of signers. In the worst case,
+3 of the signers can be malicious and try to steal the deposit, which would net
+them each 1/3 BTC. As a result, all 5 Signers must bond 0.33 BTC each,
+denominated in ETH.
 
 NOTE: For tBTC v1, attributability limitations in the signing protocol mean
 the signer group is 3-of-3. As a result, the required per-signer bond will be
-{extra-collateral} of {btc-lot-size} per signer, for a total
-{total-collateral} bond (see the following section on
-<<overcollateralization>>). With attributability in later versions, bonds
-will be able to be decreased.
+{extra-collateral} of the lot size per signer, for a total {total-collateral}
+bond (see the following section on <<overcollateralization>>). With
+attributability in later versions, bonds will be able to be decreased by
+increasing both signing group size and threshold.
 
 == Pricing currency fluctuations
 
-The above assumes a constant exchange rate between BTC and ETH, but in truth
-the two currencies fluctuate relative to each other, sometimes wildly.
+The above assumes a constant exchange rate between BTC and ETH, but in truth the
+two currencies fluctuate relative to each other, sometimes wildly.
 
 [[overcollateralization]]
 === ETH price drop relative to BTC
