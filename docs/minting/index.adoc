@@ -18,7 +18,40 @@ yielding a non-fungible token, and an additional proof enabling trade-in of
 the non-fungible token for fungible TBTC—we can balance strong security
 against reorgs with a better user experience and more flexible use cases.
 
-// TODO insert diagram
+A simplified view of the deposit creation, minting, and redemption flows is in
+this diagram:
+
+[mermaid,basic-deposit-lifecycle,svg,theme=neutral]
+.....
+sequenceDiagram
+   participant tbtc as tBTC System
+   participant depositor as Depositor
+   participant deposit as Deposit
+   participant vending as Vending Machine
+   participant redeemer as Redeemer
+
+   depositor ->> tbtc: Request deposit creation
+   tbtc ->> deposit: Create deposit
+   tbtc ->> depositor: Mint and assign deposit TDT
+   depositor ->> deposit: Submit funding proof
+   deposit ->> deposit: Move state to Qualified
+   depositor ->> vending: Reassign TDT ownership to Vending Machine
+   vending ->> depositor: Mint and transfer TBTC: lot size - signer fee
+   vending ->> deposit: Mint and escrow TBTC: signer fee
+   deposit ->> depositor: Mint and assign Fee Rebate Token
+
+   redeemer ->> vending: Send `lot size` TBTC and TDT id
+   vending ->> redeemer: Reassign TDT ownership to redeemer
+   redeemer ->> deposit: Request redemption, send signer fee
+   deposit ->> deposit: Produce redemption signature
+   redeemer ->> deposit: Prove redemption transaction on BTC
+   deposit ->> deposit: Move state to Redeemed, release signer bonds
+.....
+
+Note that the above diagram skips a few additional possibilities explained below
+in this spec, including how pre- vs at-term deposits behave differently,
+liquidation-related changes, as well as how a depositor might keep their TDT
+without minting TBTC.
 
 == Minting the non-fungible tBTC Deposit Token
 
