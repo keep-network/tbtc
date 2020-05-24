@@ -1,0 +1,7 @@
+= Communication inter-chaîne
+
+Consensus relay:: SPV de suivi de blockchain sur une autre blockchain comme par exemple BTCRelay. Les relais de consensus sont des mécanismes inter-chaîne tournant continuellement et suivant l'état du consensus d'une autre chaîne. On les distingue d'autres usages du terme "relai" comme par example le "relai à seuil" du mécanisme de balise aléatoire.
+
+SPV:: "Simplified payment verification" (Vérification de Paiment Simplifiée)
+
+Stateless SPV:: SPV ne suivant pas l'état de la blockchain en question.
