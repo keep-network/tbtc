@@ -8,20 +8,22 @@ ifndef::tbtc[toc::[]]
 
 The price feed is an integral part of the system, ensuring sufficient
 collateral backs all tBTC signers. For tBTC v1, the feed will be built on a
-https://developer.makerdao.com/feeds/[https://docs.makerdao.com/smart-contract-modules/oracle-module/oracle-security-module-osm-detailed-documentation[ETHBTC
-Oracle Security Module] from MakerDAO, currently operated by MakerDAO.
+https://docs.makerdao.com/smart-contract-modules/oracle-module/median-detailed-documentation[ETHBTC
+Medianizer] from MakerDAO, currently operated by MakerDAO.
 
 The minimal price feed design is specified completely by the interface below:
 
 [source,solidity]
 ----
 interface PriceFeed {
-    function getPrice() external view returns (uint128);
-    function updatePrice(uint128 price) public;
+    function getPrice() external view returns (uint256);
+    function updatePrice(uint256 price) public;
 }
 ----
 
-It is principally used for calculating the value of Bitcoin lot deposits, priced in Ether.
+It is principally used for calculating the value of Bitcoin lot deposits, priced in Ether. In the
+Medianizer model, the price is provided by an external entity, so the `updatePrice` method is not
+included.
 
 == Price encoding
 
@@ -37,6 +39,13 @@ However, if 1 wei is worth more than 1 sat, then the price can no longer be accu
 when 1 ether becomes worth 10,000,000,000x as much as 1 bitcoin, we find unlikely in the very short-term.
 Rather than prematurely optimize, incorporating a 2 integer ratio of `x` wei to `y` satoshi and changing the call semantics,
 we leave this as a future exercise for governance.
+
+NOTE: The Medianizer in user for tBTC v1 is what Maker calls an ETHBTC feed,
+meaning it returns the price of 1 ETH in BTC to a precision of 18 decimals.
+There is no name for the 18th decimal of BTC, since the smallest named
+denomination of a BTC is 10^-8^, the satoshi. To get the ratio of `x` wei : 1
+satoshi, tBTC must convert the ETHBTC value to the number of wei in 1 sat; it
+does this by dividing 10^28^ by the Medianizer value.
 
 == Future design
 
