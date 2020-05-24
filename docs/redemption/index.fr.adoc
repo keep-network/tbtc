@@ -1,0 +1,97 @@
+:toc: macro
+
+[[redemption]]
+= Retrait 
+
+ifndef::tbtc[]
+toc::[]
+
+:relfileprefix: ../
+:root-prefix: {relfileprefix}
+include::../constants.adoc[]
+endif::tbtc[]
+
+== Vue d'ensemble 
+
+Les dépôts représentent de vrais UTXOs Bitcoin et peuvent être retirés contre des BTC. Le système de retrait tBTC a pour but de fournir un accès à ces BTC à travers un processus vérifiable publiquement.
+
+Tant qu'un dépôt est en règle, le détenteur du
+<<minting/index.adoc#minting,jeton non fongile TDT>> peut
+<<requests,demander un retrait>>, renonçant à son TDT et payant par la même occasion les frais de signataires associés.
+
+À ce stade, le processus de retrait ne peut plus être annulé.
+
+Une fois le retrait demandé, les signataires doivent produire une signature pour une transaction Bitcoin valide envoyant les BTC du dépôt à l'adresse demandée. Une fois la signature publiée, n'importe quel participant peut soumettre une _transaction de retrait_ à la blockchain Bitcoin en utilisant cette signature.
+
+[[at-term]]
+=== Durée de dépôt et retrait
+
+Comme expliqué dans la section sur  <<deposits/economics.adoc#term,la durée de dépôt>>, un dépôt a une durée fixée. Une fois cette durée expirée, le dépôt est devient accessible à d'autres utilisateurs que son propriétaire et peut être retiré par n'importe quel compte (y compris celui du propriétaire qui n'est pas pour autant exclu). Passé ce délai, le retrait coûte exactement 1 TBTC sans frais de signataires pour le demandeur de retrait. Si les frais de signataires avaient été entiercés au moment de l'émission de TBTC, ce dépôt est utilisé pour payer les signataires et le propriétaire du dépôt reçoit 1 TBTC. Si le dépôt n'avait aucun frais de signataires entiercés, le propriétaire du dépôt reçoit 1 TBTC moins les frais de signataires qui sont distribués aux signataires.
+
+NOTE: Pour le propriétaire du dépôt au terme de la durée de dépôt, le retrait est gratuit si il y a des frais de transaction entiercés et coûte le prix des frais de signataires autrement. Il y a une différence subtile avec le retrait avant la fin de la durée de dépôt. Dans ce cas, le propriétaire du dépôt doit payer des frais de signataires _même si des frais étaient entiercés_. Il y a également une autre différence pour le détenteur du Fee Rebate Token qui obtient une réduction sur les frais de signataires lors des retraits effectués durant la durée de dépôt mais pas une fois le dépôt arrivé à son terme.
+
+[[requests]]
+== Demandes de retrait
+
+Une demande de retrait peut être effectuée dans plusieurs cas :
+
+* Si le dépôt est en règle (n'a pas été retiré, n'a pas été accusé de <<failure/index.adoc#fraud,fraude>>, n'est pas entré en phase de
+  <<bonding/index.adoc#liquidation, liquidation>>), dans la limite de sa durée et qu'un demandeur de retrait possède le TDT correspondant.
+* Si le dépôt est en règle et est arrivé à son terme ou l'a dépassé, que le demandeur de retrait possède le jeton TDT correspondant ou non.
+* Si le dépôt est entrié en phase de pré-liquidation avec un <<bonding/index.adoc#pre-liquidation,rappel de courtoisie>>, un état de sous-dimensionnement de la caution conçu pour permettre la clotûre d'un dépôt avant que ce sous-dimensionnement ne devienne dangereux. Le demandeur de retrait n'a pas besoin de détenir un jeton TDT dans ce cas non plus.
+
+Pour demander un retrait, l'utilisateur soumet une transaction de _demande de retrait_ au contrat intelligent sur la blockchain hôte. La _demande de retrait_ comprend les élements suivants :
+
+1. Un montant de frais de transaction Bitcoin
+  - doit être >={min-redemption-btc-fee} ({min-redemption-btc-feerate})
+2. Une empreinte de clé publique pour indiquer l'adresse de livraison des Bitcoin
+  - le hachage de 20-byte hash160 d'une clé publique appartenant au demandeur 
+  - pour des raisons de sécurité et de préservation des données privées, cela DOIT être une nouvelle paire de clés 
+3. Le <<repayment-amount,Montant de Remboursement>> du dépôt en TBTC
+
+À la réception de la _demande de retrait_, le contrat intelligent entierce le montant de remboursement (qui comprend les frais de signataires), enregistre l'adresse de retrait, et informe les signataires qu'une signature leur est demandée.
+
+Une fois informé de la demande de retrait, les signataires doivent attendre confirmation sur la blockchain hôte. S'ils ne patientent pas, la demande de retrait pourrait être annulée suite à une réorganisation de chaîne, auquel cas leur signature pourrait être utilisée pour retirer les BTC et soumettre une preuve de fraude de signataires. Une preuve de fraude créée sans confirmation pourrait sembler valide au contrat intelligent de la blockchain hôte car il n'aurait plus en mémoire la demande de retrait.
+
+[[repayment-amount]]
+== Montant de Remboursement
+
+:pre-term-redemption-footnote: footnote:pre-term-redemption[Les dépôts non expirés ne peuvent être retirés \ que par le détenteur du TDT associé.]
+
+Conceptuellement, le montant de remboursement est la taille du _Dépôt_ à laquelle s'ajoute des frais de signataires de {signer-fee} ({signer-fee-basis-points} points de base). Cela permet de s'assurer que les signataires sont payés au moment de fournir une signature et que les propriétaire du dépôt peut être dédommagé pour le dépôt retiré (dans le cas du retrait d'un dépôt par des utilisateurs autre que le propriétaire une fois la durée expirée). Cela assure également que le détenteur de Fee Rebate Token peut obtenir sa réduction (dans le cas d'un retrait dans la limite de la durée du dépôt).
+
+Tout calcul fait, le montant de remboursement peut varier en fonction du demandeur de retrait, du détenteur de TDT, du détenteur de FRT et de l'état d'expiration ou non du dépôt. Le tableau de <<appendix/disbursal/index.adoc#deposit-payment-flow,processus de paiement du dépôt>> indique les différentes combinaisons possibles et le montant de remboursement correspondant dû par le demandeur de retrait en supposant qu'il y ait trois participants A, B et C. Le tableau liste également tous les déboursements pertinents au moment de la preuve de retrait.
+
+== Format de la Transaction de Retrait
+
+Une transaction de retrait a un format standard intégré dans les  contrats intelligents hébergés sur la blockchain hôte du système tBTC. Cela permet de prévenir un certain nombre d'attaques complexes à l'encontre du système tBTC et de simplifier la logique des contrats. Le demandeur de retrait ne peut spécifier que deux aspects de la transaction : ses frais associés, et sa destination. Tout autre information spécifique au dépôt (par example la taille de l'UTXO) est connue par le contrat à l'avance.
+
+La _transaction de retrait_ a une seule entrée (l'UTXO dépôt) une une seule sortie (la sortie du retrait). Elle ne contient pas de "change output" ni de donnée d'entrée supplémentaire. Elle transfert simplement les BTC du dépôt au demandeur de retrait. Son ouverture programmée et numéro de séquence sont réglés à 0 et sa version à 1. Le format et la construction de son "sighash" sont détaillés <<appendix/sighash/index.adoc#sighash,en annexe>>.
+
+Comme le format est simple et standard, tout observateur peut utiliser les informations disponibles publiquement pour construire cette transaction. Une fois une signature publiée, il est très simple d'ajouter un témoin à la transaction et de la diffuser. Bien que les signataires aient une incitation à diffuser la transaction aussi tôt possible, n'importe qui peut le faire s'ils ne font pas.
+
+== Preuve de retrait
+
+Une _preuve de retrait_ est une <<appendix/spv/index.adoc#spv,preuve SPV>> qu'une _transaction de retrait_ a bien été confirmée sur la blockchain Bitcoin. Une fois une demande de retrait confirmée, le contrat de dépôt attend une _preuve de retrait_ dans une limite de {redemption-proof-timeout}. Pour valider la _preuve de retrait_, le contrat intelligent exécute une vérification de preuve SPV standard, vérifie  que l'adresse de destination correspond  bien à l'empreinte de clé publique du demandeur, et que le montant envoyé est supérieur ou égal à la `Taille d'UTXO
+- frais de transactions maximum autorisés` (voir la section sur <<Permettre des ajustements de frais de transaction Bitcoin>> plus de détails).
+
+Une fois la preuve de retrait confirmée, les frais de signataires sont payés, le détenteur de jeton FRT reçoit les fonds entiercés (si le dépôt a été retiré avant son terme) et le détenteur de jeton TDT reçoit le reste du montant de remboursement. Tout comme le montant de remboursement, le montant reçu par chaque participant dans le cas d'un retrait réussi dépend du détenteur de jeton TDT, du détenteur de FRT, du demandeur de retrait, et de l'état d'expiration ou non du dépôt. Toutes les combinaisons possibles sont résumées dans le tableau
+<<appendix/disbursal/index.adoc#deposit-payment-flow,du processus de paiement du dépôt.>>
+
+== Validation d'une signature
+
+Après que la demande de retrait ait été suffisamment confirmée,
+<<signing/index.adoc#signing,les signataires DOIVENT produire une signature>> pour la 
+_transaction de retrait__ comme demandé. Ils disposent de 
+{signature-timeout} pendant lesquelles ils peuvent produire une signature ou une <<Redemption
+proof, _preuve de retrait_>> avant d'être pénalisés. Une fois une signature valide soumise, une _preuve de rédemption_ est toujours requise mais l'échéance est repoussée jusqu'à un total de {redemption-proof-timeout}.
+
+Comme évoqué <<Redemption Transaction Format, précédemment>>, le contrat intelligent gestionnaire du dépôt sur la chaîne hôte dispose de toutes les informations nécessaires pour calculer un hachage de la _transaction de retrait_. Cela inclut la clé publique pour la signature à seuil des signataires. En utilisant la clé publique, le hachage de la signature et la demande de retrait, le contrat intelligent peut connaître la validité cryptographique de la signature et que la signature du message en question a été demandé au cours d'une demand de retrait.
+
+== Permettre un ajustement des frais de transaction Bitcoin
+
+Comme les frais de transaction Bitcoin sont fonction de la congestion du réseau et d'autre facteurs imprévisibles, le demandeur de retrait pourrait ne pas choisir des frais appropriés. Les signataires sont punis si aucune preuve de retrait n'est soumise *ou* qu'ils signent sans autorisation explicite. Cela pourrait créer une situation dans laquelle les signataires perdent dans tous les cas si ils ne parviennent pas à confirmer la transaction du demandeur de retrait à cause d'un réseau congestionné malgré leur honnêtetée. Malheureusement, on ne peut pas compter sur le demandeur de retrait pour rester en ligne ou mettre à jour les frais de transaction en bonne foi. Un mécanisme d'ajustement des frais sans consentement explicite du demandeur de retrait est donc nécessaire.
+
+Le moyen le plus simple est de permettre aux signataires d'ajuster les frais de transaction linéairement sans l'autorisation dudemandeur de retrait passé un certain délai. Nous autorisons donc les signataires à augmenter les frais de transaction linéairement toutes les  {fee-increase-timer}. C'est à dire que si les frais de transactions sont de `f`, les signataires peuvent notifier le contrat de dépôt après
+{fee-increase-timer} pour augmenter les frais à `2f`. Si la transaction n'est toujours pas confirmée après 
+{fee-increase-timer-times-two}, les signataires peuvent notifier le contrat pour augmenter les frais à `3f`. Ceci assure qu'une transaction de retrait sera éventuellement confirmée sur la blockchain Bitcoin avec des frais de transaction proches de ceux correspondant à la congestion du réseau au moment du retrait. Afin d'empêcher les signataires de demander une augmentation des frais de transaction plusieurs fois, ils doivent fournir une signature à chaque seuil. On s'assure ainsi quu'il y a effectivement une tenteative de transaction aux frais actuels avant d'en demander une augmentation.
