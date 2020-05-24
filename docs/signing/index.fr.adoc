@@ -1,0 +1,86 @@
+:toc: macro
+
+[[signing]]
+= Signature
+
+ifndef::tbtc[toc::[]]
+
+Tous les mécanismes susmentionnés nécessitent que chaque dépôt de Bitcoin soit protégé par un portefeuille M-parmi-N.
+
+Les règles de consensus du réseau Bitcoin restreignent la taille des scripts à  520 bits  (10 000 bits pour les données de sorties SegWit), limitant ainsi la taille maximale des scripts de multisignature à 80 participants (OP_CHECKMULTISIG est limité à
+link:https://github.com/bitcoin/bitcoin/blob/master/src/script/script.h#L28-L29[20 clés publiques], mais cette limite peut être contournée en utilisant `OP_CHECKSIG ADD` et
+`<threshold> OP_GREATERTHAN` comme montré par link:https://github.com/nomic-io/bitcoin-peg/blob/master/bitcoinPeg.md[Nomic Labs]). Des propositions telles que 
+link:https://github.com/bitcoin/bips/blob/master/bip-0114.mediawiki[MAST] permettraient l'implémentation de portefeuilles de multisignature plus larges mais l'activation de nouvelles fonctionnalités sur le réseau Bitcoin a historiquement été un processus à la chronologie incertaine.
+
+Enfin, les grands portefeuilles à multisignatures aboutissent à un coût de vérification qui augmente avec le nombre de participants. L'implémentation de portefeuilles multisigs sur Ethereum est  link:https://www.coindesk.com/30-million-ether-reported-stolen-parity-wallet-breach[particulièrement] link:https://www.coindesk.com/ico-funds-among-millions-frozen-parity-wallets[difficile]. En utilisant 
+link:https://crypto.stanford.edu/~dabo/pubs/papers/aggreg.pdf[un système d'agrégation de signatures de clés publiques], ces difficultés sont contournés et remplacées par la simple vérification d'une unique signature.
+
+Intuitivement, une clé publique agrégée est générée grâce à tous les participants  qui communiquent grâce à un protocol distinct, un processus aussi connu sous le nom de Génération Distribuée de Clés ("Distributed Key Generation" ou DKG). Chaque participant signe le message avec sa clé privée et contribue une "partie" de la signature finale. En supposant qu'un algorithme ECDSA est utilisé, la signature agrégée peut être vérifiée avec le clé publique agrégée en utilisant l'opération OP_CHECKSIGVERIFY sur Bitcoin, et ECRECOVER sur Ethereum. Ce processus est simple, peu coûteux, et évite l'implémentation d'une logique complexe de vérification de multisignatures. Il peut aussi être mise à jour vers d'autres configurations M-parmi-N facilement. Si une autre configuration est requise, le script ou le contrat intelligent n'a qu'à être reconfiguré pour utiliser une nouvelle clé publique agrégée suivant la re-exécution du DKG.
+
+== ECDSA à seuil
+
+Étant donnée une clé privée `x`, un message `m`, une fonction de hachage `H` et un entier `k` choisi uniformément, une signature ECDSA est un couple `(r,s)` où `s = k (m + xr)`,  `r = R_x`, `R = g^(k^-1)` et `m = H(m)`. Intuitivement, cette signature peut être convertie en une signature à seuil si `k` et `x` sont calculés par partage de secret entre t parmi n participants au protocole
+link:https://eprint.iacr.org/2019/114.pdf[L'article de Gennaro and Goldfeder]
+décrit un mécanisme efficace pour exécuter cette procédure.
+Notons qu'un mécanisme similaire a été proposé par 
+link:https://eprint.iacr.org/2018/987.pdf[Lindell et al.] la même année.
+
+De manière informelle, les participants suivent les étapes suivantes pour signer un message :
+
+1. Production d'une partie additive de `k * x`, où chaque participant `i` possède `k_i` et `x_i`.
+2. Calcul efficace de `R = g^(1/k)` en utilisant l'astuce d'inversion de Bar-Ilan et Beaver, sans que le participant `i` ne révèle `k_i`. `r` est fixé à la valeur `R_x`.
+3. Chaque participant calcule sa partie de la signature : `s_i = m * k_i + r * k_i * x_i`.
+4. La signature à seuil est la somme de toutes les parties de signature `s_i`.
+
+Une description plus précise du protocole peut être trouvée dans les sections 4.1 et 4.2 de l'article cité.
+
+
+== Amélioration de l'imputabilité des pannes 
+
+En l'état actuel du protocole, toutes les cautions des signataires sont saisies si les signataires se comportent de manière incorrecte. Si le système est paramétré pour l'usage de multisignatures `M-parmi-N`, cela signifie que si  `M` signataires se comportaient de manière incorrecte, les cautions des `N` participants seraient saisies. Il s'agit d'un vecteur de problèmes que nous souhaitons idéalement éviter. Les sous-groupes de signatures imputables (Accountable-subgroup multisignatures - décrit dans 
+the link:https://eprint.iacr.org/2018/483.pdf[l'article correspondant]) permettent de distinguer une signature générée par un sous-groupe `S` dans un schéma de multisignature `M-parmi-N` de celle d'un sous-groupe distinct. Cette technique peut être utilisée pour pénaliser uniquement les `M` signataires au comportement incorrect, éliminant le risque de punir les signataires honnêtes.
+
+Le protocole ECDSA à seuil décrit dans la section précédente ne permet pas d'imputer les défaillances à un sous-groupe de signataires. La première version de tBTC ne comprendra pas cette fonctionnalité qui sera activée lors de futures  mises à jour.
+
+== Schémas de Signature Futurs
+
+Dans cette section, nous explorons des protocoles d'agrégation de signatures qui pourraient être utilisés à l'avenir. Les techniques décrites sont sûres dans le cadre d'un modèle de publiques visibles, ce qui veut dire que les utilisateurs n'ont pas besoin de prouver qu'ils sont propriétaires de leur clé privée, rendant leur usage attractif dans les blockchains. On décrit brièvement les schémas de signatures
+link:https://eprint.iacr.org/2018/068/[MuSig] et link:https://www.iacr.org/archive/asiacrypt2001/22480516.pdf[BLS].
+
+=== MuSig
+
+_Note: Cette section est issue de la dernière section du link:https://blockstream.com/2018/01/23/en-musig-key-aggregation-schnorr-signatures/[post de blog officiel sur MuSig] par Blockstream_
+
+. Soit `H` une fonction de hachage cryptographique
+. On nomme `L = H(X_1,X_2,…)``
+. On nomme `X` la somme de tous les `H(L,X_i) * X_i`
+. Chaque signataire produit un nonce aléatoire `r_i` et partage  `R_i = r_i * G` avec les autres signataires
+. On nomme `R` la somme de tous les `R_i`
+. Chaque signataire calcule `s_i = r_i + H(X,R,m) * H(L,X_i) * x_i`
+. La signature finale est `(R,s)`, où `s` est la somme des `s_i` 
+. La vérification consiste à satisfaire l'égalité: `sG = R + H(X,R,m) * X`
+
+Contrairement aux implémentations précédentes, cet algorithme de vérification de signatures est résistant aux attaques par clés véreuses ("rogue key attacks) puisque X est défini comme la somme pondérée des clés publiques des signataires avec une pondération qui dépend des hachages des différentes clés;
+
+=== Multisignatures par couplage
+
+En se basant sur MuSig et les signatures BLS, Boneh, Drijvers et Neven introduisent une variante des implémentations BLS existantes qui ne requiert que 2 opérations de couplage pour la vérification et reste résistante aux attaques par clés véreuses. 
+
+Cette multisignature est plus courte que MuSig puisqu'elle ne requier qu'un élement du groupe plutôt que deux. MuSig requiert également un tour de communications additionnel pour générer le nonce `R` par rapport à BLS où ce n'est pas nécessaire. Tous les signataires envoient leurs signatures à un tiers qui les agrègent, éliminant ainsi tout besoin d'interactions supplémentaires entre participants qui n'ont pas besoin d'être en ligne au même moment.
+
+_Note: Cette section est tirée de la Section 1 du 
+link:https://crypto.stanford.edu/~dabo/pubs/papers/BLSmultisig.html[post officiel de Dan Boneh et al.]_
+
+. On nomme `e: G_0 x G_1 -> G_T` un couplage (forme bilinéaire, non-dégénérée, efficacement calculable) avec `g_0` et `g_1` les générateurs de `G_0` et `G_1` respectivement.
+. On nomme `sk` la clé privée de l'utilisateur et `g_1^{sk}` sa clée privée.
+. On nomme  `H_0` une fonction de hachage cryptographique de l'espace des messages dans `G_0`
+. On nomme  `H_1` une fonction de hachage cryptographique de  `G_1^n` dans `R^n`
+. Une signature sur `m` est `s_i ＝ Η_0(m)^sk_i`
+. Pour agréger les signatures d'un même message des clés publiques `(pk_1, ..., pk_n)`:
+    1. Calculer : `(t_1, ..., t_n) = H_1(pk_1, ..., pk_n)`
+    2. Aggréger les signatures: `s = s_1^t_1 * ... * s_n^t_n`
+. Pour vérifier que la signature agrégée correspond aux mêmes clés publiques :
+    1. Calculer : `(t_1, ..., t_n) = H_1(pk_1, ..., pk_n)`
+    2. Calculer la clé publique agrégée : `pk = pk_1 ^ t_1 * ... * pk_n ^ t_n`
+    (indépendemment du message signé))
+    3. Vérifier la signature : `e(g_1, s) = e(pk, H_0(m))` (demande deux couplages comme le même message est signé) :
