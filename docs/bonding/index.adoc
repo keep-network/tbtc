@@ -256,7 +256,9 @@ the Deposit (1 BTC / 75 ETH)
 discount, it auctions {liquidation-auction-start-percent} of its ETH reserves.
 
 5. An arbitrageur burns 1 TBTC at 90% of the auction and obtains 67.5 ETH. The
-liquidation of the _Deposit_ is now over.
+liquidation of the deposit is now over. The arbitrageur might do this because
+the price has recovered during the auction, or because they intend to use the
+ETH to arbitrarge against a higher price later or with a different asset.
 
 6. Half of the remaining 7.5 ETH is distributed to the signers (if they had
 committed fraud this would be 0), and the remainder is given to the account
