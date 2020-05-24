@@ -127,6 +127,7 @@ library DepositLiquidation {
         startLiquidation(_d, true);
     }
 
+
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
     /// @dev        For interface, reading auctionValue will give a past value. the current is better.
     /// @param  _d  Deposit storage pointer.
