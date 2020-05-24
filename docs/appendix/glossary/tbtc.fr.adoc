@@ -1,0 +1,13 @@
+= tBTC
+
+Dépôt:: Un dépôt est un composant essentiel de l'architecture du système. Chaque dépôt représente un ensemble de signataires sous caution qui génèrent une clé publique Bitoin et acceptent un unique UTXO à partir duquel un TBTC peut être émis.
+
+Bénéficiaire du dépôt:: Un dépôt a un unique compte Ethereum bénéficiaire -- initialement réglé pour être le déposant. Le bénéficiaire détient les droits à des frais au moment du retrait du dépôt.
+
+Demande de dépôt:: Une demande de sélection de signataires pour générer une nouvelle paire de clés asymétriques ECDSA. Une demande réussie aboutit à la création d'une nouvelle adresse Bitcoin pour la réception des fonds ainsi qu'un nouvel ensemble de signataires sous caution.
+
+Taille de lot:: La taille idéale d'un UTXO de financement de dépôt de BTC. La standardisation des tailles de dépôts permet la simplification du processus de retrait et de la cotation des dépôts sur le marché.
+
+Caution de signataires:: La caution que les signataires dépose avant que le dépôt soit financé. Cette caution assure que les signataires seront punis en cas de fraude ou de mauvaise disponibilité.
+
+TBTC réservé:: Le montant de TBTC qui ne peut être émis à partir d'un nouveau dépôt. La réservation de TBTC au moment du financement d'un dépôt permet de mettre de côté des fonds pour payer les frais de signataires au cours de la durée du dépôt.
