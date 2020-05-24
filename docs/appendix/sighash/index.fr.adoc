@@ -1,0 +1,198 @@
+:toc: macro
+
+[[sighash]]
+= Construction Standardisée de Sighash
+
+ifndef::tbtc[]
+toc::[]
+
+endif::tbtc[]
+
+== Vue d'ensemble 
+
+Pour signer, Bitcoin transforme les transactions en utilisant un processus connu sous le nom d'algorithme de SignatureHash (sighash). L'algorithme sighash original avait de nombreux défauts. Dans les scripts SegWit, l'algorithme a été modifié pour suivre https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki[BIP143]
+(les anciennes adresses utilisent toujours l'algorithme original).
+
+Le but de l'algorithme sighash est de s'engager à certains aspects de la transaction dans le hash signé. Cela empêche la malléabilité de la transaction et indique que le signataire a l'intention de respecter ces aspects. En particulier, le sighash BIP143 s'engage sur les aspects suivants (pas dans cet ordre) :
+
+1. Une ou Toutes les entrées
+2. Aucune, Une ou Toutes les sorties
+3. Le "prevout" spécifique dont cette signature témoigne
+4. Le script pubkey ou script de retrait qui verrouille ce prevout
+5. La valeur du prevout dont la transaction témoigne
+6. La séquence d'entrées dépensant ce prevout
+7. La version de la transaction
+8. La durée de verrouillage de la transaction
+
+Un engagement à ces aspects est effectué via le hash sha256 d'une chaîne de bits ordonnée. Ce hash est signé et peut être reproduit par n'importe quel utilisateur inspectant la transaction (en supposant qu'il a accès aux données historiques de la blockchain pour valider la valeur prevout). Le calcul sighash est donc un élément critique du consensus Bitcoin.
+
+Comme un groupe de signataires peut retenir les signatures, le processus de retrait les force à fournir une signature valide dans la limite d'un temps imparti. Cela signifie que le processus de retrait doit être capable d'évaluer ce que signifie la "validité" dans ce contexte. Comme le but ultime est le retrait, une signature "valide" est une signature témoignant d'une transaction qui envoie les fonds à l'empreinte de clé publique demandée au début du processus. Pour vérifier qu'une signature témoigne d'une telle transaction, il faut permettre aux contrats de valider le hash signé de sighash.
+
+Le moyen le plus simple de faire cela est de loin la création d'une transaction canonique. On peut donc implémenter un ensemble très réduit des fonctionnalités de BIP143 tout en étant quand même capable d'évaluer la validité de la signature au moment du retrait, de spécifier un sighash, et de forcer la reconstruction de la signature correspondante. De cette manière, le contrat peut demander des transactions de retrait très précises à un coût minimal.
+
+== Sighash de Retrait Canonique
+
+BIP143 suit le format général suivant:
+```
+Double SHA256 of the serialization of:
+   1. nVersion of the transaction (petit boutisme de 4 bits)
+   2. hashPrevouts (hash de 32 bits)
+   3. hashSequence (hash de 32 bits)
+   4. outpoint (hash de 32 bits + petit boutisme de 4 bits)
+   5. scriptCode of the input (serialized as scripts inside CTxOuts)
+   6. valeur de la sortie dépensée par cette entrée (petit boutisme de 8 bits)
+   7. nSequence de l'entrée (petit boutisme de 4 bits)
+   8. hashOutputs (hash de 32 bits)
+   9. nLocktime de la transaction (petit boutisme de 4 bits)
+  10. type sighash de la signature (petit boutisme de 4 bits) <1>
+```
+<1> Voir la description de Summa des
+    https://medium.com/summa-technology/summa-auction-bitcoin-technical-7344096498f2#2070[différents types de sighash] pour plus d'information sur ce champ.
+
+Comme nous n'avons pas besoin d'utiliser de durée de verrouillage pour la transaction, on interdit son usage, ce qui permet la standardisation immédiate de nombreux éléments. On interdit également tout drapeau de sighash autre que `SIGHASH_ALL` pour standardiser ce champt. On remplace ci-dessous ces éléments par la chaîne de caractières Hex standardisée :
+
+```
+Double hash SHA256 de la sérialisation de :
+   1. 01000000
+   2. hashPrevouts (hash de 32 bits)
+   3. hashSequence (hash de 32 bits)
+   4. outpoint (hash de 32 bits + petit boutisme de 4-bits)
+   5. scriptCode de l'entrée (séralisé en script dans CTxOuts)
+   6. valeur de la sortie dépensée par cette entrée (petit boutisme de 8-bits)
+   7. 00000000
+   8. hashOutputs (hash de 32 bits)
+   9. 00000000
+  10. 01000000
+```
+
+En interdisant à la transaction d'avoir plus d'une entrée ou sortie, on obtient une victoire supplémentaire. Au point 3, `hashSequence` est défini comme "le double hash SHA256 de la sérialisation de la nSequence de toutes les entrées." En n'ayant qu'une entrée et en désactivant la durée de verrouillage, on peut également standardiser ce champ :
+
+```
+Double hash SHA256 de la sérialisation de:
+   1. 01000000
+   2. hashPrevouts (hash de 32 bits)
+   3. 8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9
+   4. outpoint (hash de 32 bits + petit boutisme de 4 bits)
+   5. scriptCode de l'entrée (serialized as scripts inside CTxOuts)
+   6. valeur de la sortie dépensée par cette entrée(petit boutisme de 8 bits)
+   7. 00000000
+   8. hashOutputs (hash de 32 bits)
+   9. 00000000
+  10. 01000000
+```
+
+Ensuite, on ajoute toutes les informations auxquelles le contrat a accès, à commencer par les détails de l'UTXO dont il est dépositaire. Le contrat de dépôt a validé la preuve de financement SPV et stocké sa valeur en tant qu'outpoint. BIP143 spécifie 
+`hashPrevouts` comme étant "le double hash SHA256 de la sérialisation de tous les outpoints des entrées". On peut donc remplir les champs 2, 4, et 6 en utilisant des informations connues :
+
+```
+bytes8 depositSizeBytes
+bytes utxoOutpoint
+
+Double hash SHA256 de la sérialisation de:
+   1. 01000000
+   2. {hash256(utxoOutpoint)}
+   3. 8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9
+   4. {utxoOutpoint}
+   5. scriptCode of the input (serialized as scripts inside CTxOuts)
+   6. {depositSizeBytes}
+   7. 00000000
+   8. hashOutputs (hash de 32 bits)
+   9. 00000000
+  10. 01000000
+```
+
+Le scriptCode est aussi connu du contrat comme il est dérivé de l'empreinte de clé publique à seuil des signataires. D'après BIP143, "Pour les adresses témoin P2WPKH, le `scriptCode` est `0x1976a914{20-byte-pubkey-hash}88ac`."
+
+```
+bytes8 depositSizeBytes
+bytes utxoOutpoint
+bytes20 signerPKH
+
+Double hash SHA256 de la sérialisation de:
+   1. 01000000
+   2. {hash256(utxoOutpoint)}
+   3. 8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9
+   4. {utxoOutpoint}
+   5.
+       1. 1976a914
+       2. {signerPKH}
+       3. 88ac
+   6. {depositSizeBytes}
+   7. 00000000
+   8. hashOutputs (hash de 32 bits)
+   9. 00000000
+  10. 01000000
+```
+
+Cela ne laisse que le `hashOutputs` inconnu du contrat au moment du retrait. Intuitivement, ce n'est pas étonnant car le contrat sait où se trouve l'argent, mais pas où il doit être envoyé pour le retrait. Comme toujours, on fait référence à BIP143
+qui dit que "hashOutputs est le double hash SHA256 de la sérialisation de tous les montants de sortie (petit boutisme de 8 bits) avec  scriptPubKey." Cela peut être particulièrement long avec des données multiples mais comme évoqué précédemment, on peut standardiser les transactions à sortie unique. Cela signifique qu'il s'agit du double hash SHA256 de la valeur en petit boutisme de 8 bits retirée (moins des frais de minage), et le script pubkey contenant le hash du script du demandeur de retrait. Dans notre processus de retrait, ces deux quantités sont fixées par l'utilisateur au moment de la demande de retrait. Cela signifie que le contrat y a accès comme arguments de la fonction au moment où il demande au groupe de signataires de produire une signature. Le contrat peut donc specifier unhash précis pour cette signature.
+
+```
+bytes8 depositSizeBytes
+bytes utxoOutpoint
+bytes20 signerPKH
+
+Double SHA256 of the serialization of:
+   1. 01000000
+   2. {hash256(utxoOutpoint)}
+   3. 8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9
+   4. {utxoOutpoint}
+   5.
+       1. 1976a914
+       2. {signerPKH}
+       3. 88ac
+   6. {depositSizeBytes}
+   7. 00000000
+   8.
+       1. hash256(
+       2. {_outputValueBytes}
+       3. {_requesterPKH}
+       4. )
+   9. 00000000
+  10. 01000000
+```
+
+Ceci peut être facilement implémenté en une fonction pure en Solidity :
+
+```
+/// @notice                 calculates the sighash of a redemption tx
+/// @dev                    documented in bip143. many values are hardcoded
+/// @param _outpoint        the bitcoin output script
+/// @param _inputPKH        the input pubkeyhash (hash160(sender_pubkey))
+/// @param _inputValue      the value of the input in satoshi
+/// @param _outputValue     the value of the output in satoshi
+/// @param _outputPKH       the output pubkeyhash (hash160(recipient_pubkey))
+/// @return                 the double-sha256 (hash256) signature hash
+function oneInputOneOutputSighash(
+    bytes _outpoint,  // 36 byte UTXO id
+    bytes20 _inputPKH,  // 20 byte hash160
+    bytes8 _inputValue,  // 8-byte LE
+    bytes8 _outputValue,  // 8-byte LE
+    bytes20 _outputPKH  // 20 byte hash160
+) public pure returns (bytes32) {
+    // Fixes elements to easily make a 1-in 1-out sighash digest
+    // Does not support timelocks
+    bytes memory _scriptCode = abi.encodePacked(
+        hex"1976a914",  // length, dup, hash160, pkh_length
+        _inputPKH,
+        hex"88ac");  // equal, checksig
+    bytes32 _hashOutputs = abi.encodePacked(
+        _outputValue,  // 8-byte LE
+        hex"160014",  // this assumes p2wpkh
+        _outputPKH).hash256();
+    bytes memory _sighashPreimage = abi.encodePacked(
+        hex"01000000",  // version
+        _outpoint.hash256(),  // hashPrevouts
+        // hashSequence(hash256(00000000))
+        hex"8cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb9",
+        _outpoint,  // outpoint
+        _scriptCode,  // p2wpkh script code
+        _inputValue,  // value of the input in 8-byte LE
+        hex"00000000",  // input nSequence
+        _hashOutputs,  // hash of the single output
+        hex"00000000",  // nLockTime
+        hex"01000000"  // SIGHASH_ALL
+    );
+    return _sighashPreimage.hash256();
+}
+```
