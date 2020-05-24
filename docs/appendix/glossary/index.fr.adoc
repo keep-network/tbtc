@@ -1,0 +1,17 @@
+:toc: macro
+
+= Glossaire
+
+ifndef::tbtc[toc::[]]
+
+Blockchain hôte:: La blockchain sur laquelle les TBTC sont émis
+
+Keep:: Système de calcul multipartite sécurisé utilisé pour les signature dans le protocole tBTC
+
+PKH:: "Public key hash" ou Empreinte de clé publique 
+
+Random beacon:: Une "source de hasard" sûre et vérifiable sur la blockchain hôte.
+
+include::./tbtc.adoc[leveloffset=+1]
+include::./cross-chain.adoc[leveloffset=+1]
+include::./bitcoin.adoc[leveloffset=+1]
