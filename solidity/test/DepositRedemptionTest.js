@@ -542,7 +542,7 @@ describe("DepositRedemption", async function() {
 
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
-      // the fee is ~12,297,829,380 BTC
+      // the fee is 2.86331153 BTC
       await testDeposit.requestRedemption(
         "0x1111111100000000",
         redeemerOutputScript,
@@ -568,7 +568,7 @@ describe("DepositRedemption", async function() {
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testDeposit.setState(states.COURTESY_CALL)
 
-      // the fee is ~12,297,829,380 BTC
+      // the fee is 2.86331153 BTC
       await testDeposit.requestRedemption(
         "0x1111111100000000",
         redeemerOutputScript,
@@ -594,7 +594,7 @@ describe("DepositRedemption", async function() {
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
-      // the fee is ~12,297,829,380 BTC
+      // the fee is 2.86331153 BTC
       const {
         receipt: {blockNumber: transferBlock},
       } = await testDeposit.requestRedemption(
@@ -630,10 +630,28 @@ describe("DepositRedemption", async function() {
       await expectRevert(
         testDeposit.requestRedemption(
           "0x0011111111111111",
-          "0x" + "33".repeat(20),
+          "0x1976a914" + "33".repeat(20) + "88ac",
           {from: owner},
         ),
         "Fee is too low",
+      )
+    })
+
+    it("reverts if the output script is non-standard", async () => {
+      const block = await web3.eth.getBlock("latest")
+      await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+
+      await tbtcDepositToken.transferFrom(tdtHolder, frtHolder, tdtId, {
+        from: owner,
+      })
+
+      await expectRevert(
+        testDeposit.requestRedemption(
+          "0x1111111100000000",
+          "0x" + "33".repeat(20),
+          {from: owner},
+        ),
+        "Output script must be a standard type.",
       )
     })
 
@@ -648,7 +666,7 @@ describe("DepositRedemption", async function() {
       await expectRevert(
         testDeposit.requestRedemption(
           "0x1111111100000000",
-          "0x" + "33".repeat(20),
+          "0x1976a914" + "33".repeat(20) + "88ac",
           {from: owner},
         ),
         "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
@@ -1004,6 +1022,32 @@ describe("DepositRedemption", async function() {
       expect(redemptionChecks).to.eq.BN(new BN(fundingTx.outputValue))
     })
 
+    it("accepts all standard output types", async () => {
+      const outputScripts = [
+        "1976a914" + "00".repeat(20) + "88ac", // pkh
+        "17a914" + "00".repeat(20) + "87", // sh
+        "160014" + "00".repeat(20), // wpkh
+        "220020" + "00".repeat(32), // wsh
+      ]
+
+      for (let i = 0; i < outputScripts.length; i++) {
+        const script = outputScripts[i]
+        const tempOutputVector = "0x012040351d00000000" + script
+        await testDeposit.setRequestInfo(
+          "0x" + "11".repeat(20),
+          "0x" + script,
+          14544,
+          0,
+          "0x" + "11" * 32,
+        )
+        const redemptionChecks = await testDeposit.redemptionTransactionChecks.call(
+          fundingTx.txInputVector,
+          tempOutputVector,
+        )
+        expect(redemptionChecks).to.eq.BN(new BN(fundingTx.outputValue))
+      }
+    })
+
     it("reverts if bad input vector is provided", async () => {
       await expectRevert(
         testDeposit.redemptionTransactionChecks(
@@ -1040,7 +1084,7 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("reverts if the tx sends value to the wrong pkh", async () => {
+    it("reverts if the tx sends value to the wrong output script", async () => {
       await testDeposit.setRequestInfo(
         "0x" + "11".repeat(20),
         "0x" + "11".repeat(20),
@@ -1054,7 +1098,7 @@ describe("DepositRedemption", async function() {
           fundingTx.txInputVector,
           fundingTx.txOutputVector,
         ),
-        "Tx sends value to wrong pubkeyhash",
+        "Tx sends value to wrong output script",
       )
     })
   })
