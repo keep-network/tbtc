@@ -183,9 +183,9 @@ explicitly authorized by the tBTC system. The system only authorizes redemption 
 signatures when a redemption is in progress.]
 
 :vm-deposit-owner: footnote:[Note that, for deposits that have been used to back \
-TBTC via the vending machine, the deposit owner is the vending machine itself, \
-so by making the deposit owner whole, the system ensures the TBTC supply is in \
-line with BTC custodied by TBTC-backing deposits.]
+TBTC via the vending machine, the deposit owner is the vending machine itself; \
+by making the deposit owner whole in this case, the system ensures the TBTC \
+supply is in line with BTC custodied by TBTC-backing deposits.]
 
 Forced liquidation should be rare, as rational signers will redeem deposits
 before liquidation becomes necessary. However, the possibility of extreme
@@ -204,8 +204,8 @@ signers maximally for incorrect behavior, when such behavior can be proven.
 
 The most valuable asset held by the system is the signer bond. Therefore, the
 liquidation process seizes the signer bond and attempts to use the bonded
-value to purchase and compensate the deposit owner. Any signer bond left over
-after the deposit owner is compensated is distributed to the account
+value to purchase TBTC and compensate the deposit owner. Any signer bond left
+over after the deposit owner is compensated is distributed to the account
 responsible for reporting the misbehavior (for fraud) or between the signers and
 the account that triggered liquidation (for collateralization issues).
 
