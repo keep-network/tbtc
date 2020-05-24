@@ -334,7 +334,7 @@ describe("VendingMachine", async function() {
       const blockNumber = await web3.eth.getBlockNumber()
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
-      // the fee is ~12,297,829,380 BTC
+      // the fee is 2.86331153 BTC
       await feeRebateToken.forceMint(owner, tdtId)
       await vendingMachine.tbtcToBtc(
         testDeposit.address,
@@ -360,7 +360,7 @@ describe("VendingMachine", async function() {
     it("fails to redeem with insufficient balance", async () => {
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
-      // the fee is ~12,297,829,380 BTC
+      // the fee is 2.86331153 BTC
       // requester does not own the FRT, and therefore owes an additional SignerFee
       await feeRebateToken.forceMint(accounts[1], tdtId)
 

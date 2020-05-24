@@ -97,7 +97,8 @@ library DepositRedemption {
         address payable _redeemer
     ) internal {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
-        require(_redeemerOutputScript.length > 0, "cannot send value to zero output script");
+        bytes memory _output = abi.encodePacked(_outputValueBytes, _redeemerOutputScript);
+        require(_output.extractHash().length > 0, "Output script must be a standard type");
 
         // set redeemerAddress early to enable direct access by other functions
         _d.redeemerAddress = _redeemer;
@@ -339,17 +340,19 @@ library DepositRedemption {
     ) public view returns (uint256) {
         require(_txInputVector.validateVin(), "invalid input vector provided");
         require(_txOutputVector.validateVout(), "invalid output vector provided");
-
         bytes memory _input = _txInputVector.slice(1, _txInputVector.length-1);
-        bytes memory _output = _txOutputVector.slice(1, _txOutputVector.length-1);
 
         require(
             keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint),
             "Tx spends the wrong UTXO"
         );
+
+        bytes memory _output = _txOutputVector.slice(1, _txOutputVector.length-1);
+        bytes memory _expectedOutputScript = _d.redeemerOutputScript;
+        require(_output.length - 8 >= _d.redeemerOutputScript.length, "Output script is too short to extract the expected script");
         require(
-            keccak256(_output.slice(8, 3).concat(_output.extractHash())) == keccak256(abi.encodePacked(_d.redeemerOutputScript)),
-            "Tx sends value to wrong pubkeyhash"
+            keccak256(_output.slice(8, _expectedOutputScript.length)) == keccak256(_expectedOutputScript),
+            "Tx sends value to wrong output script"
         );
         return (uint256(_output.extractValue()));
     }
