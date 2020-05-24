@@ -1,5 +1,10 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {states, fundingTx, legacyFundingTx} = require("./helpers/utils.js")
+const {
+  states,
+  fundingTx,
+  increaseTime,
+  legacyFundingTx,
+} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -152,6 +157,78 @@ describe("DepositFunding", async function() {
           1,
           fullBtc,
         ),
+        "Opening new deposits is currently disabled.",
+      )
+    })
+
+    it("respects the supply cap schedule", async () => {
+      const bn = web3.utils.toBN
+
+      const mint = amountInSats =>
+        tbtcToken.forceMint(
+          testDeposit.address,
+          bn(amountInSats).mul(bn(10).pow(bn(10))),
+        )
+
+      const createNewDeposit = amountInSats => {
+        return testDeposit.createNewDeposit.call(
+          tbtcSystemStub.address,
+          tbtcToken.address,
+          tbtcDepositToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          1, // m
+          1,
+          amountInSats,
+        )
+      }
+
+      await mint(fullBtc - 1000)
+      await createNewDeposit(fullBtc)
+      await mint(fullBtc) // should now be at 2 BTC - 1000 sats
+
+      await expectRevert(
+        createNewDeposit(fullBtc),
+        "Opening new deposits is currently disabled.",
+      )
+
+      await increaseTime(15 * 24 * 60 * 60) // 15 days, into the 1st month
+      await createNewDeposit(fullBtc)
+      await mint(98 * fullBtc) // should new be at 100 BTC - 1000 sats
+      await expectRevert(
+        createNewDeposit(fullBtc),
+        "Opening new deposits is currently disabled.",
+      )
+
+      await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 2nd month
+      await createNewDeposit(fullBtc)
+      await mint(150 * fullBtc) // should new be at 250 BTC - 1000 sats
+      await expectRevert(
+        createNewDeposit(fullBtc),
+        "Opening new deposits is currently disabled.",
+      )
+
+      await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 3rd month
+      await createNewDeposit(fullBtc)
+      await mint(250 * fullBtc) // should new be at 500 BTC - 1000 sats
+      await expectRevert(
+        createNewDeposit(fullBtc),
+        "Opening new deposits is currently disabled.",
+      )
+
+      await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 4th month
+      await createNewDeposit(fullBtc)
+      await mint(500 * fullBtc) // should new be at 1000 BTC - 1000 sats
+      await expectRevert(
+        createNewDeposit(fullBtc),
+        "Opening new deposits is currently disabled.",
+      )
+
+      await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 5th month
+      await createNewDeposit(fullBtc)
+      await mint("2099900000000000") // should new be at 21M BTC - 1000 sats
+      await expectRevert(
+        createNewDeposit(fullBtc),
         "Opening new deposits is currently disabled.",
       )
     })
