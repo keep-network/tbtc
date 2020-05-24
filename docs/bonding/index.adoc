@@ -20,9 +20,10 @@ market-based attacks, where the price of bonded collateral can be pushed up or
 down by market manipulation.
 
 Bonded signers offer depositors recourse in the case of colluding signers
-interfering with operation. A signing group that doesn't sign within a timeout
-forfeits their bond; a signing group that provably signs unauthorized material
-forfeits their bond, and risks their work token stake.
+interfering with operation. A signing group that doesn't provide a requested
+redemption signature within a timeout (the _redemption signature timeout_)
+forfeits their bond. Similarly, a signing group that provably signs unauthorized
+material forfeits their bond, and additionally risks their work token stake.
 
 == Acceptable collateral
 
@@ -70,11 +71,11 @@ the two currencies fluctuate relative to each other, sometimes wildly.
 
 If the value of ETH drops precipitously relative to BTC, then the dollar value
 of the ETH bonded by the signers can be less than the dollar value of the BTC
-deposit they have backed, meaning they have positive expected value if they try
-to steal the BTC.
+deposit they have backed, meaning signers have positive expected value if they
+try to steal the BTC in the deposit.
 
 In order to avoid that, we require that the bonds are overcollateralized. For
-each ETH they collateralize, they must put up an additional
+each ETH signers collateralize, they must put up an additional
 {extra-collateral}, for a total of {total-collateral} collateralization rate.
 
 [example]
