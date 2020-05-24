@@ -119,16 +119,21 @@ signer selection phase.
 
 Before the selected members of a signing group can perform distributed key
 generation, they MUST put up a bond (the _signer bond_) in the native token
-of the host chain. This bond is used to penalize the members of the signing
-group if an unauthorized piece of data is signed by the signing group once
-distributed key generation is complete; it is also used to penalize a given
-member if the distributed key generation fails due to an attributed
-misbehavior of that member, if the signing group fails to produce a signature
-for the system when requested, and to bring the system into balance in cases
-of undercollateralization. The signers must have enough bond available to
-back a deposit in order to be chosen for the signing group, and the bond
-SHOULD be acquired by the deposit in the same transaction that chooses the
-signers.
+of the host chain. This bond is used in a few cases:
+
+- To liquidate deposits in case they are in danger of undercollateralization.
+- To punish a signing group if it signs an unauthorized piece of data is
+  once distributed key generation is complete.
+- To punish a signing group that fails to produce a signature for the system
+  when requested.
+- To ensure a depositor is refunded if the signing group fails to form.
+
+In all but the last case, the seized bond is auctioned for TBTC to compensate
+the deposit owner the amount of their deposit.
+
+The signers must have enough bond available to back a deposit in order to be
+chosen for a signing group, and the bond SHOULD be acquired by the deposit in
+the same transaction that chooses the signers.
 
 Bonding is described in more detail in <<bonding/index#bonding,its own
 section>>.
