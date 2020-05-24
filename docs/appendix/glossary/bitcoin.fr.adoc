@@ -1,0 +1,32 @@
+= Bitcoin & friends
+
+P2PKH / P2WPKH:: Pay to (witness) public key hash
+
+P2SH / P2WSH:: Pay to (witness) script hash
+
+Sighash:: Bitcoin signature hash algorithm
+
+BIP 143:: Proposition
+https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki[SegWit sighash]
+adoptée
+
+ALL:: Mode Sighash s'engageant à *toutes* les sorties et *toutes* les entrées
+
+SINGLE:: Mode Sighash s'engageant à *une* sortie et *toutes* les entrées
+
+ANYONECANPAY:: Modification de Sighash. Change *toutes* or *une* à un engaement à seulement 
+`UNE` entrée.
+
+SACP, singleACP:: `SINGLEANYONECANPAY`
+
+Hash160:: Fonction de hachage Bitcoin `rmd160(sha256(message))`. Utilisée pour les empreintes de clés publique des engagements dans les sorties. Utilisé pour les engagements SH avant Segwith
+
+Hash256:: Fonction de hachage Bitcoin `sha256(sha256(message))`. Utilisée pour les identifiants de transaction, le sighash, les arbres de Merkle et la preuve de travail.
+
+UTXO:: "(unspent) transaction output" (donnée de sortie de transaction non dépensée)
+
+Unité de poids:: Unité de mesure de la taille des transactions Bitcoin. Les informations principales de la transaction font 4 unités de poids par bit. Les information témoin font 1 unité de poids par bit.
+
+Vbyte:: 4 unités de poids
+
+Outpoint:: Une chaîne de caractères de 36 bits qui identifie les UTXOs Bitcoin de manière unique. Cela inclut l'identifiant de la transaction en question stocké en un petit boutisme `uint`de 32 bits (parce que Satoshi était méchant) et un petit boutisme de 4 bits `uint32` désignant la position de l'UTXO dans le vecteur de sortie de la transaction en question.  A 36-byte string that uniquely identifies Bitcoin UTXOs. 
