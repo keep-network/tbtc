@@ -26,17 +26,20 @@ After a deposit has been requested and a signing group formed, a depositor
 immediately receives a non-fungible token unique to the deposit called the _tBTC
 Deposit Token_, or _TDT_, granting them ownership of the deposit. This ownership
 comes with the exclusive right to redeem the deposit from the moment it is
-funded until the deposit term is reached.
+funded until the deposit term is reached, unless there is an
+undecollateralization issue that transitions the deposit into its "courtesy
+call" state.
 
 Once the deposit is fully _qualified_ by submitting sufficient proof of the
 funding Bitcoin transaction, the holder of the TDT can request redemption,
-and, after paying any outstanding signing fees, be guaranteed the same UTXO
-backing the deposit. The holder of the TDT is also guaranteed compensation in
-TBTC via the signing group's bonded collateral in case of fraud or
-collateralization issues (see <<bonding/index.adoc#liquidation,liquidation>>),
-and compensation in TBTC (minus signer fees) if the deposit is redeemed by
-another account after it reaches term (see the section on
-<<redemption/index.adoc#at-term, at-term redemption>>).
+and, after paying any outstanding signing fees, the holder is guaranteed the
+same UTXO backing the deposit. The holder of the TDT is also guaranteed
+compensation in TBTC via the signing group's bonded collateral in case of fraud
+or collateralization issues (see
+<<bonding/index.adoc#liquidation,liquidation>>), and compensation in TBTC (minus
+signer fees) if the deposit is redeemed by another account after it reaches term
+(see the section on <<redemption/index.adoc#at-term, at-term redemption>>) or if
+the deposit is courtesy called.
 
 === Implications
 

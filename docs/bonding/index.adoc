@@ -154,8 +154,11 @@ a single pair of assets, tBTC will initially use a simple
 === Pre-liquidation: a courtesy call
 
 At the first threshold of {pre-liquidation-threshold}, a deposit enters
-pre-liquidation, also referred to as “courtesy call”. Pre-liquidation indicates
-that the signers should close the deposit or face forced liquidation after a
+pre-liquidation, also referred to as “courtesy call”. In this state, a deposit
+can be redeemed by anyone, even if the deposit is locked (see the sections on
+<<redemption/index.adoc#redemption,redemption>> and
+<<minting/index.adoc#minting,minting>> for more). Pre-liquidation indicates that
+the signers should close the deposit or face forced liquidation after a
 pre-liquidation period. If the deposit is not closed within
 {pre-liquidation-period}, or if the deposit collateral falls below
 {liquidation-threshold} collateralization, liquidation will follow. This gives

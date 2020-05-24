@@ -23,7 +23,11 @@ A detailed treatment of signer fees can be found in
 
 Fixed-term deposits mean signer fees can easily be calculated per deposit. A
 standard term of {term-length} means depositors can budget for fees, and signers
-will know how long their bonds will be inaccessible.
+will know how long their bonds will be inaccessible. To incentivize redemption
+at term, the system is structured such that deposits can only be redeemed by the
+owner of the deposit during the term, but anyone may redeem deposits once they
+reach term. Additionally, at-term redemptions still charge their signing fees
+from the deposit owner, unless fees have been escrowed by the vending machine.
 
 Depositors that don't need future access to their deposit might prefer to
 pass the costs of the system to eventual redeemers and/or want denomination
