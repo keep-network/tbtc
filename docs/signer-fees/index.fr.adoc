@@ -1,0 +1,47 @@
+[[signer-fees]]
+= Frais de signataires
+
+Les signataires mettent en jeu <<bonding/index.adoc#bonding,leurs propres fonds>> afin d'assurer aux déposants qu'ils ne seront pas lésés. Les cautions déposées correspondent à un capital qui pourrait par ailleurs produire des revenus. Le système tBTC doit donc offrir un retour sur investissement qui compense les risques encourus pour rester compétitif par rapport à d'autres opportunités.
+
+== Payer pour la sécurité
+
+Différents modèles tarifaires existent pour couvrir le coût d'opportunité associé à la caution des signataires.
+
+Une comparaison avec un écosystème adjacent permet de déterminer une borne inférieur.
+
+Les dépositaires de cryptomonnaies centralisés demandent aujourd'hui des frais compris entre 50 et 75 points de base (0.5-0.75%) par an pour les _actifs sous contrôle_. Pour chaque année durant laquelle un Bitcoin est protégé par un dépositaire centralisé, cela représente jusqu'à 0.75% de perte.
+
+Un modèle décentralisé devrait permettre d'atteindre des frais effectifs de gardiennage plus faibles en ouvrant la porte ) à plus de compétition. Il y a cependant une limite -- un système décentralisé rend les recours légaux plus difficiles, ce qui conduit à l'usage de cautions pour assurer un dédommagement en cas de défaillance.
+
+En appliquant ce modèle tarifaire au système de caution de tBTC, il est clair qu'un signataire devrait obtenir un revenu au moins égal sur sur l'actif verrouillé.
+
+== Paramétrage des frais de transaction
+
+=== Terminologie
+
+- `Deposit`: Un contrat non fongible auquel un groupe de signataires est associé. Il coordonne le retrait de `LotSize * 1 TBTC`.
+- `LotSize`: La valeur exacte du  `Deposit` libellé en `BTC`.
+- `OvercollateralizationFactor`: Le montant supplémentaire qui doit être déposé en caution par le signataire.
+- `BondValue`: Le montant qu'un `Signer` doit verrouillé dans un contrat comme caution pour l'émission de `TBTC`. Initialement libellé en `ETH`.
+  `Deposit = OverCollateralizationFactor * LotSize * (taux de conversion ETHBTC)`.
+  À l'avenir, `TBTC` pourrait être utilisé pour la caution. En supposant un taux de conversion de 1:1 entre `BTC` et `TBTC`, l'étape de conversion du prix peut être évitée.
+- `N`: Nombre de signataires autorisés à signer une requête de dépôt pour un `Deposit`.
+- `M`: Nombre minimum de signataires requis pour signer une autorisation de retrait de 
+  `Deposit`.
+
+=== Description
+
+:initial-signers: 15
+
+On suppose que chaque signataire apporte la même contribution à la garantie du dépôt.
+
+Le coût en capital par signataire est `BondValue / N`. Dans le cas `LotSize = 1
+BTC` et `OverCollateralizationFactor = 150%`, cela représente `1.5 BTC / N`.
+
+Une paramétrisation initiale du système pourrait utiliser `{initial-signers}` signataires par lot. Par ailleurs, du fait du défaut d'imputabilité
+link:../signing/index.adoc[dans le mécanisme d'aggrégation des signatures] utilisé, on pose `M = N`.
+Cela demanderait  `0.1` BTC de capital pour **chaque** signataire par 
+`1.0 TBTC` émis.
+
+En prenant en compte les frais des dépositaires centralisés (`0.0025-0.0075 BTC`) et le fait que les signataires risquent de perdre leurs cautions, nous choisissons de récompenser les signataires avec `0.009375 TBTC` par `1.0 BTC`
+dépôsé. Comme chaque dépôt a une durée fixe de 6 mois, cela conduit à un revenu total pour les signataires de `1.875%` par capitalisation des jetons TBTC par an.
