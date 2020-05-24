@@ -58,7 +58,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _ethBackedFactory
     );
 
-    bool initialized = false;
+    uint256 initializedTimestamp = 0;
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
@@ -124,7 +124,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _keepThreshold,
         uint16 _keepSize
     ) external onlyOwner {
-        require(!initialized, "already initialized");
+        require(initializedTimestamp == 0, "already initialized");
 
         keepFactorySelection.initialize(_defaultKeepFactory);
 
@@ -145,7 +145,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
         vendingMachine = _vendingMachine;
         setTbtcDepositToken(_tbtcDepositToken);
-        initialized = true;
+        initializedTimestamp = block.timestamp;
         allowNewDeposits = true;
     }
 
@@ -173,6 +173,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
     function emergencyPauseNewDeposits() external onlyOwner returns (bool) {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
+        require(block.timestamp - initializedTimestamp < 365 days, "Can only be called within 365 days of initialization");
         pausedTimestamp = block.timestamp;
         allowNewDeposits = false;
         emit AllowNewDepositsUpdated(false);
