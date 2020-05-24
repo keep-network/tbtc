@@ -1,7 +1,8 @@
 // Constants used throughout the spec. Generally (though not always) correspond
 // to tBTC system constants.
 
-// Overcollateralization constants.
+// Overcollateralization constants. Changes here should probably change some of
+// the content in bonding/index.adoc.
 :extra-collateral: 50%
 :total-collateral: 150%
 
@@ -9,7 +10,9 @@
 :pre-liquidation-period: 6 hours
 :pre-liquidation-threshold: 125%
 :liquidation-threshold: 110%
-:liquidation-auction-start-percent: 80%
+// Should be the amount of collateral that would equal 100% of the lot size if
+// current collateral value is {total-collateral}.
+:liquidation-auction-start-percent: 66.6667%
 
 // Deposit terms.
 :term-length: 6 months

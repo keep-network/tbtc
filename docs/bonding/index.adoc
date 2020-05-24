@@ -211,7 +211,10 @@ the account that triggered liquidation (for collateralization issues).
 
 To compensate the deposit owner, the contract starts a falling-price auction
 with the seized signer bond. It offers {liquidation-auction-start-percent} of
-the signer bond in exchange for the outstanding TBTC amount. The amount of
+the signer bond in exchange for the outstanding TBTC amount. This amount assumes
+that the deposit is properly collateralized at {total-collateral}, which guards
+against price feed malfunctions that could cause a properly-collateralized
+deposit to otherwise be taken for an incorrectly high ETH value. The amount of
 bond on sale increases over time until someone chooses to purchase it, or the
 auction reaches 100% of the bond. The auction will remain open until a buyer
 is found.
