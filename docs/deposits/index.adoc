@@ -187,11 +187,12 @@ group and return the members' bonds.
 
 === Light Relays
 
-To prove a deposit, the depositor submits proof that the transaction has been
-confirmed and accumulated work on the Bitcoin chain. The proof is verified by
-a simple payment verification (SPV) smart contract on the host chain. A more
-complete overview of cross-chain SPV systems and their security properties is
-included in <<appendix/spv/index#spv,the SPV appendix>>.
+To prove a deposit, the depositor submits proof that the transaction was
+included in a valid Bitcoin block with sufficient subsequent accumulated work.
+The proof is verified by a simple payment verification (SPV) smart contract
+on the host chain. A more complete overview of cross-chain SPV systems and
+their security properties is included in <<appendix/spv/index#spv,the SPV
+appendix>>.
 
 Light relays are a new variant of on-chain SPV developed for tBTC. They seek to
 take advantage of the compact and efficient stateless SPV proofs while relaying

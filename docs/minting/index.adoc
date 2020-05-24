@@ -66,7 +66,6 @@ There are a few non-obvious implications to a UTXO-specific non-fungible token.
 // no need, but the fungible TBTC vending machine will need to be smart with
 // deposits
 
-
 == Minting fungible TBTC
 
 Once a deposit has accumulated enough work, it is eligible to be traded for

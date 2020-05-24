@@ -144,8 +144,8 @@ less than its backing BTC reserves.
 For this reason, the only price relationship the system needs to understand is
 between the signing bond collateral and BTC.
 
-For tBTC v1, that means the price of ETH to BTC. Due to only needing prices for
-a single pair of assets, tBTC will initially use a simple
+For tBTC v1, that means the price of ETH relative to BTC. Due to only needing
+prices for a single pair of assets, tBTC will initially use a simple
 <<price-feed/index.adoc#price-feed,price feed>>.
 
 == Undercollateralization
@@ -227,13 +227,13 @@ occurs:
 * In case of liquidation due to **undercollateralization or abort**, the
   remaining bond value is split 50-50 between the account which triggered the
   liquidation and the signers.
-* In case of liquidation due to **fraud**, the remaining bond value in full goes
-  to the account which triggered the liquidation by proving fraud.
+* In case of liquidation due to **fraud**, the remaining bond value goes to the
+  account which triggered the liquidation by proving fraud.
 
 At the end of liquidation, unresponsive or misbehaving signers have control of
 the deposited BTC. What those signers do with the BTC outside the tBTC system
-design is for them to decide—it might be split up, stolen by a signing
-majority, or lost permanently.
+is for them to decide—it might be split up, stolen by a signing majority, or
+lost permanently.
 
 NOTE: If a Fee Rebate Token (FRT) has been given out to mint TBTC for a
 deposit that is liquidated (see <<minting/index.adoc#minting,the Minting
