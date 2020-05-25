@@ -1,9 +1,13 @@
 // Constants used throughout the spec. Generally (though not always) correspond
 // to tBTC system constants.
 
+:signers: 3
+:threshold: 3
+
 // Overcollateralization constants. Changes here should probably change some of
-// the content in bonding/index.adoc.
+// the content in bonding/index.adoc and signer-fees/index.adoc.
 :extra-collateral: 50%
+:per-signer-collateral: 50%
 :total-collateral: 150%
 
 // Liquidation constants.
