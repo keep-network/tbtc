@@ -11,10 +11,12 @@ include::constants.adoc[]
 = tBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
 
 ifndef::release[]
-.DRAFT
+.FINAL
 ****
-NOTE: This document is a rough draft. The contents may be inaccurate, not fully
-fleshed out, and are certainly not final.
+NOTE: This document should be accurate with respect to tBTC v1. Revisions and
+notations for inaccuracy and clarification are welcome and can be shared either
+in the https://chat.tbtc.network[tBTC Discord channel] or filed as issues on the
+https://github.com/keep-network/tbtc/issues[tBTC issue tracker].
 ****
 endif::[]
 
