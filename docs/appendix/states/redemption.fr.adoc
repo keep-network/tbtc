@@ -1,0 +1,183 @@
+:toc: macro
+
+= Processus de retrait
+
+ifndef::tbtc[toc::[]]
+
+
+== Vue d'ensemble
+
+// TODO: Link flow state names and transition names depuis l'état elsewhere in
+// documentation to here
+
+Il s'agit du processus pour retirer un dépôt. Une fois entamé, un retrait ne peut plus être annulé, sauf en prouvant une fraude de signataire. L'annulation est impossible car dès qu'un retrait est demandé, les signataires ont le droit de signer et une signature ne peut être révoquée.
+
+Il en découle que l'annulation de ce processus pourrait résulter en mouvement de BTC hors de l'adresse des signataires dans descrution de TBTC, ce qui affecterait l'indexation sur la masse monétaire.
+
+Le demandeur notifie le `Dépôt` de l'information de la transaction bitcoin (frais et empreinte de clé privée) de leur choix, ainsi que suffisament de TBTC pour couvrir les TBTC restant du `Dépôt`, en plus d'assez de TBTC pour payer les frais de signataires et la caution du financeur.
+
+== États 
+
+=== `AWAITING_WITHDRAWAL_SIGNATURE`
+* Un retrait a été demandé
+* Les signataires DOIVENT signer un hash
+* Les signatires peuvent renvoyer une signature pour vérification.
+* *NOTE*: Les signataires ne sont pas encouragés à renvoyer une signature car ils devraient payer pour le gas et le stockage des mises à jour (vers les transitions d'état)
+
+=== `AWAITING_WITHDRAWAL_PROOF`
+* Les signatares ont renvoyé une signature valide du message
+* Les signataires DOIVENT fournir une preuve de paiement
+* Dans les cas sans encombres, cet état peut être sauté
+
+=== Atteignable par
+* `ACTIVE`
+** via `requestWithdrawal`
+
+=== États externes atteignables
+* `LIQUIDATION_IN_PROGRESS`
+** via une preuve de fraude ECDSA ou BTC 
+** via une expiration d'état
+* `REDEEMED`
+** En fournissant une preuve valide montrant un paiement au demandeur 
+
+== Transitions internets
+=== `provideWithdrawalSignature`
+* Les signataires doivent fournir une signature ECDSA valide
+* *peut y accéder*
+** n'importe qui
+** expected: 1 or more signers
+* *arguments*
+** `uint8 _v`
+** `bytes32 _r`
+** `bytes32 _s`
+*** La signature de retrait
+* *lit*
+** `bytes32 signingGroupPubkeyX;`
+*** La coordonnée X de la clé publique du groupe de signataires
+** `bytes32 signingGroupPubkeyY;`
+*** La coordonnée Y de la clé publique du groupe de signataires
+** `uint256 withdrawalRequestTime`
+** `bytes32 lastRequestedDigest`
+*** Accepte uniquement les signatures du hash signé le _plus récent_
+* *depuis l'état*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *vers l'état*
+** `AWAITING_WITHDRAWAL_PROOF`
+
+=== `increaseWithdrawalFee`
+* Autorise explicitement une nouvelle signature avec des frais de transaction plus élevés. Les frais sont augmentés linéairement. Les nouveaux frais doivent être explicitement autorisés par le contrat et la transaction confirmée avec qu'une nouvelle signature ne soit créée. Pour enmpêcher tout mauvais comportement, les signataires doivent fournir une signature à chaque niveau de frais bien avant qu'une nouvelle augmentation soit possible.
+* *peut y accéder*
+** n'importe qui
+*** après un délai
+* *arguments*
+** `bytes8 _previousOutputValue`
+*** la valeur de sortie précédente
+** `bytes8 _newFee`
+* *lit*
+** `uint256 initialWithdrawalFee`
+** `bytes requesterPKH`
+** `uint256 block.timestamp`
+* *écrit*
+** `uint256 withdrawalRequestTime`
+*** ré-écrit le temps actuel pour donner aux signataires du temps supplémentaire
+** `bytes32 lastRequestedDigest`
+*** met à jour la signature demandée la plus récente
+* *depuis l'état*
+** `AWAITING_WITHDRAWAL_PROOF`
+* *vers l'état*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+
+=== `provideWithdrawalProof`
+* les signataires fournissent une preuve SPV valide à demandeur
+* *peut y accéder*
+** n'importe qui
+** attendu: 1 ou plusieurs signataires
+* *arguments*
+** `bytes _bitcoinTx`
+** `bytes _merkleProof`
+** `bytes _bitcoinHeaders`
+* *lit*
+** `bytes requesterPKH`
+** `uint256 difficultyReq`
+*** du contrat de relai de la difficulté
+** `uint256 depositSize`
+** `uint256 initialWithdrawalFee`
+* *écrit*
+** `mapping(address => uint256) balances`
+*** sur le contrat TBTC ERC20
+*** 1 fois par signataire
+*** 1 fois pour le contrat de dépôt
+* *depuis l'état*
+** `AWAITING_WITHDRAWAL_PROOF`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *vers l'état*
+** `REDEEMED`
+
+== Transitions externes
+=== `requestWithdrawal` (inbound)
+// TODO: link this elsewhere
+* N'importe qui demande un retrait
+* *peut y accéder*
+** n'importe qui
+* *arguments*
+** `bytes8 _outputValueBytes`
+** `bytes _requesterPKH`
+* *lit*
+** `mapping(address => address) depositBeneficiaries`
+*** for auth
+** `bytes utxoOutpoint`
+*** Pour calculer le sighash
+** `bytes20 signerPKH`
+*** Pour calculer le sighash
+** `bytes8 depositSizeBytes`
+*** Pour calculer le sighash
+* *écrit*
+** `mapping(bytes32 => uint256) wasRequested`
+*** enregistre que le hash a été demandé 
+** `uint256 initialWithdrawalFee`
+*** les frais de retrait demandés
+** `bytes20 requesterPKH`
+*** le pubkeyhash bitcoin hash160 auquel livrer les BTC
+** `uint256 outstandingTBTC`
+*** vérifie que les TBTC du `Dépôt`ont été retournés
+*** il s'agit d'un attribut dérivé de la taille de l'UTXO, des frais de signataires, et de la caution du financeur
+** `uint256 withdrawalRequestTime`
+*** démarre un délai pour les signataires par rapport à la signature et au retrait
+** `mapping(address => uint256) balances`
+*** change la balance du demandeur sur le contrat TBTC ERC20
+** `uint256 totalSupply`
+*** change la circulation totale (destruction) sur le contrat TBTC ERC20
+** `bytes32 lastRequestedDigest`
+*** enregistre le hash comme étant le plus récent
+* *depuis l'état*
+** `ACTIVE`
+* *vers l'état*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+
+=== `provideECDSAFraudProof` (outbound)
+// TODO: link this elsewhere
+* *peut y accéder*
+** n'importe qui
+* *depuis l'état*
+** `AWAITING_WITHDRAWAL_PROOF`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *vers l'état*
+** `LIQUIDATION_IN_PROGRESS`
+
+=== `notifyRedemptionProofTimeout` (outbound)
+// TODO: link this elsewhere
+* *peut y accéder*
+** n'importe qui
+* *depuis l'état*
+** `AWAITING_WITHDRAWAL_PROOF`
+* *vers l'état*
+** `LIQUIDATION_IN_PROGRESS`
+
+=== `notifySignatureTimeout` (outbound)
+// TODO: link this elsewhere
+* *peut y accéder*
+** n'importe qui
+* *depuis l'état*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *vers l'état*
+** `LIQUIDATION_IN_PROGRESS`
