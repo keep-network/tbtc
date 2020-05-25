@@ -33,10 +33,10 @@
 :beneficiary-bond-payment: 0.0005 TBTC
 
 // Redemption and BTC fees and fee increases.
-:redemption-proof-timeout: 12 hours
+:redemption-proof-timeout: 6 hours
 :signature-timeout: 3 hours
 // TODO: fill in real numbers for these two
-:min-redemption-btc-fee: 2345 satoshi
+:min-redemption-btc-fee: 2000 satoshi
 :min-redemption-btc-feerate: ~20 satoshi/vbyte
 :fee-increase-timer: 4 hours
 :fee-increase-timer-times-two: 8 hours
