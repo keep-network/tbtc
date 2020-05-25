@@ -1,0 +1,201 @@
+:vers l'étatc: macro
+
+= Fraudes et interruptions
+
+ifndef::tbtc[vers l'étatc::[]]
+
+
+== Vue d'ensemble 
+
+Les processus de fraude et d'interruption sont en charge des échecs de signataires. Ceci inclut la punition des signataures et le démarrage du processus de liquidation des cautions. Ces transitions peuvent être invoquées depuis n'importe quel état du _Dépôt_ puisque les fautes peuvent se produire lors de n'importe quel autre processus. Une fois une faute prouvée, les cautions sont vendues aux enchères via le processus de <<Liquidation>>.
+
+Bien qu'il n'y ait pas d'état de fraude ou d'interruption à proprement parlé, il est utile de regrouper vers l'étatutes les transitions d'état liées aux fraudes dans un seul document.
+
+== États
+
+=== `COURTESY CALL`
+* Les signataires ont reçut un rappel de courvers l'étatisie
+* Ils DEVRAIENT demander le retrait du dépôt
+* N'importe qui peut demander le retrait
+
+=== `LIQUIDATION_IN_PROGRESS`
+* La liquidation pour cause de sous-dimensionnement de la caution ou d'interruption a commencé
+* La liquidation auvers l'étatmatique (sur la blockchain hôte) a échoué 
+
+=== `FRAUD_LIQUIDATION_IN_PROGRESS`
+* La liquidation pour cause de fraude a commencé
+* La liquidation auvers l'étatmatique (sur la blockchain hôte) a échoué
+
+=== `LIQUIDATED`
+* État de fin
+* Les cautions ont été liquidées et les positions clôturées
+
+=== Processus atteignable depuis
+* `ACTIVE`
+* `AWAITING_WITHDRAWAL_SIGNATURE`
+* `AWAITING_WITHDRAWAL_PROOF`
+* `SIGNER_MARGIN_CALLED`
+
+
+== Transitions internes
+
+=== `purchaseSignerBondsAtAuction`
+
+* N'importe qui peut acheter les cautions saisies lors de l'enchère
+* *peut y accéder*
+** n'importe qui
+* *lit*
+** `uint256 liquidationInitiated`
+*** pour calculer la valeur de départ de l'enchère
+** `mapping (address => uint256) balances`
+*** vers le contrat TBTC
+* *écrit*
+** `mapping (address => uint256) balances`
+*** vers le contrat TBTC, pour détruire les jetons
+* *depuis l'état*
+** `FRAUD_LIQUIDATION_IN_PROGRESS`
+** `LIQUIDATION_IN_PROGRESS`
+* *vers l'état*
+** `LIQUIDATED`
+
+=== `notifyCourtesyTimeout`
+* N'importe qui peut notifier le contrat pour montrer que la période de courtoise est écoulée
+* Initie le processus de liquidation des signataires
+* *peut y accéder*
+** n'importe qui
+* *lit*
+** `uint256 courtesyCallInitiated`
+* *écrit*
+** `uint256 liquidationInitiated`
+*** horodatage au moment où le processus de liquidation a démarré
+* *depuis l'état*
+** `COURTESY_CALL`
+* *vers l'état*
+** `LIQUIDATION_IN_PROGRESS`
+
+=== `notifyUndercollateralizedLiquidation`
+* N'importe qui peut notifier le contrat que la caution est sévèrement sous-dimensionnée
+* Le sous-dimensionnement n'interrompt pas le processus de retrait, seul une fraude a cet effet.
+* *peut y accéder*
+** n'importe qui
+* *lit*
+** PRICE_FEED
+* *écrit*
+* *depuis l'état*
+** `ACTIVE`
+** `COURTESY_CALL`
+* *vers l'état*
+** `LIQUIDATION_IN_PROGRESS`
+
+
+== Transitions externes
+
+=== `provideECDSAFraudProof`
+* N'importe qui peut fournir une signature conforme à la clé du groupe de signataires. La fraude est prouvée si la signature n'a pas été explicitement demandée.
+* *peut y accéder*
+** n'importe qui
+* *arguments*
+** `bytes _signature`
+*** La signature frauduleuse supposée
+** `bytes _publicKey`
+*** La clé publique pour vérifier la signature (doit correspondre au compte de signataire)
+** `bytes _digest`
+*** Le hash sur lequel la signature a été faite
+** `bytes _preImage`
+*** L'antécédent sha256 de ce hash (sur les transactions Bitcoin, ce sera toujours le hash intermédiaire de 32 bits)
+* *lit*
+** `bytes32 signingGroupPubkeyX;`
+*** La coordonnée X de la clé publique du groupe de signataires
+*** pour vérifier que la signature est valide.
+** `bytes32 signingGroupPubkeyY;`
+*** La coordonnée Y de la clé publique du groupe de signataires
+*** pour vérifier que la signature est valide
+** `mapping(bytes32 => uint256) wasRequested`
+*** vérifie si la signature a bien été demandée
+* *depuis l'état*
+** `AWAITING_SIGNER_SETUP`
+** `AWAITING_BTC_FUNDING_PROOF`
+** `ACTIVE`
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+** `AWAITING_WITHDRAWAL_PROOF`
+** `SIGNER_MARGIN_CALLED`
+* *vers l'état*
+** `FRAUD_LIQUIDATION_IN_PROGRESS`
+
+=== `notifyRedemptionProofTimeout`
+* N'importe qui peut notifier le contrat pour montrer qu'une preuve de retrait n'a pas été soumise dans le délai imparti. Considéré comme une interruption
+* *peut y accéder*
+** n'importe qui
+* *lit*
+** `uint256 withdrawalRequestTime`
+*** pour vérifier si le temps est écoulé
+* *écrit*
+** `uint256 liquidationInitiated`
+*** horodatage du démarrage de la liquidation
+* *depuis l'état*
+** `AWAITING_WITHDRAWAL_PROOF`
+* *vers l'état*
+** `LIQUIDATION_IN_PROGRESS`
+
+=== `notifySignatureTimeout`
+* N'importe qui peut notifier le contrat pour montrer qu'une signature de retrait n'a pas été fournit pendant le temps imparti. Considéré comme une interruption.
+* *peut y accéder*
+** n'importe qui
+* *lit*
+** `uint256 withdrawalRequestTime`
+*** pour vérifier que le temps est écoulé
+* *écrit*
+** `uint256 liquidationInitiated`
+*** horodatage de début de liquidation
+* *depuis l'état*
+** `AWAITING_WITHDRAWAL_SIGNATURE`
+* *vers l'état*
+** `LIQUIDATION_IN_PROGRESS`
+
+=== `notifyCourtesyCall`
+* N'importe qui peut notifier le contrat que la caution est sous-dimensionnée et qu'il devrait être clotûré
+* *peut y accéders*
+** n'importe qui
+* *lit*
+** PRICE_FEED
+* *écrit*
+** `uint256 courtesyCallInitiated`
+*** horodatage de la requête
+* *depuis l'état*
+** `ACTIVE`
+* *vers l'état*
+** `COURTESY_CALL`
+
+=== `notifyDepositExpiryCourtesyCall`
+* N'importe qui peut notifier le contrat qu'il a atteint son terme. 
+* Cela déclenche le rappel de courtoisie.
+* *peut y accéders*
+** n'importe qui
+* *lit*
+** `block.timestamp`
+** `uint256 DEPOSIT_TERM_LENGTH`
+*** tbtc constants
+* *écrit*
+** `uint256 courtesyCallInitiated`
+*** horodatage de la requête
+* *depuis l'état*
+** `ACTIVE`
+* *vers l'état*
+** `COURTESY_CALL`
+
+=== exitCourtesyCall
+* Durant la période du rappel de courtoisie, si le dépôt n'a pas expiré
+* N'importe qui peut notifier le contrat que la caution n'est plus sous-dimensionnée
+* Cela rebascule le contrat vers l'état `ACTIVE` 
+* *peut y accéders*
+** anyone
+* *lit*
+** `block.timestamp`
+** `uint256 fundedAt`
+*** pour vérifier que le dépôt est en train d'expirer
+** `bool getCollateralizationPercentage() < TBTCConstants.getUndercollateralizedPercent()`
+*** Vérifie le flux de prix pour voir si le dimensionnement de la caution est suffisant
+* *depuis l'état*
+** `COURTESY_CALL`
+* *vers l'état*
+** `ACTIVE`
