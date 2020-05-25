@@ -20,9 +20,46 @@ contract VendingMachine is TBTCSystemAuthority{
     TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
+    uint256 createdAt;
+
     constructor(address _systemAddress)
         TBTCSystemAuthority(_systemAddress)
-    public {}
+    public {
+        createdAt = block.timestamp;
+    }
+
+    /// @notice return the outstanding minted TBTC supply
+    function getMintedSupply() external view returns (uint256) {
+        return tbtcToken.totalSupply();
+    }
+
+    /// @notice get the maximum TBTC token supply in BTC * 10 ** 18 based on the
+    /// age of the contract deployment
+    function getMaxSupply() public view returns (uint256) {
+        uint256 age = block.timestamp - createdAt;
+
+        if(age < 1 days) {
+            return 2 * 10 ** 18;
+        }
+
+        if (age < 30 days) {
+            return 100 * 10 ** 18;
+        }
+
+        if (age < 60 days) {
+            return 250 * 10 ** 18;
+        }
+
+        if (age < 90 days) {
+            return 500 * 10 ** 18;
+        }
+
+        if (age < 120 days) {
+            return 1000 * 10 ** 18;
+        }
+
+        return 21000000 * 10 ** 18;
+    }
 
     /// @notice Set external contracts needed by the Vending Machine.
     /// @dev    Addresses are used to update the local contract instance.

@@ -1,5 +1,5 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {states, fundingTx} = require("./helpers/utils.js")
+const {increaseTime, states, fundingTx} = require("./helpers/utils.js")
 const {AssertBalance} = require("./helpers/assertBalance.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
@@ -7,6 +7,10 @@ const [owner] = accounts
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
 const {ZERO_ADDRESS} = constants
 const {expect} = require("chai")
+
+function btcToTbtc(n) {
+  return new BN(10).pow(new BN(18)).mul(new BN(n))
+}
 
 describe("VendingMachine", async function() {
   let vendingMachine
@@ -624,6 +628,85 @@ describe("VendingMachine", async function() {
         ),
         "Bad _extraData signature. Call must be to unqualifiedDepositToTbtc.",
       )
+    })
+  })
+
+  describe("getMaxSupply", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("has a max supply of 2 on the first day", async () => {
+      let maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(2))
+
+      await increaseTime(23.5 * 60 * 60) // 23.5 hours
+
+      maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(2))
+
+      await increaseTime(60 * 60) // 1 hour
+
+      maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.not.eq.BN(btcToTbtc(2))
+    })
+
+    it("has a max supply of 100 BTC between the first day and 30th day", async () => {
+      await increaseTime(24 * 60 * 60 + 1) // 1 day and 1 second
+      let maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(100))
+
+      await increaseTime(15 * 24 * 60 * 60) // 15 days
+      maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(100))
+
+      await increaseTime(14 * 24 * 60 * 60 - 10 * 600) // 14 days minus 10 minutes
+      maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(100))
+    })
+
+    it("has a max supply of 250 BTC between the 30th day and 60th day", async () => {
+      await increaseTime(30 * 24 * 60 * 60 + 1) // 30 days and 1 second
+      let maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(250))
+
+      await increaseTime(30 * 24 * 60 * 60 - 10 * 60) // 30 days minus 10 minutes
+      maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(250))
+    })
+
+    it("has a max supply of 500 BTC between the 60th day and 90th day", async () => {
+      await increaseTime(60 * 24 * 60 * 60 + 1) // 60 days and 1 second
+      let maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(500))
+
+      await increaseTime(30 * 24 * 60 * 60 - 10 * 60) // 30 days minus 10 minutes
+      maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(500))
+    })
+
+    it("has a max supply of 1000 BTC between the 90th day and 120th day", async () => {
+      await increaseTime(90 * 24 * 60 * 60 + 1) // 90 days and 1 second
+      let maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(1000))
+
+      await increaseTime(30 * 24 * 60 * 60 - 10 * 60) // 30 days minus 10 minutes
+      maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(1000))
+    })
+
+    it("has a max supply of 21M BTC after the 120th day", async () => {
+      await increaseTime(120 * 24 * 60 * 60 + 1) // 120 days and 1 second
+      let maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(21000000))
+
+      await increaseTime(30 * 24 * 60 * 60) // 30 days
+      maxSupply = await vendingMachine.getMaxSupply()
+      expect(maxSupply).to.eq.BN(btcToTbtc(21000000))
     })
   })
 })

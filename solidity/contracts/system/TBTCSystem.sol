@@ -44,7 +44,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _timestamp
     );
 
-
     event EthBtcPriceFeedAdded(address _priceFeed);
     event LotSizesUpdated(uint64[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
@@ -59,11 +58,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _ethBackedFactory
     );
 
-    uint256 initializedTimestamp = 0;
+    bool initialized = false;
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
-    TBTCToken public tbtcToken;
+    VendingMachine public vendingMachine;
 
     ISatWeiPriceFeed public priceFeed;
     IRelay public relay;
@@ -125,7 +124,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _keepThreshold,
         uint16 _keepSize
     ) external onlyOwner {
-        require(initializedTimestamp == 0, "already initialized");
+        require(!initialized, "already initialized");
 
         keepFactorySelection.initialize(_defaultKeepFactory);
 
@@ -144,49 +143,20 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _keepThreshold,
             _keepSize
         );
-        tbtcToken = _tbtcToken;
+        vendingMachine = _vendingMachine;
         setTbtcDepositToken(_tbtcDepositToken);
-        initializedTimestamp = block.timestamp;
+        initialized = true;
         allowNewDeposits = true;
     }
 
     /// @notice returns whether new deposits should be allowed.
     function getAllowNewDeposits() external view returns (bool) {
-        if (initializedTimestamp == 0 || !allowNewDeposits) {
-            return false;
-        }
+        if (!allowNewDeposits) { return false; }
 
-        uint256 supply = tbtcToken.totalSupply();
+        uint256 supply = vendingMachine.getMintedSupply();
         uint256 bufferedSupply = supply.add(getMaxLotSize().mul(10 ** 10));
 
-        return bufferedSupply <= getMaxSupply() && allowNewDeposits;
-    }
-
-    // @notice get the maximum TBTC token supply in BTC * 10 ** 18
-    function getMaxSupply() public view returns (uint256) {
-        uint256 age = block.timestamp - initializedTimestamp;
-
-        if(age < 1 days) {
-            return 2 * 10 ** 18;
-        }
-
-        if (age < 30 days) {
-            return 100 * 10 ** 18;
-        }
-
-        if (age < 60 days) {
-            return 250 * 10 ** 18;
-        }
-
-        if (age < 90 days) {
-            return 500 * 10 ** 18;
-        }
-
-        if (age < 120 days) {
-            return 1000 * 10 ** 18;
-        }
-
-        return 21000000 * 10 ** 18;
+        return bufferedSupply <= vendingMachine.getMaxSupply();
     }
 
     // @notice get the largest lot size currently enabled for deposits, in satoshis
