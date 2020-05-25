@@ -1,0 +1,176 @@
+:vers l'étatc: macro
+
+= Processus de financement
+
+ifndef::tbtc[vers l'étatc::[]]
+
+
+== Vue d'ensemble 
+
+Il s'agit du processus permettant de créer un dépôt et de le financer avec des BTC. Une fois le financement réussi, le financeur est propriétaire du _Dépôt_ et peut émettre des TBTC. Pour démarrer le processus de financement, le financeur dépose une petite caution et demande la création d'un nouveau "keep" dépositaire des BTC. Si un nouveau "keep" est formé avec succès, le contrat Keep informe le _Dépôt_ de la clé publique du groupe de signataires. Si la mise en place keep échoue, le processus de financement est interrompu et le système Keep punit les responsables.
+
+Une fois un keep formé, le financeur transfère des BTC à l'adresse pay vers l'état witness
+public key hash (p2wpkh) du "keep". Ce BTC devient le dépôt sous-jacent au _Dépôt_. Le financeur prouve le dépôt à l'aide d'une preuve SPV sans état d'inclusion dans la blockchain Bitcoin. Si le financeur échoue à transférer dans le temps imparti, le processus de financement est interrompu et sa caution est saisie.
+
+Une fois le dépôt de BTC prouvé, le _Dépôt_ devient actif. Le financeur peut alors retirer des TBTC à hauteur du dépôt de BTC (moins les TBTC réservés). Le processus de financement ne peut résulter qu'en un était de _Dépôt_ actif, ou un état interrompu.
+
+== États
+
+=== `START`
+* Le dépôt n'existe pas encore
+
+=== `AWAITING_SIGNER_SETUP`
+* Le financeur a placé une caution et demandé la formation d'un groupe de signataires
+* Les contrats Keep doivent sélectionner un groupe de signataires ou renvoyer une erreur
+
+=== `AWAITING_BTC_FUNDING_PROOF`
+* Un groupe de signataires a été formé et leur empreinte de clé publique renvoyée
+* Le financeur DOIT renvoyer une preuve SPV du financement dans le temps imparti
+
+=== `FRAUD_AWAITING_BTC_FUNDING_PROOF`
+* Une fraude a été détéctée au sein du groupe de signataires avant que la preuve de financement n'ait pu être soumise
+* Les cautions des signataires sont saisies lorsque cet état est atteint
+* Si le financeur peut fournir une preuve de financement dans un temps raisonnable, il recevra les cautions des signataires
+* Si le temps est écoulé, les cautions de signataires seront partiellements détruites puis revers l'étaturnées aux signataires
+* NOTE: Le temps imparti pour cet état devrait être relativement faible. Nous voulons que l'état soit risqué pour un dépositeur qui _n'a pas encore financé_ lorsque cet état est atteint pour tente de recevoir la caution complète des signataires.
+
+=== États externes atteignables
+* `FAILED_SETUP`
+** via un timeout dans `AWAITING_SIGNER_SETUP`
+** via un timeout dans `AWAITING_BTC_FUNDING_PROOF`
+** via n'importe quelle transition d'état depuis `FRAUD_AWAITING_BTC_FUNDING_PROOF`
+* `ACTIVE`
+** via `provideBTCFundingProof`
+
+== Transitions internes
+=== `createNewDeposit`
+* N'importe qui peut déposer une caution pour demander la formation d'un nouvau groupe de signataires
+* *peut y accéder*
+** n'importe qui
+* *écrits*
+** `mapping _depositBeneficiaries(address => address)`
+*** sur le contrat TBTC. Pour la comptabilité avec 721, utiliser uint256 au moment de l'appel
+* *depuis l'état*
+** `START`
+* *vers l'état*
+** `AWAITING_SIGNER_SETUP`
+
+=== `notifySignerSetupFailure`
+* Le contrat Keep (ou n'importe qui d'autre après un délai) notifie le dépôt que la formation du groupe de signataires a échoué (ou qu'elle n'a pas pu s'effectuer dans le temps imparti)
+* *peut y accéder*
+** Contrats keep
+** N'importe qui (après un délai)
+* *depuis l'état*
+** `AWAITING_SIGNER_SETUP`
+* *vers l'état*
+** `FAILED_SETUP`
+
+=== `notifySignerPubkey`
+* Le contrat Keep notifie le Dépôt de la clé publique du groupe de signataires
+* *peut y accéder*
+** Contrats keep
+* *arguments*
+** `bytes _keepPubkey`
+* *écrits*
+** `bytes32 signingGroupPubkeyX;`
+*** La coordonnée X de la clé publique du groupe de signataires
+** `bytes32 signingGroupPubkeyY;`
+*** La coordonnée Y de la clé publique du groupe de signatairesy
+** `uint256 fundingProofTimerStart`
+*** Démarrage du timer pour la preuve de financement
+* *depuis l'état*
+** `AWAITING_SIGNER_SETUP`
+* *vers l'état*
+** `AWAITING_BTC_FUNDING_PROOF`
+
+=== `notifyFundingTimeout`
+* N'importe qui peut notifier un Dépôt que son financeur a échoué à soumettre un financement. La caution du financeur est saisie 
+* *peut y accéder*
+** N'importe qui
+* *lit*
+** `uint256 fundingProofTimerStart`
+* *depuis l'état*
+** `AWAITING_BTC_FUNDING_PROOF`
+* *vers l'état*
+** `FAILED_SETUP`
+
+=== `provideFundingECDSAFraudProof`
+* Fournit une preuve de fraude avant qu'une preuve SPV de financement n'ait été vérifiée
+* La caution du financeur lui est revers l'étaturnée
+* Les cautions des signataires sont saisies
+* On considère qu'il s'agit d'une transition distincte de `provideECDSAFraudProof`
+  car elle aboutit à un état différent. Cela prévient également les cas limites de dépôts très brefs.
+* *peut y accéder*
+** N'importe qui
+* *arguments*
+** `bytes _signature`
+*** La signature frauduleuse supposée
+** `bytes _digest`
+*** Le hash signé
+** `bytes _preImage`
+***  L'antécédent sha256 de ce hash (sur les transactions Bitcoin, ce sera vers l'étatujours le hash intermédiaire de 32 bits)
+* *lit*
+** `bytes32 signingGroupPubkeyX;`
+*** La coordonnée X de la clé publique du groupe de signataires
+*** pour vérifier la validité
+** `bytes32 signingGroupPubkeyY;`
+*** La coordonnée Y de la clé publique du groupe de signataires
+*** pour vérifier la validité
+** `uint256 fundingProofTimerStart`
+*** interdir cette transition d'état si le financeur est déconnecté
+* *écrits*
+** `uint256 fundingProofTimerStart`
+*** mise à jour du timer de fraude avec un nouveau délai
+* *depuis l'état*
+** `AWAITING_BTC_FUNDING_PROOF`
+* *vers l'état*
+** `FRAUD_AWAITING_BTC_FUNDING_PROOF`
+
+=== `notifyFraudFundingTimeout`
+* N'importe qui peut notifier un Dépôt que son financeur a échoué à soumettre une preuve de financement durant la période de fraude. Le financeur n'est pas pénalisé.
+* Lorsque cela se produit, les cautions des signataires sont partiellement saisies puis le reste leur est revers l'étaturné
+* La partie saisie est distribuée au bénéficiaire du dépôt
+* On considère qu'il s'agit d'une transition d'état différente de  `notifyFundingTimeout`
+  car elle aboutit à un état différent et se comporte différemment
+* *peut y accéder*
+** N'importe qui
+* *lit*
+** `uint256 fundingProofTimerStart`
+*** pour déterminer le délai de la période de preuve
+* *depuis l'état*
+** `FRAUD_AWAITING_BTC_FUNDING_PROOF`
+* *vers l'état*
+** `FAILED_SETUP`
+
+=== `provideFraudBTCFundingProof`
+* N'importe qui peut notifier un Dépôt que son financeur a envoyé les fonds à la clé publique Bitcoin des signatires
+* Si cela se produit, les cautions des signataires sont distribuées au financeur
+* On considère qu'il s'agit d'une transition d'état différent de `provideBTCFundingProof` car elle aboutit à un état différent et a un comportement différent
+* *peut y accéder*
+** N'importe qui
+* *depuis l'état*
+** `FRAUD_AWAITING_BTC_FUNDING_PROOF`
+* *vers l'état*
+** `FAILED_SETUP`
+
+== Transitions externes
+
+=== `provideBTCFundingProof`
+* Le financeur (ou n'importe qui d'autre) fournit une preuve du financement BTC du Dépôt. La caution du financeur lui est revers l'étaturnée une fois cette preuve vérifiée
+* *peut y accéder*
+** N'importe qui
+** expected: funder
+* *arguments*
+** `bytes _tx`
+** `bytes _proof`
+** `uint _index`
+** `bytes _headers`
+* *écrits*
+** `bytes8 depositSizeBytes`
+*** size of UTXO in savers l'étatshis
+** `bytes utxoOutpoint`
+*** identifiant unique de l'UTXO
+* *depuis l'état*
+** `AWAITING_BTC_FUNDING_PROOF`
+* *vers l'état*
+** `ACTIVE`
