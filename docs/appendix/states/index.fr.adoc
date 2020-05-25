@@ -1,0 +1,20 @@
+:toc: macro
+
+= Annexe
+
+ifndef::tbtc[]
+toc::[]
+
+:root-prefix: ../../
+endif::tbtc[]
+
+
+== Machine à état des dépôts et retraits
+
+image::{root-prefix}img/generated/deposit-state-machine.png[]
+
+On modélise chaque dépôt comme une simple machine à état.
+
+include::funding.adoc[leveloffset=+1]
+include::redemption.adoc[leveloffset=+1]
+include::failure.adoc[leveloffset=+1]
