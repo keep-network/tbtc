@@ -1,30 +1,30 @@
-:vers l'étatc: macro
+:toc: macro
 
 = Fraudes et interruptions
 
-ifndef::tbtc[vers l'étatc::[]]
+ifndef::tbtc[toc::[]]
 
 
 == Vue d'ensemble 
 
 Les processus de fraude et d'interruption sont en charge des échecs de signataires. Ceci inclut la punition des signataures et le démarrage du processus de liquidation des cautions. Ces transitions peuvent être invoquées depuis n'importe quel état du _Dépôt_ puisque les fautes peuvent se produire lors de n'importe quel autre processus. Une fois une faute prouvée, les cautions sont vendues aux enchères via le processus de <<Liquidation>>.
 
-Bien qu'il n'y ait pas d'état de fraude ou d'interruption à proprement parlé, il est utile de regrouper vers l'étatutes les transitions d'état liées aux fraudes dans un seul document.
+Bien qu'il n'y ait pas d'état de fraude ou d'interruption à proprement parlé, il est utile de regrouper toutes les transitions d'état liées aux fraudes dans un seul document.
 
 == États
 
 === `COURTESY CALL`
-* Les signataires ont reçut un rappel de courvers l'étatisie
+* Les signataires ont reçut un rappel de courtoisie
 * Ils DEVRAIENT demander le retrait du dépôt
 * N'importe qui peut demander le retrait
 
 === `LIQUIDATION_IN_PROGRESS`
 * La liquidation pour cause de sous-dimensionnement de la caution ou d'interruption a commencé
-* La liquidation auvers l'étatmatique (sur la blockchain hôte) a échoué 
+* La liquidation automatique (sur la blockchain hôte) a échoué 
 
 === `FRAUD_LIQUIDATION_IN_PROGRESS`
 * La liquidation pour cause de fraude a commencé
-* La liquidation auvers l'étatmatique (sur la blockchain hôte) a échoué
+* La liquidation automatique (sur la blockchain hôte) a échoué
 
 === `LIQUIDATED`
 * État de fin

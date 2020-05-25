@@ -1,15 +1,15 @@
-:vers l'étatc: macro
+:toc: macro
 
 = Processus de financement
 
-ifndef::tbtc[vers l'étatc::[]]
+ifndef::tbtc[toc::[]]
 
 
 == Vue d'ensemble 
 
 Il s'agit du processus permettant de créer un dépôt et de le financer avec des BTC. Une fois le financement réussi, le financeur est propriétaire du _Dépôt_ et peut émettre des TBTC. Pour démarrer le processus de financement, le financeur dépose une petite caution et demande la création d'un nouveau "keep" dépositaire des BTC. Si un nouveau "keep" est formé avec succès, le contrat Keep informe le _Dépôt_ de la clé publique du groupe de signataires. Si la mise en place keep échoue, le processus de financement est interrompu et le système Keep punit les responsables.
 
-Une fois un keep formé, le financeur transfère des BTC à l'adresse pay vers l'état witness
+Une fois un keep formé, le financeur transfère des BTC à l'adresse pay to witness
 public key hash (p2wpkh) du "keep". Ce BTC devient le dépôt sous-jacent au _Dépôt_. Le financeur prouve le dépôt à l'aide d'une preuve SPV sans état d'inclusion dans la blockchain Bitcoin. Si le financeur échoue à transférer dans le temps imparti, le processus de financement est interrompu et sa caution est saisie.
 
 Une fois le dépôt de BTC prouvé, le _Dépôt_ devient actif. Le financeur peut alors retirer des TBTC à hauteur du dépôt de BTC (moins les TBTC réservés). Le processus de financement ne peut résulter qu'en un était de _Dépôt_ actif, ou un état interrompu.
@@ -31,7 +31,7 @@ Une fois le dépôt de BTC prouvé, le _Dépôt_ devient actif. Le financeur peu
 * Une fraude a été détéctée au sein du groupe de signataires avant que la preuve de financement n'ait pu être soumise
 * Les cautions des signataires sont saisies lorsque cet état est atteint
 * Si le financeur peut fournir une preuve de financement dans un temps raisonnable, il recevra les cautions des signataires
-* Si le temps est écoulé, les cautions de signataires seront partiellements détruites puis revers l'étaturnées aux signataires
+* Si le temps est écoulé, les cautions de signataires seront partiellements détruites puis retournées aux signataires
 * NOTE: Le temps imparti pour cet état devrait être relativement faible. Nous voulons que l'état soit risqué pour un dépositeur qui _n'a pas encore financé_ lorsque cet état est atteint pour tente de recevoir la caution complète des signataires.
 
 === États externes atteignables
@@ -96,7 +96,7 @@ Une fois le dépôt de BTC prouvé, le _Dépôt_ devient actif. Le financeur peu
 
 === `provideFundingECDSAFraudProof`
 * Fournit une preuve de fraude avant qu'une preuve SPV de financement n'ait été vérifiée
-* La caution du financeur lui est revers l'étaturnée
+* La caution du financeur lui est retournée
 * Les cautions des signataires sont saisies
 * On considère qu'il s'agit d'une transition distincte de `provideECDSAFraudProof`
   car elle aboutit à un état différent. Cela prévient également les cas limites de dépôts très brefs.
@@ -108,7 +108,7 @@ Une fois le dépôt de BTC prouvé, le _Dépôt_ devient actif. Le financeur peu
 ** `bytes _digest`
 *** Le hash signé
 ** `bytes _preImage`
-***  L'antécédent sha256 de ce hash (sur les transactions Bitcoin, ce sera vers l'étatujours le hash intermédiaire de 32 bits)
+***  L'antécédent sha256 de ce hash (sur les transactions Bitcoin, ce sera toujours le hash intermédiaire de 32 bits)
 * *lit*
 ** `bytes32 signingGroupPubkeyX;`
 *** La coordonnée X de la clé publique du groupe de signataires
@@ -128,7 +128,7 @@ Une fois le dépôt de BTC prouvé, le _Dépôt_ devient actif. Le financeur peu
 
 === `notifyFraudFundingTimeout`
 * N'importe qui peut notifier un Dépôt que son financeur a échoué à soumettre une preuve de financement durant la période de fraude. Le financeur n'est pas pénalisé.
-* Lorsque cela se produit, les cautions des signataires sont partiellement saisies puis le reste leur est revers l'étaturné
+* Lorsque cela se produit, les cautions des signataires sont partiellement saisies puis le reste leur est retourné
 * La partie saisie est distribuée au bénéficiaire du dépôt
 * On considère qu'il s'agit d'une transition d'état différente de  `notifyFundingTimeout`
   car elle aboutit à un état différent et se comporte différemment
@@ -156,7 +156,7 @@ Une fois le dépôt de BTC prouvé, le _Dépôt_ devient actif. Le financeur peu
 == Transitions externes
 
 === `provideBTCFundingProof`
-* Le financeur (ou n'importe qui d'autre) fournit une preuve du financement BTC du Dépôt. La caution du financeur lui est revers l'étaturnée une fois cette preuve vérifiée
+* Le financeur (ou n'importe qui d'autre) fournit une preuve du financement BTC du Dépôt. La caution du financeur lui est retournée une fois cette preuve vérifiée
 * *peut y accéder*
 ** N'importe qui
 ** expected: funder
@@ -167,7 +167,7 @@ Une fois le dépôt de BTC prouvé, le _Dépôt_ devient actif. Le financeur peu
 ** `bytes _headers`
 * *écrits*
 ** `bytes8 depositSizeBytes`
-*** size of UTXO in savers l'étatshis
+*** size of UTXO in satoshis
 ** `bytes utxoOutpoint`
 *** identifiant unique de l'UTXO
 * *depuis l'état*
