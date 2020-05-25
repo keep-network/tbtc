@@ -33,20 +33,20 @@ _redemption transaction_ to the Bitcoin blockchain using that signature.
 === Deposit Terms and Redemption
 
 As noted in the section on <<deposits/economics.adoc#term,deposit terms>>, a
-deposit has a fixed term. After that term expires, the deposit becomes
-unlocked from the deposit owner, so that it can be redeemed by any account
-(including, notably, the deposit owner account). At this point, redemption
-costs exactly 1 TBTC, with no signer fee due. If the deposit has had the
+deposit has a fixed term. After that term expires, the deposit becomes unlocked
+from the deposit owner, so that it can be redeemed by any account (including,
+notably, the deposit owner account). At this point, redemption costs exactly the
+lot size of the deposit, with no signer fee due. If the deposit has had the
 signer fee <<minting/index.adoc#vending-machine,escrowed during TBTC
 minting>>, the signer fee is paid from escrow and the deposit owner is sent
-the full 1 TBTC. If the deposit has no escrowed fee, the owner is sent the 1
-TBTC used to redeem, less the signer fee, which is distributed to the
+the full lot size in TBTC. If the deposit has no escrowed fee, the owner is sent
+the TBTC used to redeem, less the signer fee, which is distributed to the
 signers.
 
 NOTE: For the deposit owner, at term, redemption is free if there are escrowed
 fees, or costs the signer fee if there are not. This is subtly different from
 pre-term redemption, where the deposit owner must pay the signer fee _even if
-there are escrowed fees_. The additional difference is to the Fee Rebate
+there are escrowed fees_. The additional difference is sent to the Fee Rebate
 Token holder, who is rebated the signer fee during pre-term redemptions, but
 not during at-term redemptions.
 
@@ -95,12 +95,12 @@ contract because it no longer has a record of the redemption request.
 :pre-term-redemption-footnote: footnote:pre-term-redemption[Pre-term deposits \
 can only be redeemed by the TDT owner.]
 
-Conceptually, the repayment amount is the _Deposit_ size plus the signer fee
-of {signer-fee} ({signer-fee-basis-points} basis points). This ensures that
-the signers are paid upon providing a signature, that the owner can be
-compensated for the redeemed deposit (in at-term redemptions by parties other
-than the owner), and that the Fee Rebate Token holder can receive their fee
-rebate (in pre-term redemptions).
+Conceptually, the repayment amount is the deposit lot size plus the signer fee
+of {signer-fee} per 1 TBTC ({signer-fee-basis-points} basis points). This
+ensures that the signers are paid upon completing redemption, that the owner can
+be compensated for the redeemed deposit (in redemptions by parties other than
+the owner), and that the Fee Rebate Token holder can receive their fee rebase
+(in pre-term redemptions).
 
 After all the math shakes out, the repayment amount can vary depending on the
 redeeming party, the TDT holder, the FRT holder, and the deposit's term
