@@ -57,8 +57,5 @@ In addition, due to the lack of attributability in the
 This requires a {per-signer-collateral} BTC value in capital cost for **each**
 signer per 1 TBTC minted.
 
-Taking into account the fees from centralized custodians (`0.0025-0.0075 BTC`),
-and considering signers are also risking additional bonds, in an initial
-parameterization we choose to reward signers with `0.009375 TBTC` per `1.0 BTC`
-deposited. As each deposit has a fixed term of 6 months, that implies a total
-signing revenue of `1.875%` of the market cap of `TBTC` each year.
+// FIXME Note the governability of signer fees, or point to the relevant
+// FIXME section.
