@@ -71,16 +71,16 @@ To request redemption, a requester makes a _redemption request_ transaction
 to the smart contract on the host chain. The _redemption request_ includes
 the following:
 
-1. A Bitcoin transaction fee amount
+1. A Bitcoin transaction fee amount.
   - must be >={min-redemption-btc-fee} ({min-redemption-btc-feerate})
-2. A public key hash (PKH) for BTC delivery
-  - the 20-byte hash160 of a public key belonging to the requester
-  - for security and privacy, this SHOULD be a new keypair
-3. The deposit's <<repayment-amount,Repayment Amount>> in TBTC
+2. A standard output script for BTC delivery (one of p2pkh, p2sh, p2wpkh, or
+   p2wsh), prefixed by the length of the script. For security and privacy, this
+   SHOULD be controlled by a new keypair.
+3. The deposit's <<repayment-amount,Repayment Amount>> in TBTC.
 
 Upon receipt of the _redemption request_, the smart contract escrows the
-repayment amount, which includes the signer fee, records the receipt of the
-request, and notifies the signers that a signature is required.
+repayment amount (which includes the signer fee, if due), records the receipt of
+the request, and notifies the signers that a signature is required.
 
 Once notified of the redemption request, the signers must wait for confirmation
 on the host chain. If they do not wait for confirmation, the redemption request
@@ -88,6 +88,9 @@ may be dropped from the chain via a reorg, in which case any signature they
 produced could be used to both redeem the BTC and submit a signer fraud proof.
 A fraud proof created this way would appear valid to the host chain smart
 contract because it no longer has a record of the redemption request.
+
+// TODO We could use an expanded section on output scripts here or in an
+// TODO appendix, similar to what was posted in the May 18 incident analysis.
 
 [[repayment-amount]]
 == Repayment Amount
@@ -132,7 +135,6 @@ simple to add a witness to the transaction and broadcast it. So while signers
 have a strong incentive to broadcast the transaction as early as possible,
 anyone may do so if the signers do not.
 
-
 == Redemption proof
 
 A _redemption proof_ is an <<appendix/spv/index.adoc#spv,SPV proof>> that a
@@ -141,11 +143,11 @@ request to redeem is confirmed, the deposit smart contract expects a
 _redemption proof_ within {redemption-proof-timeout}. To validate a
 _redemption proof_, the smart contract performs normal SPV proof
 verification, and additionally verifies that the recipient matches the
-requester's public key hash, and the value is greater than or equal `UTXO
-Size - highest allowed fee` (see <<Allowing for Bitcoin fee adjustment>> for
-more details).
+requester's specified output script, and the value is greater than or equal
+`UTXO Size - highest allowed fee` (see <<Allowing for Bitcoin fee adjustment>>
+for more details).
 
-Once redemption proof is confirmed, the signing fee is paid, the FRT holder
+Once redemption proof is confirmed, the signing fee is disbursed, the FRT holder
 receives their escrowed funds (if the deposit was redeemed pre-term), and the
 TDT holder receives the remainder of the repayment amount. As with the
 repayment amount, the amount each of the parties receives in case of a
@@ -158,15 +160,15 @@ B, and C.
 
 == Validating a signature
 
-After the redemption request is sufficiently confirmed,
-<<signing/index.adoc#signing,the signers MUST produce a signature>> on the
+After the redemption request is sufficiently confirmed on the host chain, the
+signers MUST <<signing/index.adoc#signing,produce a signature>> on the
 _redemption transaction_ signature hash as requested. They have
 {signature-timeout} in which to produce either a signature, or a <<Redemption
-proof, _redemption proof_>> before being subject to penalties. Upon
-submission of a valid signature a _redemption proof_ is still required, but
-the deadline is extended to {redemption-proof-timeout} in total.
+proof,_redemption proof_>> before being subject to penalties. Upon submission of
+a valid signature a _redemption proof_ is still required, but the deadline is
+extended to {redemption-proof-timeout} in total.
 
-As discussed <<Redemption Transaction Format, earlier>>, the host chain smart
+As discussed <<Redemption Transaction Format,earlier>>, the host chain smart
 contract managing the deposit has all information necessary to calculate the
 _redemption transaction_ signature hash. This includes the signers' threshold
 public key. Using the public key, the signature hash, and the redemption
@@ -179,7 +181,7 @@ redemption process.
 Because Bitcoin fees are determined by network congestion and other highly
 unpredictable factors, the requester may not select an appropriate fee. Signers
 are punished if no redemption proof is submitted *or* if they sign
-without explicit authorization. This could creates a no-win scenario for
+without explicit authorization. This could create a no-win scenario for
 signers, in which they could not get the requester's transaction confirmed in
 the current fee climate and would eventually be punished despite honest
 behavior. Unfortunately, we cannot rely on the requester to stay online or
