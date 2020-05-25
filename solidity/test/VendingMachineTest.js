@@ -134,6 +134,43 @@ describe("VendingMachine", async function() {
         "ERC721: transfer caller is not owner nor approved.",
       )
     })
+
+    it("updates the minted supply", async () => {
+      const mintedSupply = await vendingMachine.getMintedSupply()
+
+      await tbtcDepositToken.forceMint(owner, tdtId)
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, {
+        from: owner,
+      })
+      await vendingMachine.tdtToTbtc(tdtId, {from: owner})
+
+      const newMintedSupply = await vendingMachine.getMintedSupply()
+
+      expect(mintedSupply.add(depositValue)).to.eq.BN(newMintedSupply)
+    })
+
+    it("fails if the max supply has been reached", async () => {
+      const maxSupply = await vendingMachine.getMaxSupply()
+      const mintedSupply = await vendingMachine.getMintedSupply()
+
+      // mint the difference, minus the deposit value, plus 1 weitoshi
+      const toMint = new BN("1")
+        .add(maxSupply)
+        .sub(mintedSupply)
+        .sub(depositValue)
+      await tbtcToken.forceMint(owner, toMint)
+
+      await tbtcDepositToken.forceMint(owner, tdtId)
+      await tbtcDepositToken.approve(vendingMachine.address, tdtId, {
+        from: owner,
+      })
+      await expectRevert(
+        vendingMachine.tdtToTbtc(tdtId, {from: owner}),
+        "Can't mint more than the max supply cap",
+      )
+
+      await assertBalance.tbtc(owner, toMint)
+    })
   })
 
   describe("#tbtcToTdt", async () => {

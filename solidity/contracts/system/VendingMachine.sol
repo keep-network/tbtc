@@ -29,7 +29,7 @@ contract VendingMachine is TBTCSystemAuthority{
     }
 
     /// @notice return the outstanding minted TBTC supply
-    function getMintedSupply() external view returns (uint256) {
+    function getMintedSupply() public view returns (uint256) {
         return tbtcToken.totalSupply();
     }
 
@@ -111,11 +111,13 @@ contract VendingMachine is TBTCSystemAuthority{
 
         tbtcDepositToken.transferFrom(msg.sender, address(this), _tdtId);
 
-        // If the backing Deposit does not have a signer fee in escrow, mint it.
         Deposit deposit = Deposit(address(uint160(_tdtId)));
         uint256 signerFee = deposit.signerFee();
         uint256 depositValue = deposit.lotSizeTbtc();
 
+        require(getMintedSupply() + depositValue < getMaxSupply(), "Can't mint more than the max supply cap");
+
+        // If the backing Deposit does not have a signer fee in escrow, mint it.
         if(tbtcToken.balanceOf(address(_tdtId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
             tbtcToken.mint(address(_tdtId), signerFee);
