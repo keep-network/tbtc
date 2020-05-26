@@ -240,7 +240,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
         require(hasSingleBitcoin, "Lot size array must always contain 1 BTC");
 
-        lotSizesSatoshis = _lotSizes;
         emit LotSizesUpdateStarted(_lotSizes, block.timestamp);
         newLotSizesSatoshis = _lotSizes;
         lotSizesChangeInitiated = block.timestamp;
