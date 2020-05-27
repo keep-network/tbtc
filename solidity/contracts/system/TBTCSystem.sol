@@ -149,14 +149,17 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         allowNewDeposits = true;
     }
 
-    /// @notice returns whether new deposits should be allowed.
+    /// @notice Returns whether new deposits should be allowed.
+    /// @return True if new deposits should be allowed, both by the emergency pause button
+    ///         and respected the max supply schedule.
     function getAllowNewDeposits() external view returns (bool) {
         if (!allowNewDeposits) { return false; }
 
         return vendingMachine.canMint(getMaxLotSize().mul(10 ** 10));
     }
 
-    // @notice get the largest lot size currently enabled for deposits, in satoshis
+    /// @notice Return the largest lot size currently enabled for deposits.
+    /// @return The largest lot size, in satoshis.
     function getMaxLotSize() public view returns (uint256) {
         uint256 max = 0;
         for (uint i = 0; i<lotSizesSatoshis.length; i++) {
