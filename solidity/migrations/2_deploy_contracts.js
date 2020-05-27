@@ -23,7 +23,7 @@ const prices = require("./prices")
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 
 // Bitcoin difficulty relays.
-const relayGenesis = require("./relay-genesis.json")
+const relayConfig = require("./relay-config.json")
 
 const OnDemandSPV = artifacts.require(
   "@summa-tx/relay-sol/contracts/OnDemandSPV",
@@ -117,13 +117,13 @@ module.exports = (deployer, network, accounts) => {
     // On mainnet and Ropsten, we use the Summa-built, Keep-operated relay;
     // see https://github.com/summa-tx/relays . On testnet, we use a local
     // mock.
-    if (network === "mainnet") {
-      const {genesis, height, epochStart} = relayGenesis.bitcoinMain
+    if (network === "mainnet" || relayConfig.forceOnDemandSPV === true) {
+      const {genesis, height, epochStart} = relayConfig.genesis.bitcoinMain
 
       await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
       difficultyRelay = await OnDemandSPV.deployed()
-    } else if (network == "keep_dev" || network == "ropsten") {
-      const {genesis, height, epochStart} = relayGenesis.bitcoinTest
+    } else if (network === "keep_dev" || network === "ropsten" || relayConfig.forceTestnetRelay === true) {
+      const {genesis, height, epochStart} = relayConfig.genesis.bitcoinTest
 
       await deployer.deploy(TestnetRelay, genesis, height, epochStart, 0)
       difficultyRelay = await TestnetRelay.deployed()
