@@ -38,7 +38,7 @@ describe("Integration -- Signature-timeout", async function () {
     })
 
     it("liquidates correctly", async () => {
-      const requirement = await testDeposit.getOwnerRedemptionTbtcRequirement.call(depositInitiator)
+      const requirement = await testDeposit.getRedemptionTbtcRequirement.call(depositInitiator)
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
 
@@ -112,7 +112,7 @@ describe("Integration -- Signature-timeout", async function () {
     })
     
     it("liquidates correctly", async () => {
-      const requirement = await testDeposit.getOwnerRedemptionTbtcRequirement.call(depositInitiator)
+      const requirement = await testDeposit.getRedemptionTbtcRequirement.call(depositInitiator)
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
 

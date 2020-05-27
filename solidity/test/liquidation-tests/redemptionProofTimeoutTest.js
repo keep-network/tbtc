@@ -35,7 +35,7 @@ describe("Integration -- Redemption-proof timeout", async function () {
     it("liquidates correctly", async () => {
      await toAwaitingWithdrawalProof(testDeposit)
       //  AWAITING_WITHDRAWAL_SIGNATURE -> AWAITING_WITHDRAWAL_PROOF
-      const requirement = await testDeposit.getOwnerRedemptionTbtcRequirement.call(depositInitiator)
+      const requirement = await testDeposit.getRedemptionTbtcRequirement.call(depositInitiator)
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
 
