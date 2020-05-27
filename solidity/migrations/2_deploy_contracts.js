@@ -122,7 +122,11 @@ module.exports = (deployer, network, accounts) => {
 
       await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
       difficultyRelay = await OnDemandSPV.deployed()
-    } else if (network === "keep_dev" || network === "ropsten" || relayConfig.forceTestnetRelay === true) {
+    } else if (
+      network === "keep_dev" ||
+      network === "ropsten" ||
+      relayConfig.forceTestnetRelay === true
+    ) {
       const {genesis, height, epochStart} = relayConfig.genesis.bitcoinTest
 
       await deployer.deploy(TestnetRelay, genesis, height, epochStart, 0)
