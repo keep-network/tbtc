@@ -115,7 +115,7 @@ contract VendingMachine is TBTCSystemAuthority{
         uint256 signerFee = deposit.signerFee();
         uint256 depositValue = deposit.lotSizeTbtc();
 
-        require(getMintedSupply() + depositValue < getMaxSupply(), "Can't mint more than the max supply cap");
+        require(canMint(depositValue), "Can't mint more than the max supply cap");
 
         // If the backing Deposit does not have a signer fee in escrow, mint it.
         if(tbtcToken.balanceOf(address(_tdtId)) < signerFee) {
@@ -130,6 +130,14 @@ contract VendingMachine is TBTCSystemAuthority{
         if(!feeRebateToken.exists(_tdtId)){
             feeRebateToken.mint(msg.sender, _tdtId);
         }
+    }
+
+    /// @notice Return whether an amount of TBTC can be minted according to the supply cap
+    ///         schedule
+    /// @dev This function is also used by TBTCSystem to decide whether to allow a new deposit.
+    /// @return True if the amount can be minted without hitting the max supply, false otherwise.
+    function canMint(uint256 amount) public view returns(bool) {
+        return getMintedSupply().add(amount) < getMaxSupply();
     }
 
     // WRAPPERS
