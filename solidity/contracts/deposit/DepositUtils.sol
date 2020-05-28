@@ -454,9 +454,9 @@ library DepositUtils {
         bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
         bool frtExists = feeRebateTokenHolder(_d) != address(0);
 
-        uint256 frtAdjust = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
-        uint256 signerFeeAdjust = computeSignerFeeAdjustment(_d, redeemerOwesNoFee, frtExists);
-        return frtAdjust.add(signerFeeAdjust);
+        uint256 frtAdjustment = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
+        uint256 signerFeeAdjustment = computeSignerFeeAdjustment(_d, redeemerOwesNoFee, frtExists);
+        return frtAdjustment.add(signerFeeAdjustment);
     }
 
     /// @notice             Get TBTC amount required by redemption by a specified _redeemer.
@@ -474,10 +474,10 @@ library DepositUtils {
 
         require(inCourtesy || redeemerHoldsTdt || atTerm, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
 
-        uint256 mainCharge = computeBaseRedemptionCharge(_d, redeemerHoldsTdt);
-        uint256 frtAdjust = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
-        uint256 signerFeeAdjust = computeSignerFeeAdjustment(_d, redeemerOwesNoFee, frtExists);
-        return mainCharge.add(frtAdjust).add(signerFeeAdjust);
+        uint256 baseRedemptionCharge = computeBaseRedemptionCharge(_d, redeemerHoldsTdt);
+        uint256 frtAdjustment = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
+        uint256 signerFeeAdjustment = computeSignerFeeAdjustment(_d, redeemerOwesNoFee, frtExists);
+        return baseRedemptionCharge.add(frtAdjustment).add(signerFeeAdjustment);
     }
 
     /// @notice                    Get the base TBTC amount needed to redeem.
