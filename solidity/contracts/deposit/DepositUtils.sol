@@ -524,10 +524,10 @@ library DepositUtils {
         bool _redeemerPaysNoFee,
         bool _frtExists
     ) internal view returns (uint256){
-        if(_redeemerPaysNoFee){
-            return 0;
-        }
-        if(_frtExists){
+        if(
+            _redeemerPaysNoFee ||
+            _frtExists
+        ){
             return 0;
         }
         return signerFee(_d);
