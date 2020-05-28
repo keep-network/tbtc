@@ -33,8 +33,12 @@ contract VendingMachine is TBTCSystemAuthority{
         return tbtcToken.totalSupply();
     }
 
-    /// @notice get the maximum TBTC token supply in BTC * 10 ** 18 based on the
-    /// age of the contract deployment
+    /// @notice Get the maximum TBTC token supply based on the age of the contract
+    ///         deployment. The supply cap starts at 2 BTC for the first day, 100 for
+    ///         the first 30 days, 250 for the next 30, 500 for the next 30, 1000 for
+    ///         the last 30... then finally removes the restriction, returning 21M BTC
+    ///         as a sanity check.
+    /// @return The max supply in weitoshis (BTC * 10 ** 18)
     function getMaxSupply() public view returns (uint256) {
         uint256 age = block.timestamp - createdAt;
 
