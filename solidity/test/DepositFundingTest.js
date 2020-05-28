@@ -157,7 +157,7 @@ describe("DepositFunding", async function() {
           1,
           fullBtc,
         ),
-        "Opening new deposits is currently disabled.",
+        "New deposits aren't allowed.",
       )
     })
 
@@ -189,7 +189,7 @@ describe("DepositFunding", async function() {
 
       await expectRevert(
         createNewDeposit(fullBtc),
-        "Opening new deposits is currently disabled.",
+        "New deposits aren't allowed.",
       )
 
       await increaseTime(15 * 24 * 60 * 60) // 15 days, into the 1st month
@@ -197,7 +197,7 @@ describe("DepositFunding", async function() {
       await mint(98 * fullBtc) // should new be at 100 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
-        "Opening new deposits is currently disabled.",
+        "New deposits aren't allowed.",
       )
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 2nd month
@@ -205,7 +205,7 @@ describe("DepositFunding", async function() {
       await mint(150 * fullBtc) // should new be at 250 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
-        "Opening new deposits is currently disabled.",
+        "New deposits aren't allowed.",
       )
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 3rd month
@@ -213,7 +213,7 @@ describe("DepositFunding", async function() {
       await mint(250 * fullBtc) // should new be at 500 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
-        "Opening new deposits is currently disabled.",
+        "New deposits aren't allowed.",
       )
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 4th month
@@ -221,7 +221,7 @@ describe("DepositFunding", async function() {
       await mint(500 * fullBtc) // should new be at 1000 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
-        "Opening new deposits is currently disabled.",
+        "New deposits aren't allowed.",
       )
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 5th month
@@ -229,7 +229,7 @@ describe("DepositFunding", async function() {
       await mint("2099900000000000") // should new be at 21M BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
-        "Opening new deposits is currently disabled.",
+        "New deposits aren't allowed.",
       )
     })
   })
