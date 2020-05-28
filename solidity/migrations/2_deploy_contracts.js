@@ -117,7 +117,7 @@ module.exports = (deployer, network, accounts) => {
     // On mainnet and Ropsten, we use the Summa-built, Keep-operated relay;
     // see https://github.com/summa-tx/relays . On testnet, we use a local
     // mock.
-    if (network === "mainnet" || relayConfig.forceOnDemandSPV === true) {
+    if (network === "mainnet" || relayConfig.forceRelay === "OnDemandSPV") {
       const {genesis, height, epochStart} = relayConfig.init.bitcoinMain
 
       await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
@@ -125,7 +125,7 @@ module.exports = (deployer, network, accounts) => {
     } else if (
       network === "keep_dev" ||
       network === "ropsten" ||
-      relayConfig.forceTestnetRelay === true
+      relayConfig.forceRelay === "TestnetRelay"
     ) {
       const {genesis, height, epochStart} = relayConfig.init.bitcoinTest
 

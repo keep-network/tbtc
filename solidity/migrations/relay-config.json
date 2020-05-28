@@ -1,6 +1,4 @@
 {
-  "forceOnDemandSPV": false,
-  "forceTestnetRelay": false,
   "init": {
     "bitcoinMain": {
       "genesis": "0x00006020dd02d03c03dbc1f41312a6940e89919ce67fbf99a20307000000000000000000260d70e7ae07c80db07fbf29d09ec1a86d4f788e58098189a6f9021236572a7dd99eb15e397a11178294a823",
