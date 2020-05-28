@@ -188,7 +188,7 @@ const StateRunner = {
      * @param {Promise<object>} baseStatePromise Promise to the base state for
      *        these tessts, after any prior state transitions.
      * @param {StateDefinition<BaseState>} stateDefinition
-     * 
+     *
      * @return {Promise<void>} A promise to the completion of the tests set up
      *         by this function. It will be resolved after tests have finished
      *         running, and allows the chaining of future state tests.
@@ -347,7 +347,7 @@ const StateRunner = {
      * @param {object} baseState
      * @param {string} firstStateName
      * @param {...string} path
-     * 
+     *
      * @return {Promise<void>} A promise to the full completion of all tests
      *         in the state path.
      */
