@@ -480,9 +480,9 @@ library DepositUtils {
         return mainCharge.add(frtAdjust).add(signerFeeAdjust);
     }
 
-    /// @notice             Get the base TBTC amount needed to redeem.
-    /// @param _redeemer    The deposit redeemer.
-    /// @return             The amount in TBTC.
+    /// @notice                    Get the base TBTC amount needed to redeem.
+    /// @param tdtOwnerRedemption  True if the redeemer is the TDT holder.
+    /// @return                    The amount in TBTC.
     function computeBaseRedemptionCharge(
         DepositUtils.Deposit storage _d,
         bool tdtOwnerRedemption
