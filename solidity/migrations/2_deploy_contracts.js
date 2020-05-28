@@ -111,7 +111,7 @@ module.exports = (deployer, network, accounts) => {
       // to maintain.
       await deployer.deploy(ETHBTCPriceFeedMock)
       const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
-      await ethBtcPriceFeedMock.setValue(prices.satwei)
+      await ethBtcPriceFeedMock.setValue(prices.ethBtc)
     }
 
     // On mainnet and Ropsten, we use the Summa-built, Keep-operated relay;
