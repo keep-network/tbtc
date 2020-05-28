@@ -674,6 +674,80 @@ describe("DepositRedemption", async function() {
     })
   })
 
+  describe("transferAndRequestRedemption", async () => {
+    const sighash =
+      "0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90"
+    const outpoint = "0x" + "33".repeat(36)
+    const valueBytes = "0x1111111111111111"
+    const keepPubkeyX = "0x" + "33".repeat(32)
+    const keepPubkeyY = "0x" + "44".repeat(32)
+    // Override redeemer output script for this test.
+    // No real reason here, it's just how we derived the below values.
+    const redeemerOutputScript = "0x160014" + "33".repeat(20)
+    let requiredBalance
+
+    before(async () => {
+      requiredBalance = depositValue
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+      await testDeposit.setState(states.ACTIVE)
+      await testDeposit.setUTXOInfo(valueBytes, 0, outpoint)
+
+      // make sure there is sufficient balance to request redemption. Then approve deposit
+      await tbtcToken.resetBalance(requiredBalance, {from: owner})
+      await tbtcToken.resetAllowance(testDeposit.address, requiredBalance, {
+        from: owner,
+      })
+      await tbtcDepositToken.approve(testDeposit.address, tdtId, {
+        from: owner,
+      })
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("updates state successfully and fires a RedemptionRequested event", async () => {
+      await testDeposit.setVendingMachineAddress(owner)
+      const blockNumber = await web3.eth.getBlockNumber()
+
+      await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is 2.86331153 BTC
+      await testDeposit.transferAndRequestRedemption(
+        "0x1111111100000000",
+        redeemerOutputScript,
+        owner,
+        {from: owner},
+      )
+
+      const requestInfo = await testDeposit.getRequestInfo()
+      expect(requestInfo[1]).to.equal(redeemerOutputScript)
+      expect(requestInfo[3]).to.not.equal(0) // withdrawalRequestTime is set
+      expect(requestInfo[4]).to.equal(sighash)
+
+      // fired an event
+      const eventList = await tbtcSystemStub.getPastEvents(
+        "RedemptionRequested",
+        {fromBlock: blockNumber, toBlock: "latest"},
+      )
+      expect(eventList[0].returnValues._digest).to.equal(sighash)
+    })
+    it("fails if the caller is no the Vending Machine", async () => {
+      await expectRevert(
+        testDeposit.transferAndRequestRedemption(
+          "0x1111111100000000",
+          redeemerOutputScript,
+          owner,
+          {from: owner},
+        ),
+        "Only the vendingMachine can call transferAndRequestRedemption",
+      )
+    })
+  })
+
   describe("approveDigest", async () => {
     beforeEach(async () => {
       await testDeposit.setSigningGroupPublicKey("0x00", "0x00")
