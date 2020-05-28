@@ -466,13 +466,13 @@ library DepositUtils {
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
         bool redeemerHoldsTdt = depositOwner(_d) == _redeemer;
         bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
-        bool frtExists = feeRebateTokenHolder(_d) != address(0);
-
         bool inCourtesy = _d.inCourtesyCall();
         bool atTerm = remainingTerm(_d) == 0;
-        bool redeemerOwesNoFee = inCourtesy || atTerm;
 
         require(inCourtesy || redeemerHoldsTdt || atTerm, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
+
+        bool redeemerOwesNoFee = inCourtesy || atTerm;
+        bool frtExists = feeRebateTokenHolder(_d) != address(0);
 
         uint256 baseRedemptionCharge = computeBaseRedemptionCharge(_d, redeemerHoldsTdt);
         uint256 frtAdjustment = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
