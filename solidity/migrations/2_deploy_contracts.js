@@ -118,7 +118,7 @@ module.exports = (deployer, network, accounts) => {
     // see https://github.com/summa-tx/relays . On testnet, we use a local
     // mock.
     if (network === "mainnet" || relayConfig.forceOnDemandSPV === true) {
-      const {genesis, height, epochStart} = relayConfig.genesis.bitcoinMain
+      const {genesis, height, epochStart} = relayConfig.init.bitcoinMain
 
       await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
       difficultyRelay = await OnDemandSPV.deployed()
@@ -127,7 +127,7 @@ module.exports = (deployer, network, accounts) => {
       network === "ropsten" ||
       relayConfig.forceTestnetRelay === true
     ) {
-      const {genesis, height, epochStart} = relayConfig.genesis.bitcoinTest
+      const {genesis, height, epochStart} = relayConfig.init.bitcoinTest
 
       await deployer.deploy(TestnetRelay, genesis, height, epochStart, 0)
       difficultyRelay = await TestnetRelay.deployed()
