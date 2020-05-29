@@ -311,20 +311,6 @@ workflows:
   docs:
     jobs:
       - compile_contracts
-      - generate_pngs
-      - generate_docs_tex
-      - generate_docs_solidity:
-          requires:
-            - compile_contracts
-      - generate_docs_asciidoctor:
-          requires:
-            - generate_docs_solidity
-            - generate_pngs
-      - upload_docs:
-          context: keep-docs
-          requires:
-            - generate_docs_tex
-            - generate_docs_asciidoctor
   build_publish_keep_dev:
     jobs:
       - compile_contracts
