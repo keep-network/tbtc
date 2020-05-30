@@ -225,10 +225,6 @@ contract TestDeposit is Deposit {
         return self.redemptionTransactionChecks(_txInputVector, _txOutputVector);
     }
 
-    function validateRedeemerNotPaid(bytes memory _txOutputVector) public view returns (bool){
-        return self.validateRedeemerNotPaid(_txOutputVector);
-    }
-
     function getWithdrawalRequestTime() public view returns(uint256){
         return self.withdrawalRequestTime;
     }

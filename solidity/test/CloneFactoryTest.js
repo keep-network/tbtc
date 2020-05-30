@@ -15,9 +15,9 @@ describe("CloneFactory", async function() {
 
   describe("createClone()", async () => {
     it("creates new clone", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
       await cloneFactory.createClone_exposed(masterContract.address)
 
-      const blockNumber = await web3.eth.getBlockNumber()
       const eventList = await cloneFactory.getPastEvents(
         "ContractCloneCreated",
         {fromBlock: blockNumber, toBlock: "latest"},
@@ -38,9 +38,9 @@ describe("CloneFactory", async function() {
     })
 
     it("does not impact master contract state", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
       await cloneFactory.createClone_exposed(masterContract.address)
 
-      const blockNumber = await web3.eth.getBlockNumber()
       const eventList = await cloneFactory.getPastEvents(
         "ContractCloneCreated",
         {fromBlock: blockNumber, toBlock: "latest"},
@@ -61,9 +61,9 @@ describe("CloneFactory", async function() {
 
   describe("isClone()", async () => {
     it("correctly checks if address is a clone", async () => {
+      const blockNumber = await web3.eth.getBlockNumber()
       await cloneFactory.createClone_exposed(masterContract.address)
 
-      const blockNumber = await web3.eth.getBlockNumber()
       const eventList = await cloneFactory.getPastEvents(
         "ContractCloneCreated",
         {fromBlock: blockNumber, toBlock: "latest"},
@@ -80,10 +80,10 @@ describe("CloneFactory", async function() {
 
     it("correctly checks if address is not a clone", async () => {
       const masterContract2 = await Dummy.new()
+      const blockNumber = await web3.eth.getBlockNumber()
 
       await cloneFactory.createClone_exposed(masterContract.address)
 
-      const blockNumber = await web3.eth.getBlockNumber()
       const eventList = await cloneFactory.getPastEvents(
         "ContractCloneCreated",
         {fromBlock: blockNumber, toBlock: "latest"},

@@ -19,8 +19,8 @@ describe("SatWeiPriceFeed", async function() {
   })
 
   describe("#getPrice", async () => {
-    beforeEach(createSnapshot)
-    afterEach(restoreSnapshot)
+    beforeEach(async () => await createSnapshot())
+    afterEach(async () => await restoreSnapshot())
 
     it("does not allow direct access for anyone other than TBTC system", async () => {
       await ethbtc.setValue(1) // make sure the feed is active
@@ -96,8 +96,8 @@ describe("SatWeiPriceFeed", async function() {
   })
 
   describe("Add price feed", async () => {
-    beforeEach(createSnapshot)
-    afterEach(restoreSnapshot)
+    beforeEach(async () => await createSnapshot())
+    afterEach(async () => await restoreSnapshot())
 
     it("Only allowed address can add feed", async () => {
       const med = await MockMedianizer.new()
@@ -119,8 +119,8 @@ describe("SatWeiPriceFeed", async function() {
   })
 
   describe("Get Working ETH/BTC feed", async () => {
-    beforeEach(createSnapshot)
-    afterEach(restoreSnapshot)
+    beforeEach(async () => await createSnapshot())
+    afterEach(async () => await restoreSnapshot())
 
     it("Returns first active feed", async () => {
       const workingEthBtcFeed = await MockMedianizer.new()

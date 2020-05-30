@@ -55,7 +55,7 @@ library DepositFunding {
         uint16 _n,
         uint64 _lotSizeSatoshis
     ) public returns (bool) {
-        require(_d.tbtcSystem.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
+        require(_d.tbtcSystem.getAllowNewDeposits(), "New deposits aren't allowed.");
         require(_d.inStart(), "Deposit setup already requested");
         require(_d.tbtcSystem.isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
 

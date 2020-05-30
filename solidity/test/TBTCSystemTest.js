@@ -330,9 +330,45 @@ describe("TBTCSystem", async function() {
     })
 
     it("pauses new deposit creation", async () => {
+      let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(true)
+
       await tbtcSystem.emergencyPauseNewDeposits()
 
-      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(false)
+    })
+
+    it("pauses new deposit creation a day out", async () => {
+      let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(true)
+
+      await increaseTime(24 * 60 * 60 + 1)
+      await tbtcSystem.emergencyPauseNewDeposits()
+
+      allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(false)
+    })
+
+    it("pauses new deposit creation 31 days out", async () => {
+      let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(true)
+
+      await increaseTime(31 * 24 * 60 * 60 + 1)
+      await tbtcSystem.emergencyPauseNewDeposits()
+
+      allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(false)
+    })
+
+    it("pauses new deposit creation 61 days out", async () => {
+      let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
+      expect(allowNewDeposits).to.equal(true)
+
+      await increaseTime(61 * 24 * 60 * 60 + 1)
+      await tbtcSystem.emergencyPauseNewDeposits()
+
+      allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(false)
     })
 
@@ -359,7 +395,7 @@ describe("TBTCSystem", async function() {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
-      await increaseTime(term.toNumber()) // 10 days
+      await increaseTime(term) // 10 days
       await tbtcSystem.resumeNewDeposits()
       const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
@@ -369,7 +405,7 @@ describe("TBTCSystem", async function() {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
-      await increaseTime(term.toNumber()) // 10 days
+      await increaseTime(term) // 10 days
       tbtcSystem.resumeNewDeposits()
 
       await expectRevert(
@@ -386,13 +422,6 @@ describe("TBTCSystem", async function() {
 
     afterEach(async () => {
       await restoreSnapshot()
-    })
-
-    it("pauses new deposit creation", async () => {
-      await tbtcSystem.emergencyPauseNewDeposits()
-
-      const allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
-      expect(allowNewDeposits).to.equal(false)
     })
 
     it("does not revert if beginKeepFactorySingleShotUpdate has already been called", async () => {
