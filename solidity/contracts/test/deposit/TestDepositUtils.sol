@@ -77,8 +77,8 @@ contract TestDepositUtils is TestDeposit {
         return self.distributeFeeRebate();
     }
 
-    function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
-        return self.pushFundsToKeepGroup(_ethValue);
+    function pushFundsToKeepGroup(uint256 _ethValue) public {
+        self.pushFundsToKeepGroup(_ethValue);
     }
 
     function enableWithdrawal(address _withdrawer, uint256 _amount) public {
