@@ -1,7 +1,7 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
 const {increaseTime, expectEvent} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {accounts, contract} = require("@openzeppelin/test-environment")
+const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {BN, expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 
@@ -12,6 +12,8 @@ const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
 
 describe("TBTCSystem governance", async function() {
   let tbtcSystem
+  let keepFactorySelector
+  let ecdsaKeepFactory
   let newKeepFactory
   let satWeiPriceFeed
   let ethBtcMedianizer
@@ -27,6 +29,8 @@ describe("TBTCSystem governance", async function() {
       tbtcSystemStub,
       tbtcDepositToken,
       mockSatWeiPriceFeed,
+      keepFactorySelectorStub,
+      ecdsaKeepFactoryStub,
     } = await deployAndLinkAll(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
@@ -38,6 +42,8 @@ describe("TBTCSystem governance", async function() {
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
+    ecdsaKeepFactory = ecdsaKeepFactoryStub
+    keepFactorySelector = keepFactorySelectorStub
     tdt = tbtcDepositToken
     satWeiPriceFeed = mockSatWeiPriceFeed
 
@@ -226,11 +232,12 @@ describe("TBTCSystem governance", async function() {
             "Signer fee divisor must be less than 5000, for a signer fee that is > 0.02%",
         },
       },
-      verifyFinalization: async (receipt, setDivisor) => {
+      verifyFinalizationEvents: (receipt, setDivisor) => {
         expectEvent(receipt, "SignerFeeDivisorUpdated", {
           _signerFeeDivisor: setDivisor,
         })
-
+      },
+      verifyFinalState: async setDivisor => {
         expect(await tbtcSystem.getSignerFeeDivisor()).to.eq.BN(setDivisor)
       },
     })
@@ -267,9 +274,10 @@ describe("TBTCSystem governance", async function() {
           error: "Lot sizes greater than 10 BTC are not allowed",
         },
       },
-      verifyFinalization: async (receipt, setLotSizes) => {
+      verifyFinalizationEvents: (receipt, setLotSizes) => {
         expectEvent(receipt, "LotSizesUpdated", {_lotSizes: setLotSizes})
-
+      },
+      verifyFinalState: async setLotSizes => {
         const lotSizes = await tbtcSystem.getAllowedLotSizes()
         lotSizes.forEach((_, i) => expect(_).to.eq.BN(setLotSizes[i]))
       },
@@ -306,7 +314,7 @@ describe("TBTCSystem governance", async function() {
             "Severe undercollateralized threshold must be < undercollateralized threshold",
         },
       },
-      verifyFinalization: async (
+      verifyFinalizationEvents: (
         receipt,
         setInitial,
         setUnder,
@@ -317,7 +325,8 @@ describe("TBTCSystem governance", async function() {
           _undercollateralizedThresholdPercent: setUnder,
           _severelyUndercollateralizedThresholdPercent: setSeverelyUnder,
         })
-
+      },
+      verifyFinalState: async (setInitial, setUnder, setSeverelyUnder) => {
         expect(await tbtcSystem.getInitialCollateralizedPercent()).to.eq.BN(
           setInitial,
         )
@@ -336,11 +345,11 @@ describe("TBTCSystem governance", async function() {
       goodParametersWithName: [
         {
           name: "_factorySelector",
-          value: "0x0000000000000000000000000000000000000001",
+          value: keepFactorySelector.address,
         },
         {
           name: "_ethBackedFactory",
-          value: "0x0000000000000000000000000000000000000002",
+          value: newKeepFactory.address,
         },
       ],
       badInitializationTests: {
@@ -352,7 +361,7 @@ describe("TBTCSystem governance", async function() {
           error: "Factory selector must be a nonzero address",
         },
       },
-      verifyFinalization: async (
+      verifyFinalizationEvents: async (
         receipt,
         setFactorySelector,
         setEthBackedFactory,
@@ -361,6 +370,28 @@ describe("TBTCSystem governance", async function() {
           _factorySelector: setFactorySelector,
           _ethBackedFactory: setEthBackedFactory,
         })
+      },
+      verifyFinalState: async () => {
+        const mockDepositOwner = accounts[1]
+        const mockDeposit = accounts[2]
+        await tdt.forceMint(mockDepositOwner, web3.utils.toBN(mockDeposit))
+
+        keepFactorySelector.setFullyBackedMode()
+        // Expect this to work normally, and update to the new factory for the
+        // next call.
+        await tbtcSystem.requestNewKeep(5, 10, 0, 123, {
+          from: mockDeposit,
+          value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
+        })
+
+        // This should fail as the _ethBackedFactory is not a real contract
+        // address, so dereferencing it will go boom.
+        await tbtcSystem.requestNewKeep(5, 10, 0, 123, {
+          from: mockDeposit,
+          value: await newKeepFactory.openKeepFeeEstimate.call(),
+        })
+
+        expect(await newKeepFactory.keepOwner.call()).to.equal(mockDeposit)
       },
     })
 
@@ -377,7 +408,12 @@ describe("TBTCSystem governance", async function() {
           error: "Cannot add inactive feed",
         },
       },
-      verifyFinalization: async (receipt, newFeedAddress) => {
+      verifyFinalizationEvents: (receipt, newFeedAddress) => {
+        expectEvent(receipt, "EthBtcPriceFeedAdded", {
+          _priceFeed: newFeedAddress,
+        })
+      },
+      verifyFinalState: async () => {
         // disable current feed
         await ethBtcMedianizer.setValue(0)
 
@@ -385,10 +421,6 @@ describe("TBTCSystem governance", async function() {
         expect(await satWeiPriceFeed.getWorkingEthBtcFeed()).to.equal(
           newEthBtcMedianizer.address,
         )
-
-        expectEvent(receipt, "EthBtcPriceFeedAdded", {
-          _priceFeed: newFeedAddress,
-        })
       },
       badFinalizationTests: {
         "finalizing inactive feed": {
@@ -406,7 +438,8 @@ describe("TBTCSystem governance", async function() {
     timeDelayGetter,
     goodParametersWithName,
     badInitializationTests,
-    verifyFinalization,
+    verifyFinalizationEvents,
+    verifyFinalState,
     badFinalizationTests,
   }) {
     timeDelayGetter = timeDelayGetter || "getGovernanceTimeDelay"
@@ -487,6 +520,22 @@ describe("TBTCSystem governance", async function() {
           expectEvent(receipt, `${change}Started`, goodParametersByName)
         })
 
+        it("does not commit updates immediately", async () => {
+          await invoke("begin", "", goodParameters)
+
+          let failed = true
+          try {
+            await verifyFinalState(...goodParameters)
+            failed = false
+          } catch (error) {
+            failed = true
+          }
+
+          if (!failed) {
+            expect.fail("Expected final state verification to fail.")
+          }
+        })
+
         it("overrides previous update and resets timer", async () => {
           await invoke("begin", "", goodParameters)
           await increaseTime(50)
@@ -559,7 +608,8 @@ describe("TBTCSystem governance", async function() {
           await increaseTime(remainingTime.toNumber() + 1)
 
           const receipt = await invoke("finalize")
-          await verifyFinalization(receipt, ...goodParameters)
+          await verifyFinalizationEvents(receipt, ...goodParameters)
+          await verifyFinalState(...goodParameters)
         })
       })
     })
