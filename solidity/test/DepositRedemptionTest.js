@@ -700,17 +700,13 @@ describe("DepositRedemption", async function() {
       const block = await web3.eth.getBlock("latest")
       await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
 
-      await tbtcDepositToken.transferFrom(tdtHolder, frtHolder, tdtId, {
-        from: owner,
-      })
-
       await expectRevert(
         testDeposit.requestRedemption(
           "0x1111111100000000",
           "0x" + "33".repeat(20),
           {from: owner},
         ),
-        "Output script must be a standard type.",
+        "Output script must be a standard type",
       )
     })
 
