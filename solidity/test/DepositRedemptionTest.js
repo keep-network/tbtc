@@ -722,12 +722,13 @@ describe("DepositRedemption", async function() {
         owner,
         {from: owner},
       )
-
+      const tdtOwner = await tbtcDepositToken.ownerOf(tdtId)
       const requestInfo = await testDeposit.getRequestInfo()
+
       expect(requestInfo[1]).to.equal(redeemerOutputScript)
       expect(requestInfo[3]).to.not.equal(0) // withdrawalRequestTime is set
       expect(requestInfo[4]).to.equal(sighash)
-
+      expect(tdtOwner).to.equal(owner)
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents(
         "RedemptionRequested",
