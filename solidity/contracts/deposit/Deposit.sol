@@ -167,7 +167,7 @@ contract Deposit is DepositFactoryAuthority {
     ) public returns (bool) {
         require(
             msg.sender == self.vendingMachineAddress,
-            "Only the vendingMachine can call transferAndRequestRedemption"
+            "Only the vending machine can call transferAndRequestRedemption"
         );
         self.transferAndRequestRedemption(
             _outputValueBytes,
