@@ -744,7 +744,7 @@ describe("DepositRedemption", async function() {
           owner,
           {from: owner},
         ),
-        "Only the vendingMachine can call transferAndRequestRedemption",
+        "Only the vending machine can call transferAndRequestRedemption",
       )
     })
   })
