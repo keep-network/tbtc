@@ -99,6 +99,7 @@ library DepositRedemption {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
         bytes memory _output = abi.encodePacked(_outputValueBytes, _redeemerOutputScript);
         require(_output.extractHash().length > 0, "Output script must be a standard type");
+        require(uint8(_output[8]) + 9 == _output.length, "Incorrect output script length");
 
         // set redeemerAddress early to enable direct access by other functions
         _d.redeemerAddress = _redeemer;
