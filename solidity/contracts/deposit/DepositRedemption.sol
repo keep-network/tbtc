@@ -220,12 +220,11 @@ library DepositRedemption {
     /// @param  _d                          Deposit storage pointer.
     /// @param  _previousOutputValueBytes   The previous output's value.
     /// @param  _newOutputValueBytes        The new output's value.
-    /// @return                             True if successful, False if prevented by timeout, otherwise revert.
     function increaseRedemptionFee(
         DepositUtils.Deposit storage _d,
         bytes8 _previousOutputValueBytes,
         bytes8 _newOutputValueBytes
-    ) public returns (bool) {
+    ) public {
         require(_d.inAwaitingWithdrawalProof(), "Fee increase only available after signature provided");
         require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
