@@ -448,40 +448,27 @@ library DepositUtils {
     /// @param _redeemer    The assumed owner of the deposit's TDT.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
-        bool inCourtesy = _d.inCourtesyCall();
-        bool atTerm = remainingTerm(_d) == 0;
-        bool redeemerOwesNoFee = inCourtesy || atTerm;
-        bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
-        bool frtExists = feeRebateTokenHolder(_d) != address(0);
-
-        uint256 frtAdjustment = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
-        uint256 signerFeeAdjustment = computeSignerFeeAdjustment(_d, redeemerOwesNoFee, frtExists);
-        return frtAdjustment.add(signerFeeAdjustment);
+        // The TDT owner only ever owes fee adjustments.
+        return computeRedemptionFeeAdjustments(_d, _redeemer);
     }
 
-    /// @notice             Get TBTC amount required by redemption by a specified _redeemer.
+    /// @notice             Get TBTC amount required for redemption by a specified _redeemer.
     /// @dev                Will revert if redemption is not possible by msg.sender.
     /// @param _redeemer    The deposit redeemer.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
         bool redeemerHoldsTdt = depositOwner(_d) == _redeemer;
-        bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
         bool inCourtesy = _d.inCourtesyCall();
         bool atTerm = remainingTerm(_d) == 0;
 
-        require(inCourtesy || redeemerHoldsTdt || atTerm, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
+        require(redeemerHoldsTdt || inCourtesy || atTerm, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
 
-        bool redeemerOwesNoFee = inCourtesy || atTerm;
-        bool frtExists = feeRebateTokenHolder(_d) != address(0);
-
-        uint256 baseRedemptionCharge = computeBaseRedemptionCharge(_d, redeemerHoldsTdt);
-        uint256 frtAdjustment = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
-        uint256 signerFeeAdjustment = computeSignerFeeAdjustment(_d, redeemerOwesNoFee, frtExists);
-        return baseRedemptionCharge.add(frtAdjustment).add(signerFeeAdjustment);
+        uint256 mainCharge = computeBaseRedemptionCharge(_d, redeemerHoldsTdt);
+        return mainCharge.add(computeRedemptionFeeAdjustments(_d, _redeemer));
     }
 
     /// @notice                    Get the base TBTC amount needed to redeem.
-    /// @param _redeemerHoldsTdt  True if the redeemer is the TDT holder.
+    /// @param _redeemerHoldsTdt   True if the redeemer is the TDT holder.
     /// @return                    The amount in TBTC.
     function computeBaseRedemptionCharge(
         DepositUtils.Deposit storage _d,
@@ -491,6 +478,22 @@ library DepositUtils {
             return 0;
         }
         return lotSizeTbtc(_d);
+    }
+
+    /// @notice             Get fees owed for redemption by a specified _redeemer.
+    /// @param _redeemer    The deposit redeemer.
+    /// @return             The fees owed in TBTC.
+    function computeRedemptionFeeAdjustments(DepositUtils.Deposit storage _d, address _redeemer) internal view returns (uint256) {
+        bool inCourtesy = _d.inCourtesyCall();
+        bool atTerm = remainingTerm(_d) == 0;
+        bool redeemerOwesNoFee = inCourtesy || atTerm;
+        bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
+        bool frtExists = feeRebateTokenHolder(_d) != address(0);
+
+        uint256 frtAdjustment = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
+        uint256 signerFeeAdjustment = computeSignerFeeAdjustment(_d, redeemerOwesNoFee, frtExists);
+
+        return frtAdjustment.add(signerFeeAdjustment);
     }
 
     /// @notice                    Get the fee rebate amount needed to redeem.
