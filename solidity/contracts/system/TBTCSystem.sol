@@ -44,7 +44,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _timestamp
     );
 
-
     event EthBtcPriceFeedAdded(address _priceFeed);
     event LotSizesUpdated(uint64[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
@@ -59,9 +58,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _ethBackedFactory
     );
 
-    bool _initialized = false;
+    bool initialized = false;
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
+
+    VendingMachine public vendingMachine;
 
     ISatWeiPriceFeed public priceFeed;
     IRelay public relay;
@@ -123,7 +124,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _keepThreshold,
         uint16 _keepSize
     ) external onlyOwner {
-        require(!_initialized, "already initialized");
+        require(!initialized, "already initialized");
 
         keepFactorySelection.initialize(_defaultKeepFactory);
 
@@ -142,16 +143,35 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _keepThreshold,
             _keepSize
         );
+        vendingMachine = _vendingMachine;
         setTbtcDepositToken(_tbtcDepositToken);
-        _initialized = true;
+        initialized = true;
         allowNewDeposits = true;
     }
 
-    /// @notice gets whether new deposits are allowed.
-    function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
+    /// @notice Returns whether new deposits should be allowed.
+    /// @return True if new deposits should be allowed, both by the emergency pause button
+    ///         and respected the max supply schedule.
+    function getAllowNewDeposits() external view returns (bool) {
+        if (!allowNewDeposits) { return false; }
+
+        return vendingMachine.canMint(getMaxLotSize().mul(10 ** 10));
+    }
+
+    /// @notice Return the largest lot size currently enabled for deposits.
+    /// @return The largest lot size, in satoshis.
+    function getMaxLotSize() public view returns (uint256) {
+        uint256 max = 0;
+        for (uint i = 0; i<lotSizesSatoshis.length; i++) {
+            if (lotSizesSatoshis[i] > max) {
+                max = lotSizesSatoshis[i];
+            }
+        }
+        return max;
+    }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
-    function emergencyPauseNewDeposits() external onlyOwner returns (bool) {
+    function emergencyPauseNewDeposits() external onlyOwner {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
         pausedTimestamp = block.timestamp;
         allowNewDeposits = false;

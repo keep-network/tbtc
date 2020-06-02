@@ -20,9 +20,50 @@ contract VendingMachine is TBTCSystemAuthority{
     TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
+    uint256 createdAt;
+
     constructor(address _systemAddress)
         TBTCSystemAuthority(_systemAddress)
-    public {}
+    public {
+        createdAt = block.timestamp;
+    }
+
+    /// @notice return the outstanding minted TBTC supply
+    function getMintedSupply() public view returns (uint256) {
+        return tbtcToken.totalSupply();
+    }
+
+    /// @notice Get the maximum TBTC token supply based on the age of the contract
+    ///         deployment. The supply cap starts at 2 BTC for the first day, 100 for
+    ///         the first 30 days, 250 for the next 30, 500 for the next 30, 1000 for
+    ///         the last 30... then finally removes the restriction, returning 21M BTC
+    ///         as a sanity check.
+    /// @return The max supply in weitoshis (BTC * 10 ** 18)
+    function getMaxSupply() public view returns (uint256) {
+        uint256 age = block.timestamp - createdAt;
+
+        if(age < 1 days) {
+            return 2 * 10 ** 18;
+        }
+
+        if (age < 30 days) {
+            return 100 * 10 ** 18;
+        }
+
+        if (age < 60 days) {
+            return 250 * 10 ** 18;
+        }
+
+        if (age < 90 days) {
+            return 500 * 10 ** 18;
+        }
+
+        if (age < 120 days) {
+            return 1000 * 10 ** 18;
+        }
+
+        return 21000000 * 10 ** 18;
+    }
 
     /// @notice Set external contracts needed by the Vending Machine.
     /// @dev    Addresses are used to update the local contract instance.
@@ -74,11 +115,13 @@ contract VendingMachine is TBTCSystemAuthority{
 
         tbtcDepositToken.transferFrom(msg.sender, address(this), _tdtId);
 
-        // If the backing Deposit does not have a signer fee in escrow, mint it.
         Deposit deposit = Deposit(address(uint160(_tdtId)));
         uint256 signerFee = deposit.signerFee();
         uint256 depositValue = deposit.lotSizeTbtc();
 
+        require(canMint(depositValue), "Can't mint more than the max supply cap");
+
+        // If the backing Deposit does not have a signer fee in escrow, mint it.
         if(tbtcToken.balanceOf(address(_tdtId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
             tbtcToken.mint(address(_tdtId), signerFee);
@@ -91,6 +134,14 @@ contract VendingMachine is TBTCSystemAuthority{
         if(!feeRebateToken.exists(_tdtId)){
             feeRebateToken.mint(msg.sender, _tdtId);
         }
+    }
+
+    /// @notice Return whether an amount of TBTC can be minted according to the supply cap
+    ///         schedule
+    /// @dev This function is also used by TBTCSystem to decide whether to allow a new deposit.
+    /// @return True if the amount can be minted without hitting the max supply, false otherwise.
+    function canMint(uint256 amount) public view returns (bool) {
+        return getMintedSupply().add(amount) < getMaxSupply();
     }
 
     // WRAPPERS
@@ -109,18 +160,16 @@ contract VendingMachine is TBTCSystemAuthority{
         bytes memory _bitcoinHeaders
     ) public {
         Deposit _d = Deposit(_depositAddress);
-        require(
-            _d.provideBTCFundingProof(
-                _txVersion,
-                _txInputVector,
-                _txOutputVector,
-                _txLocktime,
-                _fundingOutputIndex,
-                _merkleProof,
-                _txIndexInBlock,
-                _bitcoinHeaders
-            ),
-            "failed to provide funding proof");
+        _d.provideBTCFundingProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
 
         tdtToTbtc(uint256(_depositAddress));
     }
