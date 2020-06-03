@@ -173,7 +173,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
     function emergencyPauseNewDeposits() external onlyOwner returns (bool) {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
-        require(block.timestamp - initializedTimestamp < 365 days, "Can only be called within 365 days of initialization");
+        uint256 diff = block.timestamp - initializedTimestamp;
+        require(diff < 365 days, "emergencyPauseNewDeposits can only be called within 365 days of initialization");
         pausedTimestamp = block.timestamp;
         allowNewDeposits = false;
         emit AllowNewDepositsUpdated(false);

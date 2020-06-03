@@ -379,7 +379,7 @@ describe("TBTCSystem", async function() {
       await increaseTime(365 * 24 * 60 * 60 + 1)
       await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits(),
-        "Can only be called within 365 days of initialization",
+        "emergencyPauseNewDeposits can only be called within 365 days of initialization",
       )
 
       allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
