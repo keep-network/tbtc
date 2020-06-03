@@ -202,10 +202,10 @@ library DepositLiquidation {
         _d.logExitedCourtesyCall();
     }
 
-    /// @notice     Notify the contract that the signers are undercollateralized.
+    /// @notice     Notify the contract that the signers are severely undercollateralized.
     /// @dev        Calls out to the system for oracle info.
     /// @param  _d  Deposit storage pointer.
-    function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
+    function notifySevereUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
         require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
         require(getCollateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
         startLiquidation(_d, false);

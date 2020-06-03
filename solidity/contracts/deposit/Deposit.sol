@@ -425,10 +425,10 @@ contract Deposit is DepositFactoryAuthority {
         self.exitCourtesyCall();
     }
 
-    /// @notice     Notify the contract that the signers are undercollateralized.
+    /// @notice     Notify the contract that the signers are severely undercollateralized.
     /// @dev        Calls out to the system for oracle info.
-    function notifyUndercollateralizedLiquidation() public {
-        self.notifyUndercollateralizedLiquidation();
+    function notifySevereUndercollateralizedLiquidation() public {
+        self.notifySevereUndercollateralizedLiquidation();
     }
 
     /// @notice     Notifies the contract that the courtesy period has elapsed.
