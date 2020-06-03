@@ -171,7 +171,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
-    function emergencyPauseNewDeposits() external onlyOwner returns (bool) {
+    function emergencyPauseNewDeposits() external onlyOwner {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
         uint256 diff = block.timestamp - initializedTimestamp;
         require(diff < 365 days, "emergencyPauseNewDeposits can only be called within 365 days of initialization");
@@ -242,7 +242,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
         require(hasSingleBitcoin, "Lot size array must always contain 1 BTC");
 
-        lotSizesSatoshis = _lotSizes;
         emit LotSizesUpdateStarted(_lotSizes, block.timestamp);
         newLotSizesSatoshis = _lotSizes;
         lotSizesChangeInitiated = block.timestamp;
