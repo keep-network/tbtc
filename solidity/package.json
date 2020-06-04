@@ -61,7 +61,7 @@
     "mocha": "^7.0.1",
     "prettier": "^1.19.1",
     "prettier-plugin-solidity": "^1.0.0-alpha.40",
-    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.1",
+    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.2",
     "truffle": "^5.1.13",
     "solc": "0.5.17"
   }
