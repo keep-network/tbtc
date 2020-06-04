@@ -736,7 +736,7 @@ describe("DepositRedemption", async function() {
       )
       expect(eventList[0].returnValues._digest).to.equal(sighash)
     })
-    it("fails if the caller is no the Vending Machine", async () => {
+    it("fails if the caller is not the Vending Machine", async () => {
       await expectRevert(
         testDeposit.transferAndRequestRedemption(
           "0x1111111100000000",

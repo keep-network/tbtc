@@ -140,7 +140,7 @@ contract VendingMachine is TBTCSystemAuthority{
     ///         schedule
     /// @dev This function is also used by TBTCSystem to decide whether to allow a new deposit.
     /// @return True if the amount can be minted without hitting the max supply, false otherwise.
-    function canMint(uint256 amount) public view returns(bool) {
+    function canMint(uint256 amount) public view returns (bool) {
         return getMintedSupply().add(amount) < getMaxSupply();
     }
 
@@ -160,18 +160,16 @@ contract VendingMachine is TBTCSystemAuthority{
         bytes memory _bitcoinHeaders
     ) public {
         Deposit _d = Deposit(_depositAddress);
-        require(
-            _d.provideBTCFundingProof(
-                _txVersion,
-                _txInputVector,
-                _txOutputVector,
-                _txLocktime,
-                _fundingOutputIndex,
-                _merkleProof,
-                _txIndexInBlock,
-                _bitcoinHeaders
-            ),
-            "failed to provide funding proof");
+        _d.provideBTCFundingProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _fundingOutputIndex,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
 
         tdtToTbtc(uint256(_depositAddress));
     }
