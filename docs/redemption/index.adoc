@@ -120,7 +120,7 @@ in the smart contracts running on the tBTC host chain. This prevents a number
 of complex attacks on the tBTC system, as well as simplifying contract logic.
 The requester may specify only 2 aspects of the transaction: its fee and its
 destination. All other deposit-specific information (e.g. the outpoint and
-the UTXO size) is known to the deposit contract in advance.
+the UTXO value) is known to the deposit contract in advance.
 
 The _redemption transaction_ has 1 input (the deposit UTXO) and 1 output (the
 redemption output). It does not have change outputs, or additional inputs, as
@@ -144,7 +144,7 @@ _redemption proof_ within {redemption-proof-timeout}. To validate a
 _redemption proof_, the smart contract performs normal SPV proof
 verification, and additionally verifies that the recipient matches the
 requester's specified output script, and the value is greater than or equal
-`UTXO Size - highest allowed fee` (see <<Allowing for Bitcoin fee adjustment>>
+`UTXO Value - highest allowed fee` (see <<Allowing for Bitcoin fee adjustment>>
 for more details).
 
 Once redemption proof is confirmed, the signing fee is disbursed, the FRT holder

@@ -52,7 +52,7 @@ compel signers to sign each transaction despite the fact that the total value of
 the UTXOs is not known. As such, the system accepts only the first UTXO greater
 than the deposit lot size. All other BTC sent to the signing group is forfeit.
 Therefore it is imperative that depositors send only a single UTXO of an
-appropriate size.
+appropriate value.
 
 [example]
 As a particularly damaging example, consider a naive human depositor. If they
@@ -68,4 +68,4 @@ scenarios: after the deposit is marked as having timed out in funding, the
 depositor can request a _funder abort_. This request includes a Bitcoin address
 to send the underfunded UTXO back to the depositor. This escape hatch relies
 entirely on signer honesty, and the system cannot provide an economic guarantee
-to the depositor that they will get their Bitcoin back.
+to the depositor that they will get their bitcoin back.
