@@ -176,11 +176,11 @@ contract TestDeposit is Deposit {
     }
 
     function setUTXOInfo(
-        bytes8 _utxoSizeBytes,
+        bytes8 _utxoValueBytes,
         uint256 _fundedAt,
         bytes memory _utxoOutpoint
     ) public {
-        self.utxoSizeBytes = _utxoSizeBytes;
+        self.utxoValueBytes = _utxoValueBytes;
         self.fundedAt = _fundedAt;
         self.utxoOutpoint = _utxoOutpoint;
     }

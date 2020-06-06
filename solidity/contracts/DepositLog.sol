@@ -28,7 +28,7 @@ contract DepositLog {
         address indexed _depositContractAddress,
         address indexed _requester,
         bytes32 indexed _digest,
-        uint256 _utxoSize,
+        uint256 _utxoValue,
         bytes _redeemerOutputScript,
         uint256 _requestedFee,
         bytes _outpoint
@@ -142,7 +142,7 @@ contract DepositLog {
     /// @dev                    This is the only event without an explicit timestamp.
     /// @param  _requester      The ethereum address of the requester.
     /// @param  _digest         The calculated sighash digest.
-    /// @param  _utxoSize       The size of the utxo in sat.
+    /// @param  _utxoValue       The size of the utxo in sat.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @param  _requestedFee   The requester or bump-system specified fee.
     /// @param  _outpoint       The 36 byte outpoint.
@@ -150,7 +150,7 @@ contract DepositLog {
     function logRedemptionRequested(
         address _requester,
         bytes32 _digest,
-        uint256 _utxoSize,
+        uint256 _utxoValue,
         bytes memory _redeemerOutputScript,
         uint256 _requestedFee,
         bytes memory _outpoint
@@ -163,7 +163,7 @@ contract DepositLog {
             msg.sender,
             _requester,
             _digest,
-            _utxoSize,
+            _utxoValue,
             _redeemerOutputScript,
             _requestedFee,
             _outpoint
