@@ -273,6 +273,7 @@ The architecture is broken down into:
 * Signing
 * Wallet failure
 * Redemption
+* Governance
 
 include::deposits/index.adoc[leveloffset=+2]
 
@@ -289,5 +290,7 @@ include::signing/index.adoc[leveloffset=+2]
 include::failure/index.adoc[leveloffset=+2]
 
 include::redemption/index.adoc[leveloffset=+2]
+
+include::governance/index.adoc[leveloffset=+2]
 
 include::appendix/index.adoc[leveloffset=+2]

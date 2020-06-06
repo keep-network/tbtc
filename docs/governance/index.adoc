@@ -1,0 +1,31 @@
+:toc: macro
+
+[[governance]]
+= Governance
+
+ifndef::tbtc[]
+toc::[]
+
+:relfileprefix: ../
+include::../constants.adoc[]
+endif::tbtc[]
+
+== Overview
+
+The governance philosophy is simple: govern as few system parameters as
+possible. This limited view on governance means relying on social upgrades—
+deploying a new instance of the system—rather than governed contract upgrades.
+
+Social upgrades are akin to hard forks. They require an overwhelming economic
+consensus, as a new token contract and other new contracts will need to be
+coordinated and agreed upon across the market. The bar for a social upgrade is
+much higher than other common governance paradigms, and will become even more
+difficult as an instance of the system ages.
+
+The limited governance included in the system design follows a few principles.
+* Governance should only impact new deposits, whenever possible. Each deposit
+should behave predictably over the long run, regardless of governance choices.
+* All governance should abide by a time delay, giving users time to respond to
+changes in the system.
+* The governance role should be assignable to a credibly neutral third party or
+eventual decentralization.
