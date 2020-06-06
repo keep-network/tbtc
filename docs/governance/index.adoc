@@ -23,9 +23,62 @@ much higher than other common governance paradigms, and will become even more
 difficult as an instance of the system ages.
 
 The limited governance included in the system design follows a few principles.
+
 * Governance should only impact new deposits, whenever possible. Each deposit
 should behave predictably over the long run, regardless of governance choices.
-* All governance should abide by a time delay, giving users time to respond to
-changes in the system.
+* All governance should abide by a time delay if possible, giving users time to
+respond to changes in the system.
 * The governance role should be assignable to a credibly neutral third party or
 eventual decentralization.
+
+The governance functions and delays are enumerated below.
+
+.Governance Functions
+|===
+|Function |Time delay|Existing deposit impact
+
+|`emergencyPauseNewDeposits()`
+|No delay
+|None
+
+|`beginSignerFeeDivisorUpdate(uint16 divisor)`
+|2 days
+|None
+
+|`beginLotSizesUpdate(uint64[] _lotSizes)`
+|2 days
+|None
+
+|`beginCollateralizationThresholdsUpdate(uint16 initial, ...)`
+|2 days
+|None
+
+|`beginEthBtcPriceFeedAddition(address ethBtcPriceFeed)`
+|90 days
+|Only if price feed fails
+|===
+
+=== `emergencyPauseNewDeposits()`
+
+Immutable code and user safety in case of newly discovered vulnerabilities are
+often considered at odds. Instead, many smart contract systems rely heavily on
+a trusted admin key, allowing arbitrary contract upgrades. Of course, if such
+capabilities exist, why use a blockchain at all?
+
+Instead of contract upgrades, tBTC v1 includes the capability to pause new
+deposits for 10 days. The capability can be used once, and doesn't impact
+existing deposits or other system functionality. After the 10-day period
+expires, new deposits are once again enabled.
+
+This capability allows the dev team to pause new deposits in case of a 0-day
+exploit, buying precious time to alert users of any risk to funds. While the
+intent is for use in dire circumstances, the mechanism has been structured so
+the dev team can't use it as a general-purpose kill-switch.
+
+After 365 days, deposits can no longer be paused, and any call to
+`emergencyPauseNewDeposits()` MUST revert.
+
+=== `beginLotSizesUpdate(uint64[] _lotSizes)`
+=== `beginSignerFeeDivisorUpdate(uint16 divisor)`
+=== `beginCollateralizationThresholdsUpdate(uint16 initial, ...)`
+=== `beginEthBtcPriceFeedAddition(address ethBtcPriceFeed)`
