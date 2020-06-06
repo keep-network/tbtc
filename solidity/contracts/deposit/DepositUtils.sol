@@ -477,7 +477,7 @@ library DepositUtils {
 
     /// @notice Returns information associated with the funding UXTO.
     /// @return A tuple of (uxtoSizeBytes, fundedAt, uxtoOutpoint)
-    function getFundingInfo(Deposit storage _d) public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
+    function fundingInfo(Deposit storage _d) public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
         return (_d.utxoValueBytes, _d.fundedAt, _d.utxoOutpoint);
     }
 }

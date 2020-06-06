@@ -101,6 +101,12 @@ contract Deposit is DepositFactoryAuthority {
         return self.utxoValue();
     }
 
+    /// @notice Returns information associated with the funding UXTO.
+    /// @return A tuple of (uxtoValueBytes, fundedAt, uxtoOutpoint).
+    function fundingInfo() public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
+        return self.fundingInfo();
+    }
+
     // THIS IS THE INIT FUNCTION
     /// @notice        The Deposit Factory can spin up a new deposit.
     /// @dev           Only the Deposit factory can call this.
