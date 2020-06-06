@@ -49,7 +49,7 @@ contract TestDeposit is Deposit {
         setState(0);
         setLiquidationAndCourtesyInitated(0, 0);
         setRequestInfo(address(0), "", 0, 0, bytes32(0));
-        setUTXOInfo(bytes8(0), 0, "");
+        setFundingInfo(bytes8(0), 0, "");
 
         setKeepAddress(address(0));
         setSigningGroupRequestedAt(0);
@@ -175,7 +175,7 @@ contract TestDeposit is Deposit {
         );
     }
 
-    function setUTXOInfo(
+    function setFundingInfo(
         bytes8 _utxoValueBytes,
         uint256 _fundedAt,
         bytes memory _utxoOutpoint
@@ -183,10 +183,6 @@ contract TestDeposit is Deposit {
         self.utxoValueBytes = _utxoValueBytes;
         self.fundedAt = _fundedAt;
         self.utxoOutpoint = _utxoOutpoint;
-    }
-
-    function getUTXOInfo() public view returns (bytes8, uint256, bytes memory) {
-        return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
     }
 
     function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
