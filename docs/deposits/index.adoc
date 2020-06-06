@@ -236,7 +236,7 @@ of creating fake proofs.
 
 When creating a deposit, the deposit's _lot size_ must be specified. The tBTC
 system supports a governable set of available lot sizes, guaranteeing only that
-at least 1 BTC lot sizes will be available. v1 will launch with four available
+at least 1 BTC lot sizes will be available. v1 will launch with six available
 lot sizes: 0.002 BTC, 0.01 BTC, 0.1 BTC, 0.2 BTC, 0.5 BTC, and 1 BTC. Deposit
 requesters may only create deposits in one of those lot sizes, and the lot sizes
 only allow minting their corresponding amount of TBTC. If a depositor wants to

@@ -40,7 +40,7 @@ when 1 ether becomes worth 10,000,000,000x as much as 1 bitcoin, we find unlikel
 Rather than prematurely optimize, incorporating a 2 integer ratio of `x` wei to `y` satoshi and changing the call semantics,
 we leave this as a future exercise for governance.
 
-NOTE: The Medianizer in used for tBTC v1 is what Maker calls an ETHBTC feed,
+NOTE: The Medianizer in use for tBTC v1 is what Maker calls an ETHBTC feed,
 meaning it returns the price of 1 ETH in BTC to a precision of 18 decimals.
 There is no name for the 18th decimal of BTC, since the smallest named
 denomination of a BTC is 10^-8^, the satoshi, so we refer to it henceforth as a
