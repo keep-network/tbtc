@@ -21,14 +21,13 @@ contract TestDeposit is Deposit {
         uint16 _m,
         uint16 _n,
         uint64 _lotSizeSatoshis
-    ) public payable returns (bool) {
+    ) public payable {
         self.tbtcSystem = _tbtcSystem;
         self.tbtcToken = _tbtcToken;
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
-        return true;
     }
 
     function setExteriorAddresses(
@@ -221,12 +220,12 @@ contract TestDeposit is Deposit {
         return self.redemptionTransactionChecks(_txInputVector, _txOutputVector);
     }
 
-    function getWithdrawalRequestTime() public view returns(uint256){
+    function getWithdrawalRequestTime() public view returns (uint256){
         return self.withdrawalRequestTime;
     }
 
-    function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
-        return self.pushFundsToKeepGroup(_ethValue);
+    function pushFundsToKeepGroup(uint256 _ethValue) public {
+        self.pushFundsToKeepGroup(_ethValue);
     }
 
     function getAuctionBasePercentage() public view returns (uint256) {
