@@ -10,7 +10,7 @@ toc::[]
 include::../constants.adoc[]
 endif::tbtc[]
 
-== Overview
+== Philosophy
 
 The governance philosophy is simple: govern as few system parameters as
 possible. This limited view on governance means relying on social upgrades—
@@ -31,7 +31,10 @@ respond to changes in the system.
 * The governance role should be assignable to a credibly neutral third party or
 eventual decentralization.
 
-The governance functions and delays are enumerated below.
+== Governance Functions
+
+All governance functions and delays are enumerated below. Each MUST be callable
+by the contract owner alone.
 
 .Governance Functions
 |===
@@ -79,6 +82,24 @@ After 365 days, deposits can no longer be paused, and any call to
 `emergencyPauseNewDeposits()` MUST revert.
 
 === `beginLotSizesUpdate(uint64[] _lotSizes)`
+
+The contract owner may update the lot sizes enabled for new deposits after a 2
+day delay.
+
+There should always be a 1 BTC lot size enabled to keep this call from acting as
+an inadvertent kill-switch. Any update that does not include a 1 BTC lot size
+MUST revert.
+
 === `beginSignerFeeDivisorUpdate(uint16 divisor)`
+
+Unfortunately, the design of tBTC v1 does not allow for market-discoverable
+signer fees. Instead, the function of setting signer fees is left to governance.
+
+The contract owner may update the signer fee divisor after a 2 day delay,
+impacting new deposits. The fee is limited to 0.03% - 10.0%, to prevent a very
+small or very large signer fee update from acting as a kill-switch.
+
+Any update outside that range MUST revert.
+
 === `beginCollateralizationThresholdsUpdate(uint16 initial, ...)`
 === `beginEthBtcPriceFeedAddition(address ethBtcPriceFeed)`
