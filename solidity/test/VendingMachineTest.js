@@ -527,20 +527,12 @@ describe("VendingMachine", async function() {
       })
 
       it("protects receiveApproval from external callers", async () => {
-        const tbtcToBtc = vendingMachine.abi.find(x => x.name == "tbtcToBtc")
-        const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [
-          testDeposit.address,
-          "0x1111111100000000",
-          redeemerOutputScript,
-          owner,
-        ])
-
         await expectRevert(
           redemptionScript.receiveApproval(
             redemptionScript.address,
             tdtId,
             owner,
-            calldata,
+            "0x00",
             {from: owner},
           ),
           "Only token contract can call receiveApproval",
