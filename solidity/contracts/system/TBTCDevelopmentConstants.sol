@@ -27,7 +27,6 @@ library TBTCDevelopmentConstants {
     // Liquidation Flow
     uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
     uint256 public constant AUCTION_DURATION = 24 * 60 * 60; // seconds
-    uint256 public constant PERMITTED_FEE_BUMPS = 5; // number of times the fee can be increased
 
     // Getters for easy access
     function getBeneficiaryRewardDivisor() public pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
@@ -45,5 +44,4 @@ library TBTCDevelopmentConstants {
 
     function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
     function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
-    function getPermittedFeeBumps() public pure returns (uint256) {return PERMITTED_FEE_BUMPS; }
 }
