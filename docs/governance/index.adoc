@@ -102,4 +102,12 @@ small or very large signer fee update from acting as a kill-switch.
 Any update outside that range MUST revert.
 
 === `beginCollateralizationThresholdsUpdate(uint16 initial, ...)`
+
+The contract owner may update the collateralization thresholds for new deposits
+after a 2 day delay.
+
+While the update only directly impacts new deposits, if the contract owner were
+to collude with an attacker, an update could harm the peg. For that reason, any
+initial threshold under 100% or over 300% MUST revert.
+
 === `beginEthBtcPriceFeedAddition(address ethBtcPriceFeed)`
