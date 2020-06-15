@@ -86,8 +86,8 @@ After 365 days, deposits can no longer be paused, and any call to
 
 === `beginLotSizesUpdate(uint64[] _lotSizes)`
 
-The contract owner may update the lot sizes enabled for new deposits after a 2
-day delay.
+The contract owner may update the <<deposits/index.adoc#lots,lot sizes>> enabled
+for new deposits after a 2 day delay.
 
 There should always be a 1 BTC lot size enabled to keep this call from acting as
 an inadvertent kill-switch. Any update that does not include a 1 BTC lot size
@@ -96,7 +96,8 @@ MUST revert.
 === `beginSignerFeeDivisorUpdate(uint16 divisor)`
 
 Unfortunately, the design of tBTC v1 does not allow for market-discoverable
-signer fees. Instead, the function of setting signer fees is left to governance.
+<<signer-fees/index.adoc#signer-fees,signer fees>>. Instead, the function of
+setting signer fees is left to governance.
 
 The contract owner may update the signer fee divisor after a 2 day delay,
 impacting new deposits. The fee is limited to 0.03% - 10.0%, to prevent a very
@@ -106,8 +107,8 @@ Any update outside that range MUST revert.
 
 === `beginCollateralizationThresholdsUpdate(uint16 initial, ...)`
 
-The contract owner may update the collateralization thresholds for new deposits
-after a 2 day delay.
+The contract owner may update the <<bonding/index.adoc#bonding,collateralization
+thresholds>> for new deposits after a 2 day delay.
 
 While the update only directly impacts new deposits, if the contract owner were
 to collude with an attacker, an update could harm the peg. For that reason, any
@@ -115,9 +116,10 @@ initial threshold under 100% or over 300% MUST revert.
 
 === `beginEthBtcPriceFeedAddition(address ethBtcPriceFeed)`
 
-The contract owner may add a new backup ETHBTC price feed for all deposits
-after a 90 day delay. Note that this delay is significantly longer than other
-governance controls.
+The contract owner may add a new backup ETHBTC
+<<price-feed/index.adoc#price-feed,price feed>> for all deposits after a 90 day
+delay. Note that this delay is significantly longer than other governance
+controls.
 
 Price feeds must be tracked in a list, and a price feed in that list must
 _only_ used if all previously-added price feeds present themselves as

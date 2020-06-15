@@ -232,17 +232,20 @@ properties to stateless SPV proofs when used as an additional validation step,
 as even entities with significant mining resources have a greatly reduced chance
 of creating fake proofs.
 
+[[lots]]
 == Lots
 
 When creating a deposit, the deposit's _lot size_ must be specified. The tBTC
-system supports a governable set of available lot sizes, guaranteeing only that
-at least 1 BTC lot sizes will be available. v1 will launch with six available
-lot sizes: 0.002 BTC, 0.01 BTC, 0.1 BTC, 0.2 BTC, 0.5 BTC, and 1 BTC. Deposit
-requesters may only create deposits in one of those lot sizes, and the lot sizes
-only allow minting their corresponding amount of TBTC. If a depositor wants to
-deposit more than the maximum lot size the system supports, they will need to
-create multiple deposit requests and fund multiple deposits. Note that available
-deposit lot sizes are one of the aspects of tBTC v1 that are governable.
+system supports a governable set of available lot sizes (see the section on
+<<governance/index.adoc#governance,Governance>> for more), guaranteeing only
+that at least 1 BTC lot sizes will be available. v1 will launch with six
+available lot sizes: 0.002 BTC, 0.01 BTC, 0.1 BTC, 0.2 BTC, 0.5 BTC, and 1 BTC.
+Deposit requesters may only create deposits in one of those lot sizes, and the
+lot sizes only allow minting their corresponding amount of TBTC. If a depositor
+wants to deposit more than the maximum lot size the system supports, they will
+need to create multiple deposit requests and fund multiple deposits. Note that
+available deposit lot sizes are one of the aspects of tBTC v1 that are
+governable.
 
 For simplicity's sake, the rest of this spec is written with the assumption that
 deposits of {btc-lot-size} are being opened; however, anything dependent on lot
