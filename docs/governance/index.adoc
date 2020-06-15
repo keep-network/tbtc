@@ -34,7 +34,10 @@ eventual decentralization.
 == Governance Functions
 
 All governance functions and delays are enumerated below. Each MUST be callable
-by the contract owner alone.
+by the contract owner alone. For functions that have time delays, there is a
+`finalize<Function>` equivalent to the `begin<Function>` that can finalize the
+change after the specified delay (e.g.
+`beginLotSizesUpdate`/`finalizeLotSizesUpdate`).
 
 .Governance Functions
 |===
