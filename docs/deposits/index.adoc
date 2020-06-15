@@ -243,9 +243,7 @@ available lot sizes: 0.002 BTC, 0.01 BTC, 0.1 BTC, 0.2 BTC, 0.5 BTC, and 1 BTC.
 Deposit requesters may only create deposits in one of those lot sizes, and the
 lot sizes only allow minting their corresponding amount of TBTC. If a depositor
 wants to deposit more than the maximum lot size the system supports, they will
-need to create multiple deposit requests and fund multiple deposits. Note that
-available deposit lot sizes are one of the aspects of tBTC v1 that are
-governable.
+need to create multiple deposit requests and fund multiple deposits.
 
 For simplicity's sake, the rest of this spec is written with the assumption that
 deposits of {btc-lot-size} are being opened; however, anything dependent on lot
