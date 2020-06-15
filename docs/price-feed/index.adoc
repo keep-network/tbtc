@@ -1,7 +1,6 @@
-[env.theorem]
 :toc: macro
 
-[#price-feed]
+[[price-feed]]
 = Price Feed
 
 ifndef::tbtc[toc::[]]

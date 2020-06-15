@@ -22,7 +22,7 @@ coordinated and agreed upon across the market. The bar for a social upgrade is
 much higher than other common governance paradigms, and will become even more
 difficult as an instance of the system ages.
 
-The limited governance included in the system design follows a few principles.
+The limited governance included in the system design follows a few principles:
 
 * Governance should only impact new deposits, whenever possible. Each deposit
 should behave predictably over the long run, regardless of governance choices.
