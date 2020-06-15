@@ -34,6 +34,8 @@ contract FundingScript {
     /// @param _tokenId Approved TDT for the transfer.
     /// @param _extraData Encoded function call to `VendingMachine.unqualifiedDepositToTbtc`.
     function receiveApproval(address _from, uint256 _tokenId, address, bytes memory _extraData) public {
+        require(msg.sender == address(tbtcDepositToken), "Only token contract can call receiveApproval");
+
         tbtcDepositToken.transferFrom(_from, address(this), _tokenId);
         tbtcDepositToken.approve(address(vendingMachine), _tokenId);
 
