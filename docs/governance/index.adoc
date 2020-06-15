@@ -114,3 +114,22 @@ to collude with an attacker, an update could harm the peg. For that reason, any
 initial threshold under 100% or over 300% MUST revert.
 
 === `beginEthBtcPriceFeedAddition(address ethBtcPriceFeed)`
+
+The contract owner may add a new backup ETHBTC price feed for all deposits
+after a 90 day delay. Note that this delay is significantly longer than other
+governance controls.
+
+Price feeds must be tracked in a list, and a price feed in that list must
+_only_ used if all previously-added price feeds present themselves as
+_inactive_. Price feeds provide a `peek()` function that returns the value of
+the price feed alongside a boolean indicating whether the feed is active. If
+the second value in that return is `false`, the feed is considered inactive
+and the next feed in the list must be used.
+
+This update allows straightforward planning for an intentional decommissioning
+of the primary Medianizer feed. The long lead time allows any existing
+depositors who may be concerned about the new price feed ample time to close
+open deposits and retrieve their funds.
+
+This update can also be used to deal with an unexpected deactivation of the
+primary feed, though in that event the system will take 90 days to recover.
