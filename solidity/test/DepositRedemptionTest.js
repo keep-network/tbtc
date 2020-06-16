@@ -317,6 +317,31 @@ describe("DepositRedemption", async function() {
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
 
+    it("escrows correct amount if deposit is pre-term, redeemer is FRT holder and signerFee is partially escrowed", async () => {
+      const partialFee = new BN(123)
+      await feeRebateToken.transferFrom(accounts[4], owner, tdtId, {
+        from: accounts[4],
+      })
+      await tbtcToken.resetBalance(signerFee, {from: owner})
+      await tbtcToken.resetAllowance(testDeposit.address, signerFee, {
+        from: owner,
+      })
+
+      await tbtcToken.forceMint(testDeposit.address, partialFee)
+
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+
+      expect(events[0].returnValues.from).to.equal(owner)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee.sub(partialFee))
+    })
+
     it("burns 1 TBTC if deposit is in COURTESY_CALL and TDT holder is the Vending Machine", async () => {
       const {
         receipt: {blockNumber: transferBlock},
