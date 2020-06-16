@@ -19,7 +19,8 @@ abort typically represents a liveness failure from some participant. As such,
 while aborts are still punished, and may still result in liquidation, they are
 not punished as severely as fraud. For example, should the signers fail to
 produce a redemption signature in a timely manner, their bonds are liquidated
-to protect the supply peg, but any remainder is returned to them.
+to protect the supply peg, but any remainder is returned to them once the
+liquidation initiator is rewarded.
 
 [[fraud]]
 === Fraud
@@ -59,11 +60,12 @@ example, this precludes verification of Decred signatures, which use blake256.
 Signers in an Ethereum-hosted system can produce signatures on Decred
 transactions with no possibility of punishment.
 
-All host chain impose costs on argument size, Therefore cost of verification
+All host chains impose costs on argument size, therefore cost of verification
 scales with the length of the preimage. This means that it may not be
-economically feasible to verify signatures on very long pre-images, or that
+economically feasible to verify signatures on very long preimages, or that
 attempting to do so will exceed resource-use limitations (e.g. Ethereum's block
-gas limit). Fortunately, Bitcoin's signature hash algorithm uses double-sha256.
-This means that the preimage to the signed digest is always 32 bytes. As such,
+gas limit). Fortunately, Bitcoin's signature hash algorithm uses double-sha256,
+which makes the preimage of a signature the result of the first sha256. This
+means that the preimage to the signed digest is always 32 bytes, meaning
 verification costs never scale with transaction size, and even very large
-transactions do not evade ECDSA fraud verification.
+transactions cannot evade ECDSA fraud verification.

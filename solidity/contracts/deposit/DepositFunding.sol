@@ -48,13 +48,12 @@ library DepositFunding {
     /// @param _d       Deposit storage pointer.
     /// @param _m       Signing group honesty threshold.
     /// @param _n       Signing group size.
-    /// @return         True if successful, otherwise revert.
     function createNewDeposit(
         DepositUtils.Deposit storage _d,
         uint16 _m,
         uint16 _n,
         uint64 _lotSizeSatoshis
-    ) public returns (bool) {
+    ) public {
         require(_d.tbtcSystem.getAllowNewDeposits(), "New deposits aren't allowed.");
         require(_d.inStart(), "Deposit setup already requested");
         require(_d.tbtcSystem.isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
@@ -83,8 +82,6 @@ library DepositFunding {
 
         _d.setAwaitingSignerSetup();
         _d.logCreated(_d.keepAddress);
-
-        return true;
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
@@ -218,7 +215,6 @@ library DepositFunding {
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block.
     /// @param _txIndexInBlock      Transaction index in the block (0-indexed).
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first.
-    /// @return                     True if no errors are thrown.
     function provideBTCFundingProof(
         DepositUtils.Deposit storage _d,
         bytes4 _txVersion,
@@ -229,7 +225,7 @@ library DepositFunding {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public returns (bool) {
+    ) public {
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
@@ -255,7 +251,5 @@ library DepositFunding {
         fundingTeardown(_d);
         _d.setActive();
         _d.logFunded();
-
-        return true;
     }
 }

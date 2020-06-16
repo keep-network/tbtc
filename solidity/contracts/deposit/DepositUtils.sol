@@ -435,15 +435,12 @@ library DepositUtils {
     /// @notice             Pushes ether held by the deposit to the signer group.
     /// @dev                Ether is returned to signing group members bonds.
     /// @param  _ethValue   The amount of ether to send.
-    /// @return             True if successful, otherwise revert.
-    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal returns (bool) {
+    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
         if(_ethValue > 0){
             IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
             _keep.returnPartialSignerBonds.value(_ethValue)();
-            return true;
         }
-        return false;
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer

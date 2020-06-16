@@ -153,6 +153,10 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     1,
   )
 
+  const setupFee = await tbtcSystem.getNewDepositFeeEstimate()
+  await ecdsaKeepStub.setBondAmount(setupFee)
+  await ecdsaKeepStub.send(setupFee)
+
   return Object.assign({}, deployed, {
     Deposit,
     TestTBTCToken: TestTBTCTokenInstance,

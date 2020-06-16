@@ -188,6 +188,11 @@ describe("DepositFunding", async function() {
     })
 
     it("respects the supply cap schedule", async () => {
+      const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+      await ecdsaKeepStub.send(depositFee)
+      await ecdsaKeepStub.setBondAmount(depositFee)
+
       const bn = web3.utils.toBN
 
       const mint = amountInSats =>

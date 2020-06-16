@@ -37,6 +37,10 @@ const System = {
         ECDSAKeepStub.send(bondAmount)
         ECDSAKeepStub.setBondAmount(bondAmount)
     },
+    drainBond: async ({ ECDSAKeepStub, bondAmount }) => {
+        ECDSAKeepStub.drain()
+        ECDSAKeepStub.setBondAmount(0)
+    },
     signerSetupTimeout: async ({ TBTCConstants }) => {
         return await TBTCConstants.getSigningGroupFormationTimeout()
     },
@@ -234,7 +238,7 @@ module.exports = {
                 after: System.signerSetupTimeout,
                 transition: async (state) => {
                     const { deposit } = state
-
+                    await System.drainBond(state)
                     return {
                         state: "signerSetupFailure",
                         tx: deposit.notifySignerSetupFailure(),
