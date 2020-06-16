@@ -65,7 +65,10 @@ contract DepositLog {
     event FraudDuringSetup(address indexed _depositContractAddress);
 
     // This event is fired when we enter the ACTIVE state
-    event Funded(address indexed _depositContractAddress);
+    event Funded(
+        address indexed _depositContractAddress,
+        bytes32 indexed _txid
+    );
 
     // This event is called when we enter the COURTESY_CALL state
     event CourtesyCalled(address indexed _depositContractAddress);
@@ -214,12 +217,12 @@ contract DepositLog {
 
     /// @notice     Fires a Funded event.
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logFunded() public {
+    function logFunded(bytes32 _txid) public {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit Funded(msg.sender);
+        emit Funded(msg.sender, _txid);
     }
 
     /// @notice     Fires a CourtesyCalled event.
