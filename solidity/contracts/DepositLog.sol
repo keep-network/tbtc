@@ -18,8 +18,7 @@ contract DepositLog {
     // This event is fired when we init the deposit
     event Created(
         address indexed _depositContractAddress,
-        address indexed _keepAddress,
-        uint256 _timestamp
+        address indexed _keepAddress
     );
 
     // This log event contains all info needed to rebuild the redemption tx
@@ -40,23 +39,18 @@ contract DepositLog {
         address indexed _depositContractAddress,
         bytes32 indexed _digest,
         bytes32 _r,
-        bytes32 _s,
-        uint256 _timestamp
+        bytes32 _s
     );
 
     // This log is fired when the signing group returns a public key
     event RegisteredPubkey(
         address indexed _depositContractAddress,
         bytes32 _signingGroupPubkeyX,
-        bytes32 _signingGroupPubkeyY,
-        uint256 _timestamp
+        bytes32 _signingGroupPubkeyY
     );
 
     // This event is fired when we enter the FAILED_SETUP state for any reason
-    event SetupFailed(
-        address indexed _depositContractAddress,
-        uint256 _timestamp
-    );
+    event SetupFailed(address indexed _depositContractAddress);
 
     // This event is fired when a funder requests funder abort after
     // FAILED_SETUP has been reached. Funder abort is a voluntary signer action
@@ -68,45 +62,31 @@ contract DepositLog {
     );
 
     // This event is fired when we detect an ECDSA fraud before seeing a funding proof
-    event FraudDuringSetup(
-        address indexed _depositContractAddress,
-        uint256 _timestamp
-    );
+    event FraudDuringSetup(address indexed _depositContractAddress);
 
     // This event is fired when we enter the ACTIVE state
-    event Funded(address indexed _depositContractAddress, uint256 _timestamp);
+    event Funded(address indexed _depositContractAddress);
 
     // This event is called when we enter the COURTESY_CALL state
-    event CourtesyCalled(
-        address indexed _depositContractAddress,
-        uint256 _timestamp
-    );
+    event CourtesyCalled(address indexed _depositContractAddress);
 
     // This event is fired when we go from COURTESY_CALL to ACTIVE
-    event ExitedCourtesyCall(
-        address indexed _depositContractAddress,
-        uint256 _timestamp
-    );
+    event ExitedCourtesyCall(address indexed _depositContractAddress);
 
     // This log event is fired when liquidation
     event StartedLiquidation(
         address indexed _depositContractAddress,
-        bool _wasFraud,
-        uint256 _timestamp
+        bool _wasFraud
     );
 
     // This event is fired when the Redemption SPV proof is validated
     event Redeemed(
         address indexed _depositContractAddress,
-        bytes32 indexed _txid,
-        uint256 _timestamp
+        bytes32 indexed _txid
     );
 
     // This event is fired when Liquidation is completed
-    event Liquidated(
-        address indexed _depositContractAddress,
-        uint256 _timestamp
-    );
+    event Liquidated(address indexed _depositContractAddress);
 
     //
     // AUTH
@@ -135,7 +115,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit Created(msg.sender, _keepAddress, block.timestamp);
+        emit Created(msg.sender, _keepAddress);
     }
 
     /// @notice                 Fires a RedemptionRequested event.
@@ -182,13 +162,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit GotRedemptionSignature(
-            msg.sender,
-            _digest,
-            _r,
-            _s,
-            block.timestamp
-        );
+        emit GotRedemptionSignature(msg.sender, _digest, _r, _s);
     }
 
     /// @notice     Fires a RegisteredPubkey event.
@@ -204,8 +178,7 @@ contract DepositLog {
         emit RegisteredPubkey(
             msg.sender,
             _signingGroupPubkeyX,
-            _signingGroupPubkeyY,
-            block.timestamp
+            _signingGroupPubkeyY
         );
     }
 
@@ -216,7 +189,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit SetupFailed(msg.sender, block.timestamp);
+        emit SetupFailed(msg.sender);
     }
 
     /// @notice     Fires a FunderAbortRequested event.
@@ -236,7 +209,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit FraudDuringSetup(msg.sender, block.timestamp);
+        emit FraudDuringSetup(msg.sender);
     }
 
     /// @notice     Fires a Funded event.
@@ -246,7 +219,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit Funded(msg.sender, block.timestamp);
+        emit Funded(msg.sender);
     }
 
     /// @notice     Fires a CourtesyCalled event.
@@ -256,7 +229,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit CourtesyCalled(msg.sender, block.timestamp);
+        emit CourtesyCalled(msg.sender);
     }
 
     /// @notice             Fires a StartedLiquidation event.
@@ -267,7 +240,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit StartedLiquidation(msg.sender, _wasFraud, block.timestamp);
+        emit StartedLiquidation(msg.sender, _wasFraud);
     }
 
     /// @notice     Fires a Redeemed event
@@ -277,7 +250,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit Redeemed(msg.sender, _txid, block.timestamp);
+        emit Redeemed(msg.sender, _txid);
     }
 
     /// @notice     Fires a Liquidated event
@@ -287,7 +260,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit Liquidated(msg.sender, block.timestamp);
+        emit Liquidated(msg.sender);
     }
 
     /// @notice     Fires a ExitedCourtesyCall event
@@ -297,7 +270,7 @@ contract DepositLog {
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit ExitedCourtesyCall(msg.sender, block.timestamp);
+        emit ExitedCourtesyCall(msg.sender);
     }
 
     /// @notice               Sets the tbtcDepositToken contract.

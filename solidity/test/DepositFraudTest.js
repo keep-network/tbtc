@@ -144,7 +144,6 @@ describe("DepositFraud", async function() {
 
       expect(events[0].returnValues[0]).to.equal(testDeposit.address)
       expect(events[0].returnValues[1]).to.be.true
-      expect(events[0].returnValues[2]).to.eq.BN(block.timestamp)
 
       expect(initiator).to.equal(owner)
       expect(initiated).to.eq.BN(block.timestamp)
@@ -207,7 +206,6 @@ describe("DepositFraud", async function() {
       const initiated = await testDeposit.getLiquidationTimestamp()
       expect(events[0].returnValues[0]).to.equal(testDeposit.address)
       expect(events[0].returnValues[1]).to.be.false
-      expect(events[0].returnValues[2]).to.eq.BN(block.timestamp)
 
       expect(initiator).to.equal(owner)
       expect(initiated).to.eq.BN(block.timestamp)
