@@ -76,10 +76,11 @@ library DepositRedemption {
             if(tdtHolder == vendingMachineAddress){
                 _d.tbtcToken.burnFrom(msg.sender, tbtcLot);
             }
-            // if signer fee is not escrowed, escrow and it here and send the rest to TDT holder
+            // if signer fee is not escrowed, escrow and it here and send the rest to the TDT holder
             else if(_d.tbtcToken.balanceOf(address(this)) < signerFee){
-                _d.tbtcToken.transferFrom(msg.sender, address(this), signerFee);
-                _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
+                uint256 remainingFeeOwed = signerFee.sub(_d.tbtcToken.balanceOf(address(this)));
+                _d.tbtcToken.transferFrom(msg.sender, address(this), remainingFeeOwed);
+                _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(remainingFeeOwed));
             }
             // tansfer a full TBTC to TDT holder if signerFee is escrowed
             else{
