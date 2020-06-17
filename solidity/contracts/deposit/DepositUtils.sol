@@ -489,8 +489,10 @@ library DepositUtils {
         bool frtExists = feeRebateTokenHolder(_d) != address(0);
 
         uint256 frtAdjustment = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
-        uint256 signerFeeAdjustment = computeSignerFeeAdjustment(_d, redeemerOwesNoFee, frtExists);
-
+        uint256 signerFeeAdjustment = computeSignerFeeAdjustment(_d, frtExists);
+        if(depositOwner(_d) != _redeemer){
+            return 0;
+        }
         return frtAdjustment.add(signerFeeAdjustment);
     }
 
@@ -517,18 +519,13 @@ library DepositUtils {
     }
 
     /// @notice                   Get the signer fee amount needed to redeem.
-    /// @param _redeemerOwesNoFee True if Deposit is at term or in courtesy call.
     /// @param _frtExists         True if the FRT exists.
     /// @return                   The amount in TBTC.
     function computeSignerFeeAdjustment(
         DepositUtils.Deposit storage _d,
-        bool _redeemerOwesNoFee,
         bool _frtExists
     ) internal view returns (uint256){
-        if(
-            _redeemerOwesNoFee ||
-            _frtExists
-        ){
+        if(_frtExists){
             return 0;
         }
         return signerFee(_d);

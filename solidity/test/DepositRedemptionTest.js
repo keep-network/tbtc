@@ -230,7 +230,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(depositValue)
     })
 
-    it("returns zero if we are at-term, caller is TDT holder, and fee is not escrowed", async () => {
+    it("returns signerFee if we are at-term, caller is TDT holder, and fee is not escrowed", async () => {
       await increaseTime(depositTerm)
       await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
         from: frtHolder,
@@ -238,7 +238,7 @@ describe("DepositRedemption", async function() {
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
       )
-      expect(tbtcOwed).to.eq.BN(new BN(0))
+      expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
     it("returns signerFee if we are pre-term, caller is TDT holder and fee is not escrowed", async () => {
@@ -251,7 +251,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
-    it("returns zero if we are in courtesy_call, caller is TDT holder and fee is not escrowed", async () => {
+    it("returns signerFee if we are in courtesy_call, caller is TDT holder and fee is not escrowed", async () => {
       await testDeposit.setState(states.COURTESY_CALL)
       await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
         from: frtHolder,
@@ -259,7 +259,7 @@ describe("DepositRedemption", async function() {
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
       )
-      expect(tbtcOwed).to.eq.BN(new BN(0))
+      expect(tbtcOwed).to.eq.BN(signerFee)
     })
 
     it("returns zero if we are at-term, caller is TDT holder and signer fee is escrowed", async () => {
@@ -385,7 +385,7 @@ describe("DepositRedemption", async function() {
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
 
-    it("does nothing if Deposit is in COURTESY_CALL, caller is TDT owner and FRT owner", async () => {
+    it("escrows signerFee if Deposit is in COURTESY_CALL, caller is TDT owner and FRT owner", async () => {
       await testDeposit.setState(states.COURTESY_CALL)
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
@@ -406,7 +406,9 @@ describe("DepositRedemption", async function() {
         fromBlock: transferBlock,
         toBlock: "latest",
       })
-      expect(events.length).to.equal(0)
+      expect(events[0].returnValues.from).to.equal(owner)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
 
     it("escrows fee and sends correct TBTC if Deposit is in COURTESY_CALL and fee is not escrowed", async () => {
