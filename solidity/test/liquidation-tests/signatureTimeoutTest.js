@@ -7,7 +7,6 @@ const { expect } = require("chai")
 describe("Integration -- Signature-timeout", async function () {
   const lotSize = "10000000";
   const lotSizeTbtc = new BN("10000000000").mul(new BN(lotSize));
-  const fee = new BN("50000000000000")
   const depositInitiator = accounts[1]
   let testDeposit
 
@@ -38,7 +37,6 @@ describe("Integration -- Signature-timeout", async function () {
     })
 
     it("liquidates correctly", async () => {
-      const requirement = await testDeposit.getRedemptionTbtcRequirement.call(depositInitiator)
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
 
@@ -53,7 +51,6 @@ describe("Integration -- Signature-timeout", async function () {
   
       expect(new BN(endingBalance)).to.eq.BN(new BN(0))
       expect(depositState).to.eq.BN(states.LIQUIDATED)
-      expect(requirement).to.eq.BN(fee)
       expect(withdrawable).to.eq.BN(collateralAmount)
     })
   })
@@ -112,7 +109,6 @@ describe("Integration -- Signature-timeout", async function () {
     })
     
     it("liquidates correctly", async () => {
-      const requirement = await testDeposit.getRedemptionTbtcRequirement.call(depositInitiator)
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
 
@@ -127,7 +123,6 @@ describe("Integration -- Signature-timeout", async function () {
   
       expect(new BN(endingBalance)).to.eq.BN(new BN(0))
       expect(depositState).to.eq.BN(states.LIQUIDATED)
-      expect(requirement).to.eq.BN(new BN(0))
       expect(withdrawable).to.eq.BN(collateralAmount)
     })
   })
