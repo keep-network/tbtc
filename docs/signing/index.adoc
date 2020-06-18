@@ -91,7 +91,7 @@ _Note: This section is taken from the last section of the link:https://blockstre
 blogpost] by Blockstream_
 
 . Let `H` be a cryptographic hash function
-. Call `L = H(X_1,X_2,…)``
+. Call `L = H(X_1,X_2,…)`
 . Call `X` the sum of all `H(L,X_i) * X_i`
 . Each signer chooses a random nonce `r_i`, and shares `R_i = r_i * G` with the other signers
 . Call `R` the sum of the `R_i` points
@@ -126,7 +126,7 @@ o compute, `g_0` and `g_1` generators of `G_0` and `G_1` respectively.
 . Call `sk` the user's secret key, and `g_1^{sk}` their public key.
 . Call `H_0` a cryptographic hash function from the message space to `G_0`
 . Call `H_1` a cryptographic hash function from `G_1^n` to `R^n`
-. A signature on `m` is `s_i ＝ Η_0(m)^sk_i`
+. A signature on `m` is `s_i = Η_0(m)^sk_i`
 . To aggregate N signatures for the same message from public keys `(pk_1, ..., pk_n)`:
     1. Compute: `(t_1, ..., t_n) = H_1(pk_1, ..., pk_n)`
     2. Aggregated signature: `s = s_1^t_1 * ... * s_n^t_n`

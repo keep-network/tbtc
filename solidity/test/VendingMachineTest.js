@@ -433,9 +433,7 @@ describe("VendingMachine", async function() {
 
         await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
 
-        const tbtcToBtc = vendingMachine.abi.filter(
-          x => x.name == "tbtcToBtc",
-        )[0]
+        const tbtcToBtc = vendingMachine.abi.find(x => x.name == "tbtcToBtc")
         const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [
           testDeposit.address,
           "0x1111111100000000",
@@ -467,9 +465,7 @@ describe("VendingMachine", async function() {
         await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
         await tbtcToken.forceMint(owner, depositValue.add(signerFee))
         await feeRebateToken.forceMint(owner, tdtId)
-        const tbtcToBtc = vendingMachine.abi.filter(
-          x => x.name == "tbtcToBtc",
-        )[0]
+        const tbtcToBtc = vendingMachine.abi.find(x => x.name == "tbtcToBtc")
         const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [
           testDeposit.address,
           "0x1111111100000000",
@@ -491,9 +487,7 @@ describe("VendingMachine", async function() {
         await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
         await tbtcToken.forceMint(owner, depositValue.add(signerFee))
         await feeRebateToken.forceMint(owner, tdtId)
-        const tbtcToBtc = vendingMachine.abi.filter(
-          x => x.name == "tbtcToBtc",
-        )[0]
+        const tbtcToBtc = vendingMachine.abi.find(x => x.name == "tbtcToBtc")
         const nonexistentDeposit = "0000000000000000000000000000000000000000"
         const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [
           nonexistentDeposit,
@@ -526,6 +520,19 @@ describe("VendingMachine", async function() {
           "Bad _extraData signature. Call must be to tbtcToBtc.",
         )
       })
+
+      it("protects receiveApproval from external callers", async () => {
+        await expectRevert(
+          redemptionScript.receiveApproval(
+            redemptionScript.address,
+            tdtId,
+            owner,
+            "0x00",
+            {from: owner},
+          ),
+          "Only token contract can call receiveApproval",
+        )
+      })
     })
   })
 
@@ -550,9 +557,9 @@ describe("VendingMachine", async function() {
     })
 
     it("calls unqualifiedDepositToTbtcABI", async () => {
-      const unqualifiedDepositToTbtcABI = vendingMachine.abi.filter(
+      const unqualifiedDepositToTbtcABI = vendingMachine.abi.find(
         x => x.name == "unqualifiedDepositToTbtc",
-      )[0]
+      )
       const calldata = web3.eth.abi.encodeFunctionCall(
         unqualifiedDepositToTbtcABI,
         [
@@ -586,10 +593,10 @@ describe("VendingMachine", async function() {
       expect(await feeRebateToken.ownerOf(tdtId)).to.equal(owner)
     })
 
-    it("reverts true on success", async () => {
-      const unqualifiedDepositToTbtcABI = vendingMachine.abi.filter(
+    it("returns true on success", async () => {
+      const unqualifiedDepositToTbtcABI = vendingMachine.abi.find(
         x => x.name == "unqualifiedDepositToTbtc",
-      )[0]
+      )
       const calldata = web3.eth.abi.encodeFunctionCall(
         unqualifiedDepositToTbtcABI,
         [
@@ -616,9 +623,9 @@ describe("VendingMachine", async function() {
     })
 
     it("forwards nested revert error messages", async () => {
-      const unqualifiedDepositToTbtcABI = vendingMachine.abi.filter(
+      const unqualifiedDepositToTbtcABI = vendingMachine.abi.find(
         x => x.name == "unqualifiedDepositToTbtc",
-      )[0]
+      )
       const calldata = web3.eth.abi.encodeFunctionCall(
         unqualifiedDepositToTbtcABI,
         [
@@ -659,6 +666,37 @@ describe("VendingMachine", async function() {
           {from: owner},
         ),
         "Bad _extraData signature. Call must be to unqualifiedDepositToTbtc.",
+      )
+    })
+
+    it("protects receiveApproval from external callers", async () => {
+      const unqualifiedDepositToTbtcABI = vendingMachine.abi.find(
+        x => x.name == "unqualifiedDepositToTbtc",
+      )
+      const calldata = web3.eth.abi.encodeFunctionCall(
+        unqualifiedDepositToTbtcABI,
+        [
+          testDeposit.address,
+          fundingTx.version,
+          fundingTx.txInputVector,
+          fundingTx.txOutputVector,
+          fundingTx.txLocktime,
+          fundingTx.fundingOutputIndex,
+          fundingTx.merkleProof,
+          fundingTx.txIndexInBlock,
+          fundingTx.bitcoinHeaders,
+        ],
+      )
+
+      await expectRevert(
+        fundingScript.receiveApproval(
+          redemptionScript.address,
+          depositValue.add(signerFee),
+          accounts[0],
+          calldata,
+          {from: owner},
+        ),
+        "Only token contract can call receiveApproval",
       )
     })
   })

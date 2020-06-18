@@ -18,7 +18,40 @@ yielding a non-fungible token, and an additional proof enabling trade-in of
 the non-fungible token for fungible TBTC—we can balance strong security
 against reorgs with a better user experience and more flexible use cases.
 
-// TODO insert diagram
+A simplified view of the deposit creation, minting, and redemption flows is in
+this diagram:
+
+[mermaid,basic-deposit-lifecycle,svg,theme=neutral]
+.....
+sequenceDiagram
+   participant tbtc as tBTC System
+   participant depositor as Depositor
+   participant deposit as Deposit
+   participant vending as Vending Machine
+   participant redeemer as Redeemer
+
+   depositor ->> tbtc: Request deposit creation
+   tbtc ->> deposit: Create deposit
+   tbtc ->> depositor: Mint and assign deposit TDT
+   depositor ->> deposit: Submit funding proof
+   deposit ->> deposit: Move state to Qualified
+   depositor ->> vending: Reassign TDT ownership to Vending Machine
+   vending ->> depositor: Mint and transfer TBTC: lot size - signer fee
+   vending ->> deposit: Mint and escrow TBTC: signer fee
+   deposit ->> depositor: Mint and assign Fee Rebate Token
+
+   redeemer ->> vending: Send `lot size` TBTC and TDT id
+   vending ->> redeemer: Reassign TDT ownership to redeemer
+   redeemer ->> deposit: Request redemption, send signer fee
+   deposit ->> deposit: Produce redemption signature
+   redeemer ->> deposit: Prove redemption transaction on BTC
+   deposit ->> deposit: Move state to Redeemed, release signer bonds
+.....
+
+Note that the above diagram skips a few additional possibilities explained below
+in this spec, including how pre- vs at-term deposits behave differently,
+liquidation-related changes, as well as how a depositor might keep their TDT
+without minting TBTC.
 
 == Minting the non-fungible tBTC Deposit Token
 
@@ -26,17 +59,20 @@ After a deposit has been requested and a signing group formed, a depositor
 immediately receives a non-fungible token unique to the deposit called the _tBTC
 Deposit Token_, or _TDT_, granting them ownership of the deposit. This ownership
 comes with the exclusive right to redeem the deposit from the moment it is
-funded until the deposit term is reached.
+funded until the deposit term is reached, unless there is an
+undecollateralization issue that transitions the deposit into its "courtesy
+call" state.
 
 Once the deposit is fully _qualified_ by submitting sufficient proof of the
 funding Bitcoin transaction, the holder of the TDT can request redemption,
-and, after paying any outstanding signing fees, be guaranteed the same UTXO
-backing the deposit. The holder of the TDT is also guaranteed compensation in
-TBTC via the signing group's bonded collateral in case of fraud or
-collateralization issues (see <<bonding/index.adoc#liquidation,liquidation>>),
-and compensation in TBTC (minus signer fees) if the deposit is redeemed by
-another account after it reaches term (see the section on
-<<redemption/index.adoc#at-term, at-term redemption>>).
+and, after paying any outstanding signing fees, the holder is guaranteed the
+same UTXO backing the deposit. The holder of the TDT is also guaranteed
+compensation in TBTC via the signing group's bonded collateral in case of fraud
+or collateralization issues (see
+<<bonding/index.adoc#liquidation,liquidation>>), and compensation in TBTC (minus
+signer fees) if the deposit is redeemed by another account after it reaches term
+(see the section on <<redemption/index.adoc#at-term, at-term redemption>>) or if
+the deposit is courtesy called.
 
 === Implications
 
@@ -59,11 +95,6 @@ There are a few non-obvious implications to a UTXO-specific non-fungible token.
    parties. With this functionality, depositors wouldn't necessarily need to
    monitor the Bitcoin blockchain.
 
-// TODO can a deposit be challenged if its proof is re-orged? it appears there's
-// no need, but the fungible TBTC vending machine will need to be smart with
-// deposits
-
-
 == Minting fungible TBTC
 
 Once a deposit has accumulated enough work, it is eligible to be traded for
@@ -76,9 +107,10 @@ The TBTC vending machine is a contract on the host chain that is responsible
 for minting TBTC.
 
 Any TDT representing a qualified deposit can be exchanged. Qualified deposits
-are determined by the accumulated work of their proofs. In tBTC v1, deposits are qualified by a fixed work
-requirement proven via an <<appendix/spv/index.adoc#spv,SPV proof>>, set at
-{tx-proof-difficulty-factor} of accumulated work.
+are determined by the accumulated work of their proofs. In tBTC v1, deposits are
+qualified by a fixed work requirement proven via an
+<<appendix/spv/index.adoc#spv,SPV proof>>, set at {tx-proof-difficulty-factor}
+of accumulated work.
 
 A TDT representing a qualified deposit is also eligible for minting fungible
 TBTC. Minting TBTC is optional; depositors can stick with their TDTs, which
@@ -86,11 +118,12 @@ will be valid for the lifetime of a maintained deposit. Note that if a holder
 of the TDT wants to make a transaction with a different value than the lot
 size, they must mint TBTC, since the tBTC Deposit Token itself is non fungible.
 
-The holder of a qualified TDT may exchange that TDT for a newly minted
-{tbtc-lot-size}, less the requisite {signer-fee} signing fee. To reflect the
-reduced guarantee of the TDT holder's interest in redeeming the specific
-deposit, the signing fee is sent to the deposit to be held in escrow at the
-time of TBTC minting.
+The holder of a qualified TDT may exchange that TDT for newly minted TBTC
+equivalent to the deposit's lot size (for example, {tbtc-lot-size}), less the
+requisite signing fee (for example, {signer-fee}). To reflect the reduced
+guarantee of the TDT holder's interest in redeeming the specific deposit, the
+signing fee is sent to the deposit to be held in escrow at the time of TBTC
+minting.
 
 By exchanging and escrowing, the TDT holder waives their right to exclusive
 redemption. As such, they also receive a non-fungible _Fee Rebate Token_, or
@@ -105,14 +138,16 @@ the vending machine remains valid.
 
 === Trading TBTC for tBTC Deposit Tokens
 
-Any TDT held by the vending machine can be obtained for 1 TBTC. The vending
-machine MUST burn any TBTC it receives, in any case where it can receive TBTC.
+Any TDT held by the vending machine can be obtained for its lot size in TBTC (in
+the above instance, the deposit could be obtained for {tbtc-lot-size}). The
+vending machine MUST burn any TBTC it receives, in any case where it can receive
+TBTC.
 
 This mechanic has the effect of allowing "unlocked" deposits to be "locked"
 in advance for later redemption. In fact, TBTC minting is simply a special case
 of locking: a TDT used to mint TBTC is locked to the vending machine, which
 provides a straightforward way to transfer it to another account for the cost of
-1 TBTC.
+the lot size in TBTC.
 
 Burning all received TBTC allows for maintaining the supply peg not only when
 deposit ownership is transferred away from the vending machine, but also when
