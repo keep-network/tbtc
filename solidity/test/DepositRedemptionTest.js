@@ -916,16 +916,17 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {
+    it("correctly increases fee, approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.increaseRedemptionFee(
         previousOutputBytes,
         newOutputBytes,
       )
-
       const requestInfo = await testDeposit.getRequestInfo.call()
       expect(requestInfo[4]).to.equal(nextSighash)
 
+      const updatedFee = await testDeposit.getLatestRedemptionFee.call()
+      expect(updatedFee).to.eq.BN(new BN(initialFee).mul(new BN(2)))
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents(
         "RedemptionRequested",
