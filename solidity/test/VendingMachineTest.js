@@ -381,7 +381,6 @@ describe("VendingMachine", async function() {
         testDeposit.address,
         "0x1111111100000000",
         redeemerOutputScript,
-        owner,
         {from: owner},
       )
       const requestInfo = await testDeposit.getRequestInfo()
@@ -410,7 +409,6 @@ describe("VendingMachine", async function() {
           testDeposit.address,
           "0x1111111100000000",
           redeemerOutputScript,
-          owner,
         ),
         "SafeMath: subtraction overflow.",
       )
@@ -440,7 +438,6 @@ describe("VendingMachine", async function() {
           testDeposit.address,
           "0x1111111100000000",
           redeemerOutputScript,
-          owner,
         ])
 
         await tbtcToken.approveAndCall(
@@ -473,7 +470,6 @@ describe("VendingMachine", async function() {
           testDeposit.address,
           "0x1111111100000000",
           redeemerOutputScript,
-          owner,
         ])
 
         const success = await tbtcToken.approveAndCall.call(
@@ -497,7 +493,6 @@ describe("VendingMachine", async function() {
           nonexistentDeposit,
           "0x1111111100000000",
           redeemerOutputScript,
-          owner,
         ])
 
         await expectRevert(
