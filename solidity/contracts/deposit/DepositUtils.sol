@@ -447,7 +447,7 @@ library DepositUtils {
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
         // The TDT owner only ever owes fee adjustments.
-        return computeRedemptionFeeAdjustments(_d, _redeemer);
+        return computeRedemptionFeeAdjustment(_d, _redeemer);
     }
 
     /// @notice             Get TBTC amount required for redemption by a specified _redeemer.
@@ -462,7 +462,7 @@ library DepositUtils {
         require(redeemerHoldsTdt || inCourtesy || atTerm, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
 
         uint256 mainCharge = computeBaseRedemptionCharge(_d, redeemerHoldsTdt);
-        return mainCharge.add(computeRedemptionFeeAdjustments(_d, _redeemer));
+        return mainCharge.add(computeRedemptionFeeAdjustment(_d, _redeemer));
     }
 
     /// @notice                    Get the base TBTC amount needed to redeem.
@@ -481,53 +481,41 @@ library DepositUtils {
     /// @notice             Get fees owed for redemption by a specified _redeemer.
     /// @param _redeemer    The deposit redeemer.
     /// @return             The fees owed in TBTC.
-    function computeRedemptionFeeAdjustments(DepositUtils.Deposit storage _d, address _redeemer) internal view returns (uint256) {
+    function computeRedemptionFeeAdjustment(DepositUtils.Deposit storage _d, address _redeemer) internal view returns (uint256) {
         bool inCourtesy = _d.inCourtesyCall();
         bool atTerm = remainingTerm(_d) == 0;
-        bool redeemerOwesNoFee = inCourtesy || atTerm;
+        bool preterm = !atTerm && !inCourtesy;
         bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
         bool frtExists = feeRebateTokenHolder(_d) != address(0);
+        bool redeemerHoldsTdt = depositOwner(_d) == _redeemer;
 
-        uint256 frtAdjustment = computeFrtAdjustment(_d, redeemerOwesNoFee, redeemerHoldsFrt, frtExists);
-        uint256 signerFeeAdjustment = computeSignerFeeAdjustment(_d, frtExists);
-        if(depositOwner(_d) != _redeemer){
-            return 0;
-        }
-        return frtAdjustment.add(signerFeeAdjustment);
+        return computeSignerFee(_d, preterm, redeemerHoldsFrt, !redeemerHoldsTdt, frtExists);
     }
 
-    /// @notice                    Get the fee rebate amount needed to redeem.
-    /// @param _redeemerOwesNoFee  True if Deposit is at term or in courtesy call.
-    /// @param _redeemerHoldsFrt   True if the redeemer is the FRT holder.
-    /// @param _frtExists          True if the FRT exists.
-    /// @return                    The amount in TBTC.
-    function computeFrtAdjustment(
+    /// @notice  Get fees owed for redemption
+    /// @param _preTerm              True if the Deposit is not at-term and not in courtesy_call.
+    /// @param _redeemerHoldsFrt     True if the redeemer holds the FRT.
+    /// @param _redeemerIsThirdParty True if the redeemer is not the TDT owner.
+    /// @param _frtExists            True if the FRT exists.
+    /// @return                      The fees owed in TBTC.
+    function computeSignerFee(
         DepositUtils.Deposit storage _d,
-        bool _redeemerOwesNoFee,
+        bool _preTerm,
         bool _redeemerHoldsFrt,
+        bool _redeemerIsThirdParty,
         bool _frtExists
-    ) internal view returns (uint256){
-        if(
-            _redeemerOwesNoFee ||
-            _redeemerHoldsFrt ||
-            !_frtExists
-        ){
-            return 0;
+    ) internal view returns (uint256) {
+        bool signerFeeNotOwed;
+        if (_preTerm) {
+            signerFeeNotOwed = _redeemerHoldsFrt;
+        } else {
+            signerFeeNotOwed = _frtExists || _redeemerIsThirdParty;
         }
 
-        return signerFee(_d);
-    }
-
-    /// @notice                   Get the signer fee amount needed to redeem.
-    /// @param _frtExists         True if the FRT exists.
-    /// @return                   The amount in TBTC.
-    function computeSignerFeeAdjustment(
-        DepositUtils.Deposit storage _d,
-        bool _frtExists
-    ) internal view returns (uint256){
-        if(_frtExists){
+        if (signerFeeNotOwed) {
             return 0;
+        } else {
+            return signerFee(_d);
         }
-        return signerFee(_d);
     }
 }
