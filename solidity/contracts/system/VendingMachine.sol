@@ -181,12 +181,10 @@ contract VendingMachine is TBTCSystemAuthority{
     /// @param  _depositAddress     The address of the Deposit to redeem.
     /// @param  _outputValueBytes   The 8-byte Bitcoin transaction output size in Little Endian.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
-    /// @param  _finalRecipient     The deposit redeemer. This address will receive the TDT.
     function tbtcToBtc(
         address payable _depositAddress,
         bytes8 _outputValueBytes,
-        bytes memory _redeemerOutputScript,
-        address payable _finalRecipient
+        bytes memory _redeemerOutputScript
     ) public {
         require(tbtcDepositToken.exists(uint256(_depositAddress)), "tBTC Deposit Token does not exist");
         Deposit _d = Deposit(_depositAddress);
@@ -201,6 +199,6 @@ contract VendingMachine is TBTCSystemAuthority{
             tbtcToken.approve(_depositAddress, tbtcOwed);
         }
 
-        _d.transferAndRequestRedemption(_outputValueBytes, _redeemerOutputScript, _finalRecipient);
+        _d.transferAndRequestRedemption(_outputValueBytes, _redeemerOutputScript, msg.sender);
     }
 }
