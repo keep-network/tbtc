@@ -1114,6 +1114,23 @@ describe("DepositRedemption", async function() {
         "Tx merkle proof is not valid for provided header",
       )
     })
+
+    it("reverts if a higher fee is sent", async () => {
+      const currentFee = await testDeposit.getLatestRedemptionFee.call()
+      await testDeposit.setLatestRedemptionFee(currentFee.sub(new BN(1)))
+      await expectRevert(
+        testDeposit.provideRedemptionProof(
+          fundingTx.version,
+          fundingTx.txInputVector,
+          fundingTx.txOutputVector,
+          fundingTx.txLocktime,
+          fundingTx.merkleProof,
+          fundingTx.txIndexInBlock,
+          fundingTx.bitcoinHeaders,
+        ),
+        "Incorrect fee amount",
+      )
+    })
   })
 
   describe("redemptionTransactionChecks", async () => {
