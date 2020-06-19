@@ -243,8 +243,10 @@ library DepositFunding {
         _d.utxoOutpoint = _utxoOutpoint;
         _d.fundedAt = block.timestamp;
 
+        bytes32 _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+
         fundingTeardown(_d);
         _d.setActive();
-        _d.logFunded();
+        _d.logFunded(_txid);
     }
 }
