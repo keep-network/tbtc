@@ -437,8 +437,10 @@ library DepositUtils {
     /// @param  _ethValue   The amount of ether to send.
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        _keep.returnPartialSignerBonds.value(_ethValue)();
+        if(_ethValue > 0){
+            IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
+            _keep.returnPartialSignerBonds.value(_ethValue)();
+        }
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
