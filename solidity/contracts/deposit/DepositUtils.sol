@@ -446,30 +446,74 @@ library DepositUtils {
     /// @param _redeemer    The assumed owner of the deposit's TDT.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
-        uint256 fee = signerFee(_d);
-        bool inCourtesy = _d.inCourtesyCall();
-        if(remainingTerm(_d) > 0 && !inCourtesy){
-            if(feeRebateTokenHolder(_d) != _redeemer) {
-                return fee;
-            }
-        }
-        uint256 contractTbtcBalance = _d.tbtcToken.balanceOf(address(this));
-        if(contractTbtcBalance < fee) {
-            return fee.sub(contractTbtcBalance);
-        }
-        return 0;
+        // The TDT owner only ever owes fee adjustments.
+        return computeRedemptionFeeAdjustment(_d, _redeemer);
     }
 
-    /// @notice             Get TBTC amount required by redemption by a specified _redeemer.
+    /// @notice             Get TBTC amount required for redemption by a specified _redeemer.
     /// @dev                Will revert if redemption is not possible by msg.sender.
     /// @param _redeemer    The deposit redeemer.
     /// @return             The amount in TBTC needed to redeem the deposit.
     function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
+        bool redeemerHoldsTdt = depositOwner(_d) == _redeemer;
         bool inCourtesy = _d.inCourtesyCall();
-        if (depositOwner(_d) == _redeemer && !inCourtesy) {
-            return getOwnerRedemptionTbtcRequirement(_d, _redeemer);
+        bool atTerm = remainingTerm(_d) == 0;
+
+        require(redeemerHoldsTdt || inCourtesy || atTerm, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
+
+        uint256 mainCharge = computeBaseRedemptionCharge(_d, redeemerHoldsTdt);
+        return mainCharge.add(computeRedemptionFeeAdjustment(_d, _redeemer));
+    }
+
+    /// @notice                    Get the base TBTC amount needed to redeem.
+    /// @param _redeemerHoldsTdt   True if the redeemer is the TDT holder.
+    /// @return                    The amount in TBTC.
+    function computeBaseRedemptionCharge(
+        DepositUtils.Deposit storage _d,
+        bool _redeemerHoldsTdt
+    ) internal view returns (uint256){
+        if (_redeemerHoldsTdt) {
+            return 0;
         }
-        require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
         return lotSizeTbtc(_d);
+    }
+
+    /// @notice             Get fees owed for redemption by a specified _redeemer.
+    /// @param _redeemer    The deposit redeemer.
+    /// @return             The fees owed in TBTC.
+    function computeRedemptionFeeAdjustment(DepositUtils.Deposit storage _d, address _redeemer) internal view returns (uint256) {
+        bool preTerm = remainingTerm(_d) != 0 && !_d.inCourtesyCall();
+        bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
+        bool frtExists = feeRebateTokenHolder(_d) != address(0);
+        bool redeemerHoldsTdt = depositOwner(_d) == _redeemer;
+
+        return computeSignerFee(_d, preTerm, redeemerHoldsFrt, !redeemerHoldsTdt, frtExists);
+    }
+
+    /// @notice  Get fees owed for redemption
+    /// @param _preTerm              True if the Deposit is not at-term and not in courtesy_call.
+    /// @param _redeemerHoldsFrt     True if the redeemer holds the FRT.
+    /// @param _redeemerIsThirdParty True if the redeemer is not the TDT owner.
+    /// @param _frtExists            True if the FRT exists.
+    /// @return                      The fees owed in TBTC.
+    function computeSignerFee(
+        DepositUtils.Deposit storage _d,
+        bool _preTerm,
+        bool _redeemerHoldsFrt,
+        bool _redeemerIsThirdParty,
+        bool _frtExists
+    ) internal view returns (uint256) {
+        bool redeemerOwesNoFee;
+        if (_preTerm) {
+            redeemerOwesNoFee = _redeemerHoldsFrt;
+        } else {
+            redeemerOwesNoFee = _frtExists || _redeemerIsThirdParty;
+        }
+
+        if (redeemerOwesNoFee) {
+            return 0;
+        } else {
+            return signerFee(_d);
+        }
     }
 }
