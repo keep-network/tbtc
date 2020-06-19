@@ -586,6 +586,10 @@ describe("DepositFunding", async function() {
         toBlock: "latest",
       })
       expect(eventList.length).to.equal(1)
+      expect(
+        eventList[0].returnValues._txid,
+        "Incorrect logged TX ID",
+      ).to.equal(fundingTx.txidLE)
     })
 
     it("reverts if not awaiting funding proof", async () => {
