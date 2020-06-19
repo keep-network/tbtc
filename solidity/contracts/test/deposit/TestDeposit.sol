@@ -163,6 +163,10 @@ contract TestDeposit is Deposit {
         self.latestRedemptionFee = _latestRedemptionFee;
     }
 
+    function getLatestRedemptionFee() public returns (uint256) {
+        return self.latestRedemptionFee;
+    }
+
     function setRedeemerAddress(
         address payable _redeemerAddress
     ) public {
