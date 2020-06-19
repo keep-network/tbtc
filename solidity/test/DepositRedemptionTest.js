@@ -169,7 +169,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(new BN(0))
     })
 
-    it("returns full TBTC if we are pre term and we are at COURTESY_CALL - not TDT owner", async () => {
+    it("returns full TBTC if we are pre term and we are at COURTESY_CALL - not TDT holder", async () => {
       await testDeposit.setState(states.COURTESY_CALL)
 
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
@@ -178,7 +178,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(depositValue)
     })
 
-    it("returns zero if we are pre term and we are at COURTESY_CALL - tdt owner", async () => {
+    it("returns zero if we are pre term and we are at COURTESY_CALL - TDT holder", async () => {
       await testDeposit.setState(states.COURTESY_CALL)
 
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
