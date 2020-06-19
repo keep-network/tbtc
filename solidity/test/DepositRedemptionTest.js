@@ -916,7 +916,51 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("correctly increases fee, approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {
+    it("correctly increases fee", async () => {
+      const outputBytes = [
+        "0x0000ffffffffffff",
+        "0x0100feffffffffff",
+        "0x0200fdffffffffff",
+      ]
+      const sigHashes = [
+        "0xd94b6f3bf19147cc3305ef202d6bd64f9b9a12d4d19cc2d8c7f93ef58fc8fffe",
+        "0xbb56d80cfd71e90215c6b5200c0605b7b80689d3479187bc2c232e756033a560",
+      ]
+      const increment = 0xffff
+
+      for (let i = 0; i < sigHashes.length; i++) {
+        const block = await web3.eth.getBlock("latest")
+        const blockTimestamp = block.timestamp
+        withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
+        await testDeposit.setDigestApprovedAtTime(
+          sigHashes[i],
+          withdrawalRequestTime,
+        )
+
+        await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
+        await testDeposit.setRequestInfo(
+          ZERO_ADDRESS,
+          redeemerOutputScript,
+          initialFee,
+          block.timestamp - feeIncreaseTimer.toNumber(),
+          sigHashes[i],
+        )
+
+        await testDeposit.increaseRedemptionFee(
+          outputBytes[i],
+          outputBytes[i + 1],
+        )
+
+        await increaseTime(feeIncreaseTimer)
+
+        const updatedFee = await testDeposit.getLatestRedemptionFee.call()
+        expect(updatedFee).to.eq.BN(
+          new BN(increment).mul(new BN(2).add(new BN(i))),
+        )
+      }
+    })
+
+    it("approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.increaseRedemptionFee(
         previousOutputBytes,
@@ -925,8 +969,6 @@ describe("DepositRedemption", async function() {
       const requestInfo = await testDeposit.getRequestInfo.call()
       expect(requestInfo[4]).to.equal(nextSighash)
 
-      const updatedFee = await testDeposit.getLatestRedemptionFee.call()
-      expect(updatedFee).to.eq.BN(new BN(initialFee).mul(new BN(2)))
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents(
         "RedemptionRequested",
