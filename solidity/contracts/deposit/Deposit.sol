@@ -161,6 +161,10 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _redeemerOutputScript,
         address payable _finalRecipient
     ) public {
+        require(
+            msg.sender == self.vendingMachineAddress,
+            "Only the vending machine can call transferAndRequestRedemption"
+        );
         self.transferAndRequestRedemption(
             _outputValueBytes,
             _redeemerOutputScript,

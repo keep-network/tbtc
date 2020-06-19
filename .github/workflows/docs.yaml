@@ -1,0 +1,77 @@
+name: Build docs
+  
+on:
+  push:
+    branches: [ master ]
+    paths:
+    - '**.adoc'
+  pull_request:
+    branches: [ master ]
+    paths:
+    - '**.adoc'
+
+jobs:
+  HTML:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build HTML docs
+      id: html
+      uses: thesis/asciidoctor-action@v1
+      with:
+        files: 'docs/*.adoc docs/**/*.adoc'
+        args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
+    # A push event is a master merge; deploy to primary bucket.
+    - if: github.event_name == 'push'
+      name: Upload asciidocs
+      uses: thesis/gcp-storage-bucket-action@v3.1.0
+      with:
+        service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+        project: cfc-production
+        bucket-name: docs.keep.network
+        bucket-path: tbtc
+        build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+    # A pull_request event is a PR; deploy to preview bucket.
+    - if: github.event_name == 'pull_request'
+      name: Upload asciidocs preview
+      uses: thesis/gcp-storage-bucket-action@v3.1.0
+      with:
+        service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+        project: cfc-production
+        bucket-name: docs.keep.network
+        bucket-path: tbtc/${{ github.head_ref }}
+        build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+
+  PDF:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build HTML docs
+      id: html
+      uses: thesis/asciidoctor-action@v1
+      with:
+        files: 'docs/*.adoc docs/**/*.adoc'
+        format: pdf
+        args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
+    # A push event is a master merge; deploy to primary bucket.
+    - if: github.event_name == 'push'
+      name: Upload asciidocs
+      uses: thesis/gcp-storage-bucket-action@v3.1.0
+      with:
+        service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+        project: cfc-production
+        bucket-name: docs.keep.network
+        bucket-path: tbtc
+        build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+    # A pull_request event is a PR; deploy to preview bucket.
+    - if: github.event_name == 'pull_request'
+      name: Upload asciidocs preview
+      uses: thesis/gcp-storage-bucket-action@v3.1.0
+      with:
+        service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+        project: cfc-production
+        bucket-name: docs.keep.network
+        bucket-path: tbtc/${{ github.head_ref }}
+        build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs

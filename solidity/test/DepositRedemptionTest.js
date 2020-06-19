@@ -733,6 +733,81 @@ describe("DepositRedemption", async function() {
     })
   })
 
+  describe("transferAndRequestRedemption", async () => {
+    const sighash =
+      "0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90"
+    const outpoint = "0x" + "33".repeat(36)
+    const valueBytes = "0x1111111111111111"
+    const keepPubkeyX = "0x" + "33".repeat(32)
+    const keepPubkeyY = "0x" + "44".repeat(32)
+    // Override redeemer output script for this test.
+    // No real reason here, it's just how we derived the below values.
+    const redeemerOutputScript = "0x160014" + "33".repeat(20)
+    let requiredBalance
+
+    before(async () => {
+      requiredBalance = depositValue
+    })
+
+    beforeEach(async () => {
+      await createSnapshot()
+      await testDeposit.setState(states.ACTIVE)
+      await testDeposit.setUTXOInfo(valueBytes, 0, outpoint)
+
+      // make sure there is sufficient balance to request redemption. Then approve deposit
+      await tbtcToken.resetBalance(requiredBalance, {from: owner})
+      await tbtcToken.resetAllowance(testDeposit.address, requiredBalance, {
+        from: owner,
+      })
+      await tbtcDepositToken.approve(testDeposit.address, tdtId, {
+        from: owner,
+      })
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("updates state successfully and fires a RedemptionRequested event", async () => {
+      await testDeposit.setVendingMachineAddress(owner)
+      const blockNumber = await web3.eth.getBlockNumber()
+
+      await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+
+      // the fee is 2.86331153 BTC
+      await testDeposit.transferAndRequestRedemption(
+        "0x1111111100000000",
+        redeemerOutputScript,
+        owner,
+        {from: owner},
+      )
+      const tdtOwner = await tbtcDepositToken.ownerOf(tdtId)
+      const requestInfo = await testDeposit.getRequestInfo()
+
+      expect(requestInfo[1]).to.equal(redeemerOutputScript)
+      expect(requestInfo[3]).to.not.equal(0) // withdrawalRequestTime is set
+      expect(requestInfo[4]).to.equal(sighash)
+      expect(tdtOwner).to.equal(owner)
+      // fired an event
+      const eventList = await tbtcSystemStub.getPastEvents(
+        "RedemptionRequested",
+        {fromBlock: blockNumber, toBlock: "latest"},
+      )
+      expect(eventList[0].returnValues._digest).to.equal(sighash)
+    })
+    it("fails if the caller is not the Vending Machine", async () => {
+      await expectRevert(
+        testDeposit.transferAndRequestRedemption(
+          "0x1111111100000000",
+          redeemerOutputScript,
+          owner,
+          {from: owner},
+        ),
+        "Only the vending machine can call transferAndRequestRedemption",
+      )
+    })
+  })
+
   describe("approveDigest", async () => {
     beforeEach(async () => {
       await testDeposit.setSigningGroupPublicKey("0x00", "0x00")
@@ -900,13 +975,56 @@ describe("DepositRedemption", async function() {
       )
     })
 
+    it("correctly increases fee", async () => {
+      const outputBytes = [
+        "0x0000ffffffffffff",
+        "0x0100feffffffffff",
+        "0x0200fdffffffffff",
+      ]
+      const sigHashes = [
+        "0xd94b6f3bf19147cc3305ef202d6bd64f9b9a12d4d19cc2d8c7f93ef58fc8fffe",
+        "0xbb56d80cfd71e90215c6b5200c0605b7b80689d3479187bc2c232e756033a560",
+      ]
+      const increment = 0xffff
+
+      for (let i = 0; i < sigHashes.length; i++) {
+        const block = await web3.eth.getBlock("latest")
+        const blockTimestamp = block.timestamp
+        withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
+        await testDeposit.setDigestApprovedAtTime(
+          sigHashes[i],
+          withdrawalRequestTime,
+        )
+
+        await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
+        await testDeposit.setRequestInfo(
+          ZERO_ADDRESS,
+          redeemerOutputScript,
+          initialFee,
+          block.timestamp - feeIncreaseTimer.toNumber(),
+          sigHashes[i],
+        )
+
+        await testDeposit.increaseRedemptionFee(
+          outputBytes[i],
+          outputBytes[i + 1],
+        )
+
+        await increaseTime(feeIncreaseTimer)
+
+        const updatedFee = await testDeposit.getLatestRedemptionFee.call()
+        expect(updatedFee).to.eq.BN(
+          new BN(increment).mul(new BN(2).add(new BN(i))),
+        )
+      }
+    })
+
     it("approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.increaseRedemptionFee(
         previousOutputBytes,
         newOutputBytes,
       )
-
       const requestInfo = await testDeposit.getRequestInfo.call()
       expect(requestInfo[4]).to.equal(nextSighash)
 
@@ -1053,6 +1171,23 @@ describe("DepositRedemption", async function() {
           fundingTx.bitcoinHeaders,
         ),
         "Tx merkle proof is not valid for provided header",
+      )
+    })
+
+    it("reverts if a higher fee is sent", async () => {
+      const currentFee = await testDeposit.getLatestRedemptionFee.call()
+      await testDeposit.setLatestRedemptionFee(currentFee.sub(new BN(1)))
+      await expectRevert(
+        testDeposit.provideRedemptionProof(
+          fundingTx.version,
+          fundingTx.txInputVector,
+          fundingTx.txOutputVector,
+          fundingTx.txLocktime,
+          fundingTx.merkleProof,
+          fundingTx.txIndexInBlock,
+          fundingTx.bitcoinHeaders,
+        ),
+        "Incorrect fee amount",
       )
     })
   })
