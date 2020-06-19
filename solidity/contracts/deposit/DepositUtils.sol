@@ -472,10 +472,4 @@ library DepositUtils {
         require(remainingTerm(_d) == 0 || inCourtesy, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
         return lotSizeTbtc(_d);
     }
-
-    /// @notice Returns information associated with the funding UXTO.
-    /// @return A tuple of (uxtoSizeBytes, fundedAt, uxtoOutpoint)
-    function fundingInfo(Deposit storage _d) public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
-        return (_d.utxoValueBytes, _d.fundedAt, _d.utxoOutpoint);
-    }
 }

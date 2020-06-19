@@ -104,7 +104,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @notice Returns information associated with the funding UXTO.
     /// @return A tuple of (uxtoValueBytes, fundedAt, uxtoOutpoint).
     function fundingInfo() public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
-        return self.fundingInfo();
+        return (self.utxoValueBytes, self.fundedAt, self.utxoOutpoint);
     }
 
     // THIS IS THE INIT FUNCTION
