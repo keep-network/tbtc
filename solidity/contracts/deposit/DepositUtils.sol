@@ -482,14 +482,12 @@ library DepositUtils {
     /// @param _redeemer    The deposit redeemer.
     /// @return             The fees owed in TBTC.
     function computeRedemptionFeeAdjustment(DepositUtils.Deposit storage _d, address _redeemer) internal view returns (uint256) {
-        bool inCourtesy = _d.inCourtesyCall();
-        bool atTerm = remainingTerm(_d) == 0;
-        bool preterm = !atTerm && !inCourtesy;
+        bool preTerm = remainingTerm(_d) != 0 && !_d.inCourtesyCall();
         bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
         bool frtExists = feeRebateTokenHolder(_d) != address(0);
         bool redeemerHoldsTdt = depositOwner(_d) == _redeemer;
 
-        return computeSignerFee(_d, preterm, redeemerHoldsFrt, !redeemerHoldsTdt, frtExists);
+        return computeSignerFee(_d, preTerm, redeemerHoldsFrt, !redeemerHoldsTdt, frtExists);
     }
 
     /// @notice  Get fees owed for redemption
@@ -505,14 +503,14 @@ library DepositUtils {
         bool _redeemerIsThirdParty,
         bool _frtExists
     ) internal view returns (uint256) {
-        bool signerFeeNotOwed;
+        bool redeemerOwesNoFee;
         if (_preTerm) {
-            signerFeeNotOwed = _redeemerHoldsFrt;
+            redeemerOwesNoFee = _redeemerHoldsFrt;
         } else {
-            signerFeeNotOwed = _frtExists || _redeemerIsThirdParty;
+            redeemerOwesNoFee = _frtExists || _redeemerIsThirdParty;
         }
 
-        if (signerFeeNotOwed) {
+        if (redeemerOwesNoFee) {
             return 0;
         } else {
             return signerFee(_d);
