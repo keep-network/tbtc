@@ -23,15 +23,15 @@ spec:
 
       initContainers:
         - name: initcontainer-provision-relay-maintainer
-          image: gcr.io/keep-test-f3e0/initcontainer-provision-relay-maintainer:set-infura-project-id
+          image: gcr.io/keep-test-f3e0/initcontainer-provision-relay-maintainer:latest
           imagePullPolicy: Always
           env:
 
             - name: ETH_RPC_URL
               valueFrom:
-                configMapKeyRef:
+                secretKeyRef:
                   name: eth-network-ropsten
-                  key: rpc-url
+                  key: infura-rpc-url
 
             - name: ETH_NETWORK_ID
               valueFrom:
@@ -43,7 +43,7 @@ spec:
               value: ropsten
 
             - name: INFURA_PROJECT_ID
-              value: 59fb36a36fa4474b890c13dd30038be5
+              value: 414a548bc7434bbfb7a135b694b15aa4
 
             - name: RELAY_MAINTAINER_ETH_ACCOUNT_ADDRESS
               valueFrom:
@@ -82,7 +82,7 @@ spec:
                   key: http-api-key
 
             - name: RELAY_CONTRACT_ADDRESS
-              value: '0xfb8476462BFf9B4455CDB382dB0187c77D89618E'
+              value: '0x91C4b8A630434f150875a24051Bbae8CD56A0827'
 
           volumeMounts:
             - name: relay-maintainer-env
