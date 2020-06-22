@@ -102,8 +102,18 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     /// @notice Returns information associated with the funding UXTO.
+    /// @dev This call will revert if the deposit is not in a state where the
+    ///      funding info should be valid. In particular, before funding proof
+    ///      is successfully submitted (i.e. in states START,
+    ///      AWAITING_SIGNER_SETUP, and AWAITING_BTC_FUNDING_PROOF), none of
+    ///      these values are set or valid.
     /// @return A tuple of (uxtoValueBytes, fundedAt, uxtoOutpoint).
     function fundingInfo() public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
+        require(
+            ! self.inFunding(),
+            "Deposit has not yet been funded and has no available funding info"
+        );
+
         return (self.utxoValueBytes, self.fundedAt, self.utxoOutpoint);
     }
 
