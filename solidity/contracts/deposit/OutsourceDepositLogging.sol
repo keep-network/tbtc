@@ -104,9 +104,9 @@ library OutsourceDepositLogging {
 
     /// @notice     Fires a Funded event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
-    function logFunded(DepositUtils.Deposit storage _d) external {
+    function logFunded(DepositUtils.Deposit storage _d, bytes32 _txid) external {
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
-        _logger.logFunded();
+        _logger.logFunded(_txid);
     }
 
     /// @notice     Fires a CourtesyCalled event.

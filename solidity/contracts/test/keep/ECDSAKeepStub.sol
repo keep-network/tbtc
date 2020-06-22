@@ -92,4 +92,8 @@ contract ECDSAKeepStub is IBondedECDSAKeep {
         require(msg.value > 0, "value must be greater than 0");
         _depositAddress.transfer(msg.value);
     }
+
+    function drain() public {
+        address(0).transfer(address(this).balance);
+    }
 }

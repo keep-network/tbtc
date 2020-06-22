@@ -63,6 +63,7 @@ library DepositFunding {
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
         _d.keepSetupFee = _d.tbtcSystem.getNewDepositFeeEstimate();
+
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
             _m,
@@ -70,6 +71,8 @@ library DepositFunding {
             _bondRequirementWei,
             TBTCConstants.getDepositTerm()
         );
+
+        require(_d.fetchBondAmount() >= _d.keepSetupFee, "Insufficient signer bonds to cover setup fee");
 
         _d.signerFeeDivisor = _d.tbtcSystem.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _d.tbtcSystem.getUndercollateralizedThresholdPercent();
@@ -93,9 +96,11 @@ library DepositFunding {
         // refund the deposit owner the cost to create a new Deposit at the time the Deposit was opened.
         uint256 _seized = _d.seizeSignerBonds();
 
-        /* solium-disable-next-line security/no-send */
-        _d.enableWithdrawal(_d.depositOwner(), _d.keepSetupFee);
-        _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
+        if(_seized >= _d.keepSetupFee){
+            /* solium-disable-next-line security/no-send */
+            _d.enableWithdrawal(_d.depositOwner(), _d.keepSetupFee);
+            _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
+        }
 
         _d.setFailedSetup();
         _d.logSetupFailed();
@@ -243,8 +248,10 @@ library DepositFunding {
         _d.utxoOutpoint = _utxoOutpoint;
         _d.fundedAt = block.timestamp;
 
+        bytes32 _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+
         fundingTeardown(_d);
         _d.setActive();
-        _d.logFunded();
+        _d.logFunded(_txid);
     }
 }

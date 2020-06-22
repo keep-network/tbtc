@@ -18,7 +18,6 @@ const TestDepositUtilsSPV = contract.fromArtifact("TestDepositUtilsSPV")
 
 describe("DepositUtils", async function() {
   let beneficiary
-  const funderBondAmount = new BN("10").pow(new BN("5"))
   const fullBtc = 100000000
   let tbtcConstants
   let mockRelay
@@ -51,6 +50,12 @@ describe("DepositUtils", async function() {
       web3.utils.toBN(testDeposit.address),
     )
 
+    const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+    await ecdsaKeepStub.send(depositFee)
+    await ecdsaKeepStub.setBondAmount(depositFee)
+    await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
+
     await testDeposit.createNewDeposit(
       tbtcSystemStub.address,
       tbtcToken.address,
@@ -60,7 +65,7 @@ describe("DepositUtils", async function() {
       1, // m
       1, // n
       fullBtc,
-      {value: funderBondAmount},
+      {value: depositFee},
     )
   })
 
@@ -299,6 +304,11 @@ describe("DepositUtils", async function() {
         beneficiary,
         web3.utils.toBN(testDeposit.address),
       )
+      const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+      await ecdsaKeepStub.send(depositFee)
+      await ecdsaKeepStub.setBondAmount(depositFee)
+      await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
 
       await testDeposit.createNewDeposit(
         tbtcSystemStub.address,
@@ -309,7 +319,7 @@ describe("DepositUtils", async function() {
         1, // m
         1, // n
         fullBtc,
-        {value: funderBondAmount},
+        {value: depositFee},
       )
 
       await testDeposit.setPubKey(
@@ -561,9 +571,6 @@ describe("DepositUtils", async function() {
 
   describe("fetchBondAmount()", async () => {
     it("calls out to the keep system", async () => {
-      const bondAmount = await testDeposit.fetchBondAmount.call()
-      expect(bondAmount).to.eq.BN(10000)
-
       await ecdsaKeepStub.setBondAmount(44)
       const newBondAmount = await testDeposit.fetchBondAmount.call()
       expect(newBondAmount).to.eq.BN(44)
@@ -636,13 +643,14 @@ describe("DepositUtils", async function() {
 
   describe("seizeSignerBonds()", async () => {
     it("calls out to the keep system and returns the seized amount", async () => {
-      const value = 5000
+      const value = new BN(5000)
+      const currentBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
       await ecdsaKeepStub.send(value, {from: owner})
 
       const seized = await testDeposit.seizeSignerBonds.call()
       await testDeposit.seizeSignerBonds()
 
-      expect(seized).to.eq.BN(value)
+      expect(seized).to.eq.BN(value.add(new BN(currentBalance)))
     })
 
     it("errors if no funds were seized", async () => {

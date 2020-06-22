@@ -116,6 +116,10 @@ contract TestDeposit is Deposit {
         self.keepAddress = _keepAddress;
     }
 
+    function setVendingMachineAddress(address _vendingMachineAddress) public {
+        self.vendingMachineAddress = _vendingMachineAddress;
+    }
+
     function setSigningGroupRequestedAt(uint256 _signingGroupRequestedAt) public {
         self.signingGroupRequestedAt = _signingGroupRequestedAt;
     }
@@ -157,6 +161,10 @@ contract TestDeposit is Deposit {
 
     function setLatestRedemptionFee(uint256 _latestRedemptionFee) public {
         self.latestRedemptionFee = _latestRedemptionFee;
+    }
+
+    function getLatestRedemptionFee() public returns (uint256) {
+        return self.latestRedemptionFee;
     }
 
     function setRedeemerAddress(

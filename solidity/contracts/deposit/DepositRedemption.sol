@@ -229,7 +229,7 @@ library DepositRedemption {
         require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
-        _d.latestRedemptionFee = _newOutputValue;
+        _d.latestRedemptionFee = _d.utxoValue().sub(_newOutputValue);
         // Calculate the next sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
