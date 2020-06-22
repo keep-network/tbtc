@@ -48,14 +48,13 @@ library DepositFunding {
     /// @param _d       Deposit storage pointer.
     /// @param _m       Signing group honesty threshold.
     /// @param _n       Signing group size.
-    /// @return         True if successful, otherwise revert.
     function createNewDeposit(
         DepositUtils.Deposit storage _d,
         uint16 _m,
         uint16 _n,
         uint64 _lotSizeSatoshis
-    ) public returns (bool) {
-        require(_d.tbtcSystem.getAllowNewDeposits(), "Opening new deposits is currently disabled.");
+    ) public {
+        require(_d.tbtcSystem.getAllowNewDeposits(), "New deposits aren't allowed.");
         require(_d.inStart(), "Deposit setup already requested");
         require(_d.tbtcSystem.isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
 
@@ -64,6 +63,7 @@ library DepositFunding {
         uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
         _d.keepSetupFee = _d.tbtcSystem.getNewDepositFeeEstimate();
+
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
             _m,
@@ -71,6 +71,8 @@ library DepositFunding {
             _bondRequirementWei,
             TBTCConstants.getDepositTerm()
         );
+
+        require(_d.fetchBondAmount() >= _d.keepSetupFee, "Insufficient signer bonds to cover setup fee");
 
         _d.signerFeeDivisor = _d.tbtcSystem.getSignerFeeDivisor();
         _d.undercollateralizedThresholdPercent = _d.tbtcSystem.getUndercollateralizedThresholdPercent();
@@ -80,8 +82,6 @@ library DepositFunding {
 
         _d.setAwaitingSignerSetup();
         _d.logCreated(_d.keepAddress);
-
-        return true;
     }
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
@@ -96,9 +96,11 @@ library DepositFunding {
         // refund the deposit owner the cost to create a new Deposit at the time the Deposit was opened.
         uint256 _seized = _d.seizeSignerBonds();
 
-        /* solium-disable-next-line security/no-send */
-        _d.enableWithdrawal(_d.depositOwner(), _d.keepSetupFee);
-        _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
+        if(_seized >= _d.keepSetupFee){
+            /* solium-disable-next-line security/no-send */
+            _d.enableWithdrawal(_d.depositOwner(), _d.keepSetupFee);
+            _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
+        }
 
         _d.setFailedSetup();
         _d.logSetupFailed();
@@ -213,7 +215,6 @@ library DepositFunding {
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block.
     /// @param _txIndexInBlock      Transaction index in the block (0-indexed).
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first.
-    /// @return                     True if no errors are thrown.
     function provideBTCFundingProof(
         DepositUtils.Deposit storage _d,
         bytes4 _txVersion,
@@ -224,7 +225,7 @@ library DepositFunding {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public returns (bool) {
+    ) public {
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
@@ -243,14 +244,14 @@ library DepositFunding {
         );
 
         // Write down the UTXO info and set to active. Congratulations :)
-        _d.utxoSizeBytes = _valueBytes;
+        _d.utxoValueBytes = _valueBytes;
         _d.utxoOutpoint = _utxoOutpoint;
         _d.fundedAt = block.timestamp;
 
+        bytes32 _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+
         fundingTeardown(_d);
         _d.setActive();
-        _d.logFunded();
-
-        return true;
+        _d.logFunded(_txid);
     }
 }

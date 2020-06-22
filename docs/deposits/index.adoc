@@ -12,34 +12,56 @@ endif::tbtc[]
 
 == Overview
 
-tBTC provides a mechanism for creating a token, TBTC, on a non-Bitcoin _host
-chain_ (in tBTC v1, this host chain is Ethereum), that is 1-to-1 backed by
-bitcoin. Parties interested in minting TBTC <<request,request>> that
-the tBTC system provide them with a Bitcoin wallet address. The system
-<<signer-selection,selects a set of _signers_>>, which are tasked with
-generating a private/public keypair and furnishing it to the system. The
-interested party then becomes a _depositor_ by sending bitcoin to the wallet
-(the amount of required bitcoin is discussed separately in the section on
-<<Lots,lots>>). The deposit cannot be maintained for free, as deposits require
-signers to put up an ETH bond to guarantee good behavior (see the section on
-<<Deposit economics>>). To cover these costs, the deposit is paid for by
-signing fees that cover a set _term_ of deposit redemption exclusivity for
-the deposit owner, discussed separately in the section on <<term,terms>>.
+The tBTC system provides a mechanism for creating a token, TBTC, on a
+non-Bitcoin _host chain_ (in tBTC v1, the first host chain is Ethereum), that
+is 1-to-1 backed by bitcoin. Parties interested in minting TBTC
+<<request,request>> that the system provide them with a Bitcoin wallet
+address. The system <<signer-selection,selects a set of _signers_>>, which
+are tasked with generating a private/public keypair and furnishing it to the
+system. The interested party then becomes a _depositor_ by sending bitcoin to
+the wallet (the amount of required bitcoin is discussed separately in the
+section on <<Lots,lots>>). The deposit cannot be maintained for free, as
+deposits require signers to put up an ETH bond to guarantee good behavior
+(see the section on <<Deposit economics,deposit economics>>). To cover these
+costs, the deposit is paid for by signing fees that cover a set _term_ of
+deposit redemption exclusivity for the deposit owner, discussed separately in
+the section on <<term,the deposit term>>.
 
 Each of these steps is shown in the diagram below and discussed in subsequent
 sections.
 
-image::{root-prefix}img/generated/initiate-deposit.png[]
+[mermaid,initiate-deposit,svg,theme=neutral]
+.....
+sequenceDiagram
+   participant btc as Bitcoin
+   participant user as User
+   participant tbtc as tBTC System
+   participant host as Host Chain
+
+   user ->> host: Request Deposit Creation
+   host -->> user: assign deposit owner NFT (TDT)
+   host -->> tbtc: Create Signing Group (event)
+
+   tbtc ->> host: public wallet address
+
+   user ->> btc: send deposit to signing group
+   btc -->> user: mine multiple blocks
+   user ->> host: prove deposit to block
+
+   user ->> host: exchange TDT
+   host -->> tbtc: mint and assign TBTC
+.....
 
 [[request]]
 == Deposit request
 
 The starting point for acquiring TBTC is generating a _deposit request_. This
-request is a transaction to a smart contract on tBTC's host chain.
-signals that the sender requires a signing group backed wallet Because signing
-groups are not free to create, deposit requests include a small bond in the host
-chain's native token to cover the creation of the signing group. The bond is
-refunded when a successful deposit is made to the generated wallet.
+request is a transaction to a smart contract on tBTC's host chain, and
+signals that the sender requires a signing group backed wallet, mediated by a
+_deposit_. Because signing groups have an inherent creation cost, deposit
+requests charge a small payment in the host chain's native token to cover the
+creation of the signing group. This payment can be refunded if the signing
+group fails to generate and publish a public key after a timeout.
 
 [[signer-selection]]
 === Signer selection
@@ -55,32 +77,66 @@ network, described in http://keep.network/whitepaper[its whitepaper]. The Keep
 Random Beacon is described in more detail in the
 http://docs.keep.network/random-beacon/[Keep Random Beacon yellowpaper].]
 
-image::{root-prefix}img/generated/signing-group-creation.png[]
+[mermaid,signing-group-creation,svg,theme=neutral]
+.....
+sequenceDiagram
+   participant user as User
+   participant tbtc as tBTC System
+   participant deposit as Deposit Contract
+   participant keep as ECDSA Keep
+   participant beacon as Keep Random Beacon
+   participant host as Host Chain
+
+   user ->> tbtc: request deposit
+   tbtc ->> deposit: create new deposit
+   deposit ->> keep: request signing group
+   keep -->> deposit: id
+   keep -->> user: id
+   keep ->> beacon: request random seed
+   beacon --x keep: seed (async)
+   keep ->> keep: create signing group
+   keep ->> host: broadcast group public key
+   host -->> user: group public key available (event)
+   user ->> deposit: get deposit address
+   deposit ->> keep: get public key
+   deposit ->> deposit: convert public key to address
+   deposit -->> user: address (event)
+.....
 
 When a request comes in to create a signing group, the tBTC system requests a
 random seed from a secure decentralized random beacon.footnote:[A system is only
 as decentralized as its most centralized component, so the beacon must be
-decentralized to achieve proper decentralization of the tBTC system as a whole.]
-The resulting random seed is used to randomly select signing group members from
-the eligible pool of signers. Finally, these signers coordinate a distributed
-key generation protocol that results in a public ECDSA key for the group, which
-is used to produce a wallet address that is then published to the host chain.
-This completes the signer selection phase.
+decentralized to achieve proper decentralization of the tBTC system as a whole;
+however, note that tBTC is designed to be resilient even if the same entity
+controls all signers in a signing group.] The resulting random seed is used
+to randomly select signing group members from the eligible pool of signers.
+Finally, these signers coordinate a distributed key generation protocol that
+results in a public ECDSA key for the group, which is used to produce a
+wallet address that is then published to the host chain. This completes the
+signer selection phase.
 
 ==== Signer bonding
 
 Before the selected members of a signing group can perform distributed key
-generation, they must agree to become members of the signing group by putting up
-a bond (the _signer bond_) in the native token of the host chain. This bond
-is used to penalize the members of the signing group if an unauthorized piece
-of data is signed by the signing group once distributed key generation is
-complete; it is also used to penalize a given member if the distributed key
-generation fails due to an attributed misbehavior of that member, if the signing
-group fails to produce a signature for the system when requested, and to
-bring the system into balance in cases of undercollateralization.
+generation, they MUST put up a bond (the _signer bond_) in the native token
+of the host chain. This bond is used in a few cases:
 
-Bonding is described in more detail in
-<<bonding/index#bonding,its own section>>.
+- To liquidate deposits in case they are in danger of undercollateralization.
+- To punish a signing group if it signs an unauthorized piece of data is
+  once distributed key generation is complete.
+- To punish a signing group that fails to produce a signature for the system
+  when requested.
+- To ensure a depositor is refunded if the signing group fails to form.
+
+In all but the last case, the seized bond is auctioned for TBTC to compensate
+the deposit owner the amount of their deposit.
+
+The signers must have enough bond available to back a deposit in order to be
+chosen for a signing group, and the bond SHOULD be acquired by the deposit in
+the same transaction that chooses the signers.
+
+Bonding is described in more detail in <<bonding/index#bonding,its own
+section>>.
 
 ==== Distributed key generation
 
@@ -90,6 +146,7 @@ a subset M of the signers can create signatures on behalf of the group. For \
 tBTC v1, signing groups are 3-of-3, meaning they are groups of 3 signers that \
 require all 3 signers to collaborate to create signatures on behalf of the \
 group.]
+
 Some small notes about the distributed key generation a signing group undergoes.
 The distributed key generation protocol should result in three properties:
 
@@ -108,44 +165,49 @@ The distributed key generation protocol should result in three properties:
 [[funding]]
 == Making a deposit
 
-:sufficient-confirmations: footnote:[For tBTC v1, sufficient confirmations means 6 confirmations. Confirmation numbers \
-that are variable, particularly in response to volume of deposits that are \
-opened, are part of the discussion for tBTC v2.]
+:sufficient-confirmations: footnote:[For tBTC v1, sufficient confirmations \
+means 6 confirmations. Confirmation numbers that are variable, particularly \
+in response to volume of deposits that are opened, are part of the discussion \
+for tBTC v2.]
 
 Once the tBTC system has a wallet address available for a given deposit request,
 the _depositor_ can broadcast a Bitcoin transaction sending BTC from a wallet
 they control to the wallet address for the signing group. Once the transaction
 has been sufficiently confirmed{sufficient-confirmations} by the Bitcoin
 chain, the depositor has to issue a transaction to the host chain proving
-that the _Deposit_ has been funded.
+that the _deposit_ has been funded.
 
 The only link between the Bitcoin chain and the host chain is the tBTC system,
 which runs as a set of smart contracts on the host chain. As such, the Bitcoin
 transaction issued by the depositor has to be proven to the tBTC system before
 the tBTC system allows the depositor to behave as if they have successfully
-deposited their BTC into the signer wallet. When a deposit proof is accepted
-by the system, the deposit bond is refunded to the depositor. If a deposit
-proof is not received within a given timeout window, the signing group will
-disband and the system will seize the bond's value, making it available to the
-signing group members to reclaim.
+deposited their BTC into the signer wallet. If the signing group fails to
+provide a public key within a given timeout window (the _signing group formation
+timeout_), the _depositor_ can notify the deposit that this has occurred to
+receive their deposit payment back, taken out of the bonds that the signers put
+up as part of the signing group selection process. If a deposit proof is not
+received within a given timeout window (the _deposit funding timeout_), the
+signing group can notify the deposit that this has occurred to disband the
+group and return the members' bonds.
 
 === Light Relays
 
-To prove a deposit, the depositor submits proof the transaction has been
-confirmed and accumulated work on the Bitcoin chain. The proof is
-verified by an on-chain simple payment verification (SPV) contract on the host
-chain. A more complete overview of cross-chain SPV systems and their security
-properties <<appendix/spv/index#spv,is included in the appendix>>.
+To prove a deposit, the depositor submits proof that the transaction was
+included in a valid Bitcoin block with sufficient subsequent accumulated work.
+The proof is verified by a simple payment verification (SPV) smart contract
+on the host chain. A more complete overview of cross-chain SPV systems and
+their security properties is included in <<appendix/spv/index#spv,the SPV
+appendix>>.
 
 Light relays are a new variant of on-chain SPV developed for tBTC. They seek to
 take advantage of the compact and efficient stateless SPV proofs while relaying
-enough information to provide each stateless proof with some recency guarantee.
-We achieve this by taking advantage of the difficulty adjustment feature of
-Bitcoin's protocol. Bitcoin adjusts difficulty every 2016 blocks, based on
-timestamps of the first and last block in that period (due to an off-by-one
-error in the Satoshi client, one interblock period is excluded from the
-difficulty calculation). The change is deterministic and within some tolerance
-may be set by the miner of the last block.
+enough information to provide each stateless proof with some additional recency
+guarantee. We achieve this by taking advantage of the difficulty adjustment
+feature of Bitcoin's protocol. Bitcoin adjusts difficulty every 2016 blocks,
+based on timestamps of the first and last block in that period (due to an
+off-by-one error in the Satoshi client, one interblock period is excluded from
+the difficulty calculation). The change is deterministic and within some
+tolerance may be set by the miner of the last block.
 
 A light relay does not store every block header. Instead it stores only a slice
 of headers around the difficulty adjustment event and records the difficulty
@@ -156,30 +218,42 @@ the slice, and that the new difficulty conforms to Bitcoin's adjustment
 algorithm. In other words, our light relay tracks only Bitcoin's current
 difficulty, and no other information about its state.
 
-Knowing the current difficulty gives stateless SPV proofs stronger recency
-assurances. Any newly-generated stateless SPV must include that difficulty in
-its header chain. And that difficulty is not known to any party in advance.
-Miners with an `n`-fraction (as usual, `n >= 2` due to the 51% assumption) of
-the hashrate have a `1/n` chance of being allowed to set the difficulty, and
-thus have a `1/n` chance of being able to successfully predict it 2 weeks in
-advance (by generating fake proofs, and then setting the difficulty such that
-they appear valid). Generalized, this is a `1/n^t^` chance of successfully
-predicting difficulty `t` adjustment periods (`2t` weeks) in advance. Therefore
-the use of the light relay provides stronger security properties to stateless
-SPV proofs when used as an additional validation step, as even entities with
-significant mining resources have a greatly reduced chance of creating fake
-proofs.
+Knowing the current difficulty gives basic stateless SPV proofs additional,
+stronger recency assurances. Any newly-generated stateless SPV must include that
+difficulty in its header chain, and that difficulty is not known to any party in
+advance. Miners with an `n`-fraction (as usual, `n >= 2` due to the 51%
+assumption) of the hashrate have a `1/n` chance of being allowed to set the
+difficulty, and thus have a `1/n` chance of being able to successfully predict
+it 2 weeks in advance (by generating fake proofs, and then setting the
+difficulty such that they appear valid). Generalized, this is a `1/n^t^` chance
+of successfully predicting difficulty `t` adjustment periods (`2t` weeks) in
+advance. Therefore the use of the light relay provides stronger security
+properties to stateless SPV proofs when used as an additional validation step,
+as even entities with significant mining resources have a greatly reduced chance
+of creating fake proofs.
 
+[[lots]]
 == Lots
 
-Deposits will be managed in fixed-size _lots_. Each deposit therefore will
-have to be of the same amount: {btc-lot-size}. Thus, a depositor submitting
-their <<Proof of deposit,proof of deposit>> must prove that they deposited
-{btc-lot-size} into the deposit's signing group wallet. If a depositor wants to
-deposit more than the lot size, they will need to create multiple deposit
-requests and fund multiple deposits. This allows each deposit to be backed by
-a different signing group, both simplifying the bonding of signing groups and
-improving the resilience of the system to signing group failure, malicious or not.
+When creating a deposit, the deposit's _lot size_ must be specified. The tBTC
+system supports a governable set of available lot sizes (see the section on
+<<governance/index.adoc#governance,Governance>> for more), guaranteeing only
+that at least 1 BTC lot sizes will be available. v1 will launch with six
+available lot sizes: 0.002 BTC, 0.01 BTC, 0.1 BTC, 0.2 BTC, 0.5 BTC, and 1 BTC.
+Deposit requesters may only create deposits in one of those lot sizes, and the
+lot sizes only allow minting their corresponding amount of TBTC. If a depositor
+wants to deposit more than the maximum lot size the system supports, they will
+need to create multiple deposit requests and fund multiple deposits.
+
+For simplicity's sake, the rest of this spec is written with the assumption that
+deposits of {btc-lot-size} are being opened; however, anything dependent on lot
+size (such as signing fees) will be defined as a value proportional to the
+lot size.
+
+Limited lot sizes with a max cap allow each deposit to be backed by a
+different signing group, both simplifying the bonding of signing groups and
+improving the resilience of the system to signing group failure, malicious or
+not.
 
 include::./mistakes.adoc[leveloffset=+1]
 

@@ -177,7 +177,7 @@ jobs:
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
-            export BONDED_ECDSA_KEEP_VENDOR_CONTRACT_DATA="BondedECDSAKeepVendor.json"
+            export BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
             solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
@@ -311,51 +311,14 @@ workflows:
   docs:
     jobs:
       - compile_contracts
-      - generate_pngs
-      - generate_docs_tex
-      - generate_docs_solidity:
-          requires:
-            - compile_contracts
-      - generate_docs_asciidoctor:
-          requires:
-            - generate_docs_solidity
-            - generate_pngs
-      - upload_docs:
-          context: keep-docs
-          requires:
-            - generate_docs_tex
-            - generate_docs_asciidoctor
-  migrate_build_publish_keep_dev:
+  build_publish_keep_dev:
     jobs:
       - compile_contracts
-      - migrate_contracts:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - compile_contracts
-      - publish_npm_package:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - publish_contract_data:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
       - build_relay_maintainer_initcontainer:
           filters:
             branches:
               only: master
           context: keep-dev
-          requires:
-            - publish_npm_package
       - publish_relay_maintainer_initcontainer:
           filters:
             branches:

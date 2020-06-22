@@ -28,7 +28,7 @@ contract DepositLog {
         address indexed _depositContractAddress,
         address indexed _requester,
         bytes32 indexed _digest,
-        uint256 _utxoSize,
+        uint256 _utxoValue,
         bytes _redeemerOutputScript,
         uint256 _requestedFee,
         bytes _outpoint
@@ -74,7 +74,11 @@ contract DepositLog {
     );
 
     // This event is fired when we enter the ACTIVE state
-    event Funded(address indexed _depositContractAddress, uint256 _timestamp);
+    event Funded(
+        address indexed _depositContractAddress,
+        bytes32 indexed _txid,
+        uint256 _timestamp
+    );
 
     // This event is called when we enter the COURTESY_CALL state
     event CourtesyCalled(
@@ -142,7 +146,7 @@ contract DepositLog {
     /// @dev                    This is the only event without an explicit timestamp.
     /// @param  _requester      The ethereum address of the requester.
     /// @param  _digest         The calculated sighash digest.
-    /// @param  _utxoSize       The size of the utxo in sat.
+    /// @param  _utxoValue       The size of the utxo in sat.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @param  _requestedFee   The requester or bump-system specified fee.
     /// @param  _outpoint       The 36 byte outpoint.
@@ -150,7 +154,7 @@ contract DepositLog {
     function logRedemptionRequested(
         address _requester,
         bytes32 _digest,
-        uint256 _utxoSize,
+        uint256 _utxoValue,
         bytes memory _redeemerOutputScript,
         uint256 _requestedFee,
         bytes memory _outpoint
@@ -163,7 +167,7 @@ contract DepositLog {
             msg.sender,
             _requester,
             _digest,
-            _utxoSize,
+            _utxoValue,
             _redeemerOutputScript,
             _requestedFee,
             _outpoint
@@ -241,12 +245,12 @@ contract DepositLog {
 
     /// @notice     Fires a Funded event.
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logFunded() public {
+    function logFunded(bytes32 _txid) public {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
         );
-        emit Funded(msg.sender, block.timestamp);
+        emit Funded(msg.sender, _txid, block.timestamp);
     }
 
     /// @notice     Fires a CourtesyCalled event.

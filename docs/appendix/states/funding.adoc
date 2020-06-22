@@ -194,7 +194,7 @@ an abort state.
 ** `bytes _headers`
 * *writes*
 ** `bytes8 depositSizeBytes`
-*** size of UTXO in satoshis
+*** value of UTXO in satoshis
 ** `bytes utxoOutpoint`
 *** unique identifier for the UTXO
 * *from*

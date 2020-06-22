@@ -26,7 +26,7 @@ toc::[]
 * Read the http://docs.keep.network/tbtc/[specification].
 * Consult http://docs.keep.network/tbtc/solidity/[Solidity API
 documentation].
-* For questions and support, join the #tbtc channel on
+* For questions and support, join the #tbtc-protocol channel on
 https://discord.gg/4R6RGFf[Discord].
 
 == Installation
@@ -71,7 +71,16 @@ contract MySystem {
 
 == Security
 
-tBTC is currently under audit.
+tBTC's first 6-week audit was completed by ConsenSys Diligence on March 27,
+2020, against https://github.com/keep-network/tbtc/commit/fbb2018c41456d19ec20eb28a17070ee2b10eb5d[fbb2018c41].
+They've published a detailed https://diligence.consensys.net/audits/2020/02/thesis-tbtc-and-keep/[audit report]
+and https://diligence.consensys.net/audits/2020/03/thesis-cryptographic-review/[cryptographic review].
+
+tBTC is currently under audit by two additional parties—
+https://www.trailofbits.com/[Trail of Bits] and an unannounced Bitcoin-focused
+security researcher.
+
+Review a more focused treatment of tBTC's security model https://tbtc.network/developers/tbtc-security-model/[here].
 
 Please report any security issues you find to mailto:security@keep.network[security@keep.network].
 

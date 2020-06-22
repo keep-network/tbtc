@@ -14,10 +14,11 @@ const DepositRedemption = contract.fromArtifact("DepositRedemption")
 const DepositLiquidation = contract.fromArtifact("DepositLiquidation")
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
 const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
-const ECDSAKeepVendorStub = contract.fromArtifact("ECDSAKeepVendorStub")
 const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 const MockRelay = contract.fromArtifact("MockRelay")
 const MockSatWeiPriceFeed = contract.fromArtifact("MockSatWeiPriceFeed")
+const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
+const KeepFactorySelectorStub = contract.fromArtifact("KeepFactorySelectorStub")
 const TBTCSystemStub = contract.fromArtifact("TBTCSystemStub")
 const TBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
 const FeeRebateToken = contract.fromArtifact("TestFeeRebateToken")
@@ -29,6 +30,7 @@ const RedemptionScript = contract.fromArtifact("RedemptionScript")
 const FundingScript = contract.fromArtifact("FundingScript")
 
 const TEST_DEPOSIT_DEPLOY = [
+  {name: "KeepFactorySelection", contract: KeepFactorySelection},
   {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
   {name: "MockRelay", contract: MockRelay},
   {name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed},
@@ -58,6 +60,7 @@ const TEST_DEPOSIT_DEPLOY = [
   {name: "BTCUtils", contract: BTCUtils},
   {name: "ValidateSPV", contract: ValidateSPV},
   {name: "CheckBitcoinSigs", contract: CheckBitcoinSigs},
+  {name: "ECDSAKeepFactoryStub", contract: ECDSAKeepFactoryStub},
   {
     name: "TBTCDepositToken",
     contract: TBTCDepositToken,
@@ -72,6 +75,11 @@ const TEST_DEPOSIT_DEPLOY = [
     name: "ECDSAKeepStub",
     contract: ECDSAKeepStub,
     constructorParams: ["VendingMachine", ""],
+  },
+  {
+    name: "KeepFactorySelectorStub",
+    contract: KeepFactorySelectorStub,
+    constructorParams: ["ECDSAKeepFactoryStub"],
   },
 ]
 
@@ -102,7 +110,6 @@ const TEST_DEPOSIT_DEPLOY = [
  *    - feeRebateToken
  *    - testDeposit
  *    - depositUtils
- *    - keepVendorStub
  *    - ecdsaKeepStub
  *    - depositFactory
  *    Additionally, the object contains a `deployed` property that holds
@@ -131,10 +138,8 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   await mockRelay.setPrevEpochDifficulty(1)
 
   const tbtcSystemStub = deployed.TBTCSystemStub
-  const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
-  const ecdsaKeepVendorStub = await ECDSAKeepVendorStub.new(
-    ecdsaKeepFactoryStub.address,
-  )
+  const keepFactorySelectorStub = deployed.KeepFactorySelectorStub
+  const ecdsaKeepFactoryStub = deployed.ECDSAKeepFactoryStub
 
   const tbtcToken = await TestTBTCToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
@@ -172,7 +177,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   }
 
   await tbtcSystemStub.initialize(
-    ecdsaKeepVendorStub.address,
+    ecdsaKeepFactoryStub.address,
     depositFactory.address,
     testDeposit.address,
     tbtcToken.address,
@@ -199,6 +204,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     deployed,
     redemptionScript,
     fundingScript,
+    keepFactorySelectorStub
   }
 }
 
