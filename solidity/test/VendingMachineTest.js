@@ -290,7 +290,7 @@ describe("VendingMachine", async function() {
         {from: owner},
       )
 
-      const UTXOInfo = await testDeposit.getUTXOInfo.call()
+      const UTXOInfo = await testDeposit.fundingInfo.call()
       expect(UTXOInfo[0]).to.equal(fundingTx.outValueBytes)
       expect(UTXOInfo[2]).to.equal(fundingTx.expectedUTXOOutpoint)
 
@@ -361,7 +361,7 @@ describe("VendingMachine", async function() {
         from: owner,
       })
       await testDeposit.setState(states.ACTIVE)
-      await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
     })
 
     beforeEach(async () => {
@@ -582,7 +582,7 @@ describe("VendingMachine", async function() {
         {from: owner},
       )
 
-      const UTXOInfo = await testDeposit.getUTXOInfo.call()
+      const UTXOInfo = await testDeposit.fundingInfo.call()
       expect(UTXOInfo[0]).to.equal(fundingTx.outValueBytes)
       expect(UTXOInfo[2]).to.equal(fundingTx.expectedUTXOOutpoint)
 

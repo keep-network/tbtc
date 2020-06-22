@@ -93,7 +93,7 @@ describe("DepositRedemption", async function() {
     beforeEach(async () => {
       await createSnapshot()
       block = await web3.eth.getBlock("latest")
-      await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
     })
 
     afterEach(async () => {
@@ -143,7 +143,7 @@ describe("DepositRedemption", async function() {
     beforeEach(async () => {
       await createSnapshot()
       block = await web3.eth.getBlock("latest")
-      await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
     })
 
     afterEach(async () => {
@@ -286,7 +286,7 @@ describe("DepositRedemption", async function() {
       await createSnapshot()
       block = await web3.eth.getBlock("latest")
       await testDeposit.setRedeemerAddress(owner)
-      await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
       await tbtcToken.resetBalance(depositValue, {from: owner})
       await tbtcToken.resetAllowance(testDeposit.address, depositValue, {
         from: owner,
@@ -583,7 +583,7 @@ describe("DepositRedemption", async function() {
     beforeEach(async () => {
       await createSnapshot()
       await testDeposit.setState(states.ACTIVE)
-      await testDeposit.setUTXOInfo(valueBytes, 0, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, 0, outpoint)
 
       // make sure there is sufficient balance to request redemption. Then approve deposit
       await tbtcToken.resetBalance(requiredBalance, {from: owner})
@@ -651,7 +651,7 @@ describe("DepositRedemption", async function() {
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
-      await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
 
       // the fee is 2.86331153 BTC
       const {
@@ -698,7 +698,7 @@ describe("DepositRedemption", async function() {
 
     it("reverts if the output script is non-standard", async () => {
       const block = await web3.eth.getBlock("latest")
-      await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
 
       await tbtcDepositToken.transferFrom(tdtHolder, frtHolder, tdtId, {
         from: owner,
@@ -716,7 +716,7 @@ describe("DepositRedemption", async function() {
 
     it("reverts if the caller is not the deposit owner", async () => {
       const block = await web3.eth.getBlock("latest")
-      await testDeposit.setUTXOInfo(valueBytes, block.timestamp, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
 
       await tbtcDepositToken.transferFrom(tdtHolder, frtHolder, tdtId, {
         from: owner,
@@ -752,7 +752,7 @@ describe("DepositRedemption", async function() {
     beforeEach(async () => {
       await createSnapshot()
       await testDeposit.setState(states.ACTIVE)
-      await testDeposit.setUTXOInfo(valueBytes, 0, outpoint)
+      await testDeposit.setFundingInfo(valueBytes, 0, outpoint)
 
       // make sure there is sufficient balance to request redemption. Then approve deposit
       await tbtcToken.resetBalance(requiredBalance, {from: owner})
@@ -965,7 +965,7 @@ describe("DepositRedemption", async function() {
       )
       await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
-      await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
+      await testDeposit.setFundingInfo(prevoutValueBytes, 0, outpoint)
       await testDeposit.setRequestInfo(
         ZERO_ADDRESS,
         redeemerOutputScript,
@@ -1098,7 +1098,7 @@ describe("DepositRedemption", async function() {
         await testDeposit.signerFee(),
       )
       await mockRelay.setCurrentEpochDifficulty(fundingTx.difficulty)
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         fundingTx.prevoutValueBytes,
         0,
         fundingTx.prevoutOutpoint,
@@ -1194,7 +1194,7 @@ describe("DepositRedemption", async function() {
 
   describe("redemptionTransactionChecks", async () => {
     beforeEach(async () => {
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         fundingTx.prevoutValueBytes,
         0,
         fundingTx.prevoutOutpoint,
@@ -1263,7 +1263,7 @@ describe("DepositRedemption", async function() {
     })
 
     it("reverts if the tx spends the wrong utxo", async () => {
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         fundingTx.prevoutValueBytes,
         0,
         "0x" + "33".repeat(36),

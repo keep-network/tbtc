@@ -547,13 +547,13 @@ describe("DepositUtils", async function() {
     })
   })
 
-  describe("utxoSize()", async () => {
-    it("returns the state's utxoSizeBytes as an integer", async () => {
-      const utxoSize = await testDeposit.utxoSize.call()
-      expect(utxoSize).to.eq.BN(0)
+  describe("utxoValue()", async () => {
+    it("returns the state's utxoValueBytes as an integer", async () => {
+      const utxoValue = await testDeposit.utxoValue.call()
+      expect(utxoValue).to.eq.BN(0)
 
-      await testDeposit.setUTXOInfo("0x11223344", 1, "0x")
-      const newUtxoSize = await testDeposit.utxoSize.call()
+      await testDeposit.setFundingInfo("0x11223344", 1, "0x")
+      const newUtxoSize = await testDeposit.utxoValue.call()
       expect(newUtxoSize).to.eq.BN(new BN("44332211", 16))
     })
   })
@@ -834,7 +834,7 @@ describe("DepositUtils", async function() {
     it("returns remaining term from current block", async () => {
       const block = await web3.eth.getBlock("latest")
       // Set Deposit.fundedAt to current block.
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         prevoutValueBytes,
         block.timestamp,
         outpoint,
@@ -850,7 +850,7 @@ describe("DepositUtils", async function() {
 
     it("returns 0 if deposit is at term", async () => {
       const block = await web3.eth.getBlock("latest")
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         prevoutValueBytes,
         block.timestamp,
         outpoint,

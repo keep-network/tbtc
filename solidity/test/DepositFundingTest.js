@@ -561,10 +561,10 @@ describe("DepositFunding", async function() {
       )
       const expectedFundedAt = (await web3.eth.getBlock(proofBlock)).timestamp
 
-      const UTXOInfo = await testDeposit.getUTXOInfo.call()
-      expect(UTXOInfo[0]).to.equal(fundingTx.outValueBytes)
-      expect(UTXOInfo[1]).to.eq.BN(new BN(expectedFundedAt))
-      expect(UTXOInfo[2]).to.equal(fundingTx.expectedUTXOOutpoint)
+      const fundingInfo = await testDeposit.fundingInfo.call()
+      expect(fundingInfo[0]).to.equal(fundingTx.outValueBytes)
+      expect(fundingInfo[1]).to.eq.BN(new BN(expectedFundedAt))
+      expect(fundingInfo[2]).to.equal(fundingTx.expectedUTXOOutpoint)
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
       expect(
@@ -636,7 +636,7 @@ describe("DepositFunding", async function() {
         legacyFundingTx.bitcoinHeaders,
       )
 
-      const UTXOInfo = await testDeposit.getUTXOInfo.call()
+      const UTXOInfo = await testDeposit.fundingInfo.call()
       expect(UTXOInfo[0]).to.eql(legacyFundingTx.outValueBytes)
       expect(UTXOInfo[2]).to.eql(legacyFundingTx.expectedUTXOOutpoint)
 
