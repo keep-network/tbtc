@@ -195,6 +195,23 @@ describe("KeepFactorySelection", async () => {
         keepStakeFactory.address,
       )
     })
+
+    it("reverts if the returned factory is not one of the set factories", async () => {
+      await keepFactorySelection.setFullyBackedKeepFactory(
+        ethStakeFactory.address,
+      )
+      await keepFactorySelection.setKeepFactorySelector(
+        keepFactorySelector.address,
+      )
+
+      await keepFactorySelector.setMaliciousMode()
+
+      // refresh the choice; it should be the default factory now
+      await expectRevert(
+        keepFactorySelection.selectFactoryAndRefresh(),
+        "Factory selector returned unknown factory",
+      )
+    })
   })
 
   describe("setFullyBackedKeepFactory", async () => {
