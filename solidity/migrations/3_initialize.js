@@ -42,6 +42,7 @@ module.exports = async function(deployer, network) {
     TBTCDepositToken.address,
     FeeRebateToken.address,
     VendingMachine.address,
+    deployer.address,
     keepThreshold,
     keepGroupSize,
   )

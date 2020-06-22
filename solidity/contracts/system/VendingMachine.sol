@@ -20,6 +20,8 @@ contract VendingMachine is TBTCSystemAuthority{
     TBTCDepositToken tbtcDepositToken;
     FeeRebateToken feeRebateToken;
 
+    uint8 capOverride = 0;
+
     uint256 createdAt;
 
     constructor(address _systemAddress)
@@ -42,27 +44,33 @@ contract VendingMachine is TBTCSystemAuthority{
     function getMaxSupply() public view returns (uint256) {
         uint256 age = block.timestamp - createdAt;
 
-        if(age < 1 days) {
+        if(capOverride < 1 && age < 1 days) {
             return 2 * 10 ** 18;
         }
 
-        if (age < 30 days) {
+        if (capOverride < 2 && age < 30 days) {
             return 100 * 10 ** 18;
         }
 
-        if (age < 60 days) {
+        if (capOverride < 3 && age < 60 days) {
             return 250 * 10 ** 18;
         }
 
-        if (age < 90 days) {
+        if (capOverride < 4 && age < 90 days) {
             return 500 * 10 ** 18;
         }
 
-        if (age < 120 days) {
+        if (capOverride < 5 && age < 120 days) {
             return 1000 * 10 ** 18;
         }
 
         return 21000000 * 10 ** 18;
+    }
+
+    /// @notice Advance the supply cap to the next graduated restriction.
+    /// @dev Only callable from the system contract.
+    function advanceSupplyCapSchedule() public onlyTbtcSystem {
+        capOverride += 1;
     }
 
     /// @notice Set external contracts needed by the Vending Machine.

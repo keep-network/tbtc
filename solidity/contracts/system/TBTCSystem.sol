@@ -63,6 +63,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 constant pausedDuration = 10 days;
 
     VendingMachine public vendingMachine;
+    address public capManager;
 
     ISatWeiPriceFeed public priceFeed;
     IRelay public relay;
@@ -111,6 +112,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _tbtcDepositToken  TBTCDepositToken (TDT). More info in `TBTCDepositToken`.
     /// @param _feeRebateToken    FeeRebateToken (FRT). More info in `FeeRebateToken`.
     /// @param _vendingMachine    Vending Machine. More info in `VendingMachine`.
+    /// @param _capManager        Address authorized to increase the supply cap
+    ///                           on the VendingMachine. More info in `VendingMachine.increaseCap()`
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size.
     function initialize(
@@ -121,6 +124,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         TBTCDepositToken _tbtcDepositToken,
         FeeRebateToken _feeRebateToken,
         VendingMachine _vendingMachine,
+        address _capManager,
         uint16 _keepThreshold,
         uint16 _keepSize
     ) external onlyOwner {
@@ -144,6 +148,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _keepSize
         );
         vendingMachine = _vendingMachine;
+        capManager = _capManager;
         setTbtcDepositToken(_tbtcDepositToken);
         initializedTimestamp = block.timestamp;
         allowNewDeposits = true;
@@ -168,6 +173,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             }
         }
         return max;
+    }
+
+    /// @notice Allow the supply cap to be advanced to the next graduated
+    ///         restriction.
+    function advanceSupplyCapSchedule() public {
+        require(msg.sender == capManager, "Only the supply cap manager may increase the supply cap");
+        vendingMachine.advanceSupplyCapSchedule();
     }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
