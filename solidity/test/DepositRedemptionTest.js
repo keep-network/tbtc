@@ -729,7 +729,7 @@ describe("DepositRedemption", async function() {
           testDeposit.requestRedemption("0x1111111100000000", script, {
             from: tdtHolder,
           }),
-          "Incorrect output script length",
+          "Output script must be a standard type",
         )
       })
     }
