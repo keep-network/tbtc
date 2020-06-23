@@ -767,22 +767,8 @@ describe("VendingMachine", async function() {
       expect(maxSupply).to.not.eq.BN(btcToTbtc(500))
     })
 
-    it("has a max supply of 1000 BTC between the 90th day and 120th day", async () => {
-      await increaseTime(90 * 24 * 60 * 60 + 1) // 90 days and 1 second
-      let maxSupply = await vendingMachine.getMaxSupply()
-      expect(maxSupply).to.eq.BN(btcToTbtc(1000))
-
-      await increaseTime(30 * 24 * 60 * 60 - 10 * 60) // 30 days minus 10 minutes
-      maxSupply = await vendingMachine.getMaxSupply()
-      expect(maxSupply).to.eq.BN(btcToTbtc(1000))
-
-      await increaseTime(60 * 60) // one hour
-      maxSupply = await vendingMachine.getMaxSupply()
-      expect(maxSupply).to.not.eq.BN(btcToTbtc(1000))
-    })
-
-    it("has a max supply of 21M BTC after the 120th day", async () => {
-      await increaseTime(120 * 24 * 60 * 60 + 1) // 120 days and 1 second
+    it("has a max supply of 21M BTC after the 90th day", async () => {
+      await increaseTime(90 * 24 * 60 * 60 + 1) // 120 days and 1 second
       let maxSupply = await vendingMachine.getMaxSupply()
       expect(maxSupply).to.eq.BN(btcToTbtc(21000000))
 

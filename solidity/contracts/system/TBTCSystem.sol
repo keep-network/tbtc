@@ -153,9 +153,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @return True if new deposits should be allowed, both by the emergency pause button
     ///         and respected the max supply schedule.
     function getAllowNewDeposits() external view returns (bool) {
-        if (!allowNewDeposits) {return false;}
-
-        return vendingMachine.canMint(getMaxLotSize().mul(10 ** 10));
+        return allowNewDeposits &&
+            vendingMachine.canMint(getMaxLotSize().mul(10 ** 10));
     }
 
     /// @notice Return the largest lot size currently enabled for deposits.
@@ -173,8 +172,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
     function emergencyPauseNewDeposits() external onlyOwner {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
-        uint256 diff = block.timestamp - initializedTimestamp;
-        require(diff < 365 days, "emergencyPauseNewDeposits can only be called within 365 days of initialization");
+        uint256 sinceInit = block.timestamp - initializedTimestamp;
+        require(sinceInit < 180 days, "emergencyPauseNewDeposits can only be called within 180 days of initialization");
         pausedTimestamp = block.timestamp;
         allowNewDeposits = false;
         emit AllowNewDepositsUpdated(false);
