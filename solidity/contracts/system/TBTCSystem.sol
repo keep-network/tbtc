@@ -153,9 +153,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @return True if new deposits should be allowed, both by the emergency pause button
     ///         and respected the max supply schedule.
     function getAllowNewDeposits() external view returns (bool) {
-        if (!allowNewDeposits) {return false;}
-
-        return vendingMachine.canMint(getMaxLotSize().mul(10 ** 10));
+        return allowNewDeposits &&
+            vendingMachine.canMint(getMaxLotSize().mul(10 ** 10));
     }
 
     /// @notice Return the largest lot size currently enabled for deposits.
