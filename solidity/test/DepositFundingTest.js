@@ -45,6 +45,7 @@ describe("DepositFunding", async function() {
       ecdsaKeepFactoryStub,
     } = await deployAndLinkAll())
 
+    await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
     ecdsaKeepFactory = ecdsaKeepFactoryStub
     beneficiary = accounts[4]
     await tbtcDepositToken.forceMint(
@@ -67,7 +68,11 @@ describe("DepositFunding", async function() {
 
   describe("createNewDeposit", async () => {
     it("runs and updates state and fires a created event", async () => {
-      const expectedKeepAddress = "0x0000000000000000000000000000000000000007"
+      const expectedKeepAddress = ecdsaKeepStub.address
+      const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+      await ecdsaKeepStub.send(depositFee)
+      await ecdsaKeepStub.setBondAmount(depositFee)
 
       const blockNumber = await web3.eth.getBlockNumber()
 
@@ -120,6 +125,27 @@ describe("DepositFunding", async function() {
       )
     })
 
+    it("reverts if bond is insufficient to cover a deposit creation fee refund", async () => {
+      const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+      await ecdsaKeepStub.send(depositFee - 1)
+      await ecdsaKeepStub.setBondAmount(depositFee - 1)
+
+      await expectRevert(
+        testDeposit.createNewDeposit.call(
+          tbtcSystemStub.address,
+          tbtcToken.address,
+          tbtcDepositToken.address,
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          1, // m
+          1,
+          fullBtc,
+        ),
+        "Insufficient signer bonds to cover setup fee",
+      )
+    })
+
     it("reverts if not in the start state", async () => {
       await testDeposit.setState(states.REDEEMED)
 
@@ -157,6 +183,11 @@ describe("DepositFunding", async function() {
     })
 
     it("respects the supply cap schedule", async () => {
+      const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+      await ecdsaKeepStub.send(depositFee)
+      await ecdsaKeepStub.setBondAmount(depositFee)
+
       const bn = web3.utils.toBN
 
       const mint = amountInSats =>
@@ -189,7 +220,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(15 * 24 * 60 * 60) // 15 days, into the 1st month
       await createNewDeposit(fullBtc)
-      await mint(98 * fullBtc) // should new be at 100 BTC - 1000 sats
+      await mint(98 * fullBtc) // should now be at 100 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -197,7 +228,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 2nd month
       await createNewDeposit(fullBtc)
-      await mint(150 * fullBtc) // should new be at 250 BTC - 1000 sats
+      await mint(150 * fullBtc) // should now be at 250 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -205,7 +236,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 3rd month
       await createNewDeposit(fullBtc)
-      await mint(250 * fullBtc) // should new be at 500 BTC - 1000 sats
+      await mint(250 * fullBtc) // should now be at 500 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -213,15 +244,10 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 4th month
       await createNewDeposit(fullBtc)
-      await mint(500 * fullBtc) // should new be at 1000 BTC - 1000 sats
-      await expectRevert(
-        createNewDeposit(fullBtc),
-        "New deposits aren't allowed.",
-      )
+      await mint(1500 * fullBtc) // should now be at 1000 BTC - 1000 sats
 
-      await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 5th month
       await createNewDeposit(fullBtc)
-      await mint("2099900000000000") // should new be at 21M BTC - 1000 sats
+      await mint("2099850000000000") // should now be at 21M BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -255,9 +281,11 @@ describe("DepositFunding", async function() {
     })
 
     beforeEach(async () => {
+      await createSnapshot()
+
       const block = await web3.eth.getBlock("latest")
       const blockTimestamp = block.timestamp
-      const value = openKeepFee + 100
+      const value = openKeepFee
 
       await ecdsaKeepStub.send(value)
 
@@ -266,6 +294,10 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.AWAITING_SIGNER_SETUP)
 
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart)
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
     })
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
@@ -519,10 +551,10 @@ describe("DepositFunding", async function() {
       )
       const expectedFundedAt = (await web3.eth.getBlock(proofBlock)).timestamp
 
-      const UTXOInfo = await testDeposit.getUTXOInfo.call()
-      expect(UTXOInfo[0]).to.equal(fundingTx.outValueBytes)
-      expect(UTXOInfo[1]).to.eq.BN(new BN(expectedFundedAt))
-      expect(UTXOInfo[2]).to.equal(fundingTx.expectedUTXOOutpoint)
+      const fundingInfo = await testDeposit.fundingInfo.call()
+      expect(fundingInfo[0]).to.equal(fundingTx.outValueBytes)
+      expect(fundingInfo[1]).to.eq.BN(new BN(expectedFundedAt))
+      expect(fundingInfo[2]).to.equal(fundingTx.expectedUTXOOutpoint)
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
       expect(

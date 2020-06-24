@@ -62,7 +62,7 @@ library DepositUtils {
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
 
         // written when we get funded
-        bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
+        bytes8 utxoValueBytes;  // LE uint. the size of the deposit UTXO in satoshis
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
 
@@ -304,8 +304,8 @@ library DepositUtils {
     /// @notice    Returns the size of the deposit UTXO in satoshi.
     /// @dev       We store the deposit as bytes8 to make signature checking easier.
     /// @return    UTXO value in satoshi.
-    function utxoSize(Deposit storage _d) public view returns (uint256) {
-        return bytes8LEToUint(_d.utxoSizeBytes);
+    function utxoValue(Deposit storage _d) public view returns (uint256) {
+        return bytes8LEToUint(_d.utxoValueBytes);
     }
 
     /// @notice     Gets the current price of Bitcoin in Ether.
@@ -443,8 +443,10 @@ library DepositUtils {
     /// @param  _ethValue   The amount of ether to send.
     function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        _keep.returnPartialSignerBonds.value(_ethValue)();
+        if(_ethValue > 0){
+            IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
+            _keep.returnPartialSignerBonds.value(_ethValue)();
+        }
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer

@@ -91,14 +91,30 @@ contract Deposit is DepositFactoryAuthority {
         return self.lotSizeTbtc();
     }
 
-    /// @notice     Get the size of the funding UTXO.
+    /// @notice     Get the value of the funding UTXO.
     /// @dev        This will only return 0 unless
     ///             the funding transaction has been confirmed on-chain.
     ///             See `provideBTCFundingProof` for more info on the funding proof.
-    /// @return     Uint256 UTXO size in satoshi.
+    /// @return     Uint256 UTXO value in satoshi.
     ///             0 if no funding proof has been provided.
-    function utxoSize() public view returns (uint256){
-        return self.utxoSize();
+    function utxoValue() public view returns (uint256){
+        return self.utxoValue();
+    }
+
+    /// @notice Returns information associated with the funding UXTO.
+    /// @dev This call will revert if the deposit is not in a state where the
+    ///      funding info should be valid. In particular, before funding proof
+    ///      is successfully submitted (i.e. in states START,
+    ///      AWAITING_SIGNER_SETUP, and AWAITING_BTC_FUNDING_PROOF), none of
+    ///      these values are set or valid.
+    /// @return A tuple of (uxtoValueBytes, fundedAt, uxtoOutpoint).
+    function fundingInfo() public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
+        require(
+            ! self.inFunding(),
+            "Deposit has not yet been funded and has no available funding info"
+        );
+
+        return (self.utxoValueBytes, self.fundedAt, self.utxoOutpoint);
     }
 
     // THIS IS THE INIT FUNCTION

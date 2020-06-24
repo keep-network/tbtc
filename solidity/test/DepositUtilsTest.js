@@ -18,7 +18,6 @@ const TestDepositUtilsSPV = contract.fromArtifact("TestDepositUtilsSPV")
 
 describe("DepositUtils", async function() {
   let beneficiary
-  const funderBondAmount = new BN("10").pow(new BN("5"))
   const fullBtc = 100000000
   let tbtcConstants
   let mockRelay
@@ -51,6 +50,12 @@ describe("DepositUtils", async function() {
       web3.utils.toBN(testDeposit.address),
     )
 
+    const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+    await ecdsaKeepStub.send(depositFee)
+    await ecdsaKeepStub.setBondAmount(depositFee)
+    await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
+
     await testDeposit.createNewDeposit(
       tbtcSystemStub.address,
       tbtcToken.address,
@@ -60,7 +65,7 @@ describe("DepositUtils", async function() {
       1, // m
       1, // n
       fullBtc,
-      {value: funderBondAmount},
+      {value: depositFee},
     )
   })
 
@@ -334,6 +339,11 @@ describe("DepositUtils", async function() {
         beneficiary,
         web3.utils.toBN(testDeposit.address),
       )
+      const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
+
+      await ecdsaKeepStub.send(depositFee)
+      await ecdsaKeepStub.setBondAmount(depositFee)
+      await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
 
       await testDeposit.createNewDeposit(
         tbtcSystemStub.address,
@@ -344,7 +354,7 @@ describe("DepositUtils", async function() {
         1, // m
         1, // n
         fullBtc,
-        {value: funderBondAmount},
+        {value: depositFee},
       )
 
       await testDeposit.setPubKey(
@@ -572,13 +582,13 @@ describe("DepositUtils", async function() {
     })
   })
 
-  describe("utxoSize()", async () => {
-    it("returns the state's utxoSizeBytes as an integer", async () => {
-      const utxoSize = await testDeposit.utxoSize.call()
-      expect(utxoSize).to.eq.BN(0)
+  describe("utxoValue()", async () => {
+    it("returns the state's utxoValueBytes as an integer", async () => {
+      const utxoValue = await testDeposit.utxoValue.call()
+      expect(utxoValue).to.eq.BN(0)
 
-      await testDeposit.setUTXOInfo("0x11223344", 1, "0x")
-      const newUtxoSize = await testDeposit.utxoSize.call()
+      await testDeposit.setFundingInfo("0x11223344", 1, "0x")
+      const newUtxoSize = await testDeposit.utxoValue.call()
       expect(newUtxoSize).to.eq.BN(new BN("44332211", 16))
     })
   })
@@ -596,9 +606,6 @@ describe("DepositUtils", async function() {
 
   describe("fetchBondAmount()", async () => {
     it("calls out to the keep system", async () => {
-      const bondAmount = await testDeposit.fetchBondAmount.call()
-      expect(bondAmount).to.eq.BN(10000)
-
       await ecdsaKeepStub.setBondAmount(44)
       const newBondAmount = await testDeposit.fetchBondAmount.call()
       expect(newBondAmount).to.eq.BN(44)
@@ -671,13 +678,14 @@ describe("DepositUtils", async function() {
 
   describe("seizeSignerBonds()", async () => {
     it("calls out to the keep system and returns the seized amount", async () => {
-      const value = 5000
+      const value = new BN(5000)
+      const currentBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
       await ecdsaKeepStub.send(value, {from: owner})
 
       const seized = await testDeposit.seizeSignerBonds.call()
       await testDeposit.seizeSignerBonds()
 
-      expect(seized).to.eq.BN(value)
+      expect(seized).to.eq.BN(value.add(new BN(currentBalance)))
     })
 
     it("errors if no funds were seized", async () => {
@@ -861,7 +869,7 @@ describe("DepositUtils", async function() {
     it("returns remaining term from current block", async () => {
       const block = await web3.eth.getBlock("latest")
       // Set Deposit.fundedAt to current block.
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         prevoutValueBytes,
         block.timestamp,
         outpoint,
@@ -877,7 +885,7 @@ describe("DepositUtils", async function() {
 
     it("returns 0 if deposit is at term", async () => {
       const block = await web3.eth.getBlock("latest")
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         prevoutValueBytes,
         block.timestamp,
         outpoint,
