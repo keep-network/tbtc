@@ -37,7 +37,7 @@
   "dependencies": {
     "@keep-network/keep-ecdsa": "1.0.0",
     "@summa-tx/bitcoin-spv-sol": "^3.1.0",
-    "@summa-tx/relay-sol": "^2.0.1",
+    "@summa-tx/relay-sol": "^2.0.2",
     "openzeppelin-solidity": "2.3.0"
   },
   "devDependencies": {
