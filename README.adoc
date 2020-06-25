@@ -32,7 +32,7 @@ https://discord.gg/4R6RGFf[Discord].
 == Installation
 
 tBTC contracts are currently published in the NPM Registry as the package
-[`@keep-network/tbtc`](https://www.npmjs.com/package/@keep-network/tbtc).
+https://www.npmjs.com/package/@keep-network/tbtc[`@keep-network/tbtc`].
 Packages have versions corresponding to their network:
 
 - `-pre` packages contain prerelease packages for the internal Keep testnet.
