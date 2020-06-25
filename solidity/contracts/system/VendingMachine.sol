@@ -192,7 +192,7 @@ contract VendingMachine is TBTCSystemAuthority{
         tbtcToken.burnFrom(msg.sender, _d.lotSizeTbtc());
         tbtcDepositToken.approve(_depositAddress, uint256(_depositAddress));
 
-        uint256 tbtcOwed = _d.getOwnerRedemptionTbtcRequirement(msg.sender);
+        (uint256 tbtcOwed,) = _d.getOwnerRedemptionTbtcRequirement(msg.sender);
 
         if(tbtcOwed != 0){
             tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
