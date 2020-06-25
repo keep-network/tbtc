@@ -408,7 +408,7 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.setBondAmount(new BN("1000000000000000000000000", 10))
       await tbtcSystemStub.setOraclePrice(new BN("1", 10))
       await testDeposit.setState(states.COURTESY_CALL)
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         "0x" + "00".repeat(8),
         fundedTime,
         "0x" + "00".repeat(36),

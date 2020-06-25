@@ -225,7 +225,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(15 * 24 * 60 * 60) // 15 days, into the 1st month
       await createNewDeposit(fullBtc)
-      await mint(98 * fullBtc) // should new be at 100 BTC - 1000 sats
+      await mint(98 * fullBtc) // should now be at 100 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -233,7 +233,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 2nd month
       await createNewDeposit(fullBtc)
-      await mint(150 * fullBtc) // should new be at 250 BTC - 1000 sats
+      await mint(150 * fullBtc) // should now be at 250 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -241,7 +241,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 3rd month
       await createNewDeposit(fullBtc)
-      await mint(250 * fullBtc) // should new be at 500 BTC - 1000 sats
+      await mint(250 * fullBtc) // should now be at 500 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -249,15 +249,10 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 4th month
       await createNewDeposit(fullBtc)
-      await mint(500 * fullBtc) // should new be at 1000 BTC - 1000 sats
-      await expectRevert(
-        createNewDeposit(fullBtc),
-        "New deposits aren't allowed.",
-      )
+      await mint(1500 * fullBtc) // should now be at 1000 BTC - 1000 sats
 
-      await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 5th month
       await createNewDeposit(fullBtc)
-      await mint("2099900000000000") // should new be at 21M BTC - 1000 sats
+      await mint("2099850000000000") // should now be at 21M BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -561,10 +556,10 @@ describe("DepositFunding", async function() {
       )
       const expectedFundedAt = (await web3.eth.getBlock(proofBlock)).timestamp
 
-      const UTXOInfo = await testDeposit.getUTXOInfo.call()
-      expect(UTXOInfo[0]).to.equal(fundingTx.outValueBytes)
-      expect(UTXOInfo[1]).to.eq.BN(new BN(expectedFundedAt))
-      expect(UTXOInfo[2]).to.equal(fundingTx.expectedUTXOOutpoint)
+      const fundingInfo = await testDeposit.fundingInfo.call()
+      expect(fundingInfo[0]).to.equal(fundingTx.outValueBytes)
+      expect(fundingInfo[1]).to.eq.BN(new BN(expectedFundedAt))
+      expect(fundingInfo[2]).to.equal(fundingTx.expectedUTXOOutpoint)
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
       expect(
@@ -636,7 +631,7 @@ describe("DepositFunding", async function() {
         legacyFundingTx.bitcoinHeaders,
       )
 
-      const UTXOInfo = await testDeposit.getUTXOInfo.call()
+      const UTXOInfo = await testDeposit.fundingInfo.call()
       expect(UTXOInfo[0]).to.eql(legacyFundingTx.outValueBytes)
       expect(UTXOInfo[2]).to.eql(legacyFundingTx.expectedUTXOOutpoint)
 
