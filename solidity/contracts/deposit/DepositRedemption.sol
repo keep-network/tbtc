@@ -53,41 +53,21 @@ library DepositRedemption {
         address tdtHolder = _d.depositOwner();
         address vendingMachineAddress = _d.vendingMachineAddress;
 
-        uint256 tbtcLot = _d.lotSizeTbtc();
-        uint256 signerFee = _d.signerFee();
-        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(_d.redeemerAddress);
+        (uint256 tbtcOwedToDeposit, uint256 tbtcOwedToRedeemer,  uint256 tbtcOwedToTdtHolder) =
+        _d.getRedemptionTbtcRequirement(_d.redeemerAddress);
 
-        // if we owe 0 TBTC, msg.sender is TDT holder and FRT holder.
-        if(tbtcOwed == 0){
-            return;
-        }
-        // if we owe > 0 & < signerfee, msg.sender is TDT holder but not FRT holder.
-        if(tbtcOwed <= signerFee){
-            _d.tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
-            return;
-        }
-        // Redemmer always owes a full TBTC for at-term redemption.
-        if(tbtcOwed == tbtcLot){
-            // the TDT holder has exclusive redemption rights to a UXTO up until the deposit’s term.
-            // At that point, we open it up so anyone may redeem it.
-            // As compensation, the TDT holder is reimbursed in TBTC
-            // Vending Machine-owned TDTs have been used to mint TBTC,
-            // and we should always burn a full TBTC to redeem the deposit.
+        if(tbtcOwedToDeposit > 0){
             if(tdtHolder == vendingMachineAddress){
-                _d.tbtcToken.burnFrom(msg.sender, tbtcLot);
+                _d.tbtcToken.burnFrom(msg.sender, tbtcOwedToDeposit);
             }
-            // if signer fee is not escrowed, escrow and it here and send the rest to TDT holder
-            else if(_d.tbtcToken.balanceOf(address(this)) < signerFee){
-                _d.tbtcToken.transferFrom(msg.sender, address(this), signerFee);
-                _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
-            }
-            // tansfer a full TBTC to TDT holder if signerFee is escrowed
-            else{
-                _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot);
-            }
-            return;
+            _d.tbtcToken.transferFrom(msg.sender, address(this), tbtcOwedToDeposit);
         }
-        revert("tbtcOwed value must be 0, SignerFee, or a full TBTC");
+        if(tbtcOwedToTdtHolder > 0){
+            _d.tbtcToken.transfer(tdtHolder, tbtcOwedToTdtHolder);
+        }
+        if(tbtcOwedToRedeemer > 0){
+            _d.tbtcToken.transfer(_d.redeemerAddress, tbtcOwedToRedeemer);
+        }
     }
 
     function _requestRedemption(
