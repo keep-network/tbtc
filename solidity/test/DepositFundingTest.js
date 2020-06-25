@@ -1,10 +1,5 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {
-  states,
-  fundingTx,
-  increaseTime,
-  legacyFundingTx,
-} = require("./helpers/utils.js")
+const {states, fundingTx, increaseTime} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -603,58 +598,6 @@ describe("DepositFunding", async function() {
         ),
         "Not awaiting funding",
       )
-    })
-  })
-
-  describe("provideBTCFundingProof Legacy", async () => {
-    beforeEach(async () => {
-      await mockRelay.setCurrentEpochDifficulty(legacyFundingTx.difficulty)
-      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
-      await testDeposit.setSigningGroupPublicKey(
-        legacyFundingTx.signerPubkeyX,
-        legacyFundingTx.signerPubkeyY,
-      )
-      await ecdsaKeepStub.send(1000000, {from: accounts[0]})
-    })
-
-    it("updates to active, stores UTXO info, deconsts funding info, logs Funded", async () => {
-      const blockNumber = await web3.eth.getBlockNumber()
-
-      await testDeposit.provideBTCFundingProof(
-        legacyFundingTx.version,
-        legacyFundingTx.txInputVector,
-        legacyFundingTx.txOutputVector,
-        legacyFundingTx.txLocktime,
-        legacyFundingTx.fundingOutputIndex,
-        legacyFundingTx.merkleProof,
-        legacyFundingTx.txIndexInBlock,
-        legacyFundingTx.bitcoinHeaders,
-      )
-
-      const UTXOInfo = await testDeposit.fundingInfo.call()
-      expect(UTXOInfo[0]).to.eql(legacyFundingTx.outValueBytes)
-      expect(UTXOInfo[2]).to.eql(legacyFundingTx.expectedUTXOOutpoint)
-
-      const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
-      expect(signingGroupRequestedAt).to.eq.BN(
-        0,
-        "signingGroupRequestedAt not deconsted",
-      )
-
-      const fundingProofTimerStart = await testDeposit.getFundingProofTimerStart.call()
-      expect(fundingProofTimerStart).to.eq.BN(
-        0,
-        "fundingProofTimerStart not deconsted",
-      )
-
-      const depositState = await testDeposit.getState.call()
-      expect(depositState).to.eq.BN(states.ACTIVE)
-
-      const eventList = await tbtcSystemStub.getPastEvents("Funded", {
-        fromBlock: blockNumber,
-        toBlock: "latest",
-      })
-      expect(eventList.length).to.eql(1)
     })
   })
 })
