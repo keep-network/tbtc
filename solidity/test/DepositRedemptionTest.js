@@ -700,19 +700,39 @@ describe("DepositRedemption", async function() {
       const block = await web3.eth.getBlock("latest")
       await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
 
-      await tbtcDepositToken.transferFrom(tdtHolder, frtHolder, tdtId, {
-        from: owner,
-      })
-
       await expectRevert(
         testDeposit.requestRedemption(
           "0x1111111100000000",
           "0x" + "33".repeat(20),
           {from: owner},
         ),
-        "Output script must be a standard type.",
+        "Output script must be a standard type",
       )
     })
+
+    const badLengths = {
+      // declare 20 bytes, include 21
+      p2pkh: "0x1976a914" + "33".repeat(21) + "88ac",
+      // declare 20 bytes, include 21
+      p2sh: "0x17a914" + "33".repeat(21) + "87",
+      // declare 20 bytes, include 21
+      p2wpkh: "0x160014" + "33".repeat(21),
+      // declare 32 bytes, include 33
+      p2wsh: "0x220020" + "33".repeat(33),
+    }
+    for (const [type, script] of Object.entries(badLengths)) {
+      it(`reverts if ${type} output script has standard type but bad length`, async () => {
+        const block = await web3.eth.getBlock("latest")
+        await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
+
+        await expectRevert(
+          testDeposit.requestRedemption("0x1111111100000000", script, {
+            from: tdtHolder,
+          }),
+          "Output script must be a standard type",
+        )
+      })
+    }
 
     it("reverts if the caller is not the deposit owner", async () => {
       const block = await web3.eth.getBlock("latest")

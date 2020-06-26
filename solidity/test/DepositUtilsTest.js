@@ -242,9 +242,13 @@ describe("DepositUtils", async function() {
   })
 
   describe("findAndParseFundingOutput()", async () => {
-    const _txOutputVector =
-      "0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6"
-    const _fundingOutputIndex = 0
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
 
     it("correctly returns valuebytes", async () => {
       await testDeposit.setPubKey(
@@ -252,8 +256,8 @@ describe("DepositUtils", async function() {
         fundingTx.signerPubkeyY,
       )
       const valueBytes = await testDeposit.findAndParseFundingOutput.call(
-        _txOutputVector,
-        _fundingOutputIndex,
+        fundingTx.txOutputVector,
+        fundingTx.fundingOutputIndex,
       )
       expect(
         fundingTx.outValueBytes,
@@ -269,12 +273,43 @@ describe("DepositUtils", async function() {
 
       await expectRevert(
         testDeposit.findAndParseFundingOutput.call(
-          _txOutputVector,
-          _fundingOutputIndex,
+          fundingTx.txOutputVector,
+          fundingTx.fundingOutputIndex,
         ),
-        "could not identify output funding the required public key hash",
+        "Could not identify output funding the required public key hash",
       )
     })
+
+    // The output value will be the same regardless.
+    const fundingOutputBase = fundingTx.txOutputVector.substring(0, 20)
+    const unsupportedFundingOutputScripts = {
+      p2pkh: "1976a9" + "1486e7303082a6a21d5837176bc808bf4828371ab6" + "88ac",
+      p2sh: "17a9" + "1486e7303082a6a21d5837176bc808bf4828371ab6" + "87",
+      // p2wsh should fail at identifying the output funding the PKH, since
+      // extractHash will return a non-PKH hash.
+    }
+
+    for (const [type, script] of Object.entries(
+      unsupportedFundingOutputScripts,
+    )) {
+      it(`reverts if ${type} output is used to fund the deposit`, async () => {
+        await testDeposit.setPubKey(
+          fundingTx.signerPubkeyX,
+          fundingTx.signerPubkeyY,
+        )
+
+        const txOutputVector = fundingOutputBase + script
+        console.log(await testDeposit.signerPKH.call())
+
+        await expectRevert(
+          testDeposit.findAndParseFundingOutput.call(
+            txOutputVector,
+            fundingTx.fundingOutputIndex,
+          ),
+          "Funding transaction output type unsupported: only p2wpkh outputs are supported",
+        )
+      })
+    }
   })
 
   describe("validateAndParseFundingSPVProof()", async () => {
