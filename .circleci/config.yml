@@ -238,7 +238,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
       - compile_contracts:
           requires:
             - keep_test_approval
@@ -246,13 +246,13 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
       - migrate_contracts:
           filters:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - compile_contracts
@@ -261,7 +261,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - migrate_contracts
@@ -270,7 +270,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - migrate_contracts
@@ -279,7 +279,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - publish_npm_package
@@ -288,7 +288,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - build_relay_maintainer_initcontainer

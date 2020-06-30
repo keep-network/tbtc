@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/tbtc",
-  "version": "1.0.0",
+  "version": "1.0.2-rc",
   "description": "The tBTC smart contracts implementing the TBTC trustlessly Bitcoin-backed ERC-20 token.",
   "repository": {
     "type": "git",
@@ -35,7 +35,7 @@
   },
   "homepage": "https://tbtc.network/",
   "dependencies": {
-    "@keep-network/keep-ecdsa": "1.0.0",
+    "@keep-network/keep-ecdsa": ">1.1.2-rc <1.1.2",
     "@summa-tx/bitcoin-spv-sol": "^3.1.0",
     "@summa-tx/relay-sol": "^2.0.2",
     "openzeppelin-solidity": "2.3.0"
