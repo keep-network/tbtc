@@ -107,14 +107,14 @@ library DepositRedemption {
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
-        uint256 _requestedFee = _d.utxoSize().sub(_outputValue);
+        uint256 _requestedFee = _d.utxoValue().sub(_outputValue);
         require(_requestedFee >= TBTCConstants.getMinimumRedemptionFee(), "Fee is too low");
 
         // Calculate the sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _outputValueBytes,
             _redeemerOutputScript);
 
@@ -131,7 +131,7 @@ library DepositRedemption {
         _d.logRedemptionRequested(
             _redeemer,
             _sighash,
-            _d.utxoSize(),
+            _d.utxoValue(),
             _redeemerOutputScript,
             _requestedFee,
             _d.utxoOutpoint);
@@ -229,12 +229,12 @@ library DepositRedemption {
         require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
-        _d.latestRedemptionFee = _d.utxoSize().sub(_newOutputValue);
+        _d.latestRedemptionFee = _d.utxoValue().sub(_newOutputValue);
         // Calculate the next sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _newOutputValueBytes,
             _d.redeemerOutputScript);
 
@@ -249,9 +249,9 @@ library DepositRedemption {
         _d.logRedemptionRequested(
             msg.sender,
             _sighash,
-            _d.utxoSize(),
+            _d.utxoValue(),
             _d.redeemerOutputScript,
-            _d.utxoSize().sub(_newOutputValue),
+            _d.utxoValue().sub(_newOutputValue),
             _d.utxoOutpoint);
     }
 
@@ -270,7 +270,7 @@ library DepositRedemption {
         bytes32 _previousSighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _previousOutputValueBytes,
             _d.redeemerOutputScript);
         require(
@@ -309,7 +309,7 @@ library DepositRedemption {
         _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
         _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
-        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.latestRedemptionFee, "Incorrect fee amount");
+        require((_d.utxoValue().sub(_fundingOutputValue)) <= _d.latestRedemptionFee, "Incorrect fee amount");
 
         // Transfer TBTC to signers and close the keep.
         distributeSignerFee(_d);

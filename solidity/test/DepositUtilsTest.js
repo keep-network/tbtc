@@ -242,9 +242,13 @@ describe("DepositUtils", async function() {
   })
 
   describe("findAndParseFundingOutput()", async () => {
-    const _txOutputVector =
-      "0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6"
-    const _fundingOutputIndex = 0
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
 
     it("correctly returns valuebytes", async () => {
       await testDeposit.setPubKey(
@@ -252,8 +256,8 @@ describe("DepositUtils", async function() {
         fundingTx.signerPubkeyY,
       )
       const valueBytes = await testDeposit.findAndParseFundingOutput.call(
-        _txOutputVector,
-        _fundingOutputIndex,
+        fundingTx.txOutputVector,
+        fundingTx.fundingOutputIndex,
       )
       expect(
         fundingTx.outValueBytes,
@@ -269,12 +273,43 @@ describe("DepositUtils", async function() {
 
       await expectRevert(
         testDeposit.findAndParseFundingOutput.call(
-          _txOutputVector,
-          _fundingOutputIndex,
+          fundingTx.txOutputVector,
+          fundingTx.fundingOutputIndex,
         ),
-        "could not identify output funding the required public key hash",
+        "Could not identify output funding the required public key hash",
       )
     })
+
+    // The output value will be the same regardless.
+    const fundingOutputBase = fundingTx.txOutputVector.substring(0, 20)
+    const unsupportedFundingOutputScripts = {
+      p2pkh: "1976a9" + "1486e7303082a6a21d5837176bc808bf4828371ab6" + "88ac",
+      p2sh: "17a9" + "1486e7303082a6a21d5837176bc808bf4828371ab6" + "87",
+      // p2wsh should fail at identifying the output funding the PKH, since
+      // extractHash will return a non-PKH hash.
+    }
+
+    for (const [type, script] of Object.entries(
+      unsupportedFundingOutputScripts,
+    )) {
+      it(`reverts if ${type} output is used to fund the deposit`, async () => {
+        await testDeposit.setPubKey(
+          fundingTx.signerPubkeyX,
+          fundingTx.signerPubkeyY,
+        )
+
+        const txOutputVector = fundingOutputBase + script
+        console.log(await testDeposit.signerPKH.call())
+
+        await expectRevert(
+          testDeposit.findAndParseFundingOutput.call(
+            txOutputVector,
+            fundingTx.fundingOutputIndex,
+          ),
+          "Funding transaction output type unsupported: only p2wpkh outputs are supported",
+        )
+      })
+    }
   })
 
   describe("validateAndParseFundingSPVProof()", async () => {
@@ -547,13 +582,13 @@ describe("DepositUtils", async function() {
     })
   })
 
-  describe("utxoSize()", async () => {
-    it("returns the state's utxoSizeBytes as an integer", async () => {
-      const utxoSize = await testDeposit.utxoSize.call()
-      expect(utxoSize).to.eq.BN(0)
+  describe("utxoValue()", async () => {
+    it("returns the state's utxoValueBytes as an integer", async () => {
+      const utxoValue = await testDeposit.utxoValue.call()
+      expect(utxoValue).to.eq.BN(0)
 
-      await testDeposit.setUTXOInfo("0x11223344", 1, "0x")
-      const newUtxoSize = await testDeposit.utxoSize.call()
+      await testDeposit.setFundingInfo("0x11223344", 1, "0x")
+      const newUtxoSize = await testDeposit.utxoValue.call()
       expect(newUtxoSize).to.eq.BN(new BN("44332211", 16))
     })
   })
@@ -834,7 +869,7 @@ describe("DepositUtils", async function() {
     it("returns remaining term from current block", async () => {
       const block = await web3.eth.getBlock("latest")
       // Set Deposit.fundedAt to current block.
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         prevoutValueBytes,
         block.timestamp,
         outpoint,
@@ -850,7 +885,7 @@ describe("DepositUtils", async function() {
 
     it("returns 0 if deposit is at term", async () => {
       const block = await web3.eth.getBlock("latest")
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         prevoutValueBytes,
         block.timestamp,
         outpoint,

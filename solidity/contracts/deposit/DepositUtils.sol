@@ -62,7 +62,7 @@ library DepositUtils {
         bytes32 lastRequestedDigest;  // the digest most recently requested for signing
 
         // written when we get funded
-        bytes8 utxoSizeBytes;  // LE uint. the size of the deposit UTXO in satoshis
+        bytes8 utxoValueBytes;  // LE uint. the size of the deposit UTXO in satoshis
         uint256 fundedAt; // timestamp when funding proof was received
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
 
@@ -150,8 +150,8 @@ library DepositUtils {
     }
 
     /// @notice                     Find and validate funding output in transaction output vector using the index.
-    /// @dev                        Gets `_fundingOutputIndex` output from the output vector and validates if it's
-    ///                             Public Key Hash matches a Public Key Hash of the deposit.
+    /// @dev                        Gets `_fundingOutputIndex` output from the output vector and validates if it is
+    ///                             a p2wpkh output with public key hash matching this deposit's public key hash.
     /// @param _d                   Deposit storage pointer.
     /// @param _txOutputVector      All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC outputs.
     /// @param _fundingOutputIndex  Index of funding output in _txOutputVector.
@@ -167,12 +167,18 @@ library DepositUtils {
         // Find the output paying the signer PKH
         _output = _txOutputVector.extractOutputAtIndex(_fundingOutputIndex);
 
-        if (keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d)))) {
-            _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
-            return _valueBytes;
-        }
-        // If we don't return from inside the loop, we failed.
-        revert("could not identify output funding the required public key hash");
+        require(
+            keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d))),
+            "Could not identify output funding the required public key hash"
+        );
+        require(
+            _output.length == 31 &&
+                _output.keccak256Slice(8, 23) == keccak256(abi.encodePacked(hex"160014", signerPKH(_d))),
+            "Funding transaction output type unsupported: only p2wpkh outputs are supported"
+        );
+
+        _valueBytes = bytes8(_output.slice(0, 8).toBytes32());
+        return _valueBytes;
     }
 
     /// @notice                     Validates the funding tx and parses information from it.
@@ -298,8 +304,8 @@ library DepositUtils {
     /// @notice    Returns the size of the deposit UTXO in satoshi.
     /// @dev       We store the deposit as bytes8 to make signature checking easier.
     /// @return    UTXO value in satoshi.
-    function utxoSize(Deposit storage _d) public view returns (uint256) {
-        return bytes8LEToUint(_d.utxoSizeBytes);
+    function utxoValue(Deposit storage _d) public view returns (uint256) {
+        return bytes8LEToUint(_d.utxoValueBytes);
     }
 
     /// @notice     Gets the current price of Bitcoin in Ether.
