@@ -39,8 +39,6 @@ describe("DepositRedemption", async function() {
   let signerFee
   let depositTerm
   let tdtId
-  // TODO tdtHolder, frtHolder
-  let vendingMachine
 
   const tdtHolder = owner
   const frtHolder = accounts[4]
@@ -100,7 +98,8 @@ describe("DepositRedemption", async function() {
       await restoreSnapshot()
     })
 
-    it("returns signerFee if we are pre-term and owner is not FRT holder", async () => {
+    it("returns signer fee if we are pre-term, owner is not FRT holder and signer fee is escrowed", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
       const tbtcOwed = await testDeposit.getOwnerRedemptionTbtcRequirement.call(
         owner,
       )
@@ -119,7 +118,7 @@ describe("DepositRedemption", async function() {
       expect(tbtcOwed).to.eq.BN(new BN(0))
     })
 
-    it("returns signer fee if deposit is pre-term and signer fee is not escrowed", async () => {
+    it("returns 2*signerFee if deposit is pre-term, owner is not FRT holder and signer fee is not escrowed", async () => {
       await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
         from: frtHolder,
       })
@@ -127,10 +126,9 @@ describe("DepositRedemption", async function() {
       const tbtcOwed = await testDeposit.getOwnerRedemptionTbtcRequirement.call(
         owner,
       )
-      expect(tbtcOwed).to.eq.BN(signerFee)
+      expect(tbtcOwed).to.eq.BN(signerFee.mul(new BN(2)))
     })
   })
-
   describe("getRedemptionTbtcRequirement", async () => {
     let outpoint
     let valueBytes
@@ -150,410 +148,1688 @@ describe("DepositRedemption", async function() {
       await restoreSnapshot()
     })
 
-    it("returns signerFee if we are pre term and redeemer is not FRT holder", async () => {
-      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
-        tdtHolder,
-      )
-      expect(tbtcOwed).to.eq.BN(signerFee)
-    })
-
-    it("returns zero if deposit is pre-term, redeemer is FRT holder and signer fee is escrowed", async () => {
+    it("redeemer: (TDT holder & FRT Holder) deposit: (at-term) balance: (0) expected: (signerFee)(0)(0)", async () => {
+      await increaseTime(depositTerm)
       await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
         from: frtHolder,
       })
-      await tbtcToken.forceMint(testDeposit.address, signerFee)
-
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
       )
-      expect(tbtcOwed).to.eq.BN(new BN(0))
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
     })
-
-    it("returns full TBTC if we are pre term and we are at COURTESY_CALL - not TDT holder", async () => {
+    it("redeemer: (TDT holder & FRT Holder) deposit: (courtesy_call) balance: (0) expected: (signerFee)(0)(0)", async () => {
       await testDeposit.setState(states.COURTESY_CALL)
-
-      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
-        accounts[9],
-      )
-      expect(tbtcOwed).to.eq.BN(depositValue)
-    })
-
-    it("returns zero if we are pre term and we are at COURTESY_CALL - TDT holder", async () => {
-      await testDeposit.setState(states.COURTESY_CALL)
-
-      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
-        owner,
-      )
-      expect(tbtcOwed).to.eq.BN(new BN(0))
-    })
-
-    it("returns zero if deposit is pre-term and redeemer is FRT holder", async () => {
       await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
         from: frtHolder,
       })
-
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
       )
-      expect(tbtcOwed).to.eq.BN(new BN(0))
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
     })
-
-    it("returns SignerFee if deposit is pre-term, FRT does not exist and signer fee is partially escrowed", async () => {
-      await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
+    it("redeemer: (TDT holder & FRT Holder) deposit: (pre-term) balance: (0) expected: (signerFee)(0)(0)", async () => {
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
         from: frtHolder,
       })
-
-      await tbtcToken.forceMint(testDeposit.address, signerFee)
-
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
       )
-      expect(tbtcOwed).to.eq.BN(signerFee)
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
     })
-
-    it("reverts if deposit is pre-term and redeemer is not Deposit owner", async () => {
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (at-term) balance: (0) expected: (signerFee)(0)(0)", async () => {
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (0) expected: (signerFee)(0)(0)", async () => {
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (pre-term) balance: (0) expected: (2 * signerFee)(0)(0)", async () => {
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(signerFee.mul(new BN(2)))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (at-term) balance: (0) expected: (lotSize + signerFee)(0)(lotSize - signerFee)", async () => {
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue.add(signerFee))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (courtesy_call) balance: (0) expected: (lotSize + signerFee)(0)(lotSize - signerFee)", async () => {
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue.add(signerFee))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (pre-term) balance: (0) expected: (REVERT)", async () => {
       await expectRevert(
-        testDeposit.getRedemptionTbtcRequirement.call(accounts[1]),
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
         "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
       )
     })
-
-    it("returns full TBTC if we are at-term and caller is not TDT holder", async () => {
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (at-term) balance: (0) expected: (lotSize + signerFee)(0)(lotSize - signerFee)", async () => {
       await increaseTime(depositTerm)
-      await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
-        from: owner,
-      })
-
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
-        tdtHolder,
+        accounts[9],
       )
-      expect(tbtcOwed).to.eq.BN(depositValue)
+      expect(tbtcOwed[0]).to.eq.BN(depositValue.add(signerFee))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue.sub(signerFee))
     })
-
-    it("returns signerFee if we are at-term, caller is TDT holder, and fee is not escrowed", async () => {
-      await increaseTime(depositTerm)
-      await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
-        from: frtHolder,
-      })
-      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
-        tdtHolder,
-      )
-      expect(tbtcOwed).to.eq.BN(signerFee)
-    })
-
-    it("returns signerFee if we are pre-term, caller is TDT holder and fee is not escrowed", async () => {
-      await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
-        from: frtHolder,
-      })
-      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
-        tdtHolder,
-      )
-      expect(tbtcOwed).to.eq.BN(signerFee)
-    })
-
-    it("returns signerFee if we are in courtesy_call, caller is TDT holder and fee is not escrowed", async () => {
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (0) expected: (lotSize + signerFee)(0)(lotSize - signerFee)", async () => {
       await testDeposit.setState(states.COURTESY_CALL)
-      await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue.add(signerFee))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (pre-term) balance: (0) expected: (REVERT)", async () => {
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (at-term) balance: (signerFee) expected: (0)(0)(0)", async () => {
+      await increaseTime(depositTerm)
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
         from: frtHolder,
       })
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
       )
-      expect(tbtcOwed).to.eq.BN(signerFee)
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
     })
-
-    it("returns zero if we are at-term, caller is TDT holder and signer fee is escrowed", async () => {
+    it("redeemer: (TDT holder & FRT Holder) deposit: (courtesy_call) balance: (signerFee) expected: (0)(0)(0)", async () => {
+      await testDeposit.setState(states.COURTESY_CALL)
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (pre-term) balance: (signerFee) expected: (0)(0)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (at-term) balance: (signerFee) expected: (0)(0)(0)", async () => {
       await tbtcToken.forceMint(testDeposit.address, signerFee)
       await increaseTime(depositTerm)
-
       const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
         tdtHolder,
       )
-      expect(tbtcOwed).to.eq.BN(new BN(0))
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (signerFee) expected: (0)(0)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (pre-term) balance: (signerFee) expected: (signerFee)(0)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (at-term) balance: (signerFee) expected: (lotSize)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (courtesy_call) balance: (signerFee) expected: (lotSize)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (pre-term) balance: (signerFee) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (at-term) balance: (signerFee) expected: (lotSize)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (signerFee) expected: (lotSize)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (pre-term) balance: (signerFee) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee)
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (at-term) balance: (2*signerFee) expected: (0)(signerFee)(0)", async () => {
+      await increaseTime(depositTerm)
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(signerFee)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (courtesy_call) balance: (2*signerFee) expected: (0)(signerFee)(0)", async () => {
+      await testDeposit.setState(states.COURTESY_CALL)
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(signerFee)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (pre-term) balance: (2*signerFee) expected: (0)(signerFee)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(signerFee)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (at-term) balance: (2*signerFee) expected: (0)(signerFee)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(signerFee)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (2*signerFee) expected: (0)(signerFee)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(signerFee)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (pre-term) balance: (2*signerFee) expected: (0)(0)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (at-term) balance: (2*signerFee) expected: (lotSize - signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (courtesy_call) balance: (2*signerFee) expected: (lotSize - signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (pre-term) balance: (2*signerFee) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (at-term) balance: (2*signerFee) expected: (lotSize - signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (2*signerFee) expected: (lotSize - signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (pre-term) balance: (2*signerFee) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, signerFee.mul(new BN(2)))
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (at-term) balance: (lotSize) expected: (0)(lotSize - signerFee)(0)", async () => {
+      await increaseTime(depositTerm)
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (courtesy_call) balance: (lotSize) expected: (0)(lotSize - signerFee)(0)", async () => {
+      await testDeposit.setState(states.COURTESY_CALL)
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (pre-term) balance: (lotSize) expected: (0)(lotSize - signerFee)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (at-term) balance: (lotSize) expected: (0)(lotSize - signerFee)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (lotSize) expected: (0)(lotSize - signerFee)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (pre-term) balance: (lotSize) expected: (0)(lotSize - 2*signerFee)(0)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee.mul(new BN(2))))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (at-term) balance: (lotSize) expected: (signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (courtesy_call) balance: (lotSize) expected: (signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (pre-term) balance: (lotSize) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (at-term) balance: (lotSize) expected: (signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (lotSize) expected: (signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(signerFee)
+      expect(tbtcOwed[1]).to.eq.BN(0)
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (pre-term) balance: (lotSize) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (at-term) balance: (2*lotSize) expected: (0)(2*lotSize - signerFee)(0)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await increaseTime(depositTerm)
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.mul(new BN(2)).sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (courtesy_call) balance: (2*lotSize) expected: (0)(2*lotSize - signerFee)(0)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await testDeposit.setState(states.COURTESY_CALL)
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.mul(new BN(2)).sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (pre-term) balance: (2*lotSize) expected: (0)(2*lotSize - signerFee)(0)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
+        from: frtHolder,
+      })
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.mul(new BN(2)).sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (at-term) balance: (2*lotSize) expected: (0)(2*lotSize - signerFee)(0)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.mul(new BN(2)).sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (2*lotSize) expected: (0)(2*lotSize - signerFee)(0)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.mul(new BN(2)).sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (pre-term) balance: (2*lotSize) expected: (0)(2*lotSize - 2*signerFee)(0)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        tdtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(
+        depositValue.mul(new BN(2)).sub(signerFee.mul(new BN(2))),
+      )
+      expect(tbtcOwed[2]).to.eq.BN(0)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (at-term) balance: (2*lotSize) expected: (0)(lotSize - signerFee)(lotSize)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (courtesy_call) balance: (2*lotSize) expected: (0)(lotSize - signerFee)(lotSize)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (pre-term) balance: (2*lotSize) expected: (REVERT)", async () => {
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (at-term) balance: (2*lotSize) expected: (0)(lotSize - signerFee)(lotSize)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await increaseTime(depositTerm)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (2*lotSize) expected: (0)(lotSize - signerFee)(lotSize)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await testDeposit.setState(states.COURTESY_CALL)
+      const tbtcOwed = await testDeposit.getRedemptionTbtcRequirement.call(
+        accounts[9],
+      )
+      expect(tbtcOwed[0]).to.eq.BN(0)
+      expect(tbtcOwed[1]).to.eq.BN(depositValue.sub(signerFee))
+      expect(tbtcOwed[2]).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (pre-term) balance: (2*lotSize) expected: (REVERT)", async () => {
+      await expectRevert(
+        testDeposit.getRedemptionTbtcRequirement.call(frtHolder),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
     })
   })
-
   describe("performRedemptionTBTCTransfers", async () => {
     let outpoint
     let valueBytes
     let block
+    let caller
     before(async () => {
       outpoint = "0x" + "33".repeat(36)
       valueBytes = "0x1111111111111111"
     })
 
     beforeEach(async () => {
+      caller = accounts[5]
       await createSnapshot()
       block = await web3.eth.getBlock("latest")
-      await testDeposit.setRedeemerAddress(owner)
       await testDeposit.setFundingInfo(valueBytes, block.timestamp, outpoint)
-      await tbtcToken.resetBalance(depositValue, {from: owner})
-      await tbtcToken.resetAllowance(testDeposit.address, depositValue, {
-        from: owner,
-      })
     })
 
     afterEach(async () => {
       await restoreSnapshot()
     })
-
-    it("does nothing if deposit is pre-term, redeemer is FRT holder and signerFee is escrowed", async () => {
-      await tbtcToken.forceMint(testDeposit.address, signerFee)
-      await feeRebateToken.transferFrom(frtHolder, tdtHolder, tdtId, {
-        from: frtHolder,
-      })
-
-      const {
-        receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers()
-
-      const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: transferBlock,
-        toBlock: "latest",
-      })
-      expect(events.length).to.equal(0)
-    })
-
-    it("escrows signerFee if deposit is pre-term, and signerFee is not escrowed", async () => {
-      await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
-        from: frtHolder,
-      })
-      await tbtcToken.resetBalance(signerFee, {from: owner})
-      await tbtcToken.resetAllowance(testDeposit.address, signerFee, {
-        from: owner,
-      })
-
-      const {
-        receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
-      const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: transferBlock,
-        toBlock: "latest",
-      })
-
-      expect(events[0].returnValues.from).to.equal(owner)
-      expect(events[0].returnValues.to).to.equal(testDeposit.address)
-      expect(events[0].returnValues.value).to.eq.BN(signerFee)
-    })
-
-    it("burns 1 TBTC if deposit is in COURTESY_CALL and TDT holder is the Vending Machine", async () => {
-      const {
-        receipt: {blockNumber: transferBlock},
-      } = await tbtcDepositToken.transferFrom(
-        owner,
-        vendingMachine.address,
-        tdtId,
-        {from: owner},
+    it("redeemer: (TDT holder & FRT Holder) deposit: (at-term) balance: (0) expected: signerFee to Deposit", async () => {
+      await increaseTime(depositTerm)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(tdtHolder)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
       )
-      await testDeposit.setState(states.COURTESY_CALL)
-
-      await testDeposit.performRedemptionTBTCTransfers({from: owner})
-
-      const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: transferBlock,
-        toBlock: "latest",
-      })
-
-      expect(events[0].returnValues.from).to.equal(owner)
-      expect(events[0].returnValues.to).to.equal(ZERO_ADDRESS)
-      expect(events[0].returnValues.value).to.eq.BN(depositValue)
-    })
-
-    it("escrows signerFee if deposit is pre-term, owner is TDT holder and signer fee is partially escrowed", async () => {
-      await tbtcToken.forceMint(testDeposit.address, signerFee)
-      await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
         from: frtHolder,
-      })
-
-      await tbtcToken.resetBalance(signerFee, {from: owner})
-      await tbtcToken.resetAllowance(testDeposit.address, signerFee, {
-        from: owner,
-      })
-
-      block = await web3.eth.getBlock("latest")
-
-      const {
-        receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
-
-      const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: transferBlock,
-        toBlock: "latest",
-      })
-      expect(events[0].returnValues.from).to.equal(owner)
-      expect(events[0].returnValues.to).to.equal(testDeposit.address)
-      expect(events[0].returnValues.value).to.eq.BN(signerFee)
-    })
-
-    it("escrows signerFee if Deposit is in COURTESY_CALL, caller is TDT owner and FRT owner", async () => {
-      await testDeposit.setState(states.COURTESY_CALL)
-      await tbtcToken.forceMint(testDeposit.address, signerFee)
-      await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
-        from: frtHolder,
-      })
-
-      await tbtcToken.resetBalance(signerFee, {from: owner})
-      await tbtcToken.resetAllowance(testDeposit.address, signerFee, {
-        from: owner,
       })
       block = await web3.eth.getBlock("latest")
-
       const {
         receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
         fromBlock: transferBlock,
         toBlock: "latest",
       })
-      expect(events[0].returnValues.from).to.equal(owner)
+      expect(events[0].returnValues.from).to.equal(caller)
       expect(events[0].returnValues.to).to.equal(testDeposit.address)
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
     })
-
-    it("escrows fee and sends correct TBTC if Deposit is in COURTESY_CALL and fee is not escrowed", async () => {
+    it("redeemer: (TDT holder & FRT Holder) deposit: (courtesy_call) balance: (0) expected: (signerFee) to Deposit", async () => {
       await testDeposit.setState(states.COURTESY_CALL)
-      await feeRebateToken.burn(web3.utils.toBN(testDeposit.address), {
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
         from: frtHolder,
       })
-      await testDeposit.setRedeemerAddress(accounts[9])
-      await tbtcToken.resetBalance(depositValue, {from: accounts[9]})
-      await tbtcToken.resetAllowance(testDeposit.address, depositValue, {
-        from: accounts[9],
-      })
-
+      block = await web3.eth.getBlock("latest")
       const {
         receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: accounts[9]})
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
         fromBlock: transferBlock,
         toBlock: "latest",
       })
-
-      expect(events[0].returnValues.from).to.equal(accounts[9])
+      expect(events[0].returnValues.from).to.equal(caller)
       expect(events[0].returnValues.to).to.equal(testDeposit.address)
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
-      expect(events[1].returnValues.from).to.equal(accounts[9])
-      expect(events[1].returnValues.to).to.equal(owner)
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (pre-term) balance: (0) expected: (signerFee) to Deposit", async () => {
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
+        from: frtHolder,
+      })
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (at-term) balance: (0) expected: (signerFee) to Deposit", async () => {
+      await increaseTime(depositTerm)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (0) expected: (signerFee) to Deposit", async () => {
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (pre-term) balance: (0) expected: (2 * signerFee) to Deposit", async () => {
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee.mul(new BN(2)))
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (at-term) balance: (0) expected: (lotSize + signerFee) to Deposit (lotSize - signerFee) to TDT holder", async () => {
+      await increaseTime(depositTerm)
+      const redeemer = frtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee.add(depositValue))
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(tdtHolder)
       expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
     })
-
-    it("transfers 1 TBTC to TDT holder if deposit is in COURTESY_CALL and fee is escrowed", async () => {
-      await tbtcToken.forceMint(testDeposit.address, signerFee)
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (courtesy_call) balance: (0) expected: (lotSize + signerFee) to Deposit (lotSize - signerFee) to TDT holder", async () => {
       await testDeposit.setState(states.COURTESY_CALL)
-      await testDeposit.setRedeemerAddress(accounts[9])
-      await tbtcToken.resetBalance(depositValue, {from: accounts[9]})
-      await tbtcToken.resetAllowance(testDeposit.address, depositValue, {
-        from: accounts[9],
-      })
-
-      const {
-        receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: accounts[9]})
-
-      const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: transferBlock,
-        toBlock: "latest",
-      })
-      expect(events[0].returnValues.from).to.equal(accounts[9])
-      expect(events[0].returnValues.to).to.equal(owner)
-      expect(events[0].returnValues.value).to.eq.BN(depositValue)
-    })
-
-    it("transfers signerFee if deposit is pre-term and redeemer is not FRT holder", async () => {
-      await tbtcToken.resetBalance(signerFee, {from: owner})
-      await tbtcToken.resetAllowance(testDeposit.address, signerFee, {
-        from: owner,
-      })
-
-      const {
-        receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
-
-      const events = await tbtcToken.getPastEvents("Transfer", {
-        fromBlock: transferBlock,
-        toBlock: "latest",
-      })
-      expect(events[0].returnValues.from).to.equal(tdtHolder)
-      expect(events[0].returnValues.to).to.equal(testDeposit.address)
-      expect(events[0].returnValues.value).to.eq.BN(signerFee)
-    })
-
-    it("burns 1 TBTC if deposit is at-term and Deposit Token owner is Vending Machine", async () => {
-      await increaseTime(depositTerm)
-      await tbtcDepositToken.transferFrom(
-        tdtHolder,
-        vendingMachine.address,
-        tdtId,
-        {from: owner},
+      const redeemer = frtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
       )
-      await tbtcToken.resetBalance(depositValue, {from: owner})
-      await tbtcToken.resetAllowance(testDeposit.address, depositValue, {
-        from: owner,
-      })
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
 
+      block = await web3.eth.getBlock("latest")
       const {
         receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee.add(depositValue))
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(tdtHolder)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (pre-term) balance: (0) expected: (REVERT)", async () => {
+      await expectRevert(
+        testDeposit.performRedemptionTBTCTransfers(),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (at-term) balance: (0) expected: (lotSize + signerFee) to deposit (lotSize - signerFee) to TDT holder", async () => {
+      await increaseTime(depositTerm)
+      const redeemer = accounts[6]
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee.add(depositValue))
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(tdtHolder)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (0) expected: (lotSize + signerFee) to Deposit (lotSize - signerFee) to TDT holder", async () => {
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = accounts[6]
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee.add(depositValue))
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(tdtHolder)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (pre-term) balance: (0) expected: (REVERT)", async () => {
+      await expectRevert(
+        testDeposit.performRedemptionTBTCTransfers(),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (at-term) balance: (lotSize) expected: (lotSize - signerFee) to redeemer", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await increaseTime(depositTerm)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(tdtHolder)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
+        from: frtHolder,
+      })
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
         fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events.length).to.equal(1)
-      expect(events[0].returnValues.from).to.equal(tdtHolder)
-      expect(events[0].returnValues.to).to.equal(ZERO_ADDRESS)
-      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
     })
-
-    it("sends 1 TBTC to Deposit Token owner if deposit is at-term and fee is escrowed", async () => {
-      await increaseTime(depositTerm)
-      await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
-        from: owner,
+    it("redeemer: (TDT holder & FRT Holder) deposit: (courtesy_call) balance: (lotSize) expected: (lotSize - signerFee) to redeemer", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
+        from: frtHolder,
       })
-      await tbtcToken.forceMint(testDeposit.address, signerFee)
-      await increaseTime(depositTerm)
-
+      block = await web3.eth.getBlock("latest")
       const {
         receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
         fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events.length).to.equal(1)
-      expect(events[0].returnValues.from).to.equal(tdtHolder)
-      expect(events[0].returnValues.to).to.equal(accounts[1])
-      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
     })
-
-    it("escrows fee and sends correct TBTC if Deposit is at-term and fee is not escrowed", async () => {
-      await increaseTime(depositTerm)
-      await tbtcDepositToken.transferFrom(tdtHolder, accounts[1], tdtId, {
-        from: owner,
+    it("redeemer: (TDT holder & FRT Holder) deposit: (pre-term) balance: (lotSize) expected: (lotSize - signerFee) to redeemer", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
+        from: frtHolder,
       })
-      await tbtcToken.resetBalance(depositValue, {from: owner})
-      await tbtcToken.resetAllowance(testDeposit.address, depositValue, {
-        from: owner,
-      })
-
+      block = await web3.eth.getBlock("latest")
       const {
         receipt: {blockNumber: transferBlock},
-      } = await testDeposit.performRedemptionTBTCTransfers({from: owner})
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (at-term) balance: (lotSize) expected: (lotSize - signerFee) to redeemer", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await increaseTime(depositTerm)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (lotSize) expected: (lotSize - signerFee) to redeemer", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (pre-term) balance: (lotSize) expected: (lotSize - 2*signerFee) to redeemer", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(
+        depositValue.sub(signerFee.mul(new BN(2))),
+      )
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (at-term) balance: (lotSize) expected: (signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await increaseTime(depositTerm)
+      const redeemer = frtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
 
       const events = await tbtcToken.getPastEvents("Transfer", {
         fromBlock: transferBlock,
         toBlock: "latest",
       })
       expect(events.length).to.equal(2)
-      expect(events[0].returnValues.from).to.equal(tdtHolder)
+      expect(events[0].returnValues.from).to.equal(caller)
       expect(events[0].returnValues.to).to.equal(testDeposit.address)
       expect(events[0].returnValues.value).to.eq.BN(signerFee)
-      expect(events[1].returnValues.from).to.equal(tdtHolder)
-      expect(events[1].returnValues.to).to.equal(accounts[1])
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(tdtHolder)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (courtesy_call) balance: (lotSize) expected: (signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = frtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(2)
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(tdtHolder)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (pre-term) balance: (lotSize) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await expectRevert(
+        testDeposit.performRedemptionTBTCTransfers(),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (at-term) balance: (lotSize) expected: (signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await increaseTime(depositTerm)
+      const redeemer = accounts[6]
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(2)
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(tdtHolder)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (lotSize) expected:(signerFee)(0)(lotSize)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = accounts[6]
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(2)
+      expect(events[0].returnValues.from).to.equal(caller)
+      expect(events[0].returnValues.to).to.equal(testDeposit.address)
+      expect(events[0].returnValues.value).to.eq.BN(signerFee)
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(tdtHolder)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue)
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (pre-term) balance: (lotSize) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(testDeposit.address, depositValue)
+      await expectRevert(
+        testDeposit.performRedemptionTBTCTransfers(),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    // ============================================
+    it("redeemer: (TDT holder & FRT Holder) deposit: (at-term) balance: (2*lotSize) expected: (0)(2*lotSize - signerFee)(0) to redeemer", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await increaseTime(depositTerm)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(tdtHolder)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
+        from: frtHolder,
+      })
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(
+        depositValue.mul(new BN(2)).sub(signerFee),
+      )
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (courtesy_call) balance: (lotSize*2) expected: (0)(2*lotSize - signerFee)(0) to redeemer", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
+        from: frtHolder,
+      })
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(
+        depositValue.mul(new BN(2)).sub(signerFee),
+      )
+    })
+    it("redeemer: (TDT holder & FRT Holder) deposit: (pre-term) balance: (lotSize * 2) expected: (0)(2*lotSize - signerFee)(0) to redeemer", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      await feeRebateToken.transferFrom(frtHolder, redeemer, tdtId, {
+        from: frtHolder,
+      })
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(
+        depositValue.mul(new BN(2)).sub(signerFee),
+      )
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (at-term) balance: (lotSize*2) expected: (0)(2*lotSize - signerFee)(0) to redeemer", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await increaseTime(depositTerm)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(
+        depositValue.mul(new BN(2)).sub(signerFee),
+      )
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (lotSize*2) expected: (0)(2*lotSize - signerFee)(0) to redeemer", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(
+        depositValue.mul(new BN(2)).sub(signerFee),
+      )
+    })
+    it("redeemer: (TDT holder & !FRT Holder) deposit: (pre-term) balance: (lotSize*2) expected: (0)(2*lotSize - 2*signerFee)(0) to redeemer", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      const redeemer = tdtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        redeemer,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(1)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(redeemer)
+      expect(events[0].returnValues.value).to.eq.BN(
+        depositValue.mul(new BN(2)).sub(signerFee.mul(new BN(2))),
+      )
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (at-term) balance: (lotSize*2) expected: (0)(lotSize - signerFee)(lotSize)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await increaseTime(depositTerm)
+      const redeemer = frtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(2)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(tdtHolder)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(redeemer)
       expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (courtesy_call) balance: (lotSize*2) expected: (0)(lotSize - signerFee)(lotSize)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = frtHolder
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(tdtHolder)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(redeemer)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & FRT Holder) deposit: (pre-term) balance: (lotSize*2) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await expectRevert(
+        testDeposit.performRedemptionTBTCTransfers(),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (at-term) balance: (lotSize*2) expected: (0)(lotSize - signerFee)(lotSize)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await increaseTime(depositTerm)
+      const redeemer = accounts[6]
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(2)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(tdtHolder)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(redeemer)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (courtesy_call) balance: (lotSize*2) expected:(0)(lotSize - signerFee)(lotSize)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await testDeposit.setState(states.COURTESY_CALL)
+      const redeemer = accounts[6]
+      await testDeposit.setRedeemerAddress(redeemer)
+      const fundingRequirement = await testDeposit.getRedemptionTbtcRequirement.call(
+        frtHolder,
+      )
+      await tbtcToken.resetBalance(fundingRequirement[0], {from: caller})
+      await tbtcToken.resetAllowance(
+        testDeposit.address,
+        fundingRequirement[0],
+        {
+          from: caller,
+        },
+      )
+
+      block = await web3.eth.getBlock("latest")
+      const {
+        receipt: {blockNumber: transferBlock},
+      } = await testDeposit.performRedemptionTBTCTransfers({from: caller})
+
+      const events = await tbtcToken.getPastEvents("Transfer", {
+        fromBlock: transferBlock,
+        toBlock: "latest",
+      })
+      expect(events.length).to.equal(2)
+      expect(events[0].returnValues.from).to.equal(testDeposit.address)
+      expect(events[0].returnValues.to).to.equal(tdtHolder)
+      expect(events[0].returnValues.value).to.eq.BN(depositValue)
+      expect(events[1].returnValues.from).to.equal(testDeposit.address)
+      expect(events[1].returnValues.to).to.equal(redeemer)
+      expect(events[1].returnValues.value).to.eq.BN(depositValue.sub(signerFee))
+    })
+    it("redeemer: (!TDT holder & !FRT Holder) deposit: (pre-term) balance: (lotSize*2) expected: (REVERT)", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        depositValue.mul(new BN(2)),
+      )
+      await expectRevert(
+        testDeposit.performRedemptionTBTCTransfers(),
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+      )
     })
   })
 
@@ -648,6 +1924,11 @@ describe("DepositRedemption", async function() {
     })
 
     it("escrows the fee rebate reward for the fee rebate token holder", async () => {
+      await tbtcToken.forceMint(
+        testDeposit.address,
+        await testDeposit.signerFee(),
+      )
+
       const block = await web3.eth.getBlock("latest")
 
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)

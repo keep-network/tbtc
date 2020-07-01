@@ -65,9 +65,9 @@ const System = {
         await TestTBTCToken.forceMint(
             opener,
             // Let's just play it safe.
-            redemptionRequirement,
+            redemptionRequirement[0],
         )
-        await TestTBTCToken.approve(deposit.address, redemptionRequirement, { from: opener })
+        await TestTBTCToken.approve(deposit.address, redemptionRequirement[0], { from: opener })
     },
     setAndApproveLiquidationBalance: async ({ TestTBTCToken, deposit }) => {
         const lotSize = await deposit.lotSizeSatoshis()
