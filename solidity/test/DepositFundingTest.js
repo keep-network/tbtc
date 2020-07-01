@@ -1,10 +1,5 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {
-  states,
-  fundingTx,
-  increaseTime,
-  legacyFundingTx,
-} = require("./helpers/utils.js")
+const {states, fundingTx, increaseTime} = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
@@ -225,7 +220,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(15 * 24 * 60 * 60) // 15 days, into the 1st month
       await createNewDeposit(fullBtc)
-      await mint(98 * fullBtc) // should new be at 100 BTC - 1000 sats
+      await mint(98 * fullBtc) // should now be at 100 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -233,7 +228,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 2nd month
       await createNewDeposit(fullBtc)
-      await mint(150 * fullBtc) // should new be at 250 BTC - 1000 sats
+      await mint(150 * fullBtc) // should now be at 250 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -241,7 +236,7 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 3rd month
       await createNewDeposit(fullBtc)
-      await mint(250 * fullBtc) // should new be at 500 BTC - 1000 sats
+      await mint(250 * fullBtc) // should now be at 500 BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -249,15 +244,10 @@ describe("DepositFunding", async function() {
 
       await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 4th month
       await createNewDeposit(fullBtc)
-      await mint(500 * fullBtc) // should new be at 1000 BTC - 1000 sats
-      await expectRevert(
-        createNewDeposit(fullBtc),
-        "New deposits aren't allowed.",
-      )
+      await mint(1500 * fullBtc) // should now be at 1000 BTC - 1000 sats
 
-      await increaseTime(30 * 24 * 60 * 60) // 30 days, into the 5th month
       await createNewDeposit(fullBtc)
-      await mint("2099900000000000") // should new be at 21M BTC - 1000 sats
+      await mint("2099850000000000") // should now be at 21M BTC - 1000 sats
       await expectRevert(
         createNewDeposit(fullBtc),
         "New deposits aren't allowed.",
@@ -608,58 +598,6 @@ describe("DepositFunding", async function() {
         ),
         "Not awaiting funding",
       )
-    })
-  })
-
-  describe("provideBTCFundingProof Legacy", async () => {
-    beforeEach(async () => {
-      await mockRelay.setCurrentEpochDifficulty(legacyFundingTx.difficulty)
-      await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
-      await testDeposit.setSigningGroupPublicKey(
-        legacyFundingTx.signerPubkeyX,
-        legacyFundingTx.signerPubkeyY,
-      )
-      await ecdsaKeepStub.send(1000000, {from: accounts[0]})
-    })
-
-    it("updates to active, stores UTXO info, deconsts funding info, logs Funded", async () => {
-      const blockNumber = await web3.eth.getBlockNumber()
-
-      await testDeposit.provideBTCFundingProof(
-        legacyFundingTx.version,
-        legacyFundingTx.txInputVector,
-        legacyFundingTx.txOutputVector,
-        legacyFundingTx.txLocktime,
-        legacyFundingTx.fundingOutputIndex,
-        legacyFundingTx.merkleProof,
-        legacyFundingTx.txIndexInBlock,
-        legacyFundingTx.bitcoinHeaders,
-      )
-
-      const UTXOInfo = await testDeposit.fundingInfo.call()
-      expect(UTXOInfo[0]).to.eql(legacyFundingTx.outValueBytes)
-      expect(UTXOInfo[2]).to.eql(legacyFundingTx.expectedUTXOOutpoint)
-
-      const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
-      expect(signingGroupRequestedAt).to.eq.BN(
-        0,
-        "signingGroupRequestedAt not deconsted",
-      )
-
-      const fundingProofTimerStart = await testDeposit.getFundingProofTimerStart.call()
-      expect(fundingProofTimerStart).to.eq.BN(
-        0,
-        "fundingProofTimerStart not deconsted",
-      )
-
-      const depositState = await testDeposit.getState.call()
-      expect(depositState).to.eq.BN(states.ACTIVE)
-
-      const eventList = await tbtcSystemStub.getPastEvents("Funded", {
-        fromBlock: blockNumber,
-        toBlock: "latest",
-      })
-      expect(eventList.length).to.eql(1)
     })
   })
 })

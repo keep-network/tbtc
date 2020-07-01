@@ -32,17 +32,28 @@ contract KeepFactorySelectionStub {
 contract KeepFactorySelectorStub is KeepFactorySelector {
 
     bool internal defaultMode = true;
+    bool internal maliciousMode = false;
 
     function selectFactory(
         uint256 _seed,
         IBondedECDSAKeepFactory _defaultFactory,
         IBondedECDSAKeepFactory _fullyBackedFactory
     ) external view returns (IBondedECDSAKeepFactory) {
-        if (defaultMode) {
+        if (maliciousMode) {
+            return IBondedECDSAKeepFactory(0xaFacEbadfAceCffeeFaceacebacEAfAceCfFEeA0);
+        } else if (defaultMode) {
             return _defaultFactory;
         } else {
             return _fullyBackedFactory;
         }
+    }
+
+    function setMaliciousMode() public {
+        maliciousMode = true;
+    }
+
+    function unsetMaliciousMode() public {
+        maliciousMode = false;
     }
 
     function setDefaultMode() public {

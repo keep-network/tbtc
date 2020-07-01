@@ -114,6 +114,12 @@ library KeepFactorySelection {
             _self.keepStakeFactory,
             _self.ethStakeFactory
         );
+
+        require(
+            _self.selectedFactory == _self.keepStakeFactory ||
+                _self.selectedFactory == _self.ethStakeFactory,
+            "Factory selector returned unknown factory"
+        );
     }
 
     /// @notice Sets the address of the fully backed, ETH-stake based keep
