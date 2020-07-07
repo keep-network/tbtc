@@ -73,7 +73,11 @@ const all = [
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
     let constantsContract = TBTCConstants
-    if (network == "keep_dev" || network == "development") {
+    if (
+      network == "keep_dev" ||
+      network == "development" ||
+      network == "ropsten"
+    ) {
       // For keep_dev and development, replace constants with testnet constants.
       // Masquerade as TBTCConstants like a sinister fellow.
       TBTCDevelopmentConstants._json.contractName = "TBTCConstants"
