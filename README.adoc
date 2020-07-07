@@ -78,7 +78,7 @@ and https://diligence.consensys.net/audits/2020/03/thesis-cryptographic-review/[
 
 An additional audit was conducted by Bitcoin-focused security researcher
 https://twitter.com/sr_gi[Sergi Delgado] from May 25 to May 31, 2020. You can
-https://srgi.me/resources/reports/tbtc_audit.pdf[review Sergi's results on his site.].
+https://srgi.me/resources/reports/tbtc_audit.pdf[review Sergi's results on his site].
 
 tBTC is currently under audit by
 https://www.trailofbits.com/[Trail of Bits]. You can review
