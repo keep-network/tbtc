@@ -82,7 +82,7 @@ spec:
                   key: http-api-key
 
             - name: RELAY_CONTRACT_ADDRESS
-              value: '0x91C4b8A630434f150875a24051Bbae8CD56A0827'
+              value: '0xE2EF3a01F05bAA92b0a4EA231106FA7c9DF5d6e3'
 
           volumeMounts:
             - name: relay-maintainer-env
