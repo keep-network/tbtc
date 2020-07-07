@@ -1,9 +1,8 @@
 const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {states, fundingTx, increaseTime} = require("./helpers/utils.js")
+const {states, fundingTx } = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = constants
+const {BN, expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
@@ -21,7 +20,6 @@ describe("DepositFunding", async function() {
   let tbtcConstants
   let mockRelay
   let tbtcSystemStub
-  let tbtcToken
   let tbtcDepositToken
   let testDeposit
   let ecdsaKeepStub
@@ -30,15 +28,11 @@ describe("DepositFunding", async function() {
   let fundingProofTimerStart
   let beneficiary
 
-  const funderBondAmount = new BN("10").pow(new BN("5"))
-  const fullBtc = 100000000
-
   before(async () => {
     ;({
       tbtcConstants,
       mockRelay,
       tbtcSystemStub,
-      tbtcToken,
       tbtcDepositToken,
       testDeposit,
       ecdsaKeepStub,
@@ -76,7 +70,6 @@ describe("DepositFunding", async function() {
         tbtcConstants,
         mockRelay,
         tbtcSystemStub,
-        tbtcToken,
         tbtcDepositToken,
         testDeposit,
         ecdsaKeepStub,
