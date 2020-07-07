@@ -84,7 +84,7 @@ tBTC is currently under audit by
 https://www.trailofbits.com/[Trail of Bits]. You can review
 https://github.com/keep-network/tbtc/issues?q=is%3Aissue+author%3Asamczsun[issues found by `@samczsun`] as they are discovered.
 
-A focsued treatment of tBTC's security model can be
+A focused treatment of tBTC's security model can be
 https://tbtc.network/developers/tbtc-security-model/[found here].
 
 Please dislose any security issues you find to
