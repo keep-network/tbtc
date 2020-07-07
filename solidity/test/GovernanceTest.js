@@ -114,14 +114,14 @@ describe("TBTCSystem governance", async function() {
       expect(allowNewDeposits).to.equal(false)
     })
 
-    it("doesn't pause new deposit creation after a year has passed", async () => {
+    it("doesn't pause new deposit creation after 6 months have passed", async () => {
       let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
 
-      await increaseTime(365 * 24 * 60 * 60 + 1)
+      await increaseTime(180 * 24 * 60 * 60 + 1)
       await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits(),
-        "emergencyPauseNewDeposits can only be called within 365 days of initialization",
+        "emergencyPauseNewDeposits can only be called within 180 days of initialization",
       )
 
       allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
