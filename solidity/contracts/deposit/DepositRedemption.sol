@@ -97,7 +97,8 @@ library DepositRedemption {
         address payable _redeemer
     ) internal {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
-        require(_redeemerOutputScript.length > 0, "cannot send value to zero output script");
+        bytes memory _output = abi.encodePacked(_outputValueBytes, _redeemerOutputScript);
+        require(_output.extractHash().length > 0, "Output script must be a standard type");
 
         // set redeemerAddress early to enable direct access by other functions
         _d.redeemerAddress = _redeemer;
@@ -106,14 +107,14 @@ library DepositRedemption {
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
-        uint256 _requestedFee = _d.utxoSize().sub(_outputValue);
+        uint256 _requestedFee = _d.utxoValue().sub(_outputValue);
         require(_requestedFee >= TBTCConstants.getMinimumRedemptionFee(), "Fee is too low");
 
         // Calculate the sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _outputValueBytes,
             _redeemerOutputScript);
 
@@ -130,7 +131,7 @@ library DepositRedemption {
         _d.logRedemptionRequested(
             _redeemer,
             _sighash,
-            _d.utxoSize(),
+            _d.utxoValue(),
             _redeemerOutputScript,
             _requestedFee,
             _d.utxoOutpoint);
@@ -219,22 +220,21 @@ library DepositRedemption {
     /// @param  _d                          Deposit storage pointer.
     /// @param  _previousOutputValueBytes   The previous output's value.
     /// @param  _newOutputValueBytes        The new output's value.
-    /// @return                             True if successful, False if prevented by timeout, otherwise revert.
     function increaseRedemptionFee(
         DepositUtils.Deposit storage _d,
         bytes8 _previousOutputValueBytes,
         bytes8 _newOutputValueBytes
-    ) public returns (bool) {
+    ) public {
         require(_d.inAwaitingWithdrawalProof(), "Fee increase only available after signature provided");
         require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
-        _d.latestRedemptionFee = _newOutputValue;
+        _d.latestRedemptionFee = _d.utxoValue().sub(_newOutputValue);
         // Calculate the next sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _newOutputValueBytes,
             _d.redeemerOutputScript);
 
@@ -249,9 +249,9 @@ library DepositRedemption {
         _d.logRedemptionRequested(
             msg.sender,
             _sighash,
-            _d.utxoSize(),
+            _d.utxoValue(),
             _d.redeemerOutputScript,
-            _d.utxoSize().sub(_newOutputValue),
+            _d.utxoValue().sub(_newOutputValue),
             _d.utxoOutpoint);
     }
 
@@ -270,7 +270,7 @@ library DepositRedemption {
         bytes32 _previousSighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _previousOutputValueBytes,
             _d.redeemerOutputScript);
         require(
@@ -309,7 +309,7 @@ library DepositRedemption {
         _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
         _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
-        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.latestRedemptionFee, "Incorrect fee amount");
+        require((_d.utxoValue().sub(_fundingOutputValue)) <= _d.latestRedemptionFee, "Incorrect fee amount");
 
         // Transfer TBTC to signers and close the keep.
         distributeSignerFee(_d);
@@ -339,17 +339,19 @@ library DepositRedemption {
     ) public view returns (uint256) {
         require(_txInputVector.validateVin(), "invalid input vector provided");
         require(_txOutputVector.validateVout(), "invalid output vector provided");
-
         bytes memory _input = _txInputVector.slice(1, _txInputVector.length-1);
-        bytes memory _output = _txOutputVector.slice(1, _txOutputVector.length-1);
 
         require(
             keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint),
             "Tx spends the wrong UTXO"
         );
+
+        bytes memory _output = _txOutputVector.slice(1, _txOutputVector.length-1);
+        bytes memory _expectedOutputScript = _d.redeemerOutputScript;
+        require(_output.length - 8 >= _d.redeemerOutputScript.length, "Output script is too short to extract the expected script");
         require(
-            keccak256(_output.slice(8, 3).concat(_output.extractHash())) == keccak256(abi.encodePacked(_d.redeemerOutputScript)),
-            "Tx sends value to wrong pubkeyhash"
+            keccak256(_output.slice(8, _expectedOutputScript.length)) == keccak256(_expectedOutputScript),
+            "Tx sends value to wrong output script"
         );
         return (uint256(_output.extractValue()));
     }

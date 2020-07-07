@@ -127,32 +127,6 @@ library DepositLiquidation {
         startLiquidation(_d, true);
     }
 
-    /// @notice                 Search _txOutputVector for output paying the redeemer.
-    /// @dev                    Require that outputs checked are witness.
-    /// @param  _d              Deposit storage pointer.
-    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
-    /// @return                 False if output paying redeemer was found, true otherwise.
-    function validateRedeemerNotPaid(
-        DepositUtils.Deposit storage _d,
-        bytes memory _txOutputVector
-    ) internal view returns (bool){
-        bytes memory _output;
-        uint256 _offset = 1;
-        uint256 _permittedFeeBumps = TBTCConstants.getPermittedFeeBumps();
-        uint256 _requiredOutputValue = _d.utxoSize().sub((_d.initialRedemptionFee.mul((_permittedFeeBumps.add(1)))));
-
-        uint8 _numOuts = uint8(_txOutputVector.slice(0, 1)[0]);
-        for (uint8 i = 0; i < _numOuts; i++) {
-            _output = _txOutputVector.slice(_offset, _txOutputVector.length.sub(_offset));
-            _offset = _offset.add(_output.determineOutputLength());
-
-            if (_output.extractValue() >= _requiredOutputValue &&
-                keccak256(_output.slice(8, 3).concat(_output.extractHash())) == keccak256(abi.encodePacked(_d.redeemerOutputScript))) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
     /// @dev        For interface, reading auctionValue will give a past value. the current is better.

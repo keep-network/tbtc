@@ -49,8 +49,8 @@ contract TestDepositUtils is TestDeposit {
         return self.signerPKH();
     }
 
-    function utxoSize() public view returns (uint256) {
-        return self.utxoSize();
+    function utxoValue() public view returns (uint256) {
+        return self.utxoValue();
     }
 
     function fetchBitcoinPrice() public view returns (uint256) {
@@ -77,8 +77,8 @@ contract TestDepositUtils is TestDeposit {
         return self.distributeFeeRebate();
     }
 
-    function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
-        return self.pushFundsToKeepGroup(_ethValue);
+    function pushFundsToKeepGroup(uint256 _ethValue) public {
+        self.pushFundsToKeepGroup(_ethValue);
     }
 
     function enableWithdrawal(address _withdrawer, uint256 _amount) public {

@@ -55,6 +55,8 @@ spec:
                 key: http-api-key
           - name: BCOIN_INDEX_TX
             value: 'true'
+          - name: BCOIN_REPLACE_BY_FEE
+            value: 'true'
         volumeMounts:
           - name: bcoin-data
             mountPath: /mnt/.bcoin

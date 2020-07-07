@@ -21,11 +21,21 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
         return keepAddress;
     }
 
+    function setKeepAddress(address _keepAddress) external {
+        keepAddress = _keepAddress;
+    }
+
     function openKeepFeeEstimate() external view returns (uint256) {
         return feeEstimate;
     }
 
     function setOpenKeepFeeEstimate(uint256 _fee) external {
         feeEstimate = _fee;
+    }
+
+    function getSortitionPoolWeight(
+        address _application
+    ) external view returns (uint256 poolWeight) {
+        return 100000;
     }
 }

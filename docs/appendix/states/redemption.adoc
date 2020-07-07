@@ -153,7 +153,7 @@ funder bond payment.
 *** the bitcoin hash160 pubkeyhash to which to deliver BTC
 ** `uint256 outstandingTBTC`
 *** check that the `Deposit`'s TBTC has been returned
-*** this is a derived attribute from UTXO size, the signer fee, and the funder
+*** this is a derived attribute from UTXO value, the signer fee, and the funder
 	bond value
 ** `uint256 withdrawalRequestTime`
 *** start timeouts for signers wrt signing and withdrawal

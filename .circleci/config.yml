@@ -65,99 +65,6 @@ jobs:
           name: Run NPM tests
           working_directory: ~/project/solidity
           command: npm run test:quick
-  generate_pngs:
-    docker:
-      - image: keepnetwork/texlive:15
-    steps:
-      - checkout
-      - run:
-          name: Generate TeX-based PNGs
-          working_directory: ~/project/docs
-          command: |
-            mkdir -p /tmp/build/docs/img
-            make pngs
-            cp -r img/generated /tmp/build/docs/img/generated
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - ./build/docs/img/generated/*.png
-  generate_docs_tex:
-    docker:
-      - image: keepnetwork/texlive:15
-    steps:
-      - checkout
-      - run:
-          name: Generate TeX Document Files
-          working_directory: ~/project/docs
-          command: |
-            mkdir -p /tmp/build/docs
-            make build.pdf
-            cp *.pdf /tmp/build/docs
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - ./build/docs/*.pdf
-  generate_docs_solidity:
-    executor: docker-node
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Generate solidity docs
-          command: |
-            cd solidity/docs
-            mkdir -p output
-            node generate-api-docs.js > output/index.adoc
-
-            mkdir -p /tmp/build/docs
-            cp -r output /tmp/build/docs/solidity
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - ./build/docs/solidity/*
-  generate_docs_asciidoctor:
-    docker:
-      - image: asciidoctor/docker-asciidoctor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Generate Asciidoctor PDF/HTML Files
-          working_directory: ~/project/docs
-          command: |
-            set -ex
-            shopt -s extglob globstar nullglob
-
-            cp -r ../build/docs/img ./
-
-            asciidoctor -a revdate=`date +%Y-%m-%d` --failure-level=ERROR *.adoc **/*.adoc
-            for a in $(ls *.html **/*.html); do set +x; mkdir -p /tmp/build/docs/$(dirname $a); cp $a /tmp/build/docs/$(dirname $a)/; done
-            set -x
-            asciidoctor-pdf -a revdate=`date +%Y-%m-%d` *.adoc **/*.adoc
-            for a in $(ls *.pdf **/*.pdf); do set +x; mkdir -p /tmp/build/docs/$(dirname $a); cp $a /tmp/build/docs/$(dirname $a)/; done
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - ./build/docs
-  upload_docs:
-    docker:
-      - image: google/cloud-sdk:slim
-    steps:
-      - attach_workspace:
-          at: /tmp
-      - gcp-cli/initialize:
-          google-project-id: GOOGLE_PROJECT_ID
-          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
-          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
-          gcloud-service-key: GCLOUD_SERVICE_KEY_DOC_UPLOAD
-      - run:
-          name: Upload Document Files to docs.keep.network
-          command: |
-            cd /tmp/build/docs
-            export DIR=$(test $CIRCLE_BRANCH != master && echo $CIRCLE_BRANCH/)
-            gsutil -m cp -r * gs://docs.keep.network/tbtc/$DIR
   migrate_contracts:
     executor: docker-thesis-buildpack
     steps:
@@ -177,7 +84,7 @@ jobs:
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
-            export BONDED_ECDSA_KEEP_VENDOR_CONTRACT_DATA="BondedECDSAKeepVendor.json"
+            export BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
             solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
@@ -308,54 +215,14 @@ workflows:
       - unit_test_contracts:
           requires:
             - compile_contracts
-  docs:
+  build_publish_keep_dev:
     jobs:
       - compile_contracts
-      - generate_pngs
-      - generate_docs_tex
-      - generate_docs_solidity:
-          requires:
-            - compile_contracts
-      - generate_docs_asciidoctor:
-          requires:
-            - generate_docs_solidity
-            - generate_pngs
-      - upload_docs:
-          context: keep-docs
-          requires:
-            - generate_docs_tex
-            - generate_docs_asciidoctor
-  migrate_build_publish_keep_dev:
-    jobs:
-      - compile_contracts
-      - migrate_contracts:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - compile_contracts
-      - publish_npm_package:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-      - publish_contract_data:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
       - build_relay_maintainer_initcontainer:
           filters:
             branches:
               only: master
           context: keep-dev
-          requires:
-            - publish_npm_package
       - publish_relay_maintainer_initcontainer:
           filters:
             branches:
@@ -371,7 +238,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
       - compile_contracts:
           requires:
             - keep_test_approval
@@ -379,13 +246,13 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
       - migrate_contracts:
           filters:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - compile_contracts
@@ -394,7 +261,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - migrate_contracts
@@ -403,7 +270,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - migrate_contracts
@@ -412,7 +279,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - publish_npm_package
@@ -421,7 +288,7 @@ workflows:
             tags:
               only: /^v.*/
             branches:
-              ignore: /.*/
+              only: /releases\/.*/
           context: keep-test
           requires:
             - build_relay_maintainer_initcontainer

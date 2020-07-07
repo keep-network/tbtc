@@ -4,7 +4,7 @@
 
 https://circleci.com/gh/keep-network/tbtc[image:https://circleci.com/gh/keep-network/tbtc.svg?style=svg&circle-token=ec728f5ca814b6cb2db5ffeb7258151b752a207e[CircleCI
 Build Status]]
-http://docs.keep.network/tbtc/solidity/[image:https://img.shields.io/badge/docs-website-yellow.svg[Docs]]
+http://docs.keep.network/tbtc/solidity/[image:https://img.shields.io/badge/docs-website-green.svg[Docs]]
 https://discord.gg/4R6RGFf[image:https://img.shields.io/badge/chat-Discord-blueViolet.svg[Chat
 with us on Discord]]
 
@@ -26,13 +26,13 @@ toc::[]
 * Read the http://docs.keep.network/tbtc/[specification].
 * Consult http://docs.keep.network/tbtc/solidity/[Solidity API
 documentation].
-* For questions and support, join the #tbtc channel on
+* For questions and support, join the #tbtc-protocol channel on
 https://discord.gg/4R6RGFf[Discord].
 
 == Installation
 
 tBTC contracts are currently published in the NPM Registry as the package
-[`@keep-network/tbtc`](https://www.npmjs.com/package/@keep-network/tbtc).
+https://www.npmjs.com/package/@keep-network/tbtc[`@keep-network/tbtc`].
 Packages have versions corresponding to their network:
 
 - `-pre` packages contain prerelease packages for the internal Keep testnet.
@@ -71,7 +71,16 @@ contract MySystem {
 
 == Security
 
-tBTC is currently under audit.
+tBTC's first 6-week audit was completed by ConsenSys Diligence on March 27,
+2020, against https://github.com/keep-network/tbtc/commit/fbb2018c41456d19ec20eb28a17070ee2b10eb5d[fbb2018c41].
+They've published a detailed https://diligence.consensys.net/audits/2020/02/thesis-tbtc-and-keep/[audit report]
+and https://diligence.consensys.net/audits/2020/03/thesis-cryptographic-review/[cryptographic review].
+
+tBTC is currently under audit by two additional parties—
+https://www.trailofbits.com/[Trail of Bits] and an unannounced Bitcoin-focused
+security researcher.
+
+Review a more focused treatment of tBTC's security model https://tbtc.network/developers/tbtc-security-model/[here].
 
 Please report any security issues you find to mailto:security@keep.network[security@keep.network].
 
@@ -146,28 +155,17 @@ tandem with code.
 
 === Prerequisites
 
-Docs are written in http://asciidoctor.org/[AsciiDoctor], diagrams in a
-LaTeX package called
-https://www.overleaf.com/learn/latex/TikZ_package[Tikz].
+Docs are written in http://asciidoctor.org/[AsciiDoctor], with diagrams in
+https://asciidoctor.org/docs/asciidoctor-diagram/#mermaid[Mermaid].
 
 ==== macOS
 
-1.  Install https://www.tug.org/texlive/[TeX Live] manually, and other
-dependencies using CLI:
+Install the dependencies via CLI:
 +
 [source,sh]
 ----
 gem install asciidoctor-pdf --pre
 brew install poppler
-----
-2.  Install the TikZ package to your local LaTeX environment:
-+
-[source,sh]
-----
-sudo cp docs/latex/tikz-uml.sty /usr/local/texlive/texmf-local/
-
-# Update TeX package tree
-sudo texhash
 ----
 
 === Build
@@ -176,8 +174,6 @@ sudo texhash
 ----
 cd docs
 
-# Generate diagrams
-make pngs
 # Generate index.pdf
 asciidoctor-pdf index.adoc
 ----

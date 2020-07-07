@@ -4,8 +4,7 @@ const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {AssertBalance} = require("./helpers/assertBalance.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
-const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = constants
+const {BN, expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
 
 describe("DepositFraud", async function() {
@@ -299,81 +298,6 @@ describe("DepositFraud", async function() {
         ),
         "Signature is not fraud",
       )
-    })
-  })
-
-  describe("validateRedeemerNotPaid", async () => {
-    const _txOutputVector =
-      "0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6"
-    const redeemerOutputScript =
-      "0x16001486e7303082a6a21d5837176bc808bf4828371ab6"
-    const prevoutValueBytes = "0xf078351d00000000"
-    const outpoint =
-      "0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000"
-    const _longTxOutputVector = `0x034897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b078952112040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6`
-
-    beforeEach(async () => {
-      await testDeposit.setUTXOInfo(prevoutValueBytes, 0, outpoint)
-      await testDeposit.setRequestInfo(
-        ZERO_ADDRESS,
-        redeemerOutputScript,
-        2424,
-        0,
-        bytes32zero,
-      )
-    })
-
-    it("returns false if redeemer is paid and value is sufficient", async () => {
-      const success = await testDeposit.validateRedeemerNotPaid(_txOutputVector)
-      expect(success).to.be.false
-    })
-
-    it("returns false if redeemer is paid, value is sufficient and output is at 3rd position", async () => {
-      const success = await testDeposit.validateRedeemerNotPaid(
-        _longTxOutputVector,
-      )
-      expect(success).to.be.false
-    })
-
-    it("returns true if redeemer is not paid", async () => {
-      await testDeposit.setRequestInfo(
-        ZERO_ADDRESS,
-        "0x" + "0".repeat(20),
-        2424,
-        0,
-        bytes32zero,
-      )
-
-      const success = await testDeposit.validateRedeemerNotPaid(_txOutputVector)
-      expect(success).to.be.true
-    })
-
-    it("returns true if value is not sufficient", async () => {
-      await testDeposit.setUTXOInfo("0xf078351d00000001", 0, outpoint)
-
-      const success = await testDeposit.validateRedeemerNotPaid(_txOutputVector)
-      expect(success).to.be.true
-    })
-
-    it("returns true if there is no witness flag", async () => {
-      const _txOutputVectorNoWitness =
-        "0x024897070000000000220020a4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c180000000000000000166a14edb1b5c2f39af0fec151732585b1049b07895211"
-      const newPKH =
-        "0xa4333e5612ab1a1043b25755c89b16d55184a42f81799e623e6bc39db8539c18" // note length > 20
-
-      await testDeposit.setRequestInfo(
-        ZERO_ADDRESS,
-        newPKH,
-        2424,
-        0,
-        bytes32zero,
-      )
-      await testDeposit.setUTXOInfo("0xffff", 0, outpoint)
-
-      const success = await testDeposit.validateRedeemerNotPaid(
-        _txOutputVectorNoWitness,
-      )
-      expect(success).to.be.true
     })
   })
 })
