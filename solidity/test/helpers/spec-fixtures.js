@@ -33,7 +33,12 @@ const redemptionPaymentColumns = redemptionPaymentTable.getHeadRows()[0].map(_ =
 
 /**
  * @typedef {object} RedemptionPaymentFixture
+ * @property {number} row The row in the disbursal table this fixture represents.
+ * @property {string} description A human-readable description of this fixture's
+ *           system state.
  * @property {boolean} preTerm Whether this scenario is for a pre-term deposit.
+ * @property {boolean} courtesyCall Whether this scenario is for a courtesy-call
+ *           deposit.
  * @property {boolean} [redemptionShouldRevert] If true, this redemption should
  *           revert rather than complete successfully.
  * @property {AccountIndex} [tdtHolder] The TDT holder account index.
@@ -97,16 +102,23 @@ function redemptionPaymentFixturesFor(lotSize, signerFee) {
         }
     }
 
-    return redemptionPaymentTable.getBodyRows().reduce(
-        // One head row, and it has our column names.
-        (/** @type {RedemptionPaymentFixture[]} */fixtures, row) => {
-            const fixture = {}
+    return redemptionPaymentTable.getBodyRows().flatMap((row, index) => {
+            /** @type {RedemptionPaymentFixture} */
+            const fixture = {
+                row: index + 1,
+                description: '',
+                preTerm: true,
+                courtesyCall: false,
+                repaymentAmount: new BN(0),
+                disbursalAmounts: {},
+            }
+
             for (let i = 0; i < redemptionPaymentColumns.length; ++i) {
                 const columnName = redemptionPaymentColumns[i]
                 const columnText = row[i].getText()
 
-                // Below, breaking breaks the loop instead of the switch;
-                // continue instead.
+                // Below, breaking breaks the loop, not the switch; use continue
+                // instead.
                 switch(columnName) {
                 case "Deposit state":
                     fixture.preTerm = columnText == "Pre-term"
@@ -117,7 +129,6 @@ function redemptionPaymentFixturesFor(lotSize, signerFee) {
                     continue
                 case "Disbursal Amounts":
                     fixture.redemptionShouldRevert = !!columnText.match(/N\/A/)
-                    fixture.disbursalAmounts = {}
 
                     if (!fixture.redemptionShouldRevert) {
                         const disbursalList =
@@ -140,12 +151,39 @@ function redemptionPaymentFixturesFor(lotSize, signerFee) {
                             .replace(/ [a-z]/g, (_) => _.toUpperCase())
                             .replace(/ /g, '')
 
+                    fixture.description += ` ${columnName}: ${columnText}`
+
                     fixture[camelCaseName] = asAccountIndex(columnText)
                 }
             }
 
-            fixtures.push(fixture)
-            return fixtures
+            fixture.description =
+                (fixture.preTerm
+                    ? "Pre-term"
+                    : "At-term ") + fixture.description
+
+            if (! fixture.preTerm) {
+                // For at-term fixtures, create a copy that is the same fixture
+                // setup, but at courtesy call instead. This is because
+                // courtesy-call scenarios are identical to at-term scenarios
+                // for disbursal purposes, but their starting state is
+               // different.
+                const courtesyCallCopy =
+                    Object.assign(
+                        {
+                            courtesyCall: true,
+                            description: fixture.description.replace(
+                                "At-term ",
+                                "Courtesy",
+                            ),
+                        },
+                        fixture
+                    )
+
+                return [fixture, courtesyCallCopy]
+            } else {
+                return fixture
+            }
         },
         [],
     )
