@@ -163,7 +163,7 @@ contract TestDeposit is Deposit {
         self.latestRedemptionFee = _latestRedemptionFee;
     }
 
-    function getLatestRedemptionFee() public returns (uint256) {
+    function getLatestRedemptionFee() public view returns (uint256) {
         return self.latestRedemptionFee;
     }
 
@@ -172,6 +172,7 @@ contract TestDeposit is Deposit {
     ) public {
         self.redeemerAddress = _redeemerAddress;
     }
+
     function getRequestInfo() public view returns (address, bytes memory, uint256, uint256, bytes32) {
         return (
             self.redeemerAddress,
@@ -192,12 +193,8 @@ contract TestDeposit is Deposit {
         self.utxoOutpoint = _utxoOutpoint;
     }
 
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256, uint256, uint256) {
-        return self.getRedemptionTbtcRequirement(_redeemer);
-    }
-
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
-        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
+    function calculateRedemptionTbtcAmounts(address _redeemer) public view returns (uint256, uint256, uint256) {
+        return self.calculateRedemptionTbtcAmounts(_redeemer, false);
     }
 
     function performRedemptionTBTCTransfers() public {

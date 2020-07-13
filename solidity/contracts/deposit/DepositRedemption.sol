@@ -50,13 +50,18 @@ library DepositRedemption {
     /// @notice Handles TBTC requirements for redemption.
     /// @dev Burns or transfers depending on term and supply-peg impact.
     ///      Once these transfers complete, the deposit balance should be
-    ///      sufficient to pay out signer fees plus any fee rebate owed.
+    ///      sufficient to pay out signer fees once the redemption transaction
+    ///      is proven on the Bitcoin side.
     function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
         address tdtHolder = _d.depositOwner();
+        address frtHolder = _d.feeRebateTokenHolder();
         address vendingMachineAddress = _d.vendingMachineAddress;
 
-        (uint256 tbtcOwedToDeposit, uint256 tbtcOwedToRedeemer,  uint256 tbtcOwedToTdtHolder) =
-        _d.getRedemptionTbtcRequirement(_d.redeemerAddress);
+        (
+            uint256 tbtcOwedToDeposit,
+            uint256 tbtcOwedToTdtHolder,
+            uint256 tbtcOwedToFrtHolder
+        ) = _d.calculateRedemptionTbtcAmounts(_d.redeemerAddress, false);
 
         if(tbtcOwedToDeposit > 0){
             if(tdtHolder == vendingMachineAddress){
@@ -69,8 +74,8 @@ library DepositRedemption {
         if(tbtcOwedToTdtHolder > 0){
             _d.tbtcToken.transfer(tdtHolder, tbtcOwedToTdtHolder);
         }
-        if(tbtcOwedToRedeemer > 0){
-            _d.tbtcToken.transfer(_d.redeemerAddress, tbtcOwedToRedeemer);
+        if(tbtcOwedToFrtHolder > 0){
+            _d.tbtcToken.transfer(frtHolder, tbtcOwedToFrtHolder);
         }
     }
 

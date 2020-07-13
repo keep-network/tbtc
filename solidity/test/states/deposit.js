@@ -37,7 +37,7 @@ const System = {
         ECDSAKeepStub.send(bondAmount)
         ECDSAKeepStub.setBondAmount(bondAmount)
     },
-    drainBond: async ({ ECDSAKeepStub, bondAmount }) => {
+    drainBond: async ({ ECDSAKeepStub }) => {
         ECDSAKeepStub.drain()
         ECDSAKeepStub.setBondAmount(0)
     },
@@ -65,9 +65,13 @@ const System = {
         await TestTBTCToken.forceMint(
             opener,
             // Let's just play it safe.
-            redemptionRequirement[0],
+            redemptionRequirement,
         )
-        await TestTBTCToken.approve(deposit.address, redemptionRequirement[0], { from: opener })
+        await TestTBTCToken.approve(
+            deposit.address,
+            redemptionRequirement,
+            { from: opener }
+        )
     },
     setAndApproveLiquidationBalance: async ({ TestTBTCToken, deposit }) => {
         const lotSize = await deposit.lotSizeSatoshis()
