@@ -259,8 +259,8 @@ library DepositUtils {
 
     /// @notice         Determines the fees due to the signers for work performed.
     /// @dev            Signers are paid based on the TBTC issued.
-    /// @return         Accumulated fees in smallest TBTC unit (tsat).
-    function signerFee(Deposit storage _d) public view returns (uint256) {
+    /// @return         Accumulated fees in 10**18 decimals.
+    function signerFeeTbtc(Deposit storage _d) public view returns (uint256) {
         return lotSizeTbtc(_d).div(_d.signerFeeDivisor);
     }
 
@@ -433,8 +433,8 @@ library DepositUtils {
         }
 
         // pay out the rebate if it is available
-        if(_d.tbtcToken.balanceOf(address(this)) >= signerFee(_d)) {
-            _d.tbtcToken.transfer(rebateTokenHolder, signerFee(_d));
+        if(_d.tbtcToken.balanceOf(address(this)) >= signerFeeTbtc(_d)) {
+            _d.tbtcToken.transfer(rebateTokenHolder, signerFeeTbtc(_d));
         }
     }
 
@@ -476,7 +476,7 @@ library DepositUtils {
         bool inCourtesy = _d.inCourtesyCall();
         bool atTerm = remainingTerm(_d) == 0;
         uint256 lotSize = lotSizeTbtc(_d);
-        uint256 signerFee = signerFee(_d);
+        uint256 signerFee = signerFeeTbtc(_d);
 
         require(redeemerHoldsTdt || inCourtesy || atTerm, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
 
@@ -539,9 +539,9 @@ library DepositUtils {
         bool escrowRequiresFeeRebate = _preTerm && !_redeemerHoldsFrt;
 
         if (escrowRequiresFeeRebate) {
-            return signerFee(_d).mul(2);
+            return signerFeeTbtc(_d).mul(2);
         } else {
-            return signerFee(_d);
+            return signerFeeTbtc(_d);
          }
     }
 }

@@ -69,7 +69,7 @@ describe("DepositRedemption", async function() {
     await tbtcDepositToken.forceMint(tdtHolder, tdtId)
 
     depositValue = await testDeposit.lotSizeTbtc.call()
-    signerFee = await testDeposit.signerFee.call()
+    signerFee = await testDeposit.signerFeeTbtc.call()
     depositTerm = await tbtcConstants.getDepositTerm.call()
   })
 
@@ -1926,7 +1926,7 @@ describe("DepositRedemption", async function() {
     it("escrows the fee rebate reward for the fee rebate token holder", async () => {
       await tbtcToken.forceMint(
         testDeposit.address,
-        await testDeposit.signerFee(),
+        await testDeposit.signerFeeTbtc(),
       )
 
       const block = await web3.eth.getBlock("latest")
@@ -2396,7 +2396,7 @@ describe("DepositRedemption", async function() {
       // Mint the signer fee so we don't try to transfer nonexistent tokens eh.
       await tbtcToken.forceMint(
         testDeposit.address,
-        await testDeposit.signerFee(),
+        await testDeposit.signerFeeTbtc(),
       )
       await mockRelay.setCurrentEpochDifficulty(fundingTx.difficulty)
       await testDeposit.setFundingInfo(

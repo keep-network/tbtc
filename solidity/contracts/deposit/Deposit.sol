@@ -73,8 +73,8 @@ contract Deposit is DepositFactoryAuthority {
     ///             the tasks needed to maintain a decentralized and trustless
     ///             model for tBTC. It is a percentage of the lotSize (deposit size).
     /// @return     Fee amount in tBTC.
-    function signerFee() public view returns (uint256) {
-        return self.signerFee();
+    function signerFeeTbtc() public view returns (uint256) {
+        return self.signerFeeTbtc();
     }
 
     /// @notice     Get the deposit's BTC lot size in satoshi.

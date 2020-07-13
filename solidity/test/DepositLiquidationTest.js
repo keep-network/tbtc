@@ -200,7 +200,7 @@ describe("DepositLiquidation", async function() {
 
     it("distributes reward to FRT holder", async () => {
       // Make sure Deposit has enough to cover beneficiary reward
-      const beneficiaryReward = await testDeposit.signerFee.call()
+      const beneficiaryReward = await testDeposit.signerFeeTbtc.call()
       await tbtcToken.forceMint(testDeposit.address, beneficiaryReward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)

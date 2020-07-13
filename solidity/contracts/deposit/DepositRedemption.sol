@@ -33,8 +33,8 @@ library DepositRedemption {
     function distributeSignerFee(DepositUtils.Deposit storage _d) internal {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
-        _d.tbtcToken.approve(_d.keepAddress, _d.signerFee());
-        _keep.distributeERC20Reward(address(_d.tbtcToken), _d.signerFee());
+        _d.tbtcToken.approve(_d.keepAddress, _d.signerFeeTbtc());
+        _keep.distributeERC20Reward(address(_d.tbtcToken), _d.signerFeeTbtc());
     }
 
     /// @notice Approves digest for signing by a keep.
