@@ -510,7 +510,7 @@ library DepositUtils {
         bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
         uint256 signerFee = signerFeeTbtc(_d);
 
-        uint256 feeEscrow = computeRedemptionFeeEscrow(
+        uint256 feeEscrow = calculateRedemptionFeeEscrow(
             signerFee,
             preTerm,
             frtExists,
@@ -518,12 +518,16 @@ library DepositUtils {
             redeemerHoldsFrt
         );
 
+        // Base redemption + fee = total we need to have escrowed to start
+        // redemption.
         owedToDeposit =
-            computeBaseRedemptionCharge(
+            calculateBaseRedemptionCharge(
                 lotSizeTbtc(_d),
                 redeemerHoldsTdt
             ).add(feeEscrow);
 
+        // Adjust the amount owed to the deposit based on any balance the
+        // deposit already has.
         uint256 balance = _d.tbtcToken.balanceOf(address(this));
         if (owedToDeposit > balance) {
             owedToDeposit = owedToDeposit.sub(balance);
@@ -533,13 +537,14 @@ library DepositUtils {
 
         // Pre-term, the FRT rebate is payed out, but if the redeemer holds the
         // FRT, the amount has already been subtracted from what is owed to the
-        // deposit at this point by computeRedemptionFeeEscrow. This allows the
-        // redeemer to simply *not pay* the fee rebate, rather than having them
-        // pay it only to have it immediately returned.
+        // deposit at this point (by calculateRedemptionFeeEscrow). This allows
+        // the redeemer to simply *not pay* the fee rebate, rather than having
+        // them pay it only to have it immediately returned.
         if (preTerm && frtExists && !redeemerHoldsFrt) {
             owedToFrtHolder = signerFee;
         }
 
+        // The TDT holder gets any leftover balance.
         owedToTdtHolder =
             balance.add(owedToDeposit).sub(signerFee).sub(owedToFrtHolder);
 
@@ -550,7 +555,7 @@ library DepositUtils {
     /// @param _lotSize   The lot size to use for the base redemption charge.
     /// @param _redeemerHoldsTdt   True if the redeemer is the TDT holder.
     /// @return                    The amount in TBTC.
-    function computeBaseRedemptionCharge(
+    function calculateBaseRedemptionCharge(
         uint256 _lotSize,
         bool _redeemerHoldsTdt
     ) internal pure returns (uint256){
@@ -567,7 +572,7 @@ library DepositUtils {
     /// @param _redeemerHoldsTdt     True if the the redeemer holds the TDT.
     /// @param _redeemerHoldsFrt     True if the redeemer holds the FRT.
     /// @return                      The fees owed in TBTC.
-    function computeRedemptionFeeEscrow(
+    function calculateRedemptionFeeEscrow(
         uint256 signerFee,
         bool _preTerm,
         bool _frtExists,
