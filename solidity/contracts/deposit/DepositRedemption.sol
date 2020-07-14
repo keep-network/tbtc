@@ -52,7 +52,7 @@ library DepositRedemption {
     ///      Once these transfers complete, the deposit balance should be
     ///      sufficient to pay out signer fees once the redemption transaction
     ///      is proven on the Bitcoin side.
-    function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
+    function performRedemptionTbtcTransfers(DepositUtils.Deposit storage _d) internal {
         address tdtHolder = _d.depositOwner();
         address frtHolder = _d.feeRebateTokenHolder();
         address vendingMachineAddress = _d.vendingMachineAddress;
@@ -92,7 +92,7 @@ library DepositRedemption {
         // set redeemerAddress early to enable direct access by other functions
         _d.redeemerAddress = _redeemer;
 
-        performRedemptionTBTCTransfers(_d);
+        performRedemptionTbtcTransfers(_d);
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();

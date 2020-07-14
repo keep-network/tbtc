@@ -68,7 +68,7 @@ describe("Deposit redemption disbursal tester", async () => {
         //
         // In each case, the tests verify both that the internal function that
         // reports redemption TBTC amounts returns the expected values, and
-        // that the performRedemptionTBTCTransfers function performs the
+        // that the performRedemptionTbtcTransfers function performs the
         // expected transfers and leaves the deposit with exactly enough
         // escrowed to pay the signers at the end of the redemption flow.
         //
@@ -354,7 +354,7 @@ describe("Deposit redemption disbursal tester", async () => {
 
     /**
      * Helper function that runs all checks related to
-     * performRedemptionTBTCTransfers, given the expected redeemer payment.
+     * performRedemptionTbtcTransfers, given the expected redeemer payment.
      *
      * @param {RedemptionPaymentFixture} fixture
      * @param {BN} expectedRedeemerPayment
@@ -369,14 +369,14 @@ describe("Deposit redemption disbursal tester", async () => {
     ) {
       if (fixture.redemptionShouldRevert) {
         expectRevert.unspecified(
-          testDeposit.performRedemptionTBTCTransfers({
+          testDeposit.performRedemptionTbtcTransfers({
             from: accounts[fixture.redeemer],
           }),
         )
       } else {
         const receipt = resolveAllLogs(
           (
-            await testDeposit.performRedemptionTBTCTransfers({
+            await testDeposit.performRedemptionTbtcTransfers({
               from: accounts[fixture.redeemer],
             })
           ).receipt,

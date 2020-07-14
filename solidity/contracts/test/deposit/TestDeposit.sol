@@ -197,8 +197,8 @@ contract TestDeposit is Deposit {
         return self.calculateRedemptionTbtcAmounts(_redeemer, false);
     }
 
-    function performRedemptionTBTCTransfers() public {
-        self.performRedemptionTBTCTransfers();
+    function performRedemptionTbtcTransfers() public {
+        self.performRedemptionTbtcTransfers();
     }
 
     function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
