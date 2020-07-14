@@ -122,6 +122,7 @@ describe("Deposit redemption disbursal tester", async () => {
               fixture,
               fixture.repaymentAmount,
               fixture.disbursalAmounts[fixture.tdtHolder],
+              fixture.disbursalAmounts[fixture.frtHolder] || new BN(0),
             )
           })
 
@@ -164,6 +165,7 @@ describe("Deposit redemption disbursal tester", async () => {
                 fixture,
                 expectedEscrowValue,
                 expectedTdtValue,
+                fixture.disbursalAmounts[fixture.frtHolder] || new BN(0),
               )
             })
           })
@@ -212,6 +214,7 @@ describe("Deposit redemption disbursal tester", async () => {
                 fixture,
                 expectedEscrowValue,
                 expectedTdtValue,
+                fixture.disbursalAmounts[fixture.frtHolder] || new BN(0),
               )
             })
           })
@@ -287,6 +290,7 @@ describe("Deposit redemption disbursal tester", async () => {
                 fixture,
                 expectedEscrowValue,
                 expectedTdtValue,
+                fixture.disbursalAmounts[fixture.frtHolder] || new BN(0),
               )
             })
           })
@@ -350,11 +354,13 @@ describe("Deposit redemption disbursal tester", async () => {
      * @param {RedemptionPaymentFixture} fixture
      * @param {BN} expectedRedeemerPayment
      * @param {BN} expectedTdtHolderValue
+     * @param {BN} expectedFrtHolderValue
      */
     async function checkTbtcTransfers(
       fixture,
       expectedRedeemerPayment,
       expectedTdtHolderValue,
+      expectedFrtHolderValue,
     ) {
       if (fixture.redemptionShouldRevert) {
         expectRevert.unspecified(
@@ -386,6 +392,19 @@ describe("Deposit redemption disbursal tester", async () => {
           })
         }
         // else check there is no transfer event
+
+        if (
+          expectedFrtHolderValue.gt(new BN(0)) &&
+          // If the TDT and FRT holder are the same, the TDT holder check
+          // should win.
+          fixture.tdtHolder != fixture.frtHolder
+        ) {
+          expectEvent(receipt, "Transfer", {
+            from: testDeposit.address,
+            to: accounts[fixture.frtHolder],
+            value: expectedFrtHolderValue,
+          })
+        }
 
         if (expectedTdtHolderValue.gt(new BN(0))) {
           expectEvent(receipt, "Transfer", {
