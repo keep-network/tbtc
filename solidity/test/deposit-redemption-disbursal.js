@@ -9,7 +9,12 @@ const {deployAndLinkAll} = require("./helpers/testDeployer.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {redemptionPaymentFixturesFor} = require("./helpers/spec-fixtures.js")
 
-const {states, resolveAllLogs, expectEvent} = require("./helpers/utils.js")
+const {
+  states,
+  resolveAllLogs,
+  expectEvent,
+  expectNoEvent,
+} = require("./helpers/utils.js")
 
 /** @typedef { import('bn.js') } BN */
 /** @typedef {import("./helpers/spec-fixtures.js").RedemptionPaymentFixture} RedemptionPaymentFixture */
@@ -390,8 +395,12 @@ describe("Deposit redemption disbursal tester", async () => {
             to: testDeposit.address,
             value: expectedRedeemerPayment,
           })
+        } else {
+          expectNoEvent(receipt, "Transfer", {
+            from: accounts[fixture.redeemer],
+            to: testDeposit.address,
+          })
         }
-        // else check there is no transfer event
 
         if (
           expectedFrtHolderValue.gt(new BN(0)) &&
@@ -404,6 +413,14 @@ describe("Deposit redemption disbursal tester", async () => {
             to: accounts[fixture.frtHolder],
             value: expectedFrtHolderValue,
           })
+        } else if (
+          fixture.frtHolder &&
+          fixture.tdtHolder != fixture.frtHolder
+        ) {
+          expectNoEvent(receipt, "Transfer", {
+            from: testDeposit.address,
+            to: accounts[fixture.frtHolder],
+          })
         }
 
         if (expectedTdtHolderValue.gt(new BN(0))) {
@@ -412,8 +429,25 @@ describe("Deposit redemption disbursal tester", async () => {
             to: accounts[fixture.tdtHolder],
             value: expectedTdtHolderValue,
           })
+        } else if (fixture.tdtHolder != fixture.frtHolder) {
+          expectNoEvent(receipt, "Transfer", {
+            from: testDeposit.address,
+            to: accounts[fixture.tdtHolder],
+          })
         }
-        // else check there is no transfer event
+
+        // If TDT holder = FRT holder, we need to make sure both expected values
+        // are 0 before we can check that there's no transfer to that address.
+        if (
+          fixture.tdtHolder == fixture.frtHolder &&
+          expectedTdtHolderValue.eqn(0) &&
+          expectedFrtHolderValue.eqn(0)
+        ) {
+          expectNoEvent(receipt, "Transfer", {
+            from: testDeposit.address,
+            to: accounts[fixture.tdtHolder],
+          })
+        }
       }
     }
   })
