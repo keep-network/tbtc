@@ -108,7 +108,12 @@ library DepositRedemption {
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
         uint256 _requestedFee = _d.utxoValue().sub(_outputValue);
+
         require(_requestedFee >= TBTCConstants.getMinimumRedemptionFee(), "Fee is too low");
+        require(
+            _requestedFee < _d.utxoValue() / 2,
+            "Initial fee cannot exceed half of the deposit's value"
+        );
 
         // Calculate the sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(

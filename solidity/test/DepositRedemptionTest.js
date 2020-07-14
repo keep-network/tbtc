@@ -566,7 +566,7 @@ describe("DepositRedemption", async function() {
     // the sighash preimage will be:
     // 010000003fc8fd9fada5a3573744477d5e35b0d4d0645e42285e3dec25aac02078db0f838cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb93333333333333333333333333333333333333333333333333333333333333333333333331976a9145eb9b5e445db673f0ed8935d18cd205b214e518788ac111111111111111100000000e4ca7a168bd64e3123edd7f39e1ab7d670b32311cac2dda8e083822139c7936c0000000001000000
     const sighash =
-      "0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90"
+      "0xb08d3b935947dd03c2b485deecb3629bb9d7bc10c80e3cc6af43b8673e07d41c"
     const outpoint = "0x" + "33".repeat(36)
     const valueBytes = "0x1111111111111111"
     const keepPubkeyX = "0x" + "33".repeat(32)
@@ -603,7 +603,7 @@ describe("DepositRedemption", async function() {
 
       // the fee is 2.86331153 BTC
       await testDeposit.requestRedemption(
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         {from: owner},
       )
@@ -629,7 +629,7 @@ describe("DepositRedemption", async function() {
 
       // the fee is 2.86331153 BTC
       await testDeposit.requestRedemption(
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         {from: owner},
       )
@@ -657,7 +657,7 @@ describe("DepositRedemption", async function() {
       const {
         receipt: {blockNumber: transferBlock},
       } = await testDeposit.requestRedemption(
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         {from: owner},
       )
@@ -685,7 +685,7 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("reverts if the fee is low", async () => {
+    it("reverts if the fee is too low", async () => {
       await expectRevert(
         testDeposit.requestRedemption(
           "0x0011111111111111",
@@ -693,6 +693,25 @@ describe("DepositRedemption", async function() {
           {from: owner},
         ),
         "Fee is too low",
+      )
+    })
+
+    it("reverts if the fee is too high", async () => {
+      await expectRevert(
+        testDeposit.requestRedemption(
+          "0x8888888888888808",
+          "0x1976a914" + "33".repeat(20) + "88ac",
+          {from: owner},
+        ),
+        "Initial fee cannot exceed half of the deposit's value",
+      )
+    })
+
+    it("does not revert if the fee is just under the max threshold", async () => {
+      await testDeposit.requestRedemption(
+        "0x8a88888888888808",
+        "0x1976a914" + "33".repeat(20) + "88ac",
+        {from: owner},
       )
     })
 
@@ -755,7 +774,7 @@ describe("DepositRedemption", async function() {
 
   describe("transferAndRequestRedemption", async () => {
     const sighash =
-      "0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90"
+      "0xb08d3b935947dd03c2b485deecb3629bb9d7bc10c80e3cc6af43b8673e07d41c"
     const outpoint = "0x" + "33".repeat(36)
     const valueBytes = "0x1111111111111111"
     const keepPubkeyX = "0x" + "33".repeat(32)
@@ -796,7 +815,7 @@ describe("DepositRedemption", async function() {
 
       // the fee is 2.86331153 BTC
       await testDeposit.transferAndRequestRedemption(
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         owner,
         {from: owner},
