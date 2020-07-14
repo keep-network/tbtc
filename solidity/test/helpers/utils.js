@@ -220,6 +220,55 @@ function expectEvent(receipt, eventName, parameters) {
   }
 }
 
+/**
+ * Verifies that the given `receipt` has *no* event of with the given name and
+ * matching the given parameters. The assertion errors if an event with this
+ * name and matching the specified parameters exists in the receipt. Any
+ * parameters that are not explicitly enumerated match any value; that is, if
+ * an event with the given name is found that matches the parameters passed,
+ * and that event has an additional parameter, this assertion will still fail,
+ * despite the additional parameter not being explicitly mentioned.
+ *
+ * @param {TxReceipt} receipt The receipt to check for the specified event.
+ * @param {string} eventName The name of the event to look for.
+ * @param {object} parameters The parameters to look for in the event; unlike
+ *         OpenZeppelin's default version, parameters may have an array-of-BN
+ *         value and they will be properly validated.
+ */
+function expectNoEvent(receipt, eventName, parameters) {
+  const matchingLogs =
+    receipt.logs
+      .filter(_ => _.event == eventName)
+      .filter(log => {
+        for (const [parameterName, parameterValue] of Object.entries(parameters)) {
+          if (! log.args.hasOwnProperty(parameterName)) {
+            // If the parameter doesn't exist, this doesn't match.
+            return false
+          }
+
+          let matching
+          const eventValue = log.args[parameterName]
+          if (web3.utils.isBN(parameterValue[0])) {
+            matching = parameterValue
+                  .filter((bn, i) => bn.eq(eventValue[i]))
+                  .length == parameterValue.length
+          } else if (web3.utils.isBN(parameterValue)) {
+            matching = parameterValue.eq(eventValue)
+          } else {
+            matching = parameterValue == eventValue
+          }
+
+          if (!matching) {
+            return false
+          }
+        }
+
+        return true
+      })
+
+  expect(matchingLogs, `Unexpected event: ${JSON.stringify(matchingLogs[0])}`).to.be.empty
+}
+
 // real tx from mainnet bitcoin, interpreted as funding tx
 // tx source: https://www.blockchain.com/btc/tx/7c48181cb5c030655eea651c5e9aa808983f646465cbe9d01c227d99cfbc405f
 const fundingTx = {
@@ -298,6 +347,7 @@ module.exports = {
   increaseTime,
   getCurrentTime,
   expectEvent,
+  expectNoEvent,
   TX: tx,
   HEADER_PROOFS: headerChains.map(chainToProofBytes),
   fundingTx,
