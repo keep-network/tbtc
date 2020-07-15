@@ -234,7 +234,16 @@ library DepositRedemption {
         require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
+
+        // If the fee bump shrinks the UTXO value below the minimum allowed
+        // value, clamp it to that minimum. Further fee bumps will be disallowed
+        // by checkRelationshipToPrevious.
+        if (_newOutputValue < TBTCConstants.getMinimumUtxoValue()) {
+            _newOutputValue = TBTCConstants.getMinimumUtxoValue();
+        }
+
         _d.latestRedemptionFee = _d.utxoValue().sub(_newOutputValue);
+
         // Calculate the next sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
@@ -256,7 +265,7 @@ library DepositRedemption {
             _sighash,
             _d.utxoValue(),
             _d.redeemerOutputScript,
-            _d.utxoValue().sub(_newOutputValue),
+            _d.latestRedemptionFee,
             _d.utxoOutpoint);
     }
 
