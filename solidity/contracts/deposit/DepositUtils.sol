@@ -449,26 +449,6 @@ library DepositUtils {
         }
     }
 
-    /// @notice             Get TBTC amount required for redemption assuming _redeemer
-    ///                     is this deposit's TDT holder.
-    /// @param _redeemer    The assumed owner of the deposit's TDT.
-    /// @return             The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(
-        DepositUtils.Deposit storage _d,
-        address _redeemer
-    ) internal view returns (uint256) {
-        (uint256 tbtcPayment,,) = calculateRedemptionTbtcAmounts(_d, _redeemer, true);
-        return tbtcPayment;
-    }
-
-    function getRedemptionTbtcRequirement(
-        DepositUtils.Deposit storage _d,
-        address _redeemer
-    ) internal view returns(uint256) {
-        (uint256 tbtcPayment,,) = calculateRedemptionTbtcAmounts(_d, _redeemer, false);
-        return tbtcPayment;
-    }
-
     /// @notice Calculate TBTC amount required for redemption by a specified
     ///         _redeemer. If _assumeRedeemerHoldTdt is true, return the
     ///         requirement as if the redeemer holds this deposit's TDT.
