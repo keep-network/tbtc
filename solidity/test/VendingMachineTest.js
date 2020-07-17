@@ -427,8 +427,8 @@ describe("VendingMachine", async function() {
         await testDeposit.setState(states.ACTIVE)
         await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
         await tbtcToken.forceMint(owner, depositValue.add(signerFee))
+        await tbtcToken.forceMint(testDeposit.address, signerFee)
         await feeRebateToken.forceMint(owner, tdtId)
-
         const blockNumber = await web3.eth.getBlockNumber()
 
         await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
@@ -464,6 +464,7 @@ describe("VendingMachine", async function() {
         await testDeposit.setState(states.ACTIVE)
         await tbtcDepositToken.forceMint(vendingMachine.address, tdtId)
         await tbtcToken.forceMint(owner, depositValue.add(signerFee))
+        await tbtcToken.forceMint(testDeposit.address, signerFee)
         await feeRebateToken.forceMint(owner, tdtId)
         const tbtcToBtc = vendingMachine.abi.find(x => x.name == "tbtcToBtc")
         const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [

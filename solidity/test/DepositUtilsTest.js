@@ -299,7 +299,6 @@ describe("DepositUtils", async function() {
         )
 
         const txOutputVector = fundingOutputBase + script
-        console.log(await testDeposit.signerPKH.call())
 
         await expectRevert(
           testDeposit.findAndParseFundingOutput.call(
