@@ -341,7 +341,7 @@ describe("VendingMachine", async function() {
 
   describe("#tbtcToBtc", async () => {
     const sighash =
-      "0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90"
+      "0xb08d3b935947dd03c2b485deecb3629bb9d7bc10c80e3cc6af43b8673e07d41c"
     const outpoint = "0x" + "33".repeat(36)
     const valueBytes = "0x1111111111111111"
     const keepPubkeyX = "0x" + "33".repeat(32)
@@ -379,7 +379,7 @@ describe("VendingMachine", async function() {
       await feeRebateToken.forceMint(owner, tdtId)
       await vendingMachine.tbtcToBtc(
         testDeposit.address,
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         {from: owner},
       )
@@ -436,7 +436,7 @@ describe("VendingMachine", async function() {
         const tbtcToBtc = vendingMachine.abi.find(x => x.name == "tbtcToBtc")
         const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [
           testDeposit.address,
-          "0x1111111100000000",
+          "0x0000111111111111",
           redeemerOutputScript,
         ])
 
@@ -468,7 +468,7 @@ describe("VendingMachine", async function() {
         const tbtcToBtc = vendingMachine.abi.find(x => x.name == "tbtcToBtc")
         const calldata = web3.eth.abi.encodeFunctionCall(tbtcToBtc, [
           testDeposit.address,
-          "0x1111111100000000",
+          "0x0000111111111111",
           redeemerOutputScript,
         ])
 

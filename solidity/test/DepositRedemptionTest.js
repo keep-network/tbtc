@@ -8,7 +8,12 @@ const {
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
 const [owner] = accounts
-const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
+const {
+  BN,
+  constants,
+  expectRevert,
+  time,
+} = require("@openzeppelin/test-helpers")
 const {ZERO_ADDRESS} = constants
 const {expect} = require("chai")
 
@@ -566,7 +571,7 @@ describe("DepositRedemption", async function() {
     // the sighash preimage will be:
     // 010000003fc8fd9fada5a3573744477d5e35b0d4d0645e42285e3dec25aac02078db0f838cb9012517c817fead650287d61bdd9c68803b6bf9c64133dcab3e65b5a50cb93333333333333333333333333333333333333333333333333333333333333333333333331976a9145eb9b5e445db673f0ed8935d18cd205b214e518788ac111111111111111100000000e4ca7a168bd64e3123edd7f39e1ab7d670b32311cac2dda8e083822139c7936c0000000001000000
     const sighash =
-      "0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90"
+      "0xb08d3b935947dd03c2b485deecb3629bb9d7bc10c80e3cc6af43b8673e07d41c"
     const outpoint = "0x" + "33".repeat(36)
     const valueBytes = "0x1111111111111111"
     const keepPubkeyX = "0x" + "33".repeat(32)
@@ -603,7 +608,7 @@ describe("DepositRedemption", async function() {
 
       // the fee is 2.86331153 BTC
       await testDeposit.requestRedemption(
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         {from: owner},
       )
@@ -629,7 +634,7 @@ describe("DepositRedemption", async function() {
 
       // the fee is 2.86331153 BTC
       await testDeposit.requestRedemption(
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         {from: owner},
       )
@@ -657,7 +662,7 @@ describe("DepositRedemption", async function() {
       const {
         receipt: {blockNumber: transferBlock},
       } = await testDeposit.requestRedemption(
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         {from: owner},
       )
@@ -685,7 +690,7 @@ describe("DepositRedemption", async function() {
       )
     })
 
-    it("reverts if the fee is low", async () => {
+    it("reverts if the fee is too low", async () => {
       await expectRevert(
         testDeposit.requestRedemption(
           "0x0011111111111111",
@@ -693,6 +698,25 @@ describe("DepositRedemption", async function() {
           {from: owner},
         ),
         "Fee is too low",
+      )
+    })
+
+    it("reverts if the fee is too high", async () => {
+      await expectRevert(
+        testDeposit.requestRedemption(
+          "0x8888888888888808",
+          "0x1976a914" + "33".repeat(20) + "88ac",
+          {from: owner},
+        ),
+        "Initial fee cannot exceed half of the deposit's value",
+      )
+    })
+
+    it("does not revert if the fee is just under the max threshold", async () => {
+      await testDeposit.requestRedemption(
+        "0x8a88888888888808",
+        "0x1976a914" + "33".repeat(20) + "88ac",
+        {from: owner},
       )
     })
 
@@ -755,7 +779,7 @@ describe("DepositRedemption", async function() {
 
   describe("transferAndRequestRedemption", async () => {
     const sighash =
-      "0xb68a6378ddb770a82ae4779a915f0a447da7d753630f8dd3b00be8638677dd90"
+      "0xb08d3b935947dd03c2b485deecb3629bb9d7bc10c80e3cc6af43b8673e07d41c"
     const outpoint = "0x" + "33".repeat(36)
     const valueBytes = "0x1111111111111111"
     const keepPubkeyX = "0x" + "33".repeat(32)
@@ -796,7 +820,7 @@ describe("DepositRedemption", async function() {
 
       // the fee is 2.86331153 BTC
       await testDeposit.transferAndRequestRedemption(
-        "0x1111111100000000",
+        "0x0000111111111111",
         redeemerOutputScript,
         owner,
         {from: owner},
@@ -996,47 +1020,68 @@ describe("DepositRedemption", async function() {
     })
 
     it("correctly increases fee", async () => {
-      const outputBytes = [
-        "0x0000ffffffffffff",
-        "0x0100feffffffffff",
-        "0x0200fdffffffffff",
-      ]
+      // Currently little-endian = big-endian for this var.
+      const startValue = new BN(prevoutValueBytes.slice(2), 16)
+      // Fee increment that will reach the full UTXO value on the 4th bump.
+      const feeIncrement = startValue.divn(4)
+
+      const outputBytes = [1, 2, 3, 4].map(increment => {
+        const hexIncrement = startValue
+          .sub(feeIncrement.muln(increment))
+          .toString(16)
+          .padStart(16, "0")
+
+        // Convert to little-endian for contract.
+        return "0x" + [...hexIncrement.matchAll(/../g)].reverse().join("")
+      })
+
+      // Hardcoded sighashes for the first 3 output value bytes.
       const sigHashes = [
-        "0xd94b6f3bf19147cc3305ef202d6bd64f9b9a12d4d19cc2d8c7f93ef58fc8fffe",
-        "0xbb56d80cfd71e90215c6b5200c0605b7b80689d3479187bc2c232e756033a560",
+        "0xdcf7d96f5fbb1fb49d32e13a27d3a007cb91116170b504a3c3b87d07c8f6f3b3",
+        "0x5261fa987e51cde646eb8c229c5ae39955ee1c995e8e5fb38bc5e6fc470d2276",
+        "0xac51039a4029871ca5509ce9e17f11efd7821a461b1b203b7994cb2feefe49a1",
       ]
-      const increment = 0xffff
 
-      for (let i = 0; i < sigHashes.length; i++) {
-        const block = await web3.eth.getBlock("latest")
-        const blockTimestamp = block.timestamp
-        withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
-        await testDeposit.setDigestApprovedAtTime(
-          sigHashes[i],
-          withdrawalRequestTime,
-        )
+      const blockTimestamp = await time.latest()
+      await testDeposit.setDigestApprovedAtTime(sigHashes[0], blockTimestamp)
 
+      await testDeposit.setRequestInfo(
+        ZERO_ADDRESS,
+        redeemerOutputScript,
+        "0x3fffffffffffffff",
+        blockTimestamp,
+        sigHashes[0],
+      )
+
+      // Loop through first several fee bumps to check them normally; the last
+      // bump requires a tweak.
+      for (let i = 0; i < sigHashes.length - 1; i++) {
+        // State resets every fee bump.
         await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
-        await testDeposit.setRequestInfo(
-          ZERO_ADDRESS,
-          redeemerOutputScript,
-          initialFee,
-          block.timestamp - feeIncreaseTimer.toNumber(),
-          sigHashes[i],
-        )
+        await increaseTime(feeIncreaseTimer)
 
         await testDeposit.increaseRedemptionFee(
           outputBytes[i],
           outputBytes[i + 1],
         )
 
-        await increaseTime(feeIncreaseTimer)
-
         const updatedFee = await testDeposit.getLatestRedemptionFee.call()
-        expect(updatedFee).to.eq.BN(
-          new BN(increment).mul(new BN(2).add(new BN(i))),
-        )
+        expect(updatedFee).to.eq.BN(feeIncrement.muln(2 + i))
       }
+
+      // The last fee increase pushes the deposit below the minimum UTXO value,
+      // so it will in fact be clamped to (UTXO value) - 2000 satoshis (the
+      // minimum UTXO value constant).
+      await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
+      await increaseTime(feeIncreaseTimer)
+
+      await testDeposit.increaseRedemptionFee(
+        outputBytes.slice(-2)[0],
+        outputBytes.slice(-2)[1],
+      )
+
+      const updatedFee = await testDeposit.getLatestRedemptionFee.call()
+      expect(updatedFee).to.eq.BN(startValue.subn(2000))
     })
 
     it("approves a new digest for signing, updates the state, and logs RedemptionRequested", async () => {

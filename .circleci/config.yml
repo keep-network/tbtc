@@ -7,7 +7,7 @@ orbs:
 executors:
   docker-node:
     docker:
-      - image: circleci/node:11
+      - image: circleci/node:12
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
