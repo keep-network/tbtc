@@ -38,7 +38,7 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function signerFee() public view returns (uint256) {
-        return self.signerFee();
+        return self.signerFeeTbtc();
     }
 
     function signerPubkey() public view returns (bytes memory) {
