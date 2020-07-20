@@ -200,6 +200,18 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-relay-maintainer
           tag: latest
+  create_sortition_pool:
+    executor: docker-node
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+        name: Create sortition pool
+        working_directory: ~/project/solidity
+        command: |
+          cp ./scripts/create_sortition_pool.js ./
+          node create-sortition-pool.js
+
 
 workflows:
   version: 2
@@ -256,6 +268,15 @@ workflows:
           context: keep-test
           requires:
             - compile_contracts
+      - create_sortition_pool:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          context: keep-test
+        requires:
+          - migrate_contracts        
       - publish_npm_package:
           filters:
             tags:
