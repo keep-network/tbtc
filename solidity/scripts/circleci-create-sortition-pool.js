@@ -8,14 +8,14 @@ however this script can be executed manually if needed.
 const Web3 = require("web3")
 const HDWalletProvider = require("@truffle/hdwallet-provider")
 
-// Ethereum host info.
+// Ethereum host info.  Provided by Circle Context
 const ethereumHost = process.env.ETH_HOST
 const ethereumNetworkId = process.env.ETH_NETWORK_ID
 
-// Contract owner info.
+// Contract owner info. Provided by Circle Context
 const contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 const contractOwnerPrivateKey =
-  process.env._CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
+  process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
 const contractOwnerProvider = new HDWalletProvider(
   `${contractOwnerPrivateKey}`,
   `${ethereumHost}`,
