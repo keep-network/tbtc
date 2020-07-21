@@ -20,7 +20,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./KeepFactorySelection.sol";
 
-/// @title  TBTC System.
+/// @title TBTC System.
 /// @notice This contract acts as a central point for access control,
 ///         value governance, and price feed.
 /// @dev    Governable values should only affect new deposit creation.
@@ -61,8 +61,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 initializedTimestamp = 0;
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
-
-    VendingMachine public vendingMachine;
 
     ISatWeiPriceFeed public priceFeed;
     IRelay public relay;
@@ -110,7 +108,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _tbtcToken         TBTCToken. More info in `TBTCToken`.
     /// @param _tbtcDepositToken  TBTCDepositToken (TDT). More info in `TBTCDepositToken`.
     /// @param _feeRebateToken    FeeRebateToken (FRT). More info in `FeeRebateToken`.
-    /// @param _vendingMachine    Vending Machine. More info in `VendingMachine`.
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size.
     function initialize(
@@ -143,18 +140,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _keepThreshold,
             _keepSize
         );
-        vendingMachine = _vendingMachine;
         setTbtcDepositToken(_tbtcDepositToken);
         initializedTimestamp = block.timestamp;
         allowNewDeposits = true;
     }
 
     /// @notice Returns whether new deposits should be allowed.
-    /// @return True if new deposits should be allowed, both by the emergency pause button
-    ///         and respected the max supply schedule.
+    /// @return True if new deposits should be allowed by the emergency pause button
     function getAllowNewDeposits() external view returns (bool) {
-        return allowNewDeposits &&
-            vendingMachine.canMint(getMaxLotSize().mul(10 ** 10));
+        return allowNewDeposits;
     }
 
     /// @notice Return the largest lot size currently enabled for deposits.
