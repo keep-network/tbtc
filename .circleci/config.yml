@@ -206,11 +206,11 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
-        name: Create sortition pool
-        working_directory: ~/project/solidity
-        command: |
-          cp ./scripts/create_sortition_pool.js ./
-          node create-sortition-pool.js
+          name: Create sortition pool
+          working_directory: ~/project/solidity
+          command: |
+            cp ./scripts/create_sortition_pool.js ./
+            node create-sortition-pool.js
 
 
 workflows:
