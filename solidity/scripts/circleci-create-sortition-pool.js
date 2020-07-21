@@ -8,11 +8,11 @@ however this script can be executed manually if needed.
 const Web3 = require("web3")
 const HDWalletProvider = require("@truffle/hdwallet-provider")
 
-// Ethereum host info.  Provided by Circle Context
+// Ethereum host info.  Provided by Circle Context.
 const ethereumHost = process.env.ETH_HOST
 const ethereumNetworkId = process.env.ETH_NETWORK_ID
 
-// Contract owner info. Provided by Circle Context
+// Contract owner info. Provided by Circle Context.
 const contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
 const contractOwnerPrivateKey =
   process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
@@ -21,9 +21,11 @@ const contractOwnerProvider = new HDWalletProvider(
   `${ethereumHost}`,
 )
 
-// We override transactionConfirmationBlocks and transactionBlockTimeout because they're
-// 25 and 50 blocks respectively at default.  The result of this on small private testnets
-// is long wait times for scripts to execute.
+/* 
+We override transactionConfirmationBlocks and transactionBlockTimeout because they're
+25 and 50 blocks respectively at default.  The result of this on small private testnets
+is long wait times for scripts to execute.
+*/
 const web3Options = {
   defaultBlock: "latest",
   defaultGas: 4712388,
@@ -55,7 +57,7 @@ const BondedECDSAKeepFactory = new web3.eth.Contract(
 )
 BondedECDSAKeepFactory.options.handleRevert = true
 
-// We need the TBTCSystem address to pass to the
+// We need the TBTCSystem address to pass to the create pool function.
 const TBTCSystemContractAddress =
   TBTCSystemJson.networks[ethereumNetworkId].address
 
