@@ -1,0 +1,15 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: tbtc-deposit-redemption-submitter
+spec:
+  schedule: "0 */1 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: tbd
+            image: tbd
+            args:
+          restartPolicy: OnFailure
