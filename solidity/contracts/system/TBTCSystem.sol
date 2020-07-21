@@ -213,7 +213,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Set the allowed deposit lot sizes.
     /// @dev    Lot size array should always contain 10**8 satoshis (1 BTC) and
     ///         cannot contain values less than 50000 satoshis (0.0005 BTC) or
-    ///         greater than 10**9 satoshis (10 BTC).
+    ///         greater than 10**10 satoshis (100 BTC).
     ///         This can be finalized by calling `finalizeLotSizesUpdate`
     ///         anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
@@ -227,9 +227,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             } else if (_lotSizes[i] < 50 * 10**3) {
                 // Failed the minimum requirement, break on out.
                 revert("Lot sizes less than 0.0005 BTC are not allowed");
-            } else if (_lotSizes[i] > 10 * 10**8) {
+            } else if (_lotSizes[i] > 10 * 10**9) {
                 // Failed the maximum requirement, break on out.
-                revert("Lot sizes greater than 10 BTC are not allowed");
+                revert("Lot sizes greater than 100 BTC are not allowed");
             }
         }
 

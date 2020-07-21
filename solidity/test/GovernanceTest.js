@@ -265,7 +265,7 @@ describe("TBTCSystem governance", async function() {
           value: [
             new BN(10 ** 8), // required
             new BN(10 ** 6),
-            new BN(10 ** 9), // upper bound
+            new BN(10 ** 10), // upper bound
             new BN(50 * 10 ** 3), // lower bound
           ],
         },
@@ -283,9 +283,9 @@ describe("TBTCSystem governance", async function() {
           parameters: [[10 ** 7, 10 ** 8, 5 * 10 ** 3 - 1]],
           error: "Lot sizes less than 0.0005 BTC are not allowed",
         },
-        "array contains a lot size > 10 BTC": {
-          parameters: [[10 ** 7, 10 ** 9 + 1, 10 ** 8]],
-          error: "Lot sizes greater than 10 BTC are not allowed",
+        "array contains a lot size > 100 BTC": {
+          parameters: [[10 ** 7, 10 ** 10 + 1, 10 ** 8]],
+          error: "Lot sizes greater than 100 BTC are not allowed",
         },
       },
       verifyFinalizationEvents: (receipt, setLotSizes) => {
