@@ -192,11 +192,12 @@ function resolveAllLogs(receipt, contractContainer) {
  *
  * @param {TxReceipt} receipt The receipt to check for the specified event.
  * @param {string} eventName The name of the event to look for.
- * @param {object} parameters The parameters to look for in the event; unlike
+ * @param {object} [parameters] The parameters to look for in the event; unlike
  *         OpenZeppelin's default version, parameters may have an array-of-BN
  *         value and they will be properly validated.
  */
 function expectEvent(receipt, eventName, parameters) {
+  parameters = parameters || []
   const bnArrayParameterNames = []
   for (const [parameterName, parameterValue] of Object.entries(parameters)) {
     if (web3.utils.isBN(parameterValue[0])) {
@@ -231,11 +232,12 @@ function expectEvent(receipt, eventName, parameters) {
  *
  * @param {TxReceipt} receipt The receipt to check for the specified event.
  * @param {string} eventName The name of the event to look for.
- * @param {object} parameters The parameters to look for in the event; unlike
+ * @param {object} [parameters] The parameters to look for in the event; unlike
  *         OpenZeppelin's default version, parameters may have an array-of-BN
  *         value and they will be properly validated.
  */
 function expectNoEvent(receipt, eventName, parameters) {
+  parameters = parameters || {}
   const matchingLogs =
     receipt.logs
       .filter(_ => _.event == eventName)
