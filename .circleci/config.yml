@@ -275,8 +275,8 @@ workflows:
             branches:
               only: /releases\/.*/
           context: keep-test
-        requires:
-          - migrate_contracts        
+          requires:
+            - migrate_contracts        
       - publish_npm_package:
           filters:
             tags:
