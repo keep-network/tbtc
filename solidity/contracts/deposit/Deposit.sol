@@ -73,8 +73,8 @@ contract Deposit is DepositFactoryAuthority {
     ///             the tasks needed to maintain a decentralized and trustless
     ///             model for tBTC. It is a percentage of the lotSize (deposit size).
     /// @return     Fee amount in tBTC.
-    function signerFee() public view returns (uint256) {
-        return self.signerFee();
+    function signerFeeTbtc() public view returns (uint256) {
+        return self.signerFeeTbtc();
     }
 
     /// @notice     Get the deposit's BTC lot size in satoshi.
@@ -192,16 +192,18 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev                Will revert if redemption is not possible by _redeemer.
     /// @param _redeemer    The deposit redeemer.
     /// @return             The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
-        return self.getRedemptionTbtcRequirement(_redeemer);
+    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
+        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, false);
+        return tbtcPayment;
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
     ///                     is this deposit's owner (TDT holder).
     /// @param _redeemer    The assumed owner of the deposit's TDT .
     /// @return             The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
-        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
+    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
+        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, true);
+        return tbtcPayment;
     }
 
     /// @notice     Anyone may provide a withdrawal signature if it was requested.

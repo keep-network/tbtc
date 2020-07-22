@@ -259,8 +259,8 @@ library DepositUtils {
 
     /// @notice         Determines the fees due to the signers for work performed.
     /// @dev            Signers are paid based on the TBTC issued.
-    /// @return         Accumulated fees in smallest TBTC unit (tsat).
-    function signerFee(Deposit storage _d) public view returns (uint256) {
+    /// @return         Accumulated fees in 10**18 decimals.
+    function signerFeeTbtc(Deposit storage _d) public view returns (uint256) {
         return lotSizeTbtc(_d).div(_d.signerFeeDivisor);
     }
 
@@ -433,8 +433,8 @@ library DepositUtils {
         }
 
         // pay out the rebate if it is available
-        if(_d.tbtcToken.balanceOf(address(this)) >= signerFee(_d)) {
-            _d.tbtcToken.transfer(rebateTokenHolder, signerFee(_d));
+        if(_d.tbtcToken.balanceOf(address(this)) >= signerFeeTbtc(_d)) {
+            _d.tbtcToken.transfer(rebateTokenHolder, signerFeeTbtc(_d));
         }
     }
 
@@ -449,79 +449,138 @@ library DepositUtils {
         }
     }
 
-    /// @notice             Get TBTC amount required for redemption assuming _redeemer
-    ///                     is this deposit's TDT holder.
-    /// @param _redeemer    The assumed owner of the deposit's TDT.
-    /// @return             The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
-        // The TDT owner only ever owes fee adjustments.
-        return computeRedemptionFeeAdjustment(_d, _redeemer);
-    }
+    /// @notice Calculate TBTC amount required for redemption by a specified
+    ///         _redeemer. If _assumeRedeemerHoldTdt is true, return the
+    ///         requirement as if the redeemer holds this deposit's TDT.
+    /// @dev Will revert if redemption is not possible by the current owner and
+    ///      _assumeRedeemerHoldsTdt was not set. Setting
+    ///      _assumeRedeemerHoldsTdt only when appropriate is the responsibility
+    ///      of the caller; as such, this function should NEVER be publicly
+    ///      exposed.
+    /// @param _redeemer The account that should be treated as redeeming this
+    ///        deposit  for the purposes of this calculation.
+    /// @param _assumeRedeemerHoldsTdt If true, the calculation assumes that the
+    ///        specified redeemer holds the TDT. If false, the calculation
+    ///        checks the deposit owner against the specified _redeemer. Note
+    ///        that this parameter should be false for all mutating calls to
+    ///        preserve system correctness.
+    /// @return A tuple of the amount the redeemer owes to the deposit to
+    ///         initiate redemption, the amount that is owed to the TDT holder
+    ///         when redemption is initiated, and the amount that is owed to the
+    ///         FRT holder when redemption is initiated.
+    function calculateRedemptionTbtcAmounts(
+        DepositUtils.Deposit storage _d,
+        address _redeemer,
+        bool _assumeRedeemerHoldsTdt
+    ) internal view returns (
+        uint256 owedToDeposit,
+        uint256 owedToTdtHolder,
+        uint256 owedToFrtHolder
+    ) {
+        bool redeemerHoldsTdt =
+            _assumeRedeemerHoldsTdt || depositOwner(_d) == _redeemer;
+        bool preTerm = remainingTerm(_d) > 0 &&  !_d.inCourtesyCall();
 
-    /// @notice             Get TBTC amount required for redemption by a specified _redeemer.
-    /// @dev                Will revert if redemption is not possible by msg.sender.
-    /// @param _redeemer    The deposit redeemer.
-    /// @return             The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(DepositUtils.Deposit storage _d, address _redeemer) internal view returns(uint256) {
-        bool redeemerHoldsTdt = depositOwner(_d) == _redeemer;
-        bool inCourtesy = _d.inCourtesyCall();
-        bool atTerm = remainingTerm(_d) == 0;
+        require(
+            redeemerHoldsTdt || !preTerm,
+            "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL"
+        );
 
-        require(redeemerHoldsTdt || inCourtesy || atTerm, "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL");
+        bool frtExists = feeRebateTokenHolder(_d) != address(0);
+        bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
+        uint256 signerFee = signerFeeTbtc(_d);
 
-        uint256 mainCharge = computeBaseRedemptionCharge(_d, redeemerHoldsTdt);
-        return mainCharge.add(computeRedemptionFeeAdjustment(_d, _redeemer));
+        uint256 feeEscrow = calculateRedemptionFeeEscrow(
+            signerFee,
+            preTerm,
+            frtExists,
+            redeemerHoldsTdt,
+            redeemerHoldsFrt
+        );
+
+        // Base redemption + fee = total we need to have escrowed to start
+        // redemption.
+        owedToDeposit =
+            calculateBaseRedemptionCharge(
+                lotSizeTbtc(_d),
+                redeemerHoldsTdt
+            ).add(feeEscrow);
+
+        // Adjust the amount owed to the deposit based on any balance the
+        // deposit already has.
+        uint256 balance = _d.tbtcToken.balanceOf(address(this));
+        if (owedToDeposit > balance) {
+            owedToDeposit = owedToDeposit.sub(balance);
+        } else {
+            owedToDeposit = 0;
+        }
+
+        // Pre-term, the FRT rebate is payed out, but if the redeemer holds the
+        // FRT, the amount has already been subtracted from what is owed to the
+        // deposit at this point (by calculateRedemptionFeeEscrow). This allows
+        // the redeemer to simply *not pay* the fee rebate, rather than having
+        // them pay it only to have it immediately returned.
+        if (preTerm && frtExists && !redeemerHoldsFrt) {
+            owedToFrtHolder = signerFee;
+        }
+
+        // The TDT holder gets any leftover balance.
+        owedToTdtHolder =
+            balance.add(owedToDeposit).sub(signerFee).sub(owedToFrtHolder);
+
+        return (owedToDeposit, owedToTdtHolder, owedToFrtHolder);
     }
 
     /// @notice                    Get the base TBTC amount needed to redeem.
+    /// @param _lotSize   The lot size to use for the base redemption charge.
     /// @param _redeemerHoldsTdt   True if the redeemer is the TDT holder.
     /// @return                    The amount in TBTC.
-    function computeBaseRedemptionCharge(
-        DepositUtils.Deposit storage _d,
+    function calculateBaseRedemptionCharge(
+        uint256 _lotSize,
         bool _redeemerHoldsTdt
-    ) internal view returns (uint256){
+    ) internal pure returns (uint256){
         if (_redeemerHoldsTdt) {
             return 0;
         }
-        return lotSizeTbtc(_d);
-    }
-
-    /// @notice             Get fees owed for redemption by a specified _redeemer.
-    /// @param _redeemer    The deposit redeemer.
-    /// @return             The fees owed in TBTC.
-    function computeRedemptionFeeAdjustment(DepositUtils.Deposit storage _d, address _redeemer) internal view returns (uint256) {
-        bool preTerm = remainingTerm(_d) != 0 && !_d.inCourtesyCall();
-        bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
-        bool frtExists = feeRebateTokenHolder(_d) != address(0);
-        bool redeemerHoldsTdt = depositOwner(_d) == _redeemer;
-
-        return computeSignerFee(_d, preTerm, redeemerHoldsFrt, !redeemerHoldsTdt, frtExists);
+        return _lotSize;
     }
 
     /// @notice  Get fees owed for redemption
-    /// @param _preTerm              True if the Deposit is not at-term and not in courtesy_call.
+    /// @param signerFee The value of the signer fee for fee calculations.
+    /// @param _preTerm               True if the Deposit is at-term or in courtesy_call.
+    /// @param _frtExists     True if the FRT exists.
+    /// @param _redeemerHoldsTdt     True if the the redeemer holds the TDT.
     /// @param _redeemerHoldsFrt     True if the redeemer holds the FRT.
-    /// @param _redeemerIsThirdParty True if the redeemer is not the TDT owner.
-    /// @param _frtExists            True if the FRT exists.
     /// @return                      The fees owed in TBTC.
-    function computeSignerFee(
-        DepositUtils.Deposit storage _d,
+    function calculateRedemptionFeeEscrow(
+        uint256 signerFee,
         bool _preTerm,
-        bool _redeemerHoldsFrt,
-        bool _redeemerIsThirdParty,
-        bool _frtExists
-    ) internal view returns (uint256) {
-        bool redeemerOwesNoFee;
-        if (_preTerm) {
-            redeemerOwesNoFee = _redeemerHoldsFrt;
-        } else {
-            redeemerOwesNoFee = _frtExists || _redeemerIsThirdParty;
+        bool _frtExists,
+        bool _redeemerHoldsTdt,
+        bool _redeemerHoldsFrt
+    ) internal pure returns (uint256) {
+        // Escrow the fee rebate so the FRT holder can be repaids, unless the
+        // redeemer holds the FRT, in which case we simply don't require the
+        // rebate from them.
+        bool escrowRequiresFeeRebate =
+            _preTerm && _frtExists && ! _redeemerHoldsFrt;
+
+        bool escrowRequiresFee =
+            _preTerm ||
+            // If the FRT exists at term/courtesy call, the fee is
+            // "required", but should already be escrowed before redemption.
+            _frtExists ||
+            // The TDT holder always owes fees if there is no FRT.
+            _redeemerHoldsTdt;
+
+        uint256 feeEscrow = 0;
+        if (escrowRequiresFee) {
+            feeEscrow += signerFee;
+        }
+        if (escrowRequiresFeeRebate) {
+            feeEscrow += signerFee;
         }
 
-        if (redeemerOwesNoFee) {
-            return 0;
-        } else {
-            return signerFee(_d);
-        }
+        return feeEscrow;
     }
 }
