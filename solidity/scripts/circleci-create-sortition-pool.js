@@ -64,7 +64,7 @@ const TBTCSystemContractAddress =
 async function createTBTCSystemSortitionPool() {
   try {
     console.log(
-      `creating sortition pool for BondedECDSAKeepFactory: [${BondedECDSAKeepFactoryJsonAddress}]`,
+      `creating sortition pool for BondedECDSAKeepFactory: [${BondedECDSAKeepFactoryAddress}] and TBTCSystem: [${TBTCSystemContractAddress}]`,
     )
     // Create the pool for TBTCSystem.
     await BondedECDSAKeepFactory.methods
