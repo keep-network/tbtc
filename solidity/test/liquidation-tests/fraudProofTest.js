@@ -39,7 +39,7 @@ describe("Integration -- fraud proof", async function () {
     expect(depositState).to.eq.BN(states.ACTIVE)
   })
 
-  it("reverts if not fraud according to keep", async () => {
+  it("starts liquidation if keep confirms fraud", async () => {
     await ecdsaKeepStub.setSuccess(true)
 
     await testDeposit.provideECDSAFraudProof(

@@ -77,9 +77,9 @@ library DepositLiquidation {
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
 
-        // if we come from the redemption flow we shouldn't go to auction.
-        // Instead give the signer bonds to redeemer
-        if (_d.inRedemption()) {
+        // If we see fraud in the redemption flow, we shouldn't go to auction.
+        // Instead give the full signer bond directly to the redeemer.
+        if (_d.inRedemption() && _wasFraud) {
             _d.setLiquidated();
             _d.enableWithdrawal(redeemerAddress, seized);
             _d.logLiquidated();
@@ -138,17 +138,22 @@ library DepositLiquidation {
         _d.setLiquidated();
         _d.logLiquidated();
 
-        // send the TBTC to the TDT holder. If the TDT holder is the Vending Machine, burn it to maintain the peg.
-        address tdtHolder = _d.depositOwner();
+        // Send the TBTC to the redeemer if they exist, otherwise to the TDT
+        // holder. If the TDT holder is the Vending Machine, burn it to maintain
+        // the peg.
+        address tbtcRecipient = _d.redeemerAddress;
+        if (tbtcRecipient == address(0)) {
+            tbtcRecipient = _d.depositOwner();
+        }
         uint256 lotSizeTbtc = _d.lotSizeTbtc();
 
         require(_d.tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc, "Not enough TBTC to cover outstanding debt");
 
-        if(tdtHolder == _d.vendingMachineAddress){
+        if(tbtcRecipient == _d.vendingMachineAddress){
             _d.tbtcToken.burnFrom(msg.sender, lotSizeTbtc);  // burn minimal amount to cover size
         }
         else{
-            _d.tbtcToken.transferFrom(msg.sender, tdtHolder, lotSizeTbtc);
+            _d.tbtcToken.transferFrom(msg.sender, tbtcRecipient, lotSizeTbtc);
         }
 
         // Distribute funds to auction buyer

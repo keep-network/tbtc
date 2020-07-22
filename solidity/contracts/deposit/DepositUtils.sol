@@ -364,7 +364,6 @@ library DepositUtils {
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);
-        _d.redeemerAddress = address(0);
     }
 
 

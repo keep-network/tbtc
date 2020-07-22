@@ -4,6 +4,9 @@ const {
   bytes32zero,
   increaseTime,
   fundingTx,
+  expectEvent,
+  resolveAllLogs,
+  expectNoEvent,
 } = require("./helpers/utils.js")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, web3} = require("@openzeppelin/test-environment")
@@ -44,7 +47,7 @@ describe("DepositRedemption", async function() {
   let tdtId
 
   // Default holders for various accounts.
-  const [owner, , , frtHolder] = accounts
+  const [owner, redeemer, , frtHolder] = accounts
   const tdtHolder = owner
 
   before(async () => {
@@ -706,7 +709,7 @@ describe("DepositRedemption", async function() {
 
     afterEach(restoreSnapshot)
 
-    it("updates the state, deconstes struct info, calls TBTC and Keep, and emits a Redeemed event", async () => {
+    it("updates the state, clears struct info except for redeemer address, calls TBTC and Keep, and emits a Redeemed event", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       await testDeposit.provideRedemptionProof(
@@ -723,7 +726,9 @@ describe("DepositRedemption", async function() {
       expect(depositState).to.eq.BN(states.REDEEMED)
 
       const requestInfo = await testDeposit.getRequestInfo.call()
-      expect(requestInfo[0]).to.equal(ZERO_ADDRESS)
+      expect(requestInfo[0]).to.equal(
+        "0x1111111111111111111111111111111111111111",
+      ) // this value should not be cleared
       expect(requestInfo[1]).to.equal(null)
       expect(requestInfo[4]).to.equal(bytes32zero)
 
@@ -889,179 +894,91 @@ describe("DepositRedemption", async function() {
     })
   })
 
-  describe("notifySignatureTimeout", async () => {
-    let timer
+  const abortScenarios = {
+    "signature timeout": {
+      timeoutFn: constants => constants.getSignatureTimeout,
+      timeoutError: "Signature timer has not elapsed",
+      state: states.AWAITING_WITHDRAWAL_SIGNATURE,
+      stateError: "Not currently awaiting a signature",
+      notifyFn: deposit => deposit.notifySignatureTimeout,
+    },
+    "proof timeout": {
+      timeoutFn: constants => constants.getRedemptionProofTimeout,
+      timeoutError: "Proof timer has not elapsed",
+      state: states.AWAITING_WITHDRAWAL_PROOF,
+      stateError: "Not currently awaiting a redemption proof",
+      notifyFn: deposit => deposit.notifyRedemptionProofTimeout,
+    },
+  }
 
-    const owner = accounts[0]
-    const tdtHolder = owner
+  for (const [
+    scenario,
+    {timeoutFn, timeoutError, state, stateError, notifyFn},
+  ] of Object.entries(abortScenarios)) {
+    describe(`when reporting a signer abort due to ${scenario}`, async () => {
+      let abortTimeout
 
-    before(async () => {
-      timer = await tbtcConstants.getSignatureTimeout.call()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-      await tbtcDepositToken.forceMint(tdtHolder, tdtId)
-
-      withdrawalRequestTime = (await time.latest()) - timer.toNumber() - 1
-      await ecdsaKeepStub.burnContractBalance()
-      await testDeposit.setState(states.AWAITING_WITHDRAWAL_SIGNATURE)
-      await testDeposit.setRequestInfo(
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
-        0,
-        withdrawalRequestTime,
-        bytes32zero,
-      )
-    })
-
-    afterEach(restoreSnapshot)
-
-    it("reverts if not awaiting redemption signature", async () => {
-      testDeposit.setState(states.START)
-
-      await expectRevert(
-        testDeposit.notifySignatureTimeout(),
-        "Not currently awaiting a signature",
-      )
-    })
-
-    it("reverts if the signature timeout has not elapsed", async () => {
-      await testDeposit.setRequestInfo(
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
-        0,
-        withdrawalRequestTime + timer + 1,
-        bytes32zero,
-      )
-      await expectRevert(
-        testDeposit.notifySignatureTimeout(),
-        "Signature timer has not elapsed",
-      )
-    })
-
-    it("reverts if no funds received as signer bond", async () => {
-      const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(new BN(0), "no bond should be sent").to.eq.BN(bond)
-
-      await expectRevert(
-        testDeposit.notifySignatureTimeout(),
-        "No funds received, unexpected",
-      )
-    })
-
-    it("liquidates the deposit and allows redeemer to withdraw signer bond", async () => {
-      const signerBonds = new BN("1000000")
-      await ecdsaKeepStub.send(signerBonds, {from: tdtHolder})
-      await testDeposit.setRedeemerAddress(accounts[1])
-
-      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
-        from: accounts[1],
+      before(async () => {
+        abortTimeout = await timeoutFn(tbtcConstants).call()
       })
 
-      await testDeposit.notifySignatureTimeout()
-      const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(bond, "Bond not seized as expected").to.eq.BN(new BN(0))
+      beforeEach(async () => {
+        await createSnapshot()
+        await tbtcDepositToken.forceMint(tdtHolder, tdtId)
 
-      const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
-      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
-        from: accounts[1],
+        await ecdsaKeepStub.burnContractBalance()
+        await testDeposit.setState(state)
+        await testDeposit.setRequestInfo(
+          ZERO_ADDRESS,
+          ZERO_ADDRESS,
+          0,
+          await time.latest(),
+          bytes32zero,
+        )
       })
 
-      expect(initialWithdrawable).to.eq.BN(new BN("0"))
-      expect(finalWithdrawable).to.eq.BN(signerBonds)
-      expect(liquidationTime[0], "Auction should not be initiated").to.eq.BN(0)
-    })
-  })
+      it("should revert if not in correct state", async () => {
+        testDeposit.setState(states.START)
 
-  describe("notifyRedemptionProofTimeout", async () => {
-    let timer
-
-    before(async () => {
-      timer = await tbtcConstants.getRedemptionProofTimeout.call()
-    })
-
-    beforeEach(async () => {
-      await createSnapshot()
-      await tbtcDepositToken.forceMint(tdtHolder, tdtId)
-
-      withdrawalRequestTime = (await time.latest()) - timer.toNumber() - 1
-      await ecdsaKeepStub.burnContractBalance()
-      await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
-      await testDeposit.setRequestInfo(
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
-        0,
-        withdrawalRequestTime,
-        bytes32zero,
-      )
-    })
-
-    afterEach(restoreSnapshot)
-
-    it("reverts if not awaiting redemption proof", async () => {
-      await testDeposit.setState(states.START)
-
-      await expectRevert(
-        testDeposit.notifyRedemptionProofTimeout(),
-        "Not currently awaiting a redemption proof",
-      )
-    })
-
-    it("reverts if the proof timeout has not elapsed", async () => {
-      await testDeposit.setRequestInfo(
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
-        0,
-        withdrawalRequestTime * 5,
-        bytes32zero,
-      )
-
-      await expectRevert(
-        testDeposit.notifyRedemptionProofTimeout(),
-        "Proof timer has not elapsed",
-      )
-    })
-
-    it("reverts if no funds recieved as signer bond", async () => {
-      await testDeposit.setRequestInfo(
-        ZERO_ADDRESS,
-        ZERO_ADDRESS,
-        0,
-        withdrawalRequestTime,
-        bytes32zero,
-      )
-      const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(bond, "no bond should be sent").to.eq.BN(new BN(0))
-
-      await expectRevert(
-        testDeposit.notifyRedemptionProofTimeout(),
-        "No funds received, unexpected",
-      )
-    })
-
-    it("liquidates the deposit and allows redeemer to withdraw signer bond", async () => {
-      const signerBonds = new BN("1000000")
-      await ecdsaKeepStub.send(signerBonds, {from: owner})
-      await testDeposit.setRedeemerAddress(accounts[1])
-
-      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
-        from: accounts[1],
+        await expectRevert(notifyFn(testDeposit)(), stateError)
       })
 
-      await testDeposit.notifyRedemptionProofTimeout()
-
-      const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      expect(bond, "Bond not seized as expected").to.eq.BN(new BN(0))
-
-      const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
-      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
-        from: accounts[1],
+      it("reverts if the signature timeout has not elapsed", async () => {
+        await expectRevert(notifyFn(testDeposit)(), timeoutError)
       })
 
-      expect(initialWithdrawable).to.eq.BN("0")
-      expect(finalWithdrawable).to.eq.BN(signerBonds)
-      expect(liquidationTime[0], "Auction should not be initiated").to.eq.BN(0)
+      it("reverts if no funds received as signer bond", async () => {
+        await time.increase(time.duration.seconds(abortTimeout + 1))
+
+        const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
+        expect(new BN(0), "no bond should be sent").to.eq.BN(bond)
+
+        await expectRevert(
+          notifyFn(testDeposit)(),
+          "No funds received, unexpected",
+        )
+      })
+
+      it("initiates a liquidation auction", async () => {
+        await time.increase(time.duration.seconds(abortTimeout + 1))
+
+        const signerBonds = new BN("1000000")
+        await ecdsaKeepStub.send(signerBonds, {from: owner})
+        await testDeposit.setRedeemerAddress(redeemer)
+
+        const {receipt} = await notifyFn(testDeposit)()
+        const notificationTime = (await web3.eth.getBlock(receipt.blockNumber))
+          .timestamp
+        const fullReceipt = resolveAllLogs(receipt, {tbtcSystemStub})
+
+        expectNoEvent(fullReceipt, "Liquidated")
+
+        expectEvent(fullReceipt, "StartedLiquidation", {
+          _depositContractAddress: testDeposit.address,
+          _wasFraud: false,
+          _timestamp: new BN(notificationTime),
+        })
+      })
     })
-  })
+  }
 })
