@@ -48,12 +48,12 @@ npm package, so it saves us a step.
 const TBTCSystemJson = require("./build/contracts/TBTCSystem.json")
 
 // Boilerplate setup for access contract functions.
-const BondedECDSAKeepFactoryJsonAbi = BondedECDSAKeepFactoryJson.abi
-const BondedECDSAKeepFactoryJsonAddress =
-  BondedECDSAKeepFactoryJsonJson.networks[ethereumNetworkId].address
+const BondedECDSAKeepFactoryAbi = BondedECDSAKeepFactoryJson.abi
+const BondedECDSAKeepFactoryAddress =
+  BondedECDSAKeepFactoryJson.networks[ethereumNetworkId].address
 const BondedECDSAKeepFactory = new web3.eth.Contract(
-  BondedECDSAKeepFactoryJsonAbi,
-  BondedECDSAKeepFactoryJsonAddress,
+  BondedECDSAKeepFactoryAbi,
+  BondedECDSAKeepFactoryAddress,
 )
 BondedECDSAKeepFactory.options.handleRevert = true
 
