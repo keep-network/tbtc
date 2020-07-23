@@ -464,6 +464,41 @@ module.exports = {
                 },
             },
             liquidated: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    return {
+                        state: "liquidated",
+                        tx: deposit.provideECDSAFraudProof(
+                            0,
+                            bytes32zero,
+                            bytes32zero,
+                            bytes32zero,
+                            "0x00",
+                        ),
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(
+                        receipt,
+                        "StartedLiquidation",
+                        {
+                            "_depositContractAddress": deposit.address,
+                        },
+                    )
+                    expectEvent(
+                        receipt,
+                        "Liquidated",
+                        {
+                            "_depositContractAddress": deposit.address,
+                        },
+                    )
+                    expect(await deposit.getCurrentState()).to.eq.BN(
+                        System.States.LIQUIDATED
+                    )
+                },
+            },
+            liquidationInProgress: {
                 after: System.signatureTimeout,
                 transition: async (state) => {
                     const { deposit } = state
@@ -476,7 +511,7 @@ module.exports = {
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "StartedLiquidation")
                     expect(await deposit.getCurrentState()).to.eq.BN(
-                        System.States.LIQUIDATED
+                        System.States.LIQUIDATION_IN_PROGRESS
                     )
                 },
             },
