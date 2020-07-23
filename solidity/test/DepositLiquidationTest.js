@@ -225,6 +225,7 @@ describe("DepositLiquidation", async function() {
       await testDeposit.send(value, {from: accounts[8]})
 
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
+      await testDeposit.setState(states.LIQUIDATION_IN_PROGRESS)
       const auctionValue = await testDeposit.auctionValue.call()
 
       await testDeposit.purchaseSignerBondsAtAuction({from: buyer})

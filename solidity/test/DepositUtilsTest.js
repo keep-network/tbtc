@@ -468,6 +468,8 @@ describe("DepositUtils", async function() {
     })
     beforeEach(async () => {
       await createSnapshot()
+
+      await testDeposit.setState(states.LIQUIDATION_IN_PROGRESS)
     })
 
     afterEach(async () => {
@@ -516,6 +518,23 @@ describe("DepositUtils", async function() {
 
       const value = await testDeposit.auctionValue.call()
       expect(value).to.eq.BN(auctionValue.mul(percentage).div(new BN(100)))
+    })
+
+    it("reverts if the deposit is not in a liquidation state", async () => {
+      // Previous tests ensure LIQUIDATION_IN_PROGRESS doesn't revert. Check
+      // fraud liquidation here.
+      await testDeposit.setState(states.FRAUD_LIQUIDATION_IN_PROGRESS)
+      await testDeposit.auctionValue.call()
+
+      // Check states on either side of liquidation.
+      for (const state of [states.ACTIVE, states.LIQUIDATED]) {
+        await testDeposit.setState(state)
+
+        expectRevert(
+          testDeposit.auctionValue.call(),
+          "Deposit has no funds currently at auction",
+        )
+      }
     })
   })
 

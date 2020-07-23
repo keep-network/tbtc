@@ -192,6 +192,11 @@ contract Deposit is DepositFactoryAuthority {
     ///         deposit's lot size in TBTC if `purchaseSignerBondsAtAuction`
     ///         were called at the time this function is called.
     function auctionValue() public view returns (uint256) {
+        require(
+            self.inSignerLiquidation(),
+            "Deposit has no funds currently at auction"
+        );
+
         return self.auctionValue();
     }
 
