@@ -65,7 +65,7 @@ The funding flow is as follows:
 
 ## Minting TBTC
 
-After a Deposit is funded and *qualified*, it is ready for minting TBTC. The TDT represents the now-confirmed UXTO, and we are ready to swap it using the vending machine.
+   After a Deposit is funded and *qualified*, it is ready for minting TBTC. The TDT represents the now-confirmed UTXO, and we are ready to swap it using the vending machine.
 
 The **vending machine** manages the changing of TDT into TBTC and vice-versa. 
 
