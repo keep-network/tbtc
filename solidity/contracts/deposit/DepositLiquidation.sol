@@ -140,7 +140,8 @@ library DepositLiquidation {
 
         // Send the TBTC to the redeemer if they exist, otherwise to the TDT
         // holder. If the TDT holder is the Vending Machine, burn it to maintain
-        // the peg.
+        // the peg. This is because, if there is a redeemer set here, the TDT
+        // holder has already been made whole at redemption request time.
         address tbtcRecipient = _d.redeemerAddress;
         if (tbtcRecipient == address(0)) {
             tbtcRecipient = _d.depositOwner();
