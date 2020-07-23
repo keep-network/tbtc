@@ -30,7 +30,7 @@ describe("Integration -- Signature-timeout", async function () {
 
     it("unable to start liquidation when timer has not elapsed", async () => {
       await expectRevert(
-        testDeposit.notifySignatureTimeout(),
+        testDeposit.notifyRedemptionSignatureTimedOut(),
         "Signature timer has not elapsed",
       )
       const depositState = await testDeposit.getCurrentState.call()
@@ -43,7 +43,7 @@ describe("Integration -- Signature-timeout", async function () {
       const timer = await tbtcConstants.getSignatureTimeout.call()
       await increaseTime(timer.toNumber() + 1)
 
-      await testDeposit.notifySignatureTimeout()
+      await testDeposit.notifyRedemptionSignatureTimedOut()
 
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
@@ -127,7 +127,7 @@ describe("Integration -- Signature-timeout", async function () {
 
     it("unable to start liquidation when timer has not elapsed", async () => {
       await expectRevert(
-        testDeposit.notifySignatureTimeout(),
+        testDeposit.notifyRedemptionSignatureTimedOut(),
         "Signature timer has not elapsed",
       )
     })
@@ -138,7 +138,7 @@ describe("Integration -- Signature-timeout", async function () {
       const timer = await tbtcConstants.getSignatureTimeout.call()
       await increaseTime(timer.toNumber() + 1)
 
-      await testDeposit.notifySignatureTimeout()
+      await testDeposit.notifyRedemptionSignatureTimedOut()
 
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)

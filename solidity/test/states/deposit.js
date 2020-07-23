@@ -203,7 +203,7 @@ module.exports = {
 
                     return {
                         state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
+                        tx: deposit.notifySignerSetupFailed(),
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {
@@ -226,7 +226,7 @@ module.exports = {
 
                     return {
                         state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
+                        tx: deposit.notifySignerSetupFailed(),
                     }
                 },
                 expectError: async (_, error) => {
@@ -245,7 +245,7 @@ module.exports = {
                     await System.drainBond(state)
                     return {
                         state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
+                        tx: deposit.notifySignerSetupFailed(),
                     }
                 },
                 expectError: async (_, error) => {
@@ -297,7 +297,7 @@ module.exports = {
 
                     return {
                         state: "failedSetup",
-                        tx: deposit.notifyFundingTimeout()
+                        tx: deposit.notifyFundingTimedOut()
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {
@@ -337,7 +337,7 @@ module.exports = {
                 transition: async ({ deposit }) => {
                     return {
                         state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
+                        tx: deposit.notifySignerSetupFailed(),
                     }
                 },
                 expectError: async (_, error) => {
@@ -505,7 +505,7 @@ module.exports = {
                     await System.setUpBond(state)
                     return {
                         state: "liquidatinInProgress",
-                        tx: deposit.notifySignatureTimeout()
+                        tx: deposit.notifyRedemptionSignatureTimedOut()
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {
@@ -549,7 +549,7 @@ module.exports = {
 
                     return {
                         state: "liquidationInProgress",
-                        tx: deposit.notifyCourtesyTimeout()
+                        tx: deposit.notifyCourtesyCallExpired()
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {

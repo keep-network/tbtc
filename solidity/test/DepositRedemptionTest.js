@@ -900,14 +900,14 @@ describe("DepositRedemption", async function() {
       timeoutError: "Signature timer has not elapsed",
       state: states.AWAITING_WITHDRAWAL_SIGNATURE,
       stateError: "Not currently awaiting a signature",
-      notifyFn: deposit => deposit.notifySignatureTimeout,
+      notifyFn: deposit => deposit.notifyRedemptionSignatureTimedOut,
     },
     "proof timeout": {
       timeoutFn: constants => constants.getRedemptionProofTimeout,
       timeoutError: "Proof timer has not elapsed",
       state: states.AWAITING_WITHDRAWAL_PROOF,
       stateError: "Not currently awaiting a redemption proof",
-      notifyFn: deposit => deposit.notifyRedemptionProofTimeout,
+      notifyFn: deposit => deposit.notifyRedemptionProofTimedOut,
     },
   }
 

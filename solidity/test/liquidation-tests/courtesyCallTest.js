@@ -47,7 +47,7 @@ describe("Integration -- courtesy_call", async function () {
 
   it("unabse to liquidate if timer has not elapsed", async () => {
     await expectRevert(
-      testDeposit.notifyCourtesyTimeout(),
+      testDeposit.notifyCourtesyCallExpired(),
       "Courtesy period has not elapsed",
     )
     const depositState = await testDeposit.getCurrentState.call()
@@ -84,7 +84,7 @@ describe("Integration -- courtesy_call", async function () {
     timer = await tbtcConstants.getCourtesyCallTimeout.call()
     await increaseTime(timer.toNumber())
 
-    await testDeposit.notifyCourtesyTimeout({ from: liqInitiator })
+    await testDeposit.notifyCourtesyCallExpired({ from: liqInitiator })
     // not fraud and we did not come from redemption.
     const depositState = await testDeposit.getCurrentState.call()
     expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
@@ -148,7 +148,7 @@ describe("Integration -- courtesy_call", async function () {
 
     timer = await tbtcConstants.getCourtesyCallTimeout.call()
     await increaseTime(timer.toNumber())
-    await testDeposit.notifyCourtesyTimeout({ from: liqInitiator })
+    await testDeposit.notifyCourtesyCallExpired({ from: liqInitiator })
     // not fraud and we did not come from redemption.
     const depositState = await testDeposit.getCurrentState.call()
     expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)

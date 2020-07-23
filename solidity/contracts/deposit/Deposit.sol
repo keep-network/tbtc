@@ -220,8 +220,8 @@ contract Deposit is DepositFactoryAuthority {
     ///      deposit is not awaiting signer setup, if the generated public key
     ///      is unset or has incorrect length, or if the public key has a 0
     ///      X or Y value.
-    function notifySignerSetupFailure() public {
-        self.notifySignerSetupFailure();
+    function notifySignerSetupFailed() public {
+        self.notifySignerSetupFailed();
     }
 
     /// @notice Anyone may notify the contract that the ECDSA keep has generated
@@ -246,8 +246,8 @@ contract Deposit is DepositFactoryAuthority {
     ///      opening the deposit is not refunded. Emits a SetupFailed event.
     ///      Reverts if the funding timeout has not yet elapsed, or if the
     ///      deposit is not currently awaiting funding proof.
-    function notifyFundingTimeout() public {
-        self.notifyFundingTimeout();
+    function notifyFundingTimedOut() public {
+        self.notifyFundingTimedOut();
     }
 
     /// @notice Requests a funder abort for a failed-funding deposit; that is,
@@ -363,8 +363,8 @@ contract Deposit is DepositFactoryAuthority {
     ///      LiquidationStarted event. The caller is captured as the liquidation
     ///      initiator, and is eligible for 50% of any bond left after the
     ///      auction is completed.
-    function notifyCourtesyTimeout() public {
-        self.notifyCourtesyTimeout();
+    function notifyCourtesyCallExpired() public {
+        self.notifyCourtesyCallExpired();
     }
 
     /// @notice Notify the contract that the signers are undercollateralized.
@@ -419,8 +419,8 @@ contract Deposit is DepositFactoryAuthority {
     ///      signature or if the allotted time has not yet elapsed. The caller
     ///      is captured as the liquidation initiator, and is eligible for 50%
     ///      of any bond left after the auction is completed.
-    function notifySignatureTimeout() public {
-        self.notifySignatureTimeout();
+    function notifyRedemptionSignatureTimedOut() public {
+        self.notifyRedemptionSignatureTimedOut();
     }
 
     /// @notice Anyone may notify the contract that the deposit has failed to
@@ -433,8 +433,8 @@ contract Deposit is DepositFactoryAuthority {
     ///      The caller is captured as the liquidation initiator, and
     ///      is eligible for 50% of any bond left after the auction is
     ///     completed.
-    function notifyRedemptionProofTimeout() public {
-        self.notifyRedemptionProofTimeout();
+    function notifyRedemptionProofTimedOut() public {
+        self.notifyRedemptionProofTimedOut();
     }
 
     /// @notice Closes an auction and purchases the signer bonds by transferring

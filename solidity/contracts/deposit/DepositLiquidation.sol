@@ -220,7 +220,7 @@ library DepositLiquidation {
     /// @notice     Notifies the contract that the courtesy period has elapsed.
     /// @dev        This is treated as an abort, rather than fraud.
     /// @param  _d  Deposit storage pointer.
-    function notifyCourtesyTimeout(DepositUtils.Deposit storage _d) public {
+    function notifyCourtesyCallExpired(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
         require(block.timestamp >= _d.courtesyCallInitiated.add(TBTCConstants.getCourtesyCallTimeout()), "Courtesy period has not elapsed");
         startLiquidation(_d, false);

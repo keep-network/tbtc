@@ -537,7 +537,7 @@ describe("DepositLiquidation", async function() {
     })
   })
 
-  describe("notifyCourtesyTimeout", async () => {
+  describe("notifyCourtesyCallExpired", async () => {
     let courtesyTime
     let timer
     before(async () => {
@@ -554,7 +554,7 @@ describe("DepositLiquidation", async function() {
     })
 
     it("executes and moves state to LIQUIDATION_IN_PROGRESS", async () => {
-      await testDeposit.notifyCourtesyTimeout()
+      await testDeposit.notifyCourtesyCallExpired()
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
@@ -562,7 +562,7 @@ describe("DepositLiquidation", async function() {
     it("reverts if not in a courtesy call period", async () => {
       await testDeposit.setState(states.START)
       await expectRevert(
-        testDeposit.notifyCourtesyTimeout(),
+        testDeposit.notifyCourtesyCallExpired(),
         "Not in a courtesy call period",
       )
     })
@@ -570,14 +570,14 @@ describe("DepositLiquidation", async function() {
     it("reverts if the period has not elapsed", async () => {
       await testDeposit.setLiquidationAndCourtesyInitated(0, courtesyTime * 5)
       await expectRevert(
-        testDeposit.notifyCourtesyTimeout(),
+        testDeposit.notifyCourtesyCallExpired(),
         "Courtesy period has not elapsed",
       )
     })
 
     it("assert starts signer abort liquidation", async () => {
       await ecdsaKeepStub.send(1000000, {from: owner})
-      await testDeposit.notifyCourtesyTimeout()
+      await testDeposit.notifyCourtesyCallExpired()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(new BN(bond), "Bond not seized as expected").to.eq.BN("0")

@@ -37,7 +37,7 @@ describe("Integration -- Redemption-proof timeout", async function () {
   describe("Redemption-proof timeout", async () => {
     it("unable to start liquidation if timer not elapsed", async () => {
       await expectRevert(
-        testDeposit.notifyRedemptionProofTimeout(),
+        testDeposit.notifyRedemptionProofTimedOut(),
         "Not currently awaiting a redemption proof",
       )
       const depositState = await testDeposit.getCurrentState.call()
@@ -52,7 +52,7 @@ describe("Integration -- Redemption-proof timeout", async function () {
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
 
-      await testDeposit.notifyRedemptionProofTimeout()
+      await testDeposit.notifyRedemptionProofTimedOut()
 
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)

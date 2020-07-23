@@ -182,7 +182,7 @@ describe("DepositFunding", async function() {
       )
     })
   })
-  describe("notifySignerSetupFailure", async () => {
+  describe("notifySignerSetupFailed", async () => {
     let timer
     let owner
     let openKeepFee
@@ -230,7 +230,7 @@ describe("DepositFunding", async function() {
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
-      await testDeposit.notifySignerSetupFailure({from: owner})
+      await testDeposit.notifySignerSetupFailed({from: owner})
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
 
@@ -264,7 +264,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.START)
 
       await expectRevert(
-        testDeposit.notifySignerSetupFailure(),
+        testDeposit.notifySignerSetupFailed(),
         "Not awaiting setup",
       )
     })
@@ -273,7 +273,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setSigningGroupRequestedAt(fundingProofTimerStart * 5)
 
       await expectRevert(
-        testDeposit.notifySignerSetupFailure(),
+        testDeposit.notifySignerSetupFailed(),
         "Signing group formation timeout not yet elapsed",
       )
     })
@@ -349,7 +349,7 @@ describe("DepositFunding", async function() {
     })
   })
 
-  describe("notifyFundingTimeout", async () => {
+  describe("notifyFundingTimedOut", async () => {
     let timer
 
     before(async () => {
@@ -368,7 +368,7 @@ describe("DepositFunding", async function() {
     it("updates the state to failed setup, deconsts funding info, and logs SetupFailed", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await testDeposit.notifyFundingTimeout()
+      await testDeposit.notifyFundingTimedOut()
 
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.FAILED_SETUP)
@@ -384,7 +384,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.START)
 
       await expectRevert(
-        testDeposit.notifyFundingTimeout(),
+        testDeposit.notifyFundingTimedOut(),
         "Funding timeout has not started",
       )
     })
@@ -393,7 +393,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart * 5)
 
       await expectRevert(
-        testDeposit.notifyFundingTimeout(),
+        testDeposit.notifyFundingTimedOut(),
         "Funding timeout has not elapsed",
       )
     })
@@ -430,7 +430,7 @@ describe("DepositFunding", async function() {
 
     it("emits a FunderAbortRequested event", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
-      await testDeposit.notifyFundingTimeout()
+      await testDeposit.notifyFundingTimedOut()
 
       const outputScript = "0x012345"
       await testDeposit.requestFunderAbort(outputScript, {from: owner})
