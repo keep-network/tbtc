@@ -63,12 +63,12 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
 
     event DepositCloneCreated(address depositCloneAddress);
 
-    /// @notice                Creates a new deposit instance and mints a TDT.
-    ///                        This function is currently the only way to create a new deposit.
-    /// @dev                   Calls `Deposit.createNewDeposit` to initialize the instance.
-    ///                        Mints the TDT to the function caller.
-    ///                        (See `TBTCDepositToken` for more info on TDTs).
-    /// @return                True if successful, otherwise revert.
+    /// @notice Creates a new deposit instance and mints a TDT. This function is
+    ///         currently the only way to create a new deposit.
+    /// @dev Calls `Deposit.initializeDeposit` to initialize the instance. Mints
+    ///      the TDT to the function caller. (See `TBTCDepositToken` for more
+    ///      info on TDTs).
+    /// @return True if successful, otherwise the new deposit's address.
     function createDeposit (uint64 _lotSizeSatoshis) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
 
@@ -76,7 +76,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
 
         Deposit deposit = Deposit(address(uint160(cloneAddress)));
         deposit.initialize(address(this));
-        deposit.createNewDeposit.value(msg.value)(
+        deposit.initializeDeposit.value(msg.value)(
                 tbtcSystem,
                 tbtcToken,
                 tbtcDepositToken,

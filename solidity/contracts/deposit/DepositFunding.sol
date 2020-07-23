@@ -40,15 +40,15 @@ library DepositFunding {
         _d.signingGroupPubkeyY = bytes32(0);
     }
 
-    /// @notice         Internally called function to set up a newly created Deposit instance.
-    ///                 This should not be called by developers, use `DepositFactory.createNewDeposit`
-    ///                 to create a new deposit.
-    /// @dev            If called directly, the transaction will revert since the call will be
-    ///                 executed on an already set-up instance.
-    /// @param _d       Deposit storage pointer.
-    /// @param _m       Signing group honesty threshold.
-    /// @param _n       Signing group size.
-    function createNewDeposit(
+    /// @notice Internally called function to set up a newly created Deposit
+    ///         instance. This should not be called by developers, use
+    ///         `DepositFactory.createDeposit` to create a new deposit.
+    /// @dev If called directly, the transaction will revert since the call will
+    ///      be executed on an already set-up instance.
+    /// @param _d Deposit storage pointer.
+    /// @param _m Signing group honesty threshold.
+    /// @param _n Signing group size.
+    function initialize(
         DepositUtils.Deposit storage _d,
         uint16 _m,
         uint16 _n,

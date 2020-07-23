@@ -185,7 +185,7 @@ describe("DepositFactory", async function() {
       const keep = await ECDSAKeepStub.new()
 
       await tbtcDepositToken.forceMint(accounts[0], testDeposit.address)
-      await testDeposit.createNewDeposit(
+      await testDeposit.initializeDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,

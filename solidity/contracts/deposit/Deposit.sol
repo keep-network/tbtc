@@ -589,7 +589,7 @@ contract Deposit is DepositFactoryAuthority {
     ///                         required to send. This is also the amount of
     ///                         TBTC the TDT holder will be eligible to mint:
     ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
-    function createNewDeposit(
+    function initializeDeposit(
         ITBTCSystem _tbtcSystem,
         TBTCToken _tbtcToken,
         IERC721 _tbtcDepositToken,
@@ -604,7 +604,7 @@ contract Deposit is DepositFactoryAuthority {
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
-        self.createNewDeposit(_m, _n, _lotSizeSatoshis);
+        self.initialize(_m, _n, _lotSizeSatoshis);
     }
 
     /// @notice This function can only be called by the vending machine.

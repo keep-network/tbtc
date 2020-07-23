@@ -56,7 +56,7 @@ describe("DepositUtils", async function() {
     await ecdsaKeepStub.setBondAmount(depositFee)
     await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
 
-    await testDeposit.createNewDeposit(
+    await testDeposit.initializeDeposit(
       tbtcSystemStub.address,
       tbtcToken.address,
       tbtcDepositToken.address,
@@ -344,7 +344,7 @@ describe("DepositUtils", async function() {
       await ecdsaKeepStub.setBondAmount(depositFee)
       await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
 
-      await testDeposit.createNewDeposit(
+      await testDeposit.initializeDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,

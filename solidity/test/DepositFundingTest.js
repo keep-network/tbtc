@@ -66,7 +66,7 @@ describe("DepositFunding", async function() {
     await restoreSnapshot()
   })
 
-  describe("createNewDeposit", async () => {
+  describe("initializeDeposit", async () => {
     it("runs and updates state and fires a created event", async () => {
       const expectedKeepAddress = ecdsaKeepStub.address
       const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
@@ -76,7 +76,7 @@ describe("DepositFunding", async function() {
 
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await testDeposit.createNewDeposit(
+      await testDeposit.initializeDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,
@@ -132,7 +132,7 @@ describe("DepositFunding", async function() {
       await ecdsaKeepStub.setBondAmount(depositFee - 1)
 
       await expectRevert(
-        testDeposit.createNewDeposit.call(
+        testDeposit.initializeDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
           tbtcDepositToken.address,
@@ -150,7 +150,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.REDEEMED)
 
       await expectRevert(
-        testDeposit.createNewDeposit.call(
+        testDeposit.initializeDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
           tbtcDepositToken.address,
@@ -168,7 +168,7 @@ describe("DepositFunding", async function() {
       await tbtcSystemStub.emergencyPauseNewDeposits()
 
       await expectRevert(
-        testDeposit.createNewDeposit.call(
+        testDeposit.initializeDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
           tbtcDepositToken.address,
