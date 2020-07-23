@@ -154,13 +154,18 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     /// @notice Get the value of the funding UTXO.
-    /// @dev This call will return 0 if the deposit is not in a state where the
+    /// @dev This call will revert if the deposit is not in a state where the
     ///      UTXO info should be valid. In particular, before funding proof is
     ///      successfully submitted (i.e. in states START,
     ///      AWAITING_SIGNER_SETUP, and AWAITING_BTC_FUNDING_PROOF), this value
     ///      would not be valid.
     /// @return The value of the funding UTXO in satoshis.
     function utxoValue() public view returns (uint256){
+        require(
+            ! self.inFunding(),
+            "Deposit has not yet been funded and has no available funding info"
+        );
+
         return self.utxoValue();
     }
 

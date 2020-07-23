@@ -582,7 +582,26 @@ describe("DepositUtils", async function() {
   })
 
   describe("utxoValue()", async () => {
+    beforeEach(createSnapshot)
+    afterEach(restoreSnapshot)
+
+    it("reverts if the deposit is in a funding state", async () => {
+      for (const state of [
+        states.AWAITING_SIGNER_SETUP,
+        states.AWAITING_BTC_FUNDING_PROOF,
+      ]) {
+        await testDeposit.setState(state)
+
+        await expectRevert(
+          testDeposit.utxoValue.call(),
+          "Deposit has not yet been funded and has no available funding info",
+        )
+      }
+    })
+
     it("returns the state's utxoValueBytes as an integer", async () => {
+      await testDeposit.setState(states.ACTIVE)
+
       const utxoValue = await testDeposit.utxoValue.call()
       expect(utxoValue).to.eq.BN(0)
 
