@@ -72,7 +72,7 @@ describe("DepositFraud", async function() {
       await assertBalance.eth(ecdsaKeepStub.address, new BN(0))
       await assertBalance.eth(testDeposit.address, new BN(bond))
 
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+      const withdrawable = await testDeposit.withdrawableAmount.call({
         from: beneficiary,
       })
       expect(withdrawable).to.eq.BN(new BN(bond))
@@ -161,7 +161,7 @@ describe("DepositFraud", async function() {
       const currentBond = await web3.eth.getBalance(ecdsaKeepStub.address)
       const {receipt} = await testDeposit.startLiquidation(true)
 
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+      const withdrawable = await testDeposit.withdrawableAmount.call({
         from: owner,
       })
       expect(withdrawable).to.eq.BN(new BN(currentBond))

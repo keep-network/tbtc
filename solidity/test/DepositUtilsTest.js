@@ -450,7 +450,7 @@ describe("DepositUtils", async function() {
     it("returns correct base percentage", async () => {
       const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
-      const initialCollateralization = await testDeposit.getInitialCollateralizedPercent()
+      const initialCollateralization = await testDeposit.initialCollateralizedPercent()
 
       // 10000 to avoid losing value to truncating in solidity.
       const expected = new BN(10000).div(initialCollateralization)
@@ -742,17 +742,17 @@ describe("DepositUtils", async function() {
       await restoreSnapshot()
     })
 
-    it("correctly adds value to withdrawalAllowances", async () => {
+    it("correctly adds value to withdrawableAmounts", async () => {
       const value = new BN(10000)
       const beneficiary = accounts[1]
 
-      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
+      const initialWithdrawable = await testDeposit.withdrawableAmount.call({
         from: beneficiary,
       })
 
       await testDeposit.enableWithdrawal(accounts[1], value)
 
-      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
+      const finalWithdrawable = await testDeposit.withdrawableAmount.call({
         from: beneficiary,
       })
 
@@ -790,7 +790,7 @@ describe("DepositUtils", async function() {
         const tx = await testDeposit.withdrawFunds({from: beneficiary})
         const finalBalance = await web3.eth.getBalance(beneficiary)
 
-        const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        const withdrawable = await testDeposit.withdrawableAmount.call({
           from: beneficiary,
         })
         const gasPrice = await web3.eth.getGasPrice()

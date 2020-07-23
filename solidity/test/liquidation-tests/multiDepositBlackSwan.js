@@ -39,7 +39,7 @@ describe("Integration -- black-swan", async function () {
       await mockSatWeiPriceFeed.setPrice(new BN("4666666666666"))// price down 90%
       await deposits[i].notifyUndercollateralizedLiquidation()
 
-      const depositState = await deposits[i].getCurrentState.call()
+      const depositState = await deposits[i].currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     }
   })

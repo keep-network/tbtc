@@ -78,7 +78,7 @@ describe("DepositLiquidation", async function() {
     await restoreSnapshot()
   })
 
-  describe("getCollateralizationPercentage", async () => {
+  describe("collateralizationPercentage", async () => {
     const ETHprice = new BN(190)
     const BTCPrice = new BN(7700)
     const satwei = BTCPrice.div(ETHprice).mul(new BN(10000000000))
@@ -90,7 +90,7 @@ describe("DepositLiquidation", async function() {
       // expect 200% collateralization by setting bond = 2 * lotValue
       await ecdsaKeepStub.setBondAmount(satwei.mul(lotSize).mul(new BN(2)))
 
-      const collateralization = await testDeposit.getCollateralizationPercentage()
+      const collateralization = await testDeposit.collateralizationPercentage()
 
       expect(collateralization).to.eq.BN(new BN(200))
     })
@@ -102,7 +102,7 @@ describe("DepositLiquidation", async function() {
       // expect 100% collateralization by setting bond = lotValue.
       await ecdsaKeepStub.setBondAmount(satwei.mul(lotSize))
 
-      const collateralization = await testDeposit.getCollateralizationPercentage()
+      const collateralization = await testDeposit.collateralizationPercentage()
 
       expect(collateralization).to.eq.BN(new BN(100))
     })
@@ -114,7 +114,7 @@ describe("DepositLiquidation", async function() {
       // send 1/5 of value, expect 20% collateralization.
       await ecdsaKeepStub.setBondAmount(satwei.mul(lotSize).div(new BN(5)))
 
-      const collateralization = await testDeposit.getCollateralizationPercentage()
+      const collateralization = await testDeposit.collateralizationPercentage()
 
       expect(collateralization).to.eq.BN(new BN(20))
     })
@@ -126,7 +126,7 @@ describe("DepositLiquidation", async function() {
       // set less than 1% of bond, expect to receive a 0% collateralization (no decimals)
       await ecdsaKeepStub.setBondAmount(satwei.mul(lotSize).div(new BN(101)))
 
-      const collateralization = await testDeposit.getCollateralizationPercentage()
+      const collateralization = await testDeposit.collateralizationPercentage()
 
       expect(collateralization).to.eq.BN(new BN(0))
     })
@@ -233,7 +233,7 @@ describe("DepositLiquidation", async function() {
       // calculate the split of the un-purchased signer bond
       const split = value.sub(auctionValue).div(new BN(2))
 
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+      const withdrawable = await testDeposit.withdrawableAmount.call({
         from: buyer,
       })
 
@@ -277,7 +277,7 @@ describe("DepositLiquidation", async function() {
       const totalReward = (value * (100 - basePercentage)) / 100
       const split = totalReward / 2
 
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+      const withdrawable = await testDeposit.withdrawableAmount.call({
         from: liquidationInitiator,
       })
       const depositBalance = await web3.eth.getBalance(testDeposit.address)
@@ -314,7 +314,7 @@ describe("DepositLiquidation", async function() {
         new BN(initialSignerBalance),
       )
 
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+      const withdrawable = await testDeposit.withdrawableAmount.call({
         from: liquidationInitiator,
       })
 
@@ -340,7 +340,7 @@ describe("DepositLiquidation", async function() {
       lotSize = await testDeposit.lotSizeSatoshis.call()
       lotValue = lotSize.mul(oraclePrice)
 
-      undercollateralizedPercent = await testDeposit.getUndercollateralizedThresholdPercent.call()
+      undercollateralizedPercent = await testDeposit.undercollateralizedThresholdPercent.call()
     })
 
     beforeEach(async () => {

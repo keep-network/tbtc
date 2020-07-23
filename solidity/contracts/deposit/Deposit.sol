@@ -82,7 +82,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev We implement this because contracts don't handle foreign enums
     ///      well. See `DepositStates` for more info on states.
     /// @return The 0-indexed state from the DepositStates enum.
-    function getCurrentState() public view returns (uint256) {
+    function currentState() public view returns (uint256) {
         return uint256(self.currentState);
     }
 
@@ -96,7 +96,7 @@ contract Deposit is DepositFactoryAuthority {
     ///         this Deposit.
     /// @dev The keep contract address is saved on Deposit initialization.
     /// @return Address of the Keep contract.
-    function getKeepAddress() public view returns (address) {
+    function keepAddress() public view returns (address) {
         return self.keepAddress;
     }
 
@@ -113,15 +113,15 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev This value represents the percentage of the backing BTC value the
     ///      signers currently must hold as bond.
     /// @return The current collateralization level for this deposit.
-    function getCollateralizationPercentage() public view returns (uint256) {
-        return self.getCollateralizationPercentage();
+    function collateralizationPercentage() public view returns (uint256) {
+        return self.collateralizationPercentage();
     }
 
     /// @notice Get the initial collateralization level for this Deposit.
     /// @dev This value represents the percentage of the backing BTC value
     ///      the signers hold initially. It is set at creation time.
     /// @return The initial collateralization level for this deposit.
-    function getInitialCollateralizedPercent() public view returns (uint16) {
+    function initialCollateralizedPercent() public view returns (uint16) {
         return self.initialCollateralizedPercent;
     }
 
@@ -135,7 +135,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      can be changed by governance, but the value for a particular
     ///      deposit is static once the deposit is created.
     /// @return The undercollateralized level for this deposit.
-    function getUndercollateralizedThresholdPercent() public view returns (uint16) {
+    function undercollateralizedThresholdPercent() public view returns (uint16) {
         return self.undercollateralizedThresholdPercent;
     }
 
@@ -149,7 +149,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      but the value for a particular deposit is static once the deposit
     ///      is created.
     /// @return The severely undercollateralized level for this deposit.
-    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint16) {
+    function severelyUndercollateralizedThresholdPercent() public view returns (uint16) {
         return self.severelyUndercollateralizedThresholdPercent;
     }
 
@@ -206,7 +206,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      can be withdrawn using `withdrawFunds` if the deposit is in an end
     ///      state.
     /// @return The withdraw allowance in wei.
-    function getWithdrawAllowance() public view returns (uint256) {
+    function withdrawableAmount() public view returns (uint256) {
         return self.getWithdrawAllowance();
     }
 
@@ -636,5 +636,4 @@ contract Deposit is DepositFactoryAuthority {
     function withdrawFunds() public {
         self.withdrawFunds();
     }
-
 }

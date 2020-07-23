@@ -98,7 +98,7 @@ describe("DepositFunding", async function() {
       const signerFeeDivisor = await testDeposit.getSignerFeeDivisor.call()
       expect(signerFeeDivisor).to.eq.BN(systemSignerFeeDivisor)
 
-      const keepAddress = await testDeposit.getKeepAddress.call()
+      const keepAddress = await testDeposit.keepAddress.call()
       expect(keepAddress, "keepAddress not as expected").to.equal(
         expectedKeepAddress,
       )
@@ -234,7 +234,7 @@ describe("DepositFunding", async function() {
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
 
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+      const withdrawable = await testDeposit.withdrawableAmount.call({
         from: owner,
       })
 
