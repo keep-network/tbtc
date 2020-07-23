@@ -53,12 +53,29 @@ contract Deposit is DepositFactoryAuthority {
         require(msg.data.length == 0, "Deposit contract was called with unknown function selector.");
     }
 
-    /// @notice Get the contract address of the BondedECDSAKeep associated with
-    ///         this Deposit.
-    /// @dev The keep contract address is saved on Deposit initialization.
-    /// @return Address of the Keep contract.
-    function getKeepAddress() public view returns (address) {
-        return self.keepAddress;
+//----------------------------- METADATA LOOKUP ------------------------------//
+
+    /// @notice Get this deposit's BTC lot size in satoshis.
+    /// @return uint64 lot size in satoshis.
+    function lotSizeSatoshis() public view returns (uint64){
+        return self.lotSizeSatoshis;
+    }
+
+    /// @notice Get this deposit's lot size in TBTC.
+    /// @dev This is the same as lotSizeSatoshis(), but is multiplied to scale
+    ///      to 18 decimal places.
+    /// @return uint256 lot size in TBTC precision (max 18 decimal places).
+    function lotSizeTbtc() public view returns (uint256){
+        return self.lotSizeTbtc();
+    }
+
+    /// @notice Get the signer fee for this deposit, in TBTC.
+    /// @dev This is the one-time fee required by the signers to perform the
+    ///      tasks needed to maintain a decentralized and trustless model for
+    ///      tBTC. It is a percentage of the deposit's lot size.
+    /// @return Fee amount in TBTC.
+    function signerFeeTbtc() public view returns (uint256) {
+        return self.signerFeeTbtc();
     }
 
     /// @notice Get the integer representing the current state.
@@ -75,6 +92,14 @@ contract Deposit is DepositFactoryAuthority {
         return self.inActive();
     }
 
+    /// @notice Get the contract address of the BondedECDSAKeep associated with
+    ///         this Deposit.
+    /// @dev The keep contract address is saved on Deposit initialization.
+    /// @return Address of the Keep contract.
+    function getKeepAddress() public view returns (address) {
+        return self.keepAddress;
+    }
+
     /// @notice Retrieve the remaining term of the deposit in seconds.
     /// @dev The value accuracy is not guaranteed since block.timestmap can be
     ///      lightly manipulated by miners.
@@ -84,27 +109,48 @@ contract Deposit is DepositFactoryAuthority {
         return self.remainingTerm();
     }
 
-    /// @notice Get the signer fee for this deposit, in TBTC.
-    /// @dev This is the one-time fee required by the signers to perform the
-    ///      tasks needed to maintain a decentralized and trustless model for
-    ///      tBTC. It is a percentage of the deposit's lot size.
-    /// @return Fee amount in TBTC.
-    function signerFeeTbtc() public view returns (uint256) {
-        return self.signerFeeTbtc();
+    /// @notice Get the current collateralization level for this Deposit.
+    /// @dev This value represents the percentage of the backing BTC value the
+    ///      signers currently must hold as bond.
+    /// @return The current collateralization level for this deposit.
+    function getCollateralizationPercentage() public view returns (uint256) {
+        return self.getCollateralizationPercentage();
     }
 
-    /// @notice Get this deposit's BTC lot size in satoshis.
-    /// @return uint64 lot size in satoshis.
-    function lotSizeSatoshis() public view returns (uint64){
-        return self.lotSizeSatoshis;
+    /// @notice Get the initial collateralization level for this Deposit.
+    /// @dev This value represents the percentage of the backing BTC value
+    ///      the signers hold initially. It is set at creation time.
+    /// @return The initial collateralization level for this deposit.
+    function getInitialCollateralizedPercent() public view returns (uint16) {
+        return self.initialCollateralizedPercent;
     }
 
-    /// @notice Get this deposit's lot size in TBTC.
-    /// @dev This is the same as lotSizeSatoshis(), but is multiplied to scale
-    ///      to 18 decimal places.
-    /// @return uint256 lot size in TBTC precision (max 18 decimal places).
-    function lotSizeTbtc() public view returns (uint256){
-        return self.lotSizeTbtc();
+    /// @notice Get the undercollateralization level for this Deposit.
+    /// @dev This collateralization level is semi-critical. If the
+    ///      collateralization level falls below this percentage the Deposit can
+    ///      be courtesy-called by calling `notifyCourtesyCall`. This value
+    ///      represents the percentage of the backing BTC value the signers must
+    ///      hold as bond in order to not be undercollateralized. It is set at
+    ///      creation time. Note that the value for new deposits in TBTCSystem
+    ///      can be changed by governance, but the value for a particular
+    ///      deposit is static once the deposit is created.
+    /// @return The undercollateralized level for this deposit.
+    function getUndercollateralizedThresholdPercent() public view returns (uint16) {
+        return self.undercollateralizedThresholdPercent;
+    }
+
+    /// @notice Get the severe undercollateralization level for this Deposit.
+    /// @dev This collateralization level is critical. If the collateralization
+    ///      level falls below this percentage the Deposit can get liquidated.
+    ///      This value represents the percentage of the backing BTC value the
+    ///      signers must hold as bond in order to not be severely
+    ///      undercollateralized. It is set at creation time. Note that the
+    ///      value for new deposits in TBTCSystem can be changed by governance,
+    ///      but the value for a particular deposit is static once the deposit
+    ///      is created.
+    /// @return The severely undercollateralized level for this deposit.
+    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint16) {
+        return self.severelyUndercollateralizedThresholdPercent;
     }
 
     /// @notice Get the value of the funding UTXO.
@@ -134,213 +180,27 @@ contract Deposit is DepositFactoryAuthority {
         return (self.utxoValueBytes, self.fundedAt, self.utxoOutpoint);
     }
 
-    /// @notice This function can only be called by the deposit factory; use
-    ///         `DepositFactory.createDeposit` to create a new deposit.
-    /// @dev Initializes a new deposit clone with the base state for the
-    ///      deposit.
-    /// @param _tbtcSystem `TBTCSystem` contract. More info in `TBTCSystem`.
-    /// @param _tbtcToken `TBTCToken` contract. More info in TBTCToken`.
-    /// @param _tbtcDepositToken `TBTCDepositToken` (TDT) contract. More info in
-    ///        `TBTCDepositToken`.
-    /// @param _feeRebateToken `FeeRebateToken` (FRT) contract. More info in
-    ///        `FeeRebateToken`.
-    /// @param _vendingMachineAddress `VendingMachine` address. More info in
-    ///        `VendingMachine`.
-    /// @param _m Signing group honesty threshold.
-    /// @param _n Signing group size.
-    /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is
-    ///                         required to send. This is also the amount of
-    ///                         TBTC the TDT holder will be eligible to mint:
-    ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
-    function createNewDeposit(
-        ITBTCSystem _tbtcSystem,
-        TBTCToken _tbtcToken,
-        IERC721 _tbtcDepositToken,
-        FeeRebateToken _feeRebateToken,
-        address _vendingMachineAddress,
-        uint16 _m,
-        uint16 _n,
-        uint64 _lotSizeSatoshis
-    ) public onlyFactory payable {
-        self.tbtcSystem = _tbtcSystem;
-        self.tbtcToken = _tbtcToken;
-        self.tbtcDepositToken = _tbtcDepositToken;
-        self.feeRebateToken = _feeRebateToken;
-        self.vendingMachineAddress = _vendingMachineAddress;
-        self.createNewDeposit(_m, _n, _lotSizeSatoshis);
+    /// @notice Calculates the amount of value at auction right now.
+    /// @dev This call will revert if the deposit is not in a state where an
+    ///      auction is currently in progress.
+    /// @return The value in wei that would be received in exchange for the
+    ///         deposit's lot size in TBTC if `purchaseSignerBondsAtAuction`
+    ///         were called at the time this function is called.
+    function auctionValue() public view returns (uint256) {
+        return self.auctionValue();
     }
 
-    /// @notice Requests redemption of this deposit, meaning the transmission,
-    ///         by the signers, of the deposit's UTXO to the specified Bitocin
-    ///         output script. Requires approving the deposit to spend the
-    ///         amount of TBTC needed to redeem.
-    /// @dev The amount of TBTC needed to redeem can be looked up using the
-    ///      `getRedemptionTbtcRequirement` or `getOwnerRedemptionTbtcRequirement`
-    ///      functions.
-    /// @param  _outputValueBytes The 8-byte little-endian output size. The
-    ///         difference between this value and the lot size of the deposit
-    ///         will be paid as a fee to the Bitcoin miners when the signed
-    ///         transaction is broadcast.
-    /// @param  _redeemerOutputScript The redeemer's length-prefixed output
-    ///         script.
-    function requestRedemption(
-        bytes8 _outputValueBytes,
-        bytes memory _redeemerOutputScript
-    ) public {
-        self.requestRedemption(_outputValueBytes, _redeemerOutputScript);
+    /// @notice Get caller's ETH withdraw allowance.
+    /// @dev Generally ETH is only available to withdraw after the deposit
+    ///      reaches a closed state. The amount reported is for the sender, and
+    ///      can be withdrawn using `withdrawFunds` if the deposit is in an end
+    ///      state.
+    /// @return The withdraw allowance in wei.
+    function getWithdrawAllowance() public view returns (uint256) {
+        return self.getWithdrawAllowance();
     }
 
-    /// @notice This function can only be called by the vending machine.
-    /// @dev Performs the same action as requestRedemption, but transfers
-    ///      ownership of the deposit to the specified _finalRecipient. Used as
-    ///      a utility helper for the vending machine's shortcut
-    ///      TBTC->redemption path.
-    /// @param  _outputValueBytes The 8-byte little-endian output size.
-    /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
-    /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
-    function transferAndRequestRedemption(
-        bytes8 _outputValueBytes,
-        bytes memory _redeemerOutputScript,
-        address payable _finalRecipient
-    ) public {
-        require(
-            msg.sender == self.vendingMachineAddress,
-            "Only the vending machine can call transferAndRequestRedemption"
-        );
-        self.transferAndRequestRedemption(
-            _outputValueBytes,
-            _redeemerOutputScript,
-            _finalRecipient
-        );
-    }
-
-    /// @notice Get TBTC amount required for redemption by a specified
-    ///         _redeemer.
-    /// @dev This call will revert if redemption is not possible by _redeemer.
-    /// @param _redeemer The deposit redeemer whose TBTC requirement is being
-    ///        requested.
-    /// @return The amount in TBTC needed by the `_redeemer` to redeem the
-    ///         deposit.
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
-        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, false);
-        return tbtcPayment;
-    }
-
-    /// @notice Get TBTC amount required for redemption assuming _redeemer
-    ///         is this deposit's owner (TDT holder).
-    /// @param _redeemer The assumed owner of the deposit's TDT .
-    /// @return The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
-        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, true);
-        return tbtcPayment;
-    }
-
-    /// @notice Anyone may provide a withdrawal signature if it was requested.
-    /// @dev The signers will be penalized if this function is not called
-    ///      correctly within `TBTCConstants.REDEMPTION_SIGNATURE_TIMEOUT`
-    ///      seconds of a redemption request or fee increase being received.
-    /// @param _v Signature recovery value.
-    /// @param _r Signature R value.
-    /// @param _s Signature S value. Should be in the low half of secp256k1
-    ///        curve's order.
-    function provideRedemptionSignature(
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s
-    ) public {
-        self.provideRedemptionSignature(_v, _r, _s);
-    }
-
-    /// @notice Anyone may request a signature for a transaction with an
-    ///         increased Bitcoin transaction fee.
-    /// @dev This call will revert if the fee is already at its maximum, or if
-    ///      the new requested fee is not a multiple of the initial requested
-    ///      fee. Transaction fees can only be bumped by the amount of the
-    ///      initial requested fee. Calling this sends the deposit back to
-    ///      the `AWAITING_WITHDRAWAL_SIGNATURE` state and requires the signers
-    ///      to `provideRedemptionSignature` for the new output value in a
-    ///      timely fashion.
-    /// @param _previousOutputValueBytes The previous output's value.
-    /// @param _newOutputValueBytes The new output's value.
-    function increaseRedemptionFee(
-        bytes8 _previousOutputValueBytes,
-        bytes8 _newOutputValueBytes
-    ) public {
-        self.increaseRedemptionFee(_previousOutputValueBytes, _newOutputValueBytes);
-    }
-
-    /// @notice Anyone may submit a redemption proof to the deposit showing that
-    ///         a transaction was submitted and sufficiently confirmed on the
-    ///         Bitcoin chain transferring the deposit lot size's amount of BTC
-    ///         from the signer-controlled private key corresponding to this
-    ///         deposit to the requested redemption output script. This will
-    ///         move the deposit into a redeemed state.
-    /// @dev Takes a pre-parsed transaction and calculates values needed to
-    ///      verify funding. Signers can have their bonds seized if this is not
-    ///      called within `TBTCConstants.REDEMPTION_PROOF_TIMEOUT` seconds of
-    ///      a redemption signature being provided.
-    /// @param _txVersion Transaction version number (4-byte little-endian).
-    /// @param _txInputVector All transaction inputs prepended by the number of
-    ///        inputs encoded as a VarInt, max 0xFC(252) inputs.
-    /// @param _txOutputVector All transaction outputs prepended by the number
-    ///         of outputs encoded as a VarInt, max 0xFC(252) outputs.
-    /// @param _txLocktime Final 4 bytes of the transaction.
-    /// @param _merkleProof The merkle proof of transaction inclusion in a
-    ///        block.
-    /// @param _txIndexInBlock Transaction index in the block (0-indexed).
-    /// @param _bitcoinHeaders Single bytestring of 80-byte bitcoin headers,
-    ///        lowest height first.
-    function provideRedemptionProof(
-        bytes4 _txVersion,
-        bytes memory _txInputVector,
-        bytes memory _txOutputVector,
-        bytes4 _txLocktime,
-        bytes memory _merkleProof,
-        uint256 _txIndexInBlock,
-        bytes memory _bitcoinHeaders
-    ) public {
-        self.provideRedemptionProof(
-            _txVersion,
-            _txInputVector,
-            _txOutputVector,
-            _txLocktime,
-            _merkleProof,
-            _txIndexInBlock,
-            _bitcoinHeaders
-        );
-    }
-
-    /// @notice Anyone may notify the contract that the signers have failed to
-    ///         produce a signature for a redemption request in the allotted
-    ///         time.
-    /// @dev This is considered an abort, and is punished by seizing signer
-    ///      bonds and putting them up for auction. Emits a LiquidationStarted
-    ///      event and a Liquidated event and sends the full signer bond to the
-    ///      redeemer. Reverts if the deposit is not currently awaiting a
-    ///      signature or if the allotted time has not yet elapsed. The caller
-    ///      is captured as the liquidation initiator, and is eligible for 50%
-    ///      of any bond left after the auction is completed.
-    function notifySignatureTimeout() public {
-        self.notifySignatureTimeout();
-    }
-
-    /// @notice Anyone may notify the contract that the deposit has failed to
-    ///         receive a redemption proof in the allotted time.
-    /// @dev This call will revert if the deposit is not currently awaiting a
-    ///      signature or if the allotted time has not yet elapsed. This is
-    ///      considered an abort, and is punished by seizing signer bonds and
-    ///      putting them up for auction for the lot size amount in TBTC (see
-    ///      `purchaseSignerBondsAtAuction`). Emits a LiquidationStarted event.
-    ///      The caller is captured as the liquidation initiator, and
-    ///      is eligible for 50% of any bond left after the auction is
-    ///     completed.
-    function notifyRedemptionProofTimeout() public {
-        self.notifyRedemptionProofTimeout();
-    }
-
-    //
-    // FUNDING FLOW
-    //
+//------------------------------ FUNDING FLOW --------------------------------//
 
     /// @notice Anyone may notify the contract that signing group setup has
     ///         timed out if retrieveSignerPubkey is not successfully called
@@ -463,9 +323,53 @@ contract Deposit is DepositFactoryAuthority {
         );
     }
 
-    //
-    // FRAUD
-    //
+//---------------------------- LIQUIDATION FLOW ------------------------------//
+
+    /// @notice Notify the contract that the signers are undercollateralized.
+    /// @dev This call will revert if the signers are not in fact
+    ///      undercollateralized according to the price feed. After
+    ///      TBTCConstants.COURTESY_CALL_DURATION, courtesy call times out and
+    ///      regular abort liquidation occurs; see
+    ///      `notifyCourtesyTimedOut`.
+    function notifyCourtesyCall() public {
+        self.notifyCourtesyCall();
+    }
+
+    /// @notice Notify the contract that the signers' bond value has recovered
+    ///         enough to be considered sufficiently collateralized.
+    /// @dev This call will revert if collateral is still below the
+    ///      undercollateralized threshold according to the price feed.
+    function exitCourtesyCall() public {
+        self.exitCourtesyCall();
+    }
+
+    /// @notice Notifies the contract that the courtesy period has expired and
+    ///         the deposit should move into liquidation.
+    /// @dev This call will revert if the courtesy call period has not in fact
+    ///      expired or is not in the courtesy call state. Courtesy call
+    ///      expiration is treated as an abort, and is handled by seizing signer
+    ///      bonds and putting them up for auction for the lot size amount in
+    ///      TBTC (see `purchaseSignerBondsAtAuction`). Emits a
+    ///      LiquidationStarted event. The caller is captured as the liquidation
+    ///      initiator, and is eligible for 50% of any bond left after the
+    ///      auction is completed.
+    function notifyCourtesyTimeout() public {
+        self.notifyCourtesyTimeout();
+    }
+
+    /// @notice Notify the contract that the signers are undercollateralized.
+    /// @dev Calls out to the system for oracle info.
+    /// @dev This call will revert if the signers are not in fact severely
+    ///      undercollateralized according to the price feed. Severe
+    ///      undercollateralization is treated as an abort, and is handled by
+    ///      seizing signer bonds and putting them up for auction in exchange
+    ///      for the lot size amount in TBTC (see
+    ///      `purchaseSignerBondsAtAuction`). Emits a LiquidationStarted event.
+    ///      The caller is captured as the liquidation initiator, and is
+    ///      eligible for 50% of any bond left after the auction is completed.
+    function notifyUndercollateralizedLiquidation() public {
+        self.notifyUndercollateralizedLiquidation();
+    }
 
     /// @notice Anyone can provide a signature that was not requested to prove
     ///         fraud.
@@ -495,62 +399,32 @@ contract Deposit is DepositFactoryAuthority {
         self.provideECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
     }
 
-    //
-    // LIQUIDATION
-    //
-
-    /// @notice Get the current collateralization level for this Deposit.
-    /// @dev This value represents the percentage of the backing BTC value the
-    ///      signers currently must hold as bond.
-    /// @return The current collateralization level for this deposit.
-    function getCollateralizationPercentage() public view returns (uint256) {
-        return self.getCollateralizationPercentage();
+    /// @notice Anyone may notify the contract that the signers have failed to
+    ///         produce a signature for a redemption request in the allotted
+    ///         time.
+    /// @dev This is considered an abort, and is punished by seizing signer
+    ///      bonds and putting them up for auction. Emits a LiquidationStarted
+    ///      event and a Liquidated event and sends the full signer bond to the
+    ///      redeemer. Reverts if the deposit is not currently awaiting a
+    ///      signature or if the allotted time has not yet elapsed. The caller
+    ///      is captured as the liquidation initiator, and is eligible for 50%
+    ///      of any bond left after the auction is completed.
+    function notifySignatureTimeout() public {
+        self.notifySignatureTimeout();
     }
 
-    /// @notice Get the initial collateralization level for this Deposit.
-    /// @dev This value represents the percentage of the backing BTC value
-    ///      the signers hold initially. It is set at creation time.
-    /// @return The initial collateralization level for this deposit.
-    function getInitialCollateralizedPercent() public view returns (uint16) {
-        return self.initialCollateralizedPercent;
-    }
-
-    /// @notice Get the undercollateralization level for this Deposit.
-    /// @dev This collateralization level is semi-critical. If the
-    ///      collateralization level falls below this percentage the Deposit can
-    ///      be courtesy-called by calling `notifyCourtesyCall`. This value
-    ///      represents the percentage of the backing BTC value the signers must
-    ///      hold as bond in order to not be undercollateralized. It is set at
-    ///      creation time. Note that the value for new deposits in TBTCSystem
-    ///      can be changed by governance, but the value for a particular
-    ///      deposit is static once the deposit is created.
-    /// @return The undercollateralized level for this deposit.
-    function getUndercollateralizedThresholdPercent() public view returns (uint16) {
-        return self.undercollateralizedThresholdPercent;
-    }
-
-    /// @notice Get the severe undercollateralization level for this Deposit.
-    /// @dev This collateralization level is critical. If the collateralization
-    ///      level falls below this percentage the Deposit can get liquidated.
-    ///      This value represents the percentage of the backing BTC value the
-    ///      signers must hold as bond in order to not be severely
-    ///      undercollateralized. It is set at creation time. Note that the
-    ///      value for new deposits in TBTCSystem can be changed by governance,
-    ///      but the value for a particular deposit is static once the deposit
-    ///      is created.
-    /// @return The severely undercollateralized level for this deposit.
-    function getSeverelyUndercollateralizedThresholdPercent() public view returns (uint16) {
-        return self.severelyUndercollateralizedThresholdPercent;
-    }
-
-    /// @notice Calculates the amount of value at auction right now.
-    /// @dev This call will revert if the deposit is not in a state where an
-    ///      auction is currently in progress.
-    /// @return The value in wei that would be received in exchange for the
-    ///         deposit's lot size in TBTC if `purchaseSignerBondsAtAuction`
-    ///         were called at the time this function is called.
-    function auctionValue() public view returns (uint256) {
-        return self.auctionValue();
+    /// @notice Anyone may notify the contract that the deposit has failed to
+    ///         receive a redemption proof in the allotted time.
+    /// @dev This call will revert if the deposit is not currently awaiting a
+    ///      signature or if the allotted time has not yet elapsed. This is
+    ///      considered an abort, and is punished by seizing signer bonds and
+    ///      putting them up for auction for the lot size amount in TBTC (see
+    ///      `purchaseSignerBondsAtAuction`). Emits a LiquidationStarted event.
+    ///      The caller is captured as the liquidation initiator, and
+    ///      is eligible for 50% of any bond left after the auction is
+    ///     completed.
+    function notifyRedemptionProofTimeout() public {
+        self.notifyRedemptionProofTimeout();
     }
 
     /// @notice Closes an auction and purchases the signer bonds by transferring
@@ -567,50 +441,184 @@ contract Deposit is DepositFactoryAuthority {
         self.purchaseSignerBondsAtAuction();
     }
 
-    /// @notice Notify the contract that the signers are undercollateralized.
-    /// @dev This call will revert if the signers are not in fact
-    ///      undercollateralized according to the price feed. After
-    ///      TBTCConstants.COURTESY_CALL_DURATION, courtesy call times out and
-    ///      regular abort liquidation occurs; see
-    ///      `notifyCourtesyTimedOut`.
-    function notifyCourtesyCall() public {
-        self.notifyCourtesyCall();
+//---------------------------- REDEMPTION FLOW -------------------------------//
+
+    /// @notice Get TBTC amount required for redemption by a specified
+    ///         _redeemer.
+    /// @dev This call will revert if redemption is not possible by _redeemer.
+    /// @param _redeemer The deposit redeemer whose TBTC requirement is being
+    ///        requested.
+    /// @return The amount in TBTC needed by the `_redeemer` to redeem the
+    ///         deposit.
+    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
+        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, false);
+        return tbtcPayment;
     }
 
-    /// @notice Notify the contract that the signers' bond value has recovered
-    ///         enough to be considered sufficiently collateralized.
-    /// @dev This call will revert if collateral is still below the
-    ///      undercollateralized threshold according to the price feed.
-    function exitCourtesyCall() public {
-        self.exitCourtesyCall();
+    /// @notice Get TBTC amount required for redemption assuming _redeemer
+    ///         is this deposit's owner (TDT holder).
+    /// @param _redeemer The assumed owner of the deposit's TDT .
+    /// @return The amount in TBTC needed to redeem the deposit.
+    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
+        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, true);
+        return tbtcPayment;
     }
 
-    /// @notice Notify the contract that the signers are undercollateralized.
-    /// @dev Calls out to the system for oracle info.
-    /// @dev This call will revert if the signers are not in fact severely
-    ///      undercollateralized according to the price feed. Severe
-    ///      undercollateralization is treated as an abort, and is handled by
-    ///      seizing signer bonds and putting them up for auction in exchange
-    ///      for the lot size amount in TBTC (see
-    ///      `purchaseSignerBondsAtAuction`). Emits a LiquidationStarted event.
-    ///      The caller is captured as the liquidation initiator, and is
-    ///      eligible for 50% of any bond left after the auction is completed.
-    function notifyUndercollateralizedLiquidation() public {
-        self.notifyUndercollateralizedLiquidation();
+    /// @notice Requests redemption of this deposit, meaning the transmission,
+    ///         by the signers, of the deposit's UTXO to the specified Bitocin
+    ///         output script. Requires approving the deposit to spend the
+    ///         amount of TBTC needed to redeem.
+    /// @dev The amount of TBTC needed to redeem can be looked up using the
+    ///      `getRedemptionTbtcRequirement` or `getOwnerRedemptionTbtcRequirement`
+    ///      functions.
+    /// @param  _outputValueBytes The 8-byte little-endian output size. The
+    ///         difference between this value and the lot size of the deposit
+    ///         will be paid as a fee to the Bitcoin miners when the signed
+    ///         transaction is broadcast.
+    /// @param  _redeemerOutputScript The redeemer's length-prefixed output
+    ///         script.
+    function requestRedemption(
+        bytes8 _outputValueBytes,
+        bytes memory _redeemerOutputScript
+    ) public {
+        self.requestRedemption(_outputValueBytes, _redeemerOutputScript);
     }
 
-    /// @notice Notifies the contract that the courtesy period has expired and
-    ///         the deposit should move into liquidation.
-    /// @dev This call will revert if the courtesy call period has not in fact
-    ///      expired or is not in the courtesy call state. Courtesy call
-    ///      expiration is treated as an abort, and is handled by seizing signer
-    ///      bonds and putting them up for auction for the lot size amount in
-    ///      TBTC (see `purchaseSignerBondsAtAuction`). Emits a
-    ///      LiquidationStarted event. The caller is captured as the liquidation
-    ///      initiator, and is eligible for 50% of any bond left after the
-    ///      auction is completed.
-    function notifyCourtesyTimeout() public {
-        self.notifyCourtesyTimeout();
+    /// @notice Anyone may provide a withdrawal signature if it was requested.
+    /// @dev The signers will be penalized if this function is not called
+    ///      correctly within `TBTCConstants.REDEMPTION_SIGNATURE_TIMEOUT`
+    ///      seconds of a redemption request or fee increase being received.
+    /// @param _v Signature recovery value.
+    /// @param _r Signature R value.
+    /// @param _s Signature S value. Should be in the low half of secp256k1
+    ///        curve's order.
+    function provideRedemptionSignature(
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) public {
+        self.provideRedemptionSignature(_v, _r, _s);
+    }
+
+    /// @notice Anyone may request a signature for a transaction with an
+    ///         increased Bitcoin transaction fee.
+    /// @dev This call will revert if the fee is already at its maximum, or if
+    ///      the new requested fee is not a multiple of the initial requested
+    ///      fee. Transaction fees can only be bumped by the amount of the
+    ///      initial requested fee. Calling this sends the deposit back to
+    ///      the `AWAITING_WITHDRAWAL_SIGNATURE` state and requires the signers
+    ///      to `provideRedemptionSignature` for the new output value in a
+    ///      timely fashion.
+    /// @param _previousOutputValueBytes The previous output's value.
+    /// @param _newOutputValueBytes The new output's value.
+    function increaseRedemptionFee(
+        bytes8 _previousOutputValueBytes,
+        bytes8 _newOutputValueBytes
+    ) public {
+        self.increaseRedemptionFee(_previousOutputValueBytes, _newOutputValueBytes);
+    }
+
+    /// @notice Anyone may submit a redemption proof to the deposit showing that
+    ///         a transaction was submitted and sufficiently confirmed on the
+    ///         Bitcoin chain transferring the deposit lot size's amount of BTC
+    ///         from the signer-controlled private key corresponding to this
+    ///         deposit to the requested redemption output script. This will
+    ///         move the deposit into a redeemed state.
+    /// @dev Takes a pre-parsed transaction and calculates values needed to
+    ///      verify funding. Signers can have their bonds seized if this is not
+    ///      called within `TBTCConstants.REDEMPTION_PROOF_TIMEOUT` seconds of
+    ///      a redemption signature being provided.
+    /// @param _txVersion Transaction version number (4-byte little-endian).
+    /// @param _txInputVector All transaction inputs prepended by the number of
+    ///        inputs encoded as a VarInt, max 0xFC(252) inputs.
+    /// @param _txOutputVector All transaction outputs prepended by the number
+    ///         of outputs encoded as a VarInt, max 0xFC(252) outputs.
+    /// @param _txLocktime Final 4 bytes of the transaction.
+    /// @param _merkleProof The merkle proof of transaction inclusion in a
+    ///        block.
+    /// @param _txIndexInBlock Transaction index in the block (0-indexed).
+    /// @param _bitcoinHeaders Single bytestring of 80-byte bitcoin headers,
+    ///        lowest height first.
+    function provideRedemptionProof(
+        bytes4 _txVersion,
+        bytes memory _txInputVector,
+        bytes memory _txOutputVector,
+        bytes4 _txLocktime,
+        bytes memory _merkleProof,
+        uint256 _txIndexInBlock,
+        bytes memory _bitcoinHeaders
+    ) public {
+        self.provideRedemptionProof(
+            _txVersion,
+            _txInputVector,
+            _txOutputVector,
+            _txLocktime,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
+    }
+
+//--------------------------- MUTATING HELPERS -------------------------------//
+
+    /// @notice This function can only be called by the deposit factory; use
+    ///         `DepositFactory.createDeposit` to create a new deposit.
+    /// @dev Initializes a new deposit clone with the base state for the
+    ///      deposit.
+    /// @param _tbtcSystem `TBTCSystem` contract. More info in `TBTCSystem`.
+    /// @param _tbtcToken `TBTCToken` contract. More info in TBTCToken`.
+    /// @param _tbtcDepositToken `TBTCDepositToken` (TDT) contract. More info in
+    ///        `TBTCDepositToken`.
+    /// @param _feeRebateToken `FeeRebateToken` (FRT) contract. More info in
+    ///        `FeeRebateToken`.
+    /// @param _vendingMachineAddress `VendingMachine` address. More info in
+    ///        `VendingMachine`.
+    /// @param _m Signing group honesty threshold.
+    /// @param _n Signing group size.
+    /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is
+    ///                         required to send. This is also the amount of
+    ///                         TBTC the TDT holder will be eligible to mint:
+    ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
+    function createNewDeposit(
+        ITBTCSystem _tbtcSystem,
+        TBTCToken _tbtcToken,
+        IERC721 _tbtcDepositToken,
+        FeeRebateToken _feeRebateToken,
+        address _vendingMachineAddress,
+        uint16 _m,
+        uint16 _n,
+        uint64 _lotSizeSatoshis
+    ) public onlyFactory payable {
+        self.tbtcSystem = _tbtcSystem;
+        self.tbtcToken = _tbtcToken;
+        self.tbtcDepositToken = _tbtcDepositToken;
+        self.feeRebateToken = _feeRebateToken;
+        self.vendingMachineAddress = _vendingMachineAddress;
+        self.createNewDeposit(_m, _n, _lotSizeSatoshis);
+    }
+
+    /// @notice This function can only be called by the vending machine.
+    /// @dev Performs the same action as requestRedemption, but transfers
+    ///      ownership of the deposit to the specified _finalRecipient. Used as
+    ///      a utility helper for the vending machine's shortcut
+    ///      TBTC->redemption path.
+    /// @param  _outputValueBytes The 8-byte little-endian output size.
+    /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
+    /// @param  _finalRecipient     The address to receive the TDT and later be recorded as deposit redeemer.
+    function transferAndRequestRedemption(
+        bytes8 _outputValueBytes,
+        bytes memory _redeemerOutputScript,
+        address payable _finalRecipient
+    ) public {
+        require(
+            msg.sender == self.vendingMachineAddress,
+            "Only the vending machine can call transferAndRequestRedemption"
+        );
+        self.transferAndRequestRedemption(
+            _outputValueBytes,
+            _redeemerOutputScript,
+            _finalRecipient
+        );
     }
 
     /// @notice Withdraw caller's allowance.
@@ -619,13 +627,4 @@ contract Deposit is DepositFactoryAuthority {
         self.withdrawFunds();
     }
 
-    /// @notice Get caller's ETH withdraw allowance.
-    /// @dev Generally ETH is only available to withdraw after the deposit
-    ///      reaches a closed state. The amount reported is for the sender, and
-    ///      can be withdrawn using `withdrawFunds` if the deposit is in an end
-    ///      state.
-    /// @return The withdraw allowance in wei.
-    function getWithdrawAllowance() public view returns (uint256) {
-        return self.getWithdrawAllowance();
-    }
 }
