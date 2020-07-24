@@ -67,6 +67,7 @@ module.exports = async function(deployer, network) {
   }
 
   // Create sorition pool for new TBTCSystem.
+  console.log(`Creating sortition pool for TBTCSystem: [${TBTCSystem.address}]`)
   const BondedECDSAKeepFactoryContract = truffleContract(
     BondedECDSAKeepFactoryJson,
   )
