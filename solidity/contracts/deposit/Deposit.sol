@@ -212,9 +212,9 @@ contract Deposit is DepositFactoryAuthority {
 
 //------------------------------ FUNDING FLOW --------------------------------//
 
-    /// @notice Anyone may notify the contract that signing group setup has
-    ///         timed out if retrieveSignerPubkey is not successfully called
-    ///         within the allotted time.
+    /// @notice Notify the contract that signing group setup has timed out if
+    ///         retrieveSignerPubkey is not successfully called within the
+    ///         allotted time.
     /// @dev This
     ///      RegisteredPubkey event with the two components. Reverts if the
     ///      deposit is not awaiting signer setup, if the generated public key
@@ -224,8 +224,8 @@ contract Deposit is DepositFactoryAuthority {
         self.notifySignerSetupFailed();
     }
 
-    /// @notice Anyone may notify the contract that the ECDSA keep has generated
-    ///         a public key so the deposit contract can pull it in.
+    /// @notice Notify the contract that the ECDSA keep has generated a public
+    ///         key so the deposit contract can pull it in.
     /// @dev Stores the pubkey as 2 bytestrings, X and Y. Emits a
     ///      RegisteredPubkey event with the two components. Reverts if the
     ///      deposit is not awaiting signer setup, if the generated public key
@@ -235,13 +235,12 @@ contract Deposit is DepositFactoryAuthority {
         self.retrieveSignerPubkey();
     }
 
-    /// @notice Anyone may notify the contract that the funding phase of the
-    ///         deposit has timed out if provideBTCFundingProof is not
-    ///         successfully called within the allotted time. Any sent BTC is
-    ///         left under control of the signer group, and the funder can
-    ///         use `requestFunderAbort` to request an at-signer-discretion
-    ///         return of any BTC sent to a deposit that has been notified of
-    ///         a funding timeout.
+    /// @notice Notify the contract that the funding phase of the deposit has
+    ///         timed out if `provideBTCFundingProof` is not successfully called
+    ///         within the allotted time. Any sent BTC is left under control of
+    ///         the signer group, and the funder can use `requestFunderAbort` to
+    ///         request an at-signer-discretion return of any BTC sent to a
+    ///         deposit that has been notified of a funding timeout.
     /// @dev This is considered a funder fault, and the funder's payment for
     ///      opening the deposit is not refunded. Emits a SetupFailed event.
     ///      Reverts if the funding timeout has not yet elapsed, or if the
@@ -353,8 +352,8 @@ contract Deposit is DepositFactoryAuthority {
         self.exitCourtesyCall();
     }
 
-    /// @notice Notifies the contract that the courtesy period has expired and
-    ///         the deposit should move into liquidation.
+    /// @notice Notify the contract that the courtesy period has expired and the
+    ///         deposit should move into liquidation.
     /// @dev This call will revert if the courtesy call period has not in fact
     ///      expired or is not in the courtesy call state. Courtesy call
     ///      expiration is treated as an abort, and is handled by seizing signer
@@ -409,9 +408,8 @@ contract Deposit is DepositFactoryAuthority {
         self.provideECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
     }
 
-    /// @notice Anyone may notify the contract that the signers have failed to
-    ///         produce a signature for a redemption request in the allotted
-    ///         time.
+    /// @notice Notify the contract that the signers have failed to produce a
+    ///         signature for a redemption request in the allotted time.
     /// @dev This is considered an abort, and is punished by seizing signer
     ///      bonds and putting them up for auction. Emits a LiquidationStarted
     ///      event and a Liquidated event and sends the full signer bond to the
@@ -423,8 +421,8 @@ contract Deposit is DepositFactoryAuthority {
         self.notifyRedemptionSignatureTimedOut();
     }
 
-    /// @notice Anyone may notify the contract that the deposit has failed to
-    ///         receive a redemption proof in the allotted time.
+    /// @notice Notify the contract that the deposit has failed to receive a
+    ///         redemption proof in the allotted time.
     /// @dev This call will revert if the deposit is not currently awaiting a
     ///      signature or if the allotted time has not yet elapsed. This is
     ///      considered an abort, and is punished by seizing signer bonds and
