@@ -1,3 +1,5 @@
+const truffleContract = require("@truffle/contract")
+
 const TBTCSystem = artifacts.require("TBTCSystem")
 
 const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
@@ -9,6 +11,8 @@ const TBTCToken = artifacts.require("TBTCToken")
 const TBTCDepositToken = artifacts.require("TBTCDepositToken")
 const FeeRebateToken = artifacts.require("FeeRebateToken")
 const VendingMachine = artifacts.require("VendingMachine")
+// Used for creating sortition pool.
+const BondedECDSAKeepFactoryJson = require("@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json")
 
 const {BondedECDSAKeepFactoryAddress, ETHBTCMedianizer} = require("./externals")
 
@@ -61,4 +65,22 @@ module.exports = async function(deployer, network) {
       ethBtcPriceFeedMock.address,
     )
   }
+
+  // Create sorition pool for new TBTCSystem.
+  const BondedECDSAKeepFactoryContract = truffleContract(
+    BondedECDSAKeepFactoryJson,
+  )
+  BondedECDSAKeepFactoryContract.setProvider(deployer.provider)
+
+  const BondedECDSAKeepFactory = await BondedECDSAKeepFactoryContract.at(
+    BondedECDSAKeepFactoryAddress,
+  )
+  await BondedECDSAKeepFactory.createSortitionPool(TBTCSystem.address, {
+    from: accounts[0],
+  })
+
+  const sortitionPoolContractAddress = await BondedECDSAKeepFactory.getSortitionPool.call(
+    TBTCSystem.address,
+  )
+  console.log(`sortition pool address: [${sortitionPoolContractAddress}]`)
 }
