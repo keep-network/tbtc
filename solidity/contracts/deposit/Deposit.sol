@@ -215,11 +215,13 @@ contract Deposit is DepositFactoryAuthority {
     /// @notice Notify the contract that signing group setup has timed out if
     ///         retrieveSignerPubkey is not successfully called within the
     ///         allotted time.
-    /// @dev This
-    ///      RegisteredPubkey event with the two components. Reverts if the
-    ///      deposit is not awaiting signer setup, if the generated public key
-    ///      is unset or has incorrect length, or if the public key has a 0
-    ///      X or Y value.
+    /// @dev This is considered a signer fault, and the signers' bonds are used
+    ///      to make the deposit setup fee available for withdrawal by the TDT
+    ///      holder as a refund. The remainder of the signers' bonds are
+    ///      returned to the bonding pool and the signers are released from any
+    ///      further responsibilities. Reverts if the deposit is not awaiting
+    ///      signer setup or if the signing group formation timeout has not
+    ///      elapsed.
     function notifySignerSetupFailed() public {
         self.notifySignerSetupFailed();
     }
