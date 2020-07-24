@@ -411,7 +411,7 @@ library DepositUtils {
         (bool ok,) = msg.sender.call.value(available)("");
         require(
             ok,
-            "Failed to send withdraw allowance to sender"
+            "Failed to send withdrawable amount to sender"
         );
     }
 

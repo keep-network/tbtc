@@ -28,8 +28,9 @@ import "../system/DepositFactoryAuthority.sol";
 ///       - `TBTCConstants`
 ///
 ///      Where these libraries require deposit state, this contract's state
-///      variable `self` is used, a struct of type `DepositUtils.Deposit` that
-///      contains all aspects of the deposit state itself.
+///      variable `self` is used. `self` is a struct of type
+///      `DepositUtils.Deposit` that contains all aspects of the deposit state
+///      itself.
 contract Deposit is DepositFactoryAuthority {
 
     using DepositRedemption for DepositUtils.Deposit;
