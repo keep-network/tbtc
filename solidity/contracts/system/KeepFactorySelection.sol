@@ -49,7 +49,7 @@ library KeepFactorySelection {
     function initialize(
         Storage storage _self,
         IBondedECDSAKeepFactory _defaultFactory
-    ) internal {
+    ) public {
         require(
             address(_self.keepStakeFactory) == address(0),
             "Already initialized"
@@ -87,6 +87,26 @@ library KeepFactorySelection {
         refreshFactory(_self);
 
         return factory;
+    }
+
+    /// @notice Sets the minimum bondable value required from the operator to
+    /// join the sortition pool for tBTC.
+    /// @param _minimumBondableValue The minimum unbonded value allowing
+    /// an operator to join and stay in the sortition pool for the application.
+    function setMinimumBondableValue(
+        Storage storage _self,
+        uint256 _minimumBondableValue
+    ) public {
+        if (address(_self.keepStakeFactory) != address(0)) {
+            _self.keepStakeFactory.setMinimumBondableValue(
+                _minimumBondableValue
+            );
+        }
+        if (address(_self.ethStakeFactory) != address(0)) {
+            _self.ethStakeFactory.setMinimumBondableValue(
+                _minimumBondableValue
+            );
+        }
     }
 
     /// @notice Refreshes the keep factory choice. If either ETH-stake factory

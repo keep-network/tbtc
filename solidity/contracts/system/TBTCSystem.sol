@@ -506,13 +506,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Caller must be a Deposit contract"
         );
 
-        uint256 price = priceFeed.getPrice();
-        if (price == 0 || price > 10 ** 18) {
-            // This is if a sat is worth 0 wei, or is worth >1 ether. Revert at
-            // once.
-            revert("System returned a bad price");
-        }
-        return price;
+        return _fetchBitcoinPrice();
     }
 
     // Difficulty Oracle
@@ -566,6 +560,24 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
     }
 
+    /// @notice Refreshes the minimum bondable value required from the operator
+    /// to join the sortition pool for tBTC. The minimum bondable value is
+    /// equal to the current minimum lot size collateralized 150% multiplied by
+    /// the current BTC price.
+    /// @dev It is recommended to call this function on tBTC initialization and
+    /// after minimum lot size update.
+    function refreshMinimumBondableValue() external {
+        uint256 minimimLotSizeSatoshis = lotSizesSatoshis[0];
+        uint256 bondRequirementSatoshis = minimimLotSizeSatoshis.mul(
+            initialCollateralizedPercent
+        ).div(100);
+        uint256 bondRequirementWei = _fetchBitcoinPrice().mul(
+            bondRequirementSatoshis
+        );
+
+        keepFactorySelection.setMinimumBondableValue(bondRequirementWei);
+    }
+
     /// @notice Returns the time delay used for governance actions except for
     ///         price feed additions.
     function getGovernanceTimeDelay() public pure returns (uint256) {
@@ -607,6 +619,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
         IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
         return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
+    }
+
+    function _fetchBitcoinPrice() internal view returns (uint256) {
+        uint256 price = priceFeed.getPrice();
+        if (price == 0 || price > 10 ** 18) {
+            // This is if a sat is worth 0 wei, or is worth >1 ether. Revert at
+            // once.
+            revert("System returned a bad price");
+        }
+        return price;
     }
 
     /// @notice Get the time remaining until the function parameter timer value can be updated.
