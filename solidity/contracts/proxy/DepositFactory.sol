@@ -67,9 +67,14 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     ///         currently the only way to create a new deposit.
     /// @dev Calls `Deposit.initializeDeposit` to initialize the instance. Mints
     ///      the TDT to the function caller. (See `TBTCDepositToken` for more
-    ///      info on TDTs).
-    /// @return True if successful, otherwise the new deposit's address.
-    function createDeposit (uint64 _lotSizeSatoshis) public payable returns(address) {
+    ///      info on TDTs). Reverts if new deposits are currently paused, if the
+    ///      specified lot size is not currently permitted, or if the selection
+    ///      of the signers fails for any reason. Also reverts if the bonds
+    ///      collateralizing the deposit would not be enough to cover a refund
+    ///      of the deposit creation fee, should the signer group fail to
+    ///      complete its setup process.
+    /// @return The address of the new deposit.
+    function createDeposit(uint64 _lotSizeSatoshis) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
 
         TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));
