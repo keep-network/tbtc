@@ -297,6 +297,24 @@ describe("TBTCSystem governance", async function() {
       },
     })
 
+    describe("when finalizing lot size update", async () => {
+      it("updates the minimum bondable value", async () => {
+        const lotSizes = [             
+          new BN(10 ** 8), // required
+          new BN(10 ** 6),
+          new BN(10 ** 9)
+        ]
+
+        await tbtcSystem.beginLotSizesUpdate(lotSizes)
+        const remainingTime = await tbtcSystem.getRemainingLotSizesUpdateTime()
+        await increaseTime(remainingTime.toNumber() + 1)
+        await tbtcSystem.finalizeLotSizesUpdate()
+
+        const minimum = await ecdsaKeepFactory.minimumBondableValue()
+        expect(minimum).to.eq.BN(new BN(10 ** 6))
+      })
+    })
+
     governanceTest({
       property: "collateralization thresholds",
       change: "CollateralizationThresholdsUpdate",

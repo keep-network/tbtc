@@ -377,6 +377,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         emit LotSizesUpdated(newLotSizesSatoshis);
         lotSizesChangeInitiated = 0;
         newLotSizesSatoshis.length = 0;
+
+        refreshMinimumBondableValue();
     }
 
     /// @notice Finish setting the system collateralization levels
@@ -566,7 +568,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// the current BTC price.
     /// @dev It is recommended to call this function on tBTC initialization and
     /// after minimum lot size update.
-    function refreshMinimumBondableValue() external {
+    function refreshMinimumBondableValue() public {
         uint256 minimimLotSizeSatoshis = lotSizesSatoshis[0];
         uint256 bondRequirementSatoshis = minimimLotSizeSatoshis.mul(
             initialCollateralizedPercent
@@ -574,7 +576,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 bondRequirementWei = _fetchBitcoinPrice().mul(
             bondRequirementSatoshis
         );
-
         keepFactorySelection.setMinimumBondableValue(bondRequirementWei);
     }
 

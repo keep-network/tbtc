@@ -6,6 +6,7 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
     address public keepOwner;
     address public keepAddress = address(888);
     uint256 public stakeLockDuration;
+    uint256 public minimumBondableValue = 999;
     uint256 feeEstimate = 123456;
 
     function openKeep(
@@ -37,5 +38,9 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
         address _application
     ) external view returns (uint256 poolWeight) {
         return 100000;
+    }
+
+    function setMinimumBondableValue(uint256 _minimumBondableValue) public {
+        minimumBondableValue = _minimumBondableValue;
     }
 }
