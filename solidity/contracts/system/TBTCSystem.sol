@@ -569,14 +569,24 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @dev It is recommended to call this function on tBTC initialization and
     /// after minimum lot size update.
     function refreshMinimumBondableValue() public {
-        uint256 minimimLotSizeSatoshis = lotSizesSatoshis[0];
-        uint256 bondRequirementSatoshis = minimimLotSizeSatoshis.mul(
+        uint256 bondRequirementSatoshis = getMinimumLotSizeSatoshi().mul(
             initialCollateralizedPercent
         ).div(100);
         uint256 bondRequirementWei = _fetchBitcoinPrice().mul(
             bondRequirementSatoshis
         );
         keepFactorySelection.setMinimumBondableValue(bondRequirementWei);
+    }
+
+    /// @notice Returns the minimum lot size in satoshi.
+    function getMinimumLotSizeSatoshi() public view returns (uint256) {
+        uint256 minimum = lotSizesSatoshis[0];
+        for (uint i = 1; i < lotSizesSatoshis.length; i++) {
+            if (lotSizesSatoshis[i] < minimum) {
+                minimum = lotSizesSatoshis[i];
+            }
+        }
+        return minimum;
     }
 
     /// @notice Returns the time delay used for governance actions except for
