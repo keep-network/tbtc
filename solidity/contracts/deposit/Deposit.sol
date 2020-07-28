@@ -208,7 +208,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      state.
     /// @return The withdraw allowance in wei.
     function withdrawableAmount() public view returns (uint256) {
-        return self.getWithdrawAllowance();
+        return self.getWithdrawableAmount();
     }
 
 //------------------------------ FUNDING FLOW --------------------------------//

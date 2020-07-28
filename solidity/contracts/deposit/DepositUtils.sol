@@ -417,7 +417,7 @@ library DepositUtils {
 
     /// @notice     Get the caller's withdraw allowance.
     /// @return     The caller's withdraw allowance in wei.
-    function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal view returns (uint256) {
+    function getWithdrawableAmount(DepositUtils.Deposit storage _d) internal view returns (uint256) {
         return _d.withdrawableAmounts[msg.sender];
     }
 
