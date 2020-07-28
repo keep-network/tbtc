@@ -630,7 +630,7 @@ contract Deposit is DepositFactoryAuthority {
         );
     }
 
-    /// @notice Withdraw caller's allowance.
+    /// @notice Withdraw the ETH balance of the deposit allotted to the caller.
     /// @dev Withdrawals can only happen when a contract is in an end-state.
     function withdrawFunds() public {
         self.withdrawFunds();
