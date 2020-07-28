@@ -88,7 +88,7 @@ contract Deposit is DepositFactoryAuthority {
     }
 
     /// @notice Check if the Deposit is in ACTIVE state.
-    /// @return True if state is ACTIVE, fale otherwise.
+    /// @return True if state is ACTIVE, false otherwise.
     function inActive() public view returns (bool) {
         return self.inActive();
     }
@@ -383,8 +383,6 @@ contract Deposit is DepositFactoryAuthority {
         self.notifyUndercollateralizedLiquidation();
     }
 
-    /// @notice Anyone can provide a signature that was not requested to prove
-    ///         fraud.
     /// @notice Anyone can provide a signature corresponding to the signers'
     ///         public key that was not requested to prove fraud. A redemption
     ///         request and a redemption fee increase are the only ways to
