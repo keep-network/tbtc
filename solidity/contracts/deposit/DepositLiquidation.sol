@@ -77,9 +77,9 @@ library DepositLiquidation {
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
 
-        // if we come from the redemption flow we shouldn't go to auction.
-        // Instead give the signer bonds to redeemer
-        if (_d.inRedemption()) {
+        // If we see fraud in the redemption flow, we shouldn't go to auction.
+        // Instead give the full signer bond directly to the redeemer.
+        if (_d.inRedemption() && _wasFraud) {
             _d.setLiquidated();
             _d.enableWithdrawal(redeemerAddress, seized);
             _d.logLiquidated();
@@ -127,32 +127,6 @@ library DepositLiquidation {
         startLiquidation(_d, true);
     }
 
-    /// @notice                 Search _txOutputVector for output paying the redeemer.
-    /// @dev                    Require that outputs checked are witness.
-    /// @param  _d              Deposit storage pointer.
-    /// @param _txOutputVector  All transaction outputs prepended by the number of outputs encoded as a VarInt, max 0xFC(252) outputs.
-    /// @return                 False if output paying redeemer was found, true otherwise.
-    function validateRedeemerNotPaid(
-        DepositUtils.Deposit storage _d,
-        bytes memory _txOutputVector
-    ) internal view returns (bool){
-        bytes memory _output;
-        uint256 _offset = 1;
-        uint256 _permittedFeeBumps = TBTCConstants.getPermittedFeeBumps();
-        uint256 _requiredOutputValue = _d.utxoSize().sub((_d.initialRedemptionFee.mul((_permittedFeeBumps.add(1)))));
-
-        uint8 _numOuts = uint8(_txOutputVector.slice(0, 1)[0]);
-        for (uint8 i = 0; i < _numOuts; i++) {
-            _output = _txOutputVector.slice(_offset, _txOutputVector.length.sub(_offset));
-            _offset = _offset.add(_output.determineOutputLength());
-
-            if (_output.extractValue() >= _requiredOutputValue &&
-                keccak256(_output.slice(8, 3).concat(_output.extractHash())) == keccak256(abi.encodePacked(_d.redeemerOutputScript))) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
     /// @dev        For interface, reading auctionValue will give a past value. the current is better.
@@ -164,17 +138,23 @@ library DepositLiquidation {
         _d.setLiquidated();
         _d.logLiquidated();
 
-        // send the TBTC to the TDT holder. If the TDT holder is the Vending Machine, burn it to maintain the peg.
-        address tdtHolder = _d.depositOwner();
+        // Send the TBTC to the redeemer if they exist, otherwise to the TDT
+        // holder. If the TDT holder is the Vending Machine, burn it to maintain
+        // the peg. This is because, if there is a redeemer set here, the TDT
+        // holder has already been made whole at redemption request time.
+        address tbtcRecipient = _d.redeemerAddress;
+        if (tbtcRecipient == address(0)) {
+            tbtcRecipient = _d.depositOwner();
+        }
         uint256 lotSizeTbtc = _d.lotSizeTbtc();
 
         require(_d.tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc, "Not enough TBTC to cover outstanding debt");
 
-        if(tdtHolder == _d.vendingMachineAddress){
+        if(tbtcRecipient == _d.vendingMachineAddress){
             _d.tbtcToken.burnFrom(msg.sender, lotSizeTbtc);  // burn minimal amount to cover size
         }
         else{
-            _d.tbtcToken.transferFrom(msg.sender, tdtHolder, lotSizeTbtc);
+            _d.tbtcToken.transferFrom(msg.sender, tbtcRecipient, lotSizeTbtc);
         }
 
         // Distribute funds to auction buyer

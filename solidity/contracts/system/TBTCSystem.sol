@@ -20,7 +20,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./KeepFactorySelection.sol";
 
-/// @title  TBTC System.
+/// @title TBTC System.
 /// @notice This contract acts as a central point for access control,
 ///         value governance, and price feed.
 /// @dev    Governable values should only affect new deposit creation.
@@ -44,7 +44,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _timestamp
     );
 
-
     event EthBtcPriceFeedAdded(address _priceFeed);
     event LotSizesUpdated(uint64[] _lotSizes);
     event AllowNewDepositsUpdated(bool _allowNewDeposits);
@@ -59,7 +58,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _ethBackedFactory
     );
 
-    bool _initialized = false;
+    uint256 initializedTimestamp = 0;
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
 
@@ -109,7 +108,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _tbtcToken         TBTCToken. More info in `TBTCToken`.
     /// @param _tbtcDepositToken  TBTCDepositToken (TDT). More info in `TBTCDepositToken`.
     /// @param _feeRebateToken    FeeRebateToken (FRT). More info in `FeeRebateToken`.
-    /// @param _vendingMachine    Vending Machine. More info in `VendingMachine`.
     /// @param _keepThreshold     Signing group honesty threshold.
     /// @param _keepSize          Signing group size.
     function initialize(
@@ -123,7 +121,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _keepThreshold,
         uint16 _keepSize
     ) external onlyOwner {
-        require(!_initialized, "already initialized");
+        require(initializedTimestamp == 0, "already initialized");
 
         keepFactorySelection.initialize(_defaultKeepFactory);
 
@@ -143,16 +141,33 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _keepSize
         );
         setTbtcDepositToken(_tbtcDepositToken);
-        _initialized = true;
+        initializedTimestamp = block.timestamp;
         allowNewDeposits = true;
     }
 
-    /// @notice gets whether new deposits are allowed.
-    function getAllowNewDeposits() external view returns (bool) { return allowNewDeposits; }
+    /// @notice Returns whether new deposits should be allowed.
+    /// @return True if new deposits should be allowed by the emergency pause button
+    function getAllowNewDeposits() external view returns (bool) {
+        return allowNewDeposits;
+    }
+
+    /// @notice Return the largest lot size currently enabled for deposits.
+    /// @return The largest lot size, in satoshis.
+    function getMaxLotSize() public view returns (uint256) {
+        uint256 max = 0;
+        for (uint i = 0; i<lotSizesSatoshis.length; i++) {
+            if (lotSizesSatoshis[i] > max) {
+                max = lotSizesSatoshis[i];
+            }
+        }
+        return max;
+    }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
-    function emergencyPauseNewDeposits() external onlyOwner returns (bool) {
+    function emergencyPauseNewDeposits() external onlyOwner {
         require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
+        uint256 sinceInit = block.timestamp - initializedTimestamp;
+        require(sinceInit < 180 days, "emergencyPauseNewDeposits can only be called within 180 days of initialization");
         pausedTimestamp = block.timestamp;
         allowNewDeposits = false;
         emit AllowNewDepositsUpdated(false);
@@ -198,7 +213,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Set the allowed deposit lot sizes.
     /// @dev    Lot size array should always contain 10**8 satoshis (1 BTC) and
     ///         cannot contain values less than 50000 satoshis (0.0005 BTC) or
-    ///         greater than 10**9 satoshis (10 BTC).
+    ///         greater than 10**10 satoshis (100 BTC).
     ///         This can be finalized by calling `finalizeLotSizesUpdate`
     ///         anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
@@ -212,15 +227,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             } else if (_lotSizes[i] < 50 * 10**3) {
                 // Failed the minimum requirement, break on out.
                 revert("Lot sizes less than 0.0005 BTC are not allowed");
-            } else if (_lotSizes[i] > 10 * 10**8) {
+            } else if (_lotSizes[i] > 10 * 10**9) {
                 // Failed the maximum requirement, break on out.
-                revert("Lot sizes greater than 10 BTC are not allowed");
+                revert("Lot sizes greater than 100 BTC are not allowed");
             }
         }
 
         require(hasSingleBitcoin, "Lot size array must always contain 1 BTC");
 
-        lotSizesSatoshis = _lotSizes;
         emit LotSizesUpdateStarted(_lotSizes, block.timestamp);
         newLotSizesSatoshis = _lotSizes;
         lotSizesChangeInitiated = block.timestamp;

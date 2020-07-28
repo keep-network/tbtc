@@ -20,7 +20,7 @@ library OutsourceDepositLogging {
     /// @dev                    This is the only event without an explicit timestamp.
     /// @param  _redeemer       The ethereum address of the redeemer.
     /// @param  _digest         The calculated sighash digest.
-    /// @param  _utxoSize       The size of the utxo in sat.
+    /// @param  _utxoValue       The size of the utxo in sat.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
     /// @param  _requestedFee   The redeemer or bump-system specified fee.
     /// @param  _outpoint       The 36 byte outpoint.
@@ -29,7 +29,7 @@ library OutsourceDepositLogging {
         DepositUtils.Deposit storage _d,
         address _redeemer,
         bytes32 _digest,
-        uint256 _utxoSize,
+        uint256 _utxoValue,
         bytes memory _redeemerOutputScript,
         uint256 _requestedFee,
         bytes memory _outpoint
@@ -38,7 +38,7 @@ library OutsourceDepositLogging {
         _logger.logRedemptionRequested(
             _redeemer,
             _digest,
-            _utxoSize,
+            _utxoValue,
             _redeemerOutputScript,
             _requestedFee,
             _outpoint
@@ -104,9 +104,9 @@ library OutsourceDepositLogging {
 
     /// @notice     Fires a Funded event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
-    function logFunded(DepositUtils.Deposit storage _d) external {
+    function logFunded(DepositUtils.Deposit storage _d, bytes32 _txid) external {
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
-        _logger.logFunded();
+        _logger.logFunded(_txid);
     }
 
     /// @notice     Fires a CourtesyCalled event.

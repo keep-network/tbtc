@@ -16,6 +16,7 @@ library TestTBTCConstants {
     uint256 public constant INCREASE_FEE_TIMER = 4 * 60 * 60;  // seconds
     uint256 public constant REDEMPTION_PROOF_TIMEOUT = 6 * 60 * 60;  // seconds
     uint256 public constant MINIMUM_REDEMPTION_FEE = 2000; // satoshi
+    uint256 public constant MINIMUM_UTXO_VALUE = 2000; // satoshi
 
     // Funding Flow
     uint256 public constant FUNDING_PROOF_TIMEOUT = 3 * 60 * 60; // seconds
@@ -24,7 +25,6 @@ library TestTBTCConstants {
     // Liquidation Flow
     uint256 public constant COURTESY_CALL_DURATION = 6 * 60 * 60; // seconds
     uint256 public constant AUCTION_DURATION = 24 * 60 * 60; // seconds
-    uint256 public constant PERMITTED_FEE_BUMPS = 5; // number of times the fee can be increased
 
     function getBeneficiaryRewardDivisor() public pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
     function getDepositTerm() public pure returns (uint256) { return DEPOSIT_TERM_LENGTH; }
@@ -35,11 +35,11 @@ library TestTBTCConstants {
     function getIncreaseFeeTimer() public pure returns (uint256) { return INCREASE_FEE_TIMER; }
     function getRedemptionProofTimeout() public pure returns (uint256) { return REDEMPTION_PROOF_TIMEOUT; }
     function getMinimumRedemptionFee() public pure returns (uint256) { return MINIMUM_REDEMPTION_FEE; }
+    function getMinimumUtxoValue() public pure returns (uint256) { return MINIMUM_UTXO_VALUE; }
 
     function getFundingTimeout() public pure returns (uint256) { return FUNDING_PROOF_TIMEOUT; }
     function getSigningGroupFormationTimeout() public pure returns (uint256) { return FORMATION_TIMEOUT; }
 
     function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
     function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
-    function getPermittedFeeBumps() public pure returns (uint256) {return PERMITTED_FEE_BUMPS; }
 }

@@ -18,6 +18,7 @@ const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 const MockRelay = contract.fromArtifact("MockRelay")
 const MockSatWeiPriceFeed = contract.fromArtifact("MockSatWeiPriceFeed")
 const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
+const KeepFactorySelectorStub = contract.fromArtifact("KeepFactorySelectorStub")
 const TBTCSystemStub = contract.fromArtifact("TBTCSystemStub")
 const TBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
 const FeeRebateToken = contract.fromArtifact("TestFeeRebateToken")
@@ -59,6 +60,7 @@ const TEST_DEPOSIT_DEPLOY = [
   {name: "BTCUtils", contract: BTCUtils},
   {name: "ValidateSPV", contract: ValidateSPV},
   {name: "CheckBitcoinSigs", contract: CheckBitcoinSigs},
+  {name: "ECDSAKeepFactoryStub", contract: ECDSAKeepFactoryStub},
   {
     name: "TBTCDepositToken",
     contract: TBTCDepositToken,
@@ -73,6 +75,11 @@ const TEST_DEPOSIT_DEPLOY = [
     name: "ECDSAKeepStub",
     contract: ECDSAKeepStub,
     constructorParams: ["VendingMachine", ""],
+  },
+  {
+    name: "KeepFactorySelectorStub",
+    contract: KeepFactorySelectorStub,
+    constructorParams: ["ECDSAKeepFactoryStub"],
   },
 ]
 
@@ -131,7 +138,8 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   await mockRelay.setPrevEpochDifficulty(1)
 
   const tbtcSystemStub = deployed.TBTCSystemStub
-  const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
+  const keepFactorySelectorStub = deployed.KeepFactorySelectorStub
+  const ecdsaKeepFactoryStub = deployed.ECDSAKeepFactoryStub
 
   const tbtcToken = await TestTBTCToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
@@ -196,6 +204,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     deployed,
     redemptionScript,
     fundingScript,
+    keepFactorySelectorStub
   }
 }
 

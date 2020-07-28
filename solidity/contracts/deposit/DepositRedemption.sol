@@ -33,8 +33,8 @@ library DepositRedemption {
     function distributeSignerFee(DepositUtils.Deposit storage _d) internal {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
 
-        _d.tbtcToken.approve(_d.keepAddress, _d.signerFee());
-        _keep.distributeERC20Reward(address(_d.tbtcToken), _d.signerFee());
+        _d.tbtcToken.approve(_d.keepAddress, _d.signerFeeTbtc());
+        _keep.distributeERC20Reward(address(_d.tbtcToken), _d.signerFeeTbtc());
     }
 
     /// @notice Approves digest for signing by a keep.
@@ -49,45 +49,34 @@ library DepositRedemption {
 
     /// @notice Handles TBTC requirements for redemption.
     /// @dev Burns or transfers depending on term and supply-peg impact.
-    function performRedemptionTBTCTransfers(DepositUtils.Deposit storage _d) internal {
+    ///      Once these transfers complete, the deposit balance should be
+    ///      sufficient to pay out signer fees once the redemption transaction
+    ///      is proven on the Bitcoin side.
+    function performRedemptionTbtcTransfers(DepositUtils.Deposit storage _d) internal {
         address tdtHolder = _d.depositOwner();
+        address frtHolder = _d.feeRebateTokenHolder();
         address vendingMachineAddress = _d.vendingMachineAddress;
 
-        uint256 tbtcLot = _d.lotSizeTbtc();
-        uint256 signerFee = _d.signerFee();
-        uint256 tbtcOwed = _d.getRedemptionTbtcRequirement(_d.redeemerAddress);
+        (
+            uint256 tbtcOwedToDeposit,
+            uint256 tbtcOwedToTdtHolder,
+            uint256 tbtcOwedToFrtHolder
+        ) = _d.calculateRedemptionTbtcAmounts(_d.redeemerAddress, false);
 
-        // if we owe 0 TBTC, msg.sender is TDT holder and FRT holder.
-        if(tbtcOwed == 0){
-            return;
-        }
-        // if we owe > 0 & < signerfee, msg.sender is TDT holder but not FRT holder.
-        if(tbtcOwed <= signerFee){
-            _d.tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
-            return;
-        }
-        // Redemmer always owes a full TBTC for at-term redemption.
-        if(tbtcOwed == tbtcLot){
-            // the TDT holder has exclusive redemption rights to a UXTO up until the deposit’s term.
-            // At that point, we open it up so anyone may redeem it.
-            // As compensation, the TDT holder is reimbursed in TBTC
-            // Vending Machine-owned TDTs have been used to mint TBTC,
-            // and we should always burn a full TBTC to redeem the deposit.
+        if(tbtcOwedToDeposit > 0){
             if(tdtHolder == vendingMachineAddress){
-                _d.tbtcToken.burnFrom(msg.sender, tbtcLot);
+                _d.tbtcToken.burnFrom(msg.sender, tbtcOwedToDeposit);
             }
-            // if signer fee is not escrowed, escrow and it here and send the rest to TDT holder
-            else if(_d.tbtcToken.balanceOf(address(this)) < signerFee){
-                _d.tbtcToken.transferFrom(msg.sender, address(this), signerFee);
-                _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot.sub(signerFee));
-            }
-            // tansfer a full TBTC to TDT holder if signerFee is escrowed
             else{
-                _d.tbtcToken.transferFrom(msg.sender, tdtHolder, tbtcLot);
+                _d.tbtcToken.transferFrom(msg.sender, address(this), tbtcOwedToDeposit);
             }
-            return;
         }
-        revert("tbtcOwed value must be 0, SignerFee, or a full TBTC");
+        if(tbtcOwedToTdtHolder > 0){
+            _d.tbtcToken.transfer(tdtHolder, tbtcOwedToTdtHolder);
+        }
+        if(tbtcOwedToFrtHolder > 0){
+            _d.tbtcToken.transfer(frtHolder, tbtcOwedToFrtHolder);
+        }
     }
 
     function _requestRedemption(
@@ -97,23 +86,29 @@ library DepositRedemption {
         address payable _redeemer
     ) internal {
         require(_d.inRedeemableState(), "Redemption only available from Active or Courtesy state");
-        require(_redeemerOutputScript.length > 0, "cannot send value to zero output script");
+        bytes memory _output = abi.encodePacked(_outputValueBytes, _redeemerOutputScript);
+        require(_output.extractHash().length > 0, "Output script must be a standard type");
 
         // set redeemerAddress early to enable direct access by other functions
         _d.redeemerAddress = _redeemer;
 
-        performRedemptionTBTCTransfers(_d);
+        performRedemptionTbtcTransfers(_d);
 
         // Convert the 8-byte LE ints to uint256
         uint256 _outputValue = abi.encodePacked(_outputValueBytes).reverseEndianness().bytesToUint();
-        uint256 _requestedFee = _d.utxoSize().sub(_outputValue);
+        uint256 _requestedFee = _d.utxoValue().sub(_outputValue);
+
         require(_requestedFee >= TBTCConstants.getMinimumRedemptionFee(), "Fee is too low");
+        require(
+            _requestedFee < _d.utxoValue() / 2,
+            "Initial fee cannot exceed half of the deposit's value"
+        );
 
         // Calculate the sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _outputValueBytes,
             _redeemerOutputScript);
 
@@ -130,7 +125,7 @@ library DepositRedemption {
         _d.logRedemptionRequested(
             _redeemer,
             _sighash,
-            _d.utxoSize(),
+            _d.utxoValue(),
             _redeemerOutputScript,
             _requestedFee,
             _d.utxoOutpoint);
@@ -219,22 +214,30 @@ library DepositRedemption {
     /// @param  _d                          Deposit storage pointer.
     /// @param  _previousOutputValueBytes   The previous output's value.
     /// @param  _newOutputValueBytes        The new output's value.
-    /// @return                             True if successful, False if prevented by timeout, otherwise revert.
     function increaseRedemptionFee(
         DepositUtils.Deposit storage _d,
         bytes8 _previousOutputValueBytes,
         bytes8 _newOutputValueBytes
-    ) public returns (bool) {
+    ) public {
         require(_d.inAwaitingWithdrawalProof(), "Fee increase only available after signature provided");
         require(block.timestamp >= _d.withdrawalRequestTime.add(TBTCConstants.getIncreaseFeeTimer()), "Fee increase not yet permitted");
 
         uint256 _newOutputValue = checkRelationshipToPrevious(_d, _previousOutputValueBytes, _newOutputValueBytes);
-        _d.latestRedemptionFee = _newOutputValue;
+
+        // If the fee bump shrinks the UTXO value below the minimum allowed
+        // value, clamp it to that minimum. Further fee bumps will be disallowed
+        // by checkRelationshipToPrevious.
+        if (_newOutputValue < TBTCConstants.getMinimumUtxoValue()) {
+            _newOutputValue = TBTCConstants.getMinimumUtxoValue();
+        }
+
+        _d.latestRedemptionFee = _d.utxoValue().sub(_newOutputValue);
+
         // Calculate the next sighash
         bytes32 _sighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _newOutputValueBytes,
             _d.redeemerOutputScript);
 
@@ -249,9 +252,9 @@ library DepositRedemption {
         _d.logRedemptionRequested(
             msg.sender,
             _sighash,
-            _d.utxoSize(),
+            _d.utxoValue(),
             _d.redeemerOutputScript,
-            _d.utxoSize().sub(_newOutputValue),
+            _d.latestRedemptionFee,
             _d.utxoOutpoint);
     }
 
@@ -270,7 +273,7 @@ library DepositRedemption {
         bytes32 _previousSighash = CheckBitcoinSigs.wpkhSpendSighash(
             _d.utxoOutpoint,
             _d.signerPKH(),
-            _d.utxoSizeBytes,
+            _d.utxoValueBytes,
             _previousOutputValueBytes,
             _d.redeemerOutputScript);
         require(
@@ -309,7 +312,7 @@ library DepositRedemption {
         _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
         _d.checkProofFromTxId(_txid, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
 
-        require((_d.utxoSize().sub(_fundingOutputValue)) <= _d.latestRedemptionFee, "Incorrect fee amount");
+        require((_d.utxoValue().sub(_fundingOutputValue)) <= _d.latestRedemptionFee, "Incorrect fee amount");
 
         // Transfer TBTC to signers and close the keep.
         distributeSignerFee(_d);
@@ -339,17 +342,19 @@ library DepositRedemption {
     ) public view returns (uint256) {
         require(_txInputVector.validateVin(), "invalid input vector provided");
         require(_txOutputVector.validateVout(), "invalid output vector provided");
-
         bytes memory _input = _txInputVector.slice(1, _txInputVector.length-1);
-        bytes memory _output = _txOutputVector.slice(1, _txOutputVector.length-1);
 
         require(
             keccak256(_input.extractOutpoint()) == keccak256(_d.utxoOutpoint),
             "Tx spends the wrong UTXO"
         );
+
+        bytes memory _output = _txOutputVector.slice(1, _txOutputVector.length-1);
+        bytes memory _expectedOutputScript = _d.redeemerOutputScript;
+        require(_output.length - 8 >= _d.redeemerOutputScript.length, "Output script is too short to extract the expected script");
         require(
-            keccak256(_output.slice(8, 3).concat(_output.extractHash())) == keccak256(abi.encodePacked(_d.redeemerOutputScript)),
-            "Tx sends value to wrong pubkeyhash"
+            keccak256(_output.slice(8, _expectedOutputScript.length)) == keccak256(_expectedOutputScript),
+            "Tx sends value to wrong output script"
         );
         return (uint256(_output.extractValue()));
     }

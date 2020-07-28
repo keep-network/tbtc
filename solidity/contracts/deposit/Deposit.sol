@@ -73,8 +73,8 @@ contract Deposit is DepositFactoryAuthority {
     ///             the tasks needed to maintain a decentralized and trustless
     ///             model for tBTC. It is a percentage of the lotSize (deposit size).
     /// @return     Fee amount in tBTC.
-    function signerFee() public view returns (uint256) {
-        return self.signerFee();
+    function signerFeeTbtc() public view returns (uint256) {
+        return self.signerFeeTbtc();
     }
 
     /// @notice     Get the deposit's BTC lot size in satoshi.
@@ -91,14 +91,30 @@ contract Deposit is DepositFactoryAuthority {
         return self.lotSizeTbtc();
     }
 
-    /// @notice     Get the size of the funding UTXO.
+    /// @notice     Get the value of the funding UTXO.
     /// @dev        This will only return 0 unless
     ///             the funding transaction has been confirmed on-chain.
     ///             See `provideBTCFundingProof` for more info on the funding proof.
-    /// @return     Uint256 UTXO size in satoshi.
+    /// @return     Uint256 UTXO value in satoshi.
     ///             0 if no funding proof has been provided.
-    function utxoSize() public view returns (uint256){
-        return self.utxoSize();
+    function utxoValue() public view returns (uint256){
+        return self.utxoValue();
+    }
+
+    /// @notice Returns information associated with the funding UXTO.
+    /// @dev This call will revert if the deposit is not in a state where the
+    ///      funding info should be valid. In particular, before funding proof
+    ///      is successfully submitted (i.e. in states START,
+    ///      AWAITING_SIGNER_SETUP, and AWAITING_BTC_FUNDING_PROOF), none of
+    ///      these values are set or valid.
+    /// @return A tuple of (uxtoValueBytes, fundedAt, uxtoOutpoint).
+    function fundingInfo() public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
+        require(
+            ! self.inFunding(),
+            "Deposit has not yet been funded and has no available funding info"
+        );
+
+        return (self.utxoValueBytes, self.fundedAt, self.utxoOutpoint);
     }
 
     // THIS IS THE INIT FUNCTION
@@ -114,7 +130,6 @@ contract Deposit is DepositFactoryAuthority {
     /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is required to send.
     ///                         This is also the amount of TBTC the TDT holder will receive:
     ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
-    /// @return             True if successful, otherwise revert.
     function createNewDeposit(
         ITBTCSystem _tbtcSystem,
         TBTCToken _tbtcToken,
@@ -124,14 +139,13 @@ contract Deposit is DepositFactoryAuthority {
         uint16 _m,
         uint16 _n,
         uint64 _lotSizeSatoshis
-    ) public onlyFactory payable returns (bool) {
+    ) public onlyFactory payable {
         self.tbtcSystem = _tbtcSystem;
         self.tbtcToken = _tbtcToken;
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
-        return true;
     }
 
     /// @notice                     Deposit owner (TDT holder) can request redemption.
@@ -141,13 +155,11 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev                        The redeemer specifies details about the Bitcoin redemption tx.
     /// @param  _outputValueBytes   The 8-byte Little Endian output size.
     /// @param  _redeemerOutputScript The redeemer's length-prefixed output script.
-    /// @return                     True if successful, otherwise revert.
     function requestRedemption(
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript
-    ) public returns (bool) {
+    ) public {
         self.requestRedemption(_outputValueBytes, _redeemerOutputScript);
-        return true;
     }
 
     /// @notice                     Deposit owner (TDT holder) can request redemption.
@@ -164,29 +176,34 @@ contract Deposit is DepositFactoryAuthority {
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript,
         address payable _finalRecipient
-    ) public returns (bool) {
+    ) public {
+        require(
+            msg.sender == self.vendingMachineAddress,
+            "Only the vending machine can call transferAndRequestRedemption"
+        );
         self.transferAndRequestRedemption(
             _outputValueBytes,
             _redeemerOutputScript,
             _finalRecipient
         );
-        return true;
     }
 
     /// @notice             Get TBTC amount required for redemption by a specified _redeemer.
     /// @dev                Will revert if redemption is not possible by _redeemer.
     /// @param _redeemer    The deposit redeemer.
     /// @return             The amount in TBTC needed to redeem the deposit.
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
-        return self.getRedemptionTbtcRequirement(_redeemer);
+    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
+        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, false);
+        return tbtcPayment;
     }
 
     /// @notice             Get TBTC amount required for redemption assuming _redeemer
     ///                     is this deposit's owner (TDT holder).
     /// @param _redeemer    The assumed owner of the deposit's TDT .
     /// @return             The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns(uint256){
-        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
+    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
+        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, true);
+        return tbtcPayment;
     }
 
     /// @notice     Anyone may provide a withdrawal signature if it was requested.
@@ -194,26 +211,23 @@ contract Deposit is DepositFactoryAuthority {
     /// @param  _v  Signature recovery value.
     /// @param  _r  Signature R value.
     /// @param  _s  Signature S value. Should be in the low half of secp256k1 curve's order.
-    /// @return     True if successful, False if prevented by timeout, otherwise revert.
     function provideRedemptionSignature(
         uint8 _v,
         bytes32 _r,
         bytes32 _s
-    ) public returns (bool) {
+    ) public {
         self.provideRedemptionSignature(_v, _r, _s);
-        return true;
     }
 
     /// @notice                             Anyone may notify the contract that a fee bump is needed.
     /// @dev                                This sends us back to AWAITING_WITHDRAWAL_SIGNATURE.
     /// @param  _previousOutputValueBytes   The previous output's value.
     /// @param  _newOutputValueBytes        The new output's value.
-    /// @return                             True if successful, False if prevented by timeout, otherwise revert.
     function increaseRedemptionFee(
         bytes8 _previousOutputValueBytes,
         bytes8 _newOutputValueBytes
-    ) public returns (bool) {
-        return self.increaseRedemptionFee(_previousOutputValueBytes, _newOutputValueBytes);
+    ) public {
+        self.increaseRedemptionFee(_previousOutputValueBytes, _newOutputValueBytes);
     }
 
     /// @notice                 Anyone may provide a withdrawal proof to prove redemption.
@@ -233,7 +247,7 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public returns (bool) {
+    ) public {
         self.provideRedemptionProof(
             _txVersion,
             _txInputVector,
@@ -243,23 +257,18 @@ contract Deposit is DepositFactoryAuthority {
             _txIndexInBlock,
             _bitcoinHeaders
         );
-        return true;
     }
 
     /// @notice     Anyone may notify the contract that the signers have failed to produce a signature.
     /// @dev        This is considered fraud, and is punished.
-    /// @return     True if successful, otherwise revert.
-    function notifySignatureTimeout() public returns (bool) {
+    function notifySignatureTimeout() public {
         self.notifySignatureTimeout();
-        return true;
     }
 
     /// @notice     Anyone may notify the contract that the signers have failed to produce a redemption proof.
     /// @dev        This is considered fraud, and is punished.
-    /// @return     True if successful, otherwise revert.
-    function notifyRedemptionProofTimeout() public returns (bool) {
+    function notifyRedemptionProofTimeout() public {
         self.notifyRedemptionProofTimeout();
-        return true;
     }
 
     //
@@ -267,26 +276,20 @@ contract Deposit is DepositFactoryAuthority {
     //
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
-    /// @return     True if successful, otherwise revert.
-    function notifySignerSetupFailure() public returns (bool) {
+    function notifySignerSetupFailure() public {
         self.notifySignerSetupFailure();
-        return true;
     }
 
     /// @notice             Poll the Keep contract to retrieve our pubkey.
     /// @dev                Store the pubkey as 2 bytestrings, X and Y.
-    /// @return             True if successful, otherwise revert.
-    function retrieveSignerPubkey() public returns (bool) {
+    function retrieveSignerPubkey() public {
         self.retrieveSignerPubkey();
-        return true;
     }
 
     /// @notice     Anyone may notify the contract that the funder has failed to send BTC.
     /// @dev        This is considered a funder fault, and we revoke their bond.
-    /// @return     True if successful, otherwise revert.
-    function notifyFundingTimeout() public returns (bool) {
+    function notifyFundingTimeout() public {
         self.notifyFundingTimeout();
-        return true;
     }
 
     /// @notice Requests a funder abort for a failed-funding deposit; that is,
@@ -324,9 +327,8 @@ contract Deposit is DepositFactoryAuthority {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public returns (bool) {
+    ) public {
         self.provideFundingECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
-        return true;
     }
 
     /// @notice                     Anyone may notify the deposit of a funding proof to activate the deposit.
@@ -340,7 +342,6 @@ contract Deposit is DepositFactoryAuthority {
     /// @param _merkleProof         The merkle proof of transaction inclusion in a block.
     /// @param _txIndexInBlock      Transaction index in the block (0-indexed).
     /// @param _bitcoinHeaders      Single bytestring of 80-byte bitcoin headers, lowest height first.
-    /// @return                     True if no errors are thrown.
     function provideBTCFundingProof(
         bytes4 _txVersion,
         bytes memory _txInputVector,
@@ -350,7 +351,7 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public returns (bool) {
+    ) public {
         self.provideBTCFundingProof(
             _txVersion,
             _txInputVector,
@@ -361,7 +362,6 @@ contract Deposit is DepositFactoryAuthority {
             _txIndexInBlock,
             _bitcoinHeaders
         );
-        return true;
     }
 
     //
@@ -375,16 +375,14 @@ contract Deposit is DepositFactoryAuthority {
     /// @param  _s              Signature S value.
     /// @param _signedDigest    The digest signed by the signature vrs tuple.
     /// @param _preimage        The sha256 preimage of the digest.
-    /// @return                 True if successful, otherwise revert.
     function provideECDSAFraudProof(
         uint8 _v,
         bytes32 _r,
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public returns (bool) {
+    ) public {
         self.provideECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
-        return true;
     }
 
     //
@@ -433,50 +431,38 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
     /// @dev        For interface, reading auctionValue will give a past value. the current is better.
-    /// @return     True if successful, revert otherwise.
-    function purchaseSignerBondsAtAuction() public returns (bool) {
+    function purchaseSignerBondsAtAuction() public {
         self.purchaseSignerBondsAtAuction();
-        return true;
     }
 
     /// @notice     Notify the contract that the signers are undercollateralized.
     /// @dev        Calls out to the system for oracle info.
-    /// @return     True if successful, otherwise revert.
-    function notifyCourtesyCall() public returns (bool) {
+    function notifyCourtesyCall() public {
         self.notifyCourtesyCall();
-        return true;
     }
 
     /// @notice     Goes from courtesy call to active.
     /// @dev        Only callable if collateral is sufficient and the deposit is not expiring.
-    /// @return     True if successful, otherwise revert.
-    function exitCourtesyCall() public returns (bool) {
+    function exitCourtesyCall() public {
         self.exitCourtesyCall();
-        return true;
     }
 
     /// @notice     Notify the contract that the signers are undercollateralized.
     /// @dev        Calls out to the system for oracle info.
-    /// @return     True if successful, otherwise revert.
-    function notifyUndercollateralizedLiquidation() public returns (bool) {
+    function notifyUndercollateralizedLiquidation() public {
         self.notifyUndercollateralizedLiquidation();
-        return true;
     }
 
     /// @notice     Notifies the contract that the courtesy period has elapsed.
     /// @dev        This is treated as an abort, rather than fraud.
-    /// @return     True if successful, otherwise revert.
-    function notifyCourtesyTimeout() public returns (bool) {
+    function notifyCourtesyTimeout() public {
         self.notifyCourtesyTimeout();
-        return true;
     }
 
     /// @notice     Withdraw caller's allowance.
     /// @dev        Withdrawals can only happen when a contract is in an end-state.
-    /// @return     True if successful, otherwise revert.
-    function withdrawFunds() public returns (bool) {
+    function withdrawFunds() public {
         self.withdrawFunds();
-        return true;
     }
 
     /// @notice     Get caller's withdraw allowance.

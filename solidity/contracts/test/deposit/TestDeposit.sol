@@ -21,14 +21,13 @@ contract TestDeposit is Deposit {
         uint16 _m,
         uint16 _n,
         uint64 _lotSizeSatoshis
-    ) public payable returns (bool) {
+    ) public payable {
         self.tbtcSystem = _tbtcSystem;
         self.tbtcToken = _tbtcToken;
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
         self.createNewDeposit(_m, _n, _lotSizeSatoshis);
-        return true;
     }
 
     function setExteriorAddresses(
@@ -49,7 +48,7 @@ contract TestDeposit is Deposit {
         setState(0);
         setLiquidationAndCourtesyInitated(0, 0);
         setRequestInfo(address(0), "", 0, 0, bytes32(0));
-        setUTXOInfo(bytes8(0), 0, "");
+        setFundingInfo(bytes8(0), 0, "");
 
         setKeepAddress(address(0));
         setSigningGroupRequestedAt(0);
@@ -117,6 +116,10 @@ contract TestDeposit is Deposit {
         self.keepAddress = _keepAddress;
     }
 
+    function setVendingMachineAddress(address _vendingMachineAddress) public {
+        self.vendingMachineAddress = _vendingMachineAddress;
+    }
+
     function setSigningGroupRequestedAt(uint256 _signingGroupRequestedAt) public {
         self.signingGroupRequestedAt = _signingGroupRequestedAt;
     }
@@ -160,11 +163,16 @@ contract TestDeposit is Deposit {
         self.latestRedemptionFee = _latestRedemptionFee;
     }
 
+    function getLatestRedemptionFee() public view returns (uint256) {
+        return self.latestRedemptionFee;
+    }
+
     function setRedeemerAddress(
         address payable _redeemerAddress
     ) public {
         self.redeemerAddress = _redeemerAddress;
     }
+
     function getRequestInfo() public view returns (address, bytes memory, uint256, uint256, bytes32) {
         return (
             self.redeemerAddress,
@@ -175,30 +183,22 @@ contract TestDeposit is Deposit {
         );
     }
 
-    function setUTXOInfo(
-        bytes8 _utxoSizeBytes,
+    function setFundingInfo(
+        bytes8 _utxoValueBytes,
         uint256 _fundedAt,
         bytes memory _utxoOutpoint
     ) public {
-        self.utxoSizeBytes = _utxoSizeBytes;
+        self.utxoValueBytes = _utxoValueBytes;
         self.fundedAt = _fundedAt;
         self.utxoOutpoint = _utxoOutpoint;
     }
 
-    function getUTXOInfo() public view returns (bytes8, uint256, bytes memory) {
-        return (self.utxoSizeBytes, self.fundedAt, self.utxoOutpoint);
+    function calculateRedemptionTbtcAmounts(address _redeemer) public view returns (uint256, uint256, uint256) {
+        return self.calculateRedemptionTbtcAmounts(_redeemer, false);
     }
 
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
-        return self.getRedemptionTbtcRequirement(_redeemer);
-    }
-
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
-        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
-    }
-
-    function performRedemptionTBTCTransfers() public {
-        self.performRedemptionTBTCTransfers();
+    function performRedemptionTbtcTransfers() public {
+        self.performRedemptionTbtcTransfers();
     }
 
     function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {
@@ -225,16 +225,12 @@ contract TestDeposit is Deposit {
         return self.redemptionTransactionChecks(_txInputVector, _txOutputVector);
     }
 
-    function validateRedeemerNotPaid(bytes memory _txOutputVector) public view returns (bool){
-        return self.validateRedeemerNotPaid(_txOutputVector);
-    }
-
-    function getWithdrawalRequestTime() public view returns(uint256){
+    function getWithdrawalRequestTime() public view returns (uint256){
         return self.withdrawalRequestTime;
     }
 
-    function pushFundsToKeepGroup(uint256 _ethValue) public returns (bool) {
-        return self.pushFundsToKeepGroup(_ethValue);
+    function pushFundsToKeepGroup(uint256 _ethValue) public {
+        self.pushFundsToKeepGroup(_ethValue);
     }
 
     function getAuctionBasePercentage() public view returns (uint256) {

@@ -78,6 +78,60 @@ describe("DepositLiquidation", async function() {
     await restoreSnapshot()
   })
 
+  describe("getCollateralizationPercentage", async () => {
+    const ETHprice = new BN(190)
+    const BTCPrice = new BN(7700)
+    const satwei = BTCPrice.div(ETHprice).mul(new BN(10000000000))
+
+    it("returns correct collatearlization value (> 100%)", async () => {
+      const lotSize = await testDeposit.lotSizeSatoshis.call()
+
+      await tbtcSystemStub.setOraclePrice(satwei)
+      // expect 200% collateralization by setting bond = 2 * lotValue
+      await ecdsaKeepStub.setBondAmount(satwei.mul(lotSize).mul(new BN(2)))
+
+      const collateralization = await testDeposit.getCollateralizationPercentage()
+
+      expect(collateralization).to.eq.BN(new BN(200))
+    })
+
+    it("returns correct collatearlization value (= 100%)", async () => {
+      const lotSize = await testDeposit.lotSizeSatoshis.call()
+
+      await tbtcSystemStub.setOraclePrice(satwei)
+      // expect 100% collateralization by setting bond = lotValue.
+      await ecdsaKeepStub.setBondAmount(satwei.mul(lotSize))
+
+      const collateralization = await testDeposit.getCollateralizationPercentage()
+
+      expect(collateralization).to.eq.BN(new BN(100))
+    })
+
+    it("returns correct collatearlization value (< 100%)", async () => {
+      const lotSize = await testDeposit.lotSizeSatoshis.call()
+
+      await tbtcSystemStub.setOraclePrice(satwei)
+      // send 1/5 of value, expect 20% collateralization.
+      await ecdsaKeepStub.setBondAmount(satwei.mul(lotSize).div(new BN(5)))
+
+      const collateralization = await testDeposit.getCollateralizationPercentage()
+
+      expect(collateralization).to.eq.BN(new BN(20))
+    })
+
+    it("returns correct collatearlization value (< 1%)", async () => {
+      const lotSize = await testDeposit.lotSizeSatoshis.call()
+
+      await tbtcSystemStub.setOraclePrice(satwei)
+      // set less than 1% of bond, expect to receive a 0% collateralization (no decimals)
+      await ecdsaKeepStub.setBondAmount(satwei.mul(lotSize).div(new BN(101)))
+
+      const collateralization = await testDeposit.getCollateralizationPercentage()
+
+      expect(collateralization).to.eq.BN(new BN(0))
+    })
+  })
+
   describe("purchaseSignerBondsAtAuction", async () => {
     let lotSize
     let buyer
@@ -146,7 +200,7 @@ describe("DepositLiquidation", async function() {
 
     it("distributes reward to FRT holder", async () => {
       // Make sure Deposit has enough to cover beneficiary reward
-      const beneficiaryReward = await testDeposit.signerFee.call()
+      const beneficiaryReward = await testDeposit.signerFeeTbtc.call()
       await tbtcToken.forceMint(testDeposit.address, beneficiaryReward)
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
@@ -338,7 +392,6 @@ describe("DepositLiquidation", async function() {
         .mul(lotValue)
         .div(new BN(100))
       await ecdsaKeepStub.setBondAmount(bondValue)
-
       await expectRevert(
         testDeposit.notifyCourtesyCall(),
         "Signers have sufficient collateral",
@@ -355,7 +408,7 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.setBondAmount(new BN("1000000000000000000000000", 10))
       await tbtcSystemStub.setOraclePrice(new BN("1", 10))
       await testDeposit.setState(states.COURTESY_CALL)
-      await testDeposit.setUTXOInfo(
+      await testDeposit.setFundingInfo(
         "0x" + "00".repeat(8),
         fundedTime,
         "0x" + "00".repeat(36),

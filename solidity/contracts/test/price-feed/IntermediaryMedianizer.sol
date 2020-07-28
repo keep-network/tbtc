@@ -1,7 +1,7 @@
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "../external/IMedianizer.sol";
+import "../../../contracts/external/IMedianizer.sol";
 
 /// @title IntermediaryMedianizer is an updatable intermediary between a real
 ///        medianizer and IMedianizer users.

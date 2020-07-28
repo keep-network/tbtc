@@ -33,20 +33,20 @@ _redemption transaction_ to the Bitcoin blockchain using that signature.
 === Deposit Terms and Redemption
 
 As noted in the section on <<deposits/economics.adoc#term,deposit terms>>, a
-deposit has a fixed term. After that term expires, the deposit becomes
-unlocked from the deposit owner, so that it can be redeemed by any account
-(including, notably, the deposit owner account). At this point, redemption
-costs exactly 1 TBTC, with no signer fee due. If the deposit has had the
+deposit has a fixed term. After that term expires, the deposit becomes unlocked
+from the deposit owner, so that it can be redeemed by any account (including,
+notably, the deposit owner account). At this point, redemption costs exactly the
+lot size of the deposit, with no signer fee due. If the deposit has had the
 signer fee <<minting/index.adoc#vending-machine,escrowed during TBTC
 minting>>, the signer fee is paid from escrow and the deposit owner is sent
-the full 1 TBTC. If the deposit has no escrowed fee, the owner is sent the 1
-TBTC used to redeem, less the signer fee, which is distributed to the
+the full lot size in TBTC. If the deposit has no escrowed fee, the owner is sent
+the TBTC used to redeem, less the signer fee, which is distributed to the
 signers.
 
 NOTE: For the deposit owner, at term, redemption is free if there are escrowed
 fees, or costs the signer fee if there are not. This is subtly different from
 pre-term redemption, where the deposit owner must pay the signer fee _even if
-there are escrowed fees_. The additional difference is to the Fee Rebate
+there are escrowed fees_. The additional difference is sent to the Fee Rebate
 Token holder, who is rebated the signer fee during pre-term redemptions, but
 not during at-term redemptions.
 
@@ -71,16 +71,16 @@ To request redemption, a requester makes a _redemption request_ transaction
 to the smart contract on the host chain. The _redemption request_ includes
 the following:
 
-1. A Bitcoin transaction fee amount
+1. A Bitcoin transaction fee amount.
   - must be >={min-redemption-btc-fee} ({min-redemption-btc-feerate})
-2. A public key hash (PKH) for BTC delivery
-  - the 20-byte hash160 of a public key belonging to the requester
-  - for security and privacy, this SHOULD be a new keypair
-3. The deposit's <<repayment-amount,Repayment Amount>> in TBTC
+2. A standard output script for BTC delivery (one of p2pkh, p2sh, p2wpkh, or
+   p2wsh), prefixed by the length of the script. For security and privacy, this
+   SHOULD be controlled by a new keypair.
+3. The deposit's <<repayment-amount,Repayment Amount>> in TBTC.
 
 Upon receipt of the _redemption request_, the smart contract escrows the
-repayment amount, which includes the signer fee, records the receipt of the
-request, and notifies the signers that a signature is required.
+repayment amount (which includes the signer fee, if due), records the receipt of
+the request, and notifies the signers that a signature is required.
 
 Once notified of the redemption request, the signers must wait for confirmation
 on the host chain. If they do not wait for confirmation, the redemption request
@@ -89,18 +89,21 @@ produced could be used to both redeem the BTC and submit a signer fraud proof.
 A fraud proof created this way would appear valid to the host chain smart
 contract because it no longer has a record of the redemption request.
 
+// TODO We could use an expanded section on output scripts here or in an
+// TODO appendix, similar to what was posted in the May 18 incident analysis.
+
 [[repayment-amount]]
 == Repayment Amount
 
 :pre-term-redemption-footnote: footnote:pre-term-redemption[Pre-term deposits \
 can only be redeemed by the TDT owner.]
 
-Conceptually, the repayment amount is the _Deposit_ size plus the signer fee
-of {signer-fee} ({signer-fee-basis-points} basis points). This ensures that
-the signers are paid upon providing a signature, that the owner can be
-compensated for the redeemed deposit (in at-term redemptions by parties other
-than the owner), and that the Fee Rebate Token holder can receive their fee
-rebate (in pre-term redemptions).
+Conceptually, the repayment amount is the deposit lot size plus the signer fee
+of {signer-fee} per 1 TBTC ({signer-fee-basis-points} basis points). This
+ensures that the signers are paid upon completing redemption, that the owner can
+be compensated for the redeemed deposit (in redemptions by parties other than
+the owner), and that the Fee Rebate Token holder can receive their fee rebase
+(in pre-term redemptions).
 
 After all the math shakes out, the repayment amount can vary depending on the
 redeeming party, the TDT holder, the FRT holder, and the deposit's term
@@ -117,7 +120,7 @@ in the smart contracts running on the tBTC host chain. This prevents a number
 of complex attacks on the tBTC system, as well as simplifying contract logic.
 The requester may specify only 2 aspects of the transaction: its fee and its
 destination. All other deposit-specific information (e.g. the outpoint and
-the UTXO size) is known to the deposit contract in advance.
+the UTXO value) is known to the deposit contract in advance.
 
 The _redemption transaction_ has 1 input (the deposit UTXO) and 1 output (the
 redemption output). It does not have change outputs, or additional inputs, as
@@ -132,7 +135,6 @@ simple to add a witness to the transaction and broadcast it. So while signers
 have a strong incentive to broadcast the transaction as early as possible,
 anyone may do so if the signers do not.
 
-
 == Redemption proof
 
 A _redemption proof_ is an <<appendix/spv/index.adoc#spv,SPV proof>> that a
@@ -141,11 +143,11 @@ request to redeem is confirmed, the deposit smart contract expects a
 _redemption proof_ within {redemption-proof-timeout}. To validate a
 _redemption proof_, the smart contract performs normal SPV proof
 verification, and additionally verifies that the recipient matches the
-requester's public key hash, and the value is greater than or equal `UTXO
-Size - highest allowed fee` (see <<Allowing for Bitcoin fee adjustment>> for
-more details).
+requester's specified output script, and the value is greater than or equal
+`UTXO Value - highest allowed fee` (see <<Allowing for Bitcoin fee adjustment>>
+for more details).
 
-Once redemption proof is confirmed, the signing fee is paid, the FRT holder
+Once redemption proof is confirmed, the signing fee is disbursed, the FRT holder
 receives their escrowed funds (if the deposit was redeemed pre-term), and the
 TDT holder receives the remainder of the repayment amount. As with the
 repayment amount, the amount each of the parties receives in case of a
@@ -158,15 +160,15 @@ B, and C.
 
 == Validating a signature
 
-After the redemption request is sufficiently confirmed,
-<<signing/index.adoc#signing,the signers MUST produce a signature>> on the
+After the redemption request is sufficiently confirmed on the host chain, the
+signers MUST <<signing/index.adoc#signing,produce a signature>> on the
 _redemption transaction_ signature hash as requested. They have
 {signature-timeout} in which to produce either a signature, or a <<Redemption
-proof, _redemption proof_>> before being subject to penalties. Upon
-submission of a valid signature a _redemption proof_ is still required, but
-the deadline is extended to {redemption-proof-timeout} in total.
+proof,_redemption proof_>> before being subject to penalties. Upon submission of
+a valid signature a _redemption proof_ is still required, but the deadline is
+extended to {redemption-proof-timeout} in total.
 
-As discussed <<Redemption Transaction Format, earlier>>, the host chain smart
+As discussed <<Redemption Transaction Format,earlier>>, the host chain smart
 contract managing the deposit has all information necessary to calculate the
 _redemption transaction_ signature hash. This includes the signers' threshold
 public key. Using the public key, the signature hash, and the redemption
@@ -179,7 +181,7 @@ redemption process.
 Because Bitcoin fees are determined by network congestion and other highly
 unpredictable factors, the requester may not select an appropriate fee. Signers
 are punished if no redemption proof is submitted *or* if they sign
-without explicit authorization. This could creates a no-win scenario for
+without explicit authorization. This could create a no-win scenario for
 signers, in which they could not get the requester's transaction confirmed in
 the current fee climate and would eventually be punished despite honest
 behavior. Unfortunately, we cannot rely on the requester to stay online or

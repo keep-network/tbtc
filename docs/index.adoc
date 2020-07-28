@@ -11,10 +11,12 @@ include::constants.adoc[]
 = tBTC: A Decentralized Redeemable BTC-backed ERC-20 Token
 
 ifndef::release[]
-.DRAFT
+.FINAL
 ****
-NOTE: This document is a rough draft. The contents may be inaccurate, not fully
-fleshed out, and are certainly not final.
+NOTE: This document should be accurate with respect to tBTC v1. Revisions and
+notations for inaccuracy and clarification are welcome and can be shared either
+in the https://chat.tbtc.network[tBTC Discord channel] or filed as issues on the
+https://github.com/keep-network/tbtc/issues[tBTC issue tracker].
 ****
 endif::[]
 
@@ -23,22 +25,44 @@ toc::[]
 [abstract]
 .Abstract
 --
+The tBTC system is a design for a decentralized, 1-to-1 redeemable token
+supply-pegged to BTC---in other words, a sidechain. The described design can be
+implemented on a smart-contract-enabled host chain that supports custom tokens
+and a subset of functionality needed to prove certain properties of Bitcoin
+transactions. This spec in particular assumes the host chain is Ethereum. The
+peg is implemented using an approach dubbed a bonded, multifederated peg, in
+which a randomly chosen subset of a larger network of signing nodes is chosen to
+back individual deposits requested by users wishing to mint TBTC tokens on the
+host chain. The chosen signers use a threshold ECDSA protocol to generate a
+Bitcoin wallet without any single signer having access to the corresponding
+private key, and bond an amount of the host chain's native token (ETH for
+Ethereum) that ensures their behavior in the system remains honest, at risk of
+losing their bond in case of dishonesty or undercollateralization. A smart
+contract on the host chain mediates the deposit's lifecycle, including opening
+deposits, collateralization, signer fraud, and redemption. Redemption allows for
+a deposit to have its held BTC withdrawn on the Bitcoin chain, and pays signers.
+Additional mechanisms are described to properly incentivize a fixed term for
+deposits to ensure signer compensation and to allow signer exit in case of
+impending undercollateralization.
 --
 
 == Overview
 
 == Conventions
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in https://tools.ietf.org/html/rfc2119[RFC 2119].
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
+interpreted as described in https://tools.ietf.org/html/rfc2119[RFC 2119].
 
 == A note on naming
 
 The system, in its entirety, is called "tBTC". In this document and throughout
 the project, the fungible Bitcoin-backed token is called "TBTC" to distinguish
-it from the rest of the project, and strongly suggest an eventual ticker.
+it from the rest of the project. This approach is also reflected in the Ethereum
+ERC-20 token contract.
 
-Further discussion can be found on
-https://github.com/keep-network/tbtc/issues/17[Github].
+Further discussion can be found in
+https://github.com/keep-network/tbtc/issues/17[the relevant Github issue].
 
 == Prior Work
 
@@ -249,6 +273,7 @@ The architecture is broken down into:
 * Signing
 * Wallet failure
 * Redemption
+* Governance
 
 include::deposits/index.adoc[leveloffset=+2]
 
@@ -265,5 +290,7 @@ include::signing/index.adoc[leveloffset=+2]
 include::failure/index.adoc[leveloffset=+2]
 
 include::redemption/index.adoc[leveloffset=+2]
+
+include::governance/index.adoc[leveloffset=+2]
 
 include::appendix/index.adoc[leveloffset=+2]

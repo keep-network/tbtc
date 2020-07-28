@@ -56,7 +56,7 @@ possibilities in between.
 | At-term       | A          | A          | B        | {tbtc-lot-size}
   | B:: {btc-lot-size}
     signers:: {signer-fee} (escrowed)
-    A:: {tbtc-lot-size-less-signer-fee}
+    A:: {tbtc-lot-size}
 | At-term       | A          | B          | C        | {tbtc-lot-size}
   | C:: {btc-lot-size}
     signers:: {signer-fee} (escrowed)
