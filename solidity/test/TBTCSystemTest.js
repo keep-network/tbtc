@@ -95,7 +95,7 @@ describe("TBTCSystem", async function() {
 
     it("reverts if caller does not match a valid TDT", async () => {
       await expectRevert(
-        tbtcSystem.requestNewKeep(1, maxSecuredLifetime, {
+        tbtcSystem.requestNewKeep(10 ** 8, maxSecuredLifetime, {
           value: openKeepFee,
           from: accounts[0],
         }),
@@ -105,7 +105,7 @@ describe("TBTCSystem", async function() {
 
     it("reverts if caller is the owner of a valid TDT", async () => {
       await expectRevert(
-        tbtcSystem.requestNewKeep(1, maxSecuredLifetime, {
+        tbtcSystem.requestNewKeep(10 ** 8, maxSecuredLifetime, {
           value: openKeepFee,
           from: tdtOwner,
         }),
