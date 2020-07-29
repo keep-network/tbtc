@@ -151,16 +151,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return allowNewDeposits;
     }
 
+    /// @notice Return the lowest lot size currently enabled for deposits.
+    /// @return The lowest lot size, in satoshis.
+    function getMinLotSize() public view returns (uint256) {
+        return lotSizesSatoshis[0];
+    }
+
     /// @notice Return the largest lot size currently enabled for deposits.
     /// @return The largest lot size, in satoshis.
     function getMaxLotSize() public view returns (uint256) {
-        uint256 max = 0;
-        for (uint i = 0; i<lotSizesSatoshis.length; i++) {
-            if (lotSizesSatoshis[i] > max) {
-                max = lotSizesSatoshis[i];
-            }
-        }
-        return max;
+        return lotSizesSatoshis[lotSizesSatoshis.length - 1];
     }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
@@ -213,7 +213,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Set the allowed deposit lot sizes.
     /// @dev    Lot size array should always contain 10**8 satoshis (1 BTC) and
     ///         cannot contain values less than 50000 satoshis (0.0005 BTC) or
-    ///         greater than 10**10 satoshis (100 BTC).
+    ///         greater than 10**10 satoshis (100 BTC). Lot size array must not
+    ///         have duplicates and it must be sorted.
     ///         This can be finalized by calling `finalizeLotSizesUpdate`
     ///         anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
@@ -230,6 +231,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             } else if (_lotSizes[i] > 10 * 10**9) {
                 // Failed the maximum requirement, break on out.
                 revert("Lot sizes greater than 100 BTC are not allowed");
+            } else if (i > 0 && _lotSizes[i] == _lotSizes[i-1]) {
+                revert("Lot size array must not have duplicates");
+            } else if (i > 0 && _lotSizes[i] < _lotSizes[i-1]) {
+                revert("Lot size array must be sorted");
             }
         }
 
@@ -569,24 +574,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @dev It is recommended to call this function on tBTC initialization and
     /// after minimum lot size update.
     function refreshMinimumBondableValue() public {
-        uint256 bondRequirementSatoshis = getMinimumLotSizeSatoshi().mul(
+        uint256 bondRequirementSatoshis = getMinLotSize().mul(
             initialCollateralizedPercent
         ).div(100);
         uint256 bondRequirementWei = _fetchBitcoinPrice().mul(
             bondRequirementSatoshis
         );
         keepFactorySelection.setMinimumBondableValue(bondRequirementWei);
-    }
-
-    /// @notice Returns the minimum lot size in satoshi.
-    function getMinimumLotSizeSatoshi() public view returns (uint256) {
-        uint256 minimum = lotSizesSatoshis[0];
-        for (uint i = 1; i < lotSizesSatoshis.length; i++) {
-            if (lotSizesSatoshis[i] < minimum) {
-                minimum = lotSizesSatoshis[i];
-            }
-        }
-        return minimum;
     }
 
     /// @notice Returns the time delay used for governance actions except for
