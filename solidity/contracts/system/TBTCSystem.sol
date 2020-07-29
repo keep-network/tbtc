@@ -613,19 +613,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return _keepFactory.openKeep.value(msg.value)(keepSize, keepThreshold, msg.sender, bond, _maxSecuredLifetime);
     }
 
-    /// @notice Calculates bond requirement in wei for the given lot size in
-    /// satoshis given the current BTCETH price.
-    /// @param _lotSizeSatoshis Lot size in satoshis.
-    /// @return Bond requirement in wei.
-    function calculateBondRequirementWei(
-        uint256 _lotSizeSatoshis
-    ) public view returns (uint256) {
-        uint256 bondRequirementSatoshis = _lotSizeSatoshis.mul(
-            initialCollateralizedPercent
-        ).div(100);
-        return _fetchBitcoinPrice().mul(bondRequirementSatoshis);
-    }
-
     /// @notice Check if a lot size is allowed.
     /// @param _lotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
@@ -636,6 +623,19 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             }
         }
         return false;
+    }
+
+    /// @notice Calculates bond requirement in wei for the given lot size in
+    /// satoshis given the current BTCETH price.
+    /// @param _lotSizeSatoshis Lot size in satoshis.
+    /// @return Bond requirement in wei.
+    function calculateBondRequirementWei(
+        uint256 _lotSizeSatoshis
+    ) internal view returns (uint256) {
+        uint256 bondRequirementSatoshis = _lotSizeSatoshis.mul(
+            initialCollateralizedPercent
+        ).div(100);
+        return _fetchBitcoinPrice().mul(bondRequirementSatoshis);
     }
 
     function _fetchBitcoinPrice() internal view returns (uint256) {
