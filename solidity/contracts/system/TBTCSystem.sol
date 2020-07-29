@@ -162,7 +162,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Return the largest lot size currently enabled for deposits.
     /// @return The largest lot size, in satoshis.
-    function getMaxLotSize() public view returns (uint256) {
+    function getMaximumLotSize() public view returns (uint256) {
         return lotSizesSatoshis[lotSizesSatoshis.length - 1];
     }
 
