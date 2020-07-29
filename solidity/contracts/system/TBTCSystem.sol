@@ -156,7 +156,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Return the lowest lot size currently enabled for deposits.
     /// @return The lowest lot size, in satoshis.
-    function getMinLotSize() public view returns (uint256) {
+    function getMinimumLotSize() public view returns (uint256) {
         return lotSizesSatoshis[0];
     }
 
@@ -566,7 +566,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// after minimum lot size update.
     function refreshMinimumBondableValue() public {
         keepFactorySelection.setMinimumBondableValue(
-            calculateBondRequirementWei(getMinLotSize())
+            calculateBondRequirementWei(getMinimumLotSize())
         );
     }
 
