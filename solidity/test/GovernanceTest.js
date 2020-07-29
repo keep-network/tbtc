@@ -288,13 +288,13 @@ describe("TBTCSystem governance", async function() {
           error: "Lot sizes greater than 100 BTC are not allowed",
         },
         "array is not sorted": {
-          parameters: [[10 ** 6, 10 ** 8, 10 **7]],
+          parameters: [[10 ** 6, 10 ** 8, 10 ** 7]],
           error: "Lot size array must be sorted",
         },
         "array has duplicate lots": {
           parameters: [[10 ** 6, 10 ** 7, 10 ** 7, 10 ** 8]],
           error: "Lot size array must not have duplicates",
-        }
+        },
       },
       verifyFinalizationEvents: (receipt, setLotSizes) => {
         expectEvent(receipt, "LotSizesUpdated", {_lotSizes: setLotSizes})
@@ -307,9 +307,9 @@ describe("TBTCSystem governance", async function() {
 
     describe("when finalizing lot size update", async () => {
       it("updates the minimum bondable value", async () => {
-        const lotSizes = [   
-          new BN(10 ** 5), 
-          new BN(10 ** 8) // required 
+        const lotSizes = [
+          new BN(10 ** 5),
+          new BN(10 ** 8), // required
         ]
 
         await ethBtcMedianizer.setValue(new BN(10 ** 11))
@@ -420,14 +420,14 @@ describe("TBTCSystem governance", async function() {
         keepFactorySelector.setFullyBackedMode()
         // Expect this to work normally, and update to the new factory for the
         // next call.
-        await tbtcSystem.requestNewKeep(5, 10, 0, 123, {
+        await tbtcSystem.requestNewKeep(0, 123, {
           from: mockDeposit,
           value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
         })
 
         // This should fail as the _ethBackedFactory is not a real contract
         // address, so dereferencing it will go boom.
-        await tbtcSystem.requestNewKeep(5, 10, 0, 123, {
+        await tbtcSystem.requestNewKeep(0, 123, {
           from: mockDeposit,
           value: await newKeepFactory.openKeepFeeEstimate.call(),
         })
@@ -658,11 +658,11 @@ describe("TBTCSystem governance", async function() {
 
   describe("when refreshing minimum bondable value", async () => {
     it("uses the most recent ETHBTC price", async () => {
-      const lotSizes = [  
+      const lotSizes = [
         new BN(10 ** 5),
-        new BN(10 ** 6),         
+        new BN(10 ** 6),
         new BN(10 ** 7),
-        new BN(10 ** 8), // required  
+        new BN(10 ** 8), // required
       ]
 
       await ethBtcMedianizer.setValue(new BN(10 ** 11))

@@ -67,6 +67,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     KeepFactorySelection.Storage keepFactorySelection;
 
+    uint16 public keepSize;
+    uint16 public keepThreshold;
+
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
     uint16 private signerFeeDivisor = 2000; // 1/2000 == 5bps == 0.05% == 0.0005
@@ -124,6 +127,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         require(initializedTimestamp == 0, "already initialized");
 
         keepFactorySelection.initialize(_defaultKeepFactory);
+        keepThreshold = _keepThreshold;
+        keepSize = _keepSize;
 
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
@@ -136,9 +141,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _tbtcToken,
             _tbtcDepositToken,
             _feeRebateToken,
-            address(_vendingMachine),
-            _keepThreshold,
-            _keepSize
+            address(_vendingMachine)
         );
         setTbtcDepositToken(_tbtcDepositToken);
         initializedTimestamp = block.timestamp;
@@ -607,13 +610,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Request a new keep opening.
-    /// @param _m Minimum number of honest keep members required to sign.
-    /// @param _n Number of members in the keep.
     /// @param _maxSecuredLifetime Duration of stake lock in seconds.
     /// @return Address of a new keep.
     function requestNewKeep(
-        uint256 _m,
-        uint256 _n,
         uint256 _bond,
         uint256 _maxSecuredLifetime
     )
@@ -623,7 +622,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
         IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
-        return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
+        return _keepFactory.openKeep.value(msg.value)(keepSize, keepThreshold, msg.sender, _bond, _maxSecuredLifetime);
     }
 
     function _fetchBitcoinPrice() internal view returns (uint256) {

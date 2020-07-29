@@ -82,8 +82,6 @@ describe("DepositFunding", async function() {
         tbtcDepositToken.address,
         ZERO_ADDRESS,
         ZERO_ADDRESS,
-        1, // m
-        1,
         fullBtc,
         {value: funderBondAmount},
       )
@@ -138,8 +136,6 @@ describe("DepositFunding", async function() {
           tbtcDepositToken.address,
           ZERO_ADDRESS,
           ZERO_ADDRESS,
-          1, // m
-          1,
           fullBtc,
         ),
         "Insufficient signer bonds to cover setup fee",
@@ -156,8 +152,6 @@ describe("DepositFunding", async function() {
           tbtcDepositToken.address,
           ZERO_ADDRESS,
           ZERO_ADDRESS,
-          1, // m
-          1,
           fullBtc,
         ),
         "Deposit setup already requested",
@@ -174,8 +168,6 @@ describe("DepositFunding", async function() {
           tbtcDepositToken.address,
           ZERO_ADDRESS,
           ZERO_ADDRESS,
-          1, // m
-          1,
           fullBtc,
         ),
         "New deposits aren't allowed.",

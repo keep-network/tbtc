@@ -46,12 +46,8 @@ library DepositFunding {
     /// @dev            If called directly, the transaction will revert since the call will be
     ///                 executed on an already set-up instance.
     /// @param _d       Deposit storage pointer.
-    /// @param _m       Signing group honesty threshold.
-    /// @param _n       Signing group size.
     function createNewDeposit(
         DepositUtils.Deposit storage _d,
-        uint16 _m,
-        uint16 _n,
         uint64 _lotSizeSatoshis
     ) public {
         require(_d.tbtcSystem.getAllowNewDeposits(), "New deposits aren't allowed.");
@@ -66,8 +62,6 @@ library DepositFunding {
 
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
-            _m,
-            _n,
             _bondRequirementWei,
             TBTCConstants.getDepositTerm()
         );

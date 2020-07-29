@@ -25,8 +25,6 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     TBTCToken public tbtcToken;
     FeeRebateToken public feeRebateToken;
     address public vendingMachineAddress;
-    uint16 public keepThreshold;
-    uint16 public keepSize;
 
     constructor(address _systemAddress)
         TBTCSystemAuthority(_systemAddress)
@@ -39,17 +37,13 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     /// @param _tbtcDepositToken      TBTC Deposit Token contract.
     /// @param _feeRebateToken        AFee Rebate Token contract.
     /// @param _vendingMachineAddress Address of the Vending Machine contract.
-    /// @param _keepThreshold         Minimum number of honest keep members.
-    /// @param _keepSize              Number of all members in a keep.
     function setExternalDependencies(
         address payable _masterDepositAddress,
         TBTCSystem _tbtcSystem,
         TBTCToken _tbtcToken,
         TBTCDepositToken _tbtcDepositToken,
         FeeRebateToken _feeRebateToken,
-        address _vendingMachineAddress,
-        uint16 _keepThreshold,
-        uint16 _keepSize
+        address _vendingMachineAddress
     ) public onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
         tbtcDepositToken = _tbtcDepositToken;
@@ -57,8 +51,6 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         tbtcToken = _tbtcToken;
         feeRebateToken = _feeRebateToken;
         vendingMachineAddress = _vendingMachineAddress;
-        keepThreshold = _keepThreshold;
-        keepSize = _keepSize;
     }
 
     event DepositCloneCreated(address depositCloneAddress);
@@ -82,8 +74,6 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
                 tbtcDepositToken,
                 feeRebateToken,
                 vendingMachineAddress,
-                keepThreshold,
-                keepSize,
                 _lotSizeSatoshis
             );
 

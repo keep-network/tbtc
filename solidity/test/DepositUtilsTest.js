@@ -62,8 +62,6 @@ describe("DepositUtils", async function() {
       tbtcDepositToken.address,
       feeRebateToken.address,
       ZERO_ADDRESS,
-      1, // m
-      1, // n
       fullBtc,
       {value: depositFee},
     )
@@ -350,8 +348,6 @@ describe("DepositUtils", async function() {
         tbtcDepositToken.address,
         feeRebateToken.address,
         ZERO_ADDRESS,
-        1, // m
-        1, // n
         fullBtc,
         {value: depositFee},
       )

@@ -125,8 +125,6 @@ contract Deposit is DepositFactoryAuthority {
     /// @param _tbtcDepositToken  `TBTCDepositToken` (TDT) contract. More info in `TBTCDepositToken`.
     /// @param _feeRebateToken    `FeeRebateToken` (FRT) contract. More info in `FeeRebateToken`.
     /// @param _vendingMachineAddress    `VendingMachine` address. More info in `VendingMachine`.
-    /// @param _m           Signing group honesty threshold.
-    /// @param _n           Signing group size.
     /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is required to send.
     ///                         This is also the amount of TBTC the TDT holder will receive:
     ///                         (10**7 satoshi == 0.1 BTC == 0.1 TBTC).
@@ -136,8 +134,6 @@ contract Deposit is DepositFactoryAuthority {
         IERC721 _tbtcDepositToken,
         FeeRebateToken _feeRebateToken,
         address _vendingMachineAddress,
-        uint16 _m,
-        uint16 _n,
         uint64 _lotSizeSatoshis
     ) public onlyFactory payable {
         self.tbtcSystem = _tbtcSystem;
@@ -145,7 +141,7 @@ contract Deposit is DepositFactoryAuthority {
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
-        self.createNewDeposit(_m, _n, _lotSizeSatoshis);
+        self.createNewDeposit(_lotSizeSatoshis);
     }
 
     /// @notice                     Deposit owner (TDT holder) can request redemption.
