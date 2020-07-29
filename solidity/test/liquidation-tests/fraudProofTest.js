@@ -39,7 +39,7 @@ describe("Integration -- fraud proof", async function () {
     expect(depositState).to.eq.BN(states.ACTIVE)
   })
 
-  it("reverts if not fraud according to keep", async () => {
+  it("starts liquidation if keep confirms fraud", async () => {
     await ecdsaKeepStub.setSuccess(true)
 
     await testDeposit.provideECDSAFraudProof(
@@ -60,7 +60,7 @@ describe("Integration -- fraud proof", async function () {
       testDeposit.purchaseSignerBondsAtAuction(),
       "Not enough TBTC to cover outstanding debt",
     )
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.FRAUD_LIQUIDATION_IN_PROGRESS)
   })
 
@@ -71,10 +71,10 @@ describe("Integration -- fraud proof", async function () {
     await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
     await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-    const allowance = await testDeposit.getWithdrawAllowance({ from: auctionBuyer })
+    const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
     await testDeposit.withdrawFunds({ from: auctionBuyer })
 
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     const endingBalance = await web3.eth.getBalance(testDeposit.address)
 
     expect(allowance).to.eq.BN(collateralAmount)

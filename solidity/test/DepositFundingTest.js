@@ -66,7 +66,7 @@ describe("DepositFunding", async function() {
     await restoreSnapshot()
   })
 
-  describe("createNewDeposit", async () => {
+  describe("initializeDeposit", async () => {
     it("runs and updates state and fires a created event", async () => {
       const expectedKeepAddress = ecdsaKeepStub.address
       const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
@@ -76,7 +76,7 @@ describe("DepositFunding", async function() {
 
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await testDeposit.createNewDeposit(
+      await testDeposit.initializeDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,
@@ -96,7 +96,7 @@ describe("DepositFunding", async function() {
       const signerFeeDivisor = await testDeposit.getSignerFeeDivisor.call()
       expect(signerFeeDivisor).to.eq.BN(systemSignerFeeDivisor)
 
-      const keepAddress = await testDeposit.getKeepAddress.call()
+      const keepAddress = await testDeposit.keepAddress.call()
       expect(keepAddress, "keepAddress not as expected").to.equal(
         expectedKeepAddress,
       )
@@ -130,7 +130,7 @@ describe("DepositFunding", async function() {
       await ecdsaKeepStub.setBondAmount(depositFee - 1)
 
       await expectRevert(
-        testDeposit.createNewDeposit.call(
+        testDeposit.initializeDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
           tbtcDepositToken.address,
@@ -146,7 +146,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.REDEEMED)
 
       await expectRevert(
-        testDeposit.createNewDeposit.call(
+        testDeposit.initializeDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
           tbtcDepositToken.address,
@@ -162,7 +162,7 @@ describe("DepositFunding", async function() {
       await tbtcSystemStub.emergencyPauseNewDeposits()
 
       await expectRevert(
-        testDeposit.createNewDeposit.call(
+        testDeposit.initializeDeposit.call(
           tbtcSystemStub.address,
           tbtcToken.address,
           tbtcDepositToken.address,
@@ -174,7 +174,7 @@ describe("DepositFunding", async function() {
       )
     })
   })
-  describe("notifySignerSetupFailure", async () => {
+  describe("notifySignerSetupFailed", async () => {
     let timer
     let owner
     let openKeepFee
@@ -222,11 +222,11 @@ describe("DepositFunding", async function() {
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
-      await testDeposit.notifySignerSetupFailure({from: owner})
+      await testDeposit.notifySignerSetupFailed({from: owner})
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
 
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
+      const withdrawable = await testDeposit.withdrawableAmount.call({
         from: owner,
       })
 
@@ -256,7 +256,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.START)
 
       await expectRevert(
-        testDeposit.notifySignerSetupFailure(),
+        testDeposit.notifySignerSetupFailed(),
         "Not awaiting setup",
       )
     })
@@ -265,7 +265,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setSigningGroupRequestedAt(fundingProofTimerStart * 5)
 
       await expectRevert(
-        testDeposit.notifySignerSetupFailure(),
+        testDeposit.notifySignerSetupFailed(),
         "Signing group formation timeout not yet elapsed",
       )
     })
@@ -341,7 +341,7 @@ describe("DepositFunding", async function() {
     })
   })
 
-  describe("notifyFundingTimeout", async () => {
+  describe("notifyFundingTimedOut", async () => {
     let timer
 
     before(async () => {
@@ -360,7 +360,7 @@ describe("DepositFunding", async function() {
     it("updates the state to failed setup, deconsts funding info, and logs SetupFailed", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await testDeposit.notifyFundingTimeout()
+      await testDeposit.notifyFundingTimedOut()
 
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.FAILED_SETUP)
@@ -376,7 +376,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.START)
 
       await expectRevert(
-        testDeposit.notifyFundingTimeout(),
+        testDeposit.notifyFundingTimedOut(),
         "Funding timeout has not started",
       )
     })
@@ -385,7 +385,7 @@ describe("DepositFunding", async function() {
       await testDeposit.setFundingProofTimerStart(fundingProofTimerStart * 5)
 
       await expectRevert(
-        testDeposit.notifyFundingTimeout(),
+        testDeposit.notifyFundingTimedOut(),
         "Funding timeout has not elapsed",
       )
     })
@@ -422,7 +422,7 @@ describe("DepositFunding", async function() {
 
     it("emits a FunderAbortRequested event", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
-      await testDeposit.notifyFundingTimeout()
+      await testDeposit.notifyFundingTimedOut()
 
       const outputScript = "0x012345"
       await testDeposit.requestFunderAbort(outputScript, {from: owner})

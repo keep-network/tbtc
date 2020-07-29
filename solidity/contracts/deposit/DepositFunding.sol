@@ -40,13 +40,14 @@ library DepositFunding {
         _d.signingGroupPubkeyY = bytes32(0);
     }
 
-    /// @notice         Internally called function to set up a newly created Deposit instance.
-    ///                 This should not be called by developers, use `DepositFactory.createNewDeposit`
-    ///                 to create a new deposit.
-    /// @dev            If called directly, the transaction will revert since the call will be
-    ///                 executed on an already set-up instance.
-    /// @param _d       Deposit storage pointer.
-    function createNewDeposit(
+    /// @notice Internally called function to set up a newly created Deposit
+    ///         instance. This should not be called by developers, use
+    ///         `DepositFactory.createDeposit` to create a new deposit.
+    /// @dev If called directly, the transaction will revert since the call will
+    ///      be executed on an already set-up instance.
+    /// @param _d Deposit storage pointer.
+    /// @param _lotSizeSatoshis Lot size in satoshis.
+    function initialize(
         DepositUtils.Deposit storage _d,
         uint64 _lotSizeSatoshis
     ) public {
@@ -77,7 +78,7 @@ library DepositFunding {
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
     /// @param  _d  Deposit storage pointer.
-    function notifySignerSetupFailure(DepositUtils.Deposit storage _d) public {
+    function notifySignerSetupFailed(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingSignerSetup(), "Not awaiting setup");
         require(
             block.timestamp > _d.signingGroupRequestedAt.add(TBTCConstants.getSigningGroupFormationTimeout()),
@@ -120,11 +121,14 @@ library DepositFunding {
             _d.signingGroupPubkeyY);
     }
 
-    /// @notice     Anyone may notify the contract that the funder has failed to send BTC.
-    /// @dev        This is considered a funder fault, and the funder's payment
-    ///             for opening the deposit is not refunded.
-    /// @param  _d  Deposit storage pointer.
-    function notifyFundingTimeout(DepositUtils.Deposit storage _d) public {
+    /// @notice Anyone may notify the contract that the funder has failed to
+    ///         prove that they have sent BTC in time.
+    /// @dev This is considered a funder fault, and the funder's payment for
+    ///      opening the deposit is not refunded. Reverts if the funding timeout
+    ///      has not yet elapsed, or if the deposit is not currently awaiting
+    ///      funding proof.
+    /// @param _d Deposit storage pointer.
+    function notifyFundingTimedOut(DepositUtils.Deposit storage _d) public {
         require(_d.inAwaitingBTCFundingProof(), "Funding timeout has not started");
         require(
             block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout()),

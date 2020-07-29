@@ -169,8 +169,8 @@ describe("DepositFactory", async function() {
 
       // deposit1 should be AWAITING_BTC_FUNDING_PROOF (2)
       // deposit2 should be ACTIVE (5)
-      const deposit1state = await deposit1.getCurrentState()
-      const deposit2state = await deposit2.getCurrentState()
+      const deposit1state = await deposit1.currentState()
+      const deposit2state = await deposit2.currentState()
 
       expect(
         deposit1state,
@@ -185,7 +185,7 @@ describe("DepositFactory", async function() {
       const keep = await ECDSAKeepStub.new()
 
       await tbtcDepositToken.forceMint(accounts[0], testDeposit.address)
-      await testDeposit.createNewDeposit(
+      await testDeposit.initializeDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,
@@ -202,7 +202,7 @@ describe("DepositFactory", async function() {
       await testDeposit.retrieveSignerPubkey()
 
       // master deposit should now be in AWAITING_BTC_FUNDING_PROOF
-      const masterState = await testDeposit.getCurrentState()
+      const masterState = await testDeposit.currentState()
 
       const blockNumber = await web3.eth.getBlockNumber()
 
@@ -216,7 +216,7 @@ describe("DepositFactory", async function() {
       const depositNew = await TestDeposit.at(cloneNew)
 
       // should be behind Master, at AWAITING_SIGNER_SETUP
-      const newCloneState = await depositNew.getCurrentState()
+      const newCloneState = await depositNew.currentState()
 
       expect(
         masterState,

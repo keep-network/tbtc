@@ -56,7 +56,7 @@ describe("DepositUtils", async function() {
     await ecdsaKeepStub.setBondAmount(depositFee)
     await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
 
-    await testDeposit.createNewDeposit(
+    await testDeposit.initializeDeposit(
       tbtcSystemStub.address,
       tbtcToken.address,
       tbtcDepositToken.address,
@@ -342,7 +342,7 @@ describe("DepositUtils", async function() {
       await ecdsaKeepStub.setBondAmount(depositFee)
       await tbtcSystemStub.setKeepAddress(ecdsaKeepStub.address)
 
-      await testDeposit.createNewDeposit(
+      await testDeposit.initializeDeposit(
         tbtcSystemStub.address,
         tbtcToken.address,
         tbtcDepositToken.address,
@@ -446,7 +446,7 @@ describe("DepositUtils", async function() {
     it("returns correct base percentage", async () => {
       const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
-      const initialCollateralization = await testDeposit.getInitialCollateralizedPercent()
+      const initialCollateralization = await testDeposit.initialCollateralizedPercent()
 
       // 10000 to avoid losing value to truncating in solidity.
       const expected = new BN(10000).div(initialCollateralization)
@@ -464,6 +464,8 @@ describe("DepositUtils", async function() {
     })
     beforeEach(async () => {
       await createSnapshot()
+
+      await testDeposit.setState(states.LIQUIDATION_IN_PROGRESS)
     })
 
     afterEach(async () => {
@@ -512,6 +514,23 @@ describe("DepositUtils", async function() {
 
       const value = await testDeposit.auctionValue.call()
       expect(value).to.eq.BN(auctionValue.mul(percentage).div(new BN(100)))
+    })
+
+    it("reverts if the deposit is not in a liquidation state", async () => {
+      // Previous tests ensure LIQUIDATION_IN_PROGRESS doesn't revert. Check
+      // fraud liquidation here.
+      await testDeposit.setState(states.FRAUD_LIQUIDATION_IN_PROGRESS)
+      await testDeposit.auctionValue.call()
+
+      // Check states on either side of liquidation.
+      for (const state of [states.ACTIVE, states.LIQUIDATED]) {
+        await testDeposit.setState(state)
+
+        expectRevert(
+          testDeposit.auctionValue.call(),
+          "Deposit has no funds currently at auction",
+        )
+      }
     })
   })
 
@@ -578,7 +597,26 @@ describe("DepositUtils", async function() {
   })
 
   describe("utxoValue()", async () => {
+    beforeEach(createSnapshot)
+    afterEach(restoreSnapshot)
+
+    it("reverts if the deposit is in a funding state", async () => {
+      for (const state of [
+        states.AWAITING_SIGNER_SETUP,
+        states.AWAITING_BTC_FUNDING_PROOF,
+      ]) {
+        await testDeposit.setState(state)
+
+        await expectRevert(
+          testDeposit.utxoValue.call(),
+          "Deposit has not yet been funded and has no available funding info",
+        )
+      }
+    })
+
     it("returns the state's utxoValueBytes as an integer", async () => {
+      await testDeposit.setState(states.ACTIVE)
+
       const utxoValue = await testDeposit.utxoValue.call()
       expect(utxoValue).to.eq.BN(0)
 
@@ -700,17 +738,17 @@ describe("DepositUtils", async function() {
       await restoreSnapshot()
     })
 
-    it("correctly adds value to withdrawalAllowances", async () => {
+    it("correctly adds value to withdrawableAmounts", async () => {
       const value = new BN(10000)
       const beneficiary = accounts[1]
 
-      const initialWithdrawable = await testDeposit.getWithdrawAllowance.call({
+      const initialWithdrawable = await testDeposit.withdrawableAmount.call({
         from: beneficiary,
       })
 
       await testDeposit.enableWithdrawal(accounts[1], value)
 
-      const finalWithdrawable = await testDeposit.getWithdrawAllowance.call({
+      const finalWithdrawable = await testDeposit.withdrawableAmount.call({
         from: beneficiary,
       })
 
@@ -748,7 +786,7 @@ describe("DepositUtils", async function() {
         const tx = await testDeposit.withdrawFunds({from: beneficiary})
         const finalBalance = await web3.eth.getBalance(beneficiary)
 
-        const withdrawable = await testDeposit.getWithdrawAllowance.call({
+        const withdrawable = await testDeposit.withdrawableAmount.call({
           from: beneficiary,
         })
         const gasPrice = await web3.eth.getGasPrice()

@@ -12,7 +12,7 @@ contract TestDeposit is Deposit {
     // solium-disable-previous-line no-empty-blocks
     }
 
-    function createNewDeposit(
+    function initializeDeposit(
         ITBTCSystem _tbtcSystem,
         TBTCToken _tbtcToken,
         IERC721 _tbtcDepositToken,
@@ -25,7 +25,7 @@ contract TestDeposit is Deposit {
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
-        self.createNewDeposit(_lotSizeSatoshis);
+        self.initialize(_lotSizeSatoshis);
     }
 
     function setExteriorAddresses(

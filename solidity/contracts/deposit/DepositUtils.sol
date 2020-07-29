@@ -67,7 +67,7 @@ library DepositUtils {
         bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
 
         /// @dev Map of ETH balances an address can withdraw after contract reaches ends-state.
-        mapping(address => uint256) withdrawalAllowances;
+        mapping(address => uint256) withdrawableAmounts;
 
         /// @dev Map of timestamps representing when transaction digests were approved for signing
         mapping (bytes32 => uint256) approvedDigests;
@@ -364,7 +364,6 @@ library DepositUtils {
         _d.initialRedemptionFee = 0;
         _d.withdrawalRequestTime = 0;
         _d.lastRequestedDigest = bytes32(0);
-        _d.redeemerAddress = address(0);
     }
 
 
@@ -393,33 +392,33 @@ library DepositUtils {
     /// @notice     Adds a given amount to the withdraw allowance for the address.
     /// @dev        Withdrawals can only happen when a contract is in an end-state.
     function enableWithdrawal(DepositUtils.Deposit storage _d, address _withdrawer, uint256 _amount) internal {
-        _d.withdrawalAllowances[_withdrawer] = _d.withdrawalAllowances[_withdrawer].add(_amount);
+        _d.withdrawableAmounts[_withdrawer] = _d.withdrawableAmounts[_withdrawer].add(_amount);
     }
 
     /// @notice     Withdraw caller's allowance.
     /// @dev        Withdrawals can only happen when a contract is in an end-state.
     function withdrawFunds(DepositUtils.Deposit storage _d) internal {
-        uint256 available = _d.withdrawalAllowances[msg.sender];
+        uint256 available = _d.withdrawableAmounts[msg.sender];
 
         require(_d.inEndState(), "Contract not yet terminated");
         require(available > 0, "Nothing to withdraw");
         require(address(this).balance >= available, "Insufficient contract balance");
 
         // zero-out to prevent reentrancy
-        _d.withdrawalAllowances[msg.sender] = 0;
+        _d.withdrawableAmounts[msg.sender] = 0;
 
         /* solium-disable-next-line security/no-call-value */
         (bool ok,) = msg.sender.call.value(available)("");
         require(
             ok,
-            "Failed to send withdrawal allowance to sender"
+            "Failed to send withdrawable amount to sender"
         );
     }
 
     /// @notice     Get the caller's withdraw allowance.
     /// @return     The caller's withdraw allowance in wei.
-    function getWithdrawAllowance(DepositUtils.Deposit storage _d) internal view returns (uint256) {
-        return _d.withdrawalAllowances[msg.sender];
+    function getWithdrawableAmount(DepositUtils.Deposit storage _d) internal view returns (uint256) {
+        return _d.withdrawableAmounts[msg.sender];
     }
 
     /// @notice     Distributes the fee rebate to the Fee Rebate Token owner.

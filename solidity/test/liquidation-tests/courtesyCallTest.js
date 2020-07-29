@@ -32,7 +32,7 @@ describe("Integration -- courtesy_call", async function () {
       testDeposit.notifyCourtesyCall(),
       "Signers have sufficient collateral",
     )
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.ACTIVE)
   })
 
@@ -41,16 +41,16 @@ describe("Integration -- courtesy_call", async function () {
     await mockSatWeiPriceFeed.setPrice(satwei.add(new BN(1)))
     await testDeposit.notifyCourtesyCall()
 
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.COURTESY_CALL)
   })
 
   it("unabse to liquidate if timer has not elapsed", async () => {
     await expectRevert(
-      testDeposit.notifyCourtesyTimeout(),
+      testDeposit.notifyCourtesyCallExpired(),
       "Courtesy period has not elapsed",
     )
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.COURTESY_CALL)
   })
 
@@ -58,7 +58,7 @@ describe("Integration -- courtesy_call", async function () {
     await mockSatWeiPriceFeed.setPrice(satwei)
     await testDeposit.exitCourtesyCall()
 
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.ACTIVE)
   })
 
@@ -68,7 +68,7 @@ describe("Integration -- courtesy_call", async function () {
       "Not currently in courtesy call",
     )
 
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.ACTIVE)
   })
 
@@ -76,7 +76,7 @@ describe("Integration -- courtesy_call", async function () {
     await mockSatWeiPriceFeed.setPrice(satwei.add(new BN(1)))
     await testDeposit.notifyCourtesyCall()
 
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.COURTESY_CALL)
   })
 
@@ -84,9 +84,9 @@ describe("Integration -- courtesy_call", async function () {
     timer = await tbtcConstants.getCourtesyCallTimeout.call()
     await increaseTime(timer.toNumber())
 
-    await testDeposit.notifyCourtesyTimeout({ from: liqInitiator })
+    await testDeposit.notifyCourtesyCallExpired({ from: liqInitiator })
     // not fraud and we did not come from redemption.
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
   })
 
@@ -97,7 +97,7 @@ describe("Integration -- courtesy_call", async function () {
       "Not currently in courtesy call",
     )
 
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
   })
 
@@ -107,7 +107,7 @@ describe("Integration -- courtesy_call", async function () {
       testDeposit.purchaseSignerBondsAtAuction(),
       "Not enough TBTC to cover outstanding debt",
     )
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
   })
 
@@ -118,10 +118,10 @@ describe("Integration -- courtesy_call", async function () {
     await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
     await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-    const allowance = await testDeposit.getWithdrawAllowance({ from: auctionBuyer })
+    const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
     await testDeposit.withdrawFunds({ from: auctionBuyer })
 
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     const endingBalance = await web3.eth.getBalance(testDeposit.address)
 
     expect(allowance).to.eq.BN(collateralAmount)
@@ -148,9 +148,9 @@ describe("Integration -- courtesy_call", async function () {
 
     timer = await tbtcConstants.getCourtesyCallTimeout.call()
     await increaseTime(timer.toNumber())
-    await testDeposit.notifyCourtesyTimeout({ from: liqInitiator })
+    await testDeposit.notifyCourtesyCallExpired({ from: liqInitiator })
     // not fraud and we did not come from redemption.
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
   })
 
@@ -162,10 +162,10 @@ describe("Integration -- courtesy_call", async function () {
     await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
     await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-    const allowance = await testDeposit.getWithdrawAllowance({ from: auctionBuyer })
+    const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
     await testDeposit.withdrawFunds({ from: auctionBuyer })
 
-    const depositState = await testDeposit.getCurrentState.call()
+    const depositState = await testDeposit.currentState.call()
     const endingBalance = await web3.eth.getBalance(testDeposit.address)
 
     expect(allowance).to.eq.BN(collateralAmount)
