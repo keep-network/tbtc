@@ -626,7 +626,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Calculates bond requirement in wei for the given lot size in
-    /// satoshis given the current BTCETH price.
+    /// satoshis based on the current ETHBTC price.
     /// @param _lotSizeSatoshis Lot size in satoshis.
     /// @return Bond requirement in wei.
     function calculateBondRequirementWei(
