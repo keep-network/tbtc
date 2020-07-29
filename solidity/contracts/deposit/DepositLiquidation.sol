@@ -47,7 +47,7 @@ library DepositLiquidation {
     /// @dev        Compares the bond value and lot value.
     /// @param _d   Deposit storage pointer.
     /// @return     Collateralization percentage as uint.
-    function getCollateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
+    function collateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
 
         // Determine value of the lot in wei
         uint256 _satoshiPrice = _d.fetchBitcoinPrice();
@@ -192,7 +192,7 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function notifyCourtesyCall(DepositUtils.Deposit storage _d) public  {
         require(_d.inActive(), "Can only courtesy call from active state");
-        require(getCollateralizationPercentage(_d) < _d.undercollateralizedThresholdPercent, "Signers have sufficient collateral");
+        require(collateralizationPercentage(_d) < _d.undercollateralizedThresholdPercent, "Signers have sufficient collateral");
         _d.courtesyCallInitiated = block.timestamp;
         _d.setCourtesyCall();
         _d.logCourtesyCalled();
@@ -203,7 +203,7 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function exitCourtesyCall(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not currently in courtesy call");
-        require(getCollateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
+        require(collateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
         _d.setActive();
         _d.logExitedCourtesyCall();
     }
@@ -213,14 +213,14 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
         require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
-        require(getCollateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
+        require(collateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
         startLiquidation(_d, false);
     }
 
     /// @notice     Notifies the contract that the courtesy period has elapsed.
     /// @dev        This is treated as an abort, rather than fraud.
     /// @param  _d  Deposit storage pointer.
-    function notifyCourtesyTimeout(DepositUtils.Deposit storage _d) public {
+    function notifyCourtesyCallExpired(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
         require(block.timestamp >= _d.courtesyCallInitiated.add(TBTCConstants.getCourtesyCallTimeout()), "Courtesy period has not elapsed");
         startLiquidation(_d, false);

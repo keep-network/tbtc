@@ -37,10 +37,10 @@ describe("Integration -- Redemption-proof timeout", async function () {
   describe("Redemption-proof timeout", async () => {
     it("unable to start liquidation if timer not elapsed", async () => {
       await expectRevert(
-        testDeposit.notifyRedemptionProofTimeout(),
+        testDeposit.notifyRedemptionProofTimedOut(),
         "Not currently awaiting a redemption proof",
       )
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
     })
 
@@ -52,9 +52,9 @@ describe("Integration -- Redemption-proof timeout", async function () {
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
 
-      await testDeposit.notifyRedemptionProofTimeout()
+      await testDeposit.notifyRedemptionProofTimedOut()
 
-      const depositState = await testDeposit.getState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
@@ -64,7 +64,7 @@ describe("Integration -- Redemption-proof timeout", async function () {
         testDeposit.purchaseSignerBondsAtAuction(),
         "Not enough TBTC to cover outstanding debt",
       )
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
@@ -85,10 +85,10 @@ describe("Integration -- Redemption-proof timeout", async function () {
         }
       )
 
-      const allowance = await testDeposit.getWithdrawAllowance({ from: auctionBuyer })
+      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
       await testDeposit.withdrawFunds({ from: auctionBuyer })
 
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       const endingBalance = await web3.eth.getBalance(testDeposit.address)
 
       expect(allowance).to.eq.BN(collateralAmount)

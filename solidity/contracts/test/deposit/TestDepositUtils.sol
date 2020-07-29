@@ -49,10 +49,6 @@ contract TestDepositUtils is TestDeposit {
         return self.signerPKH();
     }
 
-    function utxoValue() public view returns (uint256) {
-        return self.utxoValue();
-    }
-
     function fetchBitcoinPrice() public view returns (uint256) {
         return self.fetchBitcoinPrice();
     }

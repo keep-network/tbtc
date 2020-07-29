@@ -30,10 +30,10 @@ describe("Integration -- Signature-timeout", async function () {
 
     it("unable to start liquidation when timer has not elapsed", async () => {
       await expectRevert(
-        testDeposit.notifySignatureTimeout(),
+        testDeposit.notifyRedemptionSignatureTimedOut(),
         "Signature timer has not elapsed",
       )
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
     })
 
@@ -43,9 +43,9 @@ describe("Integration -- Signature-timeout", async function () {
       const timer = await tbtcConstants.getSignatureTimeout.call()
       await increaseTime(timer.toNumber() + 1)
 
-      await testDeposit.notifySignatureTimeout()
+      await testDeposit.notifyRedemptionSignatureTimedOut()
 
-      const depositState = await testDeposit.getState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
@@ -55,7 +55,7 @@ describe("Integration -- Signature-timeout", async function () {
         testDeposit.purchaseSignerBondsAtAuction(),
         "Not enough TBTC to cover outstanding debt",
       )
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
@@ -66,10 +66,10 @@ describe("Integration -- Signature-timeout", async function () {
       await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
       await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-      const allowance = await testDeposit.getWithdrawAllowance({ from: auctionBuyer })
+      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
       await testDeposit.withdrawFunds({ from: auctionBuyer })
 
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       const endingBalance = await web3.eth.getBalance(testDeposit.address)
 
       expect(allowance).to.eq.BN(collateralAmount)
@@ -118,7 +118,7 @@ describe("Integration -- Signature-timeout", async function () {
 
       const tdtOwner = await tbtcDepositToken.ownerOf(tdtId)
       await toAwaitingWithdrawalSignature(testDeposit)
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
 
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
       expect(tdtOwner).to.equal(depositInitiator)
@@ -127,7 +127,7 @@ describe("Integration -- Signature-timeout", async function () {
 
     it("unable to start liquidation when timer has not elapsed", async () => {
       await expectRevert(
-        testDeposit.notifySignatureTimeout(),
+        testDeposit.notifyRedemptionSignatureTimedOut(),
         "Signature timer has not elapsed",
       )
     })
@@ -138,9 +138,9 @@ describe("Integration -- Signature-timeout", async function () {
       const timer = await tbtcConstants.getSignatureTimeout.call()
       await increaseTime(timer.toNumber() + 1)
 
-      await testDeposit.notifySignatureTimeout()
+      await testDeposit.notifyRedemptionSignatureTimedOut()
 
-      const depositState = await testDeposit.getState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
@@ -150,7 +150,7 @@ describe("Integration -- Signature-timeout", async function () {
         testDeposit.purchaseSignerBondsAtAuction(),
         "Not enough TBTC to cover outstanding debt",
       )
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
@@ -161,10 +161,10 @@ describe("Integration -- Signature-timeout", async function () {
       await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
       await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-      const allowance = await testDeposit.getWithdrawAllowance({ from: auctionBuyer })
+      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
       await testDeposit.withdrawFunds({ from: auctionBuyer })
 
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       const endingBalance = await web3.eth.getBalance(testDeposit.address)
 
       expect(allowance).to.eq.BN(collateralAmount)
