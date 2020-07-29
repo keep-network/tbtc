@@ -27,7 +27,7 @@ contract TBTCSystemStub is TBTCSystem {
         keepAddress = _keepAddress;
     }
 
-    function requestNewKeep(uint256, uint256) external payable returns (address _keepAddress) {
+    function requestNewKeep(uint64, uint256) external payable returns (address _keepAddress) {
         return keepAddress;
     }
 }

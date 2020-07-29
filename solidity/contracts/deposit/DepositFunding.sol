@@ -52,17 +52,14 @@ library DepositFunding {
     ) public {
         require(_d.tbtcSystem.getAllowNewDeposits(), "New deposits aren't allowed.");
         require(_d.inStart(), "Deposit setup already requested");
-        require(_d.tbtcSystem.isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
 
         _d.lotSizeSatoshis = _lotSizeSatoshis;
-        uint256 _bondRequirementSatoshi = _lotSizeSatoshis.mul(_d.tbtcSystem.getInitialCollateralizedPercent()).div(100);
-        uint256 _bondRequirementWei = _d.fetchBitcoinPrice().mul(_bondRequirementSatoshi);
 
         _d.keepSetupFee = _d.tbtcSystem.getNewDepositFeeEstimate();
 
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
-            _bondRequirementWei,
+            _lotSizeSatoshis,
             TBTCConstants.getDepositTerm()
         );
 

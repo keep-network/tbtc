@@ -420,14 +420,14 @@ describe("TBTCSystem governance", async function() {
         keepFactorySelector.setFullyBackedMode()
         // Expect this to work normally, and update to the new factory for the
         // next call.
-        await tbtcSystem.requestNewKeep(0, 123, {
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
           from: mockDeposit,
           value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
         })
 
         // This should fail as the _ethBackedFactory is not a real contract
         // address, so dereferencing it will go boom.
-        await tbtcSystem.requestNewKeep(0, 123, {
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
           from: mockDeposit,
           value: await newKeepFactory.openKeepFeeEstimate.call(),
         })
