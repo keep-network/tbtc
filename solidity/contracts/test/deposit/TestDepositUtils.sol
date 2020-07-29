@@ -38,7 +38,7 @@ contract TestDepositUtils is TestDeposit {
     }
 
     function signerFee() public view returns (uint256) {
-        return self.signerFee();
+        return self.signerFeeTbtc();
     }
 
     function signerPubkey() public view returns (bytes memory) {
@@ -47,10 +47,6 @@ contract TestDepositUtils is TestDeposit {
 
     function signerPKH() public view returns (bytes20) {
         return self.signerPKH();
-    }
-
-    function utxoValue() public view returns (uint256) {
-        return self.utxoValue();
     }
 
     function fetchBitcoinPrice() public view returns (uint256) {

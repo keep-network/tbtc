@@ -12,7 +12,7 @@ contract TestDeposit is Deposit {
     // solium-disable-previous-line no-empty-blocks
     }
 
-    function createNewDeposit(
+    function initializeDeposit(
         ITBTCSystem _tbtcSystem,
         TBTCToken _tbtcToken,
         IERC721 _tbtcDepositToken,
@@ -27,7 +27,7 @@ contract TestDeposit is Deposit {
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
-        self.createNewDeposit(_m, _n, _lotSizeSatoshis);
+        self.initialize(_m, _n, _lotSizeSatoshis);
     }
 
     function setExteriorAddresses(
@@ -163,7 +163,7 @@ contract TestDeposit is Deposit {
         self.latestRedemptionFee = _latestRedemptionFee;
     }
 
-    function getLatestRedemptionFee() public returns (uint256) {
+    function getLatestRedemptionFee() public view returns (uint256) {
         return self.latestRedemptionFee;
     }
 
@@ -172,6 +172,7 @@ contract TestDeposit is Deposit {
     ) public {
         self.redeemerAddress = _redeemerAddress;
     }
+
     function getRequestInfo() public view returns (address, bytes memory, uint256, uint256, bytes32) {
         return (
             self.redeemerAddress,
@@ -192,16 +193,12 @@ contract TestDeposit is Deposit {
         self.utxoOutpoint = _utxoOutpoint;
     }
 
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
-        return self.getRedemptionTbtcRequirement(_redeemer);
+    function calculateRedemptionTbtcAmounts(address _redeemer) public view returns (uint256, uint256, uint256) {
+        return self.calculateRedemptionTbtcAmounts(_redeemer, false);
     }
 
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256) {
-        return self.getOwnerRedemptionTbtcRequirement(_redeemer);
-    }
-
-    function performRedemptionTBTCTransfers() public {
-        self.performRedemptionTBTCTransfers();
+    function performRedemptionTbtcTransfers() public {
+        self.performRedemptionTbtcTransfers();
     }
 
     function setDigestApprovedAtTime(bytes32 _digest, uint256 _timestamp) public {

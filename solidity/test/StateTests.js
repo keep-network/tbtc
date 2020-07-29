@@ -49,4 +49,16 @@ describe("tBTC states", () => {
       "liquidationInProgress",
     )
   })
+  describe("aborted redemption", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "awaitingWithdrawalSignature",
+      "liquidationInProgress",
+    )
+  })
 })
