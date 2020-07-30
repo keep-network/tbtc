@@ -67,6 +67,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     KeepFactorySelection.Storage keepFactorySelection;
 
+    uint16 public keepSize;
+    uint16 public keepThreshold;
+
     // Parameters governed by the TBTCSystem owner
     bool private allowNewDeposits = false;
     uint16 private signerFeeDivisor = 2000; // 1/2000 == 5bps == 0.05% == 0.0005
@@ -124,6 +127,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         require(initializedTimestamp == 0, "already initialized");
 
         keepFactorySelection.initialize(_defaultKeepFactory);
+        keepThreshold = _keepThreshold;
+        keepSize = _keepSize;
 
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
@@ -136,9 +141,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _tbtcToken,
             _tbtcDepositToken,
             _feeRebateToken,
-            address(_vendingMachine),
-            _keepThreshold,
-            _keepSize
+            address(_vendingMachine)
         );
         setTbtcDepositToken(_tbtcDepositToken);
         initializedTimestamp = block.timestamp;
@@ -151,16 +154,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return allowNewDeposits;
     }
 
+    /// @notice Return the lowest lot size currently enabled for deposits.
+    /// @return The lowest lot size, in satoshis.
+    function getMinimumLotSize() public view returns (uint256) {
+        return lotSizesSatoshis[0];
+    }
+
     /// @notice Return the largest lot size currently enabled for deposits.
     /// @return The largest lot size, in satoshis.
-    function getMaxLotSize() public view returns (uint256) {
-        uint256 max = 0;
-        for (uint i = 0; i<lotSizesSatoshis.length; i++) {
-            if (lotSizesSatoshis[i] > max) {
-                max = lotSizesSatoshis[i];
-            }
-        }
-        return max;
+    function getMaximumLotSize() public view returns (uint256) {
+        return lotSizesSatoshis[lotSizesSatoshis.length - 1];
     }
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
@@ -213,7 +216,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Set the allowed deposit lot sizes.
     /// @dev    Lot size array should always contain 10**8 satoshis (1 BTC) and
     ///         cannot contain values less than 50000 satoshis (0.0005 BTC) or
-    ///         greater than 10**10 satoshis (100 BTC).
+    ///         greater than 10**10 satoshis (100 BTC). Lot size array must not
+    ///         have duplicates and it must be sorted.
     ///         This can be finalized by calling `finalizeLotSizesUpdate`
     ///         anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
@@ -230,6 +234,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             } else if (_lotSizes[i] > 10 * 10**9) {
                 // Failed the maximum requirement, break on out.
                 revert("Lot sizes greater than 100 BTC are not allowed");
+            } else if (i > 0 && _lotSizes[i] == _lotSizes[i-1]) {
+                revert("Lot size array must not have duplicates");
+            } else if (i > 0 && _lotSizes[i] < _lotSizes[i-1]) {
+                revert("Lot size array must be sorted");
             }
         }
 
@@ -377,6 +385,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         emit LotSizesUpdated(newLotSizesSatoshis);
         lotSizesChangeInitiated = 0;
         newLotSizesSatoshis.length = 0;
+
+        refreshMinimumBondableValue();
     }
 
     /// @notice Finish setting the system collateralization levels
@@ -468,18 +478,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return lotSizesSatoshis;
     }
 
-    /// @notice Check if a lot size is allowed.
-    /// @param _lotSizeSatoshis Lot size to check.
-    /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint64 _lotSizeSatoshis) external view returns (bool){
-        for( uint i = 0; i < lotSizesSatoshis.length; i++){
-            if (lotSizesSatoshis[i] == _lotSizeSatoshis){
-                return true;
-            }
-        }
-        return false;
-    }
-
     /// @notice Get the system undercollateralization level for new deposits
     function getUndercollateralizedThresholdPercent() external view returns (uint16) {
         return undercollateralizedThresholdPercent;
@@ -506,13 +504,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Caller must be a Deposit contract"
         );
 
-        uint256 price = priceFeed.getPrice();
-        if (price == 0 || price > 10 ** 18) {
-            // This is if a sat is worth 0 wei, or is worth >1 ether. Revert at
-            // once.
-            revert("System returned a bad price");
-        }
-        return price;
+        return _fetchBitcoinPrice();
     }
 
     // Difficulty Oracle
@@ -566,6 +558,20 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
     }
 
+    /// @notice Refreshes the minimum bondable value required from the operator
+    /// to join the sortition pool for tBTC. The minimum bondable value is
+    /// equal to the current minimum lot size collateralized 150% multiplied by
+    /// the current BTC price.
+    /// @dev It is recommended to call this function on tBTC initialization and
+    /// after minimum lot size update.
+    function refreshMinimumBondableValue() public {
+        keepFactorySelection.setMinimumBondableValue(
+            calculateBondRequirementWei(getMinimumLotSize()),
+            keepSize,
+            keepThreshold
+        );
+    }
+
     /// @notice Returns the time delay used for governance actions except for
     ///         price feed additions.
     function getGovernanceTimeDelay() public pure returns (uint256) {
@@ -590,14 +596,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Request a new keep opening.
-    /// @param _m Minimum number of honest keep members required to sign.
-    /// @param _n Number of members in the keep.
+    /// @param _lotSizeSatoshis Lot size in satoshis.
     /// @param _maxSecuredLifetime Duration of stake lock in seconds.
     /// @return Address of a new keep.
     function requestNewKeep(
-        uint256 _m,
-        uint256 _n,
-        uint256 _bond,
+        uint64 _lotSizeSatoshis,
         uint256 _maxSecuredLifetime
     )
         external
@@ -605,8 +608,46 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
+        require(isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
+
         IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
-        return _keepFactory.openKeep.value(msg.value)(_n, _m, msg.sender, _bond, _maxSecuredLifetime);
+        uint256 bond = calculateBondRequirementWei(_lotSizeSatoshis);
+        return _keepFactory.openKeep.value(msg.value)(keepSize, keepThreshold, msg.sender, bond, _maxSecuredLifetime);
+    }
+
+    /// @notice Check if a lot size is allowed.
+    /// @param _lotSizeSatoshis Lot size to check.
+    /// @return True if lot size is allowed, false otherwise.
+    function isAllowedLotSize(uint64 _lotSizeSatoshis) public view returns (bool){
+        for( uint i = 0; i < lotSizesSatoshis.length; i++){
+            if (lotSizesSatoshis[i] == _lotSizeSatoshis){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// @notice Calculates bond requirement in wei for the given lot size in
+    /// satoshis based on the current ETHBTC price.
+    /// @param _lotSizeSatoshis Lot size in satoshis.
+    /// @return Bond requirement in wei.
+    function calculateBondRequirementWei(
+        uint256 _lotSizeSatoshis
+    ) internal view returns (uint256) {
+        uint256 bondRequirementSatoshis = _lotSizeSatoshis.mul(
+            initialCollateralizedPercent
+        ).div(100);
+        return _fetchBitcoinPrice().mul(bondRequirementSatoshis);
+    }
+
+    function _fetchBitcoinPrice() internal view returns (uint256) {
+        uint256 price = priceFeed.getPrice();
+        if (price == 0 || price > 10 ** 18) {
+            // This is if a sat is worth 0 wei, or is worth >1 ether. Revert at
+            // once.
+            revert("System returned a bad price");
+        }
+        return price;
     }
 
     /// @notice Get the time remaining until the function parameter timer value can be updated.

@@ -582,8 +582,6 @@ contract Deposit is DepositFactoryAuthority {
     ///        `FeeRebateToken`.
     /// @param _vendingMachineAddress `VendingMachine` address. More info in
     ///        `VendingMachine`.
-    /// @param _m Signing group honesty threshold.
-    /// @param _n Signing group size.
     /// @param _lotSizeSatoshis The minimum amount of satoshi the funder is
     ///                         required to send. This is also the amount of
     ///                         TBTC the TDT holder will be eligible to mint:
@@ -594,8 +592,6 @@ contract Deposit is DepositFactoryAuthority {
         IERC721 _tbtcDepositToken,
         FeeRebateToken _feeRebateToken,
         address _vendingMachineAddress,
-        uint16 _m,
-        uint16 _n,
         uint64 _lotSizeSatoshis
     ) public onlyFactory payable {
         self.tbtcSystem = _tbtcSystem;
@@ -603,7 +599,7 @@ contract Deposit is DepositFactoryAuthority {
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
-        self.initialize(_m, _n, _lotSizeSatoshis);
+        self.initialize(_lotSizeSatoshis);
     }
 
     /// @notice This function can only be called by the vending machine.
