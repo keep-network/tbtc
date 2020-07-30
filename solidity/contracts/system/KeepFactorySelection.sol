@@ -91,20 +91,28 @@ library KeepFactorySelection {
 
     /// @notice Sets the minimum bondable value required from the operator to
     /// join the sortition pool for tBTC.
-    /// @param _minimumBondableValue The minimum unbonded value allowing
-    /// an operator to join and stay in the sortition pool for the application.
+    /// @param _minimumBondableValue The minimum bond value the application
+    /// requires from a single keep.
+    /// @param _groupSize Number of signers in the keep.
+    /// @param _honestThreshold Minimum number of honest keep signers.
     function setMinimumBondableValue(
         Storage storage _self,
-        uint256 _minimumBondableValue
+        uint256 _minimumBondableValue,
+        uint256 _groupSize,
+        uint256 _honestThreshold
     ) public {
         if (address(_self.keepStakeFactory) != address(0)) {
             _self.keepStakeFactory.setMinimumBondableValue(
-                _minimumBondableValue
+                _minimumBondableValue,
+                _groupSize,
+                _honestThreshold
             );
         }
         if (address(_self.ethStakeFactory) != address(0)) {
             _self.ethStakeFactory.setMinimumBondableValue(
-                _minimumBondableValue
+                _minimumBondableValue,
+                _groupSize,
+                _honestThreshold
             );
         }
     }

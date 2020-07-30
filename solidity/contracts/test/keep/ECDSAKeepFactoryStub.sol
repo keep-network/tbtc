@@ -40,7 +40,11 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
         return 100000;
     }
 
-    function setMinimumBondableValue(uint256 _minimumBondableValue) public {
+    function setMinimumBondableValue(
+        uint256 _minimumBondableValue,
+        uint256 _groupSize,
+        uint256 _honestThreshold
+    ) public {
         minimumBondableValue = _minimumBondableValue;
     }
 }

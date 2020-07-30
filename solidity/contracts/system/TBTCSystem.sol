@@ -566,7 +566,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// after minimum lot size update.
     function refreshMinimumBondableValue() public {
         keepFactorySelection.setMinimumBondableValue(
-            calculateBondRequirementWei(getMinimumLotSize())
+            calculateBondRequirementWei(getMinimumLotSize()),
+            keepSize,
+            keepThreshold
         );
     }
 
