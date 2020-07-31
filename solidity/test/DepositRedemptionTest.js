@@ -39,6 +39,7 @@ describe("DepositRedemption", async function() {
   let feeRebateToken
   let testDeposit
   let ecdsaKeepStub
+  let vendingMachine
 
   let withdrawalRequestTime
 
@@ -233,6 +234,32 @@ describe("DepositRedemption", async function() {
         ),
         "Output script must be a standard type",
       )
+    })
+
+    it("escrows the signer fee even if the vending machine owns the deposit", async () => {
+      await tbtcDepositToken.transferFrom(
+        tdtHolder,
+        vendingMachine.address,
+        tdtId,
+        {from: tdtHolder},
+      )
+      await feeRebateToken.burn(tdtId, {from: frtHolder})
+
+      await testDeposit.setFundingInfo(
+        valueBytes,
+        await time.latest(),
+        outpoint,
+      )
+      await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
+      await testDeposit.setState(states.COURTESY_CALL)
+
+      await testDeposit.requestRedemption(
+        "0x0000111111111111",
+        redeemerOutputScript,
+        {from: owner},
+      )
+
+      expect(await tbtcToken.balanceOf(testDeposit.address)).to.eq.BN(signerFee)
     })
 
     const badLengths = {
