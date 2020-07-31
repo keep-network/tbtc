@@ -212,11 +212,14 @@ describe("DepositRedemption", async function() {
     })
 
     it("does not revert if the fee is just under the max threshold", async () => {
-      await testDeposit.requestRedemption(
-        "0x8a88888888888808",
-        "0x1976a914" + "33".repeat(20) + "88ac",
-        {from: owner},
-      )
+      expect(
+        async () =>
+          await testDeposit.requestRedemption(
+            "0x8a88888888888808",
+            "0x1976a914" + "33".repeat(20) + "88ac",
+            {from: owner},
+          ),
+      ).does.not.throw()
     })
 
     it("reverts if the output script is non-standard", async () => {
