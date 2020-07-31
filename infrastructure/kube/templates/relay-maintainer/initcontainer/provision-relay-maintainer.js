@@ -76,7 +76,7 @@ async function createRelayMaintainerConfig() {
   const bcoinHost = process.env.BCOIN_HOST
   const bcoinPort = process.env.BCOIN_PORT
   const bcoinApiKey = process.env.BCOIN_API_KEY
-  const infuraKey = ""
+  const infuraKey = process.env.INFURA_PROJECT_ID
 
   const finalEnv =
     envTemplate
