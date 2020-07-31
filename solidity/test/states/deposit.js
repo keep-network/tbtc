@@ -712,6 +712,27 @@ module.exports = {
                     )
                 },
             },
+            awaitingWithdrawalSignature: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setAndApproveRedemptionBalance(state)
+
+                    return {
+                        state: "active",
+                        tx: deposit.requestRedemption(
+                            depositRoundTrip.redemptionTx.outputValueBytes,
+                            depositRoundTrip.redemptionTx.outputScript,
+                            { from: opener },
+                        )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "RedemptionRequested")
+                    expect(await deposit.currentState()).to.eq.BN(
+                        System.States.AWAITING_WITHDRAWAL_SIGNATURE
+                    )
+                },
+            },
             liquidationInProgress: {
                 after: System.courtesyTimeout,
                 transition: async (state) => {
