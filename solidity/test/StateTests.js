@@ -3,7 +3,7 @@ const {deployAndLinkAll} = require("./helpers/fullDeployer.js")
 const {runStatePath} = require("./states/run.js")
 
 describe("tBTC states", () => {
-  describe("simple redeem", () => {
+  describe("when running a redemption", () => {
     runStatePath(
       states,
       deployAndLinkAll(),
@@ -14,7 +14,7 @@ describe("tBTC states", () => {
       "awaitingWithdrawalSignature",
     )
   })
-  describe("Courtesy -> Active & liquidation", () => {
+  describe("when liquidating from a courtesy call", () => {
     runStatePath(
       states,
       deployAndLinkAll(),
@@ -26,7 +26,7 @@ describe("tBTC states", () => {
       "liquidationInProgress",
     )
   })
-  describe("Courtesy -> Active & liquidation_fraud", () => {
+  describe("when fraud liquidating from a courtesy call", () => {
     runStatePath(
       states,
       deployAndLinkAll(),
@@ -38,7 +38,7 @@ describe("tBTC states", () => {
       "liquidationInProgress_fraud",
     )
   })
-  describe("Undercollateralized Liquidation", () => {
+  describe("when liquidating from severe undercollateralization", () => {
     runStatePath(
       states,
       deployAndLinkAll(),
@@ -49,7 +49,7 @@ describe("tBTC states", () => {
       "liquidationInProgress",
     )
   })
-  describe("aborted redemption", () => {
+  describe("when liquidiating during a redemption", () => {
     runStatePath(
       states,
       deployAndLinkAll(),
@@ -57,6 +57,82 @@ describe("tBTC states", () => {
       "awaitingSignerSetup",
       "awaitingFundingProof",
       "active",
+      "awaitingWithdrawalSignature",
+      "liquidationInProgress",
+    )
+  })
+  describe("when minting TBTC then running a redemption", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "minted",
+      "awaitingWithdrawalSignature",
+    )
+  })
+  describe("when minting TBTC then redeeming from a courtesy call", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "minted",
+      "courtesyCall",
+      "awaitingWithdrawalSignature",
+    )
+  })
+  describe("when minting TBTC then liquidating from a courtesy call", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "minted",
+      "courtesyCall",
+      "liquidationInProgress",
+    )
+  })
+  describe("when minting TBTC then fraud liquidating from a courtesy call", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "minted",
+      "courtesyCall",
+      "liquidationInProgress_fraud",
+    )
+  })
+  describe("when minting TBTC then liquidating from severe undercollateralization", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "minted",
+      "liquidationInProgress",
+    )
+  })
+  describe("when minting TBTC then liquidiating during a redemption", () => {
+    runStatePath(
+      states,
+      deployAndLinkAll(),
+      "start",
+      "awaitingSignerSetup",
+      "awaitingFundingProof",
+      "active",
+      "minted",
       "awaitingWithdrawalSignature",
       "liquidationInProgress",
     )
