@@ -43,7 +43,10 @@ spec:
               value: ropsten
 
             - name: INFURA_PROJECT_ID
-              value: 414a548bc7434bbfb7a135b694b15aa4
+              valueFrom:
+                secretKeyRef:
+                  name: relay-maintainer
+                  value: infura-project-id
 
             - name: RELAY_MAINTAINER_ETH_ACCOUNT_ADDRESS
               valueFrom:
