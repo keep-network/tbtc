@@ -18,7 +18,7 @@ const liquidator = accounts[2]
 
 const System = {
     lotSizes: async ({ TBTCSystem }) => {
-        return (await TBTCSystem.getAllowedLotSizes())[0]
+        return await TBTCSystem.getAllowedLotSizes()
     },
     feeEstimate: async ({ TBTCSystem }) => TBTCSystem.getNewDepositFeeEstimate(),
     setEcdsaKey: async ({ ECDSAKeepStub }) => {
@@ -122,16 +122,16 @@ module.exports = {
     start: {
         name: "start",
         dependencies: {
-            lotSize: System.lotSizes,
+            availableLotSizes: System.lotSizes,
             feeEstimate: System.feeEstimate,
         },
         next: {
             awaitingSignerSetup: {
-                transition: async ({ DepositFactory, lotSize, feeEstimate }) => {
+                transition: async ({ DepositFactory, availableLotSizes, feeEstimate }) => {
                     return {
                         state: "awaitingSignerSetup",
                         tx: DepositFactory.createDeposit(
-                            lotSize,
+                            availableLotSizes[0],
                             {
                                 value: feeEstimate,
                                 from: opener,
