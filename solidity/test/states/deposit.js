@@ -59,6 +59,12 @@ const System = {
     setDifficulty: async ({ MockRelay, difficulty }) => {
         await MockRelay.setCurrentEpochDifficulty(difficulty)
     },
+    depositLotSize: async ({ deposit }) => {
+        return await deposit.lotSizeTbtc();
+    },
+    depositSignerFee: async ({ deposit }) => {
+        return await deposit.signerFeeTbtc();
+    },
     depositRedemptionRequirement: async ({ deposit }) => {
         return await deposit.getRedemptionTbtcRequirement(opener)
     },
