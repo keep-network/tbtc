@@ -59,9 +59,10 @@ const System = {
     setDifficulty: async ({ MockRelay, difficulty }) => {
         await MockRelay.setCurrentEpochDifficulty(difficulty)
     },
-    setAndApproveRedemptionBalance: async ({ TestTBTCToken, deposit }) => {
-        const redemptionRequirement =
-            await deposit.getRedemptionTbtcRequirement(opener)
+    depositRedemptionRequirement: async ({ deposit }) => {
+        return await deposit.getRedemptionTbtcRequirement(opener)
+    },
+    setAndApproveRedemptionBalance: async ({ TestTBTCToken, deposit, redemptionRequirement }) => {
         await TestTBTCToken.forceMint(
             opener,
             // Let's just play it safe.
@@ -350,6 +351,7 @@ module.exports = {
         name: "active",
         dependencies: {
             bondAmount: System.expectedBond,
+            redemptionRequirement: System.depositRedemptionRequirement,
         },
         next: {
             awaitingWithdrawalSignature: {
@@ -523,6 +525,7 @@ module.exports = {
         name: "courtesyCall",
         dependencies: {
             bondAmount: System.expectedBond,
+            redemptionRequirement: System.depositRedemptionRequirement,
         },
         next: {
             active: {
