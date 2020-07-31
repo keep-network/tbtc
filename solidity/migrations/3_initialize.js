@@ -16,7 +16,7 @@ const BondedECDSAKeepFactoryJson = require("@keep-network/keep-ecdsa/artifacts/B
 
 const {BondedECDSAKeepFactoryAddress, ETHBTCMedianizer} = require("./externals")
 
-module.exports = async function(deployer, network) {
+module.exports = async function(deployer, network, accounts) {
   // Don't enact this setup during unit testing.
   if (process.env.NODE_ENV == "test" && !process.env.INTEGRATION_TEST) return
 
@@ -66,7 +66,7 @@ module.exports = async function(deployer, network) {
     )
   }
 
-  // Create sorition pool for new TBTCSystem.
+  // Create sortition pool for new TBTCSystem.
   console.log(`Creating sortition pool for TBTCSystem: [${TBTCSystem.address}]`)
   const BondedECDSAKeepFactoryContract = truffleContract(
     BondedECDSAKeepFactoryJson,

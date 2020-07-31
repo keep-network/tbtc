@@ -191,8 +191,6 @@ describe("DepositFactory", async function() {
         tbtcDepositToken.address,
         ZERO_ADDRESS,
         ZERO_ADDRESS,
-        1,
-        1,
         fullBtc,
         {value: openKeepFee},
       )

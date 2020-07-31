@@ -263,10 +263,10 @@ describe("TBTCSystem governance", async function() {
         {
           name: "_lotSizes",
           value: [
-            new BN(10 ** 8), // required
-            new BN(10 ** 6),
-            new BN(10 ** 10), // upper bound
             new BN(50 * 10 ** 3), // lower bound
+            new BN(10 ** 6),
+            new BN(10 ** 8), // required
+            new BN(10 ** 10), // upper bound
           ],
         },
       ],
@@ -280,12 +280,20 @@ describe("TBTCSystem governance", async function() {
           error: "Lot size array must always contain 1 BTC",
         },
         "array contains a lot size < 0.0005 BTC": {
-          parameters: [[10 ** 7, 10 ** 8, 5 * 10 ** 3 - 1]],
+          parameters: [[5 * 10 ** 3 - 1, 10 ** 7, 10 ** 8]],
           error: "Lot sizes less than 0.0005 BTC are not allowed",
         },
         "array contains a lot size > 100 BTC": {
-          parameters: [[10 ** 7, 10 ** 10 + 1, 10 ** 8]],
+          parameters: [[10 ** 7, 10 ** 8, 10 ** 10 + 1]],
           error: "Lot sizes greater than 100 BTC are not allowed",
+        },
+        "array is not sorted": {
+          parameters: [[10 ** 6, 10 ** 8, 10 ** 7]],
+          error: "Lot size array must be sorted",
+        },
+        "array has duplicate lots": {
+          parameters: [[10 ** 6, 10 ** 7, 10 ** 7, 10 ** 8]],
+          error: "Lot size array must not have duplicates",
         },
       },
       verifyFinalizationEvents: (receipt, setLotSizes) => {
@@ -295,6 +303,25 @@ describe("TBTCSystem governance", async function() {
         const lotSizes = await tbtcSystem.getAllowedLotSizes()
         lotSizes.forEach((_, i) => expect(_).to.eq.BN(setLotSizes[i]))
       },
+    })
+
+    describe("when finalizing lot size update", async () => {
+      it("updates the minimum bondable value", async () => {
+        const lotSizes = [
+          new BN(10 ** 5),
+          new BN(10 ** 8), // required
+        ]
+
+        await ethBtcMedianizer.setValue(new BN(10 ** 11))
+        await tbtcSystem.beginLotSizesUpdate(lotSizes)
+        const remainingTime = await tbtcSystem.getRemainingLotSizesUpdateTime()
+        await increaseTime(remainingTime.toNumber() + 1)
+        await tbtcSystem.finalizeLotSizesUpdate()
+
+        const minimum = await ecdsaKeepFactory.minimumBondableValue()
+        // (10**28 / 10**11) * 10**5 * 150%
+        expect(minimum).to.eq.BN(new BN("15000000000000000000000"))
+      })
     })
 
     governanceTest({
@@ -393,14 +420,14 @@ describe("TBTCSystem governance", async function() {
         keepFactorySelector.setFullyBackedMode()
         // Expect this to work normally, and update to the new factory for the
         // next call.
-        await tbtcSystem.requestNewKeep(5, 10, 0, 123, {
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
           from: mockDeposit,
           value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
         })
 
         // This should fail as the _ethBackedFactory is not a real contract
         // address, so dereferencing it will go boom.
-        await tbtcSystem.requestNewKeep(5, 10, 0, 123, {
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
           from: mockDeposit,
           value: await newKeepFactory.openKeepFeeEstimate.call(),
         })
@@ -628,4 +655,27 @@ describe("TBTCSystem governance", async function() {
       })
     })
   }
+
+  describe("when refreshing minimum bondable value", async () => {
+    it("uses the most recent ETHBTC price", async () => {
+      const lotSizes = [
+        new BN(10 ** 5),
+        new BN(10 ** 6),
+        new BN(10 ** 7),
+        new BN(10 ** 8), // required
+      ]
+
+      await ethBtcMedianizer.setValue(new BN(10 ** 11))
+      await tbtcSystem.beginLotSizesUpdate(lotSizes)
+      const remainingTime = await tbtcSystem.getRemainingLotSizesUpdateTime()
+      await increaseTime(remainingTime.toNumber() + 1)
+      await tbtcSystem.finalizeLotSizesUpdate()
+
+      await ethBtcMedianizer.setValue(new BN(10 ** 13))
+      // (10**28 / 10 ** 13) * 10**5 * 150%
+      const expected = new BN("150000000000000000000")
+      await tbtcSystem.refreshMinimumBondableValue()
+      expect(await ecdsaKeepFactory.minimumBondableValue()).to.eq.BN(expected)
+    })
+  })
 })

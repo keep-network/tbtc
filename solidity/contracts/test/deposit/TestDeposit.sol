@@ -18,8 +18,6 @@ contract TestDeposit is Deposit {
         IERC721 _tbtcDepositToken,
         FeeRebateToken _feeRebateToken,
         address _vendingMachineAddress,
-        uint16 _m,
-        uint16 _n,
         uint64 _lotSizeSatoshis
     ) public payable {
         self.tbtcSystem = _tbtcSystem;
@@ -27,7 +25,7 @@ contract TestDeposit is Deposit {
         self.tbtcDepositToken = _tbtcDepositToken;
         self.feeRebateToken = _feeRebateToken;
         self.vendingMachineAddress = _vendingMachineAddress;
-        self.initialize(_m, _n, _lotSizeSatoshis);
+        self.initialize(_lotSizeSatoshis);
     }
 
     function setExteriorAddresses(
