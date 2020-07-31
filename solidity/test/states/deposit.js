@@ -1,9 +1,9 @@
 // @ts-check
-const {BN, expectEvent} = require("@openzeppelin/test-helpers")
+const {BN} = require("@openzeppelin/test-helpers")
 const {accounts} = require("@openzeppelin/test-environment")
 const {expect} = require("chai")
 
-const {depositRoundTrip, bytes32zero} = require("../helpers/utils.js")
+const {depositRoundTrip, bytes32zero, expectEvent} = require("../helpers/utils.js")
 
 /** @typedef {any} BN */
 /** @typedef { import("./run.js").StateDefinition<object> } StateDefinition */
@@ -358,8 +358,67 @@ module.exports = {
         dependencies: {
             bondAmount: System.expectedBond,
             redemptionRequirement: System.depositRedemptionRequirement,
+            lotSize: System.depositLotSize,
+            signerFee: System.depositSignerFee,
         },
         next: {
+            minted: {
+                transition: async (state) => {
+                    const { deposit, VendingMachine, TBTCDepositToken } = state
+                    await TBTCDepositToken.approve(
+                        VendingMachine.address,
+                        deposit.address,
+                        { from: opener },
+                    )
+
+                    return {
+                        state: "minted",
+                        tx: VendingMachine.tdtToTbtc(deposit.address, { from: opener })
+                    }
+                },
+                expect: async (_, receipt, { deposit, VendingMachine, lotSize, signerFee }) => {
+                    // Owner should have received the TBTC less signer fee.
+                    expectEvent(
+                        receipt,
+                        "Transfer",
+                        {
+                            "from": "0x0000000000000000000000000000000000000000",
+                            "to": opener,
+                            "value": lotSize.sub(signerFee),
+                        },
+                    )
+                    // Owner should have received the FRT.
+                    expectEvent(
+                        receipt,
+                        "Transfer",
+                        {
+                            "from": "0x0000000000000000000000000000000000000000",
+                            "to": opener,
+                            "tokenId": new BN(deposit.address.substring(2), 16),
+                        },
+                    )
+                    // Vending machine should have received the TDT.
+                    expectEvent(
+                        receipt,
+                        "Transfer",
+                        {
+                            "from": opener,
+                            "to": VendingMachine.address,
+                            "tokenId": new BN(deposit.address.substring(2), 16),
+                        },
+                    )
+                    // Deposit should have received the signer fee.
+                    expectEvent(
+                        receipt,
+                        "Transfer",
+                        {
+                            "from": "0x0000000000000000000000000000000000000000",
+                            "to": deposit.address,
+                            "value": signerFee,
+                        },
+                    )
+                },
+            },
             awaitingWithdrawalSignature: {
                 transition: async (state) => {
                     const { deposit } = state
@@ -441,6 +500,14 @@ module.exports = {
         },
         // TODO What can't happen here?
         failNext: {}
+    },
+    minted: {
+        name: "minted",
+        dependencies: {
+            redemptionRequirement: System.depositVendingMachineRedemptionRequirement,
+        },
+        next: {
+        }
     },
     awaitingWithdrawalSignature: {
         name: "awaitingWithdrawalSignature",
