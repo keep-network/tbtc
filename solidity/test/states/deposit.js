@@ -68,6 +68,9 @@ const System = {
     depositRedemptionRequirement: async ({ deposit }) => {
         return await deposit.getRedemptionTbtcRequirement(opener)
     },
+    depositVendingMachineRedemptionRequirement: async ({ deposit, lotSize }) => {
+        return lotSize.add(await deposit.getOwnerRedemptionTbtcRequirement(opener))
+    },
     setAndApproveRedemptionBalance: async ({ TestTBTCToken, deposit, redemptionRequirement }) => {
         await TestTBTCToken.forceMint(
             opener,
@@ -76,6 +79,18 @@ const System = {
         )
         await TestTBTCToken.approve(
             deposit.address,
+            redemptionRequirement,
+            { from: opener }
+        )
+    },
+    setAndApproveVendingMachineRedemptionBalance: async ({ VendingMachine, TestTBTCToken, redemptionRequirement }) => {
+        await TestTBTCToken.forceMint(
+            opener,
+            // Let's just play it safe.
+            redemptionRequirement,
+        )
+        await TestTBTCToken.approve(
+            VendingMachine.address,
             redemptionRequirement,
             { from: opener }
         )
@@ -507,6 +522,85 @@ module.exports = {
             redemptionRequirement: System.depositVendingMachineRedemptionRequirement,
         },
         next: {
+            awaitingWithdrawalSignature: {
+                transition: async (state) => {
+                    const { deposit, VendingMachine } = state
+                    await System.setAndApproveVendingMachineRedemptionBalance(state)
+
+                    return {
+                        state: "active",
+                        tx: VendingMachine.tbtcToBtc(
+                            deposit.address,
+                            depositRoundTrip.redemptionTx.outputValueBytes,
+                            depositRoundTrip.redemptionTx.outputScript,
+                            { from: opener },
+                        )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "RedemptionRequested")
+                    expect(await deposit.currentState()).to.eq.BN(
+                        System.States.AWAITING_WITHDRAWAL_SIGNATURE
+                    )
+                },
+            },
+            courtesyCall: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    await System.setUndercollateralized(state)
+
+                    return {
+                        state: "courtesyCall",
+                        tx: deposit.notifyCourtesyCall()
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "CourtesyCalled")
+                    expect(await deposit.currentState()).to.eq.BN(
+                        System.States.COURTESY_CALL
+                    )
+                },
+            },
+            liquidationInProgress: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    await System.setSeverelyUndercollateralized(state)
+                    return {
+                        state: "liquidatinInProgress",
+                        tx: deposit.notifyUndercollateralizedLiquidation()
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "StartedLiquidation")
+                    expect(await deposit.currentState()).to.eq.BN(
+                        System.States.LIQUIDATION_IN_PROGRESS
+                    )
+                },
+            },
+            liquidationInProgress_fraud: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    return {
+                        state: "liquidatinInProgress",
+                        tx: deposit.provideECDSAFraudProof(
+                            0,
+                            bytes32zero,
+                            bytes32zero,
+                            bytes32zero,
+                            "0x00"
+                        )
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(receipt, "StartedLiquidation")
+                    expect(await deposit.currentState()).to.eq.BN(
+                        System.States.FRAUD_LIQUIDATION_IN_PROGRESS
+                    )
+                },
+            },
         }
     },
     awaitingWithdrawalSignature: {
