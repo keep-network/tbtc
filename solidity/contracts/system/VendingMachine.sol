@@ -111,7 +111,7 @@ contract VendingMachine is TBTCSystemAuthority{
         tbtcDepositToken.transferFrom(msg.sender, address(this), _tdtId);
 
         Deposit deposit = Deposit(address(uint160(_tdtId)));
-        uint256 signerFee = deposit.signerFee();
+        uint256 signerFee = deposit.signerFeeTbtc();
         uint256 depositValue = deposit.lotSizeTbtc();
 
         require(canMint(depositValue), "Can't mint more than the max supply cap");

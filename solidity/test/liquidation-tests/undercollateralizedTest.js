@@ -34,7 +34,7 @@ describe("Integration -- Undercollateralized", async function () {
         testDeposit.notifyUndercollateralizedLiquidation(),
         "Deposit has sufficient collateral",
       )
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.ACTIVE)
     })
 
@@ -44,7 +44,7 @@ describe("Integration -- Undercollateralized", async function () {
       await mockSatWeiPriceFeed.setPrice(satwei.add(new BN(1)))
       await testDeposit.notifyUndercollateralizedLiquidation()
 
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
@@ -54,7 +54,7 @@ describe("Integration -- Undercollateralized", async function () {
         testDeposit.purchaseSignerBondsAtAuction(),
         "Not enough TBTC to cover outstanding debt",
       )
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
@@ -67,10 +67,10 @@ describe("Integration -- Undercollateralized", async function () {
   
       await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
   
-      const allowance = await testDeposit.getWithdrawAllowance({ from: auctionBuyer })
+      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
       await testDeposit.withdrawFunds({from: auctionBuyer})
   
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       const endingBalance = await web3.eth.getBalance(testDeposit.address)
       const tbtcBalance = await tbtcToken.balanceOf(depositInitiator)
 

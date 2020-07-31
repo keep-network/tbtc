@@ -47,7 +47,7 @@ library DepositLiquidation {
     /// @dev        Compares the bond value and lot value.
     /// @param _d   Deposit storage pointer.
     /// @return     Collateralization percentage as uint.
-    function getCollateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
+    function collateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
 
         // Determine value of the lot in wei
         uint256 _satoshiPrice = _d.fetchBitcoinPrice();
@@ -77,9 +77,9 @@ library DepositLiquidation {
         // Reclaim used state for gas savings
         _d.redemptionTeardown();
 
-        // if we come from the redemption flow we shouldn't go to auction.
-        // Instead give the signer bonds to redeemer
-        if (_d.inRedemption()) {
+        // If we see fraud in the redemption flow, we shouldn't go to auction.
+        // Instead give the full signer bond directly to the redeemer.
+        if (_d.inRedemption() && _wasFraud) {
             _d.setLiquidated();
             _d.enableWithdrawal(redeemerAddress, seized);
             _d.logLiquidated();
@@ -138,17 +138,23 @@ library DepositLiquidation {
         _d.setLiquidated();
         _d.logLiquidated();
 
-        // send the TBTC to the TDT holder. If the TDT holder is the Vending Machine, burn it to maintain the peg.
-        address tdtHolder = _d.depositOwner();
+        // Send the TBTC to the redeemer if they exist, otherwise to the TDT
+        // holder. If the TDT holder is the Vending Machine, burn it to maintain
+        // the peg. This is because, if there is a redeemer set here, the TDT
+        // holder has already been made whole at redemption request time.
+        address tbtcRecipient = _d.redeemerAddress;
+        if (tbtcRecipient == address(0)) {
+            tbtcRecipient = _d.depositOwner();
+        }
         uint256 lotSizeTbtc = _d.lotSizeTbtc();
 
         require(_d.tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc, "Not enough TBTC to cover outstanding debt");
 
-        if(tdtHolder == _d.vendingMachineAddress){
+        if(tbtcRecipient == _d.vendingMachineAddress){
             _d.tbtcToken.burnFrom(msg.sender, lotSizeTbtc);  // burn minimal amount to cover size
         }
         else{
-            _d.tbtcToken.transferFrom(msg.sender, tdtHolder, lotSizeTbtc);
+            _d.tbtcToken.transferFrom(msg.sender, tbtcRecipient, lotSizeTbtc);
         }
 
         // Distribute funds to auction buyer
@@ -186,7 +192,7 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function notifyCourtesyCall(DepositUtils.Deposit storage _d) public  {
         require(_d.inActive(), "Can only courtesy call from active state");
-        require(getCollateralizationPercentage(_d) < _d.undercollateralizedThresholdPercent, "Signers have sufficient collateral");
+        require(collateralizationPercentage(_d) < _d.undercollateralizedThresholdPercent, "Signers have sufficient collateral");
         _d.courtesyCallInitiated = block.timestamp;
         _d.setCourtesyCall();
         _d.logCourtesyCalled();
@@ -197,7 +203,7 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function exitCourtesyCall(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not currently in courtesy call");
-        require(getCollateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
+        require(collateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
         _d.setActive();
         _d.logExitedCourtesyCall();
     }
@@ -207,14 +213,14 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
         require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
-        require(getCollateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
+        require(collateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
         startLiquidation(_d, false);
     }
 
     /// @notice     Notifies the contract that the courtesy period has elapsed.
     /// @dev        This is treated as an abort, rather than fraud.
     /// @param  _d  Deposit storage pointer.
-    function notifyCourtesyTimeout(DepositUtils.Deposit storage _d) public {
+    function notifyCourtesyCallExpired(DepositUtils.Deposit storage _d) public {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
         require(block.timestamp >= _d.courtesyCallInitiated.add(TBTCConstants.getCourtesyCallTimeout()), "Courtesy period has not elapsed");
         startLiquidation(_d, false);

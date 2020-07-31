@@ -8,6 +8,7 @@ describe("Integration -- Signature-timeout", async function () {
   const lotSize = "10000000";
   const lotSizeTbtc = new BN("10000000000").mul(new BN(lotSize));
   const depositInitiator = accounts[1]
+  const auctionBuyer = accounts[3]
   let testDeposit
 
   describe("Signature-timeout no FRT minted", async () => {
@@ -29,31 +30,54 @@ describe("Integration -- Signature-timeout", async function () {
 
     it("unable to start liquidation when timer has not elapsed", async () => {
       await expectRevert(
-        testDeposit.notifySignatureTimeout(),
+        testDeposit.notifyRedemptionSignatureTimedOut(),
         "Signature timer has not elapsed",
       )
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
     })
 
+    it("starts liquidation auction", async () => {
+      await ecdsaKeepStub.setSuccess(true)
+
+      const timer = await tbtcConstants.getSignatureTimeout.call()
+      await increaseTime(timer.toNumber() + 1)
+
+      await testDeposit.notifyRedemptionSignatureTimedOut()
+
+      const depositState = await testDeposit.currentState.call()
+      expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
+    })
+
+    it("reverts if no TBTC balance has been approved by the auction buyer to the Deposit", async () => {
+      await tbtcToken.resetBalance(lotSizeTbtc, { from: auctionBuyer })
+      await expectRevert(
+        testDeposit.purchaseSignerBondsAtAuction(),
+        "Not enough TBTC to cover outstanding debt",
+      )
+      const depositState = await testDeposit.currentState.call()
+      expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
+    })
+
     it("liquidates correctly", async () => {
-      const timer = await tbtcConstants.getRedemptionProofTimeout.call()
-      await increaseTime(timer.toNumber())
+      const duration = await tbtcConstants.getAuctionDuration.call()
+      await increaseTime(duration.toNumber())
 
-      await testDeposit.notifySignatureTimeout()
+      await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
+      await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-      const depositState = await testDeposit.getCurrentState.call()
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
-        from: depositInitiator,
-      })
-      await testDeposit.withdrawFunds({from: depositInitiator})
+      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
+      await testDeposit.withdrawFunds({ from: auctionBuyer })
+
+      const depositState = await testDeposit.currentState.call()
       const endingBalance = await web3.eth.getBalance(testDeposit.address)
-  
+
+      expect(allowance).to.eq.BN(collateralAmount)
       expect(new BN(endingBalance)).to.eq.BN(new BN(0))
       expect(depositState).to.eq.BN(states.LIQUIDATED)
-      expect(withdrawable).to.eq.BN(collateralAmount)
     })
   })
+
   describe("Signature-timeout - FRT minted", async () => {
 
     before(async () => {
@@ -94,7 +118,7 @@ describe("Integration -- Signature-timeout", async function () {
 
       const tdtOwner = await tbtcDepositToken.ownerOf(tdtId)
       await toAwaitingWithdrawalSignature(testDeposit)
-      const depositState = await testDeposit.getCurrentState.call()
+      const depositState = await testDeposit.currentState.call()
 
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
       expect(tdtOwner).to.equal(depositInitiator)
@@ -103,27 +127,49 @@ describe("Integration -- Signature-timeout", async function () {
 
     it("unable to start liquidation when timer has not elapsed", async () => {
       await expectRevert(
-        testDeposit.notifySignatureTimeout(),
+        testDeposit.notifyRedemptionSignatureTimedOut(),
         "Signature timer has not elapsed",
       )
     })
-    
+
+    it("starts liquidation auction", async () => {
+      await ecdsaKeepStub.setSuccess(true)
+
+      const timer = await tbtcConstants.getSignatureTimeout.call()
+      await increaseTime(timer.toNumber() + 1)
+
+      await testDeposit.notifyRedemptionSignatureTimedOut()
+
+      const depositState = await testDeposit.currentState.call()
+      expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
+    })
+
+    it("reverts if no TBTC balance has been approved by the auction buyer to the Deposit", async () => {
+      await tbtcToken.resetBalance(lotSizeTbtc, { from: auctionBuyer })
+      await expectRevert(
+        testDeposit.purchaseSignerBondsAtAuction(),
+        "Not enough TBTC to cover outstanding debt",
+      )
+      const depositState = await testDeposit.currentState.call()
+      expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
+    })
+
     it("liquidates correctly", async () => {
-      const timer = await tbtcConstants.getRedemptionProofTimeout.call()
-      await increaseTime(timer.toNumber())
+      const duration = await tbtcConstants.getAuctionDuration.call()
+      await increaseTime(duration.toNumber())
 
-      await testDeposit.notifySignatureTimeout()
+      await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
+      await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-      const depositState = await testDeposit.getCurrentState.call()
-      const withdrawable = await testDeposit.getWithdrawAllowance.call({
-        from: depositInitiator,
-      })
-      await testDeposit.withdrawFunds({from: depositInitiator})
+      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
+      await testDeposit.withdrawFunds({ from: auctionBuyer })
+
+      const depositState = await testDeposit.currentState.call()
       const endingBalance = await web3.eth.getBalance(testDeposit.address)
-  
+
+      expect(allowance).to.eq.BN(collateralAmount)
       expect(new BN(endingBalance)).to.eq.BN(new BN(0))
       expect(depositState).to.eq.BN(states.LIQUIDATED)
-      expect(withdrawable).to.eq.BN(collateralAmount)
     })
   })
 })

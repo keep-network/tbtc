@@ -37,7 +37,7 @@ const System = {
         ECDSAKeepStub.send(bondAmount)
         ECDSAKeepStub.setBondAmount(bondAmount)
     },
-    drainBond: async ({ ECDSAKeepStub, bondAmount }) => {
+    drainBond: async ({ ECDSAKeepStub }) => {
         ECDSAKeepStub.drain()
         ECDSAKeepStub.setBondAmount(0)
     },
@@ -67,7 +67,11 @@ const System = {
             // Let's just play it safe.
             redemptionRequirement,
         )
-        await TestTBTCToken.approve(deposit.address, redemptionRequirement, { from: opener })
+        await TestTBTCToken.approve(
+            deposit.address,
+            redemptionRequirement,
+            { from: opener }
+        )
     },
     setAndApproveLiquidationBalance: async ({ TestTBTCToken, deposit }) => {
         const lotSize = await deposit.lotSizeSatoshis()
@@ -78,21 +82,21 @@ const System = {
     setWellCollateralized: async ({ deposit, ECDSAKeepStub, mockSatWeiPriceFeed }) => {
         const bondAmount = await ECDSAKeepStub.checkBondAmount()
         const lotSize = await deposit.lotSizeSatoshis()
-        const initial = await deposit.getInitialCollateralizedPercent()
+        const initial = await deposit.initialCollateralizedPercent()
         const wellCollateralized = bondAmount.div(lotSize.mul(initial).div(new BN(100)))
         await mockSatWeiPriceFeed.setPrice(wellCollateralized)
     },
     setUndercollateralized: async ({ deposit, ECDSAKeepStub, mockSatWeiPriceFeed }) => {
         const bondAmount = await ECDSAKeepStub.checkBondAmount()
         const lotSize = await deposit.lotSizeSatoshis()
-        const under = await deposit.getUndercollateralizedThresholdPercent()
+        const under = await deposit.undercollateralizedThresholdPercent()
         const undercollateralized = bondAmount.div(lotSize.mul(under.sub(new BN(1))).div(new BN(100)))
         await mockSatWeiPriceFeed.setPrice(undercollateralized)
     },
     setSeverelyUndercollateralized: async ({ deposit, ECDSAKeepStub, mockSatWeiPriceFeed }) => {
         const bondAmount = await ECDSAKeepStub.checkBondAmount()
         const lotSize = await deposit.lotSizeSatoshis()
-        const severe = await deposit.getSeverelyUndercollateralizedThresholdPercent()
+        const severe = await deposit.severelyUndercollateralizedThresholdPercent()
         const severelyUndercollateralized = bondAmount.div(lotSize.mul(severe.sub(new BN(1))).div(new BN(100)))
         await mockSatWeiPriceFeed.setPrice(severelyUndercollateralized)
     },
@@ -151,7 +155,7 @@ module.exports = {
                         _depositContractAddress: deposit.address,
                         _keepAddress: ECDSAKeepStub.address,
                     })
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.AWAITING_SIGNER_SETUP
                     )
                     expect(await TBTCDepositToken.ownerOf(deposit.address)).to.equal(
@@ -186,7 +190,7 @@ module.exports = {
                         _signingGroupPubkeyX: depositRoundTrip.signerPubkey.x,
                         _signingGroupPubkeyY: depositRoundTrip.signerPubkey.y,
                     })
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.AWAITING_BTC_FUNDING_PROOF
                     )
                 },
@@ -199,12 +203,12 @@ module.exports = {
 
                     return {
                         state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
+                        tx: deposit.notifySignerSetupFailed(),
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "SetupFailed")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.FAILED_SETUP
                     )
                 }
@@ -222,7 +226,7 @@ module.exports = {
 
                     return {
                         state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
+                        tx: deposit.notifySignerSetupFailed(),
                     }
                 },
                 expectError: async (_, error) => {
@@ -241,7 +245,7 @@ module.exports = {
                     await System.drainBond(state)
                     return {
                         state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
+                        tx: deposit.notifySignerSetupFailed(),
                     }
                 },
                 expectError: async (_, error) => {
@@ -280,7 +284,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "Funded")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.ACTIVE
                     )
                 },
@@ -293,12 +297,12 @@ module.exports = {
 
                     return {
                         state: "failedSetup",
-                        tx: deposit.notifyFundingTimeout()
+                        tx: deposit.notifyFundingTimedOut()
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "SetupFailed")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.FAILED_SETUP
                     )
                 },
@@ -321,7 +325,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "SetupFailed")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.FAILED_SETUP
                     )
                 },
@@ -333,7 +337,7 @@ module.exports = {
                 transition: async ({ deposit }) => {
                     return {
                         state: "signerSetupFailure",
-                        tx: deposit.notifySignerSetupFailure(),
+                        tx: deposit.notifySignerSetupFailed(),
                     }
                 },
                 expectError: async (_, error) => {
@@ -364,7 +368,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "RedemptionRequested")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.AWAITING_WITHDRAWAL_SIGNATURE
                     )
                 },
@@ -382,7 +386,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "CourtesyCalled")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.COURTESY_CALL
                     )
                 },
@@ -399,7 +403,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "StartedLiquidation")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.LIQUIDATION_IN_PROGRESS
                     )
                 },
@@ -421,7 +425,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "StartedLiquidation")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.FRAUD_LIQUIDATION_IN_PROGRESS
                     )
                 },
@@ -454,25 +458,60 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "Redeemed")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.REDEEMED
                     )
                 },
             },
             liquidated: {
+                transition: async (state) => {
+                    const { deposit } = state
+                    await System.setUpBond(state)
+                    return {
+                        state: "liquidated",
+                        tx: deposit.provideECDSAFraudProof(
+                            0,
+                            bytes32zero,
+                            bytes32zero,
+                            bytes32zero,
+                            "0x00",
+                        ),
+                    }
+                },
+                expect: async (_, receipt, { deposit }) => {
+                    expectEvent(
+                        receipt,
+                        "StartedLiquidation",
+                        {
+                            "_depositContractAddress": deposit.address,
+                        },
+                    )
+                    expectEvent(
+                        receipt,
+                        "Liquidated",
+                        {
+                            "_depositContractAddress": deposit.address,
+                        },
+                    )
+                    expect(await deposit.currentState()).to.eq.BN(
+                        System.States.LIQUIDATED
+                    )
+                },
+            },
+            liquidationInProgress: {
                 after: System.signatureTimeout,
                 transition: async (state) => {
                     const { deposit } = state
                     await System.setUpBond(state)
                     return {
                         state: "liquidatinInProgress",
-                        tx: deposit.notifySignatureTimeout()
+                        tx: deposit.notifyRedemptionSignatureTimedOut()
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "StartedLiquidation")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
-                        System.States.LIQUIDATED
+                    expect(await deposit.currentState()).to.eq.BN(
+                        System.States.LIQUIDATION_IN_PROGRESS
                     )
                 },
             },
@@ -498,7 +537,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "ExitedCourtesyCall")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.ACTIVE
                     )
                 },
@@ -510,12 +549,12 @@ module.exports = {
 
                     return {
                         state: "liquidationInProgress",
-                        tx: deposit.notifyCourtesyTimeout()
+                        tx: deposit.notifyCourtesyCallExpired()
                     }
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "StartedLiquidation")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.LIQUIDATION_IN_PROGRESS
                     )
                 },
@@ -537,7 +576,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "StartedLiquidation")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.FRAUD_LIQUIDATION_IN_PROGRESS
                     )
                 },
@@ -563,7 +602,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "Liquidated")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.LIQUIDATED
                     )
                 },
@@ -600,7 +639,7 @@ module.exports = {
                 },
                 expect: async (_, receipt, { deposit }) => {
                     expectEvent(receipt, "Liquidated")
-                    expect(await deposit.getCurrentState()).to.eq.BN(
+                    expect(await deposit.currentState()).to.eq.BN(
                         System.States.LIQUIDATED
                     )
                 },
