@@ -46,8 +46,8 @@ spec:
             - name: SUMMA_RELAY_INFURA_KEY
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-mainnet
-                  key: project-id
+                  name: relay-maintainer
+                  key: infura-project-id
 
             - name: SUMMA_RELAY_OPERATOR_KEY
               valueFrom:
