@@ -1,0 +1,74 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: relay-maintainer
+  namespace: default
+  labels:
+    app: maintainer
+    type: relay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maintainer
+      type: relay
+  template:
+    metadata:
+      labels:
+        app: maintainer
+        type: relay
+    spec:
+      containers:
+        - name: relay-maintainer
+          image: gcr.io/keep-prd-210b/relay-maintainer:gas-attack
+          imagePullPolicy: Always
+          command: ["python", "maintainer/header_forwarder/h.py"]
+          env:
+            - name: SUMMA_RELAY_ETHER_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-mainnet
+                  key: rpc-url
+
+            - name: SUMMA_RELAY_ETH_NETWORK
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-mainnet
+                  key: network-name
+
+            - name: SUMMA_RELAY_ETH_CHAIN_ID
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-mainnet
+                  key: network-id
+
+            - name: SUMMA_RELAY_INFURA_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: relay-maintainer
+                  key: infura-project-id
+
+            - name: SUMMA_RELAY_OPERATOR_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: relay-maintainer
+                  key: eth-account-key
+
+            - name: SUMMA_RELAY_BCOIN_HOST
+              value: bcoin.default.svc.cluster.local
+
+            - name: BCOIN_PORT
+              value: '8332'
+
+            - name: SUMMA_RELAY_BCOIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: bcoin
+                  key: http-api-key
+
+            - name: SUMMA_RELAY_CONTRACT
+              value: '0xaA1D2805a0fA2DB185A99EDa43637d3169b240f7'
+
+
+

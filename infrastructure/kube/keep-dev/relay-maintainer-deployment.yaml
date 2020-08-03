@@ -42,6 +42,9 @@ spec:
             - name: ETH_NETWORK_NAME
               value: internal
 
+            - name: INFURA_PROJECT_ID
+              value: ""
+
             - name: RELAY_MAINTAINER_ETH_ACCOUNT_ADDRESS
               valueFrom:
                 configMapKeyRef:
@@ -77,6 +80,9 @@ spec:
                 secretKeyRef:
                   name: bcoin
                   key: http-api-key
+
+            - name: RELAY_CONTRACT_ADDRESS
+              value: '0x0Caf7C011d6d15334b0E55D822FEa0C2b483f226'
 
           volumeMounts:
             - name: relay-maintainer-env

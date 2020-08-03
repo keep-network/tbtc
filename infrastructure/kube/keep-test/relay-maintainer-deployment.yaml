@@ -23,47 +23,53 @@ spec:
 
       initContainers:
         - name: initcontainer-provision-relay-maintainer
-          image: gcr.io/keep-test-f3e0/initcontainer-provision-relay-maintainer
+          image: gcr.io/keep-test-f3e0/initcontainer-provision-relay-maintainer:latest
           imagePullPolicy: Always
           env:
 
             - name: ETH_RPC_URL
               valueFrom:
-                configMapKeyRef:
-                  name: eth-network-internal
-                  key: rpc-url
+                secretKeyRef:
+                  name: eth-network-ropsten
+                  key: infura-rpc-url
 
             - name: ETH_NETWORK_ID
               valueFrom:
                 configMapKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: network-id
 
             - name: ETH_NETWORK_NAME
-              value: internal
+              value: ropsten
+
+            - name: INFURA_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: relay-maintainer
+                  value: infura-project-id
 
             - name: RELAY_MAINTAINER_ETH_ACCOUNT_ADDRESS
               valueFrom:
                 configMapKeyRef:
                   name: eth-account-info
-                  key: account-0-address
+                  key: account-25-address
 
             - name: RELAY_MAINTAINER_ETH_ACCOUNT_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
                   name: eth-account-privatekeys
-                  key: account-0
+                  key: account-25
 
             - name: CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
               valueFrom:
                 configMapKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: contract-owner-eth-account-address
 
             - name: CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-internal
+                  name: eth-network-ropsten
                   key: contract-owner-eth-account-private-key
 
             - name: BCOIN_HOST
@@ -77,6 +83,9 @@ spec:
                 secretKeyRef:
                   name: bcoin
                   key: http-api-key
+
+            - name: RELAY_CONTRACT_ADDRESS
+              value: '0xD0E4Fd90a67dba6C5bf2D11848c6B552d5E92e32'
 
           volumeMounts:
             - name: relay-maintainer-env
