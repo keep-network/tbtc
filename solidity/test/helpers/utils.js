@@ -5,7 +5,6 @@ const {web3} = require("@openzeppelin/test-environment")
 
 const ozHelpers = require("@openzeppelin/test-helpers")
 const {BN} = ozHelpers
-const ozExpectEvent = ozHelpers.expectEvent
 const {expect} = require("chai")
 
 // Header with insufficient work. It's used for negative scenario tests when we
@@ -195,30 +194,45 @@ function resolveAllLogs(receipt, contractContainer) {
  * @param {object} [parameters] The parameters to look for in the event; unlike
  *         OpenZeppelin's default version, parameters may have an array-of-BN
  *         value and they will be properly validated.
+ * @param {object} [customMessage] The message to report if a matching event is
+ *        not found.
  */
-function expectEvent(receipt, eventName, parameters) {
-  parameters = parameters || []
-  const bnArrayParameterNames = []
-  for (const [parameterName, parameterValue] of Object.entries(parameters)) {
-    if (web3.utils.isBN(parameterValue[0])) {
-      bnArrayParameterNames.push(parameterName)
-    }
-  }
+function expectEvent(receipt, eventName, parameters, customMessage) {
+  parameters = parameters || {}
 
-  // Use OpenZeppelin helper for all non-array-of-BN parameters.
-  const withoutBnArray = Object.assign({}, parameters)
-  bnArrayParameterNames.forEach(_ => delete withoutBnArray[_])
-  ozExpectEvent(receipt, eventName, withoutBnArray)
-
-  if (bnArrayParameterNames.length > 0) {
+  const matchingLogs = receipt.logs.filter(_ => _.event == eventName)
+  expect(matchingLogs).not.to.have.lengthOf(
+    0,
+    customMessage ||
+      `Found no events named ${eventName} in ${JSON.stringify(receipt.logs)}`
+  )
+  expect(
+    matchingLogs,
+    customMessage ||
+      `Could not find parameter match for\n${JSON.stringify(parameters)}\nin\n` +
+        `${matchingLogs.map(_ => JSON.stringify(_.args)).join("\n")}.`,
+  ).to.satisfy((matchingLogs) => {
     // Check array-of-BN parameters in nested fashion, directly.
-    const log = receipt.logs.find(_ => _.event == eventName)
-    bnArrayParameterNames.forEach(paramName => {
-      log.args[paramName].forEach((bn, i) => {
-        expect(bn).to.eq.BN(parameters[paramName][i])
+    return matchingLogs.some(log => 
+      Object.entries(log.args).every(([argName, argValue]) => {
+        if (! parameters.hasOwnProperty(argName)) {
+          return true
+        } else if (web3.utils.isBN(parameters[argName])) {
+          return parameters[argName].toString() ==
+              web3.utils.isBN(argValue) ? argValue.toString() : argValue
+        } else if (web3.utils.isBN(parameters[argName][0])) {
+          return parameters[argName].every((bn, i) => {
+            return bn.toString() ==
+              web3.utils.isBN(argValue[i]) ?
+                argValue[i].toString() :
+                argValue[i]
+          })
+        } else {
+          return parameters[argName] == argValue
+        }
       })
-    })
-  }
+    )
+  })
 }
 
 /**

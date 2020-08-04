@@ -64,15 +64,14 @@ library DepositRedemption {
         ) = _d.calculateRedemptionTbtcAmounts(_d.redeemerAddress, false);
 
         if(tbtcOwedToDeposit > 0){
-            if(tdtHolder == vendingMachineAddress){
-                _d.tbtcToken.burnFrom(msg.sender, tbtcOwedToDeposit);
-            }
-            else{
-                _d.tbtcToken.transferFrom(msg.sender, address(this), tbtcOwedToDeposit);
-            }
+            _d.tbtcToken.transferFrom(msg.sender, address(this), tbtcOwedToDeposit);
         }
         if(tbtcOwedToTdtHolder > 0){
-            _d.tbtcToken.transfer(tdtHolder, tbtcOwedToTdtHolder);
+            if(tdtHolder == vendingMachineAddress){
+                _d.tbtcToken.burn(tbtcOwedToTdtHolder);
+            } else {
+                _d.tbtcToken.transfer(tdtHolder, tbtcOwedToTdtHolder);
+            }
         }
         if(tbtcOwedToFrtHolder > 0){
             _d.tbtcToken.transfer(frtHolder, tbtcOwedToFrtHolder);
