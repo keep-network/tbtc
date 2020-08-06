@@ -8,6 +8,9 @@ executors:
   docker-node:
     docker:
       - image: circleci/node:12
+    docker-node-gcloud:
+      docker:
+        - image: appfarm/node-gcloud-base      
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
@@ -66,7 +69,7 @@ jobs:
           working_directory: ~/project/solidity
           command: npm run test:quick
   migrate_contracts:
-    executor: docker-thesis-buildpack
+    executor: docker-node-gcloud
     steps:
       - checkout
       - setup_remote_docker:
@@ -83,18 +86,21 @@ jobs:
           command: |
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
+      
+            # This needs to be part of a base docker image, not installed here.
+            apt-get update
+            apt-get install jq -y
+
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
             export BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
             solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
           command: |
-            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
-            export BUILD_TAG=$CIRCLE_SHA1
-            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
             mkdir -p /tmp/tbtc/contracts
-            solidity/scripts/circleci-migrate-contracts.sh
+            npm ci
+            ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
+            cp ./build/contracts/* /tmp/tbtc/contracts
       - persist_to_workspace:
           root: /tmp/tbtc
           paths:
