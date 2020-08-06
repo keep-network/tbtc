@@ -83,6 +83,7 @@ jobs:
             rm -rf node_modules
       - run:
           name: Provision External Contract Addresses
+          working_directory: ~/project/solidity
           command: |
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
@@ -93,9 +94,10 @@ jobs:
 
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
             export BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
-            solidity/scripts/circleci-provision-external-contracts.sh
+            scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
+          working_directory: ~/project/solidity
           command: |
             mkdir -p /tmp/tbtc/contracts
             npm ci
