@@ -46,7 +46,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: relay-maintainer
-                  value: infura-project-id
+                  key: infura-project-id
 
             - name: RELAY_MAINTAINER_ETH_ACCOUNT_ADDRESS
               valueFrom:
@@ -85,7 +85,7 @@ spec:
                   key: http-api-key
 
             - name: RELAY_CONTRACT_ADDRESS
-              value: '0xD0E4Fd90a67dba6C5bf2D11848c6B552d5E92e32'
+              value: '0x3dB8e9A6efea0a424DD6A4758B7855f34bec1c81'
 
           volumeMounts:
             - name: relay-maintainer-env
