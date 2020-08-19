@@ -40,8 +40,8 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
     function getPrice()
         external onlyTbtcSystem view returns (uint256)
     {
-        bool ethBtcActive;
-        uint256 ethBtc;
+        bool ethBtcActive = false;
+        uint256 ethBtc = 0;
 
         for(uint i = 0; i < ethBtcFeeds.length; i++){
             (ethBtc, ethBtcActive) = ethBtcFeeds[i].peek();

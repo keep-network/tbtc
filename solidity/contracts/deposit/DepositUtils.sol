@@ -343,7 +343,7 @@ library DepositUtils {
     /// @return         The current token holder if the Token exists.
     ///                 address(0) if the token does not exist.
     function feeRebateTokenHolder(Deposit storage _d) public view returns (address payable) {
-        address tokenHolder;
+        address tokenHolder = address(0);
         if(_d.feeRebateToken.exists(uint256(address(this)))){
             tokenHolder = address(uint160(_d.feeRebateToken.ownerOf(uint256(address(this)))));
         }
