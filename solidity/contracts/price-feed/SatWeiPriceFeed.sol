@@ -72,13 +72,13 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
         return address(0);
     }
 
-    /// @notice Add _ethBtcFeed to internal ethBtcFeeds array.
+    /// @notice Add _newEthBtcFeed to internal ethBtcFeeds array.
     /// @dev IMedianizer must be active in order to add.
-    function addEthBtcFeed(IMedianizer _ethBtcFeed) external onlyTbtcSystem {
+    function addEthBtcFeed(IMedianizer _newEthBtcFeed) external onlyTbtcSystem {
         bool ethBtcActive;
-        (, ethBtcActive) = _ethBtcFeed.peek();
+        (, ethBtcActive) = _newEthBtcFeed.peek();
         require(ethBtcActive, "Cannot add inactive feed");
-        ethBtcFeeds.push(_ethBtcFeed);
+        ethBtcFeeds.push(_newEthBtcFeed);
     }
 
     /// @notice Function modifier ensures modified function is only called by tbtcSystemAddress.
