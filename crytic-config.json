@@ -1,4 +1,12 @@
 {
     "cwd": "solidity",
-    "solc": "0.5.17"
+    "custom_unit_test": {
+        "enabled": true,
+        "commands": [
+            {
+                "command": ["npm", "run", "test"],
+                "expected": "{RETURN_CODE} == 0"
+            }
+        ]
+    }
 }
