@@ -1,5 +1,6 @@
 pragma solidity 0.5.17;
 
+import {ITokenRecipient} from "../interfaces/ITokenRecipient.sol";
 import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
@@ -12,7 +13,7 @@ import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 /// This contract implements receiveApproval() and can therefore use
 /// approveAndCall(). This pattern combines TBTC Token approval and
 /// vendingMachine.tbtcToBtc() in a single transaction.
-contract RedemptionScript {
+contract RedemptionScript is ITokenRecipient {
     using BytesLib for bytes;
 
     TBTCToken tbtcToken;
