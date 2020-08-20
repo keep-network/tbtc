@@ -22,15 +22,15 @@ library DepositLiquidation {
     using DepositStates for DepositUtils.Deposit;
     using OutsourceDepositLogging for DepositUtils.Deposit;
 
-    /// @notice                 Notifies the keep contract of fraud.
-    /// @dev                    Calls out to the keep contract. this could get expensive if preimage is large.
-    /// @param  _d              Deposit storage pointer.
-    /// @param  _v              Signature recovery value.
-    /// @param  _r              Signature R value.
-    /// @param  _s              Signature S value.
-    /// @param _signedDigest    The digest signed by the signature vrs tuple.
-    /// @param _preimage        The sha256 preimage of the digest.
-    /// @return                 True if fraud, otherwise revert.
+    /// @notice Notifies the keep contract of fraud. Reverts if not fraud.
+    /// @dev Calls out to the keep contract. this could get expensive if preimage
+    ///      is large.
+    /// @param  _d Deposit storage pointer.
+    /// @param  _v Signature recovery value.
+    /// @param  _r Signature R value.
+    /// @param  _s Signature S value.
+    /// @param _signedDigest The digest signed by the signature vrs tuple.
+    /// @param _preimage The sha256 preimage of the digest.
     function submitSignatureFraud(
         DepositUtils.Deposit storage _d,
         uint8 _v,
@@ -38,9 +38,9 @@ library DepositLiquidation {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public returns (bool _isFraud) {
+    ) public {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
-        return _keep.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
+        _keep.submitSignatureFraud(_v, _r, _s, _signedDigest, _preimage);
     }
 
     /// @notice     Determines the collateralization percentage of the signing group.
