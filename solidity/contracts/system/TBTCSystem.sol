@@ -183,7 +183,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Anyone can reactivate deposit creations after the pause duration is over.
     function resumeNewDeposits() external {
-        require(allowNewDeposits == false, "New deposits are currently allowed");
+        require(! allowNewDeposits, "New deposits are currently allowed");
         require(pausedTimestamp != 0, "Deposit has not been paused");
         require(block.timestamp.sub(pausedTimestamp) >= pausedDuration, "Deposits are still paused");
         allowNewDeposits = true;
@@ -191,7 +191,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     function getRemainingPauseTerm() external view returns (uint256) {
-        require(allowNewDeposits == false, "New deposits are currently allowed");
+        require(! allowNewDeposits, "New deposits are currently allowed");
         return (block.timestamp.sub(pausedTimestamp) >= pausedDuration)?
             0:
             pausedDuration.sub(block.timestamp.sub(pausedTimestamp));
