@@ -1,3 +1,4 @@
 {
-    "filter_paths": "contracts/test"
+    "filter_paths": "contracts/test",
+    "detectors_to_exclude": "assembly,timestamp"
 }
