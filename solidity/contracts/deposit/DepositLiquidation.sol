@@ -112,7 +112,7 @@ library DepositLiquidation {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         require(
             !_d.inFunding(),
             "Use provideFundingECDSAFraudProof instead"
@@ -131,7 +131,7 @@ library DepositLiquidation {
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
     /// @dev        For interface, reading auctionValue will give a past value. the current is better.
     /// @param  _d  Deposit storage pointer.
-    function purchaseSignerBondsAtAuction(DepositUtils.Deposit storage _d) public {
+    function purchaseSignerBondsAtAuction(DepositUtils.Deposit storage _d) external {
         bool _wasFraud = _d.inFraudLiquidationInProgress();
         require(_d.inSignerLiquidation(), "No active auction");
 
@@ -190,7 +190,7 @@ library DepositLiquidation {
     /// @notice     Notify the contract that the signers are undercollateralized.
     /// @dev        Calls out to the system for oracle info.
     /// @param  _d  Deposit storage pointer.
-    function notifyCourtesyCall(DepositUtils.Deposit storage _d) public  {
+    function notifyCourtesyCall(DepositUtils.Deposit storage _d) external  {
         require(_d.inActive(), "Can only courtesy call from active state");
         require(collateralizationPercentage(_d) < _d.undercollateralizedThresholdPercent, "Signers have sufficient collateral");
         _d.courtesyCallInitiated = block.timestamp;
@@ -201,7 +201,7 @@ library DepositLiquidation {
     /// @notice     Goes from courtesy call to active.
     /// @dev        Only callable if collateral is sufficient and the deposit is not expiring.
     /// @param  _d  Deposit storage pointer.
-    function exitCourtesyCall(DepositUtils.Deposit storage _d) public {
+    function exitCourtesyCall(DepositUtils.Deposit storage _d) external {
         require(_d.inCourtesyCall(), "Not currently in courtesy call");
         require(collateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
         _d.setActive();
@@ -211,7 +211,7 @@ library DepositLiquidation {
     /// @notice     Notify the contract that the signers are undercollateralized.
     /// @dev        Calls out to the system for oracle info.
     /// @param  _d  Deposit storage pointer.
-    function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) public {
+    function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) external {
         require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
         require(collateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
         startLiquidation(_d, false);
@@ -220,7 +220,7 @@ library DepositLiquidation {
     /// @notice     Notifies the contract that the courtesy period has elapsed.
     /// @dev        This is treated as an abort, rather than fraud.
     /// @param  _d  Deposit storage pointer.
-    function notifyCourtesyCallExpired(DepositUtils.Deposit storage _d) public {
+    function notifyCourtesyCallExpired(DepositUtils.Deposit storage _d) external {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
         require(block.timestamp >= _d.courtesyCallInitiated.add(TBTCConstants.getCourtesyCallTimeout()), "Courtesy period has not elapsed");
         startLiquidation(_d, false);

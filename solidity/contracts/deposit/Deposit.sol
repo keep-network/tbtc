@@ -12,6 +12,12 @@ import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 
 import "../system/DepositFactoryAuthority.sol";
 
+// solium-disable function-order
+// Below, a few functions must be public to allow bytes memory parameters, but
+// their being so triggers errors because public functions should be grouped
+// below external functions. Since these would be external if it were possible,
+// we ignore the issue.
+
 /// @title  tBTC Deposit
 /// @notice This is the main contract for tBTC. It is the state machine that
 ///         (through various libraries) handles bitcoin funding, bitcoin-spv
@@ -58,7 +64,7 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice Get this deposit's BTC lot size in satoshis.
     /// @return uint64 lot size in satoshis.
-    function lotSizeSatoshis() public view returns (uint64){
+    function lotSizeSatoshis() external view returns (uint64){
         return self.lotSizeSatoshis;
     }
 
@@ -66,7 +72,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev This is the same as lotSizeSatoshis(), but is multiplied to scale
     ///      to 18 decimal places.
     /// @return uint256 lot size in TBTC precision (max 18 decimal places).
-    function lotSizeTbtc() public view returns (uint256){
+    function lotSizeTbtc() external view returns (uint256){
         return self.lotSizeTbtc();
     }
 
@@ -75,7 +81,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      tasks needed to maintain a decentralized and trustless model for
     ///      tBTC. It is a percentage of the deposit's lot size.
     /// @return Fee amount in TBTC.
-    function signerFeeTbtc() public view returns (uint256) {
+    function signerFeeTbtc() external view returns (uint256) {
         return self.signerFeeTbtc();
     }
 
@@ -83,13 +89,13 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev We implement this because contracts don't handle foreign enums
     ///      well. See `DepositStates` for more info on states.
     /// @return The 0-indexed state from the DepositStates enum.
-    function currentState() public view returns (uint256) {
+    function currentState() external view returns (uint256) {
         return uint256(self.currentState);
     }
 
     /// @notice Check if the Deposit is in ACTIVE state.
     /// @return True if state is ACTIVE, false otherwise.
-    function inActive() public view returns (bool) {
+    function inActive() external view returns (bool) {
         return self.inActive();
     }
 
@@ -97,7 +103,7 @@ contract Deposit is DepositFactoryAuthority {
     ///         this Deposit.
     /// @dev The keep contract address is saved on Deposit initialization.
     /// @return Address of the Keep contract.
-    function keepAddress() public view returns (address) {
+    function keepAddress() external view returns (address) {
         return self.keepAddress;
     }
 
@@ -106,7 +112,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at
     ///         term.
-    function remainingTerm() public view returns(uint256){
+    function remainingTerm() external view returns(uint256){
         return self.remainingTerm();
     }
 
@@ -114,7 +120,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev This value represents the percentage of the backing BTC value the
     ///      signers currently must hold as bond.
     /// @return The current collateralization level for this deposit.
-    function collateralizationPercentage() public view returns (uint256) {
+    function collateralizationPercentage() external view returns (uint256) {
         return self.collateralizationPercentage();
     }
 
@@ -122,7 +128,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev This value represents the percentage of the backing BTC value
     ///      the signers hold initially. It is set at creation time.
     /// @return The initial collateralization level for this deposit.
-    function initialCollateralizedPercent() public view returns (uint16) {
+    function initialCollateralizedPercent() external view returns (uint16) {
         return self.initialCollateralizedPercent;
     }
 
@@ -136,7 +142,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      can be changed by governance, but the value for a particular
     ///      deposit is static once the deposit is created.
     /// @return The undercollateralized level for this deposit.
-    function undercollateralizedThresholdPercent() public view returns (uint16) {
+    function undercollateralizedThresholdPercent() external view returns (uint16) {
         return self.undercollateralizedThresholdPercent;
     }
 
@@ -150,7 +156,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      but the value for a particular deposit is static once the deposit
     ///      is created.
     /// @return The severely undercollateralized level for this deposit.
-    function severelyUndercollateralizedThresholdPercent() public view returns (uint16) {
+    function severelyUndercollateralizedThresholdPercent() external view returns (uint16) {
         return self.severelyUndercollateralizedThresholdPercent;
     }
 
@@ -161,7 +167,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      AWAITING_SIGNER_SETUP, and AWAITING_BTC_FUNDING_PROOF), this value
     ///      would not be valid.
     /// @return The value of the funding UTXO in satoshis.
-    function utxoValue() public view returns (uint256){
+    function utxoValue() external view returns (uint256){
         require(
             ! self.inFunding(),
             "Deposit has not yet been funded and has no available funding info"
@@ -177,7 +183,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      AWAITING_SIGNER_SETUP, and AWAITING_BTC_FUNDING_PROOF), none of
     ///      these values are set or valid.
     /// @return A tuple of (uxtoValueBytes, fundedAt, uxtoOutpoint).
-    function fundingInfo() public view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
+    function fundingInfo() external view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
         require(
             ! self.inFunding(),
             "Deposit has not yet been funded and has no available funding info"
@@ -192,7 +198,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @return The value in wei that would be received in exchange for the
     ///         deposit's lot size in TBTC if `purchaseSignerBondsAtAuction`
     ///         were called at the time this function is called.
-    function auctionValue() public view returns (uint256) {
+    function auctionValue() external view returns (uint256) {
         require(
             self.inSignerLiquidation(),
             "Deposit has no funds currently at auction"
@@ -207,7 +213,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      can be withdrawn using `withdrawFunds` if the deposit is in an end
     ///      state.
     /// @return The withdraw allowance in wei.
-    function withdrawableAmount() public view returns (uint256) {
+    function withdrawableAmount() external view returns (uint256) {
         return self.getWithdrawableAmount();
     }
 
@@ -223,7 +229,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      further responsibilities. Reverts if the deposit is not awaiting
     ///      signer setup or if the signing group formation timeout has not
     ///      elapsed.
-    function notifySignerSetupFailed() public {
+    function notifySignerSetupFailed() external {
         self.notifySignerSetupFailed();
     }
 
@@ -234,7 +240,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      deposit is not awaiting signer setup, if the generated public key
     ///      is unset or has incorrect length, or if the public key has a 0
     ///      X or Y value.
-    function retrieveSignerPubkey() public {
+    function retrieveSignerPubkey() external {
         self.retrieveSignerPubkey();
     }
 
@@ -248,7 +254,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      opening the deposit is not refunded. Emits a SetupFailed event.
     ///      Reverts if the funding timeout has not yet elapsed, or if the
     ///      deposit is not currently awaiting funding proof.
-    function notifyFundingTimedOut() public {
+    function notifyFundingTimedOut() external {
         self.notifyFundingTimedOut();
     }
 
@@ -264,7 +270,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      but stores no additional state.
     /// @param _abortOutputScript The output script the funder wishes to request
     ///        a return of their UTXO to.
-    function requestFunderAbort(bytes memory _abortOutputScript) public {
+    function requestFunderAbort(bytes memory _abortOutputScript) public { // not external to allow bytes memory parameters
         require(
             self.depositOwner() == msg.sender,
             "Only TDT holder can request funder abort"
@@ -289,7 +295,7 @@ contract Deposit is DepositFactoryAuthority {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         self.provideFundingECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
     }
 
@@ -322,7 +328,7 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         self.provideBTCFundingProof(
             _txVersion,
             _txInputVector,
@@ -343,7 +349,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      TBTCConstants.COURTESY_CALL_DURATION, courtesy call times out and
     ///      regular abort liquidation occurs; see
     ///      `notifyCourtesyTimedOut`.
-    function notifyCourtesyCall() public {
+    function notifyCourtesyCall() external {
         self.notifyCourtesyCall();
     }
 
@@ -351,7 +357,7 @@ contract Deposit is DepositFactoryAuthority {
     ///         enough to be considered sufficiently collateralized.
     /// @dev This call will revert if collateral is still below the
     ///      undercollateralized threshold according to the price feed.
-    function exitCourtesyCall() public {
+    function exitCourtesyCall() external {
         self.exitCourtesyCall();
     }
 
@@ -365,7 +371,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      LiquidationStarted event. The caller is captured as the liquidation
     ///      initiator, and is eligible for 50% of any bond left after the
     ///      auction is completed.
-    function notifyCourtesyCallExpired() public {
+    function notifyCourtesyCallExpired() external {
         self.notifyCourtesyCallExpired();
     }
 
@@ -379,7 +385,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      `purchaseSignerBondsAtAuction`). Emits a LiquidationStarted event.
     ///      The caller is captured as the liquidation initiator, and is
     ///      eligible for 50% of any bond left after the auction is completed.
-    function notifyUndercollateralizedLiquidation() public {
+    function notifyUndercollateralizedLiquidation() external {
         self.notifyUndercollateralizedLiquidation();
     }
 
@@ -405,7 +411,7 @@ contract Deposit is DepositFactoryAuthority {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         self.provideECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
     }
 
@@ -418,7 +424,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      signature or if the allotted time has not yet elapsed. The caller
     ///      is captured as the liquidation initiator, and is eligible for 50%
     ///      of any bond left after the auction is completed.
-    function notifyRedemptionSignatureTimedOut() public {
+    function notifyRedemptionSignatureTimedOut() external {
         self.notifyRedemptionSignatureTimedOut();
     }
 
@@ -432,7 +438,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      The caller is captured as the liquidation initiator, and
     ///      is eligible for 50% of any bond left after the auction is
     ///     completed.
-    function notifyRedemptionProofTimedOut() public {
+    function notifyRedemptionProofTimedOut() external {
         self.notifyRedemptionProofTimedOut();
     }
 
@@ -446,7 +452,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      the `auctionValue` function; note, however, that the function's
     ///      value is only static during the specific block it is queried, as it
     ///      varies by block timestamp.
-    function purchaseSignerBondsAtAuction() public {
+    function purchaseSignerBondsAtAuction() external {
         self.purchaseSignerBondsAtAuction();
     }
 
@@ -459,7 +465,7 @@ contract Deposit is DepositFactoryAuthority {
     ///        requested.
     /// @return The amount in TBTC needed by the `_redeemer` to redeem the
     ///         deposit.
-    function getRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
+    function getRedemptionTbtcRequirement(address _redeemer) external view returns (uint256){
         (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, false);
         return tbtcPayment;
     }
@@ -468,7 +474,7 @@ contract Deposit is DepositFactoryAuthority {
     ///         is this deposit's owner (TDT holder).
     /// @param _redeemer The assumed owner of the deposit's TDT .
     /// @return The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) public view returns (uint256){
+    function getOwnerRedemptionTbtcRequirement(address _redeemer) external view returns (uint256){
         (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, true);
         return tbtcPayment;
     }
@@ -489,7 +495,7 @@ contract Deposit is DepositFactoryAuthority {
     function requestRedemption(
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         self.requestRedemption(_outputValueBytes, _redeemerOutputScript);
     }
 
@@ -505,7 +511,7 @@ contract Deposit is DepositFactoryAuthority {
         uint8 _v,
         bytes32 _r,
         bytes32 _s
-    ) public {
+    ) external {
         self.provideRedemptionSignature(_v, _r, _s);
     }
 
@@ -523,7 +529,7 @@ contract Deposit is DepositFactoryAuthority {
     function increaseRedemptionFee(
         bytes8 _previousOutputValueBytes,
         bytes8 _newOutputValueBytes
-    ) public {
+    ) external {
         self.increaseRedemptionFee(_previousOutputValueBytes, _newOutputValueBytes);
     }
 
@@ -556,7 +562,7 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         self.provideRedemptionProof(
             _txVersion,
             _txInputVector,
@@ -614,7 +620,7 @@ contract Deposit is DepositFactoryAuthority {
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript,
         address payable _finalRecipient
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         require(
             msg.sender == self.vendingMachineAddress,
             "Only the vending machine can call transferAndRequestRedemption"
@@ -628,7 +634,7 @@ contract Deposit is DepositFactoryAuthority {
 
     /// @notice Withdraw the ETH balance of the deposit allotted to the caller.
     /// @dev Withdrawals can only happen when a contract is in an end-state.
-    function withdrawFunds() public {
+    function withdrawFunds() external {
         self.withdrawFunds();
     }
 }

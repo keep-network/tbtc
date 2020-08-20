@@ -143,7 +143,7 @@ library DepositRedemption {
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript,
         address payable _finalRecipient
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         _d.tbtcDepositToken.transferFrom(msg.sender, _finalRecipient, uint256(address(this)));
 
         _requestRedemption(_d, _outputValueBytes, _redeemerOutputScript, _finalRecipient);
@@ -159,7 +159,7 @@ library DepositRedemption {
         DepositUtils.Deposit storage _d,
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         _requestRedemption(_d, _outputValueBytes, _redeemerOutputScript, msg.sender);
     }
 
@@ -174,7 +174,7 @@ library DepositRedemption {
         uint8 _v,
         bytes32 _r,
         bytes32 _s
-    ) public {
+    ) external {
         require(_d.inAwaitingWithdrawalSignature(), "Not currently awaiting a signature");
 
         // If we're outside of the signature window, we COULD punish signers here
@@ -300,7 +300,7 @@ library DepositRedemption {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         bytes32 _txid;
         uint256 _fundingOutputValue;
 
@@ -361,7 +361,7 @@ library DepositRedemption {
     /// @notice     Anyone may notify the contract that the signers have failed to produce a signature.
     /// @dev        This is considered fraud, and is punished.
     /// @param  _d  Deposit storage pointer.
-    function notifyRedemptionSignatureTimedOut(DepositUtils.Deposit storage _d) public {
+    function notifyRedemptionSignatureTimedOut(DepositUtils.Deposit storage _d) external {
         require(_d.inAwaitingWithdrawalSignature(), "Not currently awaiting a signature");
         require(block.timestamp > _d.withdrawalRequestTime.add(TBTCConstants.getSignatureTimeout()), "Signature timer has not elapsed");
         _d.startLiquidation(false);  // not fraud, just failure
@@ -370,7 +370,7 @@ library DepositRedemption {
     /// @notice     Anyone may notify the contract that the signers have failed to produce a redemption proof.
     /// @dev        This is considered fraud, and is punished.
     /// @param  _d  Deposit storage pointer.
-    function notifyRedemptionProofTimedOut(DepositUtils.Deposit storage _d) public {
+    function notifyRedemptionProofTimedOut(DepositUtils.Deposit storage _d) external {
         require(_d.inAwaitingWithdrawalProof(), "Not currently awaiting a redemption proof");
         require(block.timestamp > _d.withdrawalRequestTime.add(TBTCConstants.getRedemptionProofTimeout()), "Proof timer has not elapsed");
         _d.startLiquidation(false);  // not fraud, just failure

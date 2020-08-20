@@ -167,7 +167,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Return the largest lot size currently enabled for deposits.
     /// @return The largest lot size, in satoshis.
-    function getMaximumLotSize() public view returns (uint256) {
+    function getMaximumLotSize() external view returns (uint256) {
         return lotSizesSatoshis[lotSizesSatoshis.length - 1];
     }
 
@@ -182,7 +182,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Anyone can reactivate deposit creations after the pause duration is over.
-    function resumeNewDeposits() public {
+    function resumeNewDeposits() external {
         require(allowNewDeposits == false, "New deposits are currently allowed");
         require(pausedTimestamp != 0, "Deposit has not been paused");
         require(block.timestamp.sub(pausedTimestamp) >= pausedDuration, "Deposits are still paused");
@@ -190,7 +190,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         emit AllowNewDepositsUpdated(true);
     }
 
-    function getRemainingPauseTerm() public view returns (uint256) {
+    function getRemainingPauseTerm() external view returns (uint256) {
         require(allowNewDeposits == false, "New deposits are currently allowed");
         return (block.timestamp.sub(pausedTimestamp) >= pausedDuration)?
             0:
@@ -599,7 +599,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Returns the time delay used for governance actions except for
     ///         price feed additions.
-    function getGovernanceTimeDelay() public pure returns (uint256) {
+    function getGovernanceTimeDelay() external pure returns (uint256) {
         return governanceTimeDelay;
     }
 
@@ -610,7 +610,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Returns the time delay used for price feed addition governance
     ///         actions.
-    function getPriceFeedGovernanceTimeDelay() public view returns (uint256) {
+    function getPriceFeedGovernanceTimeDelay() external pure returns (uint256) {
         return priceFeedGovernanceTimeDelay;
     }
 

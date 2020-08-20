@@ -3,6 +3,12 @@ pragma solidity 0.5.17;
 import {TBTCDepositToken} from "./system/TBTCDepositToken.sol";
 
 
+// solium-disable function-order
+// Below, a few functions must be public to allow bytes memory parameters, but
+// their being so triggers errors because public functions should be grouped
+// below external functions. Since these would be external if it were possible,
+// we ignore the issue.
+
 contract DepositLog {
     /*
     Logging philosophy:
@@ -113,20 +119,6 @@ contract DepositLog {
     );
 
     //
-    // AUTH
-    //
-
-    /// @notice             Checks if an address is an allowed logger.
-    /// @dev                checks tbtcDepositToken to see if the caller represents
-    ///                     an existing deposit.
-    ///                     We don't require this, so deposits are not bricked if the system borks.
-    /// @param  _caller     The address of the calling contract.
-    /// @return             True if approved, otherwise false.
-    function approvedToLog(address _caller) public view returns (bool) {
-        return tbtcDepositToken.exists(uint256(_caller));
-    }
-
-    //
     // Logging
     //
 
@@ -134,7 +126,7 @@ contract DepositLog {
     /// @dev                  We append the sender, which is the deposit contract that called.
     /// @param  _keepAddress  The address of the associated keep.
     /// @return               True if successful, else revert.
-    function logCreated(address _keepAddress) public {
+    function logCreated(address _keepAddress) external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -159,6 +151,7 @@ contract DepositLog {
         uint256 _requestedFee,
         bytes memory _outpoint
     ) public {
+        // not external to allow bytes memory parameters
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -180,7 +173,7 @@ contract DepositLog {
     /// @param  _r      signature r value.
     /// @param  _s      signature s value.
     function logGotRedemptionSignature(bytes32 _digest, bytes32 _r, bytes32 _s)
-        public
+        external
     {
         require(
             approvedToLog(msg.sender),
@@ -200,7 +193,7 @@ contract DepositLog {
     function logRegisteredPubkey(
         bytes32 _signingGroupPubkeyX,
         bytes32 _signingGroupPubkeyY
-    ) public {
+    ) external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -215,7 +208,7 @@ contract DepositLog {
 
     /// @notice     Fires a SetupFailed event.
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logSetupFailed() public {
+    function logSetupFailed() external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -226,6 +219,7 @@ contract DepositLog {
     /// @notice     Fires a FunderAbortRequested event.
     /// @dev        We append the sender, which is the deposit contract that called.
     function logFunderRequestedAbort(bytes memory _abortOutputScript) public {
+        // not external to allow bytes memory parameters
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -235,7 +229,7 @@ contract DepositLog {
 
     /// @notice     Fires a FraudDuringSetup event.
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logFraudDuringSetup() public {
+    function logFraudDuringSetup() external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -245,7 +239,7 @@ contract DepositLog {
 
     /// @notice     Fires a Funded event.
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logFunded(bytes32 _txid) public {
+    function logFunded(bytes32 _txid) external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -255,7 +249,7 @@ contract DepositLog {
 
     /// @notice     Fires a CourtesyCalled event.
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logCourtesyCalled() public {
+    function logCourtesyCalled() external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -266,7 +260,7 @@ contract DepositLog {
     /// @notice             Fires a StartedLiquidation event.
     /// @dev                We append the sender, which is the deposit contract that called.
     /// @param _wasFraud    True if liquidating for fraud.
-    function logStartedLiquidation(bool _wasFraud) public {
+    function logStartedLiquidation(bool _wasFraud) external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -276,7 +270,7 @@ contract DepositLog {
 
     /// @notice     Fires a Redeemed event
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logRedeemed(bytes32 _txid) public {
+    function logRedeemed(bytes32 _txid) external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -286,7 +280,7 @@ contract DepositLog {
 
     /// @notice     Fires a Liquidated event
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logLiquidated() public {
+    function logLiquidated() external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -296,7 +290,7 @@ contract DepositLog {
 
     /// @notice     Fires a ExitedCourtesyCall event
     /// @dev        We append the sender, which is the deposit contract that called.
-    function logExitedCourtesyCall() public {
+    function logExitedCourtesyCall() external {
         require(
             approvedToLog(msg.sender),
             "Caller is not approved to log events"
@@ -316,5 +310,19 @@ contract DepositLog {
             "tbtcDepositToken is already set"
         );
         tbtcDepositToken = _tbtcDepositTokenAddress;
+    }
+
+    //
+    // AUTH
+    //
+
+    /// @notice             Checks if an address is an allowed logger.
+    /// @dev                checks tbtcDepositToken to see if the caller represents
+    ///                     an existing deposit.
+    ///                     We don't require this, so deposits are not bricked if the system borks.
+    /// @param  _caller     The address of the calling contract.
+    /// @return             True if approved, otherwise false.
+    function approvedToLog(address _caller) public view returns (bool) {
+        return tbtcDepositToken.exists(uint256(_caller));
     }
 }

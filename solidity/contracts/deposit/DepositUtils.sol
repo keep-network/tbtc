@@ -203,7 +203,7 @@ library DepositUtils {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){
+    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){ // not external to allow bytes memory parameters
         require(_txInputVector.validateVin(), "invalid input vector provided");
         require(_txOutputVector.validateVout(), "invalid output vector provided");
 
@@ -236,7 +236,7 @@ library DepositUtils {
     /// @dev        We calculate the % of the auction that has elapsed, then scale the value up.
     /// @param _d   Deposit storage pointer.
     /// @return     The value in wei to distribute in the auction at the current time.
-    function auctionValue(Deposit storage _d) public view returns (uint256) {
+    function auctionValue(Deposit storage _d) external view returns (uint256) {
         uint256 _elapsed = block.timestamp.sub(_d.liquidationInitiated);
         uint256 _available = address(this).balance;
         if (_elapsed > TBTCConstants.getAuctionDuration()) {
@@ -288,7 +288,7 @@ library DepositUtils {
     /// @notice    Returns the packed public key (64 bytes) for the signing group.
     /// @dev       We store it as 2 bytes32, (2 slots) then repack it on demand.
     /// @return    64 byte public key.
-    function signerPubkey(Deposit storage _d) public view returns (bytes memory) {
+    function signerPubkey(Deposit storage _d) external view returns (bytes memory) {
         return abi.encodePacked(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
     }
 
@@ -304,21 +304,21 @@ library DepositUtils {
     /// @notice    Returns the size of the deposit UTXO in satoshi.
     /// @dev       We store the deposit as bytes8 to make signature checking easier.
     /// @return    UTXO value in satoshi.
-    function utxoValue(Deposit storage _d) public view returns (uint256) {
+    function utxoValue(Deposit storage _d) external view returns (uint256) {
         return bytes8LEToUint(_d.utxoValueBytes);
     }
 
     /// @notice     Gets the current price of Bitcoin in Ether.
     /// @dev        Polls the price feed via the system contract.
     /// @return     The current price of 1 sat in wei.
-    function fetchBitcoinPrice(Deposit storage _d) public view returns (uint256) {
+    function fetchBitcoinPrice(Deposit storage _d) external view returns (uint256) {
         return _d.tbtcSystem.fetchBitcoinPrice();
     }
 
     /// @notice     Fetches the Keep's bond amount in wei.
     /// @dev        Calls the keep contract to do so.
     /// @return     The amount of bonded ETH in wei.
-    function fetchBondAmount(Deposit storage _d) public view returns (uint256) {
+    function fetchBondAmount(Deposit storage _d) external view returns (uint256) {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.checkBondAmount();
     }
@@ -335,7 +335,7 @@ library DepositUtils {
     /// @param _digest  Digest to check approval for.
     /// @return         Timestamp from the moment of recording the digest for signing.
     ///                 Returns 0 if the digest was not approved for signing.
-    function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) public view returns (uint256) {
+    function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) external view returns (uint256) {
         return _d.approvedDigests[_digest];
     }
 
