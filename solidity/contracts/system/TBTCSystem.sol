@@ -664,10 +664,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function calculateBondRequirementWei(
         uint256 _requestedLotSizeSatoshis
     ) internal view returns (uint256) {
-        uint256 bondRequirementSatoshis = _lotSizeSatoshis.mul(
-            initialCollateralizedPercent
-        ).div(100);
-        return _fetchBitcoinPrice().mul(bondRequirementSatoshis);
+        uint256 lotSizeInWei = _fetchBitcoinPrice().mul(_requestedLotSizeSatoshis);
+        return lotSizeInWei.mul(initialCollateralizedPercent).div(100);
     }
 
     function _fetchBitcoinPrice() internal view returns (uint256) {
