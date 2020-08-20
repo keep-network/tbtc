@@ -9,7 +9,14 @@ contract DepositFactoryAuthority {
     bool internal _initialized = false;
     address internal _depositFactory;
 
-    /// @notice Set the address of the System contract on contract initialization.
+    /// @notice Set the address of the System contract on contract
+    ///         initialization.
+    /// @dev Since this function is not access-controlled, it should be called
+    ///      transactionally with contract instantiation. In cases where a
+    ///      regular contract directly inherits from DepositFactoryAuthority,
+    ///      that should happen in the constructor. In cases where the inheritor
+    ///      is binstead used via a clone factory, the same function that
+    ///      creates a new clone should also trigger initialization.
     function initialize(address _factory) public {
         require(! _initialized, "Factory can only be initialized once.");
 
