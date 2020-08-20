@@ -16,8 +16,8 @@ interface ITBTCSystem {
     function fetchRelayPreviousDifficulty() external view returns (uint256);
     function getNewDepositFeeEstimate() external view returns (uint256);
     function getAllowNewDeposits() external view returns (bool);
-    function isAllowedLotSize(uint64 _lotSizeSatoshis) external view returns (bool);
-    function requestNewKeep(uint64 _lotSizeSatoshis, uint256 _maxSecuredLifetime) external payable returns (address);
+    function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) external view returns (bool);
+    function requestNewKeep(uint64 _requestedLotSizeSatoshis, uint256 _maxSecuredLifetime) external payable returns (address);
     function getSignerFeeDivisor() external view returns (uint16);
     function getInitialCollateralizedPercent() external view returns (uint16);
     function getUndercollateralizedThresholdPercent() external view returns (uint16);

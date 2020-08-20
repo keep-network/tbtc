@@ -626,11 +626,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Request a new keep opening.
-    /// @param _lotSizeSatoshis Lot size in satoshis.
+    /// @param _requestedLotSizeSatoshis Lot size in satoshis.
     /// @param _maxSecuredLifetime Duration of stake lock in seconds.
     /// @return Address of a new keep.
     function requestNewKeep(
-        uint64 _lotSizeSatoshis,
+        uint64 _requestedLotSizeSatoshis,
         uint256 _maxSecuredLifetime
     )
         external
@@ -638,19 +638,19 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        require(isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
+        require(isAllowedLotSize(_requestedLotSizeSatoshis), "provided lot size not supported");
 
         IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
-        uint256 bond = calculateBondRequirementWei(_lotSizeSatoshis);
+        uint256 bond = calculateBondRequirementWei(_requestedLotSizeSatoshis);
         return _keepFactory.openKeep.value(msg.value)(keepSize, keepThreshold, msg.sender, bond, _maxSecuredLifetime);
     }
 
     /// @notice Check if a lot size is allowed.
-    /// @param _lotSizeSatoshis Lot size to check.
+    /// @param _requestedLotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint64 _lotSizeSatoshis) public view returns (bool){
+    function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) public view returns (bool){
         for( uint i = 0; i < lotSizesSatoshis.length; i++){
-            if (lotSizesSatoshis[i] == _lotSizeSatoshis){
+            if (lotSizesSatoshis[i] == _requestedLotSizeSatoshis){
                 return true;
             }
         }
@@ -658,11 +658,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Calculates bond requirement in wei for the given lot size in
-    /// satoshis based on the current ETHBTC price.
-    /// @param _lotSizeSatoshis Lot size in satoshis.
+    ///         satoshis based on the current ETHBTC price.
+    /// @param _requestedLotSizeSatoshis Lot size in satoshis.
     /// @return Bond requirement in wei.
     function calculateBondRequirementWei(
-        uint256 _lotSizeSatoshis
+        uint256 _requestedLotSizeSatoshis
     ) internal view returns (uint256) {
         uint256 bondRequirementSatoshis = _lotSizeSatoshis.mul(
             initialCollateralizedPercent
