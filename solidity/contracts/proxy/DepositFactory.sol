@@ -68,6 +68,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     /// @return The address of the new deposit.
     function createDeposit(uint64 _lotSizeSatoshis) public payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
+        emit DepositCloneCreated(cloneAddress);
 
         TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));
 
@@ -81,8 +82,6 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
                 vendingMachineAddress,
                 _lotSizeSatoshis
             );
-
-        emit DepositCloneCreated(cloneAddress);
 
         return cloneAddress;
     }

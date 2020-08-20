@@ -480,9 +480,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         nextEthBtcPriceFeed = IMedianizer(0);
         ethBtcPriceFeedAdditionInitiated = 0;
 
-        priceFeed.addEthBtcFeed(_nextEthBtcPriceFeed);
-
         emit EthBtcPriceFeedAdded(address(_nextEthBtcPriceFeed));
+
+        priceFeed.addEthBtcFeed(_nextEthBtcPriceFeed);
     }
 
     /// @notice Gets the system signer fee divisor.
