@@ -52,7 +52,9 @@ contract Deposit is DepositFactoryAuthority {
     ///      the constructed deposit. The factory will set the initial values
     ///      for a new clone using `initializeDeposit`.
     constructor () public {
-        initialize(address(0));
+        // The constructed Deposit will never be used, so the deposit factory
+        // address can be anything. Clones are updated as per above.
+        initialize(address(0xdeadbeef));
     }
 
     /// @notice Deposits do not accept arbitrary ETH.

@@ -18,6 +18,7 @@ contract DepositFactoryAuthority {
     ///      is binstead used via a clone factory, the same function that
     ///      creates a new clone should also trigger initialization.
     function initialize(address _factory) public {
+        require(_factory != address(0), "Factory cannot be the zero address.");
         require(! _initialized, "Factory can only be initialized once.");
 
         _depositFactory = _factory;
