@@ -1,12 +1,3 @@
 {
-    "cwd": "solidity",
-    "custom_unit_test": {
-        "enabled": true,
-        "commands": [
-            {
-                "command": ["npm", "run", "test"],
-                "expected": "{RETURN_CODE} == 0"
-            }
-        ]
-    }
+    "cwd": "solidity"
 }
