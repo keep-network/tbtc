@@ -409,7 +409,7 @@ describe("KeepFactorySelection", async () => {
 
       await expectRevert(
         newKeepFactorySelection.setMinimumBondableValue(newValue, 5, 3),
-        "KEEP backed vendor not set",
+        "KEEP-staked vendor not set",
       )
     })
 
@@ -649,7 +649,7 @@ describe("KeepFactorySelection", async () => {
           constants.ZERO_ADDRESS,
           fullyBackedFactory.address,
         ),
-        "KEEP backed vendor not set",
+        "KEEP-staked vendor not set",
       )
     })
 
@@ -673,7 +673,7 @@ describe("KeepFactorySelection", async () => {
           thirdParty,
           fullyBackedFactory.address,
         ),
-        "Unexpected KEEP backed factory",
+        "Unexpected KEEP-staked factory",
       )
     })
 

@@ -124,7 +124,7 @@ library KeepFactorySelection {
     ) public {
         require(
             address(_self.keepStakeVendor) != address(0),
-            "KEEP backed vendor not set"
+            "KEEP-staked vendor not set"
         );
 
         IBondedECDSAKeepFactory keepStakeFactory = getKeepStakedFactory(_self);
@@ -291,7 +291,7 @@ library KeepFactorySelection {
 
         require(
             address(_self.keepStakeVendor) != address(0),
-            "KEEP backed vendor not set"
+            "KEEP-staked vendor not set"
         );
         require(
             address(_self.fullyBackedVendor) != address(0),
@@ -309,7 +309,7 @@ library KeepFactorySelection {
 
         require(
             address(latestKeepStakeFactory) == _expectedKeepStakeFactory,
-            "Unexpected KEEP backed factory"
+            "Unexpected KEEP-staked factory"
         );
         require(
             address(latestFullyBackedFactory) == _expectedFullyBackedFactory,
