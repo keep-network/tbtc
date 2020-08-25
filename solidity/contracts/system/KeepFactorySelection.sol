@@ -69,7 +69,15 @@ library KeepFactorySelection {
         );
 
         _self.keepStakeVendor = IBondedECDSAKeepVendor(_defaultVendor);
-        _self.selectedFactory = getKeepStakedFactory(_self);
+
+        address keepStakeFactory = _self.keepStakeVendor.selectFactory();
+
+        require(
+            keepStakeFactory != address(0),
+            "Vendor returned invalid factory address"
+        );
+
+        _self.selectedFactory = IBondedECDSAKeepFactory(keepStakeFactory);
     }
 
     /// @notice Returns the selected keep factory.
@@ -179,16 +187,8 @@ library KeepFactorySelection {
         if (_self.factoriesVersionsLock) {
             return _self.keepStakeFactory;
         } else {
-            IBondedECDSAKeepFactory keepStakeFactory = IBondedECDSAKeepFactory(
-                _self.keepStakeVendor.selectFactory()
-            );
-
-            require(
-                address(keepStakeFactory) != address(0),
-                "Vendor returned invalid factory address"
-            );
-
-            return keepStakeFactory;
+            return
+                IBondedECDSAKeepFactory(_self.keepStakeVendor.selectFactory());
         }
     }
 
@@ -202,16 +202,10 @@ library KeepFactorySelection {
         if (_self.factoriesVersionsLock) {
             return _self.fullyBackedFactory;
         } else {
-            IBondedECDSAKeepFactory fullyBackedFactory = IBondedECDSAKeepFactory(
-                _self.fullyBackedVendor.selectFactory()
-            );
-
-            require(
-                address(fullyBackedFactory) != address(0),
-                "Vendor returned invalid factory address"
-            );
-
-            return fullyBackedFactory;
+            return
+                IBondedECDSAKeepFactory(
+                    _self.fullyBackedVendor.selectFactory()
+                );
         }
     }
 
@@ -293,12 +287,12 @@ library KeepFactorySelection {
             "Fully backed vendor not set"
         );
 
-        IBondedECDSAKeepFactory latestKeepStakeFactory = getKeepStakedFactory(
-            _self
-        );
-        IBondedECDSAKeepFactory latestFullyBackedFactory = getFullyBackedFactory(
-            _self
-        );
+        address latestKeepStakeFactory = _self
+            .keepStakeVendor
+            .selectFactory();
+        address latestFullyBackedFactory = _self
+            .fullyBackedVendor
+            .selectFactory();
 
         require(
             address(latestKeepStakeFactory) == _expectedKeepStakeFactory,
@@ -309,8 +303,8 @@ library KeepFactorySelection {
             "Unexpected fully backed factory"
         );
 
-        _self.keepStakeFactory = latestKeepStakeFactory;
-        _self.fullyBackedFactory = latestFullyBackedFactory;
+        _self.keepStakeFactory = IBondedECDSAKeepFactory(latestKeepStakeFactory);
+        _self.fullyBackedFactory = IBondedECDSAKeepFactory(latestFullyBackedFactory);
 
         _self.factoriesVersionsLock = true;
     }

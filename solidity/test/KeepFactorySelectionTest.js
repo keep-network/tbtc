@@ -71,7 +71,7 @@ describe("KeepFactorySelection", async () => {
   })
 
   describe("selectFactory", async () => {
-    // No ETH stake factory set,
+    // No ETH-only factory set,
     // No selection strategy set.
     it("returns KEEP stake factory by default", async () => {
       const selected = await keepFactorySelection.selectFactory()
@@ -80,7 +80,7 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // ETH stake factory set.
+    // ETH-only factory set.
     // Selection strategy set.
     it("returns the same factory until refreshed", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
@@ -121,7 +121,7 @@ describe("KeepFactorySelection", async () => {
   })
 
   describe("selectFactoryAndRefresh", async () => {
-    // No ETH stake vendor set.
+    // No ETH-only vendor set.
     // No selection strategy set.
     it("returns KEEP stake factory by default", async () => {
       const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
@@ -131,7 +131,7 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // ETH stake vendor set.
+    // ETH-only vendor set.
     // No selection strategy set.
     it("returns KEEP stake factory if strategy is not set", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
@@ -144,9 +144,9 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // No ETH stake vendor set.
+    // No ETH-only vendor set.
     // Selection strategy set.
-    it("returns KEEP stake factory if ETH stake factory is not set", async () => {
+    it("returns KEEP stake factory if ETH-only factory is not set", async () => {
       await keepFactorySelection.setKeepFactorySelector(
         keepFactorySelector.address,
       )
@@ -157,7 +157,7 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // ETH stake vendor set.
+    // ETH-only vendor set.
     // Selection strategy set.
     it("returns fully-backed factory if selected by the strategy", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
@@ -180,7 +180,7 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // ETH stake vendor set.
+    // ETH-only vendor set.
     // Selection strategy set.
     it("returns default factory if selected by the strategy", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
@@ -203,7 +203,7 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // ETH stake vendor set.
+    // ETH-only vendor set.
     // Selection strategy set.
     it("returns the factory selected before refreshing", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
@@ -230,7 +230,7 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // No ETH stake vendor set.
+    // No ETH-only vendor set.
     // No selection strategy set.
     it("gets new KEEP stake factory after update in vendor", async () => {
       const newKeepFactory = await ECDSAKeepFactoryStub.new()
@@ -251,9 +251,9 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // ETH stake vendor set.
+    // ETH-only vendor set.
     // Selection strategy set.
-    it("gets new ETH stake factory after update in vendor", async () => {
+    it("gets new ETH-only factory after update in vendor", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
         fullyBackedVendor.address,
       )
@@ -287,7 +287,7 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // No ETH stake vendor set.
+    // No ETH-only vendor set.
     // No selection strategy set.
     it("returns locked KEEP stake factory", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
@@ -313,9 +313,9 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // ETH stake vendor set.
+    // ETH-only vendor set.
     // Selection strategy set.
-    it("returns locked ETH stake factory", async () => {
+    it("returns locked ETH-only factory", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
         fullyBackedVendor.address,
       )
@@ -361,16 +361,21 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    it("reverts when KEEP stake vendor returns factory with zero address", async () => {
+    it("returns zero address when KEEP stake vendor returns factory with zero address", async () => {
       await keepStakeVendor.setFactory(constants.ZERO_ADDRESS)
 
-      await expectRevert(
-        keepFactorySelection.selectFactoryAndRefresh(),
-        "Vendor returned invalid factory address",
+      // refresh the choice
+      await keepFactorySelection.selectFactoryAndRefresh()
+
+      // refresh the choice; it should be the KEEP staked factory (zero address)
+      const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
+      await keepFactorySelection.selectFactoryAndRefresh()
+      expect(selected, "unexpected factory selected").to.equal(
+        constants.ZERO_ADDRESS,
       )
     })
 
-    it("reverts when ETH stake vendor returns factory with zero address", async () => {
+    it("returns zero address when ETH-only vendor returns factory with zero address", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
         fullyBackedVendor.address,
       )
@@ -380,9 +385,16 @@ describe("KeepFactorySelection", async () => {
 
       await fullyBackedVendor.setFactory(constants.ZERO_ADDRESS)
 
-      await expectRevert(
-        keepFactorySelection.selectFactoryAndRefresh(),
-        "Vendor returned invalid factory address",
+      await keepFactorySelector.setFullyBackedMode()
+
+      // refresh the choice
+      await keepFactorySelection.selectFactoryAndRefresh()
+
+      // refresh the choice; it should be the ETH-only factory (zero address)
+      const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
+      await keepFactorySelection.selectFactoryAndRefresh()
+      expect(selected, "unexpected factory selected").to.equal(
+        constants.ZERO_ADDRESS,
       )
     })
   })
@@ -534,6 +546,18 @@ describe("KeepFactorySelection", async () => {
     })
 
     it("reverts when KEEP stake vendor not set", async () => {
+      const newKeepFactorySelection = await KeepFactorySelectionStub.new()
+
+      await expectRevert(
+        newKeepFactorySelection.lockFactoriesVersions(
+          constants.ZERO_ADDRESS,
+          fullyBackedFactory.address,
+        ),
+        "KEEP backed vendor not set",
+      )
+    })
+
+    it("reverts when ETH-only vendor not set", async () => {
       await expectRevert(
         keepFactorySelection.lockFactoriesVersions(
           constants.ZERO_ADDRESS,
@@ -557,7 +581,7 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    it("reverts for unexpected ETH stake factory address", async () => {
+    it("reverts for unexpected ETH-only factory address", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
         fullyBackedVendor.address,
       )
