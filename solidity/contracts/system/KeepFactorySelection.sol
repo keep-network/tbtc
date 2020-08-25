@@ -1,5 +1,6 @@
 pragma solidity 0.5.17;
 
+import {IBondedECDSAKeepVendor} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepVendor.sol";
 import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
 /// @title Bonded ECDSA keep factory selection strategy.
@@ -22,9 +23,10 @@ interface KeepFactorySelector {
 
 /// @title Bonded ECDSA keep factory selection library.
 /// @notice tBTC uses two bonded ECDSA keep factories: one based on KEEP stake
-/// and ETH bond, and another based on ETH stake and ETH bond. The library holds
-/// a reference to both factories as well as a reference to a selection strategy
-/// deciding which factory to choose for the new deposit being opened.
+/// and ETH bond, and another based on ETH stake and ETH bond. Factories addresses
+/// are obtained through calls to respective vendor contracts. The library holds
+/// a reference to both vendors and factories as well as a reference to a selection
+/// strategy deciding which factory to choose for the new deposit being opened.
 library KeepFactorySelection {
 
     struct Storage {
@@ -34,28 +36,33 @@ library KeepFactorySelection {
 
         KeepFactorySelector factorySelector;
 
-        // Standard ECDSA keep factory: KEEP stake and ETH bond.
+        // Standard ECDSA keep vendor and factory: KEEP stake and ETH bond.
         // Guaranteed to be set for initialized factory.
+        IBondedECDSAKeepVendor keepStakeVendor;
         IBondedECDSAKeepFactory keepStakeFactory;
 
-        // Fully backed ECDSA keep factory: ETH stake and ETH bond.
+        // Fully backed ECDSA keep vendor and factory: ETH stake and ETH bond.
+        IBondedECDSAKeepVendor ethStakeVendor;
         IBondedECDSAKeepFactory ethStakeFactory;
     }
 
     /// @notice Initializes the library with the default KEEP-stake-based
-    /// factory. The default factory is guaranteed to be set and this function
-    /// must be called when creating contract using this library.
+    /// vendor. The default vendor is guaranteed to be set and this function
+    /// must be called when creating contract using this library. It calls the
+    /// vendor to obtain the default factory address.
     /// @dev This function can be called only one time.
     function initialize(
         Storage storage _self,
-        IBondedECDSAKeepFactory _defaultFactory
+        IBondedECDSAKeepVendor _defaultVendor
     ) public {
         require(
-            address(_self.keepStakeFactory) == address(0),
+            address(_self.keepStakeVendor) == address(0),
             "Already initialized"
         );
 
-        _self.keepStakeFactory = IBondedECDSAKeepFactory(_defaultFactory);
+        _self.keepStakeVendor = IBondedECDSAKeepVendor(_defaultVendor);
+        _self.keepStakeFactory = getKeepStakedFactory(_self);
+
         _self.selectedFactory = _self.keepStakeFactory;
     }
 
@@ -123,6 +130,8 @@ library KeepFactorySelection {
     /// factories to make a choice. Additionally, passes the selection seed
     /// evaluated from the current request counter value.
     function refreshFactory(Storage storage _self) internal {
+        _self.keepStakeFactory = getKeepStakedFactory(_self);
+
         if (
             address(_self.ethStakeFactory) == address(0) ||
             address(_self.factorySelector) == address(0)
@@ -132,6 +141,8 @@ library KeepFactorySelection {
             _self.selectedFactory = _self.keepStakeFactory;
             return;
         }
+
+        _self.ethStakeFactory = getFullyBackedFactory(_self);
 
         _self.requestCounter++;
         uint256 seed = uint256(
@@ -150,6 +161,44 @@ library KeepFactorySelection {
         );
     }
 
+    /// @notice Returns KEEP staked factory address. If factories lock is not set
+    /// it calls the KEEP staked vendor to obtain the latest versions of the factory.
+    function getKeepStakedFactory(Storage storage _self)
+        internal
+        view
+        returns (IBondedECDSAKeepFactory)
+    {
+        IBondedECDSAKeepFactory keepStakeFactory = IBondedECDSAKeepFactory(
+            _self.keepStakeVendor.selectFactory()
+        );
+
+        require(
+            address(keepStakeFactory) != address(0),
+            "Vendor returned invalid factory address"
+        );
+
+        return keepStakeFactory;
+    }
+
+    /// @notice Returns ETH-stake based factory address. If factories lock is not set
+    /// it calls the ETH staked vendor to obtain the latest versions of the factory.
+    function getFullyBackedFactory(Storage storage _self)
+        internal
+        view
+        returns (IBondedECDSAKeepFactory)
+    {
+        IBondedECDSAKeepFactory ethStakeFactory = IBondedECDSAKeepFactory(
+            _self.ethStakeVendor.selectFactory()
+        );
+
+        require(
+            address(ethStakeFactory) != address(0),
+            "Vendor returned invalid factory address"
+        );
+
+        return ethStakeFactory;
+    }
+
     /// @notice Sets the address of the fully backed, ETH-stake based keep
     /// factory. KeepFactorySelection can work without the fully-backed keep
     /// factory set, always selecting the default KEEP-stake-based factory.
@@ -157,22 +206,27 @@ library KeepFactorySelection {
     /// set, KEEP-stake-based factory is no longer the default choice and it is
     /// up to the selection strategy to decide which factory should be chosen.
     /// @dev Can be called only one time!
-    /// @param _fullyBackedFactory Address of the fully-backed, ETH-stake based
-    /// keep factory.
-    function setFullyBackedKeepFactory(
+    /// @param _fullyBackedVendor Address of the fully-backed, ETH-stake based
+    /// keep vendor.
+    function setFullyBackedKeepVendor(
         Storage storage _self,
-        address _fullyBackedFactory
+        address _fullyBackedVendor
     ) internal {
         require(
-            address(_self.ethStakeFactory) == address(0),
-            "Fully backed factory already set"
+            address(_self.ethStakeVendor) == address(0),
+            "Fully backed vendor already set"
         );
-        require(
-            address(_fullyBackedFactory) != address(0),
-            "Invalid address"
-        );
+        require(_fullyBackedVendor != address(0), "Invalid address");
 
-        _self.ethStakeFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
+        IBondedECDSAKeepVendor ethStakeVendor = IBondedECDSAKeepVendor(
+            _fullyBackedVendor
+        );
+        address ethStakeFactory = ethStakeVendor.selectFactory();
+
+        require(ethStakeFactory != address(0), "Vendor returned invalid factory address");
+
+        _self.ethStakeVendor = ethStakeVendor;
+        _self.ethStakeFactory = IBondedECDSAKeepFactory(ethStakeFactory);
     }
 
     /// @notice Sets the address of the keep factory selection strategy contract.

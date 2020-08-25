@@ -8,8 +8,8 @@ contract KeepFactorySelectionStub {
     using KeepFactorySelection for KeepFactorySelection.Storage;
     KeepFactorySelection.Storage keepFactorySelection;
 
-    function initialize(IBondedECDSAKeepFactory _defaultFactory) public {
-        keepFactorySelection.initialize(_defaultFactory);
+    function initialize(IBondedECDSAKeepVendor _defaultVendor) public {
+        keepFactorySelection.initialize(_defaultVendor);
     }
 
     function selectFactory() public view returns (IBondedECDSAKeepFactory) {
@@ -20,8 +20,8 @@ contract KeepFactorySelectionStub {
         return keepFactorySelection.selectFactoryAndRefresh();
     }
 
-    function setFullyBackedKeepFactory(address _fullyBackedFactory) public {
-        keepFactorySelection.setFullyBackedKeepFactory(_fullyBackedFactory);
+    function setFullyBackedKeepVendor(address _fullyBackedVendor) public {
+        keepFactorySelection.setFullyBackedKeepVendor(_fullyBackedVendor);
     }
 
     function setKeepFactorySelector(address _factorySelector) public {

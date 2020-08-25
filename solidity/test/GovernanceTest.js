@@ -9,12 +9,14 @@ const TBTCSystem = contract.fromArtifact("TBTCSystem")
 const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
 const MockMedianizer = contract.fromArtifact("MockMedianizer")
 const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
+const ECDSAKeepVendorStub = contract.fromArtifact("ECDSAKeepVendorStub")
 
 describe("TBTCSystem governance", async function() {
   let tbtcSystem
   let keepFactorySelector
   let ecdsaKeepFactory
   let newKeepFactory
+  let newKeepVendor
   let satWeiPriceFeed
   let ethBtcMedianizer
   let badEthBtcMedianizer
@@ -31,6 +33,7 @@ describe("TBTCSystem governance", async function() {
       mockSatWeiPriceFeed,
       keepFactorySelectorStub,
       ecdsaKeepFactoryStub,
+      ecdsaKeepVendorStub,
     } = await deployAndLinkAll(
       [],
       // Though deployTestDeposit deploys a TBTCSystemStub for us, we want to
@@ -43,12 +46,14 @@ describe("TBTCSystem governance", async function() {
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
     ecdsaKeepFactory = ecdsaKeepFactoryStub
+    ecdsaKeepVendor = ecdsaKeepVendorStub
     keepFactorySelector = keepFactorySelectorStub
     tdt = tbtcDepositToken
     satWeiPriceFeed = mockSatWeiPriceFeed
 
     newKeepFactory = await ECDSAKeepFactoryStub.new()
     await newKeepFactory.setOpenKeepFeeEstimate(83)
+    newKeepVendor = await ECDSAKeepVendorStub.new(newKeepFactory.address)
 
     ethBtcMedianizer = await MockMedianizer.new()
     await ethBtcMedianizer.setValue(medianizerValue)
@@ -171,7 +176,7 @@ describe("TBTCSystem governance", async function() {
     })
   })
 
-  describe("when trying to update Keep factory info more than once", async () => {
+  describe("when trying to update Keep vendor info more than once", async () => {
     beforeEach(async () => {
       await createSnapshot()
     })
@@ -180,50 +185,50 @@ describe("TBTCSystem governance", async function() {
       await restoreSnapshot()
     })
 
-    it("does not revert if beginKeepFactorySingleShotUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("does not revert if beginKeepVendorSingleShotUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepVendorSingleShotUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
       )
 
       // Should not revert.
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+      await tbtcSystem.beginKeepVendorSingleShotUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
       )
     })
 
-    it("reverts if finalizeKeepFactorySingleShotUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("reverts if finalizeKeepVendorSingleShotUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepVendorSingleShotUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
+      const finalizationTime = await tbtcSystem.getRemainingKeepVendorSingleShotUpdateTime()
       await increaseTime(finalizationTime.toNumber() + 1) // 10 days
-      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+      await tbtcSystem.finalizeKeepVendorSingleShotUpdate()
 
       await expectRevert(
-        tbtcSystem.beginKeepFactorySingleShotUpdate(
+        tbtcSystem.beginKeepVendorSingleShotUpdate(
           "0x0000000000000000000000000000000000000001",
           "0x0000000000000000000000000000000000000002",
         ),
-        "Keep factory data can only be updated once",
+        "Keep vendor data can only be updated once",
       )
     })
 
-    it("reverts if finalizeKeepFactorySingleShotUpdate is called twice", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("reverts if finalizeKeepVendorSingleShotUpdate is called twice", async () => {
+      await tbtcSystem.beginKeepVendorSingleShotUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
+      const finalizationTime = await tbtcSystem.getRemainingKeepVendorSingleShotUpdateTime()
       await increaseTime(finalizationTime.toNumber() + 1) // 10 days
-      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+      await tbtcSystem.finalizeKeepVendorSingleShotUpdate()
 
       await expectRevert(
-        tbtcSystem.finalizeKeepFactorySingleShotUpdate(),
+        tbtcSystem.finalizeKeepVendorSingleShotUpdate(),
         "Change not initiated",
       )
     })
@@ -381,16 +386,16 @@ describe("TBTCSystem governance", async function() {
     })
 
     governanceTest({
-      property: "keep factory single-shot update",
-      change: "KeepFactorySingleShotUpdate",
+      property: "keep vendor single-shot update",
+      change: "KeepVendorSingleShotUpdate",
       goodParametersWithName: [
         {
           name: "_factorySelector",
           value: keepFactorySelector.address,
         },
         {
-          name: "_ethBackedFactory",
-          value: newKeepFactory.address,
+          name: "_ethBackedVendor",
+          value: newKeepVendor.address,
         },
       ],
       badInitializationTests: {
@@ -405,11 +410,11 @@ describe("TBTCSystem governance", async function() {
       verifyFinalizationEvents: async (
         receipt,
         setFactorySelector,
-        setEthBackedFactory,
+        setEthBackedVendor,
       ) => {
-        expectEvent(receipt, "KeepFactorySingleShotUpdated", {
+        expectEvent(receipt, "KeepVendorSingleShotUpdated", {
           _factorySelector: setFactorySelector,
-          _ethBackedFactory: setEthBackedFactory,
+          _ethBackedVendor: setEthBackedVendor,
         })
       },
       verifyFinalState: async () => {
@@ -425,7 +430,7 @@ describe("TBTCSystem governance", async function() {
           value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
         })
 
-        // This should fail as the _ethBackedFactory is not a real contract
+        // This should fail as the _ethBackedVendor is not a real contract
         // address, so dereferencing it will go boom.
         await tbtcSystem.requestNewKeep(10 ** 8, 123, {
           from: mockDeposit,

@@ -25,6 +25,7 @@ const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 
 // mocks/stubs
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
+const ECDSAKeepVendorStub = contract.fromArtifact("ECDSAKeepVendorStub")
 const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
 const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
 const MockRelay = contract.fromArtifact("MockRelay")
@@ -133,7 +134,9 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   await mockRelay.setPrevEpochDifficulty(1)
 
   const tbtcSystem = deployed.TBTCSystem
+
   const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
+  const ecdsaKeepVendorStub = await ECDSAKeepVendorStub.new(ecdsaKeepFactoryStub.address)
 
   const tbtcToken = await TestTBTCToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
@@ -171,7 +174,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   }
 
   await tbtcSystem.initialize(
-    ecdsaKeepFactoryStub.address,
+    ecdsaKeepVendorStub.address,
     depositFactory.address,
     testDeposit.address,
     tbtcToken.address,
@@ -192,6 +195,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     feeRebateToken,
     testDeposit,
     depositUtils,
+    ecdsaKeepVendorStub,
     ecdsaKeepFactoryStub,
     ecdsaKeepStub,
     depositFactory,

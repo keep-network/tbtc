@@ -14,6 +14,7 @@ const DepositFunding = contract.fromArtifact("DepositFunding")
 const DepositRedemption = contract.fromArtifact("DepositRedemption")
 const DepositLiquidation = contract.fromArtifact("DepositLiquidation")
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
+const ECDSAKeepVendorStub = contract.fromArtifact("ECDSAKeepVendorStub")
 const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
 const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
 const MockRelay = contract.fromArtifact("MockRelay")
@@ -130,6 +131,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   const tbtcSystem = deployed.TBTCSystem
   const ecdsaKeepFactoryStub = await ECDSAKeepFactoryStub.new()
   await ecdsaKeepFactoryStub.setKeepAddress(deployed.ECDSAKeepStub.address)
+  const ecdsaKeepVendorStub = await ECDSAKeepVendorStub.new(ecdsaKeepFactoryStub.address)
 
   const TestTBTCTokenInstance = await TestTBTCToken.new(vendingMachine.address)
   const testDeposit = deployed.TestDeposit
@@ -142,7 +144,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   await mockSatWeiPriceFeed.setPrice(100000000)
 
   await tbtcSystem.initialize(
-    ecdsaKeepFactoryStub.address,
+    ecdsaKeepVendorStub.address,
     depositFactory.address,
     testDeposit.address,
     TestTBTCTokenInstance.address,

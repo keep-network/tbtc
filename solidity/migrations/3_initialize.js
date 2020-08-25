@@ -14,7 +14,7 @@ const VendingMachine = artifacts.require("VendingMachine")
 // Used for creating sortition pool.
 const BondedECDSAKeepFactoryJson = require("@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json")
 
-const {BondedECDSAKeepFactoryAddress, ETHBTCMedianizer} = require("./externals")
+const {BondedECDSAKeepVendorAddress, ETHBTCMedianizer} = require("./externals")
 
 module.exports = async function(deployer, network, accounts) {
   // Don't enact this setup during unit testing.
@@ -25,7 +25,7 @@ module.exports = async function(deployer, network, accounts) {
 
   console.debug(
     `Initializing TBTCSystem [${TBTCSystem.address}] with:\n` +
-      `  keepFactory: ${BondedECDSAKeepFactoryAddress}\n` +
+      `  keepVendor: ${BondedECDSAKeepVendorAddress}\n` +
       `  depositFactory: ${DepositFactory.address}\n` +
       `  masterDepositAddress: ${Deposit.address}\n` +
       `  tbtcToken: ${TBTCToken.address}\n` +
@@ -39,7 +39,7 @@ module.exports = async function(deployer, network, accounts) {
   // System.
   const tbtcSystem = await TBTCSystem.deployed()
   await tbtcSystem.initialize(
-    BondedECDSAKeepFactoryAddress,
+    BondedECDSAKeepVendorAddress,
     DepositFactory.address,
     Deposit.address,
     TBTCToken.address,
