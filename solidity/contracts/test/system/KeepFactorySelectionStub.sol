@@ -37,8 +37,8 @@ contract KeepFactorySelectionStub {
         return address(keepFactorySelection.keepStakeFactory);
     }
 
-    function ethStakeFactory() public view returns (address) {
-        return address(keepFactorySelection.ethStakeFactory);
+    function fullyBackedFactory() public view returns (address) {
+        return address(keepFactorySelection.fullyBackedFactory);
     }
 
     function factoriesVersionsLock() public view returns (bool) {

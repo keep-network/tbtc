@@ -12,12 +12,12 @@ interface KeepFactorySelector {
     /// @notice Selects keep factory for the new deposit.
     /// @param _seed Request seed.
     /// @param _keepStakeFactory Regular, KEEP-stake based keep factory.
-    /// @param _ethStakeFactory Fully backed, ETH-bond-only based keep factory.
+    /// @param _fullyBackedFactory Fully backed, ETH-bond-only based keep factory.
     /// @return The selected keep factory.
     function selectFactory(
         uint256 _seed,
         IBondedECDSAKeepFactory _keepStakeFactory,
-        IBondedECDSAKeepFactory _ethStakeFactory
+        IBondedECDSAKeepFactory _fullyBackedFactory
     ) external view returns (IBondedECDSAKeepFactory);
 }
 
@@ -44,8 +44,8 @@ library KeepFactorySelection {
         IBondedECDSAKeepFactory keepStakeFactory;
 
         // Fully backed ECDSA keep vendor and factory: ETH bond only.
-        IBondedECDSAKeepVendor ethStakeVendor;
-        IBondedECDSAKeepFactory ethStakeFactory;
+        IBondedECDSAKeepVendor fullyBackedVendor;
+        IBondedECDSAKeepFactory fullyBackedFactory;
 
         // Lock for factories versions freeze. When set to true vendor won't be
         // called to obtain a new factory address but a version of a factory
@@ -123,8 +123,8 @@ library KeepFactorySelection {
                 _honestThreshold
             );
         }
-        if (address(_self.ethStakeFactory) != address(0)) {
-            _self.ethStakeFactory.setMinimumBondableValue(
+        if (address(_self.fullyBackedFactory) != address(0)) {
+            _self.fullyBackedFactory.setMinimumBondableValue(
                 _minimumBondableValue,
                 _groupSize,
                 _honestThreshold
@@ -143,7 +143,7 @@ library KeepFactorySelection {
         IBondedECDSAKeepFactory keepStakeFactory = getKeepStakedFactory(_self);
 
         if (
-            address(_self.ethStakeFactory) == address(0) ||
+            address(_self.fullyBackedFactory) == address(0) ||
             address(_self.factorySelector) == address(0)
         ) {
             // KEEP-stake factory is guaranteed to be there. If the selection
@@ -152,7 +152,7 @@ library KeepFactorySelection {
             return;
         }
 
-        IBondedECDSAKeepFactory ethStakeFactory = getFullyBackedFactory(_self);
+        IBondedECDSAKeepFactory fullyBackedFactory = getFullyBackedFactory(_self);
 
         _self.requestCounter++;
         uint256 seed = uint256(
@@ -161,12 +161,12 @@ library KeepFactorySelection {
         _self.selectedFactory = _self.factorySelector.selectFactory(
             seed,
             keepStakeFactory,
-            ethStakeFactory
+            fullyBackedFactory
         );
 
         require(
             _self.selectedFactory == keepStakeFactory ||
-                _self.selectedFactory == ethStakeFactory,
+                _self.selectedFactory == fullyBackedFactory,
             "Factory selector returned unknown factory"
         );
     }
@@ -202,18 +202,18 @@ library KeepFactorySelection {
         returns (IBondedECDSAKeepFactory)
     {
         if (_self.factoriesVersionsLock) {
-            return _self.ethStakeFactory;
+            return _self.fullyBackedFactory;
         } else {
-            IBondedECDSAKeepFactory ethStakeFactory = IBondedECDSAKeepFactory(
-                _self.ethStakeVendor.selectFactory()
+            IBondedECDSAKeepFactory fullyBackedFactory = IBondedECDSAKeepFactory(
+                _self.fullyBackedVendor.selectFactory()
             );
 
             require(
-                address(ethStakeFactory) != address(0),
+                address(fullyBackedFactory) != address(0),
                 "Vendor returned invalid factory address"
             );
 
-            return ethStakeFactory;
+            return fullyBackedFactory;
         }
     }
 
@@ -231,20 +231,20 @@ library KeepFactorySelection {
         address _fullyBackedVendor
     ) internal {
         require(
-            address(_self.ethStakeVendor) == address(0),
+            address(_self.fullyBackedVendor) == address(0),
             "Fully backed vendor already set"
         );
         require(_fullyBackedVendor != address(0), "Invalid address");
 
-        IBondedECDSAKeepVendor ethStakeVendor = IBondedECDSAKeepVendor(
+        IBondedECDSAKeepVendor fullyBackedVendor = IBondedECDSAKeepVendor(
             _fullyBackedVendor
         );
-        address ethStakeFactory = ethStakeVendor.selectFactory();
+        address fullyBackedFactory = fullyBackedVendor.selectFactory();
 
-        require(ethStakeFactory != address(0), "Vendor returned invalid factory address");
+        require(fullyBackedFactory != address(0), "Vendor returned invalid factory address");
 
-        _self.ethStakeVendor = ethStakeVendor;
-        _self.ethStakeFactory = IBondedECDSAKeepFactory(ethStakeFactory);
+        _self.fullyBackedVendor = fullyBackedVendor;
+        _self.fullyBackedFactory = IBondedECDSAKeepFactory(fullyBackedFactory);
     }
 
     /// @notice Sets the address of the keep factory selection strategy contract.
@@ -289,14 +289,14 @@ library KeepFactorySelection {
             "KEEP backed vendor not set"
         );
         require(
-            address(_self.ethStakeVendor) != address(0),
+            address(_self.fullyBackedVendor) != address(0),
             "Fully backed vendor not set"
         );
 
         IBondedECDSAKeepFactory latestKeepStakeFactory = getKeepStakedFactory(
             _self
         );
-        IBondedECDSAKeepFactory latestEthStakeFactory = getFullyBackedFactory(
+        IBondedECDSAKeepFactory latestFullyBackedFactory = getFullyBackedFactory(
             _self
         );
 
@@ -305,12 +305,12 @@ library KeepFactorySelection {
             "Unexpected KEEP backed factory"
         );
         require(
-            address(latestEthStakeFactory) == _expectedFullyBackedFactory,
+            address(latestFullyBackedFactory) == _expectedFullyBackedFactory,
             "Unexpected fully backed factory"
         );
 
         _self.keepStakeFactory = latestKeepStakeFactory;
-        _self.ethStakeFactory = latestEthStakeFactory;
+        _self.fullyBackedFactory = latestFullyBackedFactory;
 
         _self.factoriesVersionsLock = true;
     }
