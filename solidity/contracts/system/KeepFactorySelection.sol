@@ -143,7 +143,7 @@ library KeepFactorySelection {
         IBondedECDSAKeepFactory keepStakeFactory = getKeepStakedFactory(_self);
 
         if (
-            address(_self.fullyBackedFactory) == address(0) ||
+            address(_self.fullyBackedVendor) == address(0) ||
             address(_self.factorySelector) == address(0)
         ) {
             // KEEP-stake factory is guaranteed to be there. If the selection
@@ -223,7 +223,8 @@ library KeepFactorySelection {
     /// Once both fully-backed keep factory and factory selection strategy are
     /// set, KEEP-stake-based factory is no longer the default choice and it is
     /// up to the selection strategy to decide which factory should be chosen.
-    /// @dev Can be called only one time!
+    /// @dev Can be called only one time! The function calls the vendor to confirm
+    /// it correctly returns a factory address.
     /// @param _fullyBackedVendor Address of the fully-backed, ETH-bond-only based
     /// keep vendor.
     function setFullyBackedKeepVendor(
@@ -239,12 +240,13 @@ library KeepFactorySelection {
         IBondedECDSAKeepVendor fullyBackedVendor = IBondedECDSAKeepVendor(
             _fullyBackedVendor
         );
-        address fullyBackedFactory = fullyBackedVendor.selectFactory();
 
-        require(fullyBackedFactory != address(0), "Vendor returned invalid factory address");
+        require(
+            fullyBackedVendor.selectFactory() != address(0),
+            "Vendor returned invalid factory address"
+        );
 
         _self.fullyBackedVendor = fullyBackedVendor;
-        _self.fullyBackedFactory = IBondedECDSAKeepFactory(fullyBackedFactory);
     }
 
     /// @notice Sets the address of the keep factory selection strategy contract.

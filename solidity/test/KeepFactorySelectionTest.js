@@ -495,11 +495,11 @@ describe("KeepFactorySelection", async () => {
       await keepFactorySelection.selectFactoryAndRefresh()
 
       expect(await keepFactorySelection.keepStakeFactory()).to.equal(
-        keepStakeFactory.address,
+        constants.ZERO_ADDRESS,
       )
 
       expect(await keepFactorySelection.fullyBackedFactory()).to.equal(
-        fullyBackedFactory.address,
+        constants.ZERO_ADDRESS,
       )
 
       const newKeepFactory = await ECDSAKeepFactoryStub.new()
