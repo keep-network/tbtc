@@ -69,9 +69,7 @@ library KeepFactorySelection {
         );
 
         _self.keepStakeVendor = IBondedECDSAKeepVendor(_defaultVendor);
-        _self.keepStakeFactory = getKeepStakedFactory(_self);
-
-        _self.selectedFactory = _self.keepStakeFactory;
+        _self.selectedFactory = getKeepStakedFactory(_self);
     }
 
     /// @notice Returns the selected keep factory.

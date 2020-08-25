@@ -50,15 +50,6 @@ describe("KeepFactorySelection", async () => {
   })
 
   describe("initialize", async () => {
-    it("gets KEEP stake factory from vendor", async () => {
-      const keepFactorySelection = await KeepFactorySelectionStub.new()
-      await keepFactorySelection.initialize(keepStakeVendor.address)
-
-      expect(await keepFactorySelection.keepStakeFactory()).to.equal(
-        keepStakeFactory.address,
-      )
-    })
-
     it("can be called only one time", async () => {
       // already initialized in before
       await expectRevert(
