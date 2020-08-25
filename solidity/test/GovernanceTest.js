@@ -234,6 +234,90 @@ describe("TBTCSystem governance", async function() {
     })
   })
 
+  describe("when trying to lock Keep factories version updates", async () => {
+    beforeEach(async () => {
+      await createSnapshot()
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
+    it("call completes and emits an event", async () => {
+      const ethStakedFactory = newKeepFactory
+      const ethStakedVendor = newKeepVendor
+
+      // Set ETH-staked vendor and Keep factory selector
+      await tbtcSystem.beginKeepVendorSingleShotUpdate(
+        ecdsaKeepFactory.address,
+        ethStakedVendor.address,
+      )
+      const finalizationTime = await tbtcSystem.getRemainingKeepVendorSingleShotUpdateTime()
+      await increaseTime(finalizationTime.addn(1)) // 10 days
+      await tbtcSystem.finalizeKeepVendorSingleShotUpdate()
+
+      const receipt = await tbtcSystem.lockKeepFactoriesVersionsUpdates(
+        ecdsaKeepFactory.address,
+        ethStakedFactory.address,
+      )
+
+      expectEvent(receipt, "KeepFactoriesVersionsLocked", {
+        _keepStakeFactory: ecdsaKeepFactory.address,
+        _fullyBackedFactory: ethStakedFactory.address,
+      })
+    })
+
+    it("reverts when lockKeepFactoriesVersionsUpdates is called twice", async () => {
+      const ethStakedFactory = newKeepFactory
+      const ethStakedVendor = newKeepVendor
+
+      // Set ETH-staked vendor and Keep factory selector
+      await tbtcSystem.beginKeepVendorSingleShotUpdate(
+        ecdsaKeepFactory.address,
+        ethStakedVendor.address,
+      )
+      const finalizationTime = await tbtcSystem.getRemainingKeepVendorSingleShotUpdateTime()
+      await increaseTime(finalizationTime.addn(1)) // 10 days
+      await tbtcSystem.finalizeKeepVendorSingleShotUpdate()
+
+      await tbtcSystem.lockKeepFactoriesVersionsUpdates(
+        ecdsaKeepFactory.address,
+        ethStakedFactory.address,
+      )
+
+      await expectRevert(
+        tbtcSystem.lockKeepFactoriesVersionsUpdates(
+          ecdsaKeepFactory.address,
+          ethStakedFactory.address,
+        ),
+        "Already locked",
+      )
+    })
+
+    it("reverts when lockKeepFactoriesVersionsUpdates is by non-owner", async () => {
+      const ethStakedFactory = newKeepFactory
+      const ethStakedVendor = newKeepVendor
+
+      // Set ETH-staked vendor and Keep factory selector
+      await tbtcSystem.beginKeepVendorSingleShotUpdate(
+        ecdsaKeepFactory.address,
+        ethStakedVendor.address,
+      )
+      const finalizationTime = await tbtcSystem.getRemainingKeepVendorSingleShotUpdateTime()
+      await increaseTime(finalizationTime.addn(1)) // 10 days
+      await tbtcSystem.finalizeKeepVendorSingleShotUpdate()
+
+      await expectRevert(
+        tbtcSystem.lockKeepFactoriesVersionsUpdates(
+          ecdsaKeepFactory.address,
+          ethStakedFactory.address,
+          {from: accounts[1]},
+        ),
+        "Ownable: caller is not the owner",
+      )
+    })
+  })
+
   before(async () => {
     governanceTest({
       property: "signer fee",

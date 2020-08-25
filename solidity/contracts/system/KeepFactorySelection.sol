@@ -27,6 +27,8 @@ interface KeepFactorySelector {
 /// are obtained through calls to respective vendor contracts. The library holds
 /// a reference to both vendors and factories as well as a reference to a selection
 /// strategy deciding which factory to choose for the new deposit being opened.
+/// Factories addresses can be locked, so the vendors won't be called anymore to
+/// get the latest factories addresses.
 library KeepFactorySelection {
 
     struct Storage {
@@ -44,6 +46,11 @@ library KeepFactorySelection {
         // Fully backed ECDSA keep vendor and factory: ETH stake and ETH bond.
         IBondedECDSAKeepVendor ethStakeVendor;
         IBondedECDSAKeepFactory ethStakeFactory;
+
+        // Lock for factories versions freeze. When set to true vendor won't be
+        // called to obtain a new factory address but the latests factory will
+        // be used.
+        bool factoriesVersionsLock;
     }
 
     /// @notice Initializes the library with the default KEEP-stake-based
@@ -129,6 +136,8 @@ library KeepFactorySelection {
     /// Otherwise, calls selection strategy providing addresses of both
     /// factories to make a choice. Additionally, passes the selection seed
     /// evaluated from the current request counter value.
+    /// Unless lock is set, it calls vendors to obtain the latests factories
+    /// versions.
     function refreshFactory(Storage storage _self) internal {
         _self.keepStakeFactory = getKeepStakedFactory(_self);
 
@@ -168,16 +177,20 @@ library KeepFactorySelection {
         view
         returns (IBondedECDSAKeepFactory)
     {
-        IBondedECDSAKeepFactory keepStakeFactory = IBondedECDSAKeepFactory(
-            _self.keepStakeVendor.selectFactory()
-        );
+        if (_self.factoriesVersionsLock) {
+            return _self.keepStakeFactory;
+        } else {
+            IBondedECDSAKeepFactory keepStakeFactory = IBondedECDSAKeepFactory(
+                _self.keepStakeVendor.selectFactory()
+            );
 
-        require(
-            address(keepStakeFactory) != address(0),
-            "Vendor returned invalid factory address"
-        );
+            require(
+                address(keepStakeFactory) != address(0),
+                "Vendor returned invalid factory address"
+            );
 
-        return keepStakeFactory;
+            return keepStakeFactory;
+        }
     }
 
     /// @notice Returns ETH-stake based factory address. If factories lock is not set
@@ -187,16 +200,20 @@ library KeepFactorySelection {
         view
         returns (IBondedECDSAKeepFactory)
     {
-        IBondedECDSAKeepFactory ethStakeFactory = IBondedECDSAKeepFactory(
-            _self.ethStakeVendor.selectFactory()
-        );
+        if (_self.factoriesVersionsLock) {
+            return _self.ethStakeFactory;
+        } else {
+            IBondedECDSAKeepFactory ethStakeFactory = IBondedECDSAKeepFactory(
+                _self.ethStakeVendor.selectFactory()
+            );
 
-        require(
-            address(ethStakeFactory) != address(0),
-            "Vendor returned invalid factory address"
-        );
+            require(
+                address(ethStakeFactory) != address(0),
+                "Vendor returned invalid factory address"
+            );
 
-        return ethStakeFactory;
+            return ethStakeFactory;
+        }
     }
 
     /// @notice Sets the address of the fully backed, ETH-stake based keep
@@ -251,5 +268,49 @@ library KeepFactorySelection {
         );
 
         _self.factorySelector = KeepFactorySelector(_factorySelector);
+    }
+
+    /// @notice Locks versions of factories. When lock is set vendor contracts
+    /// won't be called anymore to obtain the latest factories versions.
+    /// It requires expected factories addresses to be provided to protect from
+    /// locking on unexpected addresses.
+    /// @param _expectedKeepStakeFactory Expected KEEP-staked factory address
+    /// @param _expectedFullyBackedFactory Expected ETH-staked factory address
+    function lockFactoriesVersions(
+        Storage storage _self,
+        address _expectedKeepStakeFactory,
+        address _expectedFullyBackedFactory
+    ) internal {
+        require(!_self.factoriesVersionsLock, "Already locked");
+
+        require(
+            address(_self.keepStakeVendor) != address(0),
+            "KEEP backed vendor not set"
+        );
+        require(
+            address(_self.ethStakeVendor) != address(0),
+            "Fully backed vendor not set"
+        );
+
+        IBondedECDSAKeepFactory latestKeepStakeFactory = getKeepStakedFactory(
+            _self
+        );
+        IBondedECDSAKeepFactory latestEthStakeFactory = getFullyBackedFactory(
+            _self
+        );
+
+        require(
+            address(latestKeepStakeFactory) == _expectedKeepStakeFactory,
+            "Unexpected KEEP backed factory"
+        );
+        require(
+            address(latestEthStakeFactory) == _expectedFullyBackedFactory,
+            "Unexpected fully backed factory"
+        );
+
+        _self.keepStakeFactory = latestKeepStakeFactory;
+        _self.ethStakeFactory = latestEthStakeFactory;
+
+        _self.factoriesVersionsLock = true;
     }
 }

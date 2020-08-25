@@ -58,6 +58,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _ethBackedVendor
     );
 
+    event KeepFactoriesVersionsLocked(
+        address _keepStakeFactory,
+        address _fullyBackedFactory
+    );
+
     uint256 initializedTimestamp = 0;
     uint256 pausedTimestamp;
     uint256 constant pausedDuration = 10 days;
@@ -466,6 +471,27 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         priceFeed.addEthBtcFeed(_nextEthBtcPriceFeed);
 
         emit EthBtcPriceFeedAdded(address(_nextEthBtcPriceFeed));
+    }
+
+    /// @notice Locks versions of Keep factories. When lock is set vendor contracts
+    /// won't be called anymore to obtain the latest Keep factories versions.
+    /// It requires expected factories addresses to be provided to protect from
+    /// locking on unexpected addresses.
+    /// @param _expectedKeepStakeFactory Expected KEEP-staked factory address
+    /// @param _expectedFullyBackedFactory Expected ETH-staked factory address
+    function lockKeepFactoriesVersionsUpdates(
+        address _expectedKeepStakeFactory,
+        address _expectedFullyBackedFactory
+    ) external onlyOwner {
+        keepFactorySelection.lockFactoriesVersions(
+            _expectedKeepStakeFactory,
+            _expectedFullyBackedFactory
+        );
+
+        emit KeepFactoriesVersionsLocked(
+            _expectedKeepStakeFactory,
+            _expectedFullyBackedFactory
+        );
     }
 
     /// @notice Gets the system signer fee divisor.

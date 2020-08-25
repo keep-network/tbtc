@@ -1,6 +1,11 @@
 pragma solidity 0.5.17;
 
-import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
+import {
+    IBondedECDSAKeepVendor
+} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepVendor.sol";
+import {
+    IBondedECDSAKeepFactory
+} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
 import "../../system/KeepFactorySelection.sol";
 
@@ -26,6 +31,28 @@ contract KeepFactorySelectionStub {
 
     function setKeepFactorySelector(address _factorySelector) public {
         keepFactorySelection.setKeepFactorySelector(_factorySelector);
+    }
+
+    function keepStakeFactory() public view returns (address) {
+        return address(keepFactorySelection.keepStakeFactory);
+    }
+
+    function ethStakeFactory() public view returns (address) {
+        return address(keepFactorySelection.ethStakeFactory);
+    }
+
+    function factoriesVersionsLock() public view returns (bool) {
+        return keepFactorySelection.factoriesVersionsLock;
+    }
+
+    function lockFactoriesVersions(
+        address _expectedKeepStakeFactory,
+        address _expectedFullyBackedFactory
+    ) public {
+        keepFactorySelection.lockFactoriesVersions(
+            _expectedKeepStakeFactory,
+            _expectedFullyBackedFactory
+        );
     }
 }
 

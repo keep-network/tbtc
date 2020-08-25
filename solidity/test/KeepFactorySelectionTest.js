@@ -1,4 +1,4 @@
-const {contract} = require("@openzeppelin/test-environment")
+const {accounts, contract} = require("@openzeppelin/test-environment")
 const {expectRevert, constants} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {expect} = require("chai")
@@ -18,6 +18,8 @@ describe("KeepFactorySelection", async () => {
   let ethStakeFactory
   let keepFactorySelector
 
+  const thirdParty = accounts[3]
+
   before(async () => {
     await KeepFactorySelection.detectNetwork()
     const library = await KeepFactorySelection.new()
@@ -27,10 +29,14 @@ describe("KeepFactorySelection", async () => {
     keepFactorySelection = await KeepFactorySelectionStub.new()
 
     keepStakeFactory = await ECDSAKeepFactoryStub.new()
+    keepStakeVendor = await ECDSAKeepVendorStub.new(keepStakeFactory.address)
+
     ethStakeFactory = await ECDSAKeepFactoryStub.new()
+    ethStakeVendor = await ECDSAKeepVendorStub.new(ethStakeFactory.address)
+
     keepFactorySelector = await KeepFactorySelectorStub.new()
 
-    await keepFactorySelection.initialize(keepStakeFactory.address)
+    await keepFactorySelection.initialize(keepStakeVendor.address)
   })
 
   beforeEach(async () => {
@@ -288,7 +294,62 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
+    // No ETH stake vendor set.
+    // No selection strategy set.
+    it("returns locked KEEP stake factory", async () => {
+      await keepFactorySelection.setFullyBackedKeepVendor(
+        ethStakeVendor.address,
+      )
 
+      await keepFactorySelection.lockFactoriesVersions(
+        keepStakeFactory.address,
+        ethStakeFactory.address,
+      )
+
+      const newKeepFactory = await ECDSAKeepFactoryStub.new()
+      await keepStakeVendor.setFactory(newKeepFactory.address)
+
+      // refresh the choice
+      await keepFactorySelection.selectFactoryAndRefresh()
+
+      // refresh the choice; it should be the locked factory
+      const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
+      await keepFactorySelection.selectFactoryAndRefresh()
+      expect(selected, "unexpected factory selected").to.equal(
+        keepStakeFactory.address,
+      )
+    })
+
+    // ETH stake vendor set.
+    // Selection strategy set.
+    it("returns locked ETH stake factory", async () => {
+      await keepFactorySelection.setFullyBackedKeepVendor(
+        ethStakeVendor.address,
+      )
+      await keepFactorySelection.setKeepFactorySelector(
+        keepFactorySelector.address,
+      )
+
+      await keepFactorySelector.setFullyBackedMode()
+
+      await keepFactorySelection.lockFactoriesVersions(
+        keepStakeFactory.address,
+        ethStakeFactory.address,
+      )
+
+      const newEthFactory = await ECDSAKeepFactoryStub.new()
+      await ethStakeVendor.setFactory(newEthFactory.address)
+
+      // refresh the choice
+      await keepFactorySelection.selectFactoryAndRefresh()
+
+      // refresh the choice; it should be the locked factory
+      const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
+      await keepFactorySelection.selectFactoryAndRefresh()
+      expect(selected, "unexpected factory selected").to.equal(
+        ethStakeFactory.address,
+      )
+    })
 
     it("reverts if the returned factory is not one of the set factories", async () => {
       await keepFactorySelection.setFullyBackedKeepVendor(
@@ -402,6 +463,114 @@ describe("KeepFactorySelection", async () => {
       await expectRevert(
         keepFactorySelection.setKeepFactorySelector(constants.ZERO_ADDRESS),
         "Invalid address",
+      )
+    })
+  })
+
+  describe("lockFactoriesVersions", async () => {
+    it("sets factories version lock", async () => {
+      await keepFactorySelection.setFullyBackedKeepVendor(
+        ethStakeVendor.address,
+      )
+
+      await keepFactorySelection.lockFactoriesVersions(
+        keepStakeFactory.address,
+        ethStakeFactory.address,
+      )
+
+      expect(await keepFactorySelection.factoriesVersionsLock()).to.be.true
+    })
+
+    it("gets latest factories from vendor", async () => {
+      await keepFactorySelection.setFullyBackedKeepVendor(
+        ethStakeVendor.address,
+      )
+
+      await keepFactorySelection.selectFactoryAndRefresh()
+
+      expect(await keepFactorySelection.keepStakeFactory()).to.equal(
+        keepStakeFactory.address,
+      )
+
+      expect(await keepFactorySelection.ethStakeFactory()).to.equal(
+        ethStakeFactory.address,
+      )
+
+      const newKeepFactory = await ECDSAKeepFactoryStub.new()
+      await keepStakeVendor.setFactory(newKeepFactory.address)
+
+      const newEthFactory = await ECDSAKeepFactoryStub.new()
+      await ethStakeVendor.setFactory(newEthFactory.address)
+
+      await keepFactorySelection.lockFactoriesVersions(
+        newKeepFactory.address,
+        newEthFactory.address,
+      )
+
+      expect(await keepFactorySelection.keepStakeFactory()).to.equal(
+        newKeepFactory.address,
+      )
+
+      expect(await keepFactorySelection.ethStakeFactory()).to.equal(
+        newEthFactory.address,
+      )
+    })
+
+    it("can be called only one time", async () => {
+      await keepFactorySelection.setFullyBackedKeepVendor(
+        ethStakeVendor.address,
+      )
+
+      await keepFactorySelection.lockFactoriesVersions(
+        keepStakeFactory.address,
+        ethStakeFactory.address,
+      )
+      // ok, this was the first time
+
+      await expectRevert(
+        keepFactorySelection.lockFactoriesVersions(
+          keepStakeFactory.address,
+          ethStakeFactory.address,
+        ),
+        "Already locked",
+      )
+    })
+
+    it("reverts when KEEP stake vendor not set", async () => {
+      await expectRevert(
+        keepFactorySelection.lockFactoriesVersions(
+          constants.ZERO_ADDRESS,
+          ethStakeFactory.address,
+        ),
+        "Fully backed vendor not set",
+      )
+    })
+
+    it("reverts for unexpected KEEP stake factory address", async () => {
+      await keepFactorySelection.setFullyBackedKeepVendor(
+        ethStakeVendor.address,
+      )
+
+      await expectRevert(
+        keepFactorySelection.lockFactoriesVersions(
+          thirdParty,
+          ethStakeFactory.address,
+        ),
+        "Unexpected KEEP backed factory",
+      )
+    })
+
+    it("reverts for unexpected ETH stake factory address", async () => {
+      await keepFactorySelection.setFullyBackedKeepVendor(
+        ethStakeVendor.address,
+      )
+
+      await expectRevert(
+        keepFactorySelection.lockFactoriesVersions(
+          keepStakeFactory.address,
+          thirdParty,
+        ),
+        "Unexpected fully backed factory",
       )
     })
   })
