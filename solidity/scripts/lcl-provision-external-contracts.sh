@@ -12,8 +12,8 @@ set -e
 # NETWORK_ID=1801 \
 #   ./lcl-provision-external-contracts.sh
 
-FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
-FACTORY_PROPERTY="BondedECDSAKeepFactory"
+VENDOR_CONTRACT_DATA="BondedECDSAKeepVendor.json"
+VENDOR_PROPERTY="BondedECDSAKeepVendor"
 
 DESTINATION_FILE=$(realpath $(dirname $0)/../migrations/externals.js)
 
@@ -26,21 +26,21 @@ SED_SUBSTITUTION_REGEXP="['\"][a-zA-Z0-9]*['\"]"
 
 FAILED=false
 
-function fetch_bonded_ecdsa_keep_factory_contract_address() {
-  echo "Fetching value for ${FACTORY_PROPERTY}..."
-  local contractDataPath=$(realpath $KEEP_ECDSA_SOL_ARTIFACTS_PATH/$FACTORY_CONTRACT_DATA)
+function fetch_bonded_ecdsa_keep_vendor_contract_address() {
+  echo "Fetching value for ${VENDOR_PROPERTY}..."
+  local contractDataPath=$(realpath $KEEP_ECDSA_SOL_ARTIFACTS_PATH/$VENDOR_CONTRACT_DATA)
   local ADDRESS=$(cat ${contractDataPath} | jq "${JSON_QUERY}" | tr -d '"')
 
   if [[ !($ADDRESS =~ $ADDRESS_REGEXP) ]]; then
     echo "Invalid address: ${ADDRESS}"
     FAILED=true
   else
-    echo "Found value for ${FACTORY_PROPERTY} = ${ADDRESS}"
-    sed -i -e "/${FACTORY_PROPERTY}/s/${SED_SUBSTITUTION_REGEXP}/\"${ADDRESS}\"/" $DESTINATION_FILE
+    echo "Found value for ${VENDOR_PROPERTY} = ${ADDRESS}"
+    sed -i -e "/${VENDOR_PROPERTY}/s/${SED_SUBSTITUTION_REGEXP}/\"${ADDRESS}\"/" $DESTINATION_FILE
   fi
 }
 
-fetch_bonded_ecdsa_keep_factory_contract_address
+fetch_bonded_ecdsa_keep_vendor_contract_address
 
 if $FAILED; then
 echo "Failed to fetch external contract addresses!"
