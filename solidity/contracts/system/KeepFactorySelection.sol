@@ -298,6 +298,8 @@ library KeepFactorySelection {
             "Fully backed vendor not set"
         );
 
+        _self.factoriesVersionsLock = true;
+
         address latestKeepStakeFactory = _self
             .keepStakeVendor
             .selectFactory();
@@ -316,7 +318,5 @@ library KeepFactorySelection {
 
         _self.keepStakeFactory = IBondedECDSAKeepFactory(latestKeepStakeFactory);
         _self.fullyBackedFactory = IBondedECDSAKeepFactory(latestFullyBackedFactory);
-
-        _self.factoriesVersionsLock = true;
     }
 }
