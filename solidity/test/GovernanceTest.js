@@ -267,7 +267,7 @@ describe("TBTCSystem governance", async function() {
       })
     })
 
-    it("reverts when lockKeepFactoriesVersionsUpdates is called twice", async () => {
+    it("reverts when called twice", async () => {
       const ethStakedFactory = newKeepFactory
       const ethStakedVendor = newKeepVendor
 
@@ -294,7 +294,7 @@ describe("TBTCSystem governance", async function() {
       )
     })
 
-    it("reverts when lockKeepFactoriesVersionsUpdates is by non-owner", async () => {
+    it("reverts when not performed by owner", async () => {
       const ethStakedFactory = newKeepFactory
       const ethStakedVendor = newKeepVendor
 
