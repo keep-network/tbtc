@@ -162,33 +162,39 @@ library KeepFactorySelection {
     function refreshFactory(Storage storage _self) internal {
         IBondedECDSAKeepFactory keepStakeFactory = getKeepStakedFactory(_self);
 
+        // KEEP-stake factory is guaranteed to be there. If the selection
+        // can not be performed, this is the default choice.
+        IBondedECDSAKeepFactory selectedFactory = keepStakeFactory;
+
         if (
-            address(_self.fullyBackedVendor) == address(0) ||
-            address(_self.factorySelector) == address(0)
+            address(_self.fullyBackedVendor) != address(0) &&
+            address(_self.factorySelector) != address(0)
         ) {
-            // KEEP-stake factory is guaranteed to be there. If the selection
-            // can not be performed, this is the default choice.
-            _self.selectedFactory = keepStakeFactory;
-            return;
+            IBondedECDSAKeepFactory fullyBackedFactory = getFullyBackedFactory(_self);
+
+            _self.requestCounter++;
+            uint256 seed = uint256(
+                keccak256(abi.encodePacked(address(this), _self.requestCounter))
+            );
+
+            selectedFactory = _self.factorySelector.selectFactory(
+                seed,
+                keepStakeFactory,
+                fullyBackedFactory
+            );
+
+            require(
+                selectedFactory == keepStakeFactory ||
+                    selectedFactory == fullyBackedFactory,
+                "Factory selector returned unknown factory"
+            );
         }
 
-        IBondedECDSAKeepFactory fullyBackedFactory = getFullyBackedFactory(_self);
-
-        _self.requestCounter++;
-        uint256 seed = uint256(
-            keccak256(abi.encodePacked(address(this), _self.requestCounter))
-        );
-        _self.selectedFactory = _self.factorySelector.selectFactory(
-            seed,
-            keepStakeFactory,
-            fullyBackedFactory
-        );
-
-        require(
-            _self.selectedFactory == keepStakeFactory ||
-                _self.selectedFactory == fullyBackedFactory,
-            "Factory selector returned unknown factory"
-        );
+        // Store selected factory only if the value differs from the currently
+        // stored.
+        if (_self.selectedFactory != selectedFactory) {
+            _self.selectedFactory = selectedFactory;
+        }
     }
 
     /// @notice Returns KEEP stake based factory address. If factories lock is not set
