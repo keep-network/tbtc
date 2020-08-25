@@ -49,7 +49,7 @@ library KeepFactorySelection {
 
         // Lock for factories versions freeze. When set to true vendor won't be
         // called to obtain a new factory address but a version of a factory
-        // from the moment of freezing will be used. Once locked the factory
+        // from the moment of freezing will be used, once locked the factory
         // address won't be able to update anymore.
         bool factoriesVersionsLocked;
     }
@@ -213,7 +213,7 @@ library KeepFactorySelection {
     }
 
     /// @notice Returns ETH-bond-only based factory address. If factories lock is not set
-    /// it calls the ETH staked vendor to obtain the latest versions of the factory.
+    /// it calls the fully-backed vendor to obtain the latest versions of the factory.
     function getFullyBackedFactory(Storage storage _self)
         internal
         view
@@ -285,7 +285,8 @@ library KeepFactorySelection {
     /// @notice Locks versions of factories. When lock is set vendor contracts
     /// won't be called anymore to obtain the latest factories versions.
     /// It requires expected factories addresses to be provided to protect from
-    /// locking on unexpected addresses.
+    /// locking on unexpected addresses. The function can be called only once and
+    /// the lock cannot be disabled.
     /// @param _expectedKeepStakedFactory Expected KEEP-staked factory address
     /// @param _expectedFullyBackedFactory Expected ETH-bond-only factory address
     function lockFactoriesVersions(

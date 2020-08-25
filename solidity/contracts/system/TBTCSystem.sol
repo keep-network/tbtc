@@ -303,7 +303,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///      called more than once until finalized to reset the values and
     ///      timer, but it can only be finalized once!
     /// @param _factorySelector Address of the keep factory selection strategy.
-    /// @param _fullyBackedVendor Address of the ETH-stake-based vendor.
+    /// @param _fullyBackedVendor Address of the ETH-only-backed vendor.
     function beginKeepVendorSingleShotUpdate(
         address _factorySelector,
         address _fullyBackedVendor
@@ -478,7 +478,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// It requires expected factories addresses to be provided to protect from
     /// locking on unexpected addresses.
     /// @param _expectedKeepStakedFactory Expected KEEP-staked factory address
-    /// @param _expectedFullyBackedFactory Expected ETH-staked factory address
+    /// @param _expectedFullyBackedFactory Expected ETH-only-backed factory address
     function lockKeepFactoriesVersionsUpdates(
         address _expectedKeepStakedFactory,
         address _expectedFullyBackedFactory
