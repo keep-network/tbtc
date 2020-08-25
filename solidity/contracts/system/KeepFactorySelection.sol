@@ -49,7 +49,7 @@ library KeepFactorySelection {
 
         // Lock for factories versions freeze. When set to true vendor won't be
         // called to obtain a new factory address but a version of a factory
-        // from the moment of freezing will be used, once locked the factory
+        // from the moment of freezing will be used. Once locked, the factory
         // address won't be able to update anymore.
         bool factoriesVersionsLocked;
     }
