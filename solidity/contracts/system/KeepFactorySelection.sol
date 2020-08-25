@@ -139,7 +139,7 @@ library KeepFactorySelection {
     /// Unless lock is set, it calls vendors to obtain the latests factories
     /// versions.
     function refreshFactory(Storage storage _self) internal {
-        _self.keepStakeFactory = getKeepStakedFactory(_self);
+        IBondedECDSAKeepFactory keepStakeFactory = getKeepStakedFactory(_self);
 
         if (
             address(_self.ethStakeFactory) == address(0) ||
@@ -147,11 +147,11 @@ library KeepFactorySelection {
         ) {
             // KEEP-stake factory is guaranteed to be there. If the selection
             // can not be performed, this is the default choice.
-            _self.selectedFactory = _self.keepStakeFactory;
+            _self.selectedFactory = keepStakeFactory;
             return;
         }
 
-        _self.ethStakeFactory = getFullyBackedFactory(_self);
+        IBondedECDSAKeepFactory ethStakeFactory = getFullyBackedFactory(_self);
 
         _self.requestCounter++;
         uint256 seed = uint256(
@@ -159,13 +159,13 @@ library KeepFactorySelection {
         );
         _self.selectedFactory = _self.factorySelector.selectFactory(
             seed,
-            _self.keepStakeFactory,
-            _self.ethStakeFactory
+            keepStakeFactory,
+            ethStakeFactory
         );
 
         require(
-            _self.selectedFactory == _self.keepStakeFactory ||
-                _self.selectedFactory == _self.ethStakeFactory,
+            _self.selectedFactory == keepStakeFactory ||
+                _self.selectedFactory == ethStakeFactory,
             "Factory selector returned unknown factory"
         );
     }
