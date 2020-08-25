@@ -51,7 +51,7 @@ library KeepFactorySelection {
         // called to obtain a new factory address but a version of a factory
         // from the moment of freezing will be used. Once locked the factory
         // address won't be able to update anymore.
-        bool factoriesVersionsLock;
+        bool factoriesVersionsLocked;
     }
 
     /// @notice Initializes the library with the default KEEP-stake-based
@@ -204,7 +204,7 @@ library KeepFactorySelection {
         view
         returns (IBondedECDSAKeepFactory)
     {
-        if (_self.factoriesVersionsLock) {
+        if (_self.factoriesVersionsLocked) {
             return _self.keepStakeFactory;
         } else {
             return
@@ -219,7 +219,7 @@ library KeepFactorySelection {
         view
         returns (IBondedECDSAKeepFactory)
     {
-        if (_self.factoriesVersionsLock) {
+        if (_self.factoriesVersionsLocked) {
             return _self.fullyBackedFactory;
         } else {
             return
@@ -293,7 +293,7 @@ library KeepFactorySelection {
         address _expectedKeepStakeFactory,
         address _expectedFullyBackedFactory
     ) internal {
-        require(!_self.factoriesVersionsLock, "Already locked");
+        require(!_self.factoriesVersionsLocked, "Already locked");
 
         require(
             address(_self.keepStakeVendor) != address(0),
@@ -304,7 +304,7 @@ library KeepFactorySelection {
             "Fully backed vendor not set"
         );
 
-        _self.factoriesVersionsLock = true;
+        _self.factoriesVersionsLocked = true;
 
         address latestKeepStakeFactory = _self
             .keepStakeVendor

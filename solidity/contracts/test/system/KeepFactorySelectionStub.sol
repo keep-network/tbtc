@@ -53,8 +53,8 @@ contract KeepFactorySelectionStub {
         return address(keepFactorySelection.fullyBackedFactory);
     }
 
-    function factoriesVersionsLock() public view returns (bool) {
-        return keepFactorySelection.factoriesVersionsLock;
+    function factoriesVersionsLocked() public view returns (bool) {
+        return keepFactorySelection.factoriesVersionsLocked;
     }
 
     function lockFactoriesVersions(

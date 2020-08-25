@@ -583,7 +583,7 @@ describe("KeepFactorySelection", async () => {
         fullyBackedFactory.address,
       )
 
-      expect(await keepFactorySelection.factoriesVersionsLock()).to.be.true
+      expect(await keepFactorySelection.factoriesVersionsLocked()).to.be.true
     })
 
     it("gets latest factories from vendor", async () => {
