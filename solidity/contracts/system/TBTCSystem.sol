@@ -59,7 +59,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     );
 
     event KeepFactoriesVersionsLocked(
-        address _keepStakeFactory,
+        address _keepStakedFactory,
         address _fullyBackedFactory
     );
 
@@ -477,19 +477,19 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// won't be called anymore to obtain the latest Keep factories versions.
     /// It requires expected factories addresses to be provided to protect from
     /// locking on unexpected addresses.
-    /// @param _expectedKeepStakeFactory Expected KEEP-staked factory address
+    /// @param _expectedKeepStakedFactory Expected KEEP-staked factory address
     /// @param _expectedFullyBackedFactory Expected ETH-staked factory address
     function lockKeepFactoriesVersionsUpdates(
-        address _expectedKeepStakeFactory,
+        address _expectedKeepStakedFactory,
         address _expectedFullyBackedFactory
     ) external onlyOwner {
         keepFactorySelection.lockFactoriesVersions(
-            _expectedKeepStakeFactory,
+            _expectedKeepStakedFactory,
             _expectedFullyBackedFactory
         );
 
         emit KeepFactoriesVersionsLocked(
-            _expectedKeepStakeFactory,
+            _expectedKeepStakedFactory,
             _expectedFullyBackedFactory
         );
     }

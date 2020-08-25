@@ -45,8 +45,8 @@ contract KeepFactorySelectionStub {
         keepFactorySelection.setKeepFactorySelector(_factorySelector);
     }
 
-    function keepStakeFactory() public view returns (address) {
-        return address(keepFactorySelection.keepStakeFactory);
+    function keepStakedFactory() public view returns (address) {
+        return address(keepFactorySelection.keepStakedFactory);
     }
 
     function fullyBackedFactory() public view returns (address) {
@@ -58,11 +58,11 @@ contract KeepFactorySelectionStub {
     }
 
     function lockFactoriesVersions(
-        address _expectedKeepStakeFactory,
+        address _expectedKeepStakedFactory,
         address _expectedFullyBackedFactory
     ) public {
         keepFactorySelection.lockFactoriesVersions(
-            _expectedKeepStakeFactory,
+            _expectedKeepStakedFactory,
             _expectedFullyBackedFactory
         );
     }

@@ -262,7 +262,7 @@ describe("TBTCSystem governance", async function() {
       )
 
       expectEvent(receipt, "KeepFactoriesVersionsLocked", {
-        _keepStakeFactory: ecdsaKeepFactory.address,
+        _keepStakedFactory: ecdsaKeepFactory.address,
         _fullyBackedFactory: ethStakedFactory.address,
       })
     })
