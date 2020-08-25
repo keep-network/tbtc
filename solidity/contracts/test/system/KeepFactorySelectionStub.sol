@@ -25,6 +25,18 @@ contract KeepFactorySelectionStub {
         return keepFactorySelection.selectFactoryAndRefresh();
     }
 
+    function setMinimumBondableValue(
+        uint256 _minimumBondableValue,
+        uint256 _groupSize,
+        uint256 _honestThreshold
+    ) public {
+        keepFactorySelection.setMinimumBondableValue(
+            _minimumBondableValue,
+            _groupSize,
+            _honestThreshold
+        );
+    }
+
     function setFullyBackedKeepVendor(address _fullyBackedVendor) public {
         keepFactorySelection.setFullyBackedKeepVendor(_fullyBackedVendor);
     }

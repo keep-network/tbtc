@@ -122,19 +122,33 @@ library KeepFactorySelection {
         uint256 _groupSize,
         uint256 _honestThreshold
     ) public {
-        if (address(_self.keepStakeFactory) != address(0)) {
-            _self.keepStakeFactory.setMinimumBondableValue(
+        require(
+            address(_self.keepStakeVendor) != address(0),
+            "KEEP backed vendor not set"
+        );
+
+        IBondedECDSAKeepFactory keepStakeFactory = getKeepStakedFactory(_self);
+
+        if (address(keepStakeFactory) != address(0)) {
+            keepStakeFactory.setMinimumBondableValue(
                 _minimumBondableValue,
                 _groupSize,
                 _honestThreshold
             );
         }
-        if (address(_self.fullyBackedFactory) != address(0)) {
-            _self.fullyBackedFactory.setMinimumBondableValue(
-                _minimumBondableValue,
-                _groupSize,
-                _honestThreshold
+
+        if (address(_self.fullyBackedVendor) != address(0)) {
+            IBondedECDSAKeepFactory fullyBackedFactory = getFullyBackedFactory(
+                _self
             );
+
+            if (address(fullyBackedFactory) != address(0)) {
+                fullyBackedFactory.setMinimumBondableValue(
+                    _minimumBondableValue,
+                    _groupSize,
+                    _honestThreshold
+                );
+            }
         }
     }
 
@@ -257,10 +271,7 @@ library KeepFactorySelection {
             address(_self.factorySelector) == address(0),
             "Factory selector already set"
         );
-        require(
-            address(_factorySelector) != address(0),
-            "Invalid address"
-        );
+        require(address(_factorySelector) != address(0), "Invalid address");
 
         _self.factorySelector = KeepFactorySelector(_factorySelector);
     }
