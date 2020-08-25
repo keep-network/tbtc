@@ -201,7 +201,7 @@ describe("TBTCSystem governance", async function() {
     it("reverts if finalizeKeepVendorSingleShotUpdate has already been called", async () => {
       await tbtcSystem.beginKeepVendorSingleShotUpdate(
         "0x0000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000002",
+        newKeepVendor.address,
       )
 
       const finalizationTime = await tbtcSystem.getRemainingKeepVendorSingleShotUpdateTime()
@@ -220,7 +220,7 @@ describe("TBTCSystem governance", async function() {
     it("reverts if finalizeKeepVendorSingleShotUpdate is called twice", async () => {
       await tbtcSystem.beginKeepVendorSingleShotUpdate(
         "0x0000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000002",
+        newKeepVendor.address,
       )
 
       const finalizationTime = await tbtcSystem.getRemainingKeepVendorSingleShotUpdateTime()
