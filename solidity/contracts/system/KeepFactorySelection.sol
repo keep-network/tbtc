@@ -12,7 +12,7 @@ interface KeepFactorySelector {
     /// @notice Selects keep factory for the new deposit.
     /// @param _seed Request seed.
     /// @param _keepStakeFactory Regular, KEEP-stake based keep factory.
-    /// @param _ethStakeFactory Fully backed, ETH-stake based keep factory.
+    /// @param _ethStakeFactory Fully backed, ETH-bond-only based keep factory.
     /// @return The selected keep factory.
     function selectFactory(
         uint256 _seed,
@@ -23,7 +23,7 @@ interface KeepFactorySelector {
 
 /// @title Bonded ECDSA keep factory selection library.
 /// @notice tBTC uses two bonded ECDSA keep factories: one based on KEEP stake
-/// and ETH bond, and another based on ETH stake and ETH bond. Factories addresses
+/// and ETH bond and another based only on ETH bond. Factories addresses
 /// are obtained through calls to respective vendor contracts. The library holds
 /// a reference to both vendors and factories as well as a reference to a selection
 /// strategy deciding which factory to choose for the new deposit being opened.
@@ -43,13 +43,14 @@ library KeepFactorySelection {
         IBondedECDSAKeepVendor keepStakeVendor;
         IBondedECDSAKeepFactory keepStakeFactory;
 
-        // Fully backed ECDSA keep vendor and factory: ETH stake and ETH bond.
+        // Fully backed ECDSA keep vendor and factory: ETH bond only.
         IBondedECDSAKeepVendor ethStakeVendor;
         IBondedECDSAKeepFactory ethStakeFactory;
 
         // Lock for factories versions freeze. When set to true vendor won't be
-        // called to obtain a new factory address but the latests factory will
-        // be used.
+        // called to obtain a new factory address but a version of a factory
+        // from the moment of freezing will be used. Once locked the factory
+        // address won't be able to update anymore.
         bool factoriesVersionsLock;
     }
 
@@ -131,7 +132,7 @@ library KeepFactorySelection {
         }
     }
 
-    /// @notice Refreshes the keep factory choice. If either ETH-stake factory
+    /// @notice Refreshes the keep factory choice. If either ETH-bond-only vendor
     /// or selection strategy is not set, KEEP-stake factory is selected.
     /// Otherwise, calls selection strategy providing addresses of both
     /// factories to make a choice. Additionally, passes the selection seed
@@ -170,7 +171,7 @@ library KeepFactorySelection {
         );
     }
 
-    /// @notice Returns KEEP staked factory address. If factories lock is not set
+    /// @notice Returns KEEP stake based factory address. If factories lock is not set
     /// it calls the KEEP staked vendor to obtain the latest versions of the factory.
     function getKeepStakedFactory(Storage storage _self)
         internal
@@ -193,7 +194,7 @@ library KeepFactorySelection {
         }
     }
 
-    /// @notice Returns ETH-stake based factory address. If factories lock is not set
+    /// @notice Returns ETH-bond-only based factory address. If factories lock is not set
     /// it calls the ETH staked vendor to obtain the latest versions of the factory.
     function getFullyBackedFactory(Storage storage _self)
         internal
@@ -216,14 +217,14 @@ library KeepFactorySelection {
         }
     }
 
-    /// @notice Sets the address of the fully backed, ETH-stake based keep
+    /// @notice Sets the address of the fully backed, ETH-bond-only based keep
     /// factory. KeepFactorySelection can work without the fully-backed keep
     /// factory set, always selecting the default KEEP-stake-based factory.
     /// Once both fully-backed keep factory and factory selection strategy are
     /// set, KEEP-stake-based factory is no longer the default choice and it is
     /// up to the selection strategy to decide which factory should be chosen.
     /// @dev Can be called only one time!
-    /// @param _fullyBackedVendor Address of the fully-backed, ETH-stake based
+    /// @param _fullyBackedVendor Address of the fully-backed, ETH-bond-only based
     /// keep vendor.
     function setFullyBackedKeepVendor(
         Storage storage _self,
@@ -275,7 +276,7 @@ library KeepFactorySelection {
     /// It requires expected factories addresses to be provided to protect from
     /// locking on unexpected addresses.
     /// @param _expectedKeepStakeFactory Expected KEEP-staked factory address
-    /// @param _expectedFullyBackedFactory Expected ETH-staked factory address
+    /// @param _expectedFullyBackedFactory Expected ETH-bond-only factory address
     function lockFactoriesVersions(
         Storage storage _self,
         address _expectedKeepStakeFactory,
