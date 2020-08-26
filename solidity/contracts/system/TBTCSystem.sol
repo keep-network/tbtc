@@ -39,8 +39,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 _timestamp
     );
     event KeepFactoryUpdateStarted(
-        address _factorySelector,
+        address _keepStakedFactory,
         address _fullyBackedFactory,
+        address _factorySelector,
         uint256 _timestamp
     );
 
@@ -54,8 +55,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _severelyUndercollateralizedThresholdPercent
     );
     event KeepFactoryUpdated(
-        address _factorySelector,
-        address _fullyBackedFactory
+        address _keepStakedFactory,
+        address _fullyBackedFactory,
+        address _factorySelector
     );
 
     uint256 initializedTimestamp = 0;
@@ -91,8 +93,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint16 private newInitialCollateralizedPercent;
     uint16 private newUndercollateralizedThresholdPercent;
     uint16 private newSeverelyUndercollateralizedThresholdPercent;
-    address private newFactorySelector;
+    address private newKeepStakedFactory;
     address private newFullyBackedFactory;
+    address private newFactorySelector;
 
     // price feed
     uint256 priceFeedGovernanceTimeDelay = 90 days;
@@ -300,11 +303,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///      timer. Upgrade can be performed more than once if initialized
     ///      before `keepFactoriesUpgradeabilityPeriod` since system initialization
     ///      is reached.
-    /// @param _factorySelector Address of the keep factory selection strategy.
+    /// @param _keepStakedFactory Address of the KEEP staked based factory.
     /// @param _fullyBackedFactory Address of the ETH-bond-only-based factory.
+    /// @param _factorySelector Address of the keep factory selection strategy.
     function beginKeepFactoryUpdate(
-        address _factorySelector,
-        address _fullyBackedFactory
+        address _keepStakedFactory,
+        address _fullyBackedFactory,
+        address _factorySelector
     )
         external onlyOwner
     {
@@ -314,20 +319,27 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "beginKeepFactoryUpdate can only be called within upgradeability period"
         );
         require(
-            _factorySelector != address(0),
-            "Factory selector must be a nonzero address"
+            _keepStakedFactory != address(0),
+            "KEEP staked factory must be a nonzero address"
         );
         require(
             _fullyBackedFactory != address(0),
-            "ETH-backed factory must be a nonzero address"
+            "Fully backed factory must be a nonzero address"
+        );
+        require(
+            _factorySelector != address(0),
+            "Factory selector must be a nonzero address"
         );
 
-        newFactorySelector = _factorySelector;
+        newKeepStakedFactory = _keepStakedFactory;
         newFullyBackedFactory = _fullyBackedFactory;
+        newFactorySelector = _factorySelector;
         keepFactoryUpdateInitiated = block.timestamp;
+
         emit KeepFactoryUpdateStarted(
-            _factorySelector,
+            _keepStakedFactory,
             _fullyBackedFactory,
+            _factorySelector,
             block.timestamp
         );
     }
@@ -431,17 +443,20 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             governanceTimeDelay
         ) {
 
-        keepFactorySelection.setKeepFactorySelector(newFactorySelector);
+        keepFactorySelection.setKeepStakedKeepFactory(newKeepStakedFactory);
         keepFactorySelection.setFullyBackedKeepFactory(newFullyBackedFactory);
+        keepFactorySelection.setKeepFactorySelector(newFactorySelector);
 
         emit KeepFactoryUpdated(
-            newFactorySelector,
-            newFullyBackedFactory
+            newKeepStakedFactory,
+            newFullyBackedFactory,
+            newFactorySelector
         );
 
         keepFactoryUpdateInitiated = 0;
-        newFactorySelector = address(0);
+        newKeepStakedFactory = address(0);
         newFullyBackedFactory = address(0);
+        newFactorySelector = address(0);
     }
 
     /// @notice Finish adding a new price feed contract to the priceFeed.

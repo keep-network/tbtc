@@ -14,7 +14,8 @@ describe("TBTCSystem governance", async function() {
   let tbtcSystem
   let keepFactorySelector
   let ecdsaKeepFactory
-  let newKeepFactory
+  let newKeepStakedFactory
+  let newFullyBackedFactory
   let satWeiPriceFeed
   let ethBtcMedianizer
   let badEthBtcMedianizer
@@ -23,6 +24,13 @@ describe("TBTCSystem governance", async function() {
   const medianizerValue = 100000000000
 
   const nonSystemOwner = accounts[3]
+
+  // We increased the value for new factories compared to the default ones
+  // as this is a way of validating that factory has been updated when using
+  // old (insufficient) value to request a new keep.
+  const defaultOpenKeepFee = 13
+  const newKeepStakedOpenKeepFee = 672
+  const newFullyBackedOpenKeepFee = 834
 
   before(async () => {
     const {
@@ -47,8 +55,15 @@ describe("TBTCSystem governance", async function() {
     tdt = tbtcDepositToken
     satWeiPriceFeed = mockSatWeiPriceFeed
 
-    newKeepFactory = await ECDSAKeepFactoryStub.new()
-    await newKeepFactory.setOpenKeepFeeEstimate(83)
+    await ecdsaKeepFactory.setOpenKeepFeeEstimate(defaultOpenKeepFee)
+
+    newKeepStakedFactory = await ECDSAKeepFactoryStub.new()
+    await newKeepStakedFactory.setOpenKeepFeeEstimate(newKeepStakedOpenKeepFee)
+
+    newFullyBackedFactory = await ECDSAKeepFactoryStub.new()
+    await newFullyBackedFactory.setOpenKeepFeeEstimate(
+      newFullyBackedOpenKeepFee,
+    )
 
     ethBtcMedianizer = await MockMedianizer.new()
     await ethBtcMedianizer.setValue(medianizerValue)
@@ -184,6 +199,7 @@ describe("TBTCSystem governance", async function() {
       await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
 
       const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
@@ -191,8 +207,9 @@ describe("TBTCSystem governance", async function() {
 
       // Should not revert.
       await tbtcSystem.beginKeepFactoryUpdate(
-        "0x0000000000000000000000000000000000000003",
-        "0x0000000000000000000000000000000000000004",
+        "0x0000000000000000000000000000000000000005",
+        "0x0000000000000000000000000000000000000006",
+        "0x0000000000000000000000000000000000000007",
       )
 
       expect(await tbtcSystem.getRemainingKeepFactoryUpdateTime()).to.eq.BN(
@@ -204,6 +221,7 @@ describe("TBTCSystem governance", async function() {
       await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
 
       const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
@@ -215,6 +233,7 @@ describe("TBTCSystem governance", async function() {
       await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
     })
 
@@ -222,6 +241,7 @@ describe("TBTCSystem governance", async function() {
       await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
 
       const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
@@ -234,6 +254,7 @@ describe("TBTCSystem governance", async function() {
       await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
 
       const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
@@ -248,6 +269,7 @@ describe("TBTCSystem governance", async function() {
         tbtcSystem.beginKeepFactoryUpdate(
           "0x0000000000000000000000000000000000000001",
           "0x0000000000000000000000000000000000000002",
+          "0x0000000000000000000000000000000000000003",
         ),
         "beginKeepFactoryUpdate can only be called within upgradeability period",
       )
@@ -257,6 +279,7 @@ describe("TBTCSystem governance", async function() {
       await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
 
       const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
@@ -422,22 +445,43 @@ describe("TBTCSystem governance", async function() {
     })
 
     governanceTest({
-      property: "keep factory single-shot update",
+      property: "keep factory update",
       change: "KeepFactoryUpdate",
       goodParametersWithName: [
+        {
+          name: "_keepStakedFactory",
+          value: newKeepStakedFactory.address,
+        },
+        {
+          name: "_fullyBackedFactory",
+          value: newFullyBackedFactory.address,
+        },
         {
           name: "_factorySelector",
           value: keepFactorySelector.address,
         },
-        {
-          name: "_fullyBackedFactory",
-          value: newKeepFactory.address,
-        },
       ],
       badInitializationTests: {
-        "factory selector is unset": {
+        "KEEP staked factory is unset": {
           parameters: [
             "0x0000000000000000000000000000000000000000",
+            "0x0000000000000000000000000000000000000002",
+            "0x0000000000000000000000000000000000000003",
+          ],
+          error: "KEEP staked factory must be a nonzero address",
+        },
+        "factory selector is unset": {
+          parameters: [
+            "0x0000000000000000000000000000000000000001",
+            "0x0000000000000000000000000000000000000000",
+            "0x0000000000000000000000000000000000000003",
+          ],
+          error: "Fully backed factory must be a nonzero address",
+        },
+        "Fully backed factory is unset": {
+          parameters: [
+            "0x0000000000000000000000000000000000000001",
+            "0x0000000000000000000000000000000000000002",
             "0x0000000000000000000000000000000000000000",
           ],
           error: "Factory selector must be a nonzero address",
@@ -445,12 +489,14 @@ describe("TBTCSystem governance", async function() {
       },
       verifyFinalizationEvents: async (
         receipt,
-        setFactorySelector,
+        setKeepStakedFactory,
         setFullyBackedFactory,
+        setFactorySelector,
       ) => {
         expectEvent(receipt, "KeepFactoryUpdated", {
-          _factorySelector: setFactorySelector,
+          _keepStakedFactory: setKeepStakedFactory,
           _fullyBackedFactory: setFullyBackedFactory,
+          _factorySelector: setFactorySelector,
         })
       },
       verifyFinalState: async () => {
@@ -458,7 +504,11 @@ describe("TBTCSystem governance", async function() {
         const mockDeposit = accounts[2]
         await tdt.forceMint(mockDepositOwner, web3.utils.toBN(mockDeposit))
 
-        keepFactorySelector.setFullyBackedMode()
+        // Expect value from the default KEEP staked factory to be returned
+        expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
+          defaultOpenKeepFee,
+        )
+
         // Expect this to work normally, and update to the new factory for the
         // next call.
         await tbtcSystem.requestNewKeep(10 ** 8, 123, {
@@ -466,14 +516,29 @@ describe("TBTCSystem governance", async function() {
           value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
         })
 
+        // Expect new KEEP-staked factory to be called
+        expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
+          newKeepStakedOpenKeepFee,
+        )
+
+        keepFactorySelector.setFullyBackedMode()
+        // Expect this to work normally, and update to the new factory for the
+        // next call.
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
+          from: mockDeposit,
+          value: await newKeepStakedFactory.openKeepFeeEstimate.call(),
+        })
+
         // This should fail as the _fullyBackedFactory is not a real contract
         // address, so dereferencing it will go boom.
         await tbtcSystem.requestNewKeep(10 ** 8, 123, {
           from: mockDeposit,
-          value: await newKeepFactory.openKeepFeeEstimate.call(),
+          value: await newFullyBackedFactory.openKeepFeeEstimate.call(),
         })
 
-        expect(await newKeepFactory.keepOwner.call()).to.equal(mockDeposit)
+        expect(await newFullyBackedFactory.keepOwner.call()).to.equal(
+          mockDeposit,
+        )
       },
     })
 
