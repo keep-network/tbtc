@@ -252,17 +252,6 @@ describe("TBTCSystem governance", async function() {
     })
 
     it("reverts for beginKeepFactoriesUpdate if upgradeability period has passed", async () => {
-      await tbtcSystem.beginKeepFactoriesUpdate(
-        "0x0000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000002",
-        "0x0000000000000000000000000000000000000003",
-      )
-
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
-      await increaseTime(finalizationTime.addn(1))
-
-      await tbtcSystem.finalizeKeepFactoriesUpdate()
-
       const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
       await increaseTime(upgradeabilityTime.addn(1))
 
