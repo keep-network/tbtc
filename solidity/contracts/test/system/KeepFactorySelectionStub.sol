@@ -16,6 +16,18 @@ contract KeepFactorySelectionStub {
         return keepFactorySelection.selectFactory();
     }
 
+    function setMinimumBondableValue(
+        uint256 _minimumBondableValue,
+        uint256 _groupSize,
+        uint256 _honestThreshold
+    ) public {
+        keepFactorySelection.setMinimumBondableValue(
+            _minimumBondableValue,
+            _groupSize,
+            _honestThreshold
+        );
+    }
+
     function selectFactoryAndRefresh() public returns (IBondedECDSAKeepFactory) {
         return keepFactorySelection.selectFactoryAndRefresh();
     }

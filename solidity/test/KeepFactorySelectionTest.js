@@ -1,5 +1,5 @@
 const {contract} = require("@openzeppelin/test-environment")
-const {expectRevert, constants} = require("@openzeppelin/test-helpers")
+const {BN, expectRevert, constants} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {expect} = require("chai")
 
@@ -334,6 +334,68 @@ describe("KeepFactorySelection", async () => {
       expect(selected4, "unexpected factory selected").to.equal(
         newEthFactory.address,
       )
+    })
+  })
+
+  describe("setMinimumBondableValue", async () => {
+    let defaultValue
+    let newValue
+
+    before(async () => {
+      defaultValue = new BN(999)
+      newValue = new BN(123987)
+    })
+
+    // No KEEP stake factory set.
+    it("completes when KEEP stake factory is not set", async () => {
+      const newKeepFactorySelection = await KeepFactorySelectionStub.new()
+
+      await newKeepFactorySelection.setMinimumBondableValue(newValue, 5, 3)
+
+      expect(await keepStakedFactory.minimumBondableValue()).to.eq.BN(
+        defaultValue,
+      )
+    })
+
+    // KEEP stake factory set.
+    // ETH-only factory not set.
+    it("updates value in KEEP stake factory", async () => {
+      await keepFactorySelection.setMinimumBondableValue(newValue, 5, 3)
+
+      expect(await keepStakedFactory.minimumBondableValue()).to.eq.BN(newValue)
+      expect(await fullyBackedFactory.minimumBondableValue()).to.eq.BN(
+        defaultValue,
+      )
+    })
+
+    // KEEP stake factory not set.
+    // ETH-only factory set.
+    it("updates value in ETH-only factory", async () => {
+      const newKeepFactorySelection = await KeepFactorySelectionStub.new()
+
+      await newKeepFactorySelection.setFullyBackedKeepFactory(
+        fullyBackedFactory.address,
+      )
+
+      await newKeepFactorySelection.setMinimumBondableValue(newValue, 5, 3)
+
+      expect(await keepStakedFactory.minimumBondableValue()).to.eq.BN(
+        defaultValue,
+      )
+      expect(await fullyBackedFactory.minimumBondableValue()).to.eq.BN(newValue)
+    })
+
+    // KEEP stake factory set.
+    // ETH-only factory set.
+    it("updates values in KEEP stake and ETH-only factories", async () => {
+      await keepFactorySelection.setFullyBackedKeepFactory(
+        fullyBackedFactory.address,
+      )
+
+      await keepFactorySelection.setMinimumBondableValue(newValue, 5, 3)
+
+      expect(await keepStakedFactory.minimumBondableValue()).to.eq.BN(newValue)
+      expect(await fullyBackedFactory.minimumBondableValue()).to.eq.BN(newValue)
     })
   })
 
