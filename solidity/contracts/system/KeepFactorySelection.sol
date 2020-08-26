@@ -150,42 +150,8 @@ library KeepFactorySelection {
         );
     }
 
-    /// @notice Sets the address of the KEEP-stake based keep factory. This is
-    /// a default factory used when a ETH-bond-only based keep factory is not set.
-    /// @dev Can be called multiple times! It's responsibility of a contract
-    /// using this library to limit and protect updates.
-    /// @param _keepStakedFactory Address of the regular, KEEP-stake based keep
-    /// factory.
-    function setKeepStakedKeepFactory(
-        Storage storage _self,
-        address _keepStakedFactory
-    ) internal {
-        require(
-            address(_keepStakedFactory) != address(0),
-            "Invalid address"
-        );
-
-        _self.keepStakedFactory = IBondedECDSAKeepFactory(_keepStakedFactory);
-    }
-
-    /// @notice Sets the address of the fully backed, ETH-bond-only based keep
-    /// factory. KeepFactorySelection can work without the fully-backed keep
-    /// factory set, always selecting the default KEEP-stake-based factory.
-    /// Once both fully-backed keep factory and factory selection strategy are
-    /// set, KEEP-stake-based factory is no longer the default choice and it is
-    /// up to the selection strategy to decide which factory should be chosen.
-    /// @dev Can be called multiple times! It's responsibility of a contract
-    /// using this library to limit and protect updates.
-    /// @param _fullyBackedFactory Address of the fully-backed, ETH-bond-only based
-    /// keep factory.
-    function setFullyBackedKeepFactory(
-        Storage storage _self,
-        address _fullyBackedFactory
-    ) internal {
-        _self.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
-    }
-
-    /// @notice Sets the address of the keep factory selection strategy contract.
+    /// @notice Sets addresses of the keep factories and the selection strategy
+    /// contracts.
     /// KeepFactorySelection can work without the keep factory selection
     /// strategy set, always selecting the default KEEP-stake-based factory.
     /// Once both fully-backed keep factory and factory selection strategy are
@@ -193,11 +159,24 @@ library KeepFactorySelection {
     /// up to the selection strategy to decide which factory should be chosen.
     /// @dev Can be called multiple times! It's responsibility of a contract
     /// using this library to limit and protect updates.
+    /// @param _keepStakedFactory Address of the regular, KEEP-stake based keep
+    /// factory.
+    /// @param _fullyBackedFactory Address of the fully-backed, ETH-bond-only based
+    /// keep factory.
     /// @param _factorySelector Address of the keep factory selection strategy.
-    function setKeepFactorySelector(
+    function setFactories(
         Storage storage _self,
+        address _keepStakedFactory,
+        address _fullyBackedFactory,
         address _factorySelector
     ) internal {
+        require(
+            address(_keepStakedFactory) != address(0),
+            "Invalid KEEP-staked factory address"
+        );
+
+        _self.keepStakedFactory = IBondedECDSAKeepFactory(_keepStakedFactory);
+        _self.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
         _self.factorySelector = KeepFactorySelector(_factorySelector);
     }
 }

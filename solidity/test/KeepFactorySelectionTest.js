@@ -1,7 +1,7 @@
 const {contract} = require("@openzeppelin/test-environment")
 const {BN, expectRevert, constants} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {expect} = require("chai")
+const {expect, assert} = require("chai")
 
 const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
 const KeepFactorySelectionStub = contract.fromArtifact(
@@ -64,8 +64,10 @@ describe("KeepFactorySelection", async () => {
     // No selection strategy set.
     it("returns selected KEEP-staked factory even after version update", async () => {
       const newKeepFactory = await ECDSAKeepFactoryStub.new()
-      await keepFactorySelection.setKeepStakedKeepFactory(
+      await keepFactorySelection.setFactories(
         newKeepFactory.address,
+        constants.ZERO_ADDRESS,
+        constants.ZERO_ADDRESS,
       )
 
       expect(
@@ -77,10 +79,9 @@ describe("KeepFactorySelection", async () => {
     // ETH-bond-only factory set.
     // Selection strategy set.
     it("returns selected ETH-only factory even after version update", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepFactorySelector.address,
         fullyBackedFactory.address,
-      )
-      await keepFactorySelection.setKeepFactorySelector(
         keepFactorySelector.address,
       )
 
@@ -91,8 +92,10 @@ describe("KeepFactorySelection", async () => {
 
       // update ETH-only factory version
       const newEthFactory = await ECDSAKeepFactoryStub.new()
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepFactorySelector.address,
         newEthFactory.address,
+        keepFactorySelector.address,
       )
 
       expect(
@@ -104,10 +107,9 @@ describe("KeepFactorySelection", async () => {
     // ETH-bond-only factory set.
     // Selection strategy set.
     it("returns the same factory until refreshed", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepFactorySelector.address,
         fullyBackedFactory.address,
-      )
-      await keepFactorySelection.setKeepFactorySelector(
         keepFactorySelector.address,
       )
 
@@ -154,9 +156,12 @@ describe("KeepFactorySelection", async () => {
     // ETH-bond-only factory set.
     // No selection strategy set.
     it("returns KEEP stake factory if strategy is not set", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepFactorySelector.address,
         fullyBackedFactory.address,
+        constants.ZERO_ADDRESS,
       )
+
       const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
       await keepFactorySelection.selectFactoryAndRefresh()
       expect(selected, "unexpected factory selected").to.equal(
@@ -167,9 +172,12 @@ describe("KeepFactorySelection", async () => {
     // No ETH-only vendor set.
     // Selection strategy set.
     it("returns KEEP stake factory if ETH-only factory is not set", async () => {
-      await keepFactorySelection.setKeepFactorySelector(
+      await keepFactorySelection.setFactories(
+        keepFactorySelector.address,
+        constants.ZERO_ADDRESS,
         keepFactorySelector.address,
       )
+
       const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
       await keepFactorySelection.selectFactoryAndRefresh()
       expect(selected, "unexpected factory selected").to.equal(
@@ -180,10 +188,9 @@ describe("KeepFactorySelection", async () => {
     // ETH-bond-only factory set.
     // Selection strategy set.
     it("returns fully-backed factory if selected by the strategy", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepFactorySelector.address,
         fullyBackedFactory.address,
-      )
-      await keepFactorySelection.setKeepFactorySelector(
         keepFactorySelector.address,
       )
 
@@ -203,10 +210,9 @@ describe("KeepFactorySelection", async () => {
     // ETH-bond-only factory set.
     // Selection strategy set.
     it("returns default factory if selected by the strategy", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepStakedFactory.address,
         fullyBackedFactory.address,
-      )
-      await keepFactorySelection.setKeepFactorySelector(
         keepFactorySelector.address,
       )
 
@@ -226,10 +232,9 @@ describe("KeepFactorySelection", async () => {
     // ETH-bond-only factory set.
     // Selection strategy set.
     it("returns the factory selected before refreshing", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepStakedFactory.address,
         fullyBackedFactory.address,
-      )
-      await keepFactorySelection.setKeepFactorySelector(
         keepFactorySelector.address,
       )
 
@@ -251,10 +256,9 @@ describe("KeepFactorySelection", async () => {
     })
 
     it("reverts if the returned factory is not one of the set factories", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepStakedFactory.address,
         fullyBackedFactory.address,
-      )
-      await keepFactorySelection.setKeepFactorySelector(
         keepFactorySelector.address,
       )
 
@@ -271,8 +275,10 @@ describe("KeepFactorySelection", async () => {
     // No selection strategy set.
     it("gets new KEEP stake factory after update", async () => {
       const newKeepFactory = await ECDSAKeepFactoryStub.new()
-      await keepFactorySelection.setKeepStakedKeepFactory(
+      await keepFactorySelection.setFactories(
         newKeepFactory.address,
+        constants.ZERO_ADDRESS,
+        constants.ZERO_ADDRESS,
       )
 
       // refresh the choice; it should be the old factory now
@@ -293,10 +299,9 @@ describe("KeepFactorySelection", async () => {
     // ETH-only vendor set.
     // Selection strategy set.
     it("gets new ETH-only factory after update", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepFactorySelector.address,
         fullyBackedFactory.address,
-      )
-      await keepFactorySelection.setKeepFactorySelector(
         keepFactorySelector.address,
       )
 
@@ -317,8 +322,10 @@ describe("KeepFactorySelection", async () => {
       )
 
       const newEthFactory = await ECDSAKeepFactoryStub.new()
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepFactorySelector.address,
         newEthFactory.address,
+        keepFactorySelector.address,
       )
 
       // refresh the choice; it should still be the old fully backed factory now
@@ -368,28 +375,13 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    // KEEP stake factory not set.
-    // ETH-only factory set.
-    it("updates value in ETH-only factory", async () => {
-      const newKeepFactorySelection = await KeepFactorySelectionStub.new()
-
-      await newKeepFactorySelection.setFullyBackedKeepFactory(
-        fullyBackedFactory.address,
-      )
-
-      await newKeepFactorySelection.setMinimumBondableValue(newValue, 5, 3)
-
-      expect(await keepStakedFactory.minimumBondableValue()).to.eq.BN(
-        defaultValue,
-      )
-      expect(await fullyBackedFactory.minimumBondableValue()).to.eq.BN(newValue)
-    })
-
     // KEEP stake factory set.
     // ETH-only factory set.
     it("updates values in KEEP stake and ETH-only factories", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
+      await keepFactorySelection.setFactories(
+        keepStakedFactory.address,
         fullyBackedFactory.address,
+        constants.ZERO_ADDRESS,
       )
 
       await keepFactorySelection.setMinimumBondableValue(newValue, 5, 3)
@@ -399,90 +391,71 @@ describe("KeepFactorySelection", async () => {
     })
   })
 
-  describe("setKeepStakedKeepFactory", async () => {
+  describe("setFactories", async () => {
     it("can be called multiple times", async () => {
       const newKeepStakedFactory = await ECDSAKeepFactoryStub.new()
-
-      await keepFactorySelection.setKeepStakedKeepFactory(
-        fullyBackedFactory.address,
-      )
-
-      expect(await keepFactorySelection.keepStakedFactory()).to.equal(
-        fullyBackedFactory.address,
-      )
-
-      await keepFactorySelection.setKeepStakedKeepFactory(
-        newKeepStakedFactory.address,
-      )
-
-      expect(await keepFactorySelection.keepStakedFactory()).to.equal(
-        newKeepStakedFactory.address,
-      )
-    })
-
-    it("can not be called for 0 address", async () => {
-      await expectRevert(
-        keepFactorySelection.setKeepStakedKeepFactory(constants.ZERO_ADDRESS),
-        "Invalid address",
-      )
-    })
-  })
-
-  describe("setFullyBackedKeepFactory", async () => {
-    it("can be called multiple times", async () => {
       const newFullyBackedFactory = await ECDSAKeepFactoryStub.new()
-
-      await keepFactorySelection.setFullyBackedKeepFactory(
-        fullyBackedFactory.address,
-      )
-
-      expect(await keepFactorySelection.fullyBackedFactory()).to.equal(
-        fullyBackedFactory.address,
-      )
-
-      await keepFactorySelection.setFullyBackedKeepFactory(
-        newFullyBackedFactory.address,
-      )
-
-      expect(await keepFactorySelection.fullyBackedFactory()).to.equal(
-        newFullyBackedFactory.address,
-      )
-    })
-
-    it("can be called for 0 address", async () => {
-      await keepFactorySelection.setFullyBackedKeepFactory(
-        constants.ZERO_ADDRESS,
-      )
-
-      expect(await keepFactorySelection.fullyBackedFactory()).to.equal(
-        constants.ZERO_ADDRESS,
-      )
-    })
-  })
-
-  describe("setKeepFactorySelector", async () => {
-    it("can be called multiple times", async () => {
       const newSelector = await KeepFactorySelectorStub.new()
 
-      await keepFactorySelection.setKeepFactorySelector(
-        keepFactorySelector.address,
-      )
-      expect(await keepFactorySelection.factorySelector()).to.equal(
+      await keepFactorySelection.setFactories(
+        keepStakedFactory.address,
+        fullyBackedFactory.address,
         keepFactorySelector.address,
       )
 
-      await keepFactorySelection.setKeepFactorySelector(newSelector.address)
+      assert.include(
+        await keepFactorySelection.factories(),
+        {
+          _keepStakedFactory: keepStakedFactory.address,
+          _fullyBackedFactory: fullyBackedFactory.address,
+          _factorySelector: keepFactorySelector.address,
+        },
+        "invalid factories after first update",
+      )
 
-      expect(await keepFactorySelection.factorySelector()).to.equal(
+      await keepFactorySelection.setFactories(
+        newKeepStakedFactory.address,
+        newFullyBackedFactory.address,
         newSelector.address,
+      )
+
+      assert.include(
+        await keepFactorySelection.factories(),
+        {
+          _keepStakedFactory: newKeepStakedFactory.address,
+          _fullyBackedFactory: newFullyBackedFactory.address,
+          _factorySelector: newSelector.address,
+        },
+        "invalid factories after second update",
       )
     })
 
-    it("can be called for 0 address", async () => {
-      await keepFactorySelection.setKeepFactorySelector(constants.ZERO_ADDRESS)
-
-      expect(await keepFactorySelection.factorySelector()).to.equal(
+    it("can be called for fully backed and factory selector zero addresses", async () => {
+      await keepFactorySelection.setFactories(
+        keepStakedFactory.address,
         constants.ZERO_ADDRESS,
+        constants.ZERO_ADDRESS,
+      )
+
+      assert.include(
+        await keepFactorySelection.factories(),
+        {
+          _keepStakedFactory: keepStakedFactory.address,
+          _fullyBackedFactory: constants.ZERO_ADDRESS,
+          _factorySelector: constants.ZERO_ADDRESS,
+        },
+        "invalid factories",
+      )
+    })
+
+    it("reverts when KEEP-staked factory address is zero", async () => {
+      await expectRevert(
+        keepFactorySelection.setFactories(
+          constants.ZERO_ADDRESS,
+          fullyBackedFactory.address,
+          keepFactorySelector.address,
+        ),
+        "Invalid KEEP-staked factory address",
       )
     })
   })

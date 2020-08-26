@@ -32,28 +32,30 @@ contract KeepFactorySelectionStub {
         return keepFactorySelection.selectFactoryAndRefresh();
     }
 
-    function setKeepStakedKeepFactory(address _keepStakedFactory) public {
-        keepFactorySelection.setKeepStakedKeepFactory(_keepStakedFactory);
+    function setFactories(
+        address _keepStakedFactory,
+        address _fullyBackedFactory,
+        address _factorySelector
+    ) public {
+        keepFactorySelection.setFactories(
+            _keepStakedFactory,
+            _fullyBackedFactory,
+            _factorySelector
+        );
     }
 
-    function keepStakedFactory() public view returns (address) {
-        return address(keepFactorySelection.keepStakedFactory);
-    }
-
-    function setFullyBackedKeepFactory(address _fullyBackedFactory) public {
-        keepFactorySelection.setFullyBackedKeepFactory(_fullyBackedFactory);
-    }
-
-    function fullyBackedFactory() public view returns (address) {
-        return address(keepFactorySelection.fullyBackedFactory);
-    }
-
-    function setKeepFactorySelector(address _factorySelector) public {
-        keepFactorySelection.setKeepFactorySelector(_factorySelector);
-    }
-
-    function factorySelector() public view returns (address) {
-        return address(keepFactorySelection.factorySelector);
+    function factories()
+        public
+        view
+        returns (
+            address _keepStakedFactory,
+            address _fullyBackedFactory,
+            address _factorySelector
+        )
+    {
+        _keepStakedFactory = address(keepFactorySelection.keepStakedFactory);
+        _fullyBackedFactory = address(keepFactorySelection.fullyBackedFactory);
+        _factorySelector = address(keepFactorySelection.factorySelector);
     }
 }
 

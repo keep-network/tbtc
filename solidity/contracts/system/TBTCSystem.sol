@@ -439,9 +439,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             governanceTimeDelay
         ) {
 
-        keepFactorySelection.setKeepStakedKeepFactory(newKeepStakedFactory);
-        keepFactorySelection.setFullyBackedKeepFactory(newFullyBackedFactory);
-        keepFactorySelection.setKeepFactorySelector(newFactorySelector);
+        keepFactorySelection.setFactories(
+            newKeepStakedFactory,
+            newFullyBackedFactory,
+            newFactorySelector
+        );
 
         emit KeepFactoriesUpdated(
             newKeepStakedFactory,
