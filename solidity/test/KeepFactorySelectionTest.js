@@ -164,6 +164,19 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
+    // No ETH-only vendor set.
+    // Selection strategy set.
+    it("returns KEEP stake factory if ETH-only factory is not set", async () => {
+      await keepFactorySelection.setKeepFactorySelector(
+        keepFactorySelector.address,
+      )
+      const selected = await keepFactorySelection.selectFactoryAndRefresh.call()
+      await keepFactorySelection.selectFactoryAndRefresh()
+      expect(selected, "unexpected factory selected").to.equal(
+        keepStakeFactory.address,
+      )
+    })
+
     // ETH stake factory set.
     // Selection strategy set.
     it("returns fully-backed factory if selected by the strategy", async () => {
