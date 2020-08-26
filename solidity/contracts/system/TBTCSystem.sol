@@ -318,17 +318,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             sinceInit < keepFactoriesUpgradeabilityPeriod,
             "beginKeepFactoryUpdate can only be called within upgradeability period"
         );
+
+        // It is required that KEEP staked factory address is configured as this is
+        // a default choice factory. Fully backed factory and factory selector
+        // are optional for the system to work, hence they don't have to be provided.
         require(
             _keepStakedFactory != address(0),
             "KEEP staked factory must be a nonzero address"
-        );
-        require(
-            _fullyBackedFactory != address(0),
-            "Fully backed factory must be a nonzero address"
-        );
-        require(
-            _factorySelector != address(0),
-            "Factory selector must be a nonzero address"
         );
 
         newKeepStakedFactory = _keepStakedFactory;

@@ -4,6 +4,7 @@ const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {BN, expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
+const constants = require("@openzeppelin/test-helpers/src/constants")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
 const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
@@ -470,22 +471,6 @@ describe("TBTCSystem governance", async function() {
           ],
           error: "KEEP staked factory must be a nonzero address",
         },
-        "factory selector is unset": {
-          parameters: [
-            "0x0000000000000000000000000000000000000001",
-            "0x0000000000000000000000000000000000000000",
-            "0x0000000000000000000000000000000000000003",
-          ],
-          error: "Fully backed factory must be a nonzero address",
-        },
-        "Fully backed factory is unset": {
-          parameters: [
-            "0x0000000000000000000000000000000000000001",
-            "0x0000000000000000000000000000000000000002",
-            "0x0000000000000000000000000000000000000000",
-          ],
-          error: "Factory selector must be a nonzero address",
-        },
       },
       verifyFinalizationEvents: async (
         receipt,
@@ -537,6 +522,59 @@ describe("TBTCSystem governance", async function() {
         })
 
         expect(await newFullyBackedFactory.keepOwner.call()).to.equal(
+          mockDeposit,
+        )
+      },
+    })
+
+    governanceTest({
+      property:
+        "keep factory update with zeroed fully backed factory and factory selector",
+      change: "KeepFactoryUpdate",
+      goodParametersWithName: [
+        {
+          name: "_keepStakedFactory",
+          value: newKeepStakedFactory.address,
+        },
+        {
+          name: "_fullyBackedFactory",
+          value: constants.ZERO_ADDRESS,
+        },
+        {
+          name: "_factorySelector",
+          value: constants.ZERO_ADDRESS,
+        },
+      ],
+      verifyFinalizationEvents: async (receipt, setKeepStakedFactory) => {
+        expectEvent(receipt, "KeepFactoryUpdated", {
+          _keepStakedFactory: setKeepStakedFactory,
+          _fullyBackedFactory: constants.ZERO_ADDRESS,
+          _factorySelector: constants.ZERO_ADDRESS,
+        })
+      },
+      verifyFinalState: async () => {
+        const mockDepositOwner = accounts[1]
+        const mockDeposit = accounts[2]
+        await tdt.forceMint(mockDepositOwner, web3.utils.toBN(mockDeposit))
+
+        // Expect this to work normally, and update to the new factory for the
+        // next call.
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
+          from: mockDeposit,
+          value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
+        })
+
+        // Expect new KEEP-staked factory to be called
+        expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
+          newKeepStakedOpenKeepFee,
+        )
+
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
+          from: mockDeposit,
+          value: await newKeepStakedFactory.openKeepFeeEstimate.call(),
+        })
+
+        expect(await newKeepStakedFactory.keepOwner.call()).to.equal(
           mockDeposit,
         )
       },

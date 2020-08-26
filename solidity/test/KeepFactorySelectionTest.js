@@ -449,10 +449,13 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    it("can not be called for 0 address", async () => {
-      await expectRevert(
-        keepFactorySelection.setFullyBackedKeepFactory(constants.ZERO_ADDRESS),
-        "Invalid address",
+    it("can be called for 0 address", async () => {
+      await keepFactorySelection.setFullyBackedKeepFactory(
+        constants.ZERO_ADDRESS,
+      )
+
+      expect(await keepFactorySelection.fullyBackedFactory()).to.equal(
+        constants.ZERO_ADDRESS,
       )
     })
   })
@@ -475,10 +478,11 @@ describe("KeepFactorySelection", async () => {
       )
     })
 
-    it("can not be called for 0 address", async () => {
-      await expectRevert(
-        keepFactorySelection.setKeepFactorySelector(constants.ZERO_ADDRESS),
-        "Invalid address",
+    it("can be called for 0 address", async () => {
+      await keepFactorySelection.setKeepFactorySelector(constants.ZERO_ADDRESS)
+
+      expect(await keepFactorySelection.factorySelector()).to.equal(
+        constants.ZERO_ADDRESS,
       )
     })
   })

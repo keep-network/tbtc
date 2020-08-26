@@ -182,11 +182,6 @@ library KeepFactorySelection {
         Storage storage _self,
         address _fullyBackedFactory
     ) internal {
-        require(
-            address(_fullyBackedFactory) != address(0),
-            "Invalid address"
-        );
-
         _self.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
     }
 
@@ -203,11 +198,6 @@ library KeepFactorySelection {
         Storage storage _self,
         address _factorySelector
     ) internal {
-        require(
-            address(_factorySelector) != address(0),
-            "Invalid address"
-        );
-
         _self.factorySelector = KeepFactorySelector(_factorySelector);
     }
 }
