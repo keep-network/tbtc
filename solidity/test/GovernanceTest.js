@@ -180,50 +180,91 @@ describe("TBTCSystem governance", async function() {
       await restoreSnapshot()
     })
 
-    it("does not revert if beginKeepFactorySingleShotUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("does not revert if beginKeepFactoryUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
       )
 
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
+      await increaseTime(finalizationTime.subn(1))
+
       // Should not revert.
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+      await tbtcSystem.beginKeepFactoryUpdate(
+        "0x0000000000000000000000000000000000000003",
+        "0x0000000000000000000000000000000000000004",
+      )
+
+      expect(await tbtcSystem.getRemainingKeepFactoryUpdateTime()).to.eq.BN(
+        await tbtcSystem.getGovernanceTimeDelay(),
+      )
+    })
+
+    it("does not revert if finalizeKeepFactoryUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactoryUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
+      await increaseTime(finalizationTime.addn(1))
+
+      await tbtcSystem.finalizeKeepFactoryUpdate()
+
+      // Should not revert.
+      await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
       )
     })
 
-    it("reverts if finalizeKeepFactorySingleShotUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("does not revert finalizeKeepFactoryUpdate if upgradeability period has passed", async () => {
+      await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
-      await increaseTime(finalizationTime.toNumber() + 1) // 10 days
-      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+      const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
+      await increaseTime(upgradeabilityTime.addn(1))
+
+      await tbtcSystem.finalizeKeepFactoryUpdate()
+    })
+
+    it("reverts for beginKeepFactoryUpdate if upgradeability period has passed", async () => {
+      await tbtcSystem.beginKeepFactoryUpdate(
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002",
+      )
+
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
+      await increaseTime(finalizationTime.addn(1))
+
+      await tbtcSystem.finalizeKeepFactoryUpdate()
+
+      const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
+      await increaseTime(upgradeabilityTime.addn(1))
 
       await expectRevert(
-        tbtcSystem.beginKeepFactorySingleShotUpdate(
+        tbtcSystem.beginKeepFactoryUpdate(
           "0x0000000000000000000000000000000000000001",
           "0x0000000000000000000000000000000000000002",
         ),
-        "Keep factory data can only be updated once",
+        "beginKeepFactoryUpdate can only be called within upgradeability period",
       )
     })
 
-    it("reverts if finalizeKeepFactorySingleShotUpdate is called twice", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("reverts if finalizeKeepFactoryUpdate is called twice", async () => {
+      await tbtcSystem.beginKeepFactoryUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
       await increaseTime(finalizationTime.toNumber() + 1) // 10 days
-      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+      await tbtcSystem.finalizeKeepFactoryUpdate()
 
       await expectRevert(
-        tbtcSystem.finalizeKeepFactorySingleShotUpdate(),
+        tbtcSystem.finalizeKeepFactoryUpdate(),
         "Change not initiated",
       )
     })
@@ -382,7 +423,7 @@ describe("TBTCSystem governance", async function() {
 
     governanceTest({
       property: "keep factory single-shot update",
-      change: "KeepFactorySingleShotUpdate",
+      change: "KeepFactoryUpdate",
       goodParametersWithName: [
         {
           name: "_factorySelector",
@@ -407,7 +448,7 @@ describe("TBTCSystem governance", async function() {
         setFactorySelector,
         setFullyBackedFactory,
       ) => {
-        expectEvent(receipt, "KeepFactorySingleShotUpdated", {
+        expectEvent(receipt, "KeepFactoryUpdated", {
           _factorySelector: setFactorySelector,
           _fullyBackedFactory: setFullyBackedFactory,
         })

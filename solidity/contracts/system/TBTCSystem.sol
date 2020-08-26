@@ -38,7 +38,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _severelyUndercollateralizedThresholdPercent,
         uint256 _timestamp
     );
-    event KeepFactorySingleShotUpdateStarted(
+    event KeepFactoryUpdateStarted(
         address _factorySelector,
         address _fullyBackedFactory,
         uint256 _timestamp
@@ -53,7 +53,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _undercollateralizedThresholdPercent,
         uint16 _severelyUndercollateralizedThresholdPercent
     );
-    event KeepFactorySingleShotUpdated(
+    event KeepFactoryUpdated(
         address _factorySelector,
         address _fullyBackedFactory
     );
@@ -79,11 +79,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint64[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     uint256 constant governanceTimeDelay = 48 hours;
+    uint256 constant keepFactoriesUpgradeabilityPeriod = 180 days;
 
     uint256 private signerFeeDivisorChangeInitiated;
     uint256 private lotSizesChangeInitiated;
     uint256 private collateralizationThresholdsChangeInitiated;
-    uint256 private keepFactorySingleShotUpdateInitiated;
+    uint256 private keepFactoryUpdateInitiated;
 
     uint16 private newSignerFeeDivisor;
     uint64[] newLotSizesSatoshis;
@@ -293,26 +294,24 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///         default KEEP-backed factory for new deposits. When the
     ///         ETH-only-backed factory and strategy are set, TBTCSystem load
     ///         balances between two factories based on the selection strategy.
-    /// @dev It can be finalized by calling `finalizeKeepFactorySingleShotUpdate`
+    /// @dev It can be finalized by calling `finalizeKeepFactoryUpdate`
     ///      any time after `governanceTimeDelay` has elapsed. This can be
     ///      called more than once until finalized to reset the values and
-    ///      timer, but it can only be finalized once!
+    ///      timer. Upgrade can be performed more than once if initialized
+    ///      before `keepFactoriesUpgradeabilityPeriod` since system initialization
+    ///      is reached.
     /// @param _factorySelector Address of the keep factory selection strategy.
     /// @param _fullyBackedFactory Address of the ETH-bond-only-based factory.
-    function beginKeepFactorySingleShotUpdate(
+    function beginKeepFactoryUpdate(
         address _factorySelector,
         address _fullyBackedFactory
     )
         external onlyOwner
     {
+        uint256 sinceInit = block.timestamp - initializedTimestamp;
         require(
-            // Either an update is in progress,
-            keepFactorySingleShotUpdateInitiated != 0 ||
-            // or we're trying to start a fresh one, in which case we must not
-            // have an already-finalized one (indicated by newFullyBackedFactory
-            // being set).
-            newFullyBackedFactory == address(0),
-            "Keep factory data can only be updated once"
+            sinceInit < keepFactoriesUpgradeabilityPeriod,
+            "beginKeepFactoryUpdate can only be called within upgradeability period"
         );
         require(
             _factorySelector != address(0),
@@ -325,8 +324,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
         newFactorySelector = _factorySelector;
         newFullyBackedFactory = _fullyBackedFactory;
-        keepFactorySingleShotUpdateInitiated = block.timestamp;
-        emit KeepFactorySingleShotUpdateStarted(
+        keepFactoryUpdateInitiated = block.timestamp;
+        emit KeepFactoryUpdateStarted(
             _factorySelector,
             _fullyBackedFactory,
             block.timestamp
@@ -420,30 +419,29 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Finish setting the address of the ETH-only-backed ECDSA keep
     ///         factory and the selection strategy that will choose between it
     ///         and the default KEEP-backed factory for new deposits.
-    /// @dev `beginKeepFactorySingleShotUpdate` must be called first; once
+    /// @dev `beginKeepFactoryUpdate` must be called first; once
     ///      `governanceTimeDelay` has passed, this function can be called to
     ///      set the collateralization thresholds to the value set in
-    ///      `beginKeepFactorySingleShotUpdate`.
-    function finalizeKeepFactorySingleShotUpdate()
+    ///      `beginKeepFactoryUpdate`.
+    function finalizeKeepFactoryUpdate()
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            keepFactorySingleShotUpdateInitiated,
+            keepFactoryUpdateInitiated,
             governanceTimeDelay
         ) {
 
         keepFactorySelection.setKeepFactorySelector(newFactorySelector);
         keepFactorySelection.setFullyBackedKeepFactory(newFullyBackedFactory);
 
-        emit KeepFactorySingleShotUpdated(
+        emit KeepFactoryUpdated(
             newFactorySelector,
             newFullyBackedFactory
         );
 
-        keepFactorySingleShotUpdateInitiated = 0;
+        keepFactoryUpdateInitiated = 0;
         newFactorySelector = address(0);
-        // Keep newFullyBackedFactory set as a marker that the update has already
-        // occurred.
+        newFullyBackedFactory = address(0);
     }
 
     /// @notice Finish adding a new price feed contract to the priceFeed.
@@ -543,9 +541,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Get the time remaining until the Keep ETH-only-backed ECDSA keep
     ///         factory and the selection strategy that will choose between it
     ///         and the KEEP-backed factory can be updated.
-    function getRemainingKeepFactorySingleShotUpdateTime() external view returns (uint256) {
+    function getRemainingKeepFactoryUpdateTime() external view returns (uint256) {
         return getRemainingChangeTime(
-            keepFactorySingleShotUpdateInitiated,
+            keepFactoryUpdateInitiated,
             governanceTimeDelay
         );
     }
@@ -555,6 +553,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return getRemainingChangeTime(
             ethBtcPriceFeedAdditionInitiated,
             priceFeedGovernanceTimeDelay
+        );
+    }
+
+    /// @notice Get the time remaining until Keep factories can no longer be updated.
+    function getRemainingKeepFactoriesUpgradeabilityTime() external view returns (uint256) {
+        return getRemainingChangeTime(
+            initializedTimestamp,
+            keepFactoriesUpgradeabilityPeriod
         );
     }
 
@@ -576,6 +582,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///         price feed additions.
     function getGovernanceTimeDelay() public pure returns (uint256) {
         return governanceTimeDelay;
+    }
+
+    /// @notice Returns the time period when keep factories upgrades are allowed.
+    function getKeepFactoriesUpgradeabilityPeriod() public pure returns (uint256) {
+        return keepFactoriesUpgradeabilityPeriod;
     }
 
     /// @notice Returns the time delay used for price feed addition governance
