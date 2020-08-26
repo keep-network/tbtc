@@ -196,50 +196,50 @@ describe("TBTCSystem governance", async function() {
       await restoreSnapshot()
     })
 
-    it("does not revert if beginKeepFactoryUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactoryUpdate(
+    it("does not revert if beginKeepFactoriesUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
         "0x0000000000000000000000000000000000000003",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
       await increaseTime(finalizationTime.subn(1))
 
       // Should not revert.
-      await tbtcSystem.beginKeepFactoryUpdate(
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000005",
         "0x0000000000000000000000000000000000000006",
         "0x0000000000000000000000000000000000000007",
       )
 
-      expect(await tbtcSystem.getRemainingKeepFactoryUpdateTime()).to.eq.BN(
+      expect(await tbtcSystem.getRemainingKeepFactoriesUpdateTime()).to.eq.BN(
         await tbtcSystem.getGovernanceTimeDelay(),
       )
     })
 
-    it("does not revert if finalizeKeepFactoryUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactoryUpdate(
+    it("does not revert if finalizeKeepFactoriesUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
         "0x0000000000000000000000000000000000000003",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
       await increaseTime(finalizationTime.addn(1))
 
-      await tbtcSystem.finalizeKeepFactoryUpdate()
+      await tbtcSystem.finalizeKeepFactoriesUpdate()
 
       // Should not revert.
-      await tbtcSystem.beginKeepFactoryUpdate(
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
         "0x0000000000000000000000000000000000000003",
       )
     })
 
-    it("does not revert finalizeKeepFactoryUpdate if upgradeability period has passed", async () => {
-      await tbtcSystem.beginKeepFactoryUpdate(
+    it("does not revert finalizeKeepFactoriesUpdate if upgradeability period has passed", async () => {
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
         "0x0000000000000000000000000000000000000003",
@@ -248,47 +248,47 @@ describe("TBTCSystem governance", async function() {
       const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
       await increaseTime(upgradeabilityTime.addn(1))
 
-      await tbtcSystem.finalizeKeepFactoryUpdate()
+      await tbtcSystem.finalizeKeepFactoriesUpdate()
     })
 
-    it("reverts for beginKeepFactoryUpdate if upgradeability period has passed", async () => {
-      await tbtcSystem.beginKeepFactoryUpdate(
+    it("reverts for beginKeepFactoriesUpdate if upgradeability period has passed", async () => {
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
         "0x0000000000000000000000000000000000000003",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
       await increaseTime(finalizationTime.addn(1))
 
-      await tbtcSystem.finalizeKeepFactoryUpdate()
+      await tbtcSystem.finalizeKeepFactoriesUpdate()
 
       const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
       await increaseTime(upgradeabilityTime.addn(1))
 
       await expectRevert(
-        tbtcSystem.beginKeepFactoryUpdate(
+        tbtcSystem.beginKeepFactoriesUpdate(
           "0x0000000000000000000000000000000000000001",
           "0x0000000000000000000000000000000000000002",
           "0x0000000000000000000000000000000000000003",
         ),
-        "beginKeepFactoryUpdate can only be called within upgradeability period",
+        "beginKeepFactoriesUpdate can only be called within upgradeability period",
       )
     })
 
-    it("reverts if finalizeKeepFactoryUpdate is called twice", async () => {
-      await tbtcSystem.beginKeepFactoryUpdate(
+    it("reverts if finalizeKeepFactoriesUpdate is called twice", async () => {
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
         "0x0000000000000000000000000000000000000003",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactoryUpdateTime()
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
       await increaseTime(finalizationTime.toNumber() + 1) // 10 days
-      await tbtcSystem.finalizeKeepFactoryUpdate()
+      await tbtcSystem.finalizeKeepFactoriesUpdate()
 
       await expectRevert(
-        tbtcSystem.finalizeKeepFactoryUpdate(),
+        tbtcSystem.finalizeKeepFactoriesUpdate(),
         "Change not initiated",
       )
     })
@@ -447,7 +447,7 @@ describe("TBTCSystem governance", async function() {
 
     governanceTest({
       property: "keep factory update",
-      change: "KeepFactoryUpdate",
+      change: "KeepFactoriesUpdate",
       goodParametersWithName: [
         {
           name: "_keepStakedFactory",
@@ -478,7 +478,7 @@ describe("TBTCSystem governance", async function() {
         setFullyBackedFactory,
         setFactorySelector,
       ) => {
-        expectEvent(receipt, "KeepFactoryUpdated", {
+        expectEvent(receipt, "KeepFactoriesUpdated", {
           _keepStakedFactory: setKeepStakedFactory,
           _fullyBackedFactory: setFullyBackedFactory,
           _factorySelector: setFactorySelector,
@@ -530,7 +530,7 @@ describe("TBTCSystem governance", async function() {
     governanceTest({
       property:
         "keep factory update with zeroed fully backed factory and factory selector",
-      change: "KeepFactoryUpdate",
+      change: "KeepFactoriesUpdate",
       goodParametersWithName: [
         {
           name: "_keepStakedFactory",
@@ -546,7 +546,7 @@ describe("TBTCSystem governance", async function() {
         },
       ],
       verifyFinalizationEvents: async (receipt, setKeepStakedFactory) => {
-        expectEvent(receipt, "KeepFactoryUpdated", {
+        expectEvent(receipt, "KeepFactoriesUpdated", {
           _keepStakedFactory: setKeepStakedFactory,
           _fullyBackedFactory: constants.ZERO_ADDRESS,
           _factorySelector: constants.ZERO_ADDRESS,

@@ -38,7 +38,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _severelyUndercollateralizedThresholdPercent,
         uint256 _timestamp
     );
-    event KeepFactoryUpdateStarted(
+    event KeepFactoriesUpdateStarted(
         address _keepStakedFactory,
         address _fullyBackedFactory,
         address _factorySelector,
@@ -54,7 +54,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _undercollateralizedThresholdPercent,
         uint16 _severelyUndercollateralizedThresholdPercent
     );
-    event KeepFactoryUpdated(
+    event KeepFactoriesUpdated(
         address _keepStakedFactory,
         address _fullyBackedFactory,
         address _factorySelector
@@ -86,7 +86,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint256 private signerFeeDivisorChangeInitiated;
     uint256 private lotSizesChangeInitiated;
     uint256 private collateralizationThresholdsChangeInitiated;
-    uint256 private keepFactoryUpdateInitiated;
+    uint256 private keepFactoriesUpdateInitiated;
 
     uint16 private newSignerFeeDivisor;
     uint64[] newLotSizesSatoshis;
@@ -297,7 +297,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///         default KEEP-backed factory for new deposits. When the
     ///         ETH-only-backed factory and strategy are set, TBTCSystem load
     ///         balances between two factories based on the selection strategy.
-    /// @dev It can be finalized by calling `finalizeKeepFactoryUpdate`
+    /// @dev It can be finalized by calling `finalizeKeepFactoriesUpdate`
     ///      any time after `governanceTimeDelay` has elapsed. This can be
     ///      called more than once until finalized to reset the values and
     ///      timer. Upgrade can be performed more than once if initialized
@@ -306,7 +306,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @param _keepStakedFactory Address of the KEEP staked based factory.
     /// @param _fullyBackedFactory Address of the ETH-bond-only-based factory.
     /// @param _factorySelector Address of the keep factory selection strategy.
-    function beginKeepFactoryUpdate(
+    function beginKeepFactoriesUpdate(
         address _keepStakedFactory,
         address _fullyBackedFactory,
         address _factorySelector
@@ -316,7 +316,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 sinceInit = block.timestamp - initializedTimestamp;
         require(
             sinceInit < keepFactoriesUpgradeabilityPeriod,
-            "beginKeepFactoryUpdate can only be called within upgradeability period"
+            "beginKeepFactoriesUpdate can only be called within upgradeability period"
         );
 
         // It is required that KEEP staked factory address is configured as this is
@@ -330,9 +330,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         newKeepStakedFactory = _keepStakedFactory;
         newFullyBackedFactory = _fullyBackedFactory;
         newFactorySelector = _factorySelector;
-        keepFactoryUpdateInitiated = block.timestamp;
+        keepFactoriesUpdateInitiated = block.timestamp;
 
-        emit KeepFactoryUpdateStarted(
+        emit KeepFactoriesUpdateStarted(
             _keepStakedFactory,
             _fullyBackedFactory,
             _factorySelector,
@@ -427,15 +427,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Finish setting the address of the ETH-only-backed ECDSA keep
     ///         factory and the selection strategy that will choose between it
     ///         and the default KEEP-backed factory for new deposits.
-    /// @dev `beginKeepFactoryUpdate` must be called first; once
+    /// @dev `beginKeepFactoriesUpdate` must be called first; once
     ///      `governanceTimeDelay` has passed, this function can be called to
     ///      set the collateralization thresholds to the value set in
-    ///      `beginKeepFactoryUpdate`.
-    function finalizeKeepFactoryUpdate()
+    ///      `beginKeepFactoriesUpdate`.
+    function finalizeKeepFactoriesUpdate()
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            keepFactoryUpdateInitiated,
+            keepFactoriesUpdateInitiated,
             governanceTimeDelay
         ) {
 
@@ -443,13 +443,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         keepFactorySelection.setFullyBackedKeepFactory(newFullyBackedFactory);
         keepFactorySelection.setKeepFactorySelector(newFactorySelector);
 
-        emit KeepFactoryUpdated(
+        emit KeepFactoriesUpdated(
             newKeepStakedFactory,
             newFullyBackedFactory,
             newFactorySelector
         );
 
-        keepFactoryUpdateInitiated = 0;
+        keepFactoriesUpdateInitiated = 0;
         newKeepStakedFactory = address(0);
         newFullyBackedFactory = address(0);
         newFactorySelector = address(0);
@@ -552,9 +552,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Get the time remaining until the Keep ETH-only-backed ECDSA keep
     ///         factory and the selection strategy that will choose between it
     ///         and the KEEP-backed factory can be updated.
-    function getRemainingKeepFactoryUpdateTime() external view returns (uint256) {
+    function getRemainingKeepFactoriesUpdateTime() external view returns (uint256) {
         return getRemainingChangeTime(
-            keepFactoryUpdateInitiated,
+            keepFactoriesUpdateInitiated,
             governanceTimeDelay
         );
     }
