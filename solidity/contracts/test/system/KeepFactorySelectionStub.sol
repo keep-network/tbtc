@@ -25,7 +25,7 @@ contract KeepFactorySelectionStub {
     }
 
     function keepStakedFactory() public view returns (address) {
-        return address(keepFactorySelection.keepStakeFactory);
+        return address(keepFactorySelection.keepStakedFactory);
     }
 
     function setFullyBackedKeepFactory(address _fullyBackedFactory) public {
@@ -33,7 +33,7 @@ contract KeepFactorySelectionStub {
     }
 
     function fullyBackedFactory() public view returns (address) {
-        return address(keepFactorySelection.ethStakeFactory);
+        return address(keepFactorySelection.fullyBackedFactory);
     }
 
     function setKeepFactorySelector(address _factorySelector) public {

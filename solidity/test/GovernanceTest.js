@@ -389,7 +389,7 @@ describe("TBTCSystem governance", async function() {
           value: keepFactorySelector.address,
         },
         {
-          name: "_ethBackedFactory",
+          name: "_fullyBackedFactory",
           value: newKeepFactory.address,
         },
       ],
@@ -405,11 +405,11 @@ describe("TBTCSystem governance", async function() {
       verifyFinalizationEvents: async (
         receipt,
         setFactorySelector,
-        setEthBackedFactory,
+        setFullyBackedFactory,
       ) => {
         expectEvent(receipt, "KeepFactorySingleShotUpdated", {
           _factorySelector: setFactorySelector,
-          _ethBackedFactory: setEthBackedFactory,
+          _fullyBackedFactory: setFullyBackedFactory,
         })
       },
       verifyFinalState: async () => {
@@ -425,7 +425,7 @@ describe("TBTCSystem governance", async function() {
           value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
         })
 
-        // This should fail as the _ethBackedFactory is not a real contract
+        // This should fail as the _fullyBackedFactory is not a real contract
         // address, so dereferencing it will go boom.
         await tbtcSystem.requestNewKeep(10 ** 8, 123, {
           from: mockDeposit,

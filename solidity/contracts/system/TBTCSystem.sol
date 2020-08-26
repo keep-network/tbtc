@@ -40,7 +40,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     );
     event KeepFactorySingleShotUpdateStarted(
         address _factorySelector,
-        address _ethBackedFactory,
+        address _fullyBackedFactory,
         uint256 _timestamp
     );
 
@@ -55,7 +55,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     );
     event KeepFactorySingleShotUpdated(
         address _factorySelector,
-        address _ethBackedFactory
+        address _fullyBackedFactory
     );
 
     uint256 initializedTimestamp = 0;
@@ -91,7 +91,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint16 private newUndercollateralizedThresholdPercent;
     uint16 private newSeverelyUndercollateralizedThresholdPercent;
     address private newFactorySelector;
-    address private newEthBackedFactory;
+    address private newFullyBackedFactory;
 
     // price feed
     uint256 priceFeedGovernanceTimeDelay = 90 days;
@@ -298,10 +298,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///      called more than once until finalized to reset the values and
     ///      timer, but it can only be finalized once!
     /// @param _factorySelector Address of the keep factory selection strategy.
-    /// @param _ethBackedFactory Address of the ETH-stake-based factory.
+    /// @param _fullyBackedFactory Address of the ETH-bond-only-based factory.
     function beginKeepFactorySingleShotUpdate(
         address _factorySelector,
-        address _ethBackedFactory
+        address _fullyBackedFactory
     )
         external onlyOwner
     {
@@ -309,9 +309,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             // Either an update is in progress,
             keepFactorySingleShotUpdateInitiated != 0 ||
             // or we're trying to start a fresh one, in which case we must not
-            // have an already-finalized one (indicated by newEthBackedFactory
+            // have an already-finalized one (indicated by newFullyBackedFactory
             // being set).
-            newEthBackedFactory == address(0),
+            newFullyBackedFactory == address(0),
             "Keep factory data can only be updated once"
         );
         require(
@@ -319,16 +319,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Factory selector must be a nonzero address"
         );
         require(
-            _ethBackedFactory != address(0),
+            _fullyBackedFactory != address(0),
             "ETH-backed factory must be a nonzero address"
         );
 
         newFactorySelector = _factorySelector;
-        newEthBackedFactory = _ethBackedFactory;
+        newFullyBackedFactory = _fullyBackedFactory;
         keepFactorySingleShotUpdateInitiated = block.timestamp;
         emit KeepFactorySingleShotUpdateStarted(
             _factorySelector,
-            _ethBackedFactory,
+            _fullyBackedFactory,
             block.timestamp
         );
     }
@@ -433,16 +433,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         ) {
 
         keepFactorySelection.setKeepFactorySelector(newFactorySelector);
-        keepFactorySelection.setFullyBackedKeepFactory(newEthBackedFactory);
+        keepFactorySelection.setFullyBackedKeepFactory(newFullyBackedFactory);
 
         emit KeepFactorySingleShotUpdated(
             newFactorySelector,
-            newEthBackedFactory
+            newFullyBackedFactory
         );
 
         keepFactorySingleShotUpdateInitiated = 0;
         newFactorySelector = address(0);
-        // Keep newEthBackedFactory set as a marker that the update has already
+        // Keep newFullyBackedFactory set as a marker that the update has already
         // occurred.
     }
 
