@@ -20,12 +20,28 @@ contract KeepFactorySelectionStub {
         return keepFactorySelection.selectFactoryAndRefresh();
     }
 
+    function setKeepStakedKeepFactory(address _keepStakedFactory) public {
+        keepFactorySelection.setKeepStakedKeepFactory(_keepStakedFactory);
+    }
+
+    function keepStakedFactory() public view returns (address) {
+        return address(keepFactorySelection.keepStakeFactory);
+    }
+
     function setFullyBackedKeepFactory(address _fullyBackedFactory) public {
         keepFactorySelection.setFullyBackedKeepFactory(_fullyBackedFactory);
     }
 
+    function fullyBackedFactory() public view returns (address) {
+        return address(keepFactorySelection.ethStakeFactory);
+    }
+
     function setKeepFactorySelector(address _factorySelector) public {
         keepFactorySelection.setKeepFactorySelector(_factorySelector);
+    }
+
+    function factorySelector() public view returns (address) {
+        return address(keepFactorySelection.factorySelector);
     }
 }
 

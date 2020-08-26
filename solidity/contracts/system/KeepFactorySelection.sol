@@ -150,23 +150,38 @@ library KeepFactorySelection {
         );
     }
 
+    /// @notice Sets the address of the KEEP-stake based keep factory. This is
+    /// a default factory used when a ETH-stake based keep factory is not set.
+    /// @dev Can be called multiple times! It's responsibility of a contract
+    /// using this library to limit and protect updates.
+    /// @param _keepStakedFactory Address of the regular, KEEP-stake based keep
+    /// factory.
+    function setKeepStakedKeepFactory(
+        Storage storage _self,
+        address _keepStakedFactory
+    ) internal {
+        require(
+            address(_keepStakedFactory) != address(0),
+            "Invalid address"
+        );
+
+        _self.keepStakeFactory = IBondedECDSAKeepFactory(_keepStakedFactory);
+    }
+
     /// @notice Sets the address of the fully backed, ETH-stake based keep
     /// factory. KeepFactorySelection can work without the fully-backed keep
     /// factory set, always selecting the default KEEP-stake-based factory.
     /// Once both fully-backed keep factory and factory selection strategy are
     /// set, KEEP-stake-based factory is no longer the default choice and it is
     /// up to the selection strategy to decide which factory should be chosen.
-    /// @dev Can be called only one time!
+    /// @dev Can be called multiple times! It's responsibility of a contract
+    /// using this library to limit and protect updates.
     /// @param _fullyBackedFactory Address of the fully-backed, ETH-stake based
     /// keep factory.
     function setFullyBackedKeepFactory(
         Storage storage _self,
         address _fullyBackedFactory
     ) internal {
-        require(
-            address(_self.ethStakeFactory) == address(0),
-            "Fully backed factory already set"
-        );
         require(
             address(_fullyBackedFactory) != address(0),
             "Invalid address"
@@ -181,16 +196,13 @@ library KeepFactorySelection {
     /// Once both fully-backed keep factory and factory selection strategy are
     /// set, KEEP-stake-based factory is no longer the default choice and it is
     /// up to the selection strategy to decide which factory should be chosen.
-    /// @dev Can be called only one time!
+    /// @dev Can be called multiple times! It's responsibility of a contract
+    /// using this library to limit and protect updates.
     /// @param _factorySelector Address of the keep factory selection strategy.
     function setKeepFactorySelector(
         Storage storage _self,
         address _factorySelector
     ) internal {
-        require(
-            address(_self.factorySelector) == address(0),
-            "Factory selector already set"
-        );
         require(
             address(_factorySelector) != address(0),
             "Invalid address"
