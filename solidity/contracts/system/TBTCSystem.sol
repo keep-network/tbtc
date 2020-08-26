@@ -316,7 +316,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint256 sinceInit = block.timestamp - initializedTimestamp;
         require(
             sinceInit < keepFactoriesUpgradeabilityPeriod,
-            "beginKeepFactoriesUpdate can only be called within upgradeability period"
+            "beginKeepFactoriesUpdate can only be called within 180 days of initialization"
         );
 
         // It is required that KEEP staked factory address is configured as this is

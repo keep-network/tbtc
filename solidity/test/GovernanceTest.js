@@ -272,7 +272,7 @@ describe("TBTCSystem governance", async function() {
           "0x0000000000000000000000000000000000000002",
           "0x0000000000000000000000000000000000000003",
         ),
-        "beginKeepFactoriesUpdate can only be called within upgradeability period",
+        "beginKeepFactoriesUpdate can only be called within 180 days of initialization",
       )
     })
 
