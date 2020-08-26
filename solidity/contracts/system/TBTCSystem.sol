@@ -292,17 +292,24 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
     }
 
-    /// @notice Sets the address of the ETH-only-backed ECDSA keep factory and
-    ///         the selection strategy that will choose between it and the
-    ///         default KEEP-backed factory for new deposits. When the
-    ///         ETH-only-backed factory and strategy are set, TBTCSystem load
-    ///         balances between two factories based on the selection strategy.
+    /// @notice Sets the addresses of the KEEP-staked ECDSA keep factory,
+    ///         ETH-only-backed ECDSA keep factory and the selection strategy
+    ///         that will choose between the two factories for new deposits.
+    ///         When the ETH-only-backed factory and strategy are not set TBTCSystem
+    ///         will use KEEP-staked factory. When both factories and strategy
+    ///         are set, TBTCSystem load balances between two factories based on
+    ///         the selection strategy.
     /// @dev It can be finalized by calling `finalizeKeepFactoriesUpdate`
     ///      any time after `governanceTimeDelay` has elapsed. This can be
     ///      called more than once until finalized to reset the values and
     ///      timer. Upgrade can be performed more than once if initialized
     ///      before `keepFactoriesUpgradeabilityPeriod` since system initialization
-    ///      is reached.
+    ///      is reached. This mechanism overwrites the previous values with a set
+    ///      provided in the request. If a parameter is not intended to be updated
+    ///      its' value should be provided as well. KEEP-staked factory address
+    ///      cannot be zero as this is a default factory required for the system
+    ///      to work. ETH-bond-only factory or the strategy are allowed to be
+    ///      set as zero addresses.
     /// @param _keepStakedFactory Address of the KEEP staked based factory.
     /// @param _fullyBackedFactory Address of the ETH-bond-only-based factory.
     /// @param _factorySelector Address of the keep factory selection strategy.
@@ -424,13 +431,12 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         collateralizationThresholdsChangeInitiated = 0;
     }
 
-    /// @notice Finish setting the address of the ETH-only-backed ECDSA keep
-    ///         factory and the selection strategy that will choose between it
-    ///         and the default KEEP-backed factory for new deposits.
+    /// @notice Finish setting addresses of the KEEP-staked ECDSA keep factory
+    ///         ETH-only-backed ECDSA keep factory and the selection strategy
+    ///         that will choose between the two factories for new deposits.
     /// @dev `beginKeepFactoriesUpdate` must be called first; once
     ///      `governanceTimeDelay` has passed, this function can be called to
-    ///      set the collateralization thresholds to the value set in
-    ///      `beginKeepFactoriesUpdate`.
+    ///      set factories addresses to the values set in `beginKeepFactoriesUpdate`.
     function finalizeKeepFactoriesUpdate()
         external
         onlyOwner
