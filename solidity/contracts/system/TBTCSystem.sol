@@ -302,14 +302,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @dev It can be finalized by calling `finalizeKeepFactoriesUpdate`
     ///      any time after `governanceTimeDelay` has elapsed. This can be
     ///      called more than once until finalized to reset the values and
-    ///      timer. Upgrade can be performed more than once if initialized
-    ///      before `keepFactoriesUpgradeabilityPeriod` since system initialization
-    ///      is reached. This mechanism overwrites the previous values with a set
-    ///      provided in the request. If a parameter is not intended to be updated
-    ///      its' value should be provided as well. KEEP-staked factory address
-    ///      cannot be zero as this is a default factory required for the system
-    ///      to work. ETH-bond-only factory or the strategy are allowed to be
-    ///      set as zero addresses.
+    ///      timer. An update can only be initialized before
+    ///      `keepFactoriesUpgradeabilityPeriod` elapses after system initialization;
+    ///      after that, no further updates can be initialized, though any pending
+    ///      update can be finalized. All calls must set all three properties to
+    ///      their desired value; leaving a value as 0, even if it was previously
+    ///      set, will update that value to be 0. ETH-bond-only factory or the
+    ///      strategy are allowed to be set as zero addresses.
     /// @param _keepStakedFactory Address of the KEEP staked based factory.
     /// @param _fullyBackedFactory Address of the ETH-bond-only-based factory.
     /// @param _factorySelector Address of the keep factory selection strategy.
@@ -431,8 +430,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         collateralizationThresholdsChangeInitiated = 0;
     }
 
-    /// @notice Finish setting addresses of the KEEP-staked ECDSA keep factory
-    ///         ETH-only-backed ECDSA keep factory and the selection strategy
+    /// @notice Finish setting addresses of the KEEP-staked ECDSA keep factory,
+    ///         ETH-only-backed ECDSA keep factory, and the selection strategy
     ///         that will choose between the two factories for new deposits.
     /// @dev `beginKeepFactoriesUpdate` must be called first; once
     ///      `governanceTimeDelay` has passed, this function can be called to

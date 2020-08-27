@@ -26,9 +26,6 @@ describe("TBTCSystem governance", async function() {
 
   const nonSystemOwner = accounts[3]
 
-  // We increased the value for new factories compared to the default ones
-  // as this is a way of validating that factory has been updated when using
-  // old (insufficient) value to request a new keep.
   const defaultOpenKeepFee = 13
   const newKeepStakedOpenKeepFee = 672
   const newFullyBackedOpenKeepFee = 834
@@ -213,6 +210,7 @@ describe("TBTCSystem governance", async function() {
         "0x0000000000000000000000000000000000000007",
       )
 
+      // Check if timer has been updated.
       expect(await tbtcSystem.getRemainingKeepFactoriesUpdateTime()).to.eq.BN(
         await tbtcSystem.getGovernanceTimeDelay(),
       )
