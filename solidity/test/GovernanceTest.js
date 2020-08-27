@@ -4,6 +4,7 @@ const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {BN, expectRevert} = require("@openzeppelin/test-helpers")
 const {expect} = require("chai")
+const constants = require("@openzeppelin/test-helpers/src/constants")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
 const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
@@ -14,7 +15,8 @@ describe("TBTCSystem governance", async function() {
   let tbtcSystem
   let keepFactorySelector
   let ecdsaKeepFactory
-  let newKeepFactory
+  let newKeepStakedFactory
+  let newFullyBackedFactory
   let satWeiPriceFeed
   let ethBtcMedianizer
   let badEthBtcMedianizer
@@ -23,6 +25,10 @@ describe("TBTCSystem governance", async function() {
   const medianizerValue = 100000000000
 
   const nonSystemOwner = accounts[3]
+
+  const defaultOpenKeepFee = 13
+  const newKeepStakedOpenKeepFee = 672
+  const newFullyBackedOpenKeepFee = 834
 
   before(async () => {
     const {
@@ -47,8 +53,15 @@ describe("TBTCSystem governance", async function() {
     tdt = tbtcDepositToken
     satWeiPriceFeed = mockSatWeiPriceFeed
 
-    newKeepFactory = await ECDSAKeepFactoryStub.new()
-    await newKeepFactory.setOpenKeepFeeEstimate(83)
+    await ecdsaKeepFactory.setOpenKeepFeeEstimate(defaultOpenKeepFee)
+
+    newKeepStakedFactory = await ECDSAKeepFactoryStub.new()
+    await newKeepStakedFactory.setOpenKeepFeeEstimate(newKeepStakedOpenKeepFee)
+
+    newFullyBackedFactory = await ECDSAKeepFactoryStub.new()
+    await newFullyBackedFactory.setOpenKeepFeeEstimate(
+      newFullyBackedOpenKeepFee,
+    )
 
     ethBtcMedianizer = await MockMedianizer.new()
     await ethBtcMedianizer.setValue(medianizerValue)
@@ -180,50 +193,66 @@ describe("TBTCSystem governance", async function() {
       await restoreSnapshot()
     })
 
-    it("does not revert if beginKeepFactorySingleShotUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("does not revert if finalizeKeepFactoriesUpdate has already been called", async () => {
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
+
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
+      await increaseTime(finalizationTime.addn(1))
+
+      await tbtcSystem.finalizeKeepFactoriesUpdate()
 
       // Should not revert.
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
     })
 
-    it("reverts if finalizeKeepFactorySingleShotUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("does not revert finalizeKeepFactoriesUpdate if upgradeability period has passed", async () => {
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
-      await increaseTime(finalizationTime.toNumber() + 1) // 10 days
-      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+      const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
+      await increaseTime(upgradeabilityTime.addn(1))
+
+      await tbtcSystem.finalizeKeepFactoriesUpdate()
+    })
+
+    it("reverts for beginKeepFactoriesUpdate if upgradeability period has passed", async () => {
+      const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
+      await increaseTime(upgradeabilityTime.addn(1))
 
       await expectRevert(
-        tbtcSystem.beginKeepFactorySingleShotUpdate(
+        tbtcSystem.beginKeepFactoriesUpdate(
           "0x0000000000000000000000000000000000000001",
           "0x0000000000000000000000000000000000000002",
+          "0x0000000000000000000000000000000000000003",
         ),
-        "Keep factory data can only be updated once",
+        "beginKeepFactoriesUpdate can only be called within 180 days of initialization",
       )
     })
 
-    it("reverts if finalizeKeepFactorySingleShotUpdate is called twice", async () => {
-      await tbtcSystem.beginKeepFactorySingleShotUpdate(
+    it("reverts if finalizeKeepFactoriesUpdate is called twice", async () => {
+      await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
+        "0x0000000000000000000000000000000000000003",
       )
 
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactorySingleShotUpdateTime()
+      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
       await increaseTime(finalizationTime.toNumber() + 1) // 10 days
-      await tbtcSystem.finalizeKeepFactorySingleShotUpdate()
+      await tbtcSystem.finalizeKeepFactoriesUpdate()
 
       await expectRevert(
-        tbtcSystem.finalizeKeepFactorySingleShotUpdate(),
+        tbtcSystem.finalizeKeepFactoriesUpdate(),
         "Change not initiated",
       )
     })
@@ -381,35 +410,42 @@ describe("TBTCSystem governance", async function() {
     })
 
     governanceTest({
-      property: "keep factory single-shot update",
-      change: "KeepFactorySingleShotUpdate",
+      property: "keep factory update",
+      change: "KeepFactoriesUpdate",
       goodParametersWithName: [
+        {
+          name: "_keepStakedFactory",
+          value: newKeepStakedFactory.address,
+        },
+        {
+          name: "_fullyBackedFactory",
+          value: newFullyBackedFactory.address,
+        },
         {
           name: "_factorySelector",
           value: keepFactorySelector.address,
         },
-        {
-          name: "_ethBackedFactory",
-          value: newKeepFactory.address,
-        },
       ],
       badInitializationTests: {
-        "factory selector is unset": {
+        "KEEP staked factory is unset": {
           parameters: [
             "0x0000000000000000000000000000000000000000",
-            "0x0000000000000000000000000000000000000000",
+            "0x0000000000000000000000000000000000000002",
+            "0x0000000000000000000000000000000000000003",
           ],
-          error: "Factory selector must be a nonzero address",
+          error: "KEEP staked factory must be a nonzero address",
         },
       },
       verifyFinalizationEvents: async (
         receipt,
+        setKeepStakedFactory,
+        setFullyBackedFactory,
         setFactorySelector,
-        setEthBackedFactory,
       ) => {
-        expectEvent(receipt, "KeepFactorySingleShotUpdated", {
+        expectEvent(receipt, "KeepFactoriesUpdated", {
+          _keepStakedFactory: setKeepStakedFactory,
+          _fullyBackedFactory: setFullyBackedFactory,
           _factorySelector: setFactorySelector,
-          _ethBackedFactory: setEthBackedFactory,
         })
       },
       verifyFinalState: async () => {
@@ -417,7 +453,11 @@ describe("TBTCSystem governance", async function() {
         const mockDeposit = accounts[2]
         await tdt.forceMint(mockDepositOwner, web3.utils.toBN(mockDeposit))
 
-        keepFactorySelector.setFullyBackedMode()
+        // Expect value from the default KEEP staked factory to be returned
+        expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
+          defaultOpenKeepFee,
+        )
+
         // Expect this to work normally, and update to the new factory for the
         // next call.
         await tbtcSystem.requestNewKeep(10 ** 8, 123, {
@@ -425,14 +465,82 @@ describe("TBTCSystem governance", async function() {
           value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
         })
 
-        // This should fail as the _ethBackedFactory is not a real contract
+        // Expect new KEEP-staked factory to be called
+        expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
+          newKeepStakedOpenKeepFee,
+        )
+
+        keepFactorySelector.setFullyBackedMode()
+        // Expect this to work normally, and update to the new factory for the
+        // next call.
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
+          from: mockDeposit,
+          value: await newKeepStakedFactory.openKeepFeeEstimate.call(),
+        })
+
+        // This should fail as the _fullyBackedFactory is not a real contract
         // address, so dereferencing it will go boom.
         await tbtcSystem.requestNewKeep(10 ** 8, 123, {
           from: mockDeposit,
-          value: await newKeepFactory.openKeepFeeEstimate.call(),
+          value: await newFullyBackedFactory.openKeepFeeEstimate.call(),
         })
 
-        expect(await newKeepFactory.keepOwner.call()).to.equal(mockDeposit)
+        expect(await newFullyBackedFactory.keepOwner.call()).to.equal(
+          mockDeposit,
+        )
+      },
+    })
+
+    governanceTest({
+      property:
+        "keep factory update with zeroed fully backed factory and factory selector",
+      change: "KeepFactoriesUpdate",
+      goodParametersWithName: [
+        {
+          name: "_keepStakedFactory",
+          value: newKeepStakedFactory.address,
+        },
+        {
+          name: "_fullyBackedFactory",
+          value: constants.ZERO_ADDRESS,
+        },
+        {
+          name: "_factorySelector",
+          value: constants.ZERO_ADDRESS,
+        },
+      ],
+      verifyFinalizationEvents: async (receipt, setKeepStakedFactory) => {
+        expectEvent(receipt, "KeepFactoriesUpdated", {
+          _keepStakedFactory: setKeepStakedFactory,
+          _fullyBackedFactory: constants.ZERO_ADDRESS,
+          _factorySelector: constants.ZERO_ADDRESS,
+        })
+      },
+      verifyFinalState: async () => {
+        const mockDepositOwner = accounts[1]
+        const mockDeposit = accounts[2]
+        await tdt.forceMint(mockDepositOwner, web3.utils.toBN(mockDeposit))
+
+        // Expect this to work normally, and update to the new factory for the
+        // next call.
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
+          from: mockDeposit,
+          value: await ecdsaKeepFactory.openKeepFeeEstimate.call(),
+        })
+
+        // Expect new KEEP-staked factory to be called
+        expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
+          newKeepStakedOpenKeepFee,
+        )
+
+        await tbtcSystem.requestNewKeep(10 ** 8, 123, {
+          from: mockDeposit,
+          value: await newKeepStakedFactory.openKeepFeeEstimate.call(),
+        })
+
+        expect(await newKeepStakedFactory.keepOwner.call()).to.equal(
+          mockDeposit,
+        )
       },
     })
 
