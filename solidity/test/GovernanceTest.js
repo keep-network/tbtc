@@ -454,6 +454,11 @@ describe("TBTCSystem governance", async function() {
       },
     })
 
+    // We added this scenario to test other possible values for factories update
+    // parameters. Ideally it should be covered by the previous `keep factory update`
+    // test but it doesn't support multiple `goodParametersWithName` sets.
+    // TODO: Improve `goodParametersWithName` handling to allow multiple sets
+    // of good values, similar as we do in `badInitializationTests`.
     governanceTest({
       property:
         "keep factory update with zeroed fully backed factory and factory selector",
