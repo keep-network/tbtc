@@ -193,29 +193,6 @@ describe("TBTCSystem governance", async function() {
       await restoreSnapshot()
     })
 
-    it("does not revert if beginKeepFactoriesUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactoriesUpdate(
-        "0x0000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000002",
-        "0x0000000000000000000000000000000000000003",
-      )
-
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
-      await increaseTime(finalizationTime.subn(1))
-
-      // Should not revert.
-      await tbtcSystem.beginKeepFactoriesUpdate(
-        "0x0000000000000000000000000000000000000005",
-        "0x0000000000000000000000000000000000000006",
-        "0x0000000000000000000000000000000000000007",
-      )
-
-      // Check if timer has been updated.
-      expect(await tbtcSystem.getRemainingKeepFactoriesUpdateTime()).to.eq.BN(
-        await tbtcSystem.getGovernanceTimeDelay(),
-      )
-    })
-
     it("does not revert if finalizeKeepFactoriesUpdate has already been called", async () => {
       await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
