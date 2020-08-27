@@ -1,7 +1,7 @@
 const {contract} = require("@openzeppelin/test-environment")
 const {BN, expectRevert, constants} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {expect, assert} = require("chai")
+const {expect} = require("chai")
 
 const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
 const KeepFactorySelectionStub = contract.fromArtifact(
@@ -403,15 +403,14 @@ describe("KeepFactorySelection", async () => {
         keepFactorySelector.address,
       )
 
-      assert.include(
+      expect(
         await keepFactorySelection.factories(),
-        {
-          _keepStakedFactory: keepStakedFactory.address,
-          _fullyBackedFactory: fullyBackedFactory.address,
-          _factorySelector: keepFactorySelector.address,
-        },
         "invalid factories after first update",
-      )
+      ).to.include({
+        _keepStakedFactory: keepStakedFactory.address,
+        _fullyBackedFactory: fullyBackedFactory.address,
+        _factorySelector: keepFactorySelector.address,
+      })
 
       await keepFactorySelection.setFactories(
         newKeepStakedFactory.address,
@@ -419,15 +418,14 @@ describe("KeepFactorySelection", async () => {
         newSelector.address,
       )
 
-      assert.include(
+      expect(
         await keepFactorySelection.factories(),
-        {
-          _keepStakedFactory: newKeepStakedFactory.address,
-          _fullyBackedFactory: newFullyBackedFactory.address,
-          _factorySelector: newSelector.address,
-        },
         "invalid factories after second update",
-      )
+      ).to.include({
+        _keepStakedFactory: newKeepStakedFactory.address,
+        _fullyBackedFactory: newFullyBackedFactory.address,
+        _factorySelector: newSelector.address,
+      })
     })
 
     it("can be called for fully backed and factory selector zero addresses", async () => {
@@ -437,15 +435,14 @@ describe("KeepFactorySelection", async () => {
         constants.ZERO_ADDRESS,
       )
 
-      assert.include(
+      expect(
         await keepFactorySelection.factories(),
-        {
-          _keepStakedFactory: keepStakedFactory.address,
-          _fullyBackedFactory: constants.ZERO_ADDRESS,
-          _factorySelector: constants.ZERO_ADDRESS,
-        },
         "invalid factories",
-      )
+      ).to.include({
+        _keepStakedFactory: keepStakedFactory.address,
+        _fullyBackedFactory: constants.ZERO_ADDRESS,
+        _factorySelector: constants.ZERO_ADDRESS,
+      })
     })
 
     it("reverts when KEEP-staked factory address is zero", async () => {
