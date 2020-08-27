@@ -737,7 +737,7 @@ describe("VendingMachine", async function() {
         } else if (interval === Infinity) {
           return "the end of time"
         }
-        return moment.duration(interval, 'seconds').humanize({d: 7, w: 40})
+        return moment.duration(interval, "seconds").humanize({d: 7, w: 40})
       }
 
       it(`has a max supply of ${expectedMax} TBTC between ${humanize(start)}
@@ -760,12 +760,11 @@ describe("VendingMachine", async function() {
 
           maxSupply = await vendingMachine.getMaxSupply()
           expect(maxSupply).to.not.eq.BN(btcToTbtc(expectedMax))
-        }
-        else {
+        } else {
           // if we've reached infinity, fast-forward 0-1000 days in advance
           // 10 times and confir
-          for(i = 0; i<10; i++) {
-            let rand = Math.floor(Math.random() * 1000)
+          for (let i = 0; i < 10; i++) {
+            const rand = Math.floor(Math.random() * 1000)
             await increaseTime(rand * DAY)
             maxSupply = await vendingMachine.getMaxSupply()
             expect(maxSupply).to.eq.BN(btcToTbtc(expectedMax))
