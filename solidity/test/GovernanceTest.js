@@ -219,23 +219,6 @@ describe("TBTCSystem governance", async function() {
         "beginKeepFactoriesUpdate can only be called within 180 days of initialization",
       )
     })
-
-    it("reverts if finalizeKeepFactoriesUpdate is called twice", async () => {
-      await tbtcSystem.beginKeepFactoriesUpdate(
-        "0x0000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000002",
-        "0x0000000000000000000000000000000000000003",
-      )
-
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
-      await increaseTime(finalizationTime.toNumber() + 1) // 10 days
-      await tbtcSystem.finalizeKeepFactoriesUpdate()
-
-      await expectRevert(
-        tbtcSystem.finalizeKeepFactoriesUpdate(),
-        "Change not initiated",
-      )
-    })
   })
 
   before(async () => {
@@ -750,6 +733,15 @@ describe("TBTCSystem governance", async function() {
           await invoke("finalize")
 
           await invoke("begin", "", goodParameters)
+        })
+
+        it("reverts if finalizing a change twice", async () => {
+          await invoke("begin", "", goodParameters)
+          const remainingTime = await invoke("getRemaining", "Time")
+          await increaseTime(remainingTime.toNumber() + 1)
+          await invoke("finalize")
+
+          await expectRevert(invoke("finalize"), "Change not initiated.")
         })
       })
     })
