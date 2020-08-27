@@ -184,7 +184,7 @@ describe("TBTCSystem governance", async function() {
     })
   })
 
-  describe("when trying to update Keep factory info more than once", async () => {
+  describe("when trying to update Keep factory info", async () => {
     beforeEach(async () => {
       await createSnapshot()
     })
