@@ -193,26 +193,6 @@ describe("TBTCSystem governance", async function() {
       await restoreSnapshot()
     })
 
-    it("does not revert if finalizeKeepFactoriesUpdate has already been called", async () => {
-      await tbtcSystem.beginKeepFactoriesUpdate(
-        "0x0000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000002",
-        "0x0000000000000000000000000000000000000003",
-      )
-
-      const finalizationTime = await tbtcSystem.getRemainingKeepFactoriesUpdateTime()
-      await increaseTime(finalizationTime.addn(1))
-
-      await tbtcSystem.finalizeKeepFactoriesUpdate()
-
-      // Should not revert.
-      await tbtcSystem.beginKeepFactoriesUpdate(
-        "0x0000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000002",
-        "0x0000000000000000000000000000000000000003",
-      )
-    })
-
     it("does not revert finalizeKeepFactoriesUpdate if upgradeability period has passed", async () => {
       await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
@@ -759,6 +739,17 @@ describe("TBTCSystem governance", async function() {
           const receipt = await invoke("finalize")
           await verifyFinalizationEvents(receipt, ...goodParameters)
           await verifyFinalState(...goodParameters)
+        })
+      })
+
+      describe("after finalizing the update", async () => {
+        it("allows to initiate a new update", async () => {
+          await invoke("begin", "", goodParameters)
+          const remainingTime = await invoke("getRemaining", "Time")
+          await increaseTime(remainingTime.toNumber() + 1)
+          await invoke("finalize")
+
+          await invoke("begin", "", goodParameters)
         })
       })
     })
