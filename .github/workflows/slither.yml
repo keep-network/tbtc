@@ -1,0 +1,31 @@
+name: Slither
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8.5
+      - name: Install Solidity
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.5.17/solc-static-linux
+          chmod 755 solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin
+          sudo ln -s -f /usr/local/bin/solc-static-linux /usr/local/bin/solc
+      - name: Install Slither
+        run: pip3 install slither-analyzer
+      - name: Install NPM packages
+        run: cd solidity && npm install
+      - name: Run Slither
+        run: cd solidity && slither .

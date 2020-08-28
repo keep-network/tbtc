@@ -1,0 +1,4 @@
+{
+  "detectors_to_exclude": "assembly,timestamp,solc-version",
+  "filter_paths": "contracts/test"
+}
