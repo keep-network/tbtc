@@ -35,15 +35,15 @@ contract ECDSAKeepFactoryStub is IBondedECDSAKeepFactory {
     }
 
     function getSortitionPoolWeight(
-        address _application
+        address
     ) external view returns (uint256 poolWeight) {
         return 100000;
     }
 
     function setMinimumBondableValue(
         uint256 _minimumBondableValue,
-        uint256 _groupSize,
-        uint256 _honestThreshold
+        uint256,
+        uint256
     ) public {
         minimumBondableValue = _minimumBondableValue;
     }

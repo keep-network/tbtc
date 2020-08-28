@@ -33,7 +33,7 @@ library OutsourceDepositLogging {
         bytes memory _redeemerOutputScript,
         uint256 _requestedFee,
         bytes memory _outpoint
-    ) public { // not external to allow bytes memory output scripts
+    ) public { // not external to allow bytes memory parameters
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logRedemptionRequested(
             _redeemer,
@@ -90,7 +90,7 @@ library OutsourceDepositLogging {
     function logFunderRequestedAbort(
         DepositUtils.Deposit storage _d,
         bytes memory _abortOutputScript
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logFunderRequestedAbort(_abortOutputScript);
     }

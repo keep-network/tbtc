@@ -65,7 +65,7 @@ contract KeepFactorySelectorStub is KeepFactorySelector {
     bool internal maliciousMode = false;
 
     function selectFactory(
-        uint256 _seed,
+        uint256,
         IBondedECDSAKeepFactory _defaultFactory,
         IBondedECDSAKeepFactory _fullyBackedFactory
     ) external view returns (IBondedECDSAKeepFactory) {

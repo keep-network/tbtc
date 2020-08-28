@@ -44,7 +44,7 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
         TBTCDepositToken _tbtcDepositToken,
         FeeRebateToken _feeRebateToken,
         address _vendingMachineAddress
-    ) public onlyTbtcSystem {
+    ) external onlyTbtcSystem {
         masterDepositAddress = _masterDepositAddress;
         tbtcDepositToken = _tbtcDepositToken;
         tbtcSystem = _tbtcSystem;
@@ -66,8 +66,9 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     ///      of the deposit creation fee, should the signer group fail to
     ///      complete its setup process.
     /// @return The address of the new deposit.
-    function createDeposit(uint64 _lotSizeSatoshis) public payable returns(address) {
+    function createDeposit(uint64 _lotSizeSatoshis) external payable returns(address) {
         address cloneAddress = createClone(masterDepositAddress);
+        emit DepositCloneCreated(cloneAddress);
 
         TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));
 
@@ -81,8 +82,6 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
                 vendingMachineAddress,
                 _lotSizeSatoshis
             );
-
-        emit DepositCloneCreated(cloneAddress);
 
         return cloneAddress;
     }
