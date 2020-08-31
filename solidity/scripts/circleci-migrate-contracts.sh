@@ -19,6 +19,13 @@ echo "<<<<<<START Contract Migration START<<<<<<"
 cp ./build/contracts/* /tmp/tbtc/contracts
 echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 
+# We are not deploying TBTCConstants to Ropsten/Dev Environment. For those we
+# use TBTCDevelopmentConstants. We remove TBTCConstants before we push to
+# Tenderly because Tenderly push fails on non-deployed contracts.
+echo "<<<<<<START Tenderly Push Preparation START<<<<<<"
+rm ./build/contracts/TBTCConstants.json
+echo ">>>>>>FINISH Tenderly Push Preparation FINISH>>>>>>"
+
 echo "<<<<<<START Tenderly Push START<<<<<<"
 tenderly login --authentication-method access-key --access-key $TENDERLY_TOKEN
 tenderly push --networks $ETH_NETWORK_ID --tag tbtc \ 
