@@ -147,6 +147,7 @@ jobs:
             npm version prerelease --preid=$preid --no-git-tag-version
 
             # Fix resolved dependency versions.
+            npm ci
             npm update
 
             # Publish to npm.
