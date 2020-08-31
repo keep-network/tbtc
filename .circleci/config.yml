@@ -81,7 +81,8 @@ jobs:
           working_directory: ~/project/solidity
           command: |
             rm -rf node_modules
-      - name: Set Gcloud Auth for bucket access
+      - run:
+          name: Set Gcloud Auth for bucket access
           command: |
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
