@@ -12,7 +12,6 @@ curl https://raw.githubusercontent.com/Tenderly/tenderly-cli/master/scripts/inst
 echo "<<<<<<FINISH Tenderly Installation FINISH<<<<<<"
 
 mkdir -p /tmp/tbtc/contracts
-cd ./solidity
 npm ci
 
 echo "<<<<<<START Contract Migration START<<<<<<"
