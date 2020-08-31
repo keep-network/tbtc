@@ -81,13 +81,14 @@ jobs:
           working_directory: ~/project/solidity
           command: |
             rm -rf node_modules
+      - name: Set Gcloud Auth for bucket access
+          command: |
+            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
       - run:
           name: Provision External Contract Addresses
           working_directory: ~/project/solidity
           command: |
-            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
-      
             # This needs to be part of a base docker image, not installed here.
             apt-get update
             apt-get install jq -y
