@@ -14,9 +14,12 @@ implementation/build/
 blocks/
 __pycache__/
 node_modules/
+artifacts/
 .mypy_cache
+
 # Visual Studio Code
 *.code-workspace
+.vscode/
 
 # infrastructure
 .secrets

@@ -10,19 +10,19 @@ interface KeepFactorySelector {
 
     /// @notice Selects keep factory for the new deposit.
     /// @param _seed Request seed.
-    /// @param _keepStakeFactory Regular, KEEP-stake based keep factory.
-    /// @param _ethStakeFactory Fully backed, ETH-stake based keep factory.
+    /// @param _keepStakedFactory Regular, KEEP-stake based keep factory.
+    /// @param _fullyBackedFactory Fully backed, ETH-bond-only based keep factory.
     /// @return The selected keep factory.
     function selectFactory(
         uint256 _seed,
-        IBondedECDSAKeepFactory _keepStakeFactory,
-        IBondedECDSAKeepFactory _ethStakeFactory
+        IBondedECDSAKeepFactory _keepStakedFactory,
+        IBondedECDSAKeepFactory _fullyBackedFactory
     ) external view returns (IBondedECDSAKeepFactory);
 }
 
 /// @title Bonded ECDSA keep factory selection library.
 /// @notice tBTC uses two bonded ECDSA keep factories: one based on KEEP stake
-/// and ETH bond, and another based on ETH stake and ETH bond. The library holds
+/// and ETH bond, and another based only on ETH bond. The library holds
 /// a reference to both factories as well as a reference to a selection strategy
 /// deciding which factory to choose for the new deposit being opened.
 library KeepFactorySelection {
@@ -36,10 +36,10 @@ library KeepFactorySelection {
 
         // Standard ECDSA keep factory: KEEP stake and ETH bond.
         // Guaranteed to be set for initialized factory.
-        IBondedECDSAKeepFactory keepStakeFactory;
+        IBondedECDSAKeepFactory keepStakedFactory;
 
-        // Fully backed ECDSA keep factory: ETH stake and ETH bond.
-        IBondedECDSAKeepFactory ethStakeFactory;
+        // Fully backed ECDSA keep factory: ETH bond only.
+        IBondedECDSAKeepFactory fullyBackedFactory;
     }
 
     /// @notice Initializes the library with the default KEEP-stake-based
@@ -51,12 +51,12 @@ library KeepFactorySelection {
         IBondedECDSAKeepFactory _defaultFactory
     ) public {
         require(
-            address(_self.keepStakeFactory) == address(0),
+            address(_self.keepStakedFactory) == address(0),
             "Already initialized"
         );
 
-        _self.keepStakeFactory = IBondedECDSAKeepFactory(_defaultFactory);
-        _self.selectedFactory = _self.keepStakeFactory;
+        _self.keepStakedFactory = IBondedECDSAKeepFactory(_defaultFactory);
+        _self.selectedFactory = _self.keepStakedFactory;
     }
 
     /// @notice Returns the selected keep factory.
@@ -82,7 +82,7 @@ library KeepFactorySelection {
     /// @return Selected keep factory.
     function selectFactoryAndRefresh(
         Storage storage _self
-    ) public returns (IBondedECDSAKeepFactory) {
+    ) external returns (IBondedECDSAKeepFactory) {
         IBondedECDSAKeepFactory factory = selectFactory(_self);
         refreshFactory(_self);
 
@@ -100,16 +100,16 @@ library KeepFactorySelection {
         uint256 _minimumBondableValue,
         uint256 _groupSize,
         uint256 _honestThreshold
-    ) public {
-        if (address(_self.keepStakeFactory) != address(0)) {
-            _self.keepStakeFactory.setMinimumBondableValue(
+    ) external {
+        if (address(_self.keepStakedFactory) != address(0)) {
+            _self.keepStakedFactory.setMinimumBondableValue(
                 _minimumBondableValue,
                 _groupSize,
                 _honestThreshold
             );
         }
-        if (address(_self.ethStakeFactory) != address(0)) {
-            _self.ethStakeFactory.setMinimumBondableValue(
+        if (address(_self.fullyBackedFactory) != address(0)) {
+            _self.fullyBackedFactory.setMinimumBondableValue(
                 _minimumBondableValue,
                 _groupSize,
                 _honestThreshold
@@ -117,19 +117,19 @@ library KeepFactorySelection {
         }
     }
 
-    /// @notice Refreshes the keep factory choice. If either ETH-stake factory
+    /// @notice Refreshes the keep factory choice. If either ETH-bond-only factory
     /// or selection strategy is not set, KEEP-stake factory is selected.
     /// Otherwise, calls selection strategy providing addresses of both
     /// factories to make a choice. Additionally, passes the selection seed
     /// evaluated from the current request counter value.
     function refreshFactory(Storage storage _self) internal {
         if (
-            address(_self.ethStakeFactory) == address(0) ||
+            address(_self.fullyBackedFactory) == address(0) ||
             address(_self.factorySelector) == address(0)
         ) {
             // KEEP-stake factory is guaranteed to be there. If the selection
             // can not be performed, this is the default choice.
-            _self.selectedFactory = _self.keepStakeFactory;
+            _self.selectedFactory = _self.keepStakedFactory;
             return;
         }
 
@@ -139,63 +139,44 @@ library KeepFactorySelection {
         );
         _self.selectedFactory = _self.factorySelector.selectFactory(
             seed,
-            _self.keepStakeFactory,
-            _self.ethStakeFactory
+            _self.keepStakedFactory,
+            _self.fullyBackedFactory
         );
 
         require(
-            _self.selectedFactory == _self.keepStakeFactory ||
-                _self.selectedFactory == _self.ethStakeFactory,
+            _self.selectedFactory == _self.keepStakedFactory ||
+                _self.selectedFactory == _self.fullyBackedFactory,
             "Factory selector returned unknown factory"
         );
     }
 
-    /// @notice Sets the address of the fully backed, ETH-stake based keep
-    /// factory. KeepFactorySelection can work without the fully-backed keep
-    /// factory set, always selecting the default KEEP-stake-based factory.
-    /// Once both fully-backed keep factory and factory selection strategy are
-    /// set, KEEP-stake-based factory is no longer the default choice and it is
-    /// up to the selection strategy to decide which factory should be chosen.
-    /// @dev Can be called only one time!
-    /// @param _fullyBackedFactory Address of the fully-backed, ETH-stake based
-    /// keep factory.
-    function setFullyBackedKeepFactory(
-        Storage storage _self,
-        address _fullyBackedFactory
-    ) internal {
-        require(
-            address(_self.ethStakeFactory) == address(0),
-            "Fully backed factory already set"
-        );
-        require(
-            address(_fullyBackedFactory) != address(0),
-            "Invalid address"
-        );
-
-        _self.ethStakeFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
-    }
-
-    /// @notice Sets the address of the keep factory selection strategy contract.
+    /// @notice Sets addresses of the keep factories and the selection strategy
+    /// contracts.
     /// KeepFactorySelection can work without the keep factory selection
     /// strategy set, always selecting the default KEEP-stake-based factory.
     /// Once both fully-backed keep factory and factory selection strategy are
     /// set, KEEP-stake-based factory is no longer the default choice and it is
     /// up to the selection strategy to decide which factory should be chosen.
-    /// @dev Can be called only one time!
+    /// @dev Can be called multiple times! It's responsibility of a contract
+    /// using this library to limit and protect updates.
+    /// @param _keepStakedFactory Address of the regular, KEEP-stake based keep
+    /// factory.
+    /// @param _fullyBackedFactory Address of the fully-backed, ETH-bond-only based
+    /// keep factory.
     /// @param _factorySelector Address of the keep factory selection strategy.
-    function setKeepFactorySelector(
+    function setFactories(
         Storage storage _self,
+        address _keepStakedFactory,
+        address _fullyBackedFactory,
         address _factorySelector
     ) internal {
         require(
-            address(_self.factorySelector) == address(0),
-            "Factory selector already set"
-        );
-        require(
-            address(_factorySelector) != address(0),
-            "Invalid address"
+            address(_keepStakedFactory) != address(0),
+            "Invalid KEEP-staked factory address"
         );
 
+        _self.keepStakedFactory = IBondedECDSAKeepFactory(_keepStakedFactory);
+        _self.fullyBackedFactory = IBondedECDSAKeepFactory(_fullyBackedFactory);
         _self.factorySelector = KeepFactorySelector(_factorySelector);
     }
 }

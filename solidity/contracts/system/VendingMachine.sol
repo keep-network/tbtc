@@ -28,38 +28,6 @@ contract VendingMachine is TBTCSystemAuthority{
         createdAt = block.timestamp;
     }
 
-    /// @notice Return the minted TBTC supply in weitoshis (BTC * 10 ** 18)
-    function getMintedSupply() public view returns (uint256) {
-        return tbtcToken.totalSupply();
-    }
-
-    /// @notice Get the maximum TBTC token supply based on the age of the contract
-    ///         deployment. The supply cap starts at 2 BTC for the first day, 100 for
-    ///         the first 30 days, 250 for the next 30, 500 for the last 30... then
-    ///         finally removes the restriction, returning 21M BTC as a sanity check.
-    /// @return The max supply in weitoshis (BTC * 10 ** 18)
-    function getMaxSupply() public view returns (uint256) {
-        uint256 age = block.timestamp - createdAt;
-
-        if(age < 1 days) {
-            return 2 * 10 ** 18;
-        }
-
-        if (age < 30 days) {
-            return 100 * 10 ** 18;
-        }
-
-        if (age < 60 days) {
-            return 250 * 10 ** 18;
-        }
-
-        if (age < 90 days) {
-            return 500 * 10 ** 18;
-        }
-
-        return 21000000 * 10 ** 18;
-    }
-
     /// @notice Set external contracts needed by the Vending Machine.
     /// @dev    Addresses are used to update the local contract instance.
     /// @param _tbtcToken        TBTCToken contract. More info in `TBTCToken`.
@@ -69,16 +37,10 @@ contract VendingMachine is TBTCSystemAuthority{
         TBTCToken _tbtcToken,
         TBTCDepositToken _tbtcDepositToken,
         FeeRebateToken _feeRebateToken
-    ) public onlyTbtcSystem {
+    ) external onlyTbtcSystem {
         tbtcToken = _tbtcToken;
         tbtcDepositToken = _tbtcDepositToken;
         feeRebateToken = _feeRebateToken;
-    }
-
-    /// @notice Determines whether a deposit is qualified for minting TBTC.
-    /// @param _depositAddress The address of the deposit
-    function isQualified(address payable _depositAddress) public view returns (bool) {
-        return Deposit(_depositAddress).inActive();
     }
 
     /// @notice Burns TBTC and transfers the tBTC Deposit Token to the caller
@@ -87,7 +49,7 @@ contract VendingMachine is TBTCSystemAuthority{
     ///         the TBTC supply peg in the Vending Machine. VendingMachine must be approved
     ///         by the caller to burn the required amount.
     /// @param _tdtId ID of tBTC Deposit Token to buy.
-    function tbtcToTdt(uint256 _tdtId) public {
+    function tbtcToTdt(uint256 _tdtId) external {
         require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
         require(isQualified(address(_tdtId)), "Deposit must be qualified");
 
@@ -139,6 +101,70 @@ contract VendingMachine is TBTCSystemAuthority{
         return getMintedSupply().add(amount) < getMaxSupply();
     }
 
+    /// @notice Determines whether a deposit is qualified for minting TBTC.
+    /// @param _depositAddress The address of the deposit
+    function isQualified(address payable _depositAddress) public view returns (bool) {
+        return Deposit(_depositAddress).inActive();
+    }
+
+    /// @notice Return the minted TBTC supply in weitoshis (BTC * 10 ** 18).
+    function getMintedSupply() public view returns (uint256) {
+        return tbtcToken.totalSupply();
+    }
+
+    /// @notice Get the maximum TBTC token supply based on the age of the
+    ///         contract deployment. The supply cap starts at 2 BTC for the two
+    ///         days, 100 for the first week, 250 for the next, then 500, 750,
+    ///         1000, 1500, 2000, 2500, and 3000... finally removing the minting
+    ///         restriction after 9 weeks and returning 21M BTC as a sanity
+    ///         check.
+    /// @return The max supply in weitoshis (BTC * 10 ** 18).
+    function getMaxSupply() public view returns (uint256) {
+        uint256 age = block.timestamp - createdAt;
+
+        if(age < 2 days) {
+            return 2 * 10 ** 18;
+        }
+
+        if (age < 7 days) {
+            return 100 * 10 ** 18;
+        }
+
+        if (age < 14 days) {
+            return 250 * 10 ** 18;
+        }
+
+        if (age < 21 days) {
+            return 500 * 10 ** 18;
+        }
+
+        if (age < 28 days) {
+            return 750 * 10 ** 18;
+        }
+
+        if (age < 35 days) {
+            return 1000 * 10 ** 18;
+        }
+
+        if (age < 42 days) {
+            return 1500 * 10 ** 18;
+        }
+
+        if (age < 49 days) {
+            return 2000 * 10 ** 18;
+        }
+
+        if (age < 56 days) {
+            return 2500 * 10 ** 18;
+        }
+
+        if (age < 63 days) {
+            return 3000 * 10 ** 18;
+        }
+
+        return 21e6 * 10 ** 18;
+    }
+
     // WRAPPERS
 
     /// @notice Qualifies a deposit and mints TBTC.
@@ -153,7 +179,7 @@ contract VendingMachine is TBTCSystemAuthority{
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         Deposit _d = Deposit(_depositAddress);
         _d.provideBTCFundingProof(
             _txVersion,
@@ -180,7 +206,7 @@ contract VendingMachine is TBTCSystemAuthority{
         address payable _depositAddress,
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         require(tbtcDepositToken.exists(uint256(_depositAddress)), "tBTC Deposit Token does not exist");
         Deposit _d = Deposit(_depositAddress);
 

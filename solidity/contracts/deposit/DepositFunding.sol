@@ -58,6 +58,10 @@ library DepositFunding {
 
         _d.keepSetupFee = _d.tbtcSystem.getNewDepositFeeEstimate();
 
+        // Note: this is a library, and library functions cannot be marked as
+        // payable. Thus, we disable Solium's check that msg.value can only be
+        // used in a payable function---this restriction actually applies to the
+        // caller of this `initialize` function, Deposit.initializeDeposit.
         /* solium-disable-next-line value-in-payable */
         _d.keepAddress = _d.tbtcSystem.requestNewKeep.value(msg.value)(
             _lotSizeSatoshis,
@@ -78,7 +82,7 @@ library DepositFunding {
 
     /// @notice     Anyone may notify the contract that signing group setup has timed out.
     /// @param  _d  Deposit storage pointer.
-    function notifySignerSetupFailed(DepositUtils.Deposit storage _d) public {
+    function notifySignerSetupFailed(DepositUtils.Deposit storage _d) external {
         require(_d.inAwaitingSignerSetup(), "Not awaiting setup");
         require(
             block.timestamp > _d.signingGroupRequestedAt.add(TBTCConstants.getSigningGroupFormationTimeout()),
@@ -128,7 +132,7 @@ library DepositFunding {
     ///      has not yet elapsed, or if the deposit is not currently awaiting
     ///      funding proof.
     /// @param _d Deposit storage pointer.
-    function notifyFundingTimedOut(DepositUtils.Deposit storage _d) public {
+    function notifyFundingTimedOut(DepositUtils.Deposit storage _d) external {
         require(_d.inAwaitingBTCFundingProof(), "Funding timeout has not started");
         require(
             block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout()),
@@ -155,7 +159,7 @@ library DepositFunding {
     function requestFunderAbort(
         DepositUtils.Deposit storage _d,
         bytes memory _abortOutputScript
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         require(
             _d.inFailedSetup(),
             "The deposit has not failed funding"
@@ -180,7 +184,7 @@ library DepositFunding {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public {
+    ) public { // not external to allow bytes memory parameters
         require(
             _d.inAwaitingBTCFundingProof(),
             "Signer fraud during funding flow only available while awaiting funding"
@@ -220,7 +224,7 @@ library DepositFunding {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public {
+    ) public { // not external to allow bytes memory parameters
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 

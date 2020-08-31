@@ -38,9 +38,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _severelyUndercollateralizedThresholdPercent,
         uint256 _timestamp
     );
-    event KeepFactorySingleShotUpdateStarted(
+    event KeepFactoriesUpdateStarted(
+        address _keepStakedFactory,
+        address _fullyBackedFactory,
         address _factorySelector,
-        address _ethBackedFactory,
         uint256 _timestamp
     );
 
@@ -53,9 +54,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         uint16 _undercollateralizedThresholdPercent,
         uint16 _severelyUndercollateralizedThresholdPercent
     );
-    event KeepFactorySingleShotUpdated(
-        address _factorySelector,
-        address _ethBackedFactory
+    event KeepFactoriesUpdated(
+        address _keepStakedFactory,
+        address _fullyBackedFactory,
+        address _factorySelector
     );
 
     uint256 initializedTimestamp = 0;
@@ -79,22 +81,24 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     uint64[] lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.001, 0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
     uint256 constant governanceTimeDelay = 48 hours;
+    uint256 constant keepFactoriesUpgradeabilityPeriod = 180 days;
 
     uint256 private signerFeeDivisorChangeInitiated;
     uint256 private lotSizesChangeInitiated;
     uint256 private collateralizationThresholdsChangeInitiated;
-    uint256 private keepFactorySingleShotUpdateInitiated;
+    uint256 private keepFactoriesUpdateInitiated;
 
     uint16 private newSignerFeeDivisor;
     uint64[] newLotSizesSatoshis;
     uint16 private newInitialCollateralizedPercent;
     uint16 private newUndercollateralizedThresholdPercent;
     uint16 private newSeverelyUndercollateralizedThresholdPercent;
+    address private newKeepStakedFactory;
+    address private newFullyBackedFactory;
     address private newFactorySelector;
-    address private newEthBackedFactory;
 
     // price feed
-    uint256 priceFeedGovernanceTimeDelay = 90 days;
+    uint256 constant priceFeedGovernanceTimeDelay = 90 days;
     uint256 ethBtcPriceFeedAdditionInitiated;
     IMedianizer nextEthBtcPriceFeed;
 
@@ -129,6 +133,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         keepFactorySelection.initialize(_defaultKeepFactory);
         keepThreshold = _keepThreshold;
         keepSize = _keepSize;
+        initializedTimestamp = block.timestamp;
+        allowNewDeposits = true;
+
+        setTbtcDepositToken(_tbtcDepositToken);
 
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
@@ -143,9 +151,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _feeRebateToken,
             address(_vendingMachine)
         );
-        setTbtcDepositToken(_tbtcDepositToken);
-        initializedTimestamp = block.timestamp;
-        allowNewDeposits = true;
     }
 
     /// @notice Returns whether new deposits should be allowed.
@@ -162,7 +167,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Return the largest lot size currently enabled for deposits.
     /// @return The largest lot size, in satoshis.
-    function getMaximumLotSize() public view returns (uint256) {
+    function getMaximumLotSize() external view returns (uint256) {
         return lotSizesSatoshis[lotSizesSatoshis.length - 1];
     }
 
@@ -177,16 +182,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Anyone can reactivate deposit creations after the pause duration is over.
-    function resumeNewDeposits() public {
-        require(allowNewDeposits == false, "New deposits are currently allowed");
+    function resumeNewDeposits() external {
+        require(! allowNewDeposits, "New deposits are currently allowed");
         require(pausedTimestamp != 0, "Deposit has not been paused");
         require(block.timestamp.sub(pausedTimestamp) >= pausedDuration, "Deposits are still paused");
         allowNewDeposits = true;
         emit AllowNewDepositsUpdated(true);
     }
 
-    function getRemainingPauseTerm() public view returns (uint256) {
-        require(allowNewDeposits == false, "New deposits are currently allowed");
+    function getRemainingPauseTerm() external view returns (uint256) {
+        require(! allowNewDeposits, "New deposits are currently allowed");
         return (block.timestamp.sub(pausedTimestamp) >= pausedDuration)?
             0:
             pausedDuration.sub(block.timestamp.sub(pausedTimestamp));
@@ -288,47 +293,56 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         );
     }
 
-    /// @notice Sets the address of the ETH-only-backed ECDSA keep factory and
-    ///         the selection strategy that will choose between it and the
-    ///         default KEEP-backed factory for new deposits. When the
-    ///         ETH-only-backed factory and strategy are set, TBTCSystem load
-    ///         balances between two factories based on the selection strategy.
-    /// @dev It can be finalized by calling `finalizeKeepFactorySingleShotUpdate`
+    /// @notice Sets the addresses of the KEEP-staked ECDSA keep factory,
+    ///         ETH-only-backed ECDSA keep factory and the selection strategy
+    ///         that will choose between the two factories for new deposits.
+    ///         When the ETH-only-backed factory and strategy are not set TBTCSystem
+    ///         will use KEEP-staked factory. When both factories and strategy
+    ///         are set, TBTCSystem load balances between two factories based on
+    ///         the selection strategy.
+    /// @dev It can be finalized by calling `finalizeKeepFactoriesUpdate`
     ///      any time after `governanceTimeDelay` has elapsed. This can be
     ///      called more than once until finalized to reset the values and
-    ///      timer, but it can only be finalized once!
+    ///      timer. An update can only be initialized before
+    ///      `keepFactoriesUpgradeabilityPeriod` elapses after system initialization;
+    ///      after that, no further updates can be initialized, though any pending
+    ///      update can be finalized. All calls must set all three properties to
+    ///      their desired value; leaving a value as 0, even if it was previously
+    ///      set, will update that value to be 0. ETH-bond-only factory or the
+    ///      strategy are allowed to be set as zero addresses.
+    /// @param _keepStakedFactory Address of the KEEP staked based factory.
+    /// @param _fullyBackedFactory Address of the ETH-bond-only-based factory.
     /// @param _factorySelector Address of the keep factory selection strategy.
-    /// @param _ethBackedFactory Address of the ETH-stake-based factory.
-    function beginKeepFactorySingleShotUpdate(
-        address _factorySelector,
-        address _ethBackedFactory
+    function beginKeepFactoriesUpdate(
+        address _keepStakedFactory,
+        address _fullyBackedFactory,
+        address _factorySelector
     )
         external onlyOwner
     {
+        uint256 sinceInit = block.timestamp - initializedTimestamp;
         require(
-            // Either an update is in progress,
-            keepFactorySingleShotUpdateInitiated != 0 ||
-            // or we're trying to start a fresh one, in which case we must not
-            // have an already-finalized one (indicated by newEthBackedFactory
-            // being set).
-            newEthBackedFactory == address(0),
-            "Keep factory data can only be updated once"
-        );
-        require(
-            _factorySelector != address(0),
-            "Factory selector must be a nonzero address"
-        );
-        require(
-            _ethBackedFactory != address(0),
-            "ETH-backed factory must be a nonzero address"
+            sinceInit < keepFactoriesUpgradeabilityPeriod,
+            "beginKeepFactoriesUpdate can only be called within 180 days of initialization"
         );
 
+        // It is required that KEEP staked factory address is configured as this is
+        // a default choice factory. Fully backed factory and factory selector
+        // are optional for the system to work, hence they don't have to be provided.
+        require(
+            _keepStakedFactory != address(0),
+            "KEEP staked factory must be a nonzero address"
+        );
+
+        newKeepStakedFactory = _keepStakedFactory;
+        newFullyBackedFactory = _fullyBackedFactory;
         newFactorySelector = _factorySelector;
-        newEthBackedFactory = _ethBackedFactory;
-        keepFactorySingleShotUpdateInitiated = block.timestamp;
-        emit KeepFactorySingleShotUpdateStarted(
+        keepFactoriesUpdateInitiated = block.timestamp;
+
+        emit KeepFactoriesUpdateStarted(
+            _keepStakedFactory,
+            _fullyBackedFactory,
             _factorySelector,
-            _ethBackedFactory,
             block.timestamp
         );
     }
@@ -417,33 +431,36 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         collateralizationThresholdsChangeInitiated = 0;
     }
 
-    /// @notice Finish setting the address of the ETH-only-backed ECDSA keep
-    ///         factory and the selection strategy that will choose between it
-    ///         and the default KEEP-backed factory for new deposits.
-    /// @dev `beginKeepFactorySingleShotUpdate` must be called first; once
+    /// @notice Finish setting addresses of the KEEP-staked ECDSA keep factory,
+    ///         ETH-only-backed ECDSA keep factory, and the selection strategy
+    ///         that will choose between the two factories for new deposits.
+    /// @dev `beginKeepFactoriesUpdate` must be called first; once
     ///      `governanceTimeDelay` has passed, this function can be called to
-    ///      set the collateralization thresholds to the value set in
-    ///      `beginKeepFactorySingleShotUpdate`.
-    function finalizeKeepFactorySingleShotUpdate()
+    ///      set factories addresses to the values set in `beginKeepFactoriesUpdate`.
+    function finalizeKeepFactoriesUpdate()
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            keepFactorySingleShotUpdateInitiated,
+            keepFactoriesUpdateInitiated,
             governanceTimeDelay
         ) {
 
-        keepFactorySelection.setKeepFactorySelector(newFactorySelector);
-        keepFactorySelection.setFullyBackedKeepFactory(newEthBackedFactory);
-
-        emit KeepFactorySingleShotUpdated(
-            newFactorySelector,
-            newEthBackedFactory
+        keepFactorySelection.setFactories(
+            newKeepStakedFactory,
+            newFullyBackedFactory,
+            newFactorySelector
         );
 
-        keepFactorySingleShotUpdateInitiated = 0;
+        emit KeepFactoriesUpdated(
+            newKeepStakedFactory,
+            newFullyBackedFactory,
+            newFactorySelector
+        );
+
+        keepFactoriesUpdateInitiated = 0;
+        newKeepStakedFactory = address(0);
+        newFullyBackedFactory = address(0);
         newFactorySelector = address(0);
-        // Keep newEthBackedFactory set as a marker that the update has already
-        // occurred.
     }
 
     /// @notice Finish adding a new price feed contract to the priceFeed.
@@ -463,9 +480,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         nextEthBtcPriceFeed = IMedianizer(0);
         ethBtcPriceFeedAdditionInitiated = 0;
 
-        priceFeed.addEthBtcFeed(_nextEthBtcPriceFeed);
-
         emit EthBtcPriceFeedAdded(address(_nextEthBtcPriceFeed));
+
+        priceFeed.addEthBtcFeed(_nextEthBtcPriceFeed);
     }
 
     /// @notice Gets the system signer fee divisor.
@@ -543,9 +560,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Get the time remaining until the Keep ETH-only-backed ECDSA keep
     ///         factory and the selection strategy that will choose between it
     ///         and the KEEP-backed factory can be updated.
-    function getRemainingKeepFactorySingleShotUpdateTime() external view returns (uint256) {
+    function getRemainingKeepFactoriesUpdateTime() external view returns (uint256) {
         return getRemainingChangeTime(
-            keepFactorySingleShotUpdateInitiated,
+            keepFactoriesUpdateInitiated,
             governanceTimeDelay
         );
     }
@@ -555,6 +572,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         return getRemainingChangeTime(
             ethBtcPriceFeedAdditionInitiated,
             priceFeedGovernanceTimeDelay
+        );
+    }
+
+    /// @notice Get the time remaining until Keep factories can no longer be updated.
+    function getRemainingKeepFactoriesUpgradeabilityTime() external view returns (uint256) {
+        return getRemainingChangeTime(
+            initializedTimestamp,
+            keepFactoriesUpgradeabilityPeriod
         );
     }
 
@@ -574,13 +599,18 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Returns the time delay used for governance actions except for
     ///         price feed additions.
-    function getGovernanceTimeDelay() public pure returns (uint256) {
+    function getGovernanceTimeDelay() external pure returns (uint256) {
         return governanceTimeDelay;
+    }
+
+    /// @notice Returns the time period when keep factories upgrades are allowed.
+    function getKeepFactoriesUpgradeabilityPeriod() public pure returns (uint256) {
+        return keepFactoriesUpgradeabilityPeriod;
     }
 
     /// @notice Returns the time delay used for price feed addition governance
     ///         actions.
-    function getPriceFeedGovernanceTimeDelay() public view returns (uint256) {
+    function getPriceFeedGovernanceTimeDelay() external pure returns (uint256) {
         return priceFeedGovernanceTimeDelay;
     }
 
@@ -596,11 +626,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Request a new keep opening.
-    /// @param _lotSizeSatoshis Lot size in satoshis.
+    /// @param _requestedLotSizeSatoshis Lot size in satoshis.
     /// @param _maxSecuredLifetime Duration of stake lock in seconds.
     /// @return Address of a new keep.
     function requestNewKeep(
-        uint64 _lotSizeSatoshis,
+        uint64 _requestedLotSizeSatoshis,
         uint256 _maxSecuredLifetime
     )
         external
@@ -608,19 +638,19 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        require(isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
+        require(isAllowedLotSize(_requestedLotSizeSatoshis), "provided lot size not supported");
 
         IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
-        uint256 bond = calculateBondRequirementWei(_lotSizeSatoshis);
+        uint256 bond = calculateBondRequirementWei(_requestedLotSizeSatoshis);
         return _keepFactory.openKeep.value(msg.value)(keepSize, keepThreshold, msg.sender, bond, _maxSecuredLifetime);
     }
 
     /// @notice Check if a lot size is allowed.
-    /// @param _lotSizeSatoshis Lot size to check.
+    /// @param _requestedLotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint64 _lotSizeSatoshis) public view returns (bool){
+    function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) public view returns (bool){
         for( uint i = 0; i < lotSizesSatoshis.length; i++){
-            if (lotSizesSatoshis[i] == _lotSizeSatoshis){
+            if (lotSizesSatoshis[i] == _requestedLotSizeSatoshis){
                 return true;
             }
         }
@@ -628,16 +658,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Calculates bond requirement in wei for the given lot size in
-    /// satoshis based on the current ETHBTC price.
-    /// @param _lotSizeSatoshis Lot size in satoshis.
+    ///         satoshis based on the current ETHBTC price.
+    /// @param _requestedLotSizeSatoshis Lot size in satoshis.
     /// @return Bond requirement in wei.
     function calculateBondRequirementWei(
-        uint256 _lotSizeSatoshis
+        uint256 _requestedLotSizeSatoshis
     ) internal view returns (uint256) {
-        uint256 bondRequirementSatoshis = _lotSizeSatoshis.mul(
-            initialCollateralizedPercent
-        ).div(100);
-        return _fetchBitcoinPrice().mul(bondRequirementSatoshis);
+        uint256 lotSizeInWei = _fetchBitcoinPrice().mul(_requestedLotSizeSatoshis);
+        return lotSizeInWei.mul(initialCollateralizedPercent).div(100);
     }
 
     function _fetchBitcoinPrice() internal view returns (uint256) {
