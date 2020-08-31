@@ -40,8 +40,8 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
     function getPrice()
         external onlyTbtcSystem view returns (uint256)
     {
-        bool ethBtcActive;
-        uint256 ethBtc;
+        bool ethBtcActive = false;
+        uint256 ethBtc = 0;
 
         for(uint i = 0; i < ethBtcFeeds.length; i++){
             (ethBtc, ethBtcActive) = ethBtcFeeds[i].peek();
@@ -72,13 +72,13 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
         return address(0);
     }
 
-    /// @notice Add _ethBtcFeed to internal ethBtcFeeds array.
+    /// @notice Add _newEthBtcFeed to internal ethBtcFeeds array.
     /// @dev IMedianizer must be active in order to add.
-    function addEthBtcFeed(IMedianizer _ethBtcFeed) external onlyTbtcSystem {
+    function addEthBtcFeed(IMedianizer _newEthBtcFeed) external onlyTbtcSystem {
         bool ethBtcActive;
-        (, ethBtcActive) = _ethBtcFeed.peek();
+        (, ethBtcActive) = _newEthBtcFeed.peek();
         require(ethBtcActive, "Cannot add inactive feed");
-        ethBtcFeeds.push(_ethBtcFeed);
+        ethBtcFeeds.push(_newEthBtcFeed);
     }
 
     /// @notice Function modifier ensures modified function is only called by tbtcSystemAddress.

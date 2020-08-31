@@ -34,7 +34,7 @@ library DepositStates {
     /// @dev        This checks on the funding flow happy path, not the fraud path.
     /// @param _d   Deposit storage pointer.
     /// @return     True if contract is currently in the funding flow else False.
-    function inFunding(DepositUtils.Deposit storage _d) public view returns (bool) {
+    function inFunding(DepositUtils.Deposit storage _d) external view returns (bool) {
         return (
             _d.currentState == uint8(States.AWAITING_SIGNER_SETUP)
          || _d.currentState == uint8(States.AWAITING_BTC_FUNDING_PROOF)
@@ -45,7 +45,7 @@ library DepositStates {
     /// @dev        This could be caused by fraud, or by an unfilled margin call.
     /// @param _d   Deposit storage pointer.
     /// @return     True if contract is currently in the liquidaton flow else False.
-    function inSignerLiquidation(DepositUtils.Deposit storage _d) public view returns (bool) {
+    function inSignerLiquidation(DepositUtils.Deposit storage _d) external view returns (bool) {
         return (
             _d.currentState == uint8(States.LIQUIDATION_IN_PROGRESS)
          || _d.currentState == uint8(States.FRAUD_LIQUIDATION_IN_PROGRESS)
@@ -56,7 +56,7 @@ library DepositStates {
     /// @dev        This checks on the redemption flow, not the REDEEMED termination state.
     /// @param _d   Deposit storage pointer.
     /// @return     True if contract is currently in the redemption flow else False.
-    function inRedemption(DepositUtils.Deposit storage _d) public view returns (bool) {
+    function inRedemption(DepositUtils.Deposit storage _d) external view returns (bool) {
         return (
             _d.currentState == uint8(States.AWAITING_WITHDRAWAL_SIGNATURE)
          || _d.currentState == uint8(States.AWAITING_WITHDRAWAL_PROOF)
@@ -67,7 +67,7 @@ library DepositStates {
     /// @dev        This checks on any halt state, regardless of triggering circumstances.
     /// @param _d   Deposit storage pointer.
     /// @return     True if contract has halted permanently.
-    function inEndState(DepositUtils.Deposit storage _d) public view returns (bool) {
+    function inEndState(DepositUtils.Deposit storage _d) external view returns (bool) {
         return (
             _d.currentState == uint8(States.LIQUIDATED)
          || _d.currentState == uint8(States.REDEEMED)
@@ -79,7 +79,7 @@ library DepositStates {
     /// @dev        Redemption is available from active and courtesy call.
     /// @param _d   Deposit storage pointer.
     /// @return     True if available, False otherwise.
-    function inRedeemableState(DepositUtils.Deposit storage _d) public view returns (bool) {
+    function inRedeemableState(DepositUtils.Deposit storage _d) external view returns (bool) {
         return (
             _d.currentState == uint8(States.ACTIVE)
          || _d.currentState == uint8(States.COURTESY_CALL)
@@ -90,7 +90,7 @@ library DepositStates {
     /// @dev        This checks on the funding flow happy path, not the fraud path.
     /// @param _d   Deposit storage pointer.
     /// @return     True if contract is currently in the start state else False.
-    function inStart(DepositUtils.Deposit storage _d) public view returns (bool) {
+    function inStart(DepositUtils.Deposit storage _d) external view returns (bool) {
         return (_d.currentState == uint8(States.START));
     }
 

@@ -1,5 +1,6 @@
 pragma solidity 0.5.17;
 
+import {ITokenRecipient} from "../interfaces/ITokenRecipient.sol";
 import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
@@ -10,7 +11,7 @@ import {VendingMachine} from "../system/VendingMachine.sol";
 /// This contract implements receiveApproval() and can therefore use
 /// approveAndCall(). This pattern combines TBTC Token approval and
 /// vendingMachine.unqualifiedDepositToTbtc() in a single transaction.
-contract FundingScript {
+contract FundingScript is ITokenRecipient {
     TBTCToken tbtcToken;
     VendingMachine vendingMachine;
     TBTCDepositToken tbtcDepositToken;
@@ -33,7 +34,12 @@ contract FundingScript {
     /// @param _from The owner of the token who approved them for transfer.
     /// @param _tokenId Approved TDT for the transfer.
     /// @param _extraData Encoded function call to `VendingMachine.unqualifiedDepositToTbtc`.
-    function receiveApproval(address _from, uint256 _tokenId, address, bytes memory _extraData) public {
+    function receiveApproval(
+        address _from,
+        uint256 _tokenId,
+        address,
+        bytes memory _extraData
+    ) public { // not external to allow bytes memory parameters
         require(msg.sender == address(tbtcDepositToken), "Only token contract can call receiveApproval");
 
         tbtcDepositToken.transferFrom(_from, address(this), _tokenId);

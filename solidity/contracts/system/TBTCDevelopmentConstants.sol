@@ -29,19 +29,19 @@ library TBTCDevelopmentConstants {
     uint256 public constant AUCTION_DURATION = 24 * 60 * 60; // seconds
 
     // Getters for easy access
-    function getBeneficiaryRewardDivisor() public pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
-    function getSatoshiMultiplier() public pure returns (uint256) { return SATOSHI_MULTIPLIER; }
-    function getDepositTerm() public pure returns (uint256) { return DEPOSIT_TERM_LENGTH; }
-    function getTxProofDifficultyFactor() public pure returns (uint256) { return TX_PROOF_DIFFICULTY_FACTOR; }
+    function getBeneficiaryRewardDivisor() external pure returns (uint256) { return BENEFICIARY_FEE_DIVISOR; }
+    function getSatoshiMultiplier() external pure returns (uint256) { return SATOSHI_MULTIPLIER; }
+    function getDepositTerm() external pure returns (uint256) { return DEPOSIT_TERM_LENGTH; }
+    function getTxProofDifficultyFactor() external pure returns (uint256) { return TX_PROOF_DIFFICULTY_FACTOR; }
 
-    function getSignatureTimeout() public pure returns (uint256) { return REDEMPTION_SIGNATURE_TIMEOUT; }
-    function getIncreaseFeeTimer() public pure returns (uint256) { return INCREASE_FEE_TIMER; }
-    function getRedemptionProofTimeout() public pure returns (uint256) { return REDEMPTION_PROOF_TIMEOUT; }
-    function getMinimumRedemptionFee() public pure returns (uint256) { return MINIMUM_REDEMPTION_FEE; }
+    function getSignatureTimeout() external pure returns (uint256) { return REDEMPTION_SIGNATURE_TIMEOUT; }
+    function getIncreaseFeeTimer() external pure returns (uint256) { return INCREASE_FEE_TIMER; }
+    function getRedemptionProofTimeout() external pure returns (uint256) { return REDEMPTION_PROOF_TIMEOUT; }
+    function getMinimumRedemptionFee() external pure returns (uint256) { return MINIMUM_REDEMPTION_FEE; }
 
-    function getFundingTimeout() public pure returns (uint256) { return FUNDING_PROOF_TIMEOUT; }
-    function getSigningGroupFormationTimeout() public pure returns (uint256) { return FORMATION_TIMEOUT; }
+    function getFundingTimeout() external pure returns (uint256) { return FUNDING_PROOF_TIMEOUT; }
+    function getSigningGroupFormationTimeout() external pure returns (uint256) { return FORMATION_TIMEOUT; }
 
-    function getCourtesyCallTimeout() public pure returns (uint256) { return COURTESY_CALL_DURATION; }
-    function getAuctionDuration() public pure returns (uint256) { return AUCTION_DURATION; }
+    function getCourtesyCallTimeout() external pure returns (uint256) { return COURTESY_CALL_DURATION; }
+    function getAuctionDuration() external pure returns (uint256) { return AUCTION_DURATION; }
 }

@@ -98,7 +98,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     address private newFactorySelector;
 
     // price feed
-    uint256 priceFeedGovernanceTimeDelay = 90 days;
+    uint256 constant priceFeedGovernanceTimeDelay = 90 days;
     uint256 ethBtcPriceFeedAdditionInitiated;
     IMedianizer nextEthBtcPriceFeed;
 
@@ -133,6 +133,10 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         keepFactorySelection.initialize(_defaultKeepFactory);
         keepThreshold = _keepThreshold;
         keepSize = _keepSize;
+        initializedTimestamp = block.timestamp;
+        allowNewDeposits = true;
+
+        setTbtcDepositToken(_tbtcDepositToken);
 
         _vendingMachine.setExternalAddresses(
             _tbtcToken,
@@ -147,9 +151,6 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             _feeRebateToken,
             address(_vendingMachine)
         );
-        setTbtcDepositToken(_tbtcDepositToken);
-        initializedTimestamp = block.timestamp;
-        allowNewDeposits = true;
     }
 
     /// @notice Returns whether new deposits should be allowed.
@@ -166,7 +167,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Return the largest lot size currently enabled for deposits.
     /// @return The largest lot size, in satoshis.
-    function getMaximumLotSize() public view returns (uint256) {
+    function getMaximumLotSize() external view returns (uint256) {
         return lotSizesSatoshis[lotSizesSatoshis.length - 1];
     }
 
@@ -181,16 +182,16 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Anyone can reactivate deposit creations after the pause duration is over.
-    function resumeNewDeposits() public {
-        require(allowNewDeposits == false, "New deposits are currently allowed");
+    function resumeNewDeposits() external {
+        require(! allowNewDeposits, "New deposits are currently allowed");
         require(pausedTimestamp != 0, "Deposit has not been paused");
         require(block.timestamp.sub(pausedTimestamp) >= pausedDuration, "Deposits are still paused");
         allowNewDeposits = true;
         emit AllowNewDepositsUpdated(true);
     }
 
-    function getRemainingPauseTerm() public view returns (uint256) {
-        require(allowNewDeposits == false, "New deposits are currently allowed");
+    function getRemainingPauseTerm() external view returns (uint256) {
+        require(! allowNewDeposits, "New deposits are currently allowed");
         return (block.timestamp.sub(pausedTimestamp) >= pausedDuration)?
             0:
             pausedDuration.sub(block.timestamp.sub(pausedTimestamp));
@@ -479,9 +480,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         nextEthBtcPriceFeed = IMedianizer(0);
         ethBtcPriceFeedAdditionInitiated = 0;
 
-        priceFeed.addEthBtcFeed(_nextEthBtcPriceFeed);
-
         emit EthBtcPriceFeedAdded(address(_nextEthBtcPriceFeed));
+
+        priceFeed.addEthBtcFeed(_nextEthBtcPriceFeed);
     }
 
     /// @notice Gets the system signer fee divisor.
@@ -598,7 +599,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Returns the time delay used for governance actions except for
     ///         price feed additions.
-    function getGovernanceTimeDelay() public pure returns (uint256) {
+    function getGovernanceTimeDelay() external pure returns (uint256) {
         return governanceTimeDelay;
     }
 
@@ -609,7 +610,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Returns the time delay used for price feed addition governance
     ///         actions.
-    function getPriceFeedGovernanceTimeDelay() public view returns (uint256) {
+    function getPriceFeedGovernanceTimeDelay() external pure returns (uint256) {
         return priceFeedGovernanceTimeDelay;
     }
 
@@ -625,11 +626,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Request a new keep opening.
-    /// @param _lotSizeSatoshis Lot size in satoshis.
+    /// @param _requestedLotSizeSatoshis Lot size in satoshis.
     /// @param _maxSecuredLifetime Duration of stake lock in seconds.
     /// @return Address of a new keep.
     function requestNewKeep(
-        uint64 _lotSizeSatoshis,
+        uint64 _requestedLotSizeSatoshis,
         uint256 _maxSecuredLifetime
     )
         external
@@ -637,19 +638,19 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         returns (address)
     {
         require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        require(isAllowedLotSize(_lotSizeSatoshis), "provided lot size not supported");
+        require(isAllowedLotSize(_requestedLotSizeSatoshis), "provided lot size not supported");
 
         IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
-        uint256 bond = calculateBondRequirementWei(_lotSizeSatoshis);
+        uint256 bond = calculateBondRequirementWei(_requestedLotSizeSatoshis);
         return _keepFactory.openKeep.value(msg.value)(keepSize, keepThreshold, msg.sender, bond, _maxSecuredLifetime);
     }
 
     /// @notice Check if a lot size is allowed.
-    /// @param _lotSizeSatoshis Lot size to check.
+    /// @param _requestedLotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint64 _lotSizeSatoshis) public view returns (bool){
+    function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) public view returns (bool){
         for( uint i = 0; i < lotSizesSatoshis.length; i++){
-            if (lotSizesSatoshis[i] == _lotSizeSatoshis){
+            if (lotSizesSatoshis[i] == _requestedLotSizeSatoshis){
                 return true;
             }
         }
@@ -657,16 +658,14 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Calculates bond requirement in wei for the given lot size in
-    /// satoshis based on the current ETHBTC price.
-    /// @param _lotSizeSatoshis Lot size in satoshis.
+    ///         satoshis based on the current ETHBTC price.
+    /// @param _requestedLotSizeSatoshis Lot size in satoshis.
     /// @return Bond requirement in wei.
     function calculateBondRequirementWei(
-        uint256 _lotSizeSatoshis
+        uint256 _requestedLotSizeSatoshis
     ) internal view returns (uint256) {
-        uint256 bondRequirementSatoshis = _lotSizeSatoshis.mul(
-            initialCollateralizedPercent
-        ).div(100);
-        return _fetchBitcoinPrice().mul(bondRequirementSatoshis);
+        uint256 lotSizeInWei = _fetchBitcoinPrice().mul(_requestedLotSizeSatoshis);
+        return lotSizeInWei.mul(initialCollateralizedPercent).div(100);
     }
 
     function _fetchBitcoinPrice() internal view returns (uint256) {
