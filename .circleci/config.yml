@@ -100,10 +100,9 @@ jobs:
           name: Migrate Contracts
           working_directory: ~/project/solidity
           command: |
-            mkdir -p /tmp/tbtc/contracts
-            npm ci
-            ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
-            cp ./build/contracts/* /tmp/tbtc/contracts
+            export BUILD_TAG=$CIRCLE_SHA1
+            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
+            solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/tbtc
           paths:
