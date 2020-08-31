@@ -70,6 +70,7 @@ module.exports = {
         return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5")
       },
       gas: 8000000,
+      skipDryRun: true,
       network_id: 3
     },
 
