@@ -103,7 +103,7 @@ jobs:
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
-            solidity/scripts/circleci-migrate-contracts.sh
+            scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/tbtc
           paths:
