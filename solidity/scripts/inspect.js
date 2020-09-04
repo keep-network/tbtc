@@ -63,6 +63,8 @@ module.exports = async function() {
                 await notifyFundingTimedOut(deposit)
             } else if (stateString == "AWAITING_WITHDRAWAL_SIGNATURE") {
                 await provideRedemptionSignature(deposit, keepAddress)
+            } else if (stateString == "AWAITING_WITHDRAWAL_PROOF") {
+                await notifyRedemptionProofTimeout(deposit)
             }
 
             console.log(``)
@@ -148,6 +150,16 @@ async function provideRedemptionSignature(deposit, keepAddress) {
             r.toString(),
             s.toString()
         )
+        console.log(`TX: ${receipt.tx}`)
+    } catch (error) {
+        console.log(`Failed with: ${JSON.stringify(error)}`)
+    }
+}
+
+async function notifyRedemptionProofTimeout(deposit) {
+    console.log(`Notifying redemption proof timeout...`)
+    try {
+        const receipt = await deposit.notifyRedemptionProofTimedOut()
         console.log(`TX: ${receipt.tx}`)
     } catch (error) {
         console.log(`Failed with: ${JSON.stringify(error)}`)
