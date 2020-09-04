@@ -67,6 +67,8 @@ module.exports = async function() {
 
             console.log(``)
         }
+
+        process.exit()
     } catch (error) {
       console.log(error)
       process.exit()
