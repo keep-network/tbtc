@@ -76,18 +76,16 @@ tBTC's first 6-week audit was completed by ConsenSys Diligence on March 27,
 They've published a detailed https://diligence.consensys.net/audits/2020/02/thesis-tbtc-and-keep/[audit report]
 and https://diligence.consensys.net/audits/2020/03/thesis-cryptographic-review/[cryptographic review].
 
-An additional audit was conducted by Bitcoin-focused security researcher
+A Bitcoin-focused audit was conducted by security researcher
 https://twitter.com/sr_gi[Sergi Delgado] from May 25 to May 31, 2020. You can
 https://srgi.me/resources/reports/tbtc_audit.pdf[review Sergi's results on his site].
 
-tBTC is currently under audit by
-https://www.trailofbits.com/[Trail of Bits]. You can review
-https://github.com/keep-network/tbtc/issues?q=is%3Aissue+author%3Asamczsun[issues found by `@samczsun`] as they are discovered.
+https://www.trailofbits.com/[Trail of Bits] conducted an audit of tBTC in June, 2020, and published a https://github.com/trailofbits/publications/blob/db9414def9f575465a47fef5489eb54d9c543eb5/reviews/thesis-summary.pdf[a summary of their results]. https://github.com/samczsun[`@samczsun`] opened issues he discovered https://github.com/keep-network/tbtc/issues?q=is%3Aissue+author%3Asamczsun[on the repo], all of which have been addressed.
 
 A focused treatment of tBTC's security model can be
 https://tbtc.network/developers/tbtc-security-model/[found here].
 
-Please dislose any security issues you find to
+Please dislose any security issues you find or suspect to
 mailto:security@keep.network[security@keep.network], or to
 https://keybase.io/shadowfiend[`@shadowfiend`],
 https://keybase.io/frdwrd[`@frdwrd`], or
