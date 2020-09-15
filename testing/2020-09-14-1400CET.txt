@@ -1,4 +1,2046 @@
-Number of created deposits: 634
+Number of created deposits: 580
+deposit address: 0xC03871bd082b0A11B23A6DfFD13f6F9c2307ce96
+deposit index:   0
+deposit state:   FAILED_SETUP
+keep address:    0x92832dd7Ac74c873B7EB1928F04B66df5a020c3A
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xFE312B2A30Cf8a36af7Ac6e7C614D875B37cC03f
+deposit index:   1
+deposit state:   ACTIVE
+keep address:    0xa791C7CBD6322396bA9bA62189894BA2F0569f30
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xD147dB9026F059fAb9D9Dba5Bf707866A010030B
+deposit index:   2
+deposit state:   FAILED_SETUP
+keep address:    0x74a61f2a1DDB2C9F02E9ba8D5A5A8806b5491111
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xb20Ed7d6Cb3A626F88A1560348F60C2e2b9c8C71
+deposit index:   3
+deposit state:   FAILED_SETUP
+keep address:    0x881304fa237295CBa49272d6874919e3f4E9A351
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x2BFA1aB28B45a1E9A4F45c9f14fd8f0f8ef0673f
+deposit index:   4
+deposit state:   ACTIVE
+keep address:    0xF2d38305160678A327009DeFB534006b3706a7AC
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xBeaAE52772dBB1F59d9ef43ca0C2AF18Efc8FA41
+deposit index:   5
+deposit state:   ACTIVE
+keep address:    0x65E71C3f8fa5f718BE9558B25561DDb4FFC8FFFd
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x0bB6A9419138A82A8ce7B9f1Eb03421db0a684aC
+deposit index:   6
+deposit state:   FAILED_SETUP
+keep address:    0x5b8D9154030d11689aa5FA453278D8b68D9A23Da
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x9664B3B549f54f327AeEA269bba8549475E4Fa24
+deposit index:   7
+deposit state:   FAILED_SETUP
+keep address:    0xa88B119CEc3232d9dd420be743D05DB051927e4D
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x4Da23C00B312a06082777a4Dd8363366EdC59762
+deposit index:   8
+deposit state:   FAILED_SETUP
+keep address:    0x33a38000108212A0CD7bAf737Bd88e3932276ed2
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x311A071BcB0a8854eC48701c5cC2B7C1c27286DB
+deposit index:   9
+deposit state:   REDEEMED
+keep address:    0x5268b2805b24AE6E7Bff9ed4171749F213486058
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xEE39975be0dcbA3a09d1b393Fa7E399D1F5f6851
+deposit index:   10
+deposit state:   ACTIVE
+keep address:    0x014622974487f22eC686bFa6f6160a08C6570d78
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x8B85c466F98275ADFffA4c5483a9461B03e539b0
+deposit index:   11
+deposit state:   REDEEMED
+keep address:    0x47B6725cfcDEc848f82d09438973E62784252b18
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x54803D5274b0C66f2365445B4908D075e45AD1CA
+deposit index:   12
+deposit state:   ACTIVE
+keep address:    0x223Cd1c3B5F6085A8E3541430fD974a0230Ac52a
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x39E7C6B7E0c6eA201839f792dCD56fb9ea1B94Bc
+deposit index:   13
+deposit state:   REDEEMED
+keep address:    0x1ae14bB22E9C23733F44e641895B766eb781284D
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x8E2b4f30EA69967509Ab95696261b18653528811
+deposit index:   14
+deposit state:   ACTIVE
+keep address:    0x43490d14C19469207375A1f7bdE6B16d0419b13d
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xb047c12EfD1a8251952E58e4DdD45b4510677BD6
+deposit index:   15
+deposit state:   ACTIVE
+keep address:    0x9526D72d65372251a2412a26f49CE42B657BE83F
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xc5364803b9B6a131b612Aef901468f366f874459
+deposit index:   16
+deposit state:   ACTIVE
+keep address:    0xF2c7FfBBb4D3587E1c8BEc33d281d4033027E2d8
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xE3cAb2f261DA6B8A91b18B311F10c19ea82474db
+deposit index:   17
+deposit state:   AWAITING_SIGNER_SETUP
+keep address:    0xaC602aE8955D93FFd2e03C08c118eD1f38C2aDa0
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+Retrieving signer pubkey...
+Failed with: {"message":"Transaction: 0x8cbc5a6f1ec36d441a6259d1ee777f111764fae09d4d75669090854d9ead27ff exited with an error (status 0). Reason given: public key not set or not 64-bytes long.\n     Please check that the transaction:\n     - satisfies all conditions set by Solidity `require` statements.\n     - does not trigger a Solidity `revert` statement.\n","stack":"Error: Transaction: 0x8cbc5a6f1ec36d441a6259d1ee777f111764fae09d4d75669090854d9ead27ff exited with an error (status 0). Reason given: public key not set or not 64-bytes long.    at PromiEvent (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/promievent.js:9:1)\n    at TruffleContract.retrieveSignerPubkey (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/execute.js:169:1)\n    at retrieveSignerPubkey (/Users/piotr/go/src/github.com/keep-network/tbtc/solidity/scripts/inspect.js:93:39)\n    at module.exports (/Users/piotr/go/src/github.com/keep-network/tbtc/solidity/scripts/inspect.js:61:23)\n    at processTicksAndRejections (internal/process/task_queues.js:86:5)","name":"StatusError","tx":"0x8cbc5a6f1ec36d441a6259d1ee777f111764fae09d4d75669090854d9ead27ff","receipt":{"blockHash":"0x08631a6e5a09355ead3bb6fd29c4ece24159048efea19fef2e8694f419c7ad60","blockNumber":8649582,"contractAddress":null,"cumulativeGasUsed":32649,"from":"0x502a2d67c6efb0a4e1a41257f8386b3e65b44920","gasUsed":32649,"logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":false,"to":"0xe3cab2f261da6b8a91b18b311f10c19ea82474db","transactionHash":"0x8cbc5a6f1ec36d441a6259d1ee777f111764fae09d4d75669090854d9ead27ff","transactionIndex":0,"rawLogs":[]},"reason":"public key not set or not 64-bytes long","hijackedStack":"Error: Transaction: 0x8cbc5a6f1ec36d441a6259d1ee777f111764fae09d4d75669090854d9ead27ff exited with an error (status 0). Reason given: public key not set or not 64-bytes long.\n     Please check that the transaction:\n     - satisfies all conditions set by Solidity `require` statements.\n     - does not trigger a Solidity `revert` statement.\n\n    at StatusError.ExtendableError (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/error/index.js:10:1)\n    at new StatusError (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/statuserror.js:33:1)\n    at Object.receipt (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/handlers.js:124:1)\n    at processTicksAndRejections (internal/process/task_queues.js:86:5)"}
+
+deposit address: 0xC9D72C3D5b51D549F3eD9617728bC608D09f3A00
+deposit index:   18
+deposit state:   AWAITING_SIGNER_SETUP
+keep address:    0xF11Ae352395c23197fA25BFabD440242CB540F7d
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+Retrieving signer pubkey...
+Failed with: {"message":"Transaction: 0xddeb87236ee9f4a4026b46a3eb954f485fc00ab0097215670123f4fbf549d02b exited with an error (status 0). Reason given: public key not set or not 64-bytes long.\n     Please check that the transaction:\n     - satisfies all conditions set by Solidity `require` statements.\n     - does not trigger a Solidity `revert` statement.\n","stack":"Error: Transaction: 0xddeb87236ee9f4a4026b46a3eb954f485fc00ab0097215670123f4fbf549d02b exited with an error (status 0). Reason given: public key not set or not 64-bytes long.    at PromiEvent (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/promievent.js:9:1)\n    at TruffleContract.retrieveSignerPubkey (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/execute.js:169:1)\n    at retrieveSignerPubkey (/Users/piotr/go/src/github.com/keep-network/tbtc/solidity/scripts/inspect.js:93:39)\n    at module.exports (/Users/piotr/go/src/github.com/keep-network/tbtc/solidity/scripts/inspect.js:61:23)\n    at processTicksAndRejections (internal/process/task_queues.js:86:5)","name":"StatusError","tx":"0xddeb87236ee9f4a4026b46a3eb954f485fc00ab0097215670123f4fbf549d02b","receipt":{"blockHash":"0x5df3c123a3418d00775d68713c3d519d5368e3d94a481b4e8b64100ea4a9bb30","blockNumber":8649584,"contractAddress":null,"cumulativeGasUsed":32649,"from":"0x502a2d67c6efb0a4e1a41257f8386b3e65b44920","gasUsed":32649,"logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":false,"to":"0xc9d72c3d5b51d549f3ed9617728bc608d09f3a00","transactionHash":"0xddeb87236ee9f4a4026b46a3eb954f485fc00ab0097215670123f4fbf549d02b","transactionIndex":0,"rawLogs":[]},"reason":"public key not set or not 64-bytes long","hijackedStack":"Error: Transaction: 0xddeb87236ee9f4a4026b46a3eb954f485fc00ab0097215670123f4fbf549d02b exited with an error (status 0). Reason given: public key not set or not 64-bytes long.\n     Please check that the transaction:\n     - satisfies all conditions set by Solidity `require` statements.\n     - does not trigger a Solidity `revert` statement.\n\n    at StatusError.ExtendableError (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/error/index.js:10:1)\n    at new StatusError (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/statuserror.js:33:1)\n    at Object.receipt (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/handlers.js:124:1)\n    at processTicksAndRejections (internal/process/task_queues.js:86:5)"}
+
+deposit address: 0x5d32491B222EfEa486A66153F0F5724082668EE8
+deposit index:   19
+deposit state:   AWAITING_SIGNER_SETUP
+keep address:    0x9083Bd2Ae428E4B77d33D79AaE8FA9BDa11e126c
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+Retrieving signer pubkey...
+Failed with: {"message":"Transaction: 0xeeada92fa1dcb74ffc50e24be360b37926e16bfdb3ecaf41bd36fb8e314420bb exited with an error (status 0). Reason given: public key not set or not 64-bytes long.\n     Please check that the transaction:\n     - satisfies all conditions set by Solidity `require` statements.\n     - does not trigger a Solidity `revert` statement.\n","stack":"Error: Transaction: 0xeeada92fa1dcb74ffc50e24be360b37926e16bfdb3ecaf41bd36fb8e314420bb exited with an error (status 0). Reason given: public key not set or not 64-bytes long.    at PromiEvent (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/promievent.js:9:1)\n    at TruffleContract.retrieveSignerPubkey (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/execute.js:169:1)\n    at retrieveSignerPubkey (/Users/piotr/go/src/github.com/keep-network/tbtc/solidity/scripts/inspect.js:93:39)\n    at module.exports (/Users/piotr/go/src/github.com/keep-network/tbtc/solidity/scripts/inspect.js:61:23)\n    at processTicksAndRejections (internal/process/task_queues.js:86:5)","name":"StatusError","tx":"0xeeada92fa1dcb74ffc50e24be360b37926e16bfdb3ecaf41bd36fb8e314420bb","receipt":{"blockHash":"0x89319621afec0ffafd0d52e614bb318a6c20f196c5f93e9116ecc8b9b2b92d48","blockNumber":8649587,"contractAddress":null,"cumulativeGasUsed":32649,"from":"0x502a2d67c6efb0a4e1a41257f8386b3e65b44920","gasUsed":32649,"logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":false,"to":"0x5d32491b222efea486a66153f0f5724082668ee8","transactionHash":"0xeeada92fa1dcb74ffc50e24be360b37926e16bfdb3ecaf41bd36fb8e314420bb","transactionIndex":0,"rawLogs":[]},"reason":"public key not set or not 64-bytes long","hijackedStack":"Error: Transaction: 0xeeada92fa1dcb74ffc50e24be360b37926e16bfdb3ecaf41bd36fb8e314420bb exited with an error (status 0). Reason given: public key not set or not 64-bytes long.\n     Please check that the transaction:\n     - satisfies all conditions set by Solidity `require` statements.\n     - does not trigger a Solidity `revert` statement.\n\n    at StatusError.ExtendableError (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/error/index.js:10:1)\n    at new StatusError (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/statuserror.js:33:1)\n    at Object.receipt (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/handlers.js:124:1)\n    at processTicksAndRejections (internal/process/task_queues.js:86:5)"}
+
+deposit address: 0x6daB95483246E4CCcd8788Af548083fBB56f7605
+deposit index:   20
+deposit state:   AWAITING_SIGNER_SETUP
+keep address:    0x03C34D01542dC73733BDC663811A962c536c78c3
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+Retrieving signer pubkey...
+Failed with: {"message":"Transaction: 0xb0bf7bd7e14b25f927e9ea1741149fcc9561692954c3ad352c127d3254b9c64b exited with an error (status 0). Reason given: public key not set or not 64-bytes long.\n     Please check that the transaction:\n     - satisfies all conditions set by Solidity `require` statements.\n     - does not trigger a Solidity `revert` statement.\n","stack":"Error: Transaction: 0xb0bf7bd7e14b25f927e9ea1741149fcc9561692954c3ad352c127d3254b9c64b exited with an error (status 0). Reason given: public key not set or not 64-bytes long.    at PromiEvent (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/promievent.js:9:1)\n    at TruffleContract.retrieveSignerPubkey (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/execute.js:169:1)\n    at retrieveSignerPubkey (/Users/piotr/go/src/github.com/keep-network/tbtc/solidity/scripts/inspect.js:93:39)\n    at module.exports (/Users/piotr/go/src/github.com/keep-network/tbtc/solidity/scripts/inspect.js:61:23)\n    at processTicksAndRejections (internal/process/task_queues.js:86:5)","name":"StatusError","tx":"0xb0bf7bd7e14b25f927e9ea1741149fcc9561692954c3ad352c127d3254b9c64b","receipt":{"blockHash":"0xda869abd39eecbe21d20db7ed354c773ce45864483a329ccd2c9a06cd8c4d8cf","blockNumber":8649589,"contractAddress":null,"cumulativeGasUsed":32649,"from":"0x502a2d67c6efb0a4e1a41257f8386b3e65b44920","gasUsed":32649,"logs":[],"logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":false,"to":"0x6dab95483246e4cccd8788af548083fbb56f7605","transactionHash":"0xb0bf7bd7e14b25f927e9ea1741149fcc9561692954c3ad352c127d3254b9c64b","transactionIndex":0,"rawLogs":[]},"reason":"public key not set or not 64-bytes long","hijackedStack":"Error: Transaction: 0xb0bf7bd7e14b25f927e9ea1741149fcc9561692954c3ad352c127d3254b9c64b exited with an error (status 0). Reason given: public key not set or not 64-bytes long.\n     Please check that the transaction:\n     - satisfies all conditions set by Solidity `require` statements.\n     - does not trigger a Solidity `revert` statement.\n\n    at StatusError.ExtendableError (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/error/index.js:10:1)\n    at new StatusError (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/statuserror.js:33:1)\n    at Object.receipt (/usr/local/lib/node_modules/node/lib/node_modules/truffle/build/webpack:/packages/contract/lib/handlers.js:124:1)\n    at processTicksAndRejections (internal/process/task_queues.js:86:5)"}
+
+deposit address: 0xA2808C751eb9A5e64ff4C5e2cDaCBB1c64B0D843
+deposit index:   21
+deposit state:   ACTIVE
+keep address:    0x595a1973d21499b66d2f11B495502c1a98A6f428
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xBDb17B3f7B1FCDDaE3D89CCEc8F28b53B3dDF4ac
+deposit index:   22
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xdDAaC8b2Ff5c9B91DAcD515f348bD2905c77a0b6
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x8b6032FaD441c4f01438086E6233BcEF871c27F6
+deposit index:   23
+deposit state:   ACTIVE
+keep address:    0xB08810488982ae53eb835cF67E65045DDDd76A6B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xBa25f7F2c973843AC363D215774F2151F3029E49
+deposit index:   24
+deposit state:   ACTIVE
+keep address:    0x7509c487f7f39e51e97501feA4d647cb6AD58339
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x4dCA3Eb14C172b58015680B75b94b023a2973112
+deposit index:   25
+deposit state:   ACTIVE
+keep address:    0x5e4E79Fd823134DCAb26549D06DD26c7130333fD
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2389d6A83F170653FD3047260455f4f37a440f8B
+deposit index:   26
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x34b0F8EAD3FbBEc55bb027672D86Ae247740e78e
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x83D4Fc7EEe2B0Ab3CAa854DaFb4431556656E3B7
+deposit index:   27
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xdF86bE1D90D2A6424E94D53dB01F850853499e8E
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x9ec64666a4bcE6122Ef4A8cA933edFf8d8545971
+deposit index:   28
+deposit state:   FAILED_SETUP
+keep address:    0x8F04d5eF88d03F83Cc05C4387444F773D8418499
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x4C4E05C684c746a136E7fFCED8c1C5ee24d173B0
+deposit index:   29
+deposit state:   ACTIVE
+keep address:    0xB42D8D35785a1EE1e82B25C456faD4598280381A
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x4d3aF4c2626909A844A6cc6E3789AE7D8CaB8d19
+deposit index:   30
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x37E5aE8530417aaFb17B45E99460c007c77a08BD
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x41D5E082EfD3b631AE4320e232D976184a61AE88
+deposit index:   31
+deposit state:   REDEEMED
+keep address:    0xFa8f83Ce5955d419F55124D4403e2759738CbF8a
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x651359B2501B62aa4F78Bbc53338507b91E34A04
+deposit index:   32
+deposit state:   REDEEMED
+keep address:    0x8c53537ad310595FD9aB896e9FD5BC4Ff07C95EE
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0xb5e45cD8b18FE67Ba20741dD21D0c6d5239aE9b3
+deposit index:   33
+deposit state:   ACTIVE
+keep address:    0x0870179AC441f2a5F4b2735441C154e876E385e8
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x4F6cA1F6395e2689d40019D5224F4aEDc1dEbE17
+deposit index:   34
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x26AeBE1daafCcFE9680b1b31686E7A2dfA96787F
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xF857362C91f1C42FE59981dF417b92198D087931
+deposit index:   35
+deposit state:   ACTIVE
+keep address:    0xD29A3CaC39FF8f73ef127422634CD811482e19a9
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xF7C4302212d46523c9dbbEdF3a8CF7A6eb9EF536
+deposit index:   36
+deposit state:   ACTIVE
+keep address:    0x23Ba1c854406278fB0c951083cdAf6fFb55Cc959
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x450f794Ff2bfaB4A0845c36f5B965238a969c922
+deposit index:   37
+deposit state:   ACTIVE
+keep address:    0x887D0F4f4d905240623A9c850fE739cdd806837B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x6E917E7A3332A2E526574821BFE87F195a09c9BD
+deposit index:   38
+deposit state:   REDEEMED
+keep address:    0xcd1A433E9F0CeE98ba371FDa0e02eCA1cE42bfEd
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x39698762eCBa6d76B0C51C906D68b3C04bf2e926
+deposit index:   39
+deposit state:   ACTIVE
+keep address:    0x4094b7c69F0b8725aAB6412B5074f31D4410EDA0
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x1dd6443c943d7859C4eA748103Cf4CE4bD4F2Ed6
+deposit index:   40
+deposit state:   ACTIVE
+keep address:    0x3Ed811f3767750Ee4B678f5f538bF90CdEAa6f4B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x9118Aa2b105ef2FbC41738D97a2f7dC3CF50c21B
+deposit index:   41
+deposit state:   ACTIVE
+keep address:    0x0B6f247Bf976ef431998BDCc42ecC7571Bd40CeB
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xd01554D2736ac5A6a184f8c5148F0882a8888792
+deposit index:   42
+deposit state:   ACTIVE
+keep address:    0x9008c5D49Bec99027b2dc62ED94E57377e81C07b
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xD8305DB2dFb3Bfd3d94DBCE54ff8Be33DE7957f8
+deposit index:   43
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x90e5Cfe92a980c6B3A111D458866674CEA266211
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x050632885760934119c8E5DC18D1Ad0738223F22
+deposit index:   44
+deposit state:   FAILED_SETUP
+keep address:    0x4f4d330b5e4AE45F8F55E9d6FD9ae74D989aEe3a
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xf236133AE777a84CCD88A2ef52AA5A098699AA43
+deposit index:   45
+deposit state:   ACTIVE
+keep address:    0xd62ae48EEa1bFb85826A21Da808BbD2aeF4C31C5
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x7ab007712BC9908007E50d4dc7cBF25FA34c3E1c
+deposit index:   46
+deposit state:   ACTIVE
+keep address:    0x7C7452cfc09c9d2C90c17D261B70DafBcBA99b60
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2c1e85acECcbD424FC35250107e60Bcd92E6414B
+deposit index:   47
+deposit state:   REDEEMED
+keep address:    0xE458D09026164a26BBcbC1391a7a6036cD235E2b
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xAf5ABCd28E6654805D49943c6788D967935e697F
+deposit index:   48
+deposit state:   ACTIVE
+keep address:    0x54B3B045dbd3dB6C314E5bC97B84C565483EC55f
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x8A53dcf6F8eF3DFc3cFA9D0958506b5ddf083FdA
+deposit index:   49
+deposit state:   ACTIVE
+keep address:    0xe675c2911926Fd0834A5757AA8227beC5eD2D1c8
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3148f31419662c7Fe65af5C694F2AC541C004a7E
+deposit index:   50
+deposit state:   FAILED_SETUP
+keep address:    0x7fB233100316A747BB68b05e2AbD774790F56B8e
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0xe8162b265F99c0E060F0E3288943658772f7bb88
+deposit index:   51
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x06E7f61ca0a18565C623310A1dAaC197c840cA4d
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x047922a9c401eDA0981C672D37066fF0938257e8
+deposit index:   52
+deposit state:   ACTIVE
+keep address:    0x13060E7f8C0d7B58805b7F56aD27bCE537C6d070
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xf58f883341c7a3Fc9E3BAe48e402BBDf19e9f73f
+deposit index:   53
+deposit state:   ACTIVE
+keep address:    0xd5e5edD362fE813744e27F49233fc9043dEBc723
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x7d60d31174cedDB3467c68ebA58AcBDe1F394CC1
+deposit index:   54
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x32D88F1A2cD518eee65Fc50F310A53E8Bd45A947
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2b7A1BFC84Ef010C6FAD52c7625b2bBbd8cd8177
+deposit index:   55
+deposit state:   FAILED_SETUP
+keep address:    0x2BD6aB600F5B2Dbbf8655EeB96d968873eC50AeF
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x397Ac04D942a27077c99ABC6f13F21300305BC24
+deposit index:   56
+deposit state:   ACTIVE
+keep address:    0xd538066fa0cCd4044F5352Ed322646CEC510c1f2
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x9c13Dbff35819DcbA836139482B146A318197e5c
+deposit index:   57
+deposit state:   ACTIVE
+keep address:    0xC0B584b870Ce00B82978cDBE022534b4013254A8
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xB1d718D0CAc94D807900adAb798DE2E498BEcC83
+deposit index:   58
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x5239076a6F13eB08C029B8AAa7Fa3a6c0FCB8b76
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xF679237bbBe336309F354630692bB85069C0112e
+deposit index:   59
+deposit state:   REDEEMED
+keep address:    0x53AD54f33E4C7bD4a7828cAD7F1A770EBb805CEF
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x14d4e44154721c25907D3416EA00Fd576F3bf8a5
+deposit index:   60
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xDAd55eD4BF7b559351db3a1E20f2698b0a35212B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3963b47389c3b59C9a4fC9f37aAfa575684D221F
+deposit index:   61
+deposit state:   ACTIVE
+keep address:    0x445448a2fCb111D5947FE16a64DC853980744342
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x4bc95f101e5C90FfB68926d75987f981E79c455f
+deposit index:   62
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xc66e2aCFB46b9B6C77295dEd34721C2c6700E6c2
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xee1b61d3B778a9c49Eca426979182E084B3f87E4
+deposit index:   63
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xC8b76875Ce596381A6B52c2A954f82C00B1f39bC
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xdf66e382238e2DbddEe34E6ABD80717FbAf3cE2d
+deposit index:   64
+deposit state:   ACTIVE
+keep address:    0xe2CcbaCEA56A35aE14B27493348549Ae43110Fc8
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x9403711e3CBc773CF220a4B2Dee761cb59231C83
+deposit index:   65
+deposit state:   ACTIVE
+keep address:    0x9409d88D86A370303634ef37D1a9Be51793006Fa
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x5AF3a9BCc5D0e4d9471c2f25a0F6aCaEF48A0460
+deposit index:   66
+deposit state:   ACTIVE
+keep address:    0x8F43950e9E7F734cc8B94e657aeEFd74DFe0A556
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x27829844B78Bb5b0D0b8297Cf724F3436199F388
+deposit index:   67
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x8aeac06c08D78b5161c140dd82d5311962147334
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xfcdD3D8dc2e1716014b3239DF6Cea7d11877Ac93
+deposit index:   68
+deposit state:   ACTIVE
+keep address:    0x27E396e1190592579B44ddE04Be6cE52ad5Dc57C
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xD668ec21B124464054646FBC360a82283c771137
+deposit index:   69
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x01BA9929710B55B9d12724a6c3763a9a273f30c3
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x99957e8d4453857800a5acB1521e0E2C674b5482
+deposit index:   70
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xCF8630e1a7e4a1c295065010be42f70D6c45062c
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x77Dba902285881f1b1e99E09f8BDe62185AF0B50
+deposit index:   71
+deposit state:   ACTIVE
+keep address:    0x4F1F1Da4D3c9aE6A774B303D679cc7A1Ff43BC13
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xe5C746b170722253398CaF0c3aAB106BaffBB75c
+deposit index:   72
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x3ddeef3c40259aac9E3AA80d024c13152291f97F
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xBf124086E112C68989d4AC879554F47308be5573
+deposit index:   73
+deposit state:   AWAITING_WITHDRAWAL_SIGNATURE
+keep address:    0x69f2A1f4711C52020d86ff839D26C744dBd6Cb63
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+Looking for the signature from keep 0x69f2A1f4711C52020d86ff839D26C744dBd6Cb63...
+0xb54d5945251eaf3a33ebf9bda638e1d06adf3476a054e440397912988f0d83a1
+Number of signatures submitted: 0
+
+deposit address: 0x7a5D492e062f750B26eBD8c49ab0a8E9188F1388
+deposit index:   74
+deposit state:   ACTIVE
+keep address:    0xD1D428b3DE59B02F774fC22DCAbB5269520846bC
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x6429EAF4BEcdb97a8c23c3D245E17F34134A5CBf
+deposit index:   75
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x6CA294DF5A6A0E7DcF2Ed13058e3B1a28fFD8e93
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xb837572C55e78426896196C03FaA01877e8Ef7c2
+deposit index:   76
+deposit state:   ACTIVE
+keep address:    0x089f9b93535610d77b6277C2ca71437eAa7B0099
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x810284a5d10b135de0C9aB7e3E99D9fb3f8B2aDb
+deposit index:   77
+deposit state:   ACTIVE
+keep address:    0xC9c05EB49E5286C936a9fA8a0512D143799c5D83
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x6C16094867E4219Cd45F803DcBF920f3D15865FD
+deposit index:   78
+deposit state:   REDEEMED
+keep address:    0x3ef5014Dd4189541D2788F58915E75BFF892510D
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xC64B2bd15fA3bDd893Dd505189744e78c29fCe43
+deposit index:   79
+deposit state:   REDEEMED
+keep address:    0x913fee79bA0f23dEe5a2b530778382EFFECD76C7
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x87180404FE55c35Fb86DBd27C43261A0A4eb2EC9
+deposit index:   80
+deposit state:   ACTIVE
+keep address:    0xD2Da9fc299345540d549B00916afF9245a392fd0
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x5b8E6D80a84d0e1e1fa4d1b2d673a7f2cbD90666
+deposit index:   81
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xe4019ccB372fA52173BC2A500c87670cADE589a6
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3A5b2C246951c14629E2145fB2377dBc87437e5D
+deposit index:   82
+deposit state:   FAILED_SETUP
+keep address:    0x51F492b9C3920a3aeA5619FA71D3DB2dc97c0af1
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xC397c64D476A234fa583f25dfD89E7EE7eB9Ede1
+deposit index:   83
+deposit state:   ACTIVE
+keep address:    0x366cE85372A289a4977428FAB9D26081dD29F570
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x7F09c79eE2C18212400E82550178B9631FedC6F4
+deposit index:   84
+deposit state:   FAILED_SETUP
+keep address:    0xAf5f65182e7c2D2d21a3955D7F7ca37E8eBC8d62
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x1bDc51106c550D5a23452D882b20d7Cf4f31b8Fd
+deposit index:   85
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x20D603095BEe6E23f7c94871D85A3d62c895AB01
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x769c40813CdD362D04eB86a79b25A9035d8D3226
+deposit index:   86
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xf02EB9A9d7e9DEF0DeD7506A2250825C3A9EbE23
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x7cA55219D8302Cec70e0e610a404545F4Cef2364
+deposit index:   87
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xC038c0F757f9ec0bCC9989E0C413a71Ed23830EA
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2978762aC04259149A0CEE3Fc8Fdf7638F76C242
+deposit index:   88
+deposit state:   ACTIVE
+keep address:    0xc98864c68fCfdCC0f0085D3F8724990a53a2b56B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x464CBABe4FD0274D91a3100a77a09107E2E25C5f
+deposit index:   89
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xF83f84dA4FFc9C5B79C47B4d52F4314b36ab787F
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2B6112992D47eafce284C7C43f2bD865Be3d5822
+deposit index:   90
+deposit state:   ACTIVE
+keep address:    0x775a9BBe81cb13002eEec9D0f1f734f50AD1a2Cd
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x1D1c44dCfd2C8Bbd00EE4BD93262dCcF646EEcb2
+deposit index:   91
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x4DD0964F9f2303Dc19Cf800E87e6267D50c556d3
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x5d7155a2D3c701BEb8e27e2e6e569b646bfc0Bb4
+deposit index:   92
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x80B8cc5E6AFD8E9E841ad24387BC0dD8c9c3fC7C
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x29a8592D8B7023b40B6B70efCCc20efb6bD706e4
+deposit index:   93
+deposit state:   FAILED_SETUP
+keep address:    0x7d7F855EF0Aea8cf2981d59F063b94E3f8740413
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x24F88286CE1818EEa56Bc0b48588C722588B97C3
+deposit index:   94
+deposit state:   FAILED_SETUP
+keep address:    0xD89d81024eE2F634036DD7bC97EaC519Aa511377
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x34F80befbca8a5e5FEDadF6F63EF6CeAf6d028de
+deposit index:   95
+deposit state:   FAILED_SETUP
+keep address:    0xefdEAB700a960b8aa53dF7E797703821b8f5f605
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x1003BE7a2BeAa2A91EbA657A27329eE70c20e107
+deposit index:   96
+deposit state:   FAILED_SETUP
+keep address:    0x34600CE375Df08a06fa7b72D40722e61877C4AC7
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0xA41f6e8F1Fa6252f576eaf87A8bCE4D27a940C08
+deposit index:   97
+deposit state:   FAILED_SETUP
+keep address:    0xC8305819310CADa4975B2266537f9836004A0Da7
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x48EcD13129707349722E77E933C06D9dE5A62DEc
+deposit index:   98
+deposit state:   ACTIVE
+keep address:    0x4945998e157e75089dD87bd67A5a1c42250c43a9
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x8f3676E9b078Ab1FA2193A8b70FC938437E33b20
+deposit index:   99
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x9349Fc37514dF5D6D0862Cc179d5F749DC921B38
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x8C26383e0D1173F153c76004B55f72ad7d4704bd
+deposit index:   100
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x7Ff33c30eb7954fEe181C03E5705F1fB1222B453
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x71E0147977FD61342746923500b27ffC214B0BDC
+deposit index:   101
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xd5c6c9c5306C1a0d9705386CdA5C3977c7aDD5C7
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x9c66F5153934A419C744820024C2ea885c56750f
+deposit index:   102
+deposit state:   ACTIVE
+keep address:    0x9586152eD20468da846de3A2Bb45F68C3ccCDD6E
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xf289805c75863875fC09fE7fF3040f3713072EB6
+deposit index:   103
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xfC7f7160F69C4fEa74b21D36ad8b5A42B16965fa
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x05783BaC41608b86B7020dC3cFDEb153b660B0dd
+deposit index:   104
+deposit state:   ACTIVE
+keep address:    0xcec8384dB6B68256Be6875457D045fdDFAd0304a
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xc363EC2b5df14c516e67e2E348D54499DB97B6ad
+deposit index:   105
+deposit state:   ACTIVE
+keep address:    0x5ED2d79Acb25Aa990D72f8b4DCcDd555297Ced33
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xeE2Bde8Eb273aa00A4E8B378DC2ABF72E5fB59B7
+deposit index:   106
+deposit state:   REDEEMED
+keep address:    0xD560F51c81a57f3428d2fa6FBBD2a35Fb1E2B554
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2fBC9a9d73bE1DAF3f4cC8E10B699B8DDBb7d591
+deposit index:   107
+deposit state:   ACTIVE
+keep address:    0xc80E24E21ef85DCeEFA364f51CDc3eA1eE88B6b4
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x55a9A79e3D337B6ebD85130875222a7D2991bD08
+deposit index:   108
+deposit state:   ACTIVE
+keep address:    0x021dE4aD86Bde9398C5D1d3AB2949D12F40B8b67
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x410b39c84af215eef6cd136C76577a5E17000Ed0
+deposit index:   109
+deposit state:   ACTIVE
+keep address:    0xf13cf45599dC41275A797802dDE64A06CD74675E
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xC2622f35f05969E9AB61180ddbC7c6Cf17dd4e50
+deposit index:   110
+deposit state:   ACTIVE
+keep address:    0xcAe13f9A62995078ee59A784B6cAb64B2426A748
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xF7812525C0dD73026cf1aFABcE90571e95E31Ed7
+deposit index:   111
+deposit state:   ACTIVE
+keep address:    0x62Fcef5A4364Bc35296E176930Be47087189366C
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xd3689C75Ea640Ea67a11D1E1927539Cc4180423d
+deposit index:   112
+deposit state:   ACTIVE
+keep address:    0x5EE48AA9452ABfA1C2eA16bAfa0AE1C9a2822c02
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x81d4876c09C2a36F261A88AA7Aa30D4896BedB36
+deposit index:   113
+deposit state:   ACTIVE
+keep address:    0x0249D2077E29f6b611aD292f6FdA6Eb86BaF125B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x20172C2B082BaA77C0552ac3474F0a4F9A29C36D
+deposit index:   114
+deposit state:   ACTIVE
+keep address:    0x57478109b49c929596010E53BBf52B8315691968
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2Da02C41adBAD8369b45d263431d0B6948f66a8C
+deposit index:   115
+deposit state:   ACTIVE
+keep address:    0xe0164DB9718F0D32AF2eE486b26F0cfBB99BB8Ae
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x7ECB94Dc6B0C2a4FE30518fCc511E6f0b9C10129
+deposit index:   116
+deposit state:   ACTIVE
+keep address:    0xedC6DEb98C620317C670f6560FB0A114Ea0D9e8e
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xD996d3B9185d7E8110bA2B88feD9a2b77FBa68b8
+deposit index:   117
+deposit state:   ACTIVE
+keep address:    0x20Ffc019600ccb9889A98F097f33443F99B31F9A
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xC3F5Aba19cF9CDd3e5BAb7b9Ec4509e15607fC4a
+deposit index:   118
+deposit state:   ACTIVE
+keep address:    0x1EE27F611154235C903995089931e5D547c6de78
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xbdf8aA3BA6f33c1D705595eE6C18dfA95633beEC
+deposit index:   119
+deposit state:   ACTIVE
+keep address:    0x0bBAeC22080825aCBf45E783F4506040D46026B1
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x4111989AD59dd59987E687e0BECc3e0235604F08
+deposit index:   120
+deposit state:   ACTIVE
+keep address:    0x7204aeA99A70D79e40204D61517eD33a5572D0d4
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xbC29B830713943dC56A63257e6240ACd87e7BC03
+deposit index:   121
+deposit state:   ACTIVE
+keep address:    0x388C7230fd4496A6C01e960712DC1f81BE5377eb
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x79aec10Bf2ABAc6D26264f30580429c769AeAdef
+deposit index:   122
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xb001Ab1524fd129594C6fAE7aCB025bb065951Aa
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x718ADe39AC5a4dbB8e37480d2d01d56CCB4Dc629
+deposit index:   123
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xe947F690f9c9B5650b9435611638A4d8cE0bC78A
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x292C31773Ebb4722D7191096520F874E8ba1B5A2
+deposit index:   124
+deposit state:   ACTIVE
+keep address:    0xa74880471767B92c3f0882D7d9626176ef27E0e9
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+
+deposit address: 0xcb9632b5fFcE8bfE62371e04D18f4aFC92189D63
+deposit index:   125
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x5E1f947A8Bd7297D2D9C01C97559528b61FC2894
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x5f6Db91b4C95444bE2d791C8b3cD8516c3cbfA25
+deposit index:   126
+deposit state:   ACTIVE
+keep address:    0x9ceCE13D73b2a892B5f851C55539335aEdD98226
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x1AbbAf00F5F005547140a66663cF816dcD987f87
+deposit index:   127
+deposit state:   ACTIVE
+keep address:    0xCD3182897Cae29101C53adD5d32d557A04b0F192
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xA7a86E8525e0639A33327e82c6A0AC5403b7a1b0
+deposit index:   128
+deposit state:   ACTIVE
+keep address:    0xb06f13E25E4AE45C4be1c367D46BE3893fe9ab03
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xccC69d376F84F3aAE57EF764284BfbD0410AEF58
+deposit index:   129
+deposit state:   ACTIVE
+keep address:    0xEAafCD686fD1c6AE4A31ea596c1BdDEBAb535F24
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x291c402FF4a33A8157E9F1dE9400134B130Fa55b
+deposit index:   130
+deposit state:   ACTIVE
+keep address:    0x84c8Fb82922771b7443E7f940D7768315271A49f
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xf8b4F95329c92BaCA02776A61DA8cd36c1f2ca84
+deposit index:   131
+deposit state:   ACTIVE
+keep address:    0x57325059F2Ddc434b833Ca0E670cAA3582108311
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3BbE4aD0dEF095c842be4757047ec1615D0DE37f
+deposit index:   132
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x77250EEC1E6c59503ba84A6DA9AD8F8F99Fd87e0
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xDc726136f89f2Ca3FECD3434C4b4620Ac57d4E4e
+deposit index:   133
+deposit state:   ACTIVE
+keep address:    0x1d638C7A13165B14CCb4cF256E9b15EFcCF5C682
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x7A8b81dfb37EE0820926d8332cca44b750cEdAd8
+deposit index:   134
+deposit state:   ACTIVE
+keep address:    0x7858ACA4Be010583FD53eE39626a484A6cAd01F8
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x323b4F420a87006e4b414c97d17849d0Fe596932
+deposit index:   135
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x77ae758d42697F284df3dea831DB9D2623D079c9
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0xFacD552658326E64768285033d2C4AC1BfeFD70e
+deposit index:   136
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x576d54DF7724122817eD3141233A5D673e3ebC87
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x4cadc4D862De7eAEd211C2066e9fB7C214981737
+deposit index:   137
+deposit state:   FAILED_SETUP
+keep address:    0xB23Eb5FE7C3dB2091E1A08F7c0B80d6f54119C3c
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xBe941b253244a218705Cbca653d94C5e1a7aA90C
+deposit index:   138
+deposit state:   REDEEMED
+keep address:    0xE7eA5b2Cf9fC1Df9971ee7b1f44745Ce2856A764
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x0f2335e728187cCD4AF47F157E70B9d056bbf203
+deposit index:   139
+deposit state:   ACTIVE
+keep address:    0x442e87a9AaaCe6F5739c4e6c3535a7Ef0b8E3428
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x323Df3128042fff3f78ec7136EC3dfAa38d5E4c2
+deposit index:   140
+deposit state:   ACTIVE
+keep address:    0xf349A14714dB94dee4c9c651cB76B92A1D812317
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xDF438ae79e465E98CaF1aa50588eDd21EEc5785e
+deposit index:   141
+deposit state:   ACTIVE
+keep address:    0x82cf528297721275d8E64F8d9258396D85047fF5
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xe0440DABf21593F77e6A620b99eAD974a36463f8
+deposit index:   142
+deposit state:   ACTIVE
+keep address:    0x2599516E6B68a964Ca7C3C94AF6E7D288E206dbe
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x84Fa610b9049fC6593C0E9351a8044C5eCF07c3b
+deposit index:   143
+deposit state:   ACTIVE
+keep address:    0x16C0884077d7627f2CE0367e4ab1C4f9d87429e7
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xE8DBf223202456c52A54CED494CF3DA5f07e6569
+deposit index:   144
+deposit state:   ACTIVE
+keep address:    0x518853c21CeE166D0F1D4f5Cc377A1A35ca7FB88
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xE8eAcF56fA6877ea5E64154249fb04fd9d8Ee5a8
+deposit index:   145
+deposit state:   ACTIVE
+keep address:    0xEc0AF5f1843921e86AEDAC2D99AB28aD8947a16F
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xAF08F9F6a1f52d7bcb8abDa2d971D229B93ba2B0
+deposit index:   146
+deposit state:   ACTIVE
+keep address:    0xD5DB92C1DcB26082F846D249c8A1221029bFA84A
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x5B1Cbd78Cb2fc6305f08e9898603e12B57089a68
+deposit index:   147
+deposit state:   ACTIVE
+keep address:    0x1fdad5A36DaB0eCb70acD1dFE900bfdc7eeb05A5
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x5257E8284B2a944BB2C815c0Ca40a8E848aa692D
+deposit index:   148
+deposit state:   ACTIVE
+keep address:    0x1120eDa57656D7367C21FDDe056dd7aEE547623D
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x46ad32d11E04319d99FdD9e2fB2697019a24999D
+deposit index:   149
+deposit state:   ACTIVE
+keep address:    0xFDa6117A7EB437b224009617aE8d27CCbeF421eE
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x8A3722dC17df3c78CD1441367fc3ccd9723DE7bE
+deposit index:   150
+deposit state:   ACTIVE
+keep address:    0x17Ea9603420F6e6E3fb1E6a32EF2f9CD1752A4C3
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x506FFe15E7F57A58AEb3a75e62d7c0e9e3CaAF22
+deposit index:   151
+deposit state:   ACTIVE
+keep address:    0x6BD6b9905b1B8075283180aE7410b4886A12366d
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xe387ba681CF62443602A3Ab23EcBC14504F1976c
+deposit index:   152
+deposit state:   ACTIVE
+keep address:    0x359291BDE55587fA814a888E0d0f46241096dfE3
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xD77ed07e55b4972253740B56633c5c1c09192713
+deposit index:   153
+deposit state:   ACTIVE
+keep address:    0xC72C4F7795d3F05fEd46aBA56d5a19A4908E6BC1
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x459b44957b187B2F531A8d1b52165230516D3bD6
+deposit index:   154
+deposit state:   ACTIVE
+keep address:    0xc122B29548FD95A814EC1b479FC77bdbdA5f72F2
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x952025A441DDa6c1389104940F8D7ea2F8D0B2C4
+deposit index:   155
+deposit state:   ACTIVE
+keep address:    0x105eF984667835Eed5610f2d73Dd3dE65DE339A3
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xf251A2f8582700579E91558eBA4bB0C70d0aA42f
+deposit index:   156
+deposit state:   FAILED_SETUP
+keep address:    0x238e39947Eb5bB5701DA9F750Ca12e5fC22D016c
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x43A07535d91E50A5Be71F42816e1A9bfE456d534
+deposit index:   157
+deposit state:   ACTIVE
+keep address:    0x923E50be7E8B430B97f1e3E20788fE3604CcEDB6
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x7D9032e29D681f9eF3d87B436D7E4BA0103B2a27
+deposit index:   158
+deposit state:   FAILED_SETUP
+keep address:    0x2CF2E5E51562658b0B12644de7D74D3BfA71Ca98
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x5da2b46548f03CE060349F9a5E252421fa478e4A
+deposit index:   159
+deposit state:   FAILED_SETUP
+keep address:    0x765145A292713989308E73b4C6d1075A28b9fb65
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x31156df354ccFbE59782C061c74dfb6be29cF2BC
+deposit index:   160
+deposit state:   FAILED_SETUP
+keep address:    0x7C419E00D86E0368DAB3FA1fAc3D1473a077bA67
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xc8d6c0ea5765c1a233f720bda7Ad074cAbbdE68d
+deposit index:   161
+deposit state:   ACTIVE
+keep address:    0x8d2D687C1F15EEF541C4B4a22144Fb97f187Ed99
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x6e5884658BD2a5382d933182FD47bDe220B7ceb4
+deposit index:   162
+deposit state:   FAILED_SETUP
+keep address:    0xB0B8c9522aB2Cae67eE3c8e4990053EE4E895604
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xBfd56573AD6830a4FDd8b5211e98eF7aE53e69D5
+deposit index:   163
+deposit state:   ACTIVE
+keep address:    0xE8B9dc92A9395BAf4A068686AEfe2A59520a30cd
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x68bd74D69Ec8124732F46804a3367fE025174C31
+deposit index:   164
+deposit state:   ACTIVE
+keep address:    0xc44F074562FF04Ce8924dF9b54e0F4012EFf5ce2
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x7355658DC920A9C3149A74eef62C742B2209666f
+deposit index:   165
+deposit state:   FAILED_SETUP
+keep address:    0x7E975CeaE26c65449BDd502C71c7294194DdECd7
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x58219ca5114605c9fC8398b1EBaa2fb6ba68B5F6
+deposit index:   166
+deposit state:   FAILED_SETUP
+keep address:    0x9759929DC4C9B14a9229F430E6687023dB837490
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x1A6429233ed18d64168aD28764deb416B0af01b6
+deposit index:   167
+deposit state:   FAILED_SETUP
+keep address:    0x362B738E0BdaBB25B2b0BC7135239d7AA248F2C8
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xBbeA15c1e55Ccd221179326B83D6Fd5171F1dA52
+deposit index:   168
+deposit state:   ACTIVE
+keep address:    0x9002E71A55E4c6476815e27fc0aB5587279665e5
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xA4E05583901A529655b231a5DB77992130a142bD
+deposit index:   169
+deposit state:   FAILED_SETUP
+keep address:    0x73C8f41D8906b81d7585BDf338731eCD0f5Ba24E
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xddC8F18bbc26930523444f3c12c1657D1B481353
+deposit index:   170
+deposit state:   FAILED_SETUP
+keep address:    0x5Db7ea3E98aE11CC388e0b68c73752f0BC31B852
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x24Bb2729746fb6B08201053Bc63BfD206d540539
+deposit index:   171
+deposit state:   FAILED_SETUP
+keep address:    0x32Ab4E8aed1F6Da68F3a6fCab629a069fcadc0f9
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x88Ef2699399aB954c1baDa2fD6C2fFBA2fF452dF
+deposit index:   172
+deposit state:   ACTIVE
+keep address:    0x800546a86515Bd5e7948DD228063346Ee5B79Dfd
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3FbE98c74374116bAc2CE00a7f310bc1D521d9Aa
+deposit index:   173
+deposit state:   FAILED_SETUP
+keep address:    0xC5afbE8dA4535bF86B8Cac821665A5B4f5E0FB7B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x4E76666C145137c446C5358187AC782e6430Fd61
+deposit index:   174
+deposit state:   FAILED_SETUP
+keep address:    0xa1D594F4cf6412D1586E384b8c59899AA0FD8719
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xD1bd04355a5C7470Df74bae89143BBa262282c4b
+deposit index:   175
+deposit state:   FAILED_SETUP
+keep address:    0xa0117A4E88165De043195Be746A6232e1331044f
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x61cb298d5139e949B107778CFAba1f786011042A
+deposit index:   176
+deposit state:   FAILED_SETUP
+keep address:    0x10dc787a1D3393ef21aBC75FBdeE4C5a2Bf89AE5
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x76Fef035482c7DcE680801ea954E603b7D9bc167
+deposit index:   177
+deposit state:   FAILED_SETUP
+keep address:    0xe4Ff9F391Ee2167C9F86950703428da0075A6fa9
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xf0f18025d50ffa7D7229C94bfcfF1f6E70a6415b
+deposit index:   178
+deposit state:   FAILED_SETUP
+keep address:    0x6aeD580aD582efB6164CD617f82544Ecc4af7141
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x9895F64aD43bfd328BC77B1180aC77D4c7627bE0
+deposit index:   179
+deposit state:   FAILED_SETUP
+keep address:    0x9e94229bc568610201AE3da9c5cB6E14353d38Cf
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3Ac2da2E5EB6Ff5b097857F901eEBf1cdB76f6C7
+deposit index:   180
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x246f08424d09C378B543E8B8Cb157A73c399d608
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x4a4a3Dd79D72422BC76727946ff55BE86D1C64dC
+deposit index:   181
+deposit state:   FAILED_SETUP
+keep address:    0xf7612098B2293d3997f73E8336e4a8B40DbcDdcB
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x88f95Fd5Abe524040215433C66A1968D30fd3efa
+deposit index:   182
+deposit state:   FAILED_SETUP
+keep address:    0x798B054995c571976EB689A736d47f82860C41a3
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xB4acc5393f66CA084Ed5fF0de82988f0a10E00d1
+deposit index:   183
+deposit state:   FAILED_SETUP
+keep address:    0xf601dc542a0c82e135C59a80965141De3B6758c9
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xBed8173bf1c034Fcbe22978907f47597168817b4
+deposit index:   184
+deposit state:   FAILED_SETUP
+keep address:    0xc051fFc1435497B9e66340B57691b335e5Ad848A
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xa142B039b3F5c897d8B063883Fb33167a463967d
+deposit index:   185
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xF9294B2D8D42393bAc65933EBe96bB4D6e29B4E3
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x1AF860693BDeDC332Bb49a50a60F456120f1b376
+deposit index:   186
+deposit state:   ACTIVE
+keep address:    0xa70c32A150d90eb1a9d280Ad65A10FB2b47E4C88
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xF99ABF52903EF0e239c4CcA89d12667c0040ceA8
+deposit index:   187
+deposit state:   ACTIVE
+keep address:    0x87a71a1fBB59638fD7bdEa8A28a0392573418dcc
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xbD5e81eE66dF0538aDFa5ea3DeB705AdfFB30C27
+deposit index:   188
+deposit state:   ACTIVE
+keep address:    0x9e2b9776bd8aA175F5e556cdf8789F4BE14e6840
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xc438273877Eb13AC5104A1C17f097406A47D13FD
+deposit index:   189
+deposit state:   ACTIVE
+keep address:    0xF7Fca6EaC671C15D5Ed06a05B4Bb3F9f5dedE119
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x3EC1f0da3a712E79510CD90ec681C55ee9755299
+deposit index:   190
+deposit state:   FAILED_SETUP
+keep address:    0x2134B609920bAc49e3859e69e9D85A1B21602c85
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x12A663278d9Fe7Bbb12324a3b54B376273D60CBE
+deposit index:   191
+deposit state:   ACTIVE
+keep address:    0x5F092EDb0F3C672172f2cFDC4d4515765Bb751cC
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x1Ac47a5B4F1e9898Da949Cf9c94142251dAe2816
+deposit index:   192
+deposit state:   FAILED_SETUP
+keep address:    0x34bAaFaC3212D891d447C7DAbB110Ba02c337BE7
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x2941B2e7Af30Ee7428A3597090A958ced0Ab8399
+deposit index:   193
+deposit state:   FAILED_SETUP
+keep address:    0xdd068a464F01553D3c3126Df5CF0D7c3ebBA9cF1
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x3bC1D08365bC3C30293727E4413bD9dee5F96133
+deposit index:   194
+deposit state:   FAILED_SETUP
+keep address:    0xA635c5420809DBD10Ca4D815A710FB775bC5d7c5
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x698cffced0Cc68897CCb9a8803B015de46F5fbE7
+deposit index:   195
+deposit state:   ACTIVE
+keep address:    0x0942691A7aD14B1579A4D9E37F16064c9E152608
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x01124D090cf4F47bc54192fAC7Bb15f3188C7454
+deposit index:   196
+deposit state:   FAILED_SETUP
+keep address:    0xC96800C5E2395Bef3a744a9C95B6444a5A9AF30c
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x1097eF59894800563D216e1963EA514C1F6f4b68
+deposit index:   197
+deposit state:   ACTIVE
+keep address:    0x0E14dB81B3376F0D5C5f7fF107893659368f8610
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x26708993922EE03FDB93eB520ac6b6e2E21Dcf20
+deposit index:   198
+deposit state:   FAILED_SETUP
+keep address:    0x67eB6f60E2fBDeF7175be42eAfe7E787E4B3043B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0xCCDa570308e9e9cd3Ca5Fb22e00041232197fC96
+deposit index:   199
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x2ca22E950DdcE7982f185A1834c775bc3be80C76
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x5095A14486caA8de2355c6631A9FFB952c931415
+deposit index:   200
+deposit state:   FAILED_SETUP
+keep address:    0xF27cbEe3e19B73296288C6E802D1Da246fCDE8D7
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x2C5D09eA691F212b2F1D5B27610eBca8A2F47396
+deposit index:   201
+deposit state:   FAILED_SETUP
+keep address:    0x0021a6dA99D3a164B3f48aA2F948908ba4b2873f
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x45576d092d680B54a1D13f1ae4399de73B42800B
+deposit index:   202
+deposit state:   FAILED_SETUP
+keep address:    0xeDdE7E27c4a922FFFa7b61e207d2F00b69f174Bb
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x3EC86E07117B4011F76fA9f028Fd35dD76343443
+deposit index:   203
+deposit state:   FAILED_SETUP
+keep address:    0x48f4Fd9c91fEdfC44A825377a0E841655B545944
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x561672faFDDD015B5190b9F2973d07Cd418A4452
+deposit index:   204
+deposit state:   ACTIVE
+keep address:    0x9603882939393de36288CD26f862cc846af8b0f6
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x6E9A99639f9c64ac82CBA0FcCbf7c41769e43Ed5
+deposit index:   205
+deposit state:   ACTIVE
+keep address:    0x58E4C39Bd8a83dcEc133d03F0E85C70D42674015
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3F0610a85D4dad056A8aDF2817A79889Ee9bC4CB
+deposit index:   206
+deposit state:   ACTIVE
+keep address:    0x87bD0c5eB4CdEB3248328504a933dca992B886C4
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x2a9F0183b87A588C3198B308Bb922115020f022E
+deposit index:   207
+deposit state:   FAILED_SETUP
+keep address:    0x64cBd85dA12C400c1f014dFD2a4a98DD047C3485
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xf07668204AdE7b28e01603E8E1106263BDB542ee
+deposit index:   208
+deposit state:   ACTIVE
+keep address:    0x073bd4EB233257D9799b080e2f1fb468883C2738
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x031Ab28026A95D66312C0F4AC72B3eC556Cc37FD
+deposit index:   209
+deposit state:   ACTIVE
+keep address:    0x74DAFDd7C6E2FE3Ff26B914Fc816B1DbCA3D3f03
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x7756998D79205ae094CC9FeCcdDe3E1e8b6bd663
+deposit index:   210
+deposit state:   FAILED_SETUP
+keep address:    0x033188641eAd846252A82202b035Dba2c6fCC1d5
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x924DbcA4527261A479cF3ECAA7fa034B2a3adDCd
+deposit index:   211
+deposit state:   ACTIVE
+keep address:    0xADb8b5A7ebC919049259b610151Db57F042B3315
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xc4d38e9aC2a94134ACDEe7Fb984ab9e1EEcFAf9A
+deposit index:   212
+deposit state:   ACTIVE
+keep address:    0xdA64c620e85373C319FfbE2aD92c16C086a17C3B
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x23d080e4fCF46F50014432Bd26B1BFafc766Bd9c
+deposit index:   213
+deposit state:   ACTIVE
+keep address:    0x57814E2c7cDbb13e459eb7DfE2e65dDF2099c618
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x03fD7e50367403213a7221ccAc21aD4A4117B107
+deposit index:   214
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x5aB150c7F470b40452FD5b02a96FC97bf9cA5422
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x1f3F1fa6cd45f4084bBFb7903199c9A90d465E26
+deposit index:   215
+deposit state:   ACTIVE
+keep address:    0x9fE0cC3b1B5F7eCB6a881d984670E0920d18aeeE
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x0cB402EBd4e687F1D46d601A0009Ed999d1912a3
+deposit index:   216
+deposit state:   FAILED_SETUP
+keep address:    0x7C267A198F73388b423a6C9419d72c9a10BB6e96
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x31C575073eF0F78A84aFC3090bE9437de0764b1c
+deposit index:   217
+deposit state:   ACTIVE
+keep address:    0x85391a0b53338Af7225822Bf168481c1aaDCD8C4
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x43BB6Dd7506276A4EE0A6d4d1079096aB4B7f1c0
+deposit index:   218
+deposit state:   ACTIVE
+keep address:    0xab11A610F6F0fe3f41120C3E7f80D81FA213BF21
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x273180C42223f6C456151DeE3c46E5284a99c54d
+deposit index:   219
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xe28630C2d1db052d8DAB9240ffFB40b8E7Bad72d
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2CD7c411A9946d7220a193137F6930bc0c1eFB10
+deposit index:   220
+deposit state:   ACTIVE
+keep address:    0x59FDF532615FEa0793bf70C4CB23CA6e39B13DbD
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x3953F7A470C3F7fF62A35971501fc5137eAa2efd
+deposit index:   221
+deposit state:   FAILED_SETUP
+keep address:    0xee7465ff55bc84720ba5b9C1509ad25a4Ac51eFa
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x81531c27c2Cd1FdB8eafae8de8102F8e2adf6541
+deposit index:   222
+deposit state:   ACTIVE
+keep address:    0xcad4DAe59231EaB1d005a69355A59a03246D80c4
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xce342dA2916Ce897f5a111916763f010aF0774A5
+deposit index:   223
+deposit state:   FAILED_SETUP
+keep address:    0x34a701C3e9e59E8b211aD622d1C4f25d7BA4F585
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x238FD81b7B798f46fA6984790adB07dC9674e6F5
+deposit index:   224
+deposit state:   FAILED_SETUP
+keep address:    0xc4B849BB96610543909B40d61bC37aB866Da2101
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x85328390A99b50577741D89cba68CefdA8ed5826
+deposit index:   225
+deposit state:   ACTIVE
+keep address:    0xfc8727d877E49fdCCbf1aCb06f606a88f35E05Ee
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x386255820a6b5bC7b62d9aE7751E3eD40d8a6A98
+deposit index:   226
+deposit state:   ACTIVE
+keep address:    0x1f010a08d692B67eb894f7702608C0BF80b626aD
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x19912EBBE336788fD52233085E0A4A12Ff0F3CAA
+deposit index:   227
+deposit state:   FAILED_SETUP
+keep address:    0x44Fce702B47a4d8718a4E134FC033dD7527E0CdF
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x374b79659E3D2127A262BDe60C841011BCFc5ba0
+deposit index:   228
+deposit state:   FAILED_SETUP
+keep address:    0xE8B904ab980bFe3c840a26E32Efa296E1C0CEB34
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xED4421952d8e74411704B420A1e0539aDFEEc923
+deposit index:   229
+deposit state:   FAILED_SETUP
+keep address:    0x8c57ff417ef29b993A384F71C24747532114Aca2
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x68C37641a5D4058056AE490eD56233c2CAC39f27
+deposit index:   230
+deposit state:   FAILED_SETUP
+keep address:    0xAD9F6C4DCcCD523B56E81f13a6AaD261Cd0dE6D4
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x06141793420dD30693f8979aBC33db3221eeB9fD
+deposit index:   231
+deposit state:   FAILED_SETUP
+keep address:    0x257b4fFF7F4F27d2e801FaACF412C425510E5509
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x08B80F4CC65caa39108DD7684824a0e3433E3347
+deposit index:   232
+deposit state:   FAILED_SETUP
+keep address:    0xE2e8930f790636c566D656e4429888Cfc8955b68
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xc6CCC64Ca48Ab47d45c881860609d5E5DAE8ab6F
+deposit index:   233
+deposit state:   FAILED_SETUP
+keep address:    0x8a775d453550C0c096C17EA80Db0e2955F62109A
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xE20d8dfDe6Fe2C3Da0E10f9Dbb2004bfC9B0f102
+deposit index:   234
+deposit state:   FAILED_SETUP
+keep address:    0x95Ed0ED06B1DefDa717f99a8FC94BF44F5f4A63A
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xd2Fd996cC561071cc06C3624482DbB967b4f8Cbb
+deposit index:   235
+deposit state:   FAILED_SETUP
+keep address:    0xa961d1093F73294247C21ba16cbcC6BE1dee7eB0
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xCBDEfAC5796588DcaA8A4c0404773b0A5E8D9CEe
+deposit index:   236
+deposit state:   FAILED_SETUP
+keep address:    0x9227BE0E82A4Ecd351D72cc44272Fbb46c1B865F
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x351cd728ba6a623f3B00cCDe83bDb6Bc46dC9F0B
+deposit index:   237
+deposit state:   FAILED_SETUP
+keep address:    0xD0aF0c4c564DbcF1Bfb2cB87a586C577b2c2d8b0
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2B42648BEE6e9EE38f8457aB34b55e54863069BC
+deposit index:   238
+deposit state:   REDEEMED
+keep address:    0x98c82fBD267020905957cb1502967eb9E601D66d
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x00FdDD96fbbC075Aac70c7DfAd16E58d0F40182F
+deposit index:   239
+deposit state:   ACTIVE
+keep address:    0x271799513e1DCCAb298094b2887992b09f2ebaee
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x3608897e0eD5d24c7b0c920E1ae4D0E7521B47E4
+deposit index:   240
+deposit state:   ACTIVE
+keep address:    0xD826d30Ce272A0d058C39750cd8aA16CEc529e7C
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xb52cb422926F3b5D9E65A78eDacD075A41544bD3
+deposit index:   241
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x1BD77d70882d600c349FB4aF1143Cbb9dF64c091
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x980b0e377B6c33b94d603d1eFFc308ac45445912
+deposit index:   242
+deposit state:   REDEEMED
+keep address:    0x58161D06796e1F4a67A5a3944633577eFc6FF680
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x4974307737c196e93Ea865593F22B034F63b0908
+deposit index:   243
+deposit state:   ACTIVE
+keep address:    0x008785e1dDD3fB23657935Ab9aE28676A2d40aed
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x25E1742C4CE646E6C34884A0a75ae362E86AD724
+deposit index:   244
+deposit state:   ACTIVE
+keep address:    0x26aBeAF5196D560494F9c9Fe40E83Ae4938D803C
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x69e40aa2E71e33F9e0420b7e19ed8aF99B263DDa
+deposit index:   245
+deposit state:   ACTIVE
+keep address:    0xdA241A3Db4f637046D25A80723d7f208bd5470bf
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x4101E247f512dEF493Ceb21aFb6D4624abC15cd1
+deposit index:   246
+deposit state:   ACTIVE
+keep address:    0x3480209DF6178b0972c6320c88CdB9c7E81543c0
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xfE4c400F6f9233595f1555b2203bEb05E5423f06
+deposit index:   247
+deposit state:   REDEEMED
+keep address:    0x48C74F7890f8a5827798068B01745BcBC8c5486A
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x7563cbba0b686fc5b9eb043D6794907364628E64
+deposit index:   248
+deposit state:   FAILED_SETUP
+keep address:    0x9c5550d60cBC088c0BD4A808ea4F47D12728438A
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0x4DECD1E3a6ccD3afDE266A867e7edF290DDDfA9b
+deposit index:   249
+deposit state:   REDEEMED
+keep address:    0xC95a469b16474801De25bf5F685296b5759b5b49
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x680e62d8Daa8647fC806f3C1242AC0FD5883c7ee
+deposit index:   250
+deposit state:   ACTIVE
+keep address:    0xeEd8E011d8f085636Df4C524B296dB4548917Ba8
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x7E293cCB4C92F8e7A6d0E43c2Bf33836ad857931
+deposit index:   251
+deposit state:   FAILED_SETUP
+keep address:    0x1d6F438Ffc5cc67C4b80f3fB21B50a036BCE5cB2
+lot size [sat]:  20000000
+lot size [tbtc]: 200000000000000000
+
+deposit address: 0x31aF7eaB2D268DD2107C617a11f022aE6528f4Cf
+deposit index:   252
+deposit state:   REDEEMED
+keep address:    0x34f84b45610AA0191aCaf58c1c66af5c67C48028
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xb82Ab4B7b35f8E68f5841404c061cAA7df163d69
+deposit index:   253
+deposit state:   ACTIVE
+keep address:    0xbA1a5b637f0DC7FCACDcf9e2F2FAe67F3502c1e7
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x56cE64455282458643cE0bE5b1e6049468880Bd2
+deposit index:   254
+deposit state:   REDEEMED
+keep address:    0x5128Fa057CC912E6E8b1bfc71D20D1C84eA30Bb7
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x735eE2D700feCF481b0CDB967381543993CaDd36
+deposit index:   255
+deposit state:   ACTIVE
+keep address:    0x870604a5D20D7C06264932369C8399C56B77dc5d
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x8ACa3B7c38986EE25Bd84c091765fb5928c91565
+deposit index:   256
+deposit state:   FAILED_SETUP
+keep address:    0x770ef3D2697917264EC96D0f34E29ff40459224e
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x4A5a06A1Eb2E98EF3a3e974FeA95dF2784898159
+deposit index:   257
+deposit state:   FAILED_SETUP
+keep address:    0x974bD3634eeE92B01Ae0b38367cF9f9B127997eB
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x6527dae62E5Af74d77721f59c67665a8d77f3Cda
+deposit index:   258
+deposit state:   FAILED_SETUP
+keep address:    0xA55e7C3BCFf39B0f36863788ED2B6204C236C3C2
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x72E0FF8d90eeE4f907a2d2Ff0DFB32f4D50e0Fa7
+deposit index:   259
+deposit state:   FAILED_SETUP
+keep address:    0xAd9E7F7A9Dfc18703d25fc1d65F380c84E00595a
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x83da454c37f1b451C0c6b631431ff073F9B96987
+deposit index:   260
+deposit state:   FAILED_SETUP
+keep address:    0xcd6e663742E23388888F67a295fADD28cD5410b9
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xea5c714DD864B5595E754F231B347C0639Fe28a3
+deposit index:   261
+deposit state:   ACTIVE
+keep address:    0xE0dC510423b246B7A1a7DAFB963c2365cC3608c0
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x4CF2af17418F7578D53aB5e8a02E4476805a2077
+deposit index:   262
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xF7DfDb4d38f14d0043D8415e3a4d17e04E1b25a1
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xDe11b53d3764aeb5ac7E11095A379159E3D94e20
+deposit index:   263
+deposit state:   ACTIVE
+keep address:    0x5895E5A5aFdDA794494526Cc1b52F6ED3A250c1c
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x5853BFA1c002A56dC1BbCb0bF0E8ef0a45E5d8FC
+deposit index:   264
+deposit state:   REDEEMED
+keep address:    0x81547517e6d03fD1b790C0583f6b96CA085b2CB6
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xF704D74a451fE58286E987BA53Cb5F1Af5A5Fd46
+deposit index:   265
+deposit state:   FAILED_SETUP
+keep address:    0xfE39C416B7B497caE36804c421deF86F76796AEB
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xe4837213Ec541EA2E1adC06E1750e1757f9c1210
+deposit index:   266
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0x861eCB16A12343C00f852665904b10546C2C8C28
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xaE2d467d1D32B88Fbc1366B99D52d7186E78A5ad
+deposit index:   267
+deposit state:   FAILED_SETUP
+keep address:    0xa8b1fE6706D99ba13Db318FC98e9ad7DE477Cc11
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x4893c3816AcabABc2e398f92d807bB79e9ecE2d8
+deposit index:   268
+deposit state:   REDEEMED
+keep address:    0x2472f7813D1b3AbE789877c99BAB020E76e53Bd4
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xa90DF11e8E58b5981F041Ca1887bA406E8943de2
+deposit index:   269
+deposit state:   ACTIVE
+keep address:    0x2d7979622fD70A7204D7098E265A8AA313b7923b
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xa8Df633DAB89B7e22B5563964fd25aD892B5eeD2
+deposit index:   270
+deposit state:   ACTIVE
+keep address:    0x0Fd8e4EC325cb069dAfa54d9e062c2BEE6660dAe
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x963436dFBA2BB77A6664eD4E0c1767E84EaE02a2
+deposit index:   271
+deposit state:   FAILED_SETUP
+keep address:    0x3E2B905A9AD5005faeFcB0393a6dddf09EF0F9c2
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xcb12320AffD67cE39d2618F0D19b2e4ff962CA80
+deposit index:   272
+deposit state:   FAILED_SETUP
+keep address:    0xFE5A4192388CaCB92bcB72C75c3A49Ab3f37Eb7d
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3F4a82b4fe3eCDCED5963937796074083dd5bB17
+deposit index:   273
+deposit state:   FAILED_SETUP
+keep address:    0x2b59B2C4A6eBD79aACD6A160b44D1f0f817bc8c3
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xC5bf98Ea2343584aC3c969b920c265Eb7d572e6d
+deposit index:   274
+deposit state:   FAILED_SETUP
+keep address:    0xC6a59CBFaB1e16BF4Cde64516266B576dc5960DA
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x400216A13638D389d4F678067a7795DB5edaba52
+deposit index:   275
+deposit state:   FAILED_SETUP
+keep address:    0x858e93Ff94Ea765338015A2A45a7D46115c32b39
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x05831EB4b9186b5E5A35d48182655799E1410940
+deposit index:   276
+deposit state:   FAILED_SETUP
+keep address:    0x9371a8fE90Cbc1beaAc310eB1df44D4bF92d5d09
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x88138da4BC52B749e7F1E72Ab19CD429457185db
+deposit index:   277
+deposit state:   FAILED_SETUP
+keep address:    0x49f0d8f9Bc952037Da9030e43E44136fF6c5Db9d
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x622fB90751a3D186A1449550d442f910E8a6AAEb
+deposit index:   278
+deposit state:   FAILED_SETUP
+keep address:    0x76ccfAc1D9033D68f25283aE06c227A71a2b7199
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x7D1CCe0D661a4cB2fEa136A3BA1c680Af90297ff
+deposit index:   279
+deposit state:   ACTIVE
+keep address:    0x792a431Afa9C7196Fe1aE59743069FD319ADDe1B
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x6b83f32f82d8d935AFD539bFbCFDb52197Ac8F76
+deposit index:   280
+deposit state:   ACTIVE
+keep address:    0x6A0CCA5165cCf230008F1Cfda4eA8bC52a7F14Ee
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x9B695367e0293AF4C95dC2d544f514388fe7987E
+deposit index:   281
+deposit state:   LIQUIDATION_IN_PROGRESS
+keep address:    0xbd25e6A35d73cC416C768E57fAe55c5Be749465D
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0xcFdF01bD96D67ECDd46fD700Eef0F4C3501DEC0b
+deposit index:   282
+deposit state:   REDEEMED
+keep address:    0xA2E56a07266189711687D97398dC39C1a642Faa1
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x02e75C8C8f1CD11f0bBDAee221772C8A132240C6
+deposit index:   283
+deposit state:   ACTIVE
+keep address:    0x70F3c2B099fD080D550eb4fbe5A890aE408ABA61
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x3f0147600973A5f7771405E1c4b23aB7785c7863
+deposit index:   284
+deposit state:   ACTIVE
+keep address:    0x706748de16b2355CddB1ca88f169D9d9Ebb2e9b1
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
+deposit address: 0x2b52B1492FEe8B8Afa27CBF482Ba5997530803fA
+deposit index:   285
+deposit state:   FAILED_SETUP
+keep address:    0xF122D193b8106c3769f132f41dE5635FF8f43526
+lot size [sat]:  10000000
+lot size [tbtc]: 100000000000000000
+
+deposit address: 0xa2A1BF52358742c973F62D87636193055cA0D271
+deposit index:   286
+deposit state:   FAILED_SETUP
+keep address:    0x8C398f908f47f1F6d1CaDF9b1Fc9f782813B14A4
+lot size [sat]:  50000000
+lot size [tbtc]: 500000000000000000
+
+deposit address: 0x294f9B50d1a9B7F7171e81611FEF718F834dA46d
+deposit index:   287
+deposit state:   ACTIVE
+keep address:    0xf17b97A05886CB9Cc129fF37410B8beA93d89602
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x12D42C348f08a1f6832EEbEF2F9077207aE77C1a
+deposit index:   288
+deposit state:   FAILED_SETUP
+keep address:    0x88F69984af6b6eF2b4d29e330cA8BC23BFB7B8A2
+lot size [sat]:  1000000
+lot size [tbtc]: 10000000000000000
+
+deposit address: 0x3666e855D6874bB54D874A98A8ed5DcA9B9FB9Fb
+deposit index:   289
+deposit state:   FAILED_SETUP
+keep address:    0xe45311c233317ED1e6EDB501Df243B020E668159
+lot size [sat]:  100000000
+lot size [tbtc]: 1000000000000000000
+
 deposit address: 0xc6eAb056544C20B92A29f4c1fF1CA4E74986582D
 deposit index:   290
 deposit state:   FAILED_SETUP
