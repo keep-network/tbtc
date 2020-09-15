@@ -1,5 +1,5 @@
 const {contract} = require("@openzeppelin/test-environment")
-const {deploySystem} = require("./utils.js")
+const {deploySystem, increaseTime} = require("./utils.js")
 
 const Deposit = contract.fromArtifact("Deposit")
 const BytesLib = contract.fromArtifact("BytesLib")
@@ -152,6 +152,10 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     1,
     1,
   )
+
+  await tbtcSystem.beginLotSizesUpdate([100000, 1e8])
+  await increaseTime(48 * 60 * 60 + 1)
+  await tbtcSystem.finalizeLotSizesUpdate()
 
   const setupFee = await tbtcSystem.getNewDepositFeeEstimate()
   await ecdsaKeepStub.setBondAmount(setupFee)
