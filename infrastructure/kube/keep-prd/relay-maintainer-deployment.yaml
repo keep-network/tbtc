@@ -68,7 +68,7 @@ spec:
                   key: http-api-key
 
             - name: SUMMA_RELAY_CONTRACT
-              value: '0xaA1D2805a0fA2DB185A99EDa43637d3169b240f7'
+              value: '0x1531b6e3d51BF80f634957dF81A990B92dA4b154'
 
 
 
