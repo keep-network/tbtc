@@ -12,6 +12,7 @@ contract TBTCSystemStub is TBTCSystem {
         TBTCSystem(_priceFeed, _relay)
     public {
         // solium-disable-previous-line no-empty-blocks
+        lotSizesSatoshis = [10**5, 10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.01, 0.1, 0.2, 0.5, 1.0] BTC
     }
 
     function setOraclePrice(uint256 _oraclePrice) external {
