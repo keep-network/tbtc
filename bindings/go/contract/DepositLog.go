@@ -20,7 +20,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/tbtc/abi"
+	"github.com/keep-network/tbtc/bindings/go/abi"
 )
 
 // Create a package-level logger for this contract. The logger exists at
@@ -92,910 +92,6 @@ func NewDepositLog(
 }
 
 // ----- Non-const Methods ------
-
-// Transaction submission.
-func (dl *DepositLog) LogExitedCourtesyCall(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dlLogger.Debug(
-		"submitting transaction logExitedCourtesyCall",
-	)
-
-	dl.transactionMutex.Lock()
-	defer dl.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *dl.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := dl.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := dl.contract.LogExitedCourtesyCall(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, dl.errorResolver.ResolveError(
-			err,
-			dl.transactorOptions.From,
-			nil,
-			"logExitedCourtesyCall",
-		)
-	}
-
-	dlLogger.Infof(
-		"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go dl.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := dl.contract.LogExitedCourtesyCall(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, dl.errorResolver.ResolveError(
-					err,
-					dl.transactorOptions.From,
-					nil,
-					"logExitedCourtesyCall",
-				)
-			}
-
-			dlLogger.Infof(
-				"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	dl.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogExitedCourtesyCall(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		dl.transactorOptions.From,
-		blockNumber, nil,
-		dl.contractABI,
-		dl.caller,
-		dl.errorResolver,
-		dl.contractAddress,
-		"logExitedCourtesyCall",
-		&result,
-	)
-
-	return err
-}
-
-func (dl *DepositLog) LogExitedCourtesyCallGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		dl.callerOptions.From,
-		dl.contractAddress,
-		"logExitedCourtesyCall",
-		dl.contractABI,
-		dl.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (dl *DepositLog) LogFraudDuringSetup(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dlLogger.Debug(
-		"submitting transaction logFraudDuringSetup",
-	)
-
-	dl.transactionMutex.Lock()
-	defer dl.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *dl.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := dl.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := dl.contract.LogFraudDuringSetup(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, dl.errorResolver.ResolveError(
-			err,
-			dl.transactorOptions.From,
-			nil,
-			"logFraudDuringSetup",
-		)
-	}
-
-	dlLogger.Infof(
-		"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go dl.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := dl.contract.LogFraudDuringSetup(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, dl.errorResolver.ResolveError(
-					err,
-					dl.transactorOptions.From,
-					nil,
-					"logFraudDuringSetup",
-				)
-			}
-
-			dlLogger.Infof(
-				"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	dl.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogFraudDuringSetup(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		dl.transactorOptions.From,
-		blockNumber, nil,
-		dl.contractABI,
-		dl.caller,
-		dl.errorResolver,
-		dl.contractAddress,
-		"logFraudDuringSetup",
-		&result,
-	)
-
-	return err
-}
-
-func (dl *DepositLog) LogFraudDuringSetupGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		dl.callerOptions.From,
-		dl.contractAddress,
-		"logFraudDuringSetup",
-		dl.contractABI,
-		dl.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (dl *DepositLog) LogFunderRequestedAbort(
-	_abortOutputScript []uint8,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dlLogger.Debug(
-		"submitting transaction logFunderRequestedAbort",
-		"params: ",
-		fmt.Sprint(
-			_abortOutputScript,
-		),
-	)
-
-	dl.transactionMutex.Lock()
-	defer dl.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *dl.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := dl.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := dl.contract.LogFunderRequestedAbort(
-		transactorOptions,
-		_abortOutputScript,
-	)
-	if err != nil {
-		return transaction, dl.errorResolver.ResolveError(
-			err,
-			dl.transactorOptions.From,
-			nil,
-			"logFunderRequestedAbort",
-			_abortOutputScript,
-		)
-	}
-
-	dlLogger.Infof(
-		"submitted transaction logFunderRequestedAbort with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go dl.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := dl.contract.LogFunderRequestedAbort(
-				transactorOptions,
-				_abortOutputScript,
-			)
-			if err != nil {
-				return transaction, dl.errorResolver.ResolveError(
-					err,
-					dl.transactorOptions.From,
-					nil,
-					"logFunderRequestedAbort",
-					_abortOutputScript,
-				)
-			}
-
-			dlLogger.Infof(
-				"submitted transaction logFunderRequestedAbort with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	dl.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogFunderRequestedAbort(
-	_abortOutputScript []uint8,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		dl.transactorOptions.From,
-		blockNumber, nil,
-		dl.contractABI,
-		dl.caller,
-		dl.errorResolver,
-		dl.contractAddress,
-		"logFunderRequestedAbort",
-		&result,
-		_abortOutputScript,
-	)
-
-	return err
-}
-
-func (dl *DepositLog) LogFunderRequestedAbortGasEstimate(
-	_abortOutputScript []uint8,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		dl.callerOptions.From,
-		dl.contractAddress,
-		"logFunderRequestedAbort",
-		dl.contractABI,
-		dl.transactor,
-		_abortOutputScript,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (dl *DepositLog) LogFunded(
-	_txid [32]uint8,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dlLogger.Debug(
-		"submitting transaction logFunded",
-		"params: ",
-		fmt.Sprint(
-			_txid,
-		),
-	)
-
-	dl.transactionMutex.Lock()
-	defer dl.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *dl.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := dl.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := dl.contract.LogFunded(
-		transactorOptions,
-		_txid,
-	)
-	if err != nil {
-		return transaction, dl.errorResolver.ResolveError(
-			err,
-			dl.transactorOptions.From,
-			nil,
-			"logFunded",
-			_txid,
-		)
-	}
-
-	dlLogger.Infof(
-		"submitted transaction logFunded with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go dl.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := dl.contract.LogFunded(
-				transactorOptions,
-				_txid,
-			)
-			if err != nil {
-				return transaction, dl.errorResolver.ResolveError(
-					err,
-					dl.transactorOptions.From,
-					nil,
-					"logFunded",
-					_txid,
-				)
-			}
-
-			dlLogger.Infof(
-				"submitted transaction logFunded with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	dl.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogFunded(
-	_txid [32]uint8,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		dl.transactorOptions.From,
-		blockNumber, nil,
-		dl.contractABI,
-		dl.caller,
-		dl.errorResolver,
-		dl.contractAddress,
-		"logFunded",
-		&result,
-		_txid,
-	)
-
-	return err
-}
-
-func (dl *DepositLog) LogFundedGasEstimate(
-	_txid [32]uint8,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		dl.callerOptions.From,
-		dl.contractAddress,
-		"logFunded",
-		dl.contractABI,
-		dl.transactor,
-		_txid,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (dl *DepositLog) LogLiquidated(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dlLogger.Debug(
-		"submitting transaction logLiquidated",
-	)
-
-	dl.transactionMutex.Lock()
-	defer dl.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *dl.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := dl.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := dl.contract.LogLiquidated(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, dl.errorResolver.ResolveError(
-			err,
-			dl.transactorOptions.From,
-			nil,
-			"logLiquidated",
-		)
-	}
-
-	dlLogger.Infof(
-		"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go dl.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := dl.contract.LogLiquidated(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, dl.errorResolver.ResolveError(
-					err,
-					dl.transactorOptions.From,
-					nil,
-					"logLiquidated",
-				)
-			}
-
-			dlLogger.Infof(
-				"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	dl.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogLiquidated(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		dl.transactorOptions.From,
-		blockNumber, nil,
-		dl.contractABI,
-		dl.caller,
-		dl.errorResolver,
-		dl.contractAddress,
-		"logLiquidated",
-		&result,
-	)
-
-	return err
-}
-
-func (dl *DepositLog) LogLiquidatedGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		dl.callerOptions.From,
-		dl.contractAddress,
-		"logLiquidated",
-		dl.contractABI,
-		dl.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (dl *DepositLog) LogRedemptionRequested(
-	_requester common.Address,
-	_digest [32]uint8,
-	_utxoValue *big.Int,
-	_redeemerOutputScript []uint8,
-	_requestedFee *big.Int,
-	_outpoint []uint8,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dlLogger.Debug(
-		"submitting transaction logRedemptionRequested",
-		"params: ",
-		fmt.Sprint(
-			_requester,
-			_digest,
-			_utxoValue,
-			_redeemerOutputScript,
-			_requestedFee,
-			_outpoint,
-		),
-	)
-
-	dl.transactionMutex.Lock()
-	defer dl.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *dl.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := dl.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := dl.contract.LogRedemptionRequested(
-		transactorOptions,
-		_requester,
-		_digest,
-		_utxoValue,
-		_redeemerOutputScript,
-		_requestedFee,
-		_outpoint,
-	)
-	if err != nil {
-		return transaction, dl.errorResolver.ResolveError(
-			err,
-			dl.transactorOptions.From,
-			nil,
-			"logRedemptionRequested",
-			_requester,
-			_digest,
-			_utxoValue,
-			_redeemerOutputScript,
-			_requestedFee,
-			_outpoint,
-		)
-	}
-
-	dlLogger.Infof(
-		"submitted transaction logRedemptionRequested with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go dl.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := dl.contract.LogRedemptionRequested(
-				transactorOptions,
-				_requester,
-				_digest,
-				_utxoValue,
-				_redeemerOutputScript,
-				_requestedFee,
-				_outpoint,
-			)
-			if err != nil {
-				return transaction, dl.errorResolver.ResolveError(
-					err,
-					dl.transactorOptions.From,
-					nil,
-					"logRedemptionRequested",
-					_requester,
-					_digest,
-					_utxoValue,
-					_redeemerOutputScript,
-					_requestedFee,
-					_outpoint,
-				)
-			}
-
-			dlLogger.Infof(
-				"submitted transaction logRedemptionRequested with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	dl.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogRedemptionRequested(
-	_requester common.Address,
-	_digest [32]uint8,
-	_utxoValue *big.Int,
-	_redeemerOutputScript []uint8,
-	_requestedFee *big.Int,
-	_outpoint []uint8,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		dl.transactorOptions.From,
-		blockNumber, nil,
-		dl.contractABI,
-		dl.caller,
-		dl.errorResolver,
-		dl.contractAddress,
-		"logRedemptionRequested",
-		&result,
-		_requester,
-		_digest,
-		_utxoValue,
-		_redeemerOutputScript,
-		_requestedFee,
-		_outpoint,
-	)
-
-	return err
-}
-
-func (dl *DepositLog) LogRedemptionRequestedGasEstimate(
-	_requester common.Address,
-	_digest [32]uint8,
-	_utxoValue *big.Int,
-	_redeemerOutputScript []uint8,
-	_requestedFee *big.Int,
-	_outpoint []uint8,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		dl.callerOptions.From,
-		dl.contractAddress,
-		"logRedemptionRequested",
-		dl.contractABI,
-		dl.transactor,
-		_requester,
-		_digest,
-		_utxoValue,
-		_redeemerOutputScript,
-		_requestedFee,
-		_outpoint,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (dl *DepositLog) LogSetupFailed(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dlLogger.Debug(
-		"submitting transaction logSetupFailed",
-	)
-
-	dl.transactionMutex.Lock()
-	defer dl.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *dl.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := dl.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := dl.contract.LogSetupFailed(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, dl.errorResolver.ResolveError(
-			err,
-			dl.transactorOptions.From,
-			nil,
-			"logSetupFailed",
-		)
-	}
-
-	dlLogger.Infof(
-		"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go dl.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := dl.contract.LogSetupFailed(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, dl.errorResolver.ResolveError(
-					err,
-					dl.transactorOptions.From,
-					nil,
-					"logSetupFailed",
-				)
-			}
-
-			dlLogger.Infof(
-				"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	dl.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogSetupFailed(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		dl.transactorOptions.From,
-		blockNumber, nil,
-		dl.contractABI,
-		dl.caller,
-		dl.errorResolver,
-		dl.contractAddress,
-		"logSetupFailed",
-		&result,
-	)
-
-	return err
-}
-
-func (dl *DepositLog) LogSetupFailedGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		dl.callerOptions.From,
-		dl.contractAddress,
-		"logSetupFailed",
-		dl.contractABI,
-		dl.transactor,
-	)
-
-	return result, err
-}
 
 // Transaction submission.
 func (dl *DepositLog) LogRegisteredPubkey(
@@ -1138,12 +234,17 @@ func (dl *DepositLog) LogRegisteredPubkeyGasEstimate(
 }
 
 // Transaction submission.
-func (dl *DepositLog) LogCourtesyCalled(
+func (dl *DepositLog) LogFunderRequestedAbort(
+	_abortOutputScript []uint8,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	dlLogger.Debug(
-		"submitting transaction logCourtesyCalled",
+		"submitting transaction logFunderRequestedAbort",
+		"params: ",
+		fmt.Sprint(
+			_abortOutputScript,
+		),
 	)
 
 	dl.transactionMutex.Lock()
@@ -1168,20 +269,22 @@ func (dl *DepositLog) LogCourtesyCalled(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := dl.contract.LogCourtesyCalled(
+	transaction, err := dl.contract.LogFunderRequestedAbort(
 		transactorOptions,
+		_abortOutputScript,
 	)
 	if err != nil {
 		return transaction, dl.errorResolver.ResolveError(
 			err,
 			dl.transactorOptions.From,
 			nil,
-			"logCourtesyCalled",
+			"logFunderRequestedAbort",
+			_abortOutputScript,
 		)
 	}
 
 	dlLogger.Infof(
-		"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
+		"submitted transaction logFunderRequestedAbort with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -1192,20 +295,22 @@ func (dl *DepositLog) LogCourtesyCalled(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := dl.contract.LogCourtesyCalled(
+			transaction, err := dl.contract.LogFunderRequestedAbort(
 				transactorOptions,
+				_abortOutputScript,
 			)
 			if err != nil {
 				return transaction, dl.errorResolver.ResolveError(
 					err,
 					dl.transactorOptions.From,
 					nil,
-					"logCourtesyCalled",
+					"logFunderRequestedAbort",
+					_abortOutputScript,
 				)
 			}
 
 			dlLogger.Infof(
-				"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
+				"submitted transaction logFunderRequestedAbort with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -1220,7 +325,8 @@ func (dl *DepositLog) LogCourtesyCalled(
 }
 
 // Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogCourtesyCalled(
+func (dl *DepositLog) CallLogFunderRequestedAbort(
+	_abortOutputScript []uint8,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1232,20 +338,256 @@ func (dl *DepositLog) CallLogCourtesyCalled(
 		dl.caller,
 		dl.errorResolver,
 		dl.contractAddress,
-		"logCourtesyCalled",
+		"logFunderRequestedAbort",
+		&result,
+		_abortOutputScript,
+	)
+
+	return err
+}
+
+func (dl *DepositLog) LogFunderRequestedAbortGasEstimate(
+	_abortOutputScript []uint8,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		dl.callerOptions.From,
+		dl.contractAddress,
+		"logFunderRequestedAbort",
+		dl.contractABI,
+		dl.transactor,
+		_abortOutputScript,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (dl *DepositLog) LogLiquidated(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dlLogger.Debug(
+		"submitting transaction logLiquidated",
+	)
+
+	dl.transactionMutex.Lock()
+	defer dl.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *dl.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := dl.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := dl.contract.LogLiquidated(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, dl.errorResolver.ResolveError(
+			err,
+			dl.transactorOptions.From,
+			nil,
+			"logLiquidated",
+		)
+	}
+
+	dlLogger.Infof(
+		"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go dl.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := dl.contract.LogLiquidated(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, dl.errorResolver.ResolveError(
+					err,
+					dl.transactorOptions.From,
+					nil,
+					"logLiquidated",
+				)
+			}
+
+			dlLogger.Infof(
+				"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	dl.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (dl *DepositLog) CallLogLiquidated(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		dl.transactorOptions.From,
+		blockNumber, nil,
+		dl.contractABI,
+		dl.caller,
+		dl.errorResolver,
+		dl.contractAddress,
+		"logLiquidated",
 		&result,
 	)
 
 	return err
 }
 
-func (dl *DepositLog) LogCourtesyCalledGasEstimate() (uint64, error) {
+func (dl *DepositLog) LogLiquidatedGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		dl.callerOptions.From,
 		dl.contractAddress,
-		"logCourtesyCalled",
+		"logLiquidated",
+		dl.contractABI,
+		dl.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (dl *DepositLog) LogExitedCourtesyCall(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dlLogger.Debug(
+		"submitting transaction logExitedCourtesyCall",
+	)
+
+	dl.transactionMutex.Lock()
+	defer dl.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *dl.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := dl.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := dl.contract.LogExitedCourtesyCall(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, dl.errorResolver.ResolveError(
+			err,
+			dl.transactorOptions.From,
+			nil,
+			"logExitedCourtesyCall",
+		)
+	}
+
+	dlLogger.Infof(
+		"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go dl.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := dl.contract.LogExitedCourtesyCall(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, dl.errorResolver.ResolveError(
+					err,
+					dl.transactorOptions.From,
+					nil,
+					"logExitedCourtesyCall",
+				)
+			}
+
+			dlLogger.Infof(
+				"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	dl.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (dl *DepositLog) CallLogExitedCourtesyCall(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		dl.transactorOptions.From,
+		blockNumber, nil,
+		dl.contractABI,
+		dl.caller,
+		dl.errorResolver,
+		dl.contractAddress,
+		"logExitedCourtesyCall",
+		&result,
+	)
+
+	return err
+}
+
+func (dl *DepositLog) LogExitedCourtesyCallGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		dl.callerOptions.From,
+		dl.contractAddress,
+		"logExitedCourtesyCall",
 		dl.contractABI,
 		dl.transactor,
 	)
@@ -1378,6 +720,498 @@ func (dl *DepositLog) LogCreatedGasEstimate(
 		dl.contractABI,
 		dl.transactor,
 		_keepAddress,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (dl *DepositLog) LogFunded(
+	_txid [32]uint8,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dlLogger.Debug(
+		"submitting transaction logFunded",
+		"params: ",
+		fmt.Sprint(
+			_txid,
+		),
+	)
+
+	dl.transactionMutex.Lock()
+	defer dl.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *dl.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := dl.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := dl.contract.LogFunded(
+		transactorOptions,
+		_txid,
+	)
+	if err != nil {
+		return transaction, dl.errorResolver.ResolveError(
+			err,
+			dl.transactorOptions.From,
+			nil,
+			"logFunded",
+			_txid,
+		)
+	}
+
+	dlLogger.Infof(
+		"submitted transaction logFunded with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go dl.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := dl.contract.LogFunded(
+				transactorOptions,
+				_txid,
+			)
+			if err != nil {
+				return transaction, dl.errorResolver.ResolveError(
+					err,
+					dl.transactorOptions.From,
+					nil,
+					"logFunded",
+					_txid,
+				)
+			}
+
+			dlLogger.Infof(
+				"submitted transaction logFunded with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	dl.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (dl *DepositLog) CallLogFunded(
+	_txid [32]uint8,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		dl.transactorOptions.From,
+		blockNumber, nil,
+		dl.contractABI,
+		dl.caller,
+		dl.errorResolver,
+		dl.contractAddress,
+		"logFunded",
+		&result,
+		_txid,
+	)
+
+	return err
+}
+
+func (dl *DepositLog) LogFundedGasEstimate(
+	_txid [32]uint8,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		dl.callerOptions.From,
+		dl.contractAddress,
+		"logFunded",
+		dl.contractABI,
+		dl.transactor,
+		_txid,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (dl *DepositLog) LogSetupFailed(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dlLogger.Debug(
+		"submitting transaction logSetupFailed",
+	)
+
+	dl.transactionMutex.Lock()
+	defer dl.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *dl.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := dl.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := dl.contract.LogSetupFailed(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, dl.errorResolver.ResolveError(
+			err,
+			dl.transactorOptions.From,
+			nil,
+			"logSetupFailed",
+		)
+	}
+
+	dlLogger.Infof(
+		"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go dl.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := dl.contract.LogSetupFailed(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, dl.errorResolver.ResolveError(
+					err,
+					dl.transactorOptions.From,
+					nil,
+					"logSetupFailed",
+				)
+			}
+
+			dlLogger.Infof(
+				"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	dl.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (dl *DepositLog) CallLogSetupFailed(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		dl.transactorOptions.From,
+		blockNumber, nil,
+		dl.contractABI,
+		dl.caller,
+		dl.errorResolver,
+		dl.contractAddress,
+		"logSetupFailed",
+		&result,
+	)
+
+	return err
+}
+
+func (dl *DepositLog) LogSetupFailedGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		dl.callerOptions.From,
+		dl.contractAddress,
+		"logSetupFailed",
+		dl.contractABI,
+		dl.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (dl *DepositLog) LogStartedLiquidation(
+	_wasFraud bool,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dlLogger.Debug(
+		"submitting transaction logStartedLiquidation",
+		"params: ",
+		fmt.Sprint(
+			_wasFraud,
+		),
+	)
+
+	dl.transactionMutex.Lock()
+	defer dl.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *dl.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := dl.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := dl.contract.LogStartedLiquidation(
+		transactorOptions,
+		_wasFraud,
+	)
+	if err != nil {
+		return transaction, dl.errorResolver.ResolveError(
+			err,
+			dl.transactorOptions.From,
+			nil,
+			"logStartedLiquidation",
+			_wasFraud,
+		)
+	}
+
+	dlLogger.Infof(
+		"submitted transaction logStartedLiquidation with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go dl.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := dl.contract.LogStartedLiquidation(
+				transactorOptions,
+				_wasFraud,
+			)
+			if err != nil {
+				return transaction, dl.errorResolver.ResolveError(
+					err,
+					dl.transactorOptions.From,
+					nil,
+					"logStartedLiquidation",
+					_wasFraud,
+				)
+			}
+
+			dlLogger.Infof(
+				"submitted transaction logStartedLiquidation with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	dl.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (dl *DepositLog) CallLogStartedLiquidation(
+	_wasFraud bool,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		dl.transactorOptions.From,
+		blockNumber, nil,
+		dl.contractABI,
+		dl.caller,
+		dl.errorResolver,
+		dl.contractAddress,
+		"logStartedLiquidation",
+		&result,
+		_wasFraud,
+	)
+
+	return err
+}
+
+func (dl *DepositLog) LogStartedLiquidationGasEstimate(
+	_wasFraud bool,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		dl.callerOptions.From,
+		dl.contractAddress,
+		"logStartedLiquidation",
+		dl.contractABI,
+		dl.transactor,
+		_wasFraud,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (dl *DepositLog) LogFraudDuringSetup(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dlLogger.Debug(
+		"submitting transaction logFraudDuringSetup",
+	)
+
+	dl.transactionMutex.Lock()
+	defer dl.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *dl.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := dl.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := dl.contract.LogFraudDuringSetup(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, dl.errorResolver.ResolveError(
+			err,
+			dl.transactorOptions.From,
+			nil,
+			"logFraudDuringSetup",
+		)
+	}
+
+	dlLogger.Infof(
+		"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go dl.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := dl.contract.LogFraudDuringSetup(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, dl.errorResolver.ResolveError(
+					err,
+					dl.transactorOptions.From,
+					nil,
+					"logFraudDuringSetup",
+				)
+			}
+
+			dlLogger.Infof(
+				"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	dl.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (dl *DepositLog) CallLogFraudDuringSetup(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		dl.transactorOptions.From,
+		blockNumber, nil,
+		dl.contractABI,
+		dl.caller,
+		dl.errorResolver,
+		dl.contractAddress,
+		"logFraudDuringSetup",
+		&result,
+	)
+
+	return err
+}
+
+func (dl *DepositLog) LogFraudDuringSetupGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		dl.callerOptions.From,
+		dl.contractAddress,
+		"logFraudDuringSetup",
+		dl.contractABI,
+		dl.transactor,
 	)
 
 	return result, err
@@ -1664,16 +1498,26 @@ func (dl *DepositLog) LogRedeemedGasEstimate(
 }
 
 // Transaction submission.
-func (dl *DepositLog) LogStartedLiquidation(
-	_wasFraud bool,
+func (dl *DepositLog) LogRedemptionRequested(
+	_requester common.Address,
+	_digest [32]uint8,
+	_utxoValue *big.Int,
+	_redeemerOutputScript []uint8,
+	_requestedFee *big.Int,
+	_outpoint []uint8,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	dlLogger.Debug(
-		"submitting transaction logStartedLiquidation",
+		"submitting transaction logRedemptionRequested",
 		"params: ",
 		fmt.Sprint(
-			_wasFraud,
+			_requester,
+			_digest,
+			_utxoValue,
+			_redeemerOutputScript,
+			_requestedFee,
+			_outpoint,
 		),
 	)
 
@@ -1699,22 +1543,32 @@ func (dl *DepositLog) LogStartedLiquidation(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := dl.contract.LogStartedLiquidation(
+	transaction, err := dl.contract.LogRedemptionRequested(
 		transactorOptions,
-		_wasFraud,
+		_requester,
+		_digest,
+		_utxoValue,
+		_redeemerOutputScript,
+		_requestedFee,
+		_outpoint,
 	)
 	if err != nil {
 		return transaction, dl.errorResolver.ResolveError(
 			err,
 			dl.transactorOptions.From,
 			nil,
-			"logStartedLiquidation",
-			_wasFraud,
+			"logRedemptionRequested",
+			_requester,
+			_digest,
+			_utxoValue,
+			_redeemerOutputScript,
+			_requestedFee,
+			_outpoint,
 		)
 	}
 
 	dlLogger.Infof(
-		"submitted transaction logStartedLiquidation with id: [%v] and nonce [%v]",
+		"submitted transaction logRedemptionRequested with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -1725,22 +1579,32 @@ func (dl *DepositLog) LogStartedLiquidation(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := dl.contract.LogStartedLiquidation(
+			transaction, err := dl.contract.LogRedemptionRequested(
 				transactorOptions,
-				_wasFraud,
+				_requester,
+				_digest,
+				_utxoValue,
+				_redeemerOutputScript,
+				_requestedFee,
+				_outpoint,
 			)
 			if err != nil {
 				return transaction, dl.errorResolver.ResolveError(
 					err,
 					dl.transactorOptions.From,
 					nil,
-					"logStartedLiquidation",
-					_wasFraud,
+					"logRedemptionRequested",
+					_requester,
+					_digest,
+					_utxoValue,
+					_redeemerOutputScript,
+					_requestedFee,
+					_outpoint,
 				)
 			}
 
 			dlLogger.Infof(
-				"submitted transaction logStartedLiquidation with id: [%v] and nonce [%v]",
+				"submitted transaction logRedemptionRequested with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -1755,8 +1619,13 @@ func (dl *DepositLog) LogStartedLiquidation(
 }
 
 // Non-mutating call, not a transaction submission.
-func (dl *DepositLog) CallLogStartedLiquidation(
-	_wasFraud bool,
+func (dl *DepositLog) CallLogRedemptionRequested(
+	_requester common.Address,
+	_digest [32]uint8,
+	_utxoValue *big.Int,
+	_redeemerOutputScript []uint8,
+	_requestedFee *big.Int,
+	_outpoint []uint8,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1768,26 +1637,157 @@ func (dl *DepositLog) CallLogStartedLiquidation(
 		dl.caller,
 		dl.errorResolver,
 		dl.contractAddress,
-		"logStartedLiquidation",
+		"logRedemptionRequested",
 		&result,
-		_wasFraud,
+		_requester,
+		_digest,
+		_utxoValue,
+		_redeemerOutputScript,
+		_requestedFee,
+		_outpoint,
 	)
 
 	return err
 }
 
-func (dl *DepositLog) LogStartedLiquidationGasEstimate(
-	_wasFraud bool,
+func (dl *DepositLog) LogRedemptionRequestedGasEstimate(
+	_requester common.Address,
+	_digest [32]uint8,
+	_utxoValue *big.Int,
+	_redeemerOutputScript []uint8,
+	_requestedFee *big.Int,
+	_outpoint []uint8,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		dl.callerOptions.From,
 		dl.contractAddress,
-		"logStartedLiquidation",
+		"logRedemptionRequested",
 		dl.contractABI,
 		dl.transactor,
-		_wasFraud,
+		_requester,
+		_digest,
+		_utxoValue,
+		_redeemerOutputScript,
+		_requestedFee,
+		_outpoint,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (dl *DepositLog) LogCourtesyCalled(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dlLogger.Debug(
+		"submitting transaction logCourtesyCalled",
+	)
+
+	dl.transactionMutex.Lock()
+	defer dl.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *dl.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := dl.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := dl.contract.LogCourtesyCalled(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, dl.errorResolver.ResolveError(
+			err,
+			dl.transactorOptions.From,
+			nil,
+			"logCourtesyCalled",
+		)
+	}
+
+	dlLogger.Infof(
+		"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go dl.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := dl.contract.LogCourtesyCalled(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, dl.errorResolver.ResolveError(
+					err,
+					dl.transactorOptions.From,
+					nil,
+					"logCourtesyCalled",
+				)
+			}
+
+			dlLogger.Infof(
+				"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	dl.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (dl *DepositLog) CallLogCourtesyCalled(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		dl.transactorOptions.From,
+		blockNumber, nil,
+		dl.contractABI,
+		dl.caller,
+		dl.errorResolver,
+		dl.contractAddress,
+		"logCourtesyCalled",
+		&result,
+	)
+
+	return err
+}
+
+func (dl *DepositLog) LogCourtesyCalledGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		dl.callerOptions.From,
+		dl.contractAddress,
+		"logCourtesyCalled",
+		dl.contractABI,
+		dl.transactor,
 	)
 
 	return result, err
@@ -1840,262 +1840,6 @@ func (dl *DepositLog) ApprovedToLogAtBlock(
 }
 
 // ------ Events -------
-
-type depositLogCreatedFunc func(
-	_depositContractAddress common.Address,
-	_keepAddress common.Address,
-	_timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (dl *DepositLog) WatchCreated(
-	success depositLogCreatedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-	_keepAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := dl.subscribeCreated(
-			success,
-			failCallback,
-			_depositContractAddressFilter,
-			_keepAddressFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				dlLogger.Warning(
-					"subscription to event Created terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (dl *DepositLog) subscribeCreated(
-	success depositLogCreatedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-	_keepAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.DepositLogCreated)
-	eventSubscription, err := dl.contract.WatchCreated(
-		nil,
-		eventChan,
-		_depositContractAddressFilter,
-		_keepAddressFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for Created events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event._depositContractAddress,
-					event._keepAddress,
-					event._timestamp,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type depositLogExitedCourtesyCallFunc func(
-	_depositContractAddress common.Address,
-	_timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (dl *DepositLog) WatchExitedCourtesyCall(
-	success depositLogExitedCourtesyCallFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := dl.subscribeExitedCourtesyCall(
-			success,
-			failCallback,
-			_depositContractAddressFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				dlLogger.Warning(
-					"subscription to event ExitedCourtesyCall terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (dl *DepositLog) subscribeExitedCourtesyCall(
-	success depositLogExitedCourtesyCallFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.DepositLogExitedCourtesyCall)
-	eventSubscription, err := dl.contract.WatchExitedCourtesyCall(
-		nil,
-		eventChan,
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for ExitedCourtesyCall events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event._depositContractAddress,
-					event._timestamp,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
 
 type depositLogGotRedemptionSignatureFunc func(
 	_depositContractAddress common.Address,
@@ -2211,643 +1955,6 @@ func (dl *DepositLog) subscribeGotRedemptionSignature(
 					event._r,
 					event._s,
 					event._timestamp,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type depositLogLiquidatedFunc func(
-	_depositContractAddress common.Address,
-	_timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (dl *DepositLog) WatchLiquidated(
-	success depositLogLiquidatedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := dl.subscribeLiquidated(
-			success,
-			failCallback,
-			_depositContractAddressFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				dlLogger.Warning(
-					"subscription to event Liquidated terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (dl *DepositLog) subscribeLiquidated(
-	success depositLogLiquidatedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.DepositLogLiquidated)
-	eventSubscription, err := dl.contract.WatchLiquidated(
-		nil,
-		eventChan,
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for Liquidated events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event._depositContractAddress,
-					event._timestamp,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type depositLogRedeemedFunc func(
-	_depositContractAddress common.Address,
-	_txid [32]uint8,
-	_timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (dl *DepositLog) WatchRedeemed(
-	success depositLogRedeemedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-	_txidFilter [][32]uint8,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := dl.subscribeRedeemed(
-			success,
-			failCallback,
-			_depositContractAddressFilter,
-			_txidFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				dlLogger.Warning(
-					"subscription to event Redeemed terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (dl *DepositLog) subscribeRedeemed(
-	success depositLogRedeemedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-	_txidFilter [][32]uint8,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.DepositLogRedeemed)
-	eventSubscription, err := dl.contract.WatchRedeemed(
-		nil,
-		eventChan,
-		_depositContractAddressFilter,
-		_txidFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for Redeemed events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event._depositContractAddress,
-					event._txid,
-					event._timestamp,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type depositLogCourtesyCalledFunc func(
-	_depositContractAddress common.Address,
-	_timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (dl *DepositLog) WatchCourtesyCalled(
-	success depositLogCourtesyCalledFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := dl.subscribeCourtesyCalled(
-			success,
-			failCallback,
-			_depositContractAddressFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				dlLogger.Warning(
-					"subscription to event CourtesyCalled terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (dl *DepositLog) subscribeCourtesyCalled(
-	success depositLogCourtesyCalledFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.DepositLogCourtesyCalled)
-	eventSubscription, err := dl.contract.WatchCourtesyCalled(
-		nil,
-		eventChan,
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for CourtesyCalled events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event._depositContractAddress,
-					event._timestamp,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type depositLogFundedFunc func(
-	_depositContractAddress common.Address,
-	_txid [32]uint8,
-	_timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (dl *DepositLog) WatchFunded(
-	success depositLogFundedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-	_txidFilter [][32]uint8,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := dl.subscribeFunded(
-			success,
-			failCallback,
-			_depositContractAddressFilter,
-			_txidFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				dlLogger.Warning(
-					"subscription to event Funded terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (dl *DepositLog) subscribeFunded(
-	success depositLogFundedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-	_txidFilter [][32]uint8,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.DepositLogFunded)
-	eventSubscription, err := dl.contract.WatchFunded(
-		nil,
-		eventChan,
-		_depositContractAddressFilter,
-		_txidFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for Funded events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event._depositContractAddress,
-					event._txid,
-					event._timestamp,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type depositLogFunderAbortRequestedFunc func(
-	_depositContractAddress common.Address,
-	_abortOutputScript []uint8,
-	blockNumber uint64,
-)
-
-func (dl *DepositLog) WatchFunderAbortRequested(
-	success depositLogFunderAbortRequestedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := dl.subscribeFunderAbortRequested(
-			success,
-			failCallback,
-			_depositContractAddressFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				dlLogger.Warning(
-					"subscription to event FunderAbortRequested terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (dl *DepositLog) subscribeFunderAbortRequested(
-	success depositLogFunderAbortRequestedFunc,
-	fail func(err error) error,
-	_depositContractAddressFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.DepositLogFunderAbortRequested)
-	eventSubscription, err := dl.contract.WatchFunderAbortRequested(
-		nil,
-		eventChan,
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for FunderAbortRequested events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event._depositContractAddress,
-					event._abortOutputScript,
 					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()
@@ -3393,6 +2500,262 @@ func (dl *DepositLog) subscribeStartedLiquidation(
 	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
+type depositLogExitedCourtesyCallFunc func(
+	_depositContractAddress common.Address,
+	_timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (dl *DepositLog) WatchExitedCourtesyCall(
+	success depositLogExitedCourtesyCallFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := dl.subscribeExitedCourtesyCall(
+			success,
+			failCallback,
+			_depositContractAddressFilter,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				dlLogger.Warning(
+					"subscription to event ExitedCourtesyCall terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (dl *DepositLog) subscribeExitedCourtesyCall(
+	success depositLogExitedCourtesyCallFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.DepositLogExitedCourtesyCall)
+	eventSubscription, err := dl.contract.WatchExitedCourtesyCall(
+		nil,
+		eventChan,
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for ExitedCourtesyCall events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event._depositContractAddress,
+					event._timestamp,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+type depositLogFundedFunc func(
+	_depositContractAddress common.Address,
+	_txid [32]uint8,
+	_timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (dl *DepositLog) WatchFunded(
+	success depositLogFundedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+	_txidFilter [][32]uint8,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := dl.subscribeFunded(
+			success,
+			failCallback,
+			_depositContractAddressFilter,
+			_txidFilter,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				dlLogger.Warning(
+					"subscription to event Funded terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (dl *DepositLog) subscribeFunded(
+	success depositLogFundedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+	_txidFilter [][32]uint8,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.DepositLogFunded)
+	eventSubscription, err := dl.contract.WatchFunded(
+		nil,
+		eventChan,
+		_depositContractAddressFilter,
+		_txidFilter,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for Funded events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event._depositContractAddress,
+					event._txid,
+					event._timestamp,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
 type depositLogFraudDuringSetupFunc func(
 	_depositContractAddress common.Address,
 	_timestamp *big.Int,
@@ -3496,6 +2859,643 @@ func (dl *DepositLog) subscribeFraudDuringSetup(
 				}
 				success(
 					event._depositContractAddress,
+					event._timestamp,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+type depositLogFunderAbortRequestedFunc func(
+	_depositContractAddress common.Address,
+	_abortOutputScript []uint8,
+	blockNumber uint64,
+)
+
+func (dl *DepositLog) WatchFunderAbortRequested(
+	success depositLogFunderAbortRequestedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := dl.subscribeFunderAbortRequested(
+			success,
+			failCallback,
+			_depositContractAddressFilter,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				dlLogger.Warning(
+					"subscription to event FunderAbortRequested terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (dl *DepositLog) subscribeFunderAbortRequested(
+	success depositLogFunderAbortRequestedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.DepositLogFunderAbortRequested)
+	eventSubscription, err := dl.contract.WatchFunderAbortRequested(
+		nil,
+		eventChan,
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for FunderAbortRequested events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event._depositContractAddress,
+					event._abortOutputScript,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+type depositLogLiquidatedFunc func(
+	_depositContractAddress common.Address,
+	_timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (dl *DepositLog) WatchLiquidated(
+	success depositLogLiquidatedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := dl.subscribeLiquidated(
+			success,
+			failCallback,
+			_depositContractAddressFilter,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				dlLogger.Warning(
+					"subscription to event Liquidated terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (dl *DepositLog) subscribeLiquidated(
+	success depositLogLiquidatedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.DepositLogLiquidated)
+	eventSubscription, err := dl.contract.WatchLiquidated(
+		nil,
+		eventChan,
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for Liquidated events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event._depositContractAddress,
+					event._timestamp,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+type depositLogRedeemedFunc func(
+	_depositContractAddress common.Address,
+	_txid [32]uint8,
+	_timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (dl *DepositLog) WatchRedeemed(
+	success depositLogRedeemedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+	_txidFilter [][32]uint8,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := dl.subscribeRedeemed(
+			success,
+			failCallback,
+			_depositContractAddressFilter,
+			_txidFilter,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				dlLogger.Warning(
+					"subscription to event Redeemed terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (dl *DepositLog) subscribeRedeemed(
+	success depositLogRedeemedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+	_txidFilter [][32]uint8,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.DepositLogRedeemed)
+	eventSubscription, err := dl.contract.WatchRedeemed(
+		nil,
+		eventChan,
+		_depositContractAddressFilter,
+		_txidFilter,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for Redeemed events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event._depositContractAddress,
+					event._txid,
+					event._timestamp,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+type depositLogCourtesyCalledFunc func(
+	_depositContractAddress common.Address,
+	_timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (dl *DepositLog) WatchCourtesyCalled(
+	success depositLogCourtesyCalledFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := dl.subscribeCourtesyCalled(
+			success,
+			failCallback,
+			_depositContractAddressFilter,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				dlLogger.Warning(
+					"subscription to event CourtesyCalled terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (dl *DepositLog) subscribeCourtesyCalled(
+	success depositLogCourtesyCalledFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.DepositLogCourtesyCalled)
+	eventSubscription, err := dl.contract.WatchCourtesyCalled(
+		nil,
+		eventChan,
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for CourtesyCalled events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event._depositContractAddress,
+					event._timestamp,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+type depositLogCreatedFunc func(
+	_depositContractAddress common.Address,
+	_keepAddress common.Address,
+	_timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (dl *DepositLog) WatchCreated(
+	success depositLogCreatedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+	_keepAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := dl.subscribeCreated(
+			success,
+			failCallback,
+			_depositContractAddressFilter,
+			_keepAddressFilter,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				dlLogger.Warning(
+					"subscription to event Created terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (dl *DepositLog) subscribeCreated(
+	success depositLogCreatedFunc,
+	fail func(err error) error,
+	_depositContractAddressFilter []common.Address,
+	_keepAddressFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.DepositLogCreated)
+	eventSubscription, err := dl.contract.WatchCreated(
+		nil,
+		eventChan,
+		_depositContractAddressFilter,
+		_keepAddressFilter,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for Created events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event._depositContractAddress,
+					event._keepAddress,
 					event._timestamp,
 					event.Raw.BlockNumber,
 				)

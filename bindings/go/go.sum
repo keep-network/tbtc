@@ -333,6 +333,7 @@ github.com/keep-network/keep-common v1.2.0 h1:hVd2tTd7vL+9CQP5Ntk5kjs+GYvkgrRNBc
 github.com/keep-network/keep-common v1.2.0/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
 github.com/keep-network/keep-core v1.3.0 h1:7Tb33EmO/ntHOEbOiYciRlBhqu5Ln6KemWCaYK0Z6LA=
 github.com/keep-network/keep-core v1.3.0/go.mod h1:1KsSSTQoN754TrFLW7kLy50pOG2CQ4BOfnJqdvEG7FA=
+github.com/keep-network/tbtc v1.1.0 h1:9ZCuBsrJYN1L1V7bAC98ZAtxv+ZIHcMhz6RJLAizLvY=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
