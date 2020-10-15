@@ -16,7 +16,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/tbtc/bindings/go/contract"
+	"github.com/keep-network/tbtc/go/contract"
 
 	"github.com/urfave/cli"
 )
@@ -59,17 +59,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "log-funder-requested-abort",
-			Usage:     "Calls the method logFunderRequestedAbort on the DepositLog contract.",
-			ArgsUsage: "[_abortOutputScript] ",
-			Action:    dlLogFunderRequestedAbort,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "log-liquidated",
-			Usage:     "Calls the method logLiquidated on the DepositLog contract.",
+			Name:      "log-courtesy-called",
+			Usage:     "Calls the method logCourtesyCalled on the DepositLog contract.",
 			ArgsUsage: "",
-			Action:    dlLogLiquidated,
+			Action:    dlLogCourtesyCalled,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -87,13 +80,6 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "log-setup-failed",
-			Usage:     "Calls the method logSetupFailed on the DepositLog contract.",
-			ArgsUsage: "",
-			Action:    dlLogSetupFailed,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
 			Name:      "log-fraud-during-setup",
 			Usage:     "Calls the method logFraudDuringSetup on the DepositLog contract.",
 			ArgsUsage: "",
@@ -101,10 +87,24 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "log-courtesy-called",
-			Usage:     "Calls the method logCourtesyCalled on the DepositLog contract.",
+			Name:      "log-setup-failed",
+			Usage:     "Calls the method logSetupFailed on the DepositLog contract.",
 			ArgsUsage: "",
-			Action:    dlLogCourtesyCalled,
+			Action:    dlLogSetupFailed,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "log-funder-requested-abort",
+			Usage:     "Calls the method logFunderRequestedAbort on the DepositLog contract.",
+			ArgsUsage: "[_abortOutputScript] ",
+			Action:    dlLogFunderRequestedAbort,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "log-liquidated",
+			Usage:     "Calls the method logLiquidated on the DepositLog contract.",
+			ArgsUsage: "",
+			Action:    dlLogLiquidated,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}},
@@ -143,51 +143,7 @@ func dlApprovedToLog(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func dlLogFunderRequestedAbort(c *cli.Context) error {
-	contract, err := initializeDepositLog(c)
-	if err != nil {
-		return err
-	}
-
-	_abortOutputScript, err := hexutil.Decode(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _abortOutputScript, a bytes, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LogFunderRequestedAbort(
-			_abortOutputScript,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallLogFunderRequestedAbort(
-			_abortOutputScript,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func dlLogLiquidated(c *cli.Context) error {
+func dlLogCourtesyCalled(c *cli.Context) error {
 	contract, err := initializeDepositLog(c)
 	if err != nil {
 		return err
@@ -199,7 +155,7 @@ func dlLogLiquidated(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LogLiquidated()
+		transaction, err = contract.LogCourtesyCalled()
 		if err != nil {
 			return err
 		}
@@ -207,7 +163,7 @@ func dlLogLiquidated(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallLogLiquidated(
+		err = contract.CallLogCourtesyCalled(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -297,39 +253,6 @@ func dlLogCreated(c *cli.Context) error {
 	return nil
 }
 
-func dlLogSetupFailed(c *cli.Context) error {
-	contract, err := initializeDepositLog(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LogSetupFailed()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallLogSetupFailed(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
 func dlLogFraudDuringSetup(c *cli.Context) error {
 	contract, err := initializeDepositLog(c)
 	if err != nil {
@@ -363,7 +286,7 @@ func dlLogFraudDuringSetup(c *cli.Context) error {
 	return nil
 }
 
-func dlLogCourtesyCalled(c *cli.Context) error {
+func dlLogSetupFailed(c *cli.Context) error {
 	contract, err := initializeDepositLog(c)
 	if err != nil {
 		return err
@@ -375,7 +298,7 @@ func dlLogCourtesyCalled(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LogCourtesyCalled()
+		transaction, err = contract.LogSetupFailed()
 		if err != nil {
 			return err
 		}
@@ -383,7 +306,84 @@ func dlLogCourtesyCalled(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallLogCourtesyCalled(
+		err = contract.CallLogSetupFailed(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func dlLogFunderRequestedAbort(c *cli.Context) error {
+	contract, err := initializeDepositLog(c)
+	if err != nil {
+		return err
+	}
+
+	_abortOutputScript, err := hexutil.Decode(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _abortOutputScript, a bytes, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.LogFunderRequestedAbort(
+			_abortOutputScript,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallLogFunderRequestedAbort(
+			_abortOutputScript,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func dlLogLiquidated(c *cli.Context) error {
+	contract, err := initializeDepositLog(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.LogLiquidated()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallLogLiquidated(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {

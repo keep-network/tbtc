@@ -16,7 +16,7 @@ __pycache__/
 node_modules/
 artifacts/
 .mypy_cache
-bindings/go/abi/**/*.abi
+go/abi/**/*.abi
 
 # Visual Studio Code
 *.code-workspace

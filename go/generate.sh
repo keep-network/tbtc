@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR=../../solidity
+DIR=../solidity
 
 # Source contracts for binding generation.
 # They should include the subdirectory prefix if any.
