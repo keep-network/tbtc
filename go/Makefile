@@ -37,12 +37,11 @@ abi/%.go: abi/%.abi
 	$(eval type=$(notdir $*))
 	go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $(type) --out $@
 
-contract/DepositLog.go cmd/DepositLog.go: abi/DepositLog.abi abi/DepositLog.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/DepositLog.go cmd/DepositLog.go
-
 contract/deposit/Deposit.go cmd/deposit/Deposit.go: abi/deposit/Deposit.abi abi/deposit/Deposit.go *.go
 	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/Deposit.go cmd/Deposit.go
 
+contract/system/TBTCSystem.go cmd/system/TBTCSystem.go: abi/system/TBTCSystem.abi abi/system/TBTCSystem.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/TBTCSystem.go cmd/TBTCSystem.go
 
 
 
