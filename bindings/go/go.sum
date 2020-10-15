@@ -331,6 +331,8 @@ github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec h
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec/go.mod h1:xR8jf3/VJAjh3nWu5tFe8Yxnt2HvWsqZHfGef1P5oDk=
 github.com/keep-network/keep-common v1.2.0 h1:hVd2tTd7vL+9CQP5Ntk5kjs+GYvkgrRNBcNvTuhHhVk=
 github.com/keep-network/keep-common v1.2.0/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
+github.com/keep-network/keep-common v1.2.1-0.20201015091820-496b0c87d6f5 h1:HCQv0+3IhaH1zvRQ2cAinKK+HJCASI41EpZuUMKD278=
+github.com/keep-network/keep-common v1.2.1-0.20201015091820-496b0c87d6f5/go.mod h1:emxogTbBdey7M3jOzfxZOdfn139kN2mI2b2wA6AHKKo=
 github.com/keep-network/keep-core v1.3.0 h1:7Tb33EmO/ntHOEbOiYciRlBhqu5Ln6KemWCaYK0Z6LA=
 github.com/keep-network/keep-core v1.3.0/go.mod h1:1KsSSTQoN754TrFLW7kLy50pOG2CQ4BOfnJqdvEG7FA=
 github.com/keep-network/tbtc v1.1.0 h1:9ZCuBsrJYN1L1V7bAC98ZAtxv+ZIHcMhz6RJLAizLvY=
