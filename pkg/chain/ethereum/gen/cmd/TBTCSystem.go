@@ -16,7 +16,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/tbtc/go/contract"
+	"github.com/keep-network/tbtc/pkg/chain/ethereum/gen/contract"
 
 	"github.com/urfave/cli"
 )
@@ -73,17 +73,31 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "fetch-relay-previous-difficulty",
-			Usage:     "Calls the constant method fetchRelayPreviousDifficulty on the TBTCSystem contract.",
+			Name:      "relay",
+			Usage:     "Calls the constant method relay on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsFetchRelayPreviousDifficulty,
+			Action:    tbtcsRelay,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-price-feed-governance-time-delay",
-			Usage:     "Calls the constant method getPriceFeedGovernanceTimeDelay on the TBTCSystem contract.",
+			Name:      "get-maximum-lot-size",
+			Usage:     "Calls the constant method getMaximumLotSize on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsGetPriceFeedGovernanceTimeDelay,
+			Action:    tbtcsGetMaximumLotSize,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-minimum-lot-size",
+			Usage:     "Calls the constant method getMinimumLotSize on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsGetMinimumLotSize,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "is-owner",
+			Usage:     "Calls the constant method isOwner on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsIsOwner,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -91,6 +105,55 @@ func init() {
 			Usage:     "Calls the constant method owner on the TBTCSystem contract.",
 			ArgsUsage: "",
 			Action:    tbtcsOwner,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "fetch-relay-previous-difficulty",
+			Usage:     "Calls the constant method fetchRelayPreviousDifficulty on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsFetchRelayPreviousDifficulty,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "fetch-bitcoin-price",
+			Usage:     "Calls the constant method fetchBitcoinPrice on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsFetchBitcoinPrice,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-remaining-lot-sizes-update-time",
+			Usage:     "Calls the constant method getRemainingLotSizesUpdateTime on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsGetRemainingLotSizesUpdateTime,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "approved-to-log",
+			Usage:     "Calls the constant method approvedToLog on the TBTCSystem contract.",
+			ArgsUsage: "[_caller] ",
+			Action:    tbtcsApprovedToLog,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-allow-new-deposits",
+			Usage:     "Calls the constant method getAllowNewDeposits on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsGetAllowNewDeposits,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "keep-threshold",
+			Usage:     "Calls the constant method keepThreshold on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsKeepThreshold,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-undercollateralized-threshold-percent",
+			Usage:     "Calls the constant method getUndercollateralizedThresholdPercent on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsGetUndercollateralizedThresholdPercent,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -108,10 +171,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-maximum-lot-size",
-			Usage:     "Calls the constant method getMaximumLotSize on the TBTCSystem contract.",
+			Name:      "get-initial-collateralized-percent",
+			Usage:     "Calls the constant method getInitialCollateralizedPercent on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsGetMaximumLotSize,
+			Action:    tbtcsGetInitialCollateralizedPercent,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -122,59 +185,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-severely-undercollateralized-threshold-percent",
-			Usage:     "Calls the constant method getSeverelyUndercollateralizedThresholdPercent on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetSeverelyUndercollateralizedThresholdPercent,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-allowed-lot-sizes",
-			Usage:     "Calls the constant method getAllowedLotSizes on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetAllowedLotSizes,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-remaining-lot-sizes-update-time",
-			Usage:     "Calls the constant method getRemainingLotSizesUpdateTime on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetRemainingLotSizesUpdateTime,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
 			Name:      "get-governance-time-delay",
 			Usage:     "Calls the constant method getGovernanceTimeDelay on the TBTCSystem contract.",
 			ArgsUsage: "",
 			Action:    tbtcsGetGovernanceTimeDelay,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-signer-fee-divisor",
-			Usage:     "Calls the constant method getSignerFeeDivisor on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetSignerFeeDivisor,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "relay",
-			Usage:     "Calls the constant method relay on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsRelay,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-remaining-collateralization-thresholds-update-time",
-			Usage:     "Calls the constant method getRemainingCollateralizationThresholdsUpdateTime on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetRemainingCollateralizationThresholdsUpdateTime,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-allow-new-deposits",
-			Usage:     "Calls the constant method getAllowNewDeposits on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetAllowNewDeposits,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -185,59 +199,17 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "is-owner",
-			Usage:     "Calls the constant method isOwner on the TBTCSystem contract.",
+			Name:      "get-remaining-collateralization-thresholds-update-time",
+			Usage:     "Calls the constant method getRemainingCollateralizationThresholdsUpdateTime on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsIsOwner,
+			Action:    tbtcsGetRemainingCollateralizationThresholdsUpdateTime,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-undercollateralized-threshold-percent",
-			Usage:     "Calls the constant method getUndercollateralizedThresholdPercent on the TBTCSystem contract.",
+			Name:      "get-price-feed-governance-time-delay",
+			Usage:     "Calls the constant method getPriceFeedGovernanceTimeDelay on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsGetUndercollateralizedThresholdPercent,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "keep-threshold",
-			Usage:     "Calls the constant method keepThreshold on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsKeepThreshold,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "approved-to-log",
-			Usage:     "Calls the constant method approvedToLog on the TBTCSystem contract.",
-			ArgsUsage: "[_caller] ",
-			Action:    tbtcsApprovedToLog,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-minimum-lot-size",
-			Usage:     "Calls the constant method getMinimumLotSize on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetMinimumLotSize,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-initial-collateralized-percent",
-			Usage:     "Calls the constant method getInitialCollateralizedPercent on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetInitialCollateralizedPercent,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-remaining-eth-btc-price-feed-addition-time",
-			Usage:     "Calls the constant method getRemainingEthBtcPriceFeedAdditionTime on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsGetRemainingEthBtcPriceFeedAdditionTime,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "fetch-bitcoin-price",
-			Usage:     "Calls the constant method fetchBitcoinPrice on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsFetchBitcoinPrice,
+			Action:    tbtcsGetPriceFeedGovernanceTimeDelay,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -248,6 +220,34 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
+			Name:      "get-allowed-lot-sizes",
+			Usage:     "Calls the constant method getAllowedLotSizes on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsGetAllowedLotSizes,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-severely-undercollateralized-threshold-percent",
+			Usage:     "Calls the constant method getSeverelyUndercollateralizedThresholdPercent on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsGetSeverelyUndercollateralizedThresholdPercent,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-signer-fee-divisor",
+			Usage:     "Calls the constant method getSignerFeeDivisor on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsGetSignerFeeDivisor,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-remaining-eth-btc-price-feed-addition-time",
+			Usage:     "Calls the constant method getRemainingEthBtcPriceFeedAdditionTime on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsGetRemainingEthBtcPriceFeedAdditionTime,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "keep-size",
 			Usage:     "Calls the constant method keepSize on the TBTCSystem contract.",
 			ArgsUsage: "",
@@ -255,24 +255,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "refresh-minimum-bondable-value",
-			Usage:     "Calls the method refreshMinimumBondableValue on the TBTCSystem contract.",
+			Name:      "finalize-keep-factories-update",
+			Usage:     "Calls the method finalizeKeepFactoriesUpdate on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsRefreshMinimumBondableValue,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "resume-new-deposits",
-			Usage:     "Calls the method resumeNewDeposits on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsResumeNewDeposits,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "emergency-pause-new-deposits",
-			Usage:     "Calls the method emergencyPauseNewDeposits on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsEmergencyPauseNewDeposits,
+			Action:    tbtcsFinalizeKeepFactoriesUpdate,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -283,24 +269,59 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "log-created",
-			Usage:     "Calls the method logCreated on the TBTCSystem contract.",
-			ArgsUsage: "[_keepAddress] ",
-			Action:    tbtcsLogCreated,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "finalize-eth-btc-price-feed-addition",
-			Usage:     "Calls the method finalizeEthBtcPriceFeedAddition on the TBTCSystem contract.",
+			Name:      "emergency-pause-new-deposits",
+			Usage:     "Calls the method emergencyPauseNewDeposits on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsFinalizeEthBtcPriceFeedAddition,
+			Action:    tbtcsEmergencyPauseNewDeposits,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "finalize-keep-factories-update",
-			Usage:     "Calls the method finalizeKeepFactoriesUpdate on the TBTCSystem contract.",
+			Name:      "begin-eth-btc-price-feed-addition",
+			Usage:     "Calls the method beginEthBtcPriceFeedAddition on the TBTCSystem contract.",
+			ArgsUsage: "[_ethBtcPriceFeed] ",
+			Action:    tbtcsBeginEthBtcPriceFeedAddition,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "transfer-ownership",
+			Usage:     "Calls the method transferOwnership on the TBTCSystem contract.",
+			ArgsUsage: "[newOwner] ",
+			Action:    tbtcsTransferOwnership,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "finalize-signer-fee-divisor-update",
+			Usage:     "Calls the method finalizeSignerFeeDivisorUpdate on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsFinalizeKeepFactoriesUpdate,
+			Action:    tbtcsFinalizeSignerFeeDivisorUpdate,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "resume-new-deposits",
+			Usage:     "Calls the method resumeNewDeposits on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsResumeNewDeposits,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "refresh-minimum-bondable-value",
+			Usage:     "Calls the method refreshMinimumBondableValue on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsRefreshMinimumBondableValue,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "renounce-ownership",
+			Usage:     "Calls the method renounceOwnership on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsRenounceOwnership,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "finalize-collateralization-thresholds-update",
+			Usage:     "Calls the method finalizeCollateralizationThresholdsUpdate on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsFinalizeCollateralizationThresholdsUpdate,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -318,31 +339,10 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "renounce-ownership",
-			Usage:     "Calls the method renounceOwnership on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsRenounceOwnership,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "finalize-signer-fee-divisor-update",
-			Usage:     "Calls the method finalizeSignerFeeDivisorUpdate on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsFinalizeSignerFeeDivisorUpdate,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "log-exited-courtesy-call",
-			Usage:     "Calls the method logExitedCourtesyCall on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsLogExitedCourtesyCall,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "begin-eth-btc-price-feed-addition",
-			Usage:     "Calls the method beginEthBtcPriceFeedAddition on the TBTCSystem contract.",
-			ArgsUsage: "[_ethBtcPriceFeed] ",
-			Action:    tbtcsBeginEthBtcPriceFeedAddition,
+			Name:      "log-funder-requested-abort",
+			Usage:     "Calls the method logFunderRequestedAbort on the TBTCSystem contract.",
+			ArgsUsage: "[_abortOutputScript] ",
+			Action:    tbtcsLogFunderRequestedAbort,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -353,11 +353,11 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "log-funder-requested-abort",
-			Usage:     "Calls the method logFunderRequestedAbort on the TBTCSystem contract.",
-			ArgsUsage: "[_abortOutputScript] ",
-			Action:    tbtcsLogFunderRequestedAbort,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Name:      "log-fraud-during-setup",
+			Usage:     "Calls the method logFraudDuringSetup on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsLogFraudDuringSetup,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "log-liquidated",
@@ -367,25 +367,25 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "log-fraud-during-setup",
-			Usage:     "Calls the method logFraudDuringSetup on the TBTCSystem contract.",
+			Name:      "log-exited-courtesy-call",
+			Usage:     "Calls the method logExitedCourtesyCall on the TBTCSystem contract.",
 			ArgsUsage: "",
-			Action:    tbtcsLogFraudDuringSetup,
+			Action:    tbtcsLogExitedCourtesyCall,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "transfer-ownership",
-			Usage:     "Calls the method transferOwnership on the TBTCSystem contract.",
-			ArgsUsage: "[newOwner] ",
-			Action:    tbtcsTransferOwnership,
+			Name:      "finalize-eth-btc-price-feed-addition",
+			Usage:     "Calls the method finalizeEthBtcPriceFeedAddition on the TBTCSystem contract.",
+			ArgsUsage: "",
+			Action:    tbtcsFinalizeEthBtcPriceFeedAddition,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "log-created",
+			Usage:     "Calls the method logCreated on the TBTCSystem contract.",
+			ArgsUsage: "[_keepAddress] ",
+			Action:    tbtcsLogCreated,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "finalize-collateralization-thresholds-update",
-			Usage:     "Calls the method finalizeCollateralizationThresholdsUpdate on the TBTCSystem contract.",
-			ArgsUsage: "",
-			Action:    tbtcsFinalizeCollateralizationThresholdsUpdate,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}},
 	})
@@ -453,13 +453,13 @@ func tbtcsGetRemainingSignerFeeDivisorUpdateTime(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsFetchRelayPreviousDifficulty(c *cli.Context) error {
+func tbtcsRelay(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.FetchRelayPreviousDifficultyAtBlock(
+	result, err := contract.RelayAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -473,13 +473,53 @@ func tbtcsFetchRelayPreviousDifficulty(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsGetPriceFeedGovernanceTimeDelay(c *cli.Context) error {
+func tbtcsGetMaximumLotSize(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.GetPriceFeedGovernanceTimeDelayAtBlock(
+	result, err := contract.GetMaximumLotSizeAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsGetMinimumLotSize(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetMinimumLotSizeAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsIsOwner(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.IsOwnerAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -500,6 +540,154 @@ func tbtcsOwner(c *cli.Context) error {
 	}
 
 	result, err := contract.OwnerAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsFetchRelayPreviousDifficulty(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.FetchRelayPreviousDifficultyAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsFetchBitcoinPrice(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.FetchBitcoinPriceAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsGetRemainingLotSizesUpdateTime(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetRemainingLotSizesUpdateTimeAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsApprovedToLog(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+	_caller, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _caller, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.ApprovedToLogAtBlock(
+		_caller,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsGetAllowNewDeposits(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetAllowNewDepositsAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsKeepThreshold(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.KeepThresholdAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsGetUndercollateralizedThresholdPercent(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetUndercollateralizedThresholdPercentAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -553,13 +741,13 @@ func tbtcsGetKeepFactoriesUpgradeabilityPeriod(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsGetMaximumLotSize(c *cli.Context) error {
+func tbtcsGetInitialCollateralizedPercent(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.GetMaximumLotSizeAtBlock(
+	result, err := contract.GetInitialCollateralizedPercentAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -593,66 +781,6 @@ func tbtcsGetRemainingKeepFactoriesUpdateTime(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsGetSeverelyUndercollateralizedThresholdPercent(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetSeverelyUndercollateralizedThresholdPercentAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsGetAllowedLotSizes(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetAllowedLotSizesAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsGetRemainingLotSizesUpdateTime(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetRemainingLotSizesUpdateTimeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
 func tbtcsGetGovernanceTimeDelay(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
@@ -660,86 +788,6 @@ func tbtcsGetGovernanceTimeDelay(c *cli.Context) error {
 	}
 
 	result, err := contract.GetGovernanceTimeDelayAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsGetSignerFeeDivisor(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetSignerFeeDivisorAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsRelay(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.RelayAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsGetRemainingCollateralizationThresholdsUpdateTime(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetRemainingCollateralizationThresholdsUpdateTimeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsGetAllowNewDeposits(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetAllowNewDepositsAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -773,13 +821,13 @@ func tbtcsGetNewDepositFeeEstimate(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsIsOwner(c *cli.Context) error {
+func tbtcsGetRemainingCollateralizationThresholdsUpdateTime(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.IsOwnerAtBlock(
+	result, err := contract.GetRemainingCollateralizationThresholdsUpdateTimeAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -793,141 +841,13 @@ func tbtcsIsOwner(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsGetUndercollateralizedThresholdPercent(c *cli.Context) error {
+func tbtcsGetPriceFeedGovernanceTimeDelay(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.GetUndercollateralizedThresholdPercentAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsKeepThreshold(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.KeepThresholdAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsApprovedToLog(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-	_caller, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _caller, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.ApprovedToLogAtBlock(
-		_caller,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsGetMinimumLotSize(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetMinimumLotSizeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsGetInitialCollateralizedPercent(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetInitialCollateralizedPercentAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsGetRemainingEthBtcPriceFeedAdditionTime(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetRemainingEthBtcPriceFeedAdditionTimeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tbtcsFetchBitcoinPrice(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.FetchBitcoinPriceAtBlock(
+	result, err := contract.GetPriceFeedGovernanceTimeDelayAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -948,6 +868,86 @@ func tbtcsFetchRelayCurrentDifficulty(c *cli.Context) error {
 	}
 
 	result, err := contract.FetchRelayCurrentDifficultyAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsGetAllowedLotSizes(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetAllowedLotSizesAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsGetSeverelyUndercollateralizedThresholdPercent(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetSeverelyUndercollateralizedThresholdPercentAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsGetSignerFeeDivisor(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetSignerFeeDivisorAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tbtcsGetRemainingEthBtcPriceFeedAdditionTime(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetRemainingEthBtcPriceFeedAdditionTimeAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -983,7 +983,7 @@ func tbtcsKeepSize(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func tbtcsRefreshMinimumBondableValue(c *cli.Context) error {
+func tbtcsFinalizeKeepFactoriesUpdate(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
@@ -995,7 +995,7 @@ func tbtcsRefreshMinimumBondableValue(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RefreshMinimumBondableValue()
+		transaction, err = contract.FinalizeKeepFactoriesUpdate()
 		if err != nil {
 			return err
 		}
@@ -1003,73 +1003,7 @@ func tbtcsRefreshMinimumBondableValue(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallRefreshMinimumBondableValue(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tbtcsResumeNewDeposits(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.ResumeNewDeposits()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallResumeNewDeposits(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tbtcsEmergencyPauseNewDeposits(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.EmergencyPauseNewDeposits()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallEmergencyPauseNewDeposits(
+		err = contract.CallFinalizeKeepFactoriesUpdate(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1146,16 +1080,49 @@ func tbtcsBeginKeepFactoriesUpdate(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsLogCreated(c *cli.Context) error {
+func tbtcsEmergencyPauseNewDeposits(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
 	}
 
-	_keepAddress, err := ethutil.AddressFromHex(c.Args()[0])
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.EmergencyPauseNewDeposits()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallEmergencyPauseNewDeposits(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tbtcsBeginEthBtcPriceFeedAddition(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	_ethBtcPriceFeed, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _keepAddress, a address, from passed value %v",
+			"couldn't parse parameter _ethBtcPriceFeed, a address, from passed value %v",
 			c.Args()[0],
 		)
 	}
@@ -1166,8 +1133,8 @@ func tbtcsLogCreated(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LogCreated(
-			_keepAddress,
+		transaction, err = contract.BeginEthBtcPriceFeedAddition(
+			_ethBtcPriceFeed,
 		)
 		if err != nil {
 			return err
@@ -1176,8 +1143,8 @@ func tbtcsLogCreated(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallLogCreated(
-			_keepAddress,
+		err = contract.CallBeginEthBtcPriceFeedAddition(
+			_ethBtcPriceFeed,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1190,10 +1157,18 @@ func tbtcsLogCreated(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsFinalizeEthBtcPriceFeedAddition(c *cli.Context) error {
+func tbtcsTransferOwnership(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
+	}
+
+	newOwner, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter newOwner, a address, from passed value %v",
+			c.Args()[0],
+		)
 	}
 
 	var (
@@ -1202,7 +1177,9 @@ func tbtcsFinalizeEthBtcPriceFeedAddition(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.FinalizeEthBtcPriceFeedAddition()
+		transaction, err = contract.TransferOwnership(
+			newOwner,
+		)
 		if err != nil {
 			return err
 		}
@@ -1210,7 +1187,8 @@ func tbtcsFinalizeEthBtcPriceFeedAddition(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallFinalizeEthBtcPriceFeedAddition(
+		err = contract.CallTransferOwnership(
+			newOwner,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1223,7 +1201,7 @@ func tbtcsFinalizeEthBtcPriceFeedAddition(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsFinalizeKeepFactoriesUpdate(c *cli.Context) error {
+func tbtcsFinalizeSignerFeeDivisorUpdate(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
@@ -1235,7 +1213,7 @@ func tbtcsFinalizeKeepFactoriesUpdate(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.FinalizeKeepFactoriesUpdate()
+		transaction, err = contract.FinalizeSignerFeeDivisorUpdate()
 		if err != nil {
 			return err
 		}
@@ -1243,7 +1221,139 @@ func tbtcsFinalizeKeepFactoriesUpdate(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallFinalizeKeepFactoriesUpdate(
+		err = contract.CallFinalizeSignerFeeDivisorUpdate(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tbtcsResumeNewDeposits(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.ResumeNewDeposits()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallResumeNewDeposits(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tbtcsRefreshMinimumBondableValue(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RefreshMinimumBondableValue()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallRefreshMinimumBondableValue(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tbtcsRenounceOwnership(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RenounceOwnership()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallRenounceOwnership(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tbtcsFinalizeCollateralizationThresholdsUpdate(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.FinalizeCollateralizationThresholdsUpdate()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallFinalizeCollateralizationThresholdsUpdate(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1322,115 +1432,16 @@ func tbtcsLogCourtesyCalled(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsRenounceOwnership(c *cli.Context) error {
+func tbtcsLogFunderRequestedAbort(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
 	}
 
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RenounceOwnership()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallRenounceOwnership(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tbtcsFinalizeSignerFeeDivisorUpdate(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.FinalizeSignerFeeDivisorUpdate()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallFinalizeSignerFeeDivisorUpdate(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tbtcsLogExitedCourtesyCall(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LogExitedCourtesyCall()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallLogExitedCourtesyCall(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tbtcsBeginEthBtcPriceFeedAddition(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	_ethBtcPriceFeed, err := ethutil.AddressFromHex(c.Args()[0])
+	_abortOutputScript, err := hexutil.Decode(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _ethBtcPriceFeed, a address, from passed value %v",
+			"couldn't parse parameter _abortOutputScript, a bytes, from passed value %v",
 			c.Args()[0],
 		)
 	}
@@ -1441,8 +1452,8 @@ func tbtcsBeginEthBtcPriceFeedAddition(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.BeginEthBtcPriceFeedAddition(
-			_ethBtcPriceFeed,
+		transaction, err = contract.LogFunderRequestedAbort(
+			_abortOutputScript,
 		)
 		if err != nil {
 			return err
@@ -1451,8 +1462,8 @@ func tbtcsBeginEthBtcPriceFeedAddition(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallBeginEthBtcPriceFeedAddition(
-			_ethBtcPriceFeed,
+		err = contract.CallLogFunderRequestedAbort(
+			_abortOutputScript,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1498,18 +1509,10 @@ func tbtcsLogSetupFailed(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsLogFunderRequestedAbort(c *cli.Context) error {
+func tbtcsLogFraudDuringSetup(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
-	}
-
-	_abortOutputScript, err := hexutil.Decode(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _abortOutputScript, a bytes, from passed value %v",
-			c.Args()[0],
-		)
 	}
 
 	var (
@@ -1518,9 +1521,7 @@ func tbtcsLogFunderRequestedAbort(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LogFunderRequestedAbort(
-			_abortOutputScript,
-		)
+		transaction, err = contract.LogFraudDuringSetup()
 		if err != nil {
 			return err
 		}
@@ -1528,8 +1529,7 @@ func tbtcsLogFunderRequestedAbort(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallLogFunderRequestedAbort(
-			_abortOutputScript,
+		err = contract.CallLogFraudDuringSetup(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1575,7 +1575,7 @@ func tbtcsLogLiquidated(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsLogFraudDuringSetup(c *cli.Context) error {
+func tbtcsLogExitedCourtesyCall(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
@@ -1587,7 +1587,7 @@ func tbtcsLogFraudDuringSetup(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LogFraudDuringSetup()
+		transaction, err = contract.LogExitedCourtesyCall()
 		if err != nil {
 			return err
 		}
@@ -1595,7 +1595,7 @@ func tbtcsLogFraudDuringSetup(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallLogFraudDuringSetup(
+		err = contract.CallLogExitedCourtesyCall(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1608,16 +1608,49 @@ func tbtcsLogFraudDuringSetup(c *cli.Context) error {
 	return nil
 }
 
-func tbtcsTransferOwnership(c *cli.Context) error {
+func tbtcsFinalizeEthBtcPriceFeedAddition(c *cli.Context) error {
 	contract, err := initializeTBTCSystem(c)
 	if err != nil {
 		return err
 	}
 
-	newOwner, err := ethutil.AddressFromHex(c.Args()[0])
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.FinalizeEthBtcPriceFeedAddition()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallFinalizeEthBtcPriceFeedAddition(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tbtcsLogCreated(c *cli.Context) error {
+	contract, err := initializeTBTCSystem(c)
+	if err != nil {
+		return err
+	}
+
+	_keepAddress, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter newOwner, a address, from passed value %v",
+			"couldn't parse parameter _keepAddress, a address, from passed value %v",
 			c.Args()[0],
 		)
 	}
@@ -1628,8 +1661,8 @@ func tbtcsTransferOwnership(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.TransferOwnership(
-			newOwner,
+		transaction, err = contract.LogCreated(
+			_keepAddress,
 		)
 		if err != nil {
 			return err
@@ -1638,41 +1671,8 @@ func tbtcsTransferOwnership(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallTransferOwnership(
-			newOwner,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tbtcsFinalizeCollateralizationThresholdsUpdate(c *cli.Context) error {
-	contract, err := initializeTBTCSystem(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.FinalizeCollateralizationThresholdsUpdate()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallFinalizeCollateralizationThresholdsUpdate(
+		err = contract.CallLogCreated(
+			_keepAddress,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
