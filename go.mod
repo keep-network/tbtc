@@ -1,4 +1,4 @@
-module github.com/keep-network/tbtc/go
+module github.com/keep-network/tbtc
 
 go 1.13
 
