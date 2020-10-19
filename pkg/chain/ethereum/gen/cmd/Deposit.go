@@ -52,24 +52,38 @@ func init() {
 		Usage:       `Provides access to the Deposit contract.`,
 		Description: depositDescription,
 		Subcommands: []cli.Command{{
-			Name:      "initial-collateralized-percent",
-			Usage:     "Calls the constant method initialCollateralizedPercent on the Deposit contract.",
+			Name:      "severely-undercollateralized-threshold-percent",
+			Usage:     "Calls the constant method severelyUndercollateralizedThresholdPercent on the Deposit contract.",
 			ArgsUsage: "",
-			Action:    dInitialCollateralizedPercent,
+			Action:    dSeverelyUndercollateralizedThresholdPercent,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "lot-size-tbtc",
-			Usage:     "Calls the constant method lotSizeTbtc on the Deposit contract.",
+			Name:      "lot-size-satoshis",
+			Usage:     "Calls the constant method lotSizeSatoshis on the Deposit contract.",
 			ArgsUsage: "",
-			Action:    dLotSizeTbtc,
+			Action:    dLotSizeSatoshis,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "signer-fee-tbtc",
-			Usage:     "Calls the constant method signerFeeTbtc on the Deposit contract.",
+			Name:      "current-state",
+			Usage:     "Calls the constant method currentState on the Deposit contract.",
 			ArgsUsage: "",
-			Action:    dSignerFeeTbtc,
+			Action:    dCurrentState,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "keep-address",
+			Usage:     "Calls the constant method keepAddress on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dKeepAddress,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "undercollateralized-threshold-percent",
+			Usage:     "Calls the constant method undercollateralizedThresholdPercent on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dUndercollateralizedThresholdPercent,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -87,17 +101,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-owner-redemption-tbtc-requirement",
-			Usage:     "Calls the constant method getOwnerRedemptionTbtcRequirement on the Deposit contract.",
-			ArgsUsage: "[_redeemer] ",
-			Action:    dGetOwnerRedemptionTbtcRequirement,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "lot-size-satoshis",
-			Usage:     "Calls the constant method lotSizeSatoshis on the Deposit contract.",
+			Name:      "funding-info",
+			Usage:     "Calls the constant method fundingInfo on the Deposit contract.",
 			ArgsUsage: "",
-			Action:    dLotSizeSatoshis,
+			Action:    dFundingInfo,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -108,24 +115,24 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "undercollateralized-threshold-percent",
-			Usage:     "Calls the constant method undercollateralizedThresholdPercent on the Deposit contract.",
+			Name:      "signer-fee-tbtc",
+			Usage:     "Calls the constant method signerFeeTbtc on the Deposit contract.",
 			ArgsUsage: "",
-			Action:    dUndercollateralizedThresholdPercent,
+			Action:    dSignerFeeTbtc,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "in-active",
-			Usage:     "Calls the constant method inActive on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dInActive,
-			Before:    cmd.ArgCountChecker(0),
+			Name:      "get-owner-redemption-tbtc-requirement",
+			Usage:     "Calls the constant method getOwnerRedemptionTbtcRequirement on the Deposit contract.",
+			ArgsUsage: "[_redeemer] ",
+			Action:    dGetOwnerRedemptionTbtcRequirement,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "funding-info",
-			Usage:     "Calls the constant method fundingInfo on the Deposit contract.",
+			Name:      "initial-collateralized-percent",
+			Usage:     "Calls the constant method initialCollateralizedPercent on the Deposit contract.",
 			ArgsUsage: "",
-			Action:    dFundingInfo,
+			Action:    dInitialCollateralizedPercent,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -136,18 +143,25 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
+			Name:      "in-active",
+			Usage:     "Calls the constant method inActive on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dInActive,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "lot-size-tbtc",
+			Usage:     "Calls the constant method lotSizeTbtc on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dLotSizeTbtc,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "get-redemption-tbtc-requirement",
 			Usage:     "Calls the constant method getRedemptionTbtcRequirement on the Deposit contract.",
 			ArgsUsage: "[_redeemer] ",
 			Action:    dGetRedemptionTbtcRequirement,
 			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "keep-address",
-			Usage:     "Calls the constant method keepAddress on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dKeepAddress,
-			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "utxo-value",
@@ -157,66 +171,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "current-state",
-			Usage:     "Calls the constant method currentState on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dCurrentState,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "severely-undercollateralized-threshold-percent",
-			Usage:     "Calls the constant method severelyUndercollateralizedThresholdPercent on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dSeverelyUndercollateralizedThresholdPercent,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "notify-courtesy-call",
-			Usage:     "Calls the method notifyCourtesyCall on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dNotifyCourtesyCall,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "notify-undercollateralized-liquidation",
-			Usage:     "Calls the method notifyUndercollateralizedLiquidation on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dNotifyUndercollateralizedLiquidation,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
 			Name:      "exit-courtesy-call",
 			Usage:     "Calls the method exitCourtesyCall on the Deposit contract.",
 			ArgsUsage: "",
 			Action:    dExitCourtesyCall,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "notify-courtesy-call-expired",
-			Usage:     "Calls the method notifyCourtesyCallExpired on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dNotifyCourtesyCallExpired,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "notify-redemption-proof-timed-out",
-			Usage:     "Calls the method notifyRedemptionProofTimedOut on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dNotifyRedemptionProofTimedOut,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "request-funder-abort",
-			Usage:     "Calls the method requestFunderAbort on the Deposit contract.",
-			ArgsUsage: "[_abortOutputScript] ",
-			Action:    dRequestFunderAbort,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "retrieve-signer-pubkey",
-			Usage:     "Calls the method retrieveSignerPubkey on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dRetrieveSignerPubkey,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -227,6 +185,41 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
+			Name:      "notify-undercollateralized-liquidation",
+			Usage:     "Calls the method notifyUndercollateralizedLiquidation on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dNotifyUndercollateralizedLiquidation,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "notify-redemption-proof-timed-out",
+			Usage:     "Calls the method notifyRedemptionProofTimedOut on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dNotifyRedemptionProofTimedOut,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "notify-signer-setup-failed",
+			Usage:     "Calls the method notifySignerSetupFailed on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dNotifySignerSetupFailed,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "request-funder-abort",
+			Usage:     "Calls the method requestFunderAbort on the Deposit contract.",
+			ArgsUsage: "[_abortOutputScript] ",
+			Action:    dRequestFunderAbort,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "notify-courtesy-call-expired",
+			Usage:     "Calls the method notifyCourtesyCallExpired on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dNotifyCourtesyCallExpired,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
 			Name:      "purchase-signer-bonds-at-auction",
 			Usage:     "Calls the method purchaseSignerBondsAtAuction on the Deposit contract.",
 			ArgsUsage: "",
@@ -234,17 +227,10 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "notify-redemption-signature-timed-out",
-			Usage:     "Calls the method notifyRedemptionSignatureTimedOut on the Deposit contract.",
+			Name:      "retrieve-signer-pubkey",
+			Usage:     "Calls the method retrieveSignerPubkey on the Deposit contract.",
 			ArgsUsage: "",
-			Action:    dNotifyRedemptionSignatureTimedOut,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw-funds",
-			Usage:     "Calls the method withdrawFunds on the Deposit contract.",
-			ArgsUsage: "",
-			Action:    dWithdrawFunds,
+			Action:    dRetrieveSignerPubkey,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -255,10 +241,24 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "notify-signer-setup-failed",
-			Usage:     "Calls the method notifySignerSetupFailed on the Deposit contract.",
+			Name:      "notify-redemption-signature-timed-out",
+			Usage:     "Calls the method notifyRedemptionSignatureTimedOut on the Deposit contract.",
 			ArgsUsage: "",
-			Action:    dNotifySignerSetupFailed,
+			Action:    dNotifyRedemptionSignatureTimedOut,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "notify-courtesy-call",
+			Usage:     "Calls the method notifyCourtesyCall on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dNotifyCourtesyCall,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "withdraw-funds",
+			Usage:     "Calls the method withdrawFunds on the Deposit contract.",
+			ArgsUsage: "",
+			Action:    dWithdrawFunds,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}},
@@ -267,13 +267,13 @@ func init() {
 
 /// ------------------- Const methods -------------------
 
-func dInitialCollateralizedPercent(c *cli.Context) error {
+func dSeverelyUndercollateralizedThresholdPercent(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.InitialCollateralizedPercentAtBlock(
+	result, err := contract.SeverelyUndercollateralizedThresholdPercentAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -287,13 +287,13 @@ func dInitialCollateralizedPercent(c *cli.Context) error {
 	return nil
 }
 
-func dLotSizeTbtc(c *cli.Context) error {
+func dLotSizeSatoshis(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.LotSizeTbtcAtBlock(
+	result, err := contract.LotSizeSatoshisAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -307,13 +307,53 @@ func dLotSizeTbtc(c *cli.Context) error {
 	return nil
 }
 
-func dSignerFeeTbtc(c *cli.Context) error {
+func dCurrentState(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.SignerFeeTbtcAtBlock(
+	result, err := contract.CurrentStateAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func dKeepAddress(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.KeepAddressAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func dUndercollateralizedThresholdPercent(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.UndercollateralizedThresholdPercentAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -367,41 +407,13 @@ func dCollateralizationPercentage(c *cli.Context) error {
 	return nil
 }
 
-func dGetOwnerRedemptionTbtcRequirement(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-	_redeemer, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _redeemer, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.GetOwnerRedemptionTbtcRequirementAtBlock(
-		_redeemer,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func dLotSizeSatoshis(c *cli.Context) error {
+func dFundingInfo(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.LotSizeSatoshisAtBlock(
+	result, err := contract.FundingInfoAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -435,13 +447,81 @@ func dAuctionValue(c *cli.Context) error {
 	return nil
 }
 
-func dUndercollateralizedThresholdPercent(c *cli.Context) error {
+func dSignerFeeTbtc(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.UndercollateralizedThresholdPercentAtBlock(
+	result, err := contract.SignerFeeTbtcAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func dGetOwnerRedemptionTbtcRequirement(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+	_redeemer, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _redeemer, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GetOwnerRedemptionTbtcRequirementAtBlock(
+		_redeemer,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func dInitialCollateralizedPercent(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.InitialCollateralizedPercentAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func dRemainingTerm(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.RemainingTermAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -475,33 +555,13 @@ func dInActive(c *cli.Context) error {
 	return nil
 }
 
-func dFundingInfo(c *cli.Context) error {
+func dLotSizeTbtc(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.FundingInfoAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func dRemainingTerm(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.RemainingTermAtBlock(
+	result, err := contract.LotSizeTbtcAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -543,26 +603,6 @@ func dGetRedemptionTbtcRequirement(c *cli.Context) error {
 	return nil
 }
 
-func dKeepAddress(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.KeepAddressAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
 func dUtxoValue(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
@@ -583,49 +623,9 @@ func dUtxoValue(c *cli.Context) error {
 	return nil
 }
 
-func dCurrentState(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.CurrentStateAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func dSeverelyUndercollateralizedThresholdPercent(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.SeverelyUndercollateralizedThresholdPercentAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
 /// ------------------- Non-const methods -------------------
 
-func dNotifyCourtesyCall(c *cli.Context) error {
+func dExitCourtesyCall(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
@@ -637,7 +637,7 @@ func dNotifyCourtesyCall(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.NotifyCourtesyCall()
+		transaction, err = contract.ExitCourtesyCall()
 		if err != nil {
 			return err
 		}
@@ -645,7 +645,40 @@ func dNotifyCourtesyCall(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallNotifyCourtesyCall(
+		err = contract.CallExitCourtesyCall(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func dNotifyFundingTimedOut(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.NotifyFundingTimedOut()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallNotifyFundingTimedOut(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -691,72 +724,6 @@ func dNotifyUndercollateralizedLiquidation(c *cli.Context) error {
 	return nil
 }
 
-func dExitCourtesyCall(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.ExitCourtesyCall()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallExitCourtesyCall(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func dNotifyCourtesyCallExpired(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.NotifyCourtesyCallExpired()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallNotifyCourtesyCallExpired(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
 func dNotifyRedemptionProofTimedOut(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
@@ -778,6 +745,39 @@ func dNotifyRedemptionProofTimedOut(c *cli.Context) error {
 	} else {
 		// Do a call.
 		err = contract.CallNotifyRedemptionProofTimedOut(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func dNotifySignerSetupFailed(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.NotifySignerSetupFailed()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallNotifySignerSetupFailed(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -834,7 +834,7 @@ func dRequestFunderAbort(c *cli.Context) error {
 	return nil
 }
 
-func dRetrieveSignerPubkey(c *cli.Context) error {
+func dNotifyCourtesyCallExpired(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
@@ -846,7 +846,7 @@ func dRetrieveSignerPubkey(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RetrieveSignerPubkey()
+		transaction, err = contract.NotifyCourtesyCallExpired()
 		if err != nil {
 			return err
 		}
@@ -854,40 +854,7 @@ func dRetrieveSignerPubkey(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallRetrieveSignerPubkey(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func dNotifyFundingTimedOut(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.NotifyFundingTimedOut()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallNotifyFundingTimedOut(
+		err = contract.CallNotifyCourtesyCallExpired(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -933,7 +900,7 @@ func dPurchaseSignerBondsAtAuction(c *cli.Context) error {
 	return nil
 }
 
-func dNotifyRedemptionSignatureTimedOut(c *cli.Context) error {
+func dRetrieveSignerPubkey(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
@@ -945,7 +912,7 @@ func dNotifyRedemptionSignatureTimedOut(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.NotifyRedemptionSignatureTimedOut()
+		transaction, err = contract.RetrieveSignerPubkey()
 		if err != nil {
 			return err
 		}
@@ -953,40 +920,7 @@ func dNotifyRedemptionSignatureTimedOut(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallNotifyRedemptionSignatureTimedOut(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func dWithdrawFunds(c *cli.Context) error {
-	contract, err := initializeDeposit(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.WithdrawFunds()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallWithdrawFunds(
+		err = contract.CallRetrieveSignerPubkey(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1043,7 +977,7 @@ func dInitialize(c *cli.Context) error {
 	return nil
 }
 
-func dNotifySignerSetupFailed(c *cli.Context) error {
+func dNotifyRedemptionSignatureTimedOut(c *cli.Context) error {
 	contract, err := initializeDeposit(c)
 	if err != nil {
 		return err
@@ -1055,7 +989,7 @@ func dNotifySignerSetupFailed(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.NotifySignerSetupFailed()
+		transaction, err = contract.NotifyRedemptionSignatureTimedOut()
 		if err != nil {
 			return err
 		}
@@ -1063,7 +997,73 @@ func dNotifySignerSetupFailed(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallNotifySignerSetupFailed(
+		err = contract.CallNotifyRedemptionSignatureTimedOut(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func dNotifyCourtesyCall(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.NotifyCourtesyCall()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallNotifyCourtesyCall(
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func dWithdrawFunds(c *cli.Context) error {
+	contract, err := initializeDeposit(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.WithdrawFunds()
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallWithdrawFunds(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
