@@ -1,9 +1,15 @@
+# Environment `SOLIDITY_DIR` provides the solidity directory as a
+# potentially-relative path, which we resolve. However, because
+# Solidity files are grouped into separate subdirectories, specific
+# files must be provided explicitly via `SOLIDITY_FILES` variable
+# to handle them in a correct way.
 solidity_dir=$(realpath ${SOLIDITY_DIR})
 solidity_files := $(foreach file,${SOLIDITY_FILES},$(file))
 
 # Solidity filenames without .sol with subdirectories prefixes.
 contract_stems := $(basename $(solidity_files))
-
+# Go abigen bindings in abi/ subdirectory with .go suffix, alongside solc ABI
+# files with .abi suffix.
 abi_files := $(addprefix abi/,$(addsuffix .abi,$(contract_stems)))
 abigen_files := $(addprefix abi/,$(addsuffix .go,$(contract_stems)))
 contract_files := $(addprefix contract/,$(addsuffix .go,$(contract_stems)))
