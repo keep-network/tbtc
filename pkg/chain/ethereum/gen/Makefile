@@ -44,10 +44,10 @@ abi/%.go: abi/%.abi
 	go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $(type) --out $@
 
 contract/deposit/Deposit.go cmd/deposit/Deposit.go: abi/deposit/Deposit.abi abi/deposit/Deposit.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/Deposit.go cmd/Deposit.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/Deposit.go
 
 contract/system/TBTCSystem.go cmd/system/TBTCSystem.go: abi/system/TBTCSystem.abi abi/system/TBTCSystem.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/TBTCSystem.go cmd/TBTCSystem.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/TBTCSystem.go
 
 
 
