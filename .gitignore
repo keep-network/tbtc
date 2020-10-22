@@ -16,6 +16,7 @@ __pycache__/
 node_modules/
 artifacts/
 .mypy_cache
+pkg/chain/ethereum/gen/abi/**/*.abi
 
 # Visual Studio Code
 *.code-workspace
