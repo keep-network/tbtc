@@ -36,6 +36,7 @@ type TBTCSystemRedemptionRequested struct {
 	RedeemerOutputScript   []byte
 	RequestedFee           *big.Int
 	Outpoint               []byte
+	BlockNumber            uint64
 }
 
 func (tsf *TBTCSystemFilterer) FilterRedemptionRequested(
@@ -72,6 +73,7 @@ func (tsf *TBTCSystemFilterer) FilterRedemptionRequested(
 			RedeemerOutputScript:   event.RedeemerOutputScript,
 			RequestedFee:           event.RequestedFee,
 			Outpoint:               event.Outpoint,
+			BlockNumber:            event.Raw.BlockNumber,
 		})
 	}
 
