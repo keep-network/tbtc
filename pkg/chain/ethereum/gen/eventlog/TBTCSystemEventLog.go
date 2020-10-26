@@ -1,4 +1,4 @@
-package filterer
+package eventlog
 
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -8,24 +8,24 @@ import (
 )
 
 // FIXME: This is a temporary structure allowing to access past events
-//  emitted by the `TBTCSystemFilterer` contract. This structure is
-//  here because the generated contract wrappers from `gen/contract`
-//  don't support `Filter*` methods yet. When the contract generator
-//  will support those methods, the below structure can be removed.
-type TBTCSystemFilterer struct {
+//  emitted by the `TBTCSystem` contract. This structure is here because
+//  the generated contract wrappers from `gen/contract` don't support
+//  `Filter*` methods yet. When the contract generator will support
+//  those methods, the below structure can be removed.
+type TBTCSystemEventLog struct {
 	contract *abi.TBTCSystem
 }
 
-func NewTBTCSystemFilterer(
+func NewTBTCSystemEventLog(
 	contractAddress common.Address,
 	backend bind.ContractBackend,
-) (*TBTCSystemFilterer, error) {
+) (*TBTCSystemEventLog, error) {
 	contract, err := abi.NewTBTCSystem(contractAddress, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	return &TBTCSystemFilterer{contract}, nil
+	return &TBTCSystemEventLog{contract}, nil
 }
 
 type TBTCSystemRedemptionRequested struct {
@@ -39,12 +39,12 @@ type TBTCSystemRedemptionRequested struct {
 	BlockNumber            uint64
 }
 
-func (tsf *TBTCSystemFilterer) FilterRedemptionRequested(
+func (tsel *TBTCSystemEventLog) PastRedemptionRequestedEvents(
 	depositsAddresses []common.Address,
 	startBlock uint64,
 	endBlock *uint64,
 ) ([]*TBTCSystemRedemptionRequested, error) {
-	iterator, err := tsf.contract.FilterRedemptionRequested(
+	iterator, err := tsel.contract.FilterRedemptionRequested(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
