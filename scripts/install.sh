@@ -23,6 +23,7 @@ KEEP_ECDSA_SOL_ARTIFACTS_PATH=$(realpath $KEEP_ECDSA_SOL_PATH/build/contracts)
 cd $TBTC_SOL_PATH
 
 printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
+rm -rf node_modules
 npm install
 
 printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
