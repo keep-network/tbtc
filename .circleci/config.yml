@@ -88,7 +88,6 @@ jobs:
             apt-get update
             apt-get install jq -y
 
-            export BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
             solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
