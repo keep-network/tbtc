@@ -84,6 +84,10 @@ jobs:
       - run:
           name: Provision External Contract Addresses
           command: |
+            # This needs to be part of a base docker image, not installed here.
+            apt-get update
+            apt-get install jq -y
+
             export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
             export BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
             solidity/scripts/circleci-provision-external-contracts.sh
