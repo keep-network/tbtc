@@ -137,9 +137,6 @@ jobs:
             # Consider including commit id? Would be +<commit id>.
             npm version prerelease --preid=$preid --no-git-tag-version
 
-            # Fix resolved dependency versions.
-            npm update
-
             # Publish to npm.
             echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
             npm publish --access=public
