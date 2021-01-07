@@ -18,6 +18,20 @@ executors:
     docker:
       - image: thesisco/docker-buildpack:bionic
 jobs:
+  resolve_latest:
+    executor: docker-node
+    steps:
+      - checkout
+      - run:
+          name: Resolve latest keep-ecdsa
+          working_directory: ~/project/solidity
+          command: npm update @keep-network/keep-ecdsa
+      - persist_to_workspace:
+          root: .
+          paths:
+            - solidity/package.json
+            - solidity/package-lock.json
+
   compile_contracts:
     executor: docker-node
     steps:
@@ -130,9 +144,6 @@ jobs:
             # Consider including commit id? Would be +<commit id>.
             npm version prerelease --preid=$preid --no-git-tag-version
 
-            # Fix resolved dependency versions.
-            npm update
-
             # Publish to npm.
             echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
             npm publish --access=public
@@ -232,14 +243,22 @@ workflows:
               only: /^v.*/
             branches:
               only: /releases\/.*/
-      - compile_contracts:
-          requires:
-            - keep_test_approval
+      - resolve_latest:
           filters:
             tags:
               only: /^v.*/
             branches:
               only: /releases\/.*/
+          requires:
+            - keep_test_approval
+      - compile_contracts:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - resolve_latest
       - migrate_contracts:
           filters:
             tags:
