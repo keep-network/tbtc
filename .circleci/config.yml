@@ -24,21 +24,14 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-
-      - restore_cache:
-          keys:
-            # When lock file changes, use increasingly general patterns to restore cache.
-            - v1-client-npm-deps-{{ .Branch }}-{{ checksum "solidity/package-lock.json" }}
-            - v1-client-npm-deps-{{ .Branch }}-
-            - v1-client-npm-deps-
-      - run: cd solidity && npm ci
-      - save_cache:
-          key: v1-client-npm-deps-{{ .Branch }}-{{ checksum "solidity/package-lock.json" }}
-          paths:
-            - solidity/node_modules
-
-      - run: cd solidity && node_modules/.bin/truffle compile
-
+      - run:
+          name: Install dependencies
+          working_directory: ~/project/solidity
+          command: npm ci
+      - run:
+          name: Compile contracts
+          working_directory: ~/project/solidity
+          command: npx truffle compile
       # Persist for downstream use.
       - persist_to_workspace:
           root: .
