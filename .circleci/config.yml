@@ -99,6 +99,11 @@ jobs:
           at: /tmp/tbtc
       - checkout
       - run:
+          name: Update dependencies
+          working_directory: ~/project/solidity
+          command: |
+            npm update @keep-network/keep-ecdsa
+      - run:
           name: Bump and publish npm package
           working_directory: ~/project/solidity
           command: |
