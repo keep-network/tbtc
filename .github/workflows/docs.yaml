@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build HTML docs
       id: html
-      uses: thesis/asciidoctor-action@v1
+      uses: thesis/asciidoctor-action@v1.0.1
       with:
         files: 'docs/*.adoc docs/**/*.adoc'
         args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
@@ -50,7 +50,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build HTML docs
       id: html
-      uses: thesis/asciidoctor-action@v1
+      uses: thesis/asciidoctor-action@v1.0.1
       with:
         files: 'docs/*.adoc docs/**/*.adoc'
         format: pdf
