@@ -18,6 +18,20 @@ executors:
     docker:
       - image: thesisco/docker-buildpack:bionic
 jobs:
+  resolve_latest:
+    executor: docker-node
+    steps:
+      - checkout
+      - run:
+          name: Resolve latest keep-ecdsa
+          working_directory: ~/project/solidity
+          command: npm update @keep-network/keep-ecdsa
+      - persist_to_workspace:
+          root: .
+          paths:
+            - solidity/package.json
+            - solidity/package-lock.json
+
   compile_contracts:
     executor: docker-node
     steps:
@@ -98,11 +112,6 @@ jobs:
       - attach_workspace:
           at: /tmp/tbtc
       - checkout
-      - run:
-          name: Update dependencies
-          working_directory: ~/project/solidity
-          command: |
-            npm update @keep-network/keep-ecdsa
       - run:
           name: Bump and publish npm package
           working_directory: ~/project/solidity
@@ -234,14 +243,22 @@ workflows:
               only: /^v.*/
             branches:
               only: /releases\/.*/
-      - compile_contracts:
-          requires:
-            - keep_test_approval
+      - resolve_latest:
           filters:
             tags:
               only: /^v.*/
             branches:
               only: /releases\/.*/
+          requires:
+            - keep_test_approval
+      - compile_contracts:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - resolve_latest
       - migrate_contracts:
           filters:
             tags:
