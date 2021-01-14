@@ -8,6 +8,9 @@ executors:
   docker-node:
     docker:
       - image: circleci/node:12
+  docker-node-gcloud:
+    docker:
+      - image: appfarm/node-gcloud-base
   docker-git:
     docker:
       - image: docker:18.06.0-ce-git
@@ -15,27 +18,34 @@ executors:
     docker:
       - image: thesisco/docker-buildpack:bionic
 jobs:
+  resolve_latest:
+    executor: docker-node
+    steps:
+      - checkout
+      - run:
+          name: Resolve latest keep-ecdsa
+          working_directory: ~/project/solidity
+          command: npm update @keep-network/keep-ecdsa
+      - persist_to_workspace:
+          root: .
+          paths:
+            - solidity/package.json
+            - solidity/package-lock.json
+
   compile_contracts:
     executor: docker-node
     steps:
       - checkout
       - attach_workspace:
           at: .
-
-      - restore_cache:
-          keys:
-            # When lock file changes, use increasingly general patterns to restore cache.
-            - v1-client-npm-deps-{{ .Branch }}-{{ checksum "solidity/package-lock.json" }}
-            - v1-client-npm-deps-{{ .Branch }}-
-            - v1-client-npm-deps-
-      - run: cd solidity && npm ci
-      - save_cache:
-          key: v1-client-npm-deps-{{ .Branch }}-{{ checksum "solidity/package-lock.json" }}
-          paths:
-            - solidity/node_modules
-
-      - run: cd solidity && node_modules/.bin/truffle compile
-
+      - run:
+          name: Install dependencies
+          working_directory: ~/project/solidity
+          command: npm ci
+      - run:
+          name: Compile contracts
+          working_directory: ~/project/solidity
+          command: npx truffle compile
       # Persist for downstream use.
       - persist_to_workspace:
           root: .
@@ -66,7 +76,7 @@ jobs:
           working_directory: ~/project/solidity
           command: npm run test:quick
   migrate_contracts:
-    executor: docker-thesis-buildpack
+    executor: docker-node-gcloud
     steps:
       - checkout
       - setup_remote_docker:
@@ -74,26 +84,23 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Remove Installed node_module
-          working_directory: ~/project/solidity
-          command: |
-            rm -rf node_modules
-      - run:
-          name: Provision External Contract Addresses
+          name: Set Gcloud Auth for bucket access
           command: |
             echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
-            export UNISWAP_CONTRACT_DATA="uniswap-contract-data.txt"
-            export BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
+      - run:
+          name: Provision External Contract Addresses
+          command: |
+            # This needs to be part of a base docker image, not installed here.
+            apt-get update
+            apt-get install jq -y
+
             solidity/scripts/circleci-provision-external-contracts.sh
       - run:
           name: Migrate Contracts
           command: |
-            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
-            mkdir -p /tmp/tbtc/contracts
             solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/tbtc
@@ -136,9 +143,6 @@ jobs:
             # Bump without doing any git work. Versioning is a build-time action for us.
             # Consider including commit id? Would be +<commit id>.
             npm version prerelease --preid=$preid --no-git-tag-version
-
-            # Fix resolved dependency versions.
-            npm update
 
             # Publish to npm.
             echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
@@ -239,14 +243,22 @@ workflows:
               only: /^v.*/
             branches:
               only: /releases\/.*/
-      - compile_contracts:
-          requires:
-            - keep_test_approval
+      - resolve_latest:
           filters:
             tags:
               only: /^v.*/
             branches:
               only: /releases\/.*/
+          requires:
+            - keep_test_approval
+      - compile_contracts:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - resolve_latest
       - migrate_contracts:
           filters:
             tags:

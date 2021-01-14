@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 
+BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA="BondedECDSAKeepFactory.json"
+
 # BondedECDSAKeepFactoryAddress: Migration from keep-network/keep-ecdsa
 # BONDED_ECDSA_KEEP_FACTORY_CONTRACT_DATA is set in the CircleCI job config
 # ETH_NETWORK_ID is set in the CircleCI context for each deployed environment

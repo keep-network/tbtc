@@ -51,6 +51,9 @@ const DepositFactory = artifacts.require("DepositFactory")
 const FundingScript = artifacts.require("FundingScript")
 const RedemptionScript = artifacts.require("RedemptionScript")
 
+// bitcoin difficulty relay
+const {RopstenTestnetRelay} = require("./externals")
+
 const all = [
   BytesLib,
   BTCUtils,
@@ -106,7 +109,6 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(OutsourceDepositLogging)
     await deployer.link(OutsourceDepositLogging, all)
 
-    let difficultyRelay
     // price feeds
     if (network !== "mainnet") {
       // On mainnet, we use the MakerDAO-deployed price feed.
@@ -118,6 +120,8 @@ module.exports = (deployer, network, accounts) => {
       await ethBtcPriceFeedMock.setValue(prices.ethBtc)
     }
 
+    // bitcoin difficulty relay
+    let difficultyRelayAddress
     // On mainnet and Ropsten, we use the Summa-built, Keep-operated relay;
     // see https://github.com/summa-tx/relays . On testnet, we use a local
     // mock.
@@ -125,27 +129,33 @@ module.exports = (deployer, network, accounts) => {
       const {genesis, height, epochStart} = relayConfig.init.bitcoinMain
 
       await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
-      difficultyRelay = await OnDemandSPV.deployed()
+      const difficultyRelay = await OnDemandSPV.deployed()
+      difficultyRelayAddress = difficultyRelay.address
+    } else if (network === "ropsten") {
+      difficultyRelayAddress = RopstenTestnetRelay
     } else if (
       network === "keep_dev" ||
-      network === "ropsten" ||
       relayConfig.forceRelay === "TestnetRelay"
     ) {
       const {genesis, height, epochStart} = relayConfig.init.bitcoinTest
 
       await deployer.deploy(TestnetRelay, genesis, height, epochStart, 0)
-      difficultyRelay = await TestnetRelay.deployed()
+      const difficultyRelay = await TestnetRelay.deployed()
+      difficultyRelayAddress = difficultyRelay.address
     } else {
       await deployer.deploy(MockRelay)
-      difficultyRelay = await MockRelay.deployed()
+      const difficultyRelay = await MockRelay.deployed()
+      difficultyRelayAddress = difficultyRelay.address
     }
 
-    await deployer.deploy(SatWeiPriceFeed)
-
-    if (!difficultyRelay) {
+    if (!difficultyRelayAddress) {
       throw new Error("Difficulty relay not found.")
     }
 
+    // satwei price feed
+    await deployer.deploy(SatWeiPriceFeed)
+
+    // keep factory selection
     await deployer.deploy(KeepFactorySelection)
     await deployer.link(KeepFactorySelection, TBTCSystem)
 
@@ -153,7 +163,7 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(
       TBTCSystem,
       SatWeiPriceFeed.address,
-      difficultyRelay.address,
+      difficultyRelayAddress,
     )
 
     await deployer.deploy(DepositFactory, TBTCSystem.address)

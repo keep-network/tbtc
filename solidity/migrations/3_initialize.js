@@ -83,5 +83,9 @@ module.exports = async function(deployer, network, accounts) {
   const sortitionPoolContractAddress = await BondedECDSAKeepFactory.getSortitionPool.call(
     TBTCSystem.address,
   )
-  console.log(`sortition pool address: [${sortitionPoolContractAddress}]`)
+  console.log(`Sortition pool address: [${sortitionPoolContractAddress}]`)
+
+  // Initialize minimum bondable value in newly created sortition pool.
+  console.log("Refreshing minimum bondable value")
+  await tbtcSystem.refreshMinimumBondableValue()
 }
