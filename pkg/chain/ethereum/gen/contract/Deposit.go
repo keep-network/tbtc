@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 	"sync"
+	"time"
 
 	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	abi "github.com/keep-network/tbtc/pkg/chain/ethereum/gen/abi/deposit"
 )
@@ -25,6 +27,21 @@ import (
 // package level so that the logger is registered at startup and can be
 // included or excluded from logging at startup by name.
 var dLogger = log.Logger("keep-contract-Deposit")
+
+const (
+	// Maximum backoff time between event resubscription attempts.
+	dSubscriptionBackoffMax = 2 * time.Minute
+
+	// Threshold below which event resubscription emits an error to the logs.
+	// WS connection can be dropped at any moment and event resubscription will
+	// follow. However, if WS connection for event subscription is getting
+	// dropped too often, it may indicate something is wrong with Ethereum
+	// client. This constant defines the minimum lifetime of an event
+	// subscription required before the subscription failure happens and
+	// resubscription follows so that the resubscription does not emit an error
+	// to the logs alerting about potential problems with Ethereum client.
+	dSubscriptionAlertThreshold = 15 * time.Minute
+)
 
 type Deposit struct {
 	contract          *abi.Deposit
@@ -37,6 +54,7 @@ type Deposit struct {
 	errorResolver     *ethutil.ErrorResolver
 	nonceManager      *ethutil.NonceManager
 	miningWaiter      *ethutil.MiningWaiter
+	blockCounter      *blockcounter.EthereumBlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -47,6 +65,7 @@ func NewDeposit(
 	backend bind.ContractBackend,
 	nonceManager *ethutil.NonceManager,
 	miningWaiter *ethutil.MiningWaiter,
+	blockCounter *blockcounter.EthereumBlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*Deposit, error) {
 	callerOptions := &bind.CallOpts{
@@ -85,6 +104,7 @@ func NewDeposit(
 		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
 		nonceManager:      nonceManager,
 		miningWaiter:      miningWaiter,
+		blockCounter:      blockCounter,
 		transactionMutex:  transactionMutex,
 	}, nil
 }
@@ -92,19 +112,12 @@ func NewDeposit(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (d *Deposit) RequestRedemption(
-	_outputValueBytes [8]uint8,
-	_redeemerOutputScript []uint8,
+func (d *Deposit) NotifyRedemptionProofTimedOut(
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	dLogger.Debug(
-		"submitting transaction requestRedemption",
-		"params: ",
-		fmt.Sprint(
-			_outputValueBytes,
-			_redeemerOutputScript,
-		),
+		"submitting transaction notifyRedemptionProofTimedOut",
 	)
 
 	d.transactionMutex.Lock()
@@ -129,24 +142,20 @@ func (d *Deposit) RequestRedemption(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := d.contract.RequestRedemption(
+	transaction, err := d.contract.NotifyRedemptionProofTimedOut(
 		transactorOptions,
-		_outputValueBytes,
-		_redeemerOutputScript,
 	)
 	if err != nil {
 		return transaction, d.errorResolver.ResolveError(
 			err,
 			d.transactorOptions.From,
 			nil,
-			"requestRedemption",
-			_outputValueBytes,
-			_redeemerOutputScript,
+			"notifyRedemptionProofTimedOut",
 		)
 	}
 
 	dLogger.Infof(
-		"submitted transaction requestRedemption with id: [%v] and nonce [%v]",
+		"submitted transaction notifyRedemptionProofTimedOut with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -157,24 +166,20 @@ func (d *Deposit) RequestRedemption(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := d.contract.RequestRedemption(
+			transaction, err := d.contract.NotifyRedemptionProofTimedOut(
 				transactorOptions,
-				_outputValueBytes,
-				_redeemerOutputScript,
 			)
 			if err != nil {
 				return transaction, d.errorResolver.ResolveError(
 					err,
 					d.transactorOptions.From,
 					nil,
-					"requestRedemption",
-					_outputValueBytes,
-					_redeemerOutputScript,
+					"notifyRedemptionProofTimedOut",
 				)
 			}
 
 			dLogger.Infof(
-				"submitted transaction requestRedemption with id: [%v] and nonce [%v]",
+				"submitted transaction notifyRedemptionProofTimedOut with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -189,9 +194,7 @@ func (d *Deposit) RequestRedemption(
 }
 
 // Non-mutating call, not a transaction submission.
-func (d *Deposit) CallRequestRedemption(
-	_outputValueBytes [8]uint8,
-	_redeemerOutputScript []uint8,
+func (d *Deposit) CallNotifyRedemptionProofTimedOut(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -203,214 +206,22 @@ func (d *Deposit) CallRequestRedemption(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"requestRedemption",
+		"notifyRedemptionProofTimedOut",
 		&result,
-		_outputValueBytes,
-		_redeemerOutputScript,
 	)
 
 	return err
 }
 
-func (d *Deposit) RequestRedemptionGasEstimate(
-	_outputValueBytes [8]uint8,
-	_redeemerOutputScript []uint8,
-) (uint64, error) {
+func (d *Deposit) NotifyRedemptionProofTimedOutGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		d.callerOptions.From,
 		d.contractAddress,
-		"requestRedemption",
+		"notifyRedemptionProofTimedOut",
 		d.contractABI,
 		d.transactor,
-		_outputValueBytes,
-		_redeemerOutputScript,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) InitializeDeposit(
-	_tbtcSystem common.Address,
-	_tbtcToken common.Address,
-	_tbtcDepositToken common.Address,
-	_feeRebateToken common.Address,
-	_vendingMachineAddress common.Address,
-	_lotSizeSatoshis uint64,
-	value *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction initializeDeposit",
-		"params: ",
-		fmt.Sprint(
-			_tbtcSystem,
-			_tbtcToken,
-			_tbtcDepositToken,
-			_feeRebateToken,
-			_vendingMachineAddress,
-			_lotSizeSatoshis,
-		),
-		"value: ", value,
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	transactorOptions.Value = value
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.InitializeDeposit(
-		transactorOptions,
-		_tbtcSystem,
-		_tbtcToken,
-		_tbtcDepositToken,
-		_feeRebateToken,
-		_vendingMachineAddress,
-		_lotSizeSatoshis,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			value,
-			"initializeDeposit",
-			_tbtcSystem,
-			_tbtcToken,
-			_tbtcDepositToken,
-			_feeRebateToken,
-			_vendingMachineAddress,
-			_lotSizeSatoshis,
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction initializeDeposit with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.InitializeDeposit(
-				transactorOptions,
-				_tbtcSystem,
-				_tbtcToken,
-				_tbtcDepositToken,
-				_feeRebateToken,
-				_vendingMachineAddress,
-				_lotSizeSatoshis,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					value,
-					"initializeDeposit",
-					_tbtcSystem,
-					_tbtcToken,
-					_tbtcDepositToken,
-					_feeRebateToken,
-					_vendingMachineAddress,
-					_lotSizeSatoshis,
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction initializeDeposit with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallInitializeDeposit(
-	_tbtcSystem common.Address,
-	_tbtcToken common.Address,
-	_tbtcDepositToken common.Address,
-	_feeRebateToken common.Address,
-	_vendingMachineAddress common.Address,
-	_lotSizeSatoshis uint64,
-	value *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, value,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"initializeDeposit",
-		&result,
-		_tbtcSystem,
-		_tbtcToken,
-		_tbtcDepositToken,
-		_feeRebateToken,
-		_vendingMachineAddress,
-		_lotSizeSatoshis,
-	)
-
-	return err
-}
-
-func (d *Deposit) InitializeDepositGasEstimate(
-	_tbtcSystem common.Address,
-	_tbtcToken common.Address,
-	_tbtcDepositToken common.Address,
-	_feeRebateToken common.Address,
-	_vendingMachineAddress common.Address,
-	_lotSizeSatoshis uint64,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"initializeDeposit",
-		d.contractABI,
-		d.transactor,
-		_tbtcSystem,
-		_tbtcToken,
-		_tbtcDepositToken,
-		_feeRebateToken,
-		_vendingMachineAddress,
-		_lotSizeSatoshis,
 	)
 
 	return result, err
@@ -525,122 +336,6 @@ func (d *Deposit) NotifySignerSetupFailedGasEstimate() (uint64, error) {
 		d.callerOptions.From,
 		d.contractAddress,
 		"notifySignerSetupFailed",
-		d.contractABI,
-		d.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) ExitCourtesyCall(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction exitCourtesyCall",
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.ExitCourtesyCall(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"exitCourtesyCall",
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction exitCourtesyCall with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.ExitCourtesyCall(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"exitCourtesyCall",
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction exitCourtesyCall with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallExitCourtesyCall(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"exitCourtesyCall",
-		&result,
-	)
-
-	return err
-}
-
-func (d *Deposit) ExitCourtesyCallGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"exitCourtesyCall",
 		d.contractABI,
 		d.transactor,
 	)
@@ -949,6 +644,925 @@ func (d *Deposit) RequestFunderAbortGasEstimate(
 }
 
 // Transaction submission.
+func (d *Deposit) InitializeDeposit(
+	_tbtcSystem common.Address,
+	_tbtcToken common.Address,
+	_tbtcDepositToken common.Address,
+	_feeRebateToken common.Address,
+	_vendingMachineAddress common.Address,
+	_lotSizeSatoshis uint64,
+	value *big.Int,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction initializeDeposit",
+		"params: ",
+		fmt.Sprint(
+			_tbtcSystem,
+			_tbtcToken,
+			_tbtcDepositToken,
+			_feeRebateToken,
+			_vendingMachineAddress,
+			_lotSizeSatoshis,
+		),
+		"value: ", value,
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	transactorOptions.Value = value
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.InitializeDeposit(
+		transactorOptions,
+		_tbtcSystem,
+		_tbtcToken,
+		_tbtcDepositToken,
+		_feeRebateToken,
+		_vendingMachineAddress,
+		_lotSizeSatoshis,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			value,
+			"initializeDeposit",
+			_tbtcSystem,
+			_tbtcToken,
+			_tbtcDepositToken,
+			_feeRebateToken,
+			_vendingMachineAddress,
+			_lotSizeSatoshis,
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction initializeDeposit with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.InitializeDeposit(
+				transactorOptions,
+				_tbtcSystem,
+				_tbtcToken,
+				_tbtcDepositToken,
+				_feeRebateToken,
+				_vendingMachineAddress,
+				_lotSizeSatoshis,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					value,
+					"initializeDeposit",
+					_tbtcSystem,
+					_tbtcToken,
+					_tbtcDepositToken,
+					_feeRebateToken,
+					_vendingMachineAddress,
+					_lotSizeSatoshis,
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction initializeDeposit with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallInitializeDeposit(
+	_tbtcSystem common.Address,
+	_tbtcToken common.Address,
+	_tbtcDepositToken common.Address,
+	_feeRebateToken common.Address,
+	_vendingMachineAddress common.Address,
+	_lotSizeSatoshis uint64,
+	value *big.Int,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, value,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"initializeDeposit",
+		&result,
+		_tbtcSystem,
+		_tbtcToken,
+		_tbtcDepositToken,
+		_feeRebateToken,
+		_vendingMachineAddress,
+		_lotSizeSatoshis,
+	)
+
+	return err
+}
+
+func (d *Deposit) InitializeDepositGasEstimate(
+	_tbtcSystem common.Address,
+	_tbtcToken common.Address,
+	_tbtcDepositToken common.Address,
+	_feeRebateToken common.Address,
+	_vendingMachineAddress common.Address,
+	_lotSizeSatoshis uint64,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"initializeDeposit",
+		d.contractABI,
+		d.transactor,
+		_tbtcSystem,
+		_tbtcToken,
+		_tbtcDepositToken,
+		_feeRebateToken,
+		_vendingMachineAddress,
+		_lotSizeSatoshis,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (d *Deposit) NotifyUndercollateralizedLiquidation(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction notifyUndercollateralizedLiquidation",
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.NotifyUndercollateralizedLiquidation(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"notifyUndercollateralizedLiquidation",
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction notifyUndercollateralizedLiquidation with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.NotifyUndercollateralizedLiquidation(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"notifyUndercollateralizedLiquidation",
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction notifyUndercollateralizedLiquidation with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallNotifyUndercollateralizedLiquidation(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"notifyUndercollateralizedLiquidation",
+		&result,
+	)
+
+	return err
+}
+
+func (d *Deposit) NotifyUndercollateralizedLiquidationGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"notifyUndercollateralizedLiquidation",
+		d.contractABI,
+		d.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (d *Deposit) Initialize(
+	_factory common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction initialize",
+		"params: ",
+		fmt.Sprint(
+			_factory,
+		),
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.Initialize(
+		transactorOptions,
+		_factory,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"initialize",
+			_factory,
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction initialize with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.Initialize(
+				transactorOptions,
+				_factory,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"initialize",
+					_factory,
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction initialize with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallInitialize(
+	_factory common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"initialize",
+		&result,
+		_factory,
+	)
+
+	return err
+}
+
+func (d *Deposit) InitializeGasEstimate(
+	_factory common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"initialize",
+		d.contractABI,
+		d.transactor,
+		_factory,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (d *Deposit) NotifyFundingTimedOut(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction notifyFundingTimedOut",
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.NotifyFundingTimedOut(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"notifyFundingTimedOut",
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction notifyFundingTimedOut with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.NotifyFundingTimedOut(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"notifyFundingTimedOut",
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction notifyFundingTimedOut with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallNotifyFundingTimedOut(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"notifyFundingTimedOut",
+		&result,
+	)
+
+	return err
+}
+
+func (d *Deposit) NotifyFundingTimedOutGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"notifyFundingTimedOut",
+		d.contractABI,
+		d.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (d *Deposit) NotifyRedemptionSignatureTimedOut(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction notifyRedemptionSignatureTimedOut",
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.NotifyRedemptionSignatureTimedOut(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"notifyRedemptionSignatureTimedOut",
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction notifyRedemptionSignatureTimedOut with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.NotifyRedemptionSignatureTimedOut(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"notifyRedemptionSignatureTimedOut",
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction notifyRedemptionSignatureTimedOut with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallNotifyRedemptionSignatureTimedOut(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"notifyRedemptionSignatureTimedOut",
+		&result,
+	)
+
+	return err
+}
+
+func (d *Deposit) NotifyRedemptionSignatureTimedOutGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"notifyRedemptionSignatureTimedOut",
+		d.contractABI,
+		d.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (d *Deposit) NotifyCourtesyCall(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction notifyCourtesyCall",
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.NotifyCourtesyCall(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"notifyCourtesyCall",
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction notifyCourtesyCall with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.NotifyCourtesyCall(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"notifyCourtesyCall",
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction notifyCourtesyCall with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallNotifyCourtesyCall(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"notifyCourtesyCall",
+		&result,
+	)
+
+	return err
+}
+
+func (d *Deposit) NotifyCourtesyCallGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"notifyCourtesyCall",
+		d.contractABI,
+		d.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (d *Deposit) RequestRedemption(
+	_outputValueBytes [8]uint8,
+	_redeemerOutputScript []uint8,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction requestRedemption",
+		"params: ",
+		fmt.Sprint(
+			_outputValueBytes,
+			_redeemerOutputScript,
+		),
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.RequestRedemption(
+		transactorOptions,
+		_outputValueBytes,
+		_redeemerOutputScript,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"requestRedemption",
+			_outputValueBytes,
+			_redeemerOutputScript,
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction requestRedemption with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.RequestRedemption(
+				transactorOptions,
+				_outputValueBytes,
+				_redeemerOutputScript,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"requestRedemption",
+					_outputValueBytes,
+					_redeemerOutputScript,
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction requestRedemption with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallRequestRedemption(
+	_outputValueBytes [8]uint8,
+	_redeemerOutputScript []uint8,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"requestRedemption",
+		&result,
+		_outputValueBytes,
+		_redeemerOutputScript,
+	)
+
+	return err
+}
+
+func (d *Deposit) RequestRedemptionGasEstimate(
+	_outputValueBytes [8]uint8,
+	_redeemerOutputScript []uint8,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"requestRedemption",
+		d.contractABI,
+		d.transactor,
+		_outputValueBytes,
+		_redeemerOutputScript,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (d *Deposit) IncreaseRedemptionFee(
 	_previousOutputValueBytes [8]uint8,
 	_newOutputValueBytes [8]uint8,
@@ -1089,906 +1703,6 @@ func (d *Deposit) IncreaseRedemptionFeeGasEstimate(
 }
 
 // Transaction submission.
-func (d *Deposit) NotifyRedemptionProofTimedOut(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction notifyRedemptionProofTimedOut",
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.NotifyRedemptionProofTimedOut(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"notifyRedemptionProofTimedOut",
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction notifyRedemptionProofTimedOut with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.NotifyRedemptionProofTimedOut(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"notifyRedemptionProofTimedOut",
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction notifyRedemptionProofTimedOut with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallNotifyRedemptionProofTimedOut(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"notifyRedemptionProofTimedOut",
-		&result,
-	)
-
-	return err
-}
-
-func (d *Deposit) NotifyRedemptionProofTimedOutGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"notifyRedemptionProofTimedOut",
-		d.contractABI,
-		d.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) NotifyRedemptionSignatureTimedOut(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction notifyRedemptionSignatureTimedOut",
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.NotifyRedemptionSignatureTimedOut(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"notifyRedemptionSignatureTimedOut",
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction notifyRedemptionSignatureTimedOut with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.NotifyRedemptionSignatureTimedOut(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"notifyRedemptionSignatureTimedOut",
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction notifyRedemptionSignatureTimedOut with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallNotifyRedemptionSignatureTimedOut(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"notifyRedemptionSignatureTimedOut",
-		&result,
-	)
-
-	return err
-}
-
-func (d *Deposit) NotifyRedemptionSignatureTimedOutGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"notifyRedemptionSignatureTimedOut",
-		d.contractABI,
-		d.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) ProvideRedemptionProof(
-	_txVersion [4]uint8,
-	_txInputVector []uint8,
-	_txOutputVector []uint8,
-	_txLocktime [4]uint8,
-	_merkleProof []uint8,
-	_txIndexInBlock *big.Int,
-	_bitcoinHeaders []uint8,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction provideRedemptionProof",
-		"params: ",
-		fmt.Sprint(
-			_txVersion,
-			_txInputVector,
-			_txOutputVector,
-			_txLocktime,
-			_merkleProof,
-			_txIndexInBlock,
-			_bitcoinHeaders,
-		),
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.ProvideRedemptionProof(
-		transactorOptions,
-		_txVersion,
-		_txInputVector,
-		_txOutputVector,
-		_txLocktime,
-		_merkleProof,
-		_txIndexInBlock,
-		_bitcoinHeaders,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"provideRedemptionProof",
-			_txVersion,
-			_txInputVector,
-			_txOutputVector,
-			_txLocktime,
-			_merkleProof,
-			_txIndexInBlock,
-			_bitcoinHeaders,
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction provideRedemptionProof with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.ProvideRedemptionProof(
-				transactorOptions,
-				_txVersion,
-				_txInputVector,
-				_txOutputVector,
-				_txLocktime,
-				_merkleProof,
-				_txIndexInBlock,
-				_bitcoinHeaders,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"provideRedemptionProof",
-					_txVersion,
-					_txInputVector,
-					_txOutputVector,
-					_txLocktime,
-					_merkleProof,
-					_txIndexInBlock,
-					_bitcoinHeaders,
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction provideRedemptionProof with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallProvideRedemptionProof(
-	_txVersion [4]uint8,
-	_txInputVector []uint8,
-	_txOutputVector []uint8,
-	_txLocktime [4]uint8,
-	_merkleProof []uint8,
-	_txIndexInBlock *big.Int,
-	_bitcoinHeaders []uint8,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"provideRedemptionProof",
-		&result,
-		_txVersion,
-		_txInputVector,
-		_txOutputVector,
-		_txLocktime,
-		_merkleProof,
-		_txIndexInBlock,
-		_bitcoinHeaders,
-	)
-
-	return err
-}
-
-func (d *Deposit) ProvideRedemptionProofGasEstimate(
-	_txVersion [4]uint8,
-	_txInputVector []uint8,
-	_txOutputVector []uint8,
-	_txLocktime [4]uint8,
-	_merkleProof []uint8,
-	_txIndexInBlock *big.Int,
-	_bitcoinHeaders []uint8,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"provideRedemptionProof",
-		d.contractABI,
-		d.transactor,
-		_txVersion,
-		_txInputVector,
-		_txOutputVector,
-		_txLocktime,
-		_merkleProof,
-		_txIndexInBlock,
-		_bitcoinHeaders,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) WithdrawFunds(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction withdrawFunds",
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.WithdrawFunds(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"withdrawFunds",
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction withdrawFunds with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.WithdrawFunds(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"withdrawFunds",
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction withdrawFunds with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallWithdrawFunds(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"withdrawFunds",
-		&result,
-	)
-
-	return err
-}
-
-func (d *Deposit) WithdrawFundsGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"withdrawFunds",
-		d.contractABI,
-		d.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) Initialize(
-	_factory common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction initialize",
-		"params: ",
-		fmt.Sprint(
-			_factory,
-		),
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.Initialize(
-		transactorOptions,
-		_factory,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"initialize",
-			_factory,
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction initialize with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.Initialize(
-				transactorOptions,
-				_factory,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"initialize",
-					_factory,
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction initialize with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallInitialize(
-	_factory common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"initialize",
-		&result,
-		_factory,
-	)
-
-	return err
-}
-
-func (d *Deposit) InitializeGasEstimate(
-	_factory common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"initialize",
-		d.contractABI,
-		d.transactor,
-		_factory,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) NotifyCourtesyCallExpired(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction notifyCourtesyCallExpired",
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.NotifyCourtesyCallExpired(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"notifyCourtesyCallExpired",
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction notifyCourtesyCallExpired with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.NotifyCourtesyCallExpired(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"notifyCourtesyCallExpired",
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction notifyCourtesyCallExpired with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallNotifyCourtesyCallExpired(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"notifyCourtesyCallExpired",
-		&result,
-	)
-
-	return err
-}
-
-func (d *Deposit) NotifyCourtesyCallExpiredGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"notifyCourtesyCallExpired",
-		d.contractABI,
-		d.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) PurchaseSignerBondsAtAuction(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction purchaseSignerBondsAtAuction",
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.PurchaseSignerBondsAtAuction(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"purchaseSignerBondsAtAuction",
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction purchaseSignerBondsAtAuction with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.PurchaseSignerBondsAtAuction(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"purchaseSignerBondsAtAuction",
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction purchaseSignerBondsAtAuction with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallPurchaseSignerBondsAtAuction(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"purchaseSignerBondsAtAuction",
-		&result,
-	)
-
-	return err
-}
-
-func (d *Deposit) PurchaseSignerBondsAtAuctionGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"purchaseSignerBondsAtAuction",
-		d.contractABI,
-		d.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
 func (d *Deposit) RetrieveSignerPubkey(
 
 	transactionOptions ...ethutil.TransactionOptions,
@@ -2105,21 +1819,12 @@ func (d *Deposit) RetrieveSignerPubkeyGasEstimate() (uint64, error) {
 }
 
 // Transaction submission.
-func (d *Deposit) TransferAndRequestRedemption(
-	_outputValueBytes [8]uint8,
-	_redeemerOutputScript []uint8,
-	_finalRecipient common.Address,
+func (d *Deposit) ExitCourtesyCall(
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	dLogger.Debug(
-		"submitting transaction transferAndRequestRedemption",
-		"params: ",
-		fmt.Sprint(
-			_outputValueBytes,
-			_redeemerOutputScript,
-			_finalRecipient,
-		),
+		"submitting transaction exitCourtesyCall",
 	)
 
 	d.transactionMutex.Lock()
@@ -2144,26 +1849,20 @@ func (d *Deposit) TransferAndRequestRedemption(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := d.contract.TransferAndRequestRedemption(
+	transaction, err := d.contract.ExitCourtesyCall(
 		transactorOptions,
-		_outputValueBytes,
-		_redeemerOutputScript,
-		_finalRecipient,
 	)
 	if err != nil {
 		return transaction, d.errorResolver.ResolveError(
 			err,
 			d.transactorOptions.From,
 			nil,
-			"transferAndRequestRedemption",
-			_outputValueBytes,
-			_redeemerOutputScript,
-			_finalRecipient,
+			"exitCourtesyCall",
 		)
 	}
 
 	dLogger.Infof(
-		"submitted transaction transferAndRequestRedemption with id: [%v] and nonce [%v]",
+		"submitted transaction exitCourtesyCall with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -2174,26 +1873,20 @@ func (d *Deposit) TransferAndRequestRedemption(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := d.contract.TransferAndRequestRedemption(
+			transaction, err := d.contract.ExitCourtesyCall(
 				transactorOptions,
-				_outputValueBytes,
-				_redeemerOutputScript,
-				_finalRecipient,
 			)
 			if err != nil {
 				return transaction, d.errorResolver.ResolveError(
 					err,
 					d.transactorOptions.From,
 					nil,
-					"transferAndRequestRedemption",
-					_outputValueBytes,
-					_redeemerOutputScript,
-					_finalRecipient,
+					"exitCourtesyCall",
 				)
 			}
 
 			dLogger.Infof(
-				"submitted transaction transferAndRequestRedemption with id: [%v] and nonce [%v]",
+				"submitted transaction exitCourtesyCall with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -2208,10 +1901,7 @@ func (d *Deposit) TransferAndRequestRedemption(
 }
 
 // Non-mutating call, not a transaction submission.
-func (d *Deposit) CallTransferAndRequestRedemption(
-	_outputValueBytes [8]uint8,
-	_redeemerOutputScript []uint8,
-	_finalRecipient common.Address,
+func (d *Deposit) CallExitCourtesyCall(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -2223,44 +1913,34 @@ func (d *Deposit) CallTransferAndRequestRedemption(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"transferAndRequestRedemption",
+		"exitCourtesyCall",
 		&result,
-		_outputValueBytes,
-		_redeemerOutputScript,
-		_finalRecipient,
 	)
 
 	return err
 }
 
-func (d *Deposit) TransferAndRequestRedemptionGasEstimate(
-	_outputValueBytes [8]uint8,
-	_redeemerOutputScript []uint8,
-	_finalRecipient common.Address,
-) (uint64, error) {
+func (d *Deposit) ExitCourtesyCallGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		d.callerOptions.From,
 		d.contractAddress,
-		"transferAndRequestRedemption",
+		"exitCourtesyCall",
 		d.contractABI,
 		d.transactor,
-		_outputValueBytes,
-		_redeemerOutputScript,
-		_finalRecipient,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (d *Deposit) NotifyFundingTimedOut(
+func (d *Deposit) WithdrawFunds(
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	dLogger.Debug(
-		"submitting transaction notifyFundingTimedOut",
+		"submitting transaction withdrawFunds",
 	)
 
 	d.transactionMutex.Lock()
@@ -2285,7 +1965,7 @@ func (d *Deposit) NotifyFundingTimedOut(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := d.contract.NotifyFundingTimedOut(
+	transaction, err := d.contract.WithdrawFunds(
 		transactorOptions,
 	)
 	if err != nil {
@@ -2293,12 +1973,12 @@ func (d *Deposit) NotifyFundingTimedOut(
 			err,
 			d.transactorOptions.From,
 			nil,
-			"notifyFundingTimedOut",
+			"withdrawFunds",
 		)
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifyFundingTimedOut with id: [%v] and nonce [%v]",
+		"submitted transaction withdrawFunds with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -2309,7 +1989,7 @@ func (d *Deposit) NotifyFundingTimedOut(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := d.contract.NotifyFundingTimedOut(
+			transaction, err := d.contract.WithdrawFunds(
 				transactorOptions,
 			)
 			if err != nil {
@@ -2317,12 +1997,12 @@ func (d *Deposit) NotifyFundingTimedOut(
 					err,
 					d.transactorOptions.From,
 					nil,
-					"notifyFundingTimedOut",
+					"withdrawFunds",
 				)
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifyFundingTimedOut with id: [%v] and nonce [%v]",
+				"submitted transaction withdrawFunds with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -2337,7 +2017,7 @@ func (d *Deposit) NotifyFundingTimedOut(
 }
 
 // Non-mutating call, not a transaction submission.
-func (d *Deposit) CallNotifyFundingTimedOut(
+func (d *Deposit) CallWithdrawFunds(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -2349,20 +2029,20 @@ func (d *Deposit) CallNotifyFundingTimedOut(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"notifyFundingTimedOut",
+		"withdrawFunds",
 		&result,
 	)
 
 	return err
 }
 
-func (d *Deposit) NotifyFundingTimedOutGasEstimate() (uint64, error) {
+func (d *Deposit) WithdrawFundsGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		d.callerOptions.From,
 		d.contractAddress,
-		"notifyFundingTimedOut",
+		"withdrawFunds",
 		d.contractABI,
 		d.transactor,
 	)
@@ -2571,6 +2251,422 @@ func (d *Deposit) ProvideBTCFundingProofGasEstimate(
 }
 
 // Transaction submission.
+func (d *Deposit) ProvideRedemptionSignature(
+	_v uint8,
+	_r [32]uint8,
+	_s [32]uint8,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction provideRedemptionSignature",
+		"params: ",
+		fmt.Sprint(
+			_v,
+			_r,
+			_s,
+		),
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.ProvideRedemptionSignature(
+		transactorOptions,
+		_v,
+		_r,
+		_s,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"provideRedemptionSignature",
+			_v,
+			_r,
+			_s,
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction provideRedemptionSignature with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.ProvideRedemptionSignature(
+				transactorOptions,
+				_v,
+				_r,
+				_s,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"provideRedemptionSignature",
+					_v,
+					_r,
+					_s,
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction provideRedemptionSignature with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallProvideRedemptionSignature(
+	_v uint8,
+	_r [32]uint8,
+	_s [32]uint8,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"provideRedemptionSignature",
+		&result,
+		_v,
+		_r,
+		_s,
+	)
+
+	return err
+}
+
+func (d *Deposit) ProvideRedemptionSignatureGasEstimate(
+	_v uint8,
+	_r [32]uint8,
+	_s [32]uint8,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"provideRedemptionSignature",
+		d.contractABI,
+		d.transactor,
+		_v,
+		_r,
+		_s,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (d *Deposit) TransferAndRequestRedemption(
+	_outputValueBytes [8]uint8,
+	_redeemerOutputScript []uint8,
+	_finalRecipient common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction transferAndRequestRedemption",
+		"params: ",
+		fmt.Sprint(
+			_outputValueBytes,
+			_redeemerOutputScript,
+			_finalRecipient,
+		),
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.TransferAndRequestRedemption(
+		transactorOptions,
+		_outputValueBytes,
+		_redeemerOutputScript,
+		_finalRecipient,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"transferAndRequestRedemption",
+			_outputValueBytes,
+			_redeemerOutputScript,
+			_finalRecipient,
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction transferAndRequestRedemption with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.TransferAndRequestRedemption(
+				transactorOptions,
+				_outputValueBytes,
+				_redeemerOutputScript,
+				_finalRecipient,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"transferAndRequestRedemption",
+					_outputValueBytes,
+					_redeemerOutputScript,
+					_finalRecipient,
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction transferAndRequestRedemption with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallTransferAndRequestRedemption(
+	_outputValueBytes [8]uint8,
+	_redeemerOutputScript []uint8,
+	_finalRecipient common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"transferAndRequestRedemption",
+		&result,
+		_outputValueBytes,
+		_redeemerOutputScript,
+		_finalRecipient,
+	)
+
+	return err
+}
+
+func (d *Deposit) TransferAndRequestRedemptionGasEstimate(
+	_outputValueBytes [8]uint8,
+	_redeemerOutputScript []uint8,
+	_finalRecipient common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"transferAndRequestRedemption",
+		d.contractABI,
+		d.transactor,
+		_outputValueBytes,
+		_redeemerOutputScript,
+		_finalRecipient,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (d *Deposit) NotifyCourtesyCallExpired(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	dLogger.Debug(
+		"submitting transaction notifyCourtesyCallExpired",
+	)
+
+	d.transactionMutex.Lock()
+	defer d.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *d.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := d.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := d.contract.NotifyCourtesyCallExpired(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, d.errorResolver.ResolveError(
+			err,
+			d.transactorOptions.From,
+			nil,
+			"notifyCourtesyCallExpired",
+		)
+	}
+
+	dLogger.Infof(
+		"submitted transaction notifyCourtesyCallExpired with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go d.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := d.contract.NotifyCourtesyCallExpired(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, d.errorResolver.ResolveError(
+					err,
+					d.transactorOptions.From,
+					nil,
+					"notifyCourtesyCallExpired",
+				)
+			}
+
+			dLogger.Infof(
+				"submitted transaction notifyCourtesyCallExpired with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	d.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (d *Deposit) CallNotifyCourtesyCallExpired(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		d.transactorOptions.From,
+		blockNumber, nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"notifyCourtesyCallExpired",
+		&result,
+	)
+
+	return err
+}
+
+func (d *Deposit) NotifyCourtesyCallExpiredGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		d.callerOptions.From,
+		d.contractAddress,
+		"notifyCourtesyCallExpired",
+		d.contractABI,
+		d.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (d *Deposit) ProvideFundingECDSAFraudProof(
 	_v uint8,
 	_r [32]uint8,
@@ -2741,136 +2837,28 @@ func (d *Deposit) ProvideFundingECDSAFraudProofGasEstimate(
 }
 
 // Transaction submission.
-func (d *Deposit) NotifyUndercollateralizedLiquidation(
+func (d *Deposit) ProvideRedemptionProof(
+	_txVersion [4]uint8,
+	_txInputVector []uint8,
+	_txOutputVector []uint8,
+	_txLocktime [4]uint8,
+	_merkleProof []uint8,
+	_txIndexInBlock *big.Int,
+	_bitcoinHeaders []uint8,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	dLogger.Debug(
-		"submitting transaction notifyUndercollateralizedLiquidation",
-	)
-
-	d.transactionMutex.Lock()
-	defer d.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *d.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := d.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := d.contract.NotifyUndercollateralizedLiquidation(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, d.errorResolver.ResolveError(
-			err,
-			d.transactorOptions.From,
-			nil,
-			"notifyUndercollateralizedLiquidation",
-		)
-	}
-
-	dLogger.Infof(
-		"submitted transaction notifyUndercollateralizedLiquidation with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go d.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := d.contract.NotifyUndercollateralizedLiquidation(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, d.errorResolver.ResolveError(
-					err,
-					d.transactorOptions.From,
-					nil,
-					"notifyUndercollateralizedLiquidation",
-				)
-			}
-
-			dLogger.Infof(
-				"submitted transaction notifyUndercollateralizedLiquidation with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	d.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (d *Deposit) CallNotifyUndercollateralizedLiquidation(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		d.transactorOptions.From,
-		blockNumber, nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"notifyUndercollateralizedLiquidation",
-		&result,
-	)
-
-	return err
-}
-
-func (d *Deposit) NotifyUndercollateralizedLiquidationGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		d.callerOptions.From,
-		d.contractAddress,
-		"notifyUndercollateralizedLiquidation",
-		d.contractABI,
-		d.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (d *Deposit) ProvideRedemptionSignature(
-	_v uint8,
-	_r [32]uint8,
-	_s [32]uint8,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	dLogger.Debug(
-		"submitting transaction provideRedemptionSignature",
+		"submitting transaction provideRedemptionProof",
 		"params: ",
 		fmt.Sprint(
-			_v,
-			_r,
-			_s,
+			_txVersion,
+			_txInputVector,
+			_txOutputVector,
+			_txLocktime,
+			_merkleProof,
+			_txIndexInBlock,
+			_bitcoinHeaders,
 		),
 	)
 
@@ -2896,26 +2884,34 @@ func (d *Deposit) ProvideRedemptionSignature(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := d.contract.ProvideRedemptionSignature(
+	transaction, err := d.contract.ProvideRedemptionProof(
 		transactorOptions,
-		_v,
-		_r,
-		_s,
+		_txVersion,
+		_txInputVector,
+		_txOutputVector,
+		_txLocktime,
+		_merkleProof,
+		_txIndexInBlock,
+		_bitcoinHeaders,
 	)
 	if err != nil {
 		return transaction, d.errorResolver.ResolveError(
 			err,
 			d.transactorOptions.From,
 			nil,
-			"provideRedemptionSignature",
-			_v,
-			_r,
-			_s,
+			"provideRedemptionProof",
+			_txVersion,
+			_txInputVector,
+			_txOutputVector,
+			_txLocktime,
+			_merkleProof,
+			_txIndexInBlock,
+			_bitcoinHeaders,
 		)
 	}
 
 	dLogger.Infof(
-		"submitted transaction provideRedemptionSignature with id: [%v] and nonce [%v]",
+		"submitted transaction provideRedemptionProof with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -2926,26 +2922,34 @@ func (d *Deposit) ProvideRedemptionSignature(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := d.contract.ProvideRedemptionSignature(
+			transaction, err := d.contract.ProvideRedemptionProof(
 				transactorOptions,
-				_v,
-				_r,
-				_s,
+				_txVersion,
+				_txInputVector,
+				_txOutputVector,
+				_txLocktime,
+				_merkleProof,
+				_txIndexInBlock,
+				_bitcoinHeaders,
 			)
 			if err != nil {
 				return transaction, d.errorResolver.ResolveError(
 					err,
 					d.transactorOptions.From,
 					nil,
-					"provideRedemptionSignature",
-					_v,
-					_r,
-					_s,
+					"provideRedemptionProof",
+					_txVersion,
+					_txInputVector,
+					_txOutputVector,
+					_txLocktime,
+					_merkleProof,
+					_txIndexInBlock,
+					_bitcoinHeaders,
 				)
 			}
 
 			dLogger.Infof(
-				"submitted transaction provideRedemptionSignature with id: [%v] and nonce [%v]",
+				"submitted transaction provideRedemptionProof with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -2960,10 +2964,14 @@ func (d *Deposit) ProvideRedemptionSignature(
 }
 
 // Non-mutating call, not a transaction submission.
-func (d *Deposit) CallProvideRedemptionSignature(
-	_v uint8,
-	_r [32]uint8,
-	_s [32]uint8,
+func (d *Deposit) CallProvideRedemptionProof(
+	_txVersion [4]uint8,
+	_txInputVector []uint8,
+	_txOutputVector []uint8,
+	_txLocktime [4]uint8,
+	_merkleProof []uint8,
+	_txIndexInBlock *big.Int,
+	_bitcoinHeaders []uint8,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -2975,44 +2983,56 @@ func (d *Deposit) CallProvideRedemptionSignature(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"provideRedemptionSignature",
+		"provideRedemptionProof",
 		&result,
-		_v,
-		_r,
-		_s,
+		_txVersion,
+		_txInputVector,
+		_txOutputVector,
+		_txLocktime,
+		_merkleProof,
+		_txIndexInBlock,
+		_bitcoinHeaders,
 	)
 
 	return err
 }
 
-func (d *Deposit) ProvideRedemptionSignatureGasEstimate(
-	_v uint8,
-	_r [32]uint8,
-	_s [32]uint8,
+func (d *Deposit) ProvideRedemptionProofGasEstimate(
+	_txVersion [4]uint8,
+	_txInputVector []uint8,
+	_txOutputVector []uint8,
+	_txLocktime [4]uint8,
+	_merkleProof []uint8,
+	_txIndexInBlock *big.Int,
+	_bitcoinHeaders []uint8,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		d.callerOptions.From,
 		d.contractAddress,
-		"provideRedemptionSignature",
+		"provideRedemptionProof",
 		d.contractABI,
 		d.transactor,
-		_v,
-		_r,
-		_s,
+		_txVersion,
+		_txInputVector,
+		_txOutputVector,
+		_txLocktime,
+		_merkleProof,
+		_txIndexInBlock,
+		_bitcoinHeaders,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (d *Deposit) NotifyCourtesyCall(
+func (d *Deposit) PurchaseSignerBondsAtAuction(
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	dLogger.Debug(
-		"submitting transaction notifyCourtesyCall",
+		"submitting transaction purchaseSignerBondsAtAuction",
 	)
 
 	d.transactionMutex.Lock()
@@ -3037,7 +3057,7 @@ func (d *Deposit) NotifyCourtesyCall(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := d.contract.NotifyCourtesyCall(
+	transaction, err := d.contract.PurchaseSignerBondsAtAuction(
 		transactorOptions,
 	)
 	if err != nil {
@@ -3045,12 +3065,12 @@ func (d *Deposit) NotifyCourtesyCall(
 			err,
 			d.transactorOptions.From,
 			nil,
-			"notifyCourtesyCall",
+			"purchaseSignerBondsAtAuction",
 		)
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifyCourtesyCall with id: [%v] and nonce [%v]",
+		"submitted transaction purchaseSignerBondsAtAuction with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -3061,7 +3081,7 @@ func (d *Deposit) NotifyCourtesyCall(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := d.contract.NotifyCourtesyCall(
+			transaction, err := d.contract.PurchaseSignerBondsAtAuction(
 				transactorOptions,
 			)
 			if err != nil {
@@ -3069,12 +3089,12 @@ func (d *Deposit) NotifyCourtesyCall(
 					err,
 					d.transactorOptions.From,
 					nil,
-					"notifyCourtesyCall",
+					"purchaseSignerBondsAtAuction",
 				)
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifyCourtesyCall with id: [%v] and nonce [%v]",
+				"submitted transaction purchaseSignerBondsAtAuction with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -3089,7 +3109,7 @@ func (d *Deposit) NotifyCourtesyCall(
 }
 
 // Non-mutating call, not a transaction submission.
-func (d *Deposit) CallNotifyCourtesyCall(
+func (d *Deposit) CallPurchaseSignerBondsAtAuction(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -3101,20 +3121,20 @@ func (d *Deposit) CallNotifyCourtesyCall(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"notifyCourtesyCall",
+		"purchaseSignerBondsAtAuction",
 		&result,
 	)
 
 	return err
 }
 
-func (d *Deposit) NotifyCourtesyCallGasEstimate() (uint64, error) {
+func (d *Deposit) PurchaseSignerBondsAtAuctionGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		d.callerOptions.From,
 		d.contractAddress,
-		"notifyCourtesyCall",
+		"purchaseSignerBondsAtAuction",
 		d.contractABI,
 		d.transactor,
 	)
@@ -3124,10 +3144,13 @@ func (d *Deposit) NotifyCourtesyCallGasEstimate() (uint64, error) {
 
 // ----- Const Methods ------
 
-func (d *Deposit) AuctionValue() (*big.Int, error) {
+func (d *Deposit) GetOwnerRedemptionTbtcRequirement(
+	_redeemer common.Address,
+) (*big.Int, error) {
 	var result *big.Int
-	result, err := d.contract.AuctionValue(
+	result, err := d.contract.GetOwnerRedemptionTbtcRequirement(
 		d.callerOptions,
+		_redeemer,
 	)
 
 	if err != nil {
@@ -3135,14 +3158,16 @@ func (d *Deposit) AuctionValue() (*big.Int, error) {
 			err,
 			d.callerOptions.From,
 			nil,
-			"auctionValue",
+			"getOwnerRedemptionTbtcRequirement",
+			_redeemer,
 		)
 	}
 
 	return result, err
 }
 
-func (d *Deposit) AuctionValueAtBlock(
+func (d *Deposit) GetOwnerRedemptionTbtcRequirementAtBlock(
+	_redeemer common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -3155,46 +3180,9 @@ func (d *Deposit) AuctionValueAtBlock(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"auctionValue",
+		"getOwnerRedemptionTbtcRequirement",
 		&result,
-	)
-
-	return result, err
-}
-
-func (d *Deposit) CollateralizationPercentage() (*big.Int, error) {
-	var result *big.Int
-	result, err := d.contract.CollateralizationPercentage(
-		d.callerOptions,
-	)
-
-	if err != nil {
-		return result, d.errorResolver.ResolveError(
-			err,
-			d.callerOptions.From,
-			nil,
-			"collateralizationPercentage",
-		)
-	}
-
-	return result, err
-}
-
-func (d *Deposit) CollateralizationPercentageAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		d.callerOptions.From,
-		blockNumber,
-		nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"collateralizationPercentage",
-		&result,
+		_redeemer,
 	)
 
 	return result, err
@@ -3244,123 +3232,9 @@ func (d *Deposit) GetRedemptionTbtcRequirementAtBlock(
 	return result, err
 }
 
-func (d *Deposit) InActive() (bool, error) {
-	var result bool
-	result, err := d.contract.InActive(
-		d.callerOptions,
-	)
-
-	if err != nil {
-		return result, d.errorResolver.ResolveError(
-			err,
-			d.callerOptions.From,
-			nil,
-			"inActive",
-		)
-	}
-
-	return result, err
-}
-
-func (d *Deposit) InActiveAtBlock(
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		d.callerOptions.From,
-		blockNumber,
-		nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"inActive",
-		&result,
-	)
-
-	return result, err
-}
-
-func (d *Deposit) KeepAddress() (common.Address, error) {
-	var result common.Address
-	result, err := d.contract.KeepAddress(
-		d.callerOptions,
-	)
-
-	if err != nil {
-		return result, d.errorResolver.ResolveError(
-			err,
-			d.callerOptions.From,
-			nil,
-			"keepAddress",
-		)
-	}
-
-	return result, err
-}
-
-func (d *Deposit) KeepAddressAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		d.callerOptions.From,
-		blockNumber,
-		nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"keepAddress",
-		&result,
-	)
-
-	return result, err
-}
-
-func (d *Deposit) LotSizeTbtc() (*big.Int, error) {
-	var result *big.Int
-	result, err := d.contract.LotSizeTbtc(
-		d.callerOptions,
-	)
-
-	if err != nil {
-		return result, d.errorResolver.ResolveError(
-			err,
-			d.callerOptions.From,
-			nil,
-			"lotSizeTbtc",
-		)
-	}
-
-	return result, err
-}
-
-func (d *Deposit) LotSizeTbtcAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		d.callerOptions.From,
-		blockNumber,
-		nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"lotSizeTbtc",
-		&result,
-	)
-
-	return result, err
-}
-
-func (d *Deposit) SeverelyUndercollateralizedThresholdPercent() (uint16, error) {
+func (d *Deposit) UndercollateralizedThresholdPercent() (uint16, error) {
 	var result uint16
-	result, err := d.contract.SeverelyUndercollateralizedThresholdPercent(
+	result, err := d.contract.UndercollateralizedThresholdPercent(
 		d.callerOptions,
 	)
 
@@ -3369,14 +3243,14 @@ func (d *Deposit) SeverelyUndercollateralizedThresholdPercent() (uint16, error) 
 			err,
 			d.callerOptions.From,
 			nil,
-			"severelyUndercollateralizedThresholdPercent",
+			"undercollateralizedThresholdPercent",
 		)
 	}
 
 	return result, err
 }
 
-func (d *Deposit) SeverelyUndercollateralizedThresholdPercentAtBlock(
+func (d *Deposit) UndercollateralizedThresholdPercentAtBlock(
 	blockNumber *big.Int,
 ) (uint16, error) {
 	var result uint16
@@ -3389,45 +3263,7 @@ func (d *Deposit) SeverelyUndercollateralizedThresholdPercentAtBlock(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"severelyUndercollateralizedThresholdPercent",
-		&result,
-	)
-
-	return result, err
-}
-
-func (d *Deposit) RemainingTerm() (*big.Int, error) {
-	var result *big.Int
-	result, err := d.contract.RemainingTerm(
-		d.callerOptions,
-	)
-
-	if err != nil {
-		return result, d.errorResolver.ResolveError(
-			err,
-			d.callerOptions.From,
-			nil,
-			"remainingTerm",
-		)
-	}
-
-	return result, err
-}
-
-func (d *Deposit) RemainingTermAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		d.callerOptions.From,
-		blockNumber,
-		nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"remainingTerm",
+		"undercollateralizedThresholdPercent",
 		&result,
 	)
 
@@ -3478,9 +3314,9 @@ func (d *Deposit) FundingInfoAtBlock(
 	return result, err
 }
 
-func (d *Deposit) InitialCollateralizedPercent() (uint16, error) {
-	var result uint16
-	result, err := d.contract.InitialCollateralizedPercent(
+func (d *Deposit) SignerFeeTbtc() (*big.Int, error) {
+	var result *big.Int
+	result, err := d.contract.SignerFeeTbtc(
 		d.callerOptions,
 	)
 
@@ -3489,17 +3325,17 @@ func (d *Deposit) InitialCollateralizedPercent() (uint16, error) {
 			err,
 			d.callerOptions.From,
 			nil,
-			"initialCollateralizedPercent",
+			"signerFeeTbtc",
 		)
 	}
 
 	return result, err
 }
 
-func (d *Deposit) InitialCollateralizedPercentAtBlock(
+func (d *Deposit) SignerFeeTbtcAtBlock(
 	blockNumber *big.Int,
-) (uint16, error) {
-	var result uint16
+) (*big.Int, error) {
+	var result *big.Int
 
 	err := ethutil.CallAtBlock(
 		d.callerOptions.From,
@@ -3509,7 +3345,45 @@ func (d *Deposit) InitialCollateralizedPercentAtBlock(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"initialCollateralizedPercent",
+		"signerFeeTbtc",
+		&result,
+	)
+
+	return result, err
+}
+
+func (d *Deposit) CurrentState() (*big.Int, error) {
+	var result *big.Int
+	result, err := d.contract.CurrentState(
+		d.callerOptions,
+	)
+
+	if err != nil {
+		return result, d.errorResolver.ResolveError(
+			err,
+			d.callerOptions.From,
+			nil,
+			"currentState",
+		)
+	}
+
+	return result, err
+}
+
+func (d *Deposit) CurrentStateAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		d.callerOptions.From,
+		blockNumber,
+		nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"currentState",
 		&result,
 	)
 
@@ -3554,13 +3428,10 @@ func (d *Deposit) WithdrawableAmountAtBlock(
 	return result, err
 }
 
-func (d *Deposit) GetOwnerRedemptionTbtcRequirement(
-	_redeemer common.Address,
-) (*big.Int, error) {
-	var result *big.Int
-	result, err := d.contract.GetOwnerRedemptionTbtcRequirement(
+func (d *Deposit) KeepAddress() (common.Address, error) {
+	var result common.Address
+	result, err := d.contract.KeepAddress(
 		d.callerOptions,
-		_redeemer,
 	)
 
 	if err != nil {
@@ -3568,19 +3439,17 @@ func (d *Deposit) GetOwnerRedemptionTbtcRequirement(
 			err,
 			d.callerOptions.From,
 			nil,
-			"getOwnerRedemptionTbtcRequirement",
-			_redeemer,
+			"keepAddress",
 		)
 	}
 
 	return result, err
 }
 
-func (d *Deposit) GetOwnerRedemptionTbtcRequirementAtBlock(
-	_redeemer common.Address,
+func (d *Deposit) KeepAddressAtBlock(
 	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
+) (common.Address, error) {
+	var result common.Address
 
 	err := ethutil.CallAtBlock(
 		d.callerOptions.From,
@@ -3590,9 +3459,46 @@ func (d *Deposit) GetOwnerRedemptionTbtcRequirementAtBlock(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"getOwnerRedemptionTbtcRequirement",
+		"keepAddress",
 		&result,
-		_redeemer,
+	)
+
+	return result, err
+}
+
+func (d *Deposit) SeverelyUndercollateralizedThresholdPercent() (uint16, error) {
+	var result uint16
+	result, err := d.contract.SeverelyUndercollateralizedThresholdPercent(
+		d.callerOptions,
+	)
+
+	if err != nil {
+		return result, d.errorResolver.ResolveError(
+			err,
+			d.callerOptions.From,
+			nil,
+			"severelyUndercollateralizedThresholdPercent",
+		)
+	}
+
+	return result, err
+}
+
+func (d *Deposit) SeverelyUndercollateralizedThresholdPercentAtBlock(
+	blockNumber *big.Int,
+) (uint16, error) {
+	var result uint16
+
+	err := ethutil.CallAtBlock(
+		d.callerOptions.From,
+		blockNumber,
+		nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"severelyUndercollateralizedThresholdPercent",
+		&result,
 	)
 
 	return result, err
@@ -3630,6 +3536,120 @@ func (d *Deposit) UtxoValueAtBlock(
 		d.errorResolver,
 		d.contractAddress,
 		"utxoValue",
+		&result,
+	)
+
+	return result, err
+}
+
+func (d *Deposit) InitialCollateralizedPercent() (uint16, error) {
+	var result uint16
+	result, err := d.contract.InitialCollateralizedPercent(
+		d.callerOptions,
+	)
+
+	if err != nil {
+		return result, d.errorResolver.ResolveError(
+			err,
+			d.callerOptions.From,
+			nil,
+			"initialCollateralizedPercent",
+		)
+	}
+
+	return result, err
+}
+
+func (d *Deposit) InitialCollateralizedPercentAtBlock(
+	blockNumber *big.Int,
+) (uint16, error) {
+	var result uint16
+
+	err := ethutil.CallAtBlock(
+		d.callerOptions.From,
+		blockNumber,
+		nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"initialCollateralizedPercent",
+		&result,
+	)
+
+	return result, err
+}
+
+func (d *Deposit) AuctionValue() (*big.Int, error) {
+	var result *big.Int
+	result, err := d.contract.AuctionValue(
+		d.callerOptions,
+	)
+
+	if err != nil {
+		return result, d.errorResolver.ResolveError(
+			err,
+			d.callerOptions.From,
+			nil,
+			"auctionValue",
+		)
+	}
+
+	return result, err
+}
+
+func (d *Deposit) AuctionValueAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		d.callerOptions.From,
+		blockNumber,
+		nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"auctionValue",
+		&result,
+	)
+
+	return result, err
+}
+
+func (d *Deposit) InActive() (bool, error) {
+	var result bool
+	result, err := d.contract.InActive(
+		d.callerOptions,
+	)
+
+	if err != nil {
+		return result, d.errorResolver.ResolveError(
+			err,
+			d.callerOptions.From,
+			nil,
+			"inActive",
+		)
+	}
+
+	return result, err
+}
+
+func (d *Deposit) InActiveAtBlock(
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		d.callerOptions.From,
+		blockNumber,
+		nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"inActive",
 		&result,
 	)
 
@@ -3674,9 +3694,9 @@ func (d *Deposit) LotSizeSatoshisAtBlock(
 	return result, err
 }
 
-func (d *Deposit) SignerFeeTbtc() (*big.Int, error) {
+func (d *Deposit) LotSizeTbtc() (*big.Int, error) {
 	var result *big.Int
-	result, err := d.contract.SignerFeeTbtc(
+	result, err := d.contract.LotSizeTbtc(
 		d.callerOptions,
 	)
 
@@ -3685,14 +3705,14 @@ func (d *Deposit) SignerFeeTbtc() (*big.Int, error) {
 			err,
 			d.callerOptions.From,
 			nil,
-			"signerFeeTbtc",
+			"lotSizeTbtc",
 		)
 	}
 
 	return result, err
 }
 
-func (d *Deposit) SignerFeeTbtcAtBlock(
+func (d *Deposit) LotSizeTbtcAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -3705,54 +3725,16 @@ func (d *Deposit) SignerFeeTbtcAtBlock(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"signerFeeTbtc",
+		"lotSizeTbtc",
 		&result,
 	)
 
 	return result, err
 }
 
-func (d *Deposit) UndercollateralizedThresholdPercent() (uint16, error) {
-	var result uint16
-	result, err := d.contract.UndercollateralizedThresholdPercent(
-		d.callerOptions,
-	)
-
-	if err != nil {
-		return result, d.errorResolver.ResolveError(
-			err,
-			d.callerOptions.From,
-			nil,
-			"undercollateralizedThresholdPercent",
-		)
-	}
-
-	return result, err
-}
-
-func (d *Deposit) UndercollateralizedThresholdPercentAtBlock(
-	blockNumber *big.Int,
-) (uint16, error) {
-	var result uint16
-
-	err := ethutil.CallAtBlock(
-		d.callerOptions.From,
-		blockNumber,
-		nil,
-		d.contractABI,
-		d.caller,
-		d.errorResolver,
-		d.contractAddress,
-		"undercollateralizedThresholdPercent",
-		&result,
-	)
-
-	return result, err
-}
-
-func (d *Deposit) CurrentState() (*big.Int, error) {
+func (d *Deposit) CollateralizationPercentage() (*big.Int, error) {
 	var result *big.Int
-	result, err := d.contract.CurrentState(
+	result, err := d.contract.CollateralizationPercentage(
 		d.callerOptions,
 	)
 
@@ -3761,14 +3743,14 @@ func (d *Deposit) CurrentState() (*big.Int, error) {
 			err,
 			d.callerOptions.From,
 			nil,
-			"currentState",
+			"collateralizationPercentage",
 		)
 	}
 
 	return result, err
 }
 
-func (d *Deposit) CurrentStateAtBlock(
+func (d *Deposit) CollateralizationPercentageAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -3781,7 +3763,45 @@ func (d *Deposit) CurrentStateAtBlock(
 		d.caller,
 		d.errorResolver,
 		d.contractAddress,
-		"currentState",
+		"collateralizationPercentage",
+		&result,
+	)
+
+	return result, err
+}
+
+func (d *Deposit) RemainingTerm() (*big.Int, error) {
+	var result *big.Int
+	result, err := d.contract.RemainingTerm(
+		d.callerOptions,
+	)
+
+	if err != nil {
+		return result, d.errorResolver.ResolveError(
+			err,
+			d.callerOptions.From,
+			nil,
+			"remainingTerm",
+		)
+	}
+
+	return result, err
+}
+
+func (d *Deposit) RemainingTermAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		d.callerOptions.From,
+		blockNumber,
+		nil,
+		d.contractABI,
+		d.caller,
+		d.errorResolver,
+		d.contractAddress,
+		"remainingTerm",
 		&result,
 	)
 
