@@ -29,6 +29,8 @@ require('babel-polyfill');
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
+const Kit = require('@celo/contractkit')
+
 const mnemonic = 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
 
 module.exports = {
@@ -72,6 +74,15 @@ module.exports = {
       gas: 8000000,
       network_id: 3,
       skipDryRun: true
+    },
+
+    alfajores: {
+      provider: function() {
+        const kit = Kit.newKit('https://alfajores-forno.celo-testnet.org')
+        kit.addAccount(process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY)
+        return kit.web3.currentProvider
+      },
+      network_id: 44787
     },
 
     mainnet: {

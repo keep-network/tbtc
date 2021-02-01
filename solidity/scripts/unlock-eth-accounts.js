@@ -3,12 +3,12 @@ Here we assume that the passphrase for unlocking all the accounts on
 some private testnet is the same.  This is intended for use with
 truffle.  Example:
 
-KEEP_ETHEREUM_PASSWORD=password \
+KEEP_ACCOUNT_PASSWORD=password \
   truffle exec ./scripts/unlock-eth-accounts.js \
   --network keep_dev
 */
 
-const password = process.env.KEEP_ETHEREUM_PASSWORD || "password"
+const password = process.env.KEEP_ACCOUNT_PASSWORD || "password"
 
 module.exports = async function() {
   const accounts = await web3.eth.getAccounts()
