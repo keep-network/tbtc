@@ -31,7 +31,8 @@ jobs:
           paths:
             - solidity/package.json
             - solidity/package-lock.json
-
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml)
+  # has been created as part of work on RFC-18
   compile_contracts:
     executor: docker-node
     steps:
@@ -52,7 +53,8 @@ jobs:
           paths:
            - solidity/node_modules
            - solidity/build/contracts
-
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml)
+  # has been created as part of work on RFC-18
   lint:
     executor: docker-node
     steps:
@@ -65,6 +67,8 @@ jobs:
           command: |
             set -ex
             npm run lint
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml)
+  # has been created as part of work on RFC-18
   unit_test_contracts:
     executor: docker-node
     steps:
