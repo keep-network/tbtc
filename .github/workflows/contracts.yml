@@ -48,7 +48,7 @@ jobs:
         run: npm ci
 
       - name: Compile contracts
-        run: npx truffle compile
+        run: npm run compile
 
       - name: Run tests
         run: npm run test:quick
