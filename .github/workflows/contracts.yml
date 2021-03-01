@@ -1,0 +1,51 @@
+name: Solidity
+
+#TODO: extend the conditions once workflow gets tested together with other workflows
+on:
+  push:
+    branches:
+      # TODO: Run on master after we're fully migrated from Circle CI
+      # - master
+      - "rfc-18/**"
+    paths:
+      - "solidity/**"
+      - ".github/workflows/contracts.yml"
+  pull_request:
+    branches:
+      # TODO: Run on all branches after we're fully migrated from Circle CI
+      - "rfc-18/**"
+    paths:
+      - "solidity/**"
+      - ".github/workflows/contracts.yml"
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12.x"
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
