@@ -17,7 +17,7 @@ on:
     paths:
       - "solidity/**"
       - ".github/workflows/contracts.yml"
-
+  workflow_dispatch:
 
 jobs:
   lint:
