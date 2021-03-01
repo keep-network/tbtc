@@ -17,6 +17,7 @@ on:
     paths:
       - "solidity/**"
       - ".github/workflows/contracts.yml"
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -54,6 +55,9 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
 
@@ -74,13 +78,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dependencies
-        working-directory: ./solidity
         run: npm ci
 
-      - name: Compile contracts
-        working-directory: ./solidity
-        run: npx truffle compile
-
       - name: Lint
-        working-directory: ./solidity
         run: npm run lint
