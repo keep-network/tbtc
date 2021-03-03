@@ -11,19 +11,19 @@ import (
 	"sync"
 	"time"
 
-	hostchainabi "github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/event"
+	hostchainabi "github.com/celo-org/celo-blockchain/accounts/abi"
+	"github.com/celo-org/celo-blockchain/accounts/abi/bind"
+	"github.com/celo-org/celo-blockchain/accounts/keystore"
+	"github.com/celo-org/celo-blockchain/common"
+	"github.com/celo-org/celo-blockchain/core/types"
+	"github.com/celo-org/celo-blockchain/event"
 
 	"github.com/ipfs/go-log"
 
-	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	chainutil "github.com/keep-network/keep-common/pkg/chain/celo/celoutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	abi "github.com/keep-network/tbtc/pkg/chain/ethereum/gen/abi/system"
+	abi "github.com/keep-network/tbtc/pkg/chain/celo/gen/abi/system"
 )
 
 // Create a package-level logger for this contract. The logger exists at
