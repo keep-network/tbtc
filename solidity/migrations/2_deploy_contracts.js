@@ -79,7 +79,8 @@ module.exports = (deployer, network, accounts) => {
     if (
       network == "keep_dev" ||
       network == "development" ||
-      network == "ropsten"
+      network == "ropsten" ||
+      network == "alfajores"
     ) {
       // For keep_dev and development, replace constants with testnet constants.
       // Masquerade as TBTCConstants like a sinister fellow.
@@ -135,6 +136,7 @@ module.exports = (deployer, network, accounts) => {
       difficultyRelayAddress = RopstenTestnetRelay
     } else if (
       network === "keep_dev" ||
+      network === "alfajores" ||
       relayConfig.forceRelay === "TestnetRelay"
     ) {
       const {genesis, height, epochStart} = relayConfig.init.bitcoinTest

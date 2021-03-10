@@ -4,9 +4,9 @@ name: Solidity
 on:
   push:
     branches:
-      # TODO: Run on master after we're fully migrated from Circle CI
-      # - master
+      # TODO: Run only on master after we're fully migrated from Circle CI
       - "rfc-18/**"
+      - master
     paths:
       - "solidity/**"
       - ".github/workflows/contracts.yml"
@@ -14,6 +14,7 @@ on:
     branches:
       # TODO: Run on all branches after we're fully migrated from Circle CI
       - "rfc-18/**"
+      - master
     paths:
       - "solidity/**"
       - ".github/workflows/contracts.yml"
@@ -82,3 +83,65 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+  migrate-and-publish-celo:
+    needs: [build-and-test, lint]
+    if: |
+      github.ref == 'refs/heads/master'
+        && (github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch')
+    environment: keep-test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12.x"
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Fetch external contracts artifacts
+        env:
+          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
+          CONTRACT_DATA_BUCKET_DIR: keep-ecdsa-celo
+          ETH_NETWORK_ID: 44787 # Alfajores network ID
+        run: ./scripts/ci-provision-external-contracts.sh
+
+      - name: Migrate contracts
+        env:
+          CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: npx truffle migrate --reset --network alfajores
+
+      # TODO: if Celo works with Tenderly, add appropriate push step
+
+      - name: Upload contract data
+        env:
+          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
+        run: |
+          cd build/contracts
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/tbtc-celo
+
+      # TODO: add NPM publish step once it's clear how artifacts should be tagged
