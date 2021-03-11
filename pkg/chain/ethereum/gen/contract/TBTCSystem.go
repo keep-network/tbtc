@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/event"
 
 	"github.com/ipfs/go-log"
@@ -49,6 +50,7 @@ type TBTCSystem struct {
 
 func NewTBTCSystem(
 	contractAddress common.Address,
+	chainId *big.Int,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethutil.NonceManager,
@@ -60,9 +62,25 @@ func NewTBTCSystem(
 		From: accountKey.Address,
 	}
 
-	transactorOptions := bind.NewKeyedTransactor(
-		accountKey.PrivateKey,
-	)
+	// FIXME Switch to bind.NewKeyedTransactorWithChainID when go-ethereum dep
+	// FIXME bumps beyond 1.9.25.
+	key := accountKey.PrivateKey
+	keyAddress := crypto.PubkeyToAddress(key.PublicKey)
+	transactorOptions := &bind.TransactOpts{
+		From: keyAddress,
+		Signer: func(_ types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			signer := types.NewEIP155Signer(chainId)
+
+			if address != keyAddress {
+				return nil, fmt.Errorf("not authorized to sign this account")
+			}
+			signature, err := crypto.Sign(signer.Hash(tx).Bytes(), key)
+			if err != nil {
+				return nil, err
+			}
+			return tx.WithSignature(signer, signature)
+		},
+	}
 
 	randomBeaconContract, err := abi.NewTBTCSystem(
 		contractAddress,
@@ -100,20 +118,16 @@ func NewTBTCSystem(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
-	_digest [32]uint8,
-	_r [32]uint8,
-	_s [32]uint8,
+func (tbtcs *TBTCSystem) BeginEthBtcPriceFeedAddition(
+	_ethBtcPriceFeed common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
-		"submitting transaction logGotRedemptionSignature",
+		"submitting transaction beginEthBtcPriceFeedAddition",
 		"params: ",
 		fmt.Sprint(
-			_digest,
-			_r,
-			_s,
+			_ethBtcPriceFeed,
 		),
 	)
 
@@ -139,26 +153,22 @@ func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := tbtcs.contract.LogGotRedemptionSignature(
+	transaction, err := tbtcs.contract.BeginEthBtcPriceFeedAddition(
 		transactorOptions,
-		_digest,
-		_r,
-		_s,
+		_ethBtcPriceFeed,
 	)
 	if err != nil {
 		return transaction, tbtcs.errorResolver.ResolveError(
 			err,
 			tbtcs.transactorOptions.From,
 			nil,
-			"logGotRedemptionSignature",
-			_digest,
-			_r,
-			_s,
+			"beginEthBtcPriceFeedAddition",
+			_ethBtcPriceFeed,
 		)
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logGotRedemptionSignature with id: [%v] and nonce [%v]",
+		"submitted transaction beginEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -169,26 +179,22 @@ func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := tbtcs.contract.LogGotRedemptionSignature(
+			transaction, err := tbtcs.contract.BeginEthBtcPriceFeedAddition(
 				transactorOptions,
-				_digest,
-				_r,
-				_s,
+				_ethBtcPriceFeed,
 			)
 			if err != nil {
 				return transaction, tbtcs.errorResolver.ResolveError(
 					err,
 					tbtcs.transactorOptions.From,
 					nil,
-					"logGotRedemptionSignature",
-					_digest,
-					_r,
-					_s,
+					"beginEthBtcPriceFeedAddition",
+					_ethBtcPriceFeed,
 				)
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logGotRedemptionSignature with id: [%v] and nonce [%v]",
+				"submitted transaction beginEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -203,10 +209,8 @@ func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
 }
 
 // Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallLogGotRedemptionSignature(
-	_digest [32]uint8,
-	_r [32]uint8,
-	_s [32]uint8,
+func (tbtcs *TBTCSystem) CallBeginEthBtcPriceFeedAddition(
+	_ethBtcPriceFeed common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -218,660 +222,26 @@ func (tbtcs *TBTCSystem) CallLogGotRedemptionSignature(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"logGotRedemptionSignature",
+		"beginEthBtcPriceFeedAddition",
 		&result,
-		_digest,
-		_r,
-		_s,
+		_ethBtcPriceFeed,
 	)
 
 	return err
 }
 
-func (tbtcs *TBTCSystem) LogGotRedemptionSignatureGasEstimate(
-	_digest [32]uint8,
-	_r [32]uint8,
-	_s [32]uint8,
+func (tbtcs *TBTCSystem) BeginEthBtcPriceFeedAdditionGasEstimate(
+	_ethBtcPriceFeed common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		tbtcs.callerOptions.From,
 		tbtcs.contractAddress,
-		"logGotRedemptionSignature",
+		"beginEthBtcPriceFeedAddition",
 		tbtcs.contractABI,
 		tbtcs.transactor,
-		_digest,
-		_r,
-		_s,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) LogSetupFailed(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction logSetupFailed",
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.LogSetupFailed(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"logSetupFailed",
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.LogSetupFailed(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"logSetupFailed",
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallLogSetupFailed(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"logSetupFailed",
-		&result,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) LogSetupFailedGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"logSetupFailed",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) BeginCollateralizationThresholdsUpdate(
-	_initialCollateralizedPercent uint16,
-	_undercollateralizedThresholdPercent uint16,
-	_severelyUndercollateralizedThresholdPercent uint16,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction beginCollateralizationThresholdsUpdate",
-		"params: ",
-		fmt.Sprint(
-			_initialCollateralizedPercent,
-			_undercollateralizedThresholdPercent,
-			_severelyUndercollateralizedThresholdPercent,
-		),
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.BeginCollateralizationThresholdsUpdate(
-		transactorOptions,
-		_initialCollateralizedPercent,
-		_undercollateralizedThresholdPercent,
-		_severelyUndercollateralizedThresholdPercent,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"beginCollateralizationThresholdsUpdate",
-			_initialCollateralizedPercent,
-			_undercollateralizedThresholdPercent,
-			_severelyUndercollateralizedThresholdPercent,
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction beginCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.BeginCollateralizationThresholdsUpdate(
-				transactorOptions,
-				_initialCollateralizedPercent,
-				_undercollateralizedThresholdPercent,
-				_severelyUndercollateralizedThresholdPercent,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"beginCollateralizationThresholdsUpdate",
-					_initialCollateralizedPercent,
-					_undercollateralizedThresholdPercent,
-					_severelyUndercollateralizedThresholdPercent,
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction beginCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallBeginCollateralizationThresholdsUpdate(
-	_initialCollateralizedPercent uint16,
-	_undercollateralizedThresholdPercent uint16,
-	_severelyUndercollateralizedThresholdPercent uint16,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"beginCollateralizationThresholdsUpdate",
-		&result,
-		_initialCollateralizedPercent,
-		_undercollateralizedThresholdPercent,
-		_severelyUndercollateralizedThresholdPercent,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) BeginCollateralizationThresholdsUpdateGasEstimate(
-	_initialCollateralizedPercent uint16,
-	_undercollateralizedThresholdPercent uint16,
-	_severelyUndercollateralizedThresholdPercent uint16,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"beginCollateralizationThresholdsUpdate",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-		_initialCollateralizedPercent,
-		_undercollateralizedThresholdPercent,
-		_severelyUndercollateralizedThresholdPercent,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) BeginSignerFeeDivisorUpdate(
-	_signerFeeDivisor uint16,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction beginSignerFeeDivisorUpdate",
-		"params: ",
-		fmt.Sprint(
-			_signerFeeDivisor,
-		),
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.BeginSignerFeeDivisorUpdate(
-		transactorOptions,
-		_signerFeeDivisor,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"beginSignerFeeDivisorUpdate",
-			_signerFeeDivisor,
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction beginSignerFeeDivisorUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.BeginSignerFeeDivisorUpdate(
-				transactorOptions,
-				_signerFeeDivisor,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"beginSignerFeeDivisorUpdate",
-					_signerFeeDivisor,
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction beginSignerFeeDivisorUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallBeginSignerFeeDivisorUpdate(
-	_signerFeeDivisor uint16,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"beginSignerFeeDivisorUpdate",
-		&result,
-		_signerFeeDivisor,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) BeginSignerFeeDivisorUpdateGasEstimate(
-	_signerFeeDivisor uint16,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"beginSignerFeeDivisorUpdate",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-		_signerFeeDivisor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) LogLiquidated(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction logLiquidated",
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.LogLiquidated(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"logLiquidated",
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.LogLiquidated(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"logLiquidated",
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallLogLiquidated(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"logLiquidated",
-		&result,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) LogLiquidatedGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"logLiquidated",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) ResumeNewDeposits(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction resumeNewDeposits",
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.ResumeNewDeposits(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"resumeNewDeposits",
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction resumeNewDeposits with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.ResumeNewDeposits(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"resumeNewDeposits",
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction resumeNewDeposits with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallResumeNewDeposits(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"resumeNewDeposits",
-		&result,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) ResumeNewDepositsGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"resumeNewDeposits",
-		tbtcs.contractABI,
-		tbtcs.transactor,
+		_ethBtcPriceFeed,
 	)
 
 	return result, err
@@ -1018,12 +388,17 @@ func (tbtcs *TBTCSystem) LogRegisteredPubkeyGasEstimate(
 }
 
 // Transaction submission.
-func (tbtcs *TBTCSystem) RefreshMinimumBondableValue(
+func (tbtcs *TBTCSystem) TransferOwnership(
+	newOwner common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
-		"submitting transaction refreshMinimumBondableValue",
+		"submitting transaction transferOwnership",
+		"params: ",
+		fmt.Sprint(
+			newOwner,
+		),
 	)
 
 	tbtcs.transactionMutex.Lock()
@@ -1048,20 +423,22 @@ func (tbtcs *TBTCSystem) RefreshMinimumBondableValue(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := tbtcs.contract.RefreshMinimumBondableValue(
+	transaction, err := tbtcs.contract.TransferOwnership(
 		transactorOptions,
+		newOwner,
 	)
 	if err != nil {
 		return transaction, tbtcs.errorResolver.ResolveError(
 			err,
 			tbtcs.transactorOptions.From,
 			nil,
-			"refreshMinimumBondableValue",
+			"transferOwnership",
+			newOwner,
 		)
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction refreshMinimumBondableValue with id: [%v] and nonce [%v]",
+		"submitted transaction transferOwnership with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -1072,20 +449,22 @@ func (tbtcs *TBTCSystem) RefreshMinimumBondableValue(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := tbtcs.contract.RefreshMinimumBondableValue(
+			transaction, err := tbtcs.contract.TransferOwnership(
 				transactorOptions,
+				newOwner,
 			)
 			if err != nil {
 				return transaction, tbtcs.errorResolver.ResolveError(
 					err,
 					tbtcs.transactorOptions.From,
 					nil,
-					"refreshMinimumBondableValue",
+					"transferOwnership",
+					newOwner,
 				)
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction refreshMinimumBondableValue with id: [%v] and nonce [%v]",
+				"submitted transaction transferOwnership with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -1100,7 +479,8 @@ func (tbtcs *TBTCSystem) RefreshMinimumBondableValue(
 }
 
 // Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallRefreshMinimumBondableValue(
+func (tbtcs *TBTCSystem) CallTransferOwnership(
+	newOwner common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1112,34 +492,38 @@ func (tbtcs *TBTCSystem) CallRefreshMinimumBondableValue(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"refreshMinimumBondableValue",
+		"transferOwnership",
 		&result,
+		newOwner,
 	)
 
 	return err
 }
 
-func (tbtcs *TBTCSystem) RefreshMinimumBondableValueGasEstimate() (uint64, error) {
+func (tbtcs *TBTCSystem) TransferOwnershipGasEstimate(
+	newOwner common.Address,
+) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		tbtcs.callerOptions.From,
 		tbtcs.contractAddress,
-		"refreshMinimumBondableValue",
+		"transferOwnership",
 		tbtcs.contractABI,
 		tbtcs.transactor,
+		newOwner,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
+func (tbtcs *TBTCSystem) LogSetupFailed(
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
-		"submitting transaction finalizeKeepFactoriesUpdate",
+		"submitting transaction logSetupFailed",
 	)
 
 	tbtcs.transactionMutex.Lock()
@@ -1164,7 +548,7 @@ func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := tbtcs.contract.FinalizeKeepFactoriesUpdate(
+	transaction, err := tbtcs.contract.LogSetupFailed(
 		transactorOptions,
 	)
 	if err != nil {
@@ -1172,12 +556,12 @@ func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
 			err,
 			tbtcs.transactorOptions.From,
 			nil,
-			"finalizeKeepFactoriesUpdate",
+			"logSetupFailed",
 		)
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction finalizeKeepFactoriesUpdate with id: [%v] and nonce [%v]",
+		"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -1188,7 +572,7 @@ func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := tbtcs.contract.FinalizeKeepFactoriesUpdate(
+			transaction, err := tbtcs.contract.LogSetupFailed(
 				transactorOptions,
 			)
 			if err != nil {
@@ -1196,12 +580,12 @@ func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
 					err,
 					tbtcs.transactorOptions.From,
 					nil,
-					"finalizeKeepFactoriesUpdate",
+					"logSetupFailed",
 				)
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction finalizeKeepFactoriesUpdate with id: [%v] and nonce [%v]",
+				"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -1216,7 +600,7 @@ func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
 }
 
 // Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallFinalizeKeepFactoriesUpdate(
+func (tbtcs *TBTCSystem) CallLogSetupFailed(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1228,136 +612,20 @@ func (tbtcs *TBTCSystem) CallFinalizeKeepFactoriesUpdate(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"finalizeKeepFactoriesUpdate",
+		"logSetupFailed",
 		&result,
 	)
 
 	return err
 }
 
-func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdateGasEstimate() (uint64, error) {
+func (tbtcs *TBTCSystem) LogSetupFailedGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		tbtcs.callerOptions.From,
 		tbtcs.contractAddress,
-		"finalizeKeepFactoriesUpdate",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) LogExitedCourtesyCall(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction logExitedCourtesyCall",
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.LogExitedCourtesyCall(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"logExitedCourtesyCall",
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.LogExitedCourtesyCall(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"logExitedCourtesyCall",
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallLogExitedCourtesyCall(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"logExitedCourtesyCall",
-		&result,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) LogExitedCourtesyCallGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"logExitedCourtesyCall",
+		"logSetupFailed",
 		tbtcs.contractABI,
 		tbtcs.transactor,
 	)
@@ -1546,122 +814,6 @@ func (tbtcs *TBTCSystem) LogRedemptionRequestedGasEstimate(
 }
 
 // Transaction submission.
-func (tbtcs *TBTCSystem) LogCourtesyCalled(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction logCourtesyCalled",
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.LogCourtesyCalled(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"logCourtesyCalled",
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.LogCourtesyCalled(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"logCourtesyCalled",
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallLogCourtesyCalled(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"logCourtesyCalled",
-		&result,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) LogCourtesyCalledGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"logCourtesyCalled",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
 func (tbtcs *TBTCSystem) FinalizeLotSizesUpdate(
 
 	transactionOptions ...ethutil.TransactionOptions,
@@ -1778,12 +930,12 @@ func (tbtcs *TBTCSystem) FinalizeLotSizesUpdateGasEstimate() (uint64, error) {
 }
 
 // Transaction submission.
-func (tbtcs *TBTCSystem) LogFraudDuringSetup(
+func (tbtcs *TBTCSystem) ResumeNewDeposits(
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
-		"submitting transaction logFraudDuringSetup",
+		"submitting transaction resumeNewDeposits",
 	)
 
 	tbtcs.transactionMutex.Lock()
@@ -1808,7 +960,7 @@ func (tbtcs *TBTCSystem) LogFraudDuringSetup(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := tbtcs.contract.LogFraudDuringSetup(
+	transaction, err := tbtcs.contract.ResumeNewDeposits(
 		transactorOptions,
 	)
 	if err != nil {
@@ -1816,12 +968,12 @@ func (tbtcs *TBTCSystem) LogFraudDuringSetup(
 			err,
 			tbtcs.transactorOptions.From,
 			nil,
-			"logFraudDuringSetup",
+			"resumeNewDeposits",
 		)
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
+		"submitted transaction resumeNewDeposits with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -1832,7 +984,7 @@ func (tbtcs *TBTCSystem) LogFraudDuringSetup(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := tbtcs.contract.LogFraudDuringSetup(
+			transaction, err := tbtcs.contract.ResumeNewDeposits(
 				transactorOptions,
 			)
 			if err != nil {
@@ -1840,12 +992,12 @@ func (tbtcs *TBTCSystem) LogFraudDuringSetup(
 					err,
 					tbtcs.transactorOptions.From,
 					nil,
-					"logFraudDuringSetup",
+					"resumeNewDeposits",
 				)
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
+				"submitted transaction resumeNewDeposits with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -1860,7 +1012,7 @@ func (tbtcs *TBTCSystem) LogFraudDuringSetup(
 }
 
 // Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallLogFraudDuringSetup(
+func (tbtcs *TBTCSystem) CallResumeNewDeposits(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1872,384 +1024,22 @@ func (tbtcs *TBTCSystem) CallLogFraudDuringSetup(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"logFraudDuringSetup",
+		"resumeNewDeposits",
 		&result,
 	)
 
 	return err
 }
 
-func (tbtcs *TBTCSystem) LogFraudDuringSetupGasEstimate() (uint64, error) {
+func (tbtcs *TBTCSystem) ResumeNewDepositsGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		tbtcs.callerOptions.From,
 		tbtcs.contractAddress,
-		"logFraudDuringSetup",
+		"resumeNewDeposits",
 		tbtcs.contractABI,
 		tbtcs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) FinalizeEthBtcPriceFeedAddition(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction finalizeEthBtcPriceFeedAddition",
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.FinalizeEthBtcPriceFeedAddition(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"finalizeEthBtcPriceFeedAddition",
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction finalizeEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.FinalizeEthBtcPriceFeedAddition(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"finalizeEthBtcPriceFeedAddition",
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction finalizeEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallFinalizeEthBtcPriceFeedAddition(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"finalizeEthBtcPriceFeedAddition",
-		&result,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) FinalizeEthBtcPriceFeedAdditionGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"finalizeEthBtcPriceFeedAddition",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) RenounceOwnership(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction renounceOwnership",
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.RenounceOwnership(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"renounceOwnership",
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction renounceOwnership with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.RenounceOwnership(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"renounceOwnership",
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction renounceOwnership with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallRenounceOwnership(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"renounceOwnership",
-		&result,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) RenounceOwnershipGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"renounceOwnership",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) BeginEthBtcPriceFeedAddition(
-	_ethBtcPriceFeed common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction beginEthBtcPriceFeedAddition",
-		"params: ",
-		fmt.Sprint(
-			_ethBtcPriceFeed,
-		),
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.BeginEthBtcPriceFeedAddition(
-		transactorOptions,
-		_ethBtcPriceFeed,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"beginEthBtcPriceFeedAddition",
-			_ethBtcPriceFeed,
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction beginEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.BeginEthBtcPriceFeedAddition(
-				transactorOptions,
-				_ethBtcPriceFeed,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"beginEthBtcPriceFeedAddition",
-					_ethBtcPriceFeed,
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction beginEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallBeginEthBtcPriceFeedAddition(
-	_ethBtcPriceFeed common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"beginEthBtcPriceFeedAddition",
-		&result,
-		_ethBtcPriceFeed,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) BeginEthBtcPriceFeedAdditionGasEstimate(
-	_ethBtcPriceFeed common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"beginEthBtcPriceFeedAddition",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-		_ethBtcPriceFeed,
 	)
 
 	return result, err
@@ -2364,527 +1154,6 @@ func (tbtcs *TBTCSystem) EmergencyPauseNewDepositsGasEstimate() (uint64, error) 
 		tbtcs.callerOptions.From,
 		tbtcs.contractAddress,
 		"emergencyPauseNewDeposits",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) TransferOwnership(
-	newOwner common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction transferOwnership",
-		"params: ",
-		fmt.Sprint(
-			newOwner,
-		),
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.TransferOwnership(
-		transactorOptions,
-		newOwner,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"transferOwnership",
-			newOwner,
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction transferOwnership with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.TransferOwnership(
-				transactorOptions,
-				newOwner,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"transferOwnership",
-					newOwner,
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction transferOwnership with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallTransferOwnership(
-	newOwner common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"transferOwnership",
-		&result,
-		newOwner,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) TransferOwnershipGasEstimate(
-	newOwner common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"transferOwnership",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-		newOwner,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) RequestNewKeep(
-	_requestedLotSizeSatoshis uint64,
-	_maxSecuredLifetime *big.Int,
-	value *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction requestNewKeep",
-		"params: ",
-		fmt.Sprint(
-			_requestedLotSizeSatoshis,
-			_maxSecuredLifetime,
-		),
-		"value: ", value,
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	transactorOptions.Value = value
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.RequestNewKeep(
-		transactorOptions,
-		_requestedLotSizeSatoshis,
-		_maxSecuredLifetime,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			value,
-			"requestNewKeep",
-			_requestedLotSizeSatoshis,
-			_maxSecuredLifetime,
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction requestNewKeep with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.RequestNewKeep(
-				transactorOptions,
-				_requestedLotSizeSatoshis,
-				_maxSecuredLifetime,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					value,
-					"requestNewKeep",
-					_requestedLotSizeSatoshis,
-					_maxSecuredLifetime,
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction requestNewKeep with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallRequestNewKeep(
-	_requestedLotSizeSatoshis uint64,
-	_maxSecuredLifetime *big.Int,
-	value *big.Int,
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, value,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"requestNewKeep",
-		&result,
-		_requestedLotSizeSatoshis,
-		_maxSecuredLifetime,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) RequestNewKeepGasEstimate(
-	_requestedLotSizeSatoshis uint64,
-	_maxSecuredLifetime *big.Int,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"requestNewKeep",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-		_requestedLotSizeSatoshis,
-		_maxSecuredLifetime,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) LogCreated(
-	_keepAddress common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction logCreated",
-		"params: ",
-		fmt.Sprint(
-			_keepAddress,
-		),
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.LogCreated(
-		transactorOptions,
-		_keepAddress,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"logCreated",
-			_keepAddress,
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction logCreated with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.LogCreated(
-				transactorOptions,
-				_keepAddress,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"logCreated",
-					_keepAddress,
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction logCreated with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallLogCreated(
-	_keepAddress common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"logCreated",
-		&result,
-		_keepAddress,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) LogCreatedGasEstimate(
-	_keepAddress common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"logCreated",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-		_keepAddress,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) FinalizeCollateralizationThresholdsUpdate(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction finalizeCollateralizationThresholdsUpdate",
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.FinalizeCollateralizationThresholdsUpdate(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"finalizeCollateralizationThresholdsUpdate",
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction finalizeCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.FinalizeCollateralizationThresholdsUpdate(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"finalizeCollateralizationThresholdsUpdate",
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction finalizeCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallFinalizeCollateralizationThresholdsUpdate(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"finalizeCollateralizationThresholdsUpdate",
-		&result,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) FinalizeCollateralizationThresholdsUpdateGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"finalizeCollateralizationThresholdsUpdate",
 		tbtcs.contractABI,
 		tbtcs.transactor,
 	)
@@ -3139,286 +1408,6 @@ func (tbtcs *TBTCSystem) LogRedeemedGasEstimate(
 }
 
 // Transaction submission.
-func (tbtcs *TBTCSystem) BeginKeepFactoriesUpdate(
-	_keepStakedFactory common.Address,
-	_fullyBackedFactory common.Address,
-	_factorySelector common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction beginKeepFactoriesUpdate",
-		"params: ",
-		fmt.Sprint(
-			_keepStakedFactory,
-			_fullyBackedFactory,
-			_factorySelector,
-		),
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.BeginKeepFactoriesUpdate(
-		transactorOptions,
-		_keepStakedFactory,
-		_fullyBackedFactory,
-		_factorySelector,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"beginKeepFactoriesUpdate",
-			_keepStakedFactory,
-			_fullyBackedFactory,
-			_factorySelector,
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction beginKeepFactoriesUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.BeginKeepFactoriesUpdate(
-				transactorOptions,
-				_keepStakedFactory,
-				_fullyBackedFactory,
-				_factorySelector,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"beginKeepFactoriesUpdate",
-					_keepStakedFactory,
-					_fullyBackedFactory,
-					_factorySelector,
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction beginKeepFactoriesUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallBeginKeepFactoriesUpdate(
-	_keepStakedFactory common.Address,
-	_fullyBackedFactory common.Address,
-	_factorySelector common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"beginKeepFactoriesUpdate",
-		&result,
-		_keepStakedFactory,
-		_fullyBackedFactory,
-		_factorySelector,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) BeginKeepFactoriesUpdateGasEstimate(
-	_keepStakedFactory common.Address,
-	_fullyBackedFactory common.Address,
-	_factorySelector common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"beginKeepFactoriesUpdate",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-		_keepStakedFactory,
-		_fullyBackedFactory,
-		_factorySelector,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tbtcs *TBTCSystem) BeginLotSizesUpdate(
-	_lotSizes []uint64,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tbtcsLogger.Debug(
-		"submitting transaction beginLotSizesUpdate",
-		"params: ",
-		fmt.Sprint(
-			_lotSizes,
-		),
-	)
-
-	tbtcs.transactionMutex.Lock()
-	defer tbtcs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tbtcs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := tbtcs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := tbtcs.contract.BeginLotSizesUpdate(
-		transactorOptions,
-		_lotSizes,
-	)
-	if err != nil {
-		return transaction, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.transactorOptions.From,
-			nil,
-			"beginLotSizesUpdate",
-			_lotSizes,
-		)
-	}
-
-	tbtcsLogger.Infof(
-		"submitted transaction beginLotSizesUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go tbtcs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := tbtcs.contract.BeginLotSizesUpdate(
-				transactorOptions,
-				_lotSizes,
-			)
-			if err != nil {
-				return transaction, tbtcs.errorResolver.ResolveError(
-					err,
-					tbtcs.transactorOptions.From,
-					nil,
-					"beginLotSizesUpdate",
-					_lotSizes,
-				)
-			}
-
-			tbtcsLogger.Infof(
-				"submitted transaction beginLotSizesUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	tbtcs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tbtcs *TBTCSystem) CallBeginLotSizesUpdate(
-	_lotSizes []uint64,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tbtcs.transactorOptions.From,
-		blockNumber, nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"beginLotSizesUpdate",
-		&result,
-		_lotSizes,
-	)
-
-	return err
-}
-
-func (tbtcs *TBTCSystem) BeginLotSizesUpdateGasEstimate(
-	_lotSizes []uint64,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tbtcs.callerOptions.From,
-		tbtcs.contractAddress,
-		"beginLotSizesUpdate",
-		tbtcs.contractABI,
-		tbtcs.transactor,
-		_lotSizes,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
 func (tbtcs *TBTCSystem) Initialize(
 	_defaultKeepFactory common.Address,
 	_depositFactory common.Address,
@@ -3629,6 +1618,368 @@ func (tbtcs *TBTCSystem) InitializeGasEstimate(
 }
 
 // Transaction submission.
+func (tbtcs *TBTCSystem) LogCourtesyCalled(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction logCourtesyCalled",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.LogCourtesyCalled(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"logCourtesyCalled",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.LogCourtesyCalled(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"logCourtesyCalled",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallLogCourtesyCalled(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"logCourtesyCalled",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) LogCourtesyCalledGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"logCourtesyCalled",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) LogLiquidated(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction logLiquidated",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.LogLiquidated(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"logLiquidated",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.LogLiquidated(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"logLiquidated",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallLogLiquidated(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"logLiquidated",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) LogLiquidatedGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"logLiquidated",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) BeginLotSizesUpdate(
+	_lotSizes []uint64,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction beginLotSizesUpdate",
+		"params: ",
+		fmt.Sprint(
+			_lotSizes,
+		),
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.BeginLotSizesUpdate(
+		transactorOptions,
+		_lotSizes,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"beginLotSizesUpdate",
+			_lotSizes,
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction beginLotSizesUpdate with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.BeginLotSizesUpdate(
+				transactorOptions,
+				_lotSizes,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"beginLotSizesUpdate",
+					_lotSizes,
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction beginLotSizesUpdate with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallBeginLotSizesUpdate(
+	_lotSizes []uint64,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"beginLotSizesUpdate",
+		&result,
+		_lotSizes,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) BeginLotSizesUpdateGasEstimate(
+	_lotSizes []uint64,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"beginLotSizesUpdate",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+		_lotSizes,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (tbtcs *TBTCSystem) LogFunded(
 	_txid [32]uint8,
 
@@ -3753,6 +2104,1127 @@ func (tbtcs *TBTCSystem) LogFundedGasEstimate(
 		tbtcs.contractABI,
 		tbtcs.transactor,
 		_txid,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction finalizeKeepFactoriesUpdate",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.FinalizeKeepFactoriesUpdate(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"finalizeKeepFactoriesUpdate",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction finalizeKeepFactoriesUpdate with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.FinalizeKeepFactoriesUpdate(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"finalizeKeepFactoriesUpdate",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction finalizeKeepFactoriesUpdate with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallFinalizeKeepFactoriesUpdate(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"finalizeKeepFactoriesUpdate",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdateGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"finalizeKeepFactoriesUpdate",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) LogFraudDuringSetup(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction logFraudDuringSetup",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.LogFraudDuringSetup(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"logFraudDuringSetup",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.LogFraudDuringSetup(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"logFraudDuringSetup",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallLogFraudDuringSetup(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"logFraudDuringSetup",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) LogFraudDuringSetupGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"logFraudDuringSetup",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) LogExitedCourtesyCall(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction logExitedCourtesyCall",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.LogExitedCourtesyCall(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"logExitedCourtesyCall",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.LogExitedCourtesyCall(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"logExitedCourtesyCall",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallLogExitedCourtesyCall(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"logExitedCourtesyCall",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) LogExitedCourtesyCallGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"logExitedCourtesyCall",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) BeginSignerFeeDivisorUpdate(
+	_signerFeeDivisor uint16,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction beginSignerFeeDivisorUpdate",
+		"params: ",
+		fmt.Sprint(
+			_signerFeeDivisor,
+		),
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.BeginSignerFeeDivisorUpdate(
+		transactorOptions,
+		_signerFeeDivisor,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"beginSignerFeeDivisorUpdate",
+			_signerFeeDivisor,
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction beginSignerFeeDivisorUpdate with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.BeginSignerFeeDivisorUpdate(
+				transactorOptions,
+				_signerFeeDivisor,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"beginSignerFeeDivisorUpdate",
+					_signerFeeDivisor,
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction beginSignerFeeDivisorUpdate with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallBeginSignerFeeDivisorUpdate(
+	_signerFeeDivisor uint16,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"beginSignerFeeDivisorUpdate",
+		&result,
+		_signerFeeDivisor,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) BeginSignerFeeDivisorUpdateGasEstimate(
+	_signerFeeDivisor uint16,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"beginSignerFeeDivisorUpdate",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+		_signerFeeDivisor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) FinalizeEthBtcPriceFeedAddition(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction finalizeEthBtcPriceFeedAddition",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.FinalizeEthBtcPriceFeedAddition(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"finalizeEthBtcPriceFeedAddition",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction finalizeEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.FinalizeEthBtcPriceFeedAddition(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"finalizeEthBtcPriceFeedAddition",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction finalizeEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallFinalizeEthBtcPriceFeedAddition(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"finalizeEthBtcPriceFeedAddition",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) FinalizeEthBtcPriceFeedAdditionGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"finalizeEthBtcPriceFeedAddition",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) FinalizeCollateralizationThresholdsUpdate(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction finalizeCollateralizationThresholdsUpdate",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.FinalizeCollateralizationThresholdsUpdate(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"finalizeCollateralizationThresholdsUpdate",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction finalizeCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.FinalizeCollateralizationThresholdsUpdate(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"finalizeCollateralizationThresholdsUpdate",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction finalizeCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallFinalizeCollateralizationThresholdsUpdate(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"finalizeCollateralizationThresholdsUpdate",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) FinalizeCollateralizationThresholdsUpdateGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"finalizeCollateralizationThresholdsUpdate",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) RefreshMinimumBondableValue(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction refreshMinimumBondableValue",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.RefreshMinimumBondableValue(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"refreshMinimumBondableValue",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction refreshMinimumBondableValue with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.RefreshMinimumBondableValue(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"refreshMinimumBondableValue",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction refreshMinimumBondableValue with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallRefreshMinimumBondableValue(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"refreshMinimumBondableValue",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) RefreshMinimumBondableValueGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"refreshMinimumBondableValue",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) RequestNewKeep(
+	_requestedLotSizeSatoshis uint64,
+	_maxSecuredLifetime *big.Int,
+	value *big.Int,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction requestNewKeep",
+		"params: ",
+		fmt.Sprint(
+			_requestedLotSizeSatoshis,
+			_maxSecuredLifetime,
+		),
+		"value: ", value,
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	transactorOptions.Value = value
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.RequestNewKeep(
+		transactorOptions,
+		_requestedLotSizeSatoshis,
+		_maxSecuredLifetime,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			value,
+			"requestNewKeep",
+			_requestedLotSizeSatoshis,
+			_maxSecuredLifetime,
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction requestNewKeep with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.RequestNewKeep(
+				transactorOptions,
+				_requestedLotSizeSatoshis,
+				_maxSecuredLifetime,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					value,
+					"requestNewKeep",
+					_requestedLotSizeSatoshis,
+					_maxSecuredLifetime,
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction requestNewKeep with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallRequestNewKeep(
+	_requestedLotSizeSatoshis uint64,
+	_maxSecuredLifetime *big.Int,
+	value *big.Int,
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, value,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"requestNewKeep",
+		&result,
+		_requestedLotSizeSatoshis,
+		_maxSecuredLifetime,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) RequestNewKeepGasEstimate(
+	_requestedLotSizeSatoshis uint64,
+	_maxSecuredLifetime *big.Int,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"requestNewKeep",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+		_requestedLotSizeSatoshis,
+		_maxSecuredLifetime,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) BeginCollateralizationThresholdsUpdate(
+	_initialCollateralizedPercent uint16,
+	_undercollateralizedThresholdPercent uint16,
+	_severelyUndercollateralizedThresholdPercent uint16,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction beginCollateralizationThresholdsUpdate",
+		"params: ",
+		fmt.Sprint(
+			_initialCollateralizedPercent,
+			_undercollateralizedThresholdPercent,
+			_severelyUndercollateralizedThresholdPercent,
+		),
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.BeginCollateralizationThresholdsUpdate(
+		transactorOptions,
+		_initialCollateralizedPercent,
+		_undercollateralizedThresholdPercent,
+		_severelyUndercollateralizedThresholdPercent,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"beginCollateralizationThresholdsUpdate",
+			_initialCollateralizedPercent,
+			_undercollateralizedThresholdPercent,
+			_severelyUndercollateralizedThresholdPercent,
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction beginCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.BeginCollateralizationThresholdsUpdate(
+				transactorOptions,
+				_initialCollateralizedPercent,
+				_undercollateralizedThresholdPercent,
+				_severelyUndercollateralizedThresholdPercent,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"beginCollateralizationThresholdsUpdate",
+					_initialCollateralizedPercent,
+					_undercollateralizedThresholdPercent,
+					_severelyUndercollateralizedThresholdPercent,
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction beginCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallBeginCollateralizationThresholdsUpdate(
+	_initialCollateralizedPercent uint16,
+	_undercollateralizedThresholdPercent uint16,
+	_severelyUndercollateralizedThresholdPercent uint16,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"beginCollateralizationThresholdsUpdate",
+		&result,
+		_initialCollateralizedPercent,
+		_undercollateralizedThresholdPercent,
+		_severelyUndercollateralizedThresholdPercent,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) BeginCollateralizationThresholdsUpdateGasEstimate(
+	_initialCollateralizedPercent uint16,
+	_undercollateralizedThresholdPercent uint16,
+	_severelyUndercollateralizedThresholdPercent uint16,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"beginCollateralizationThresholdsUpdate",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+		_initialCollateralizedPercent,
+		_undercollateralizedThresholdPercent,
+		_severelyUndercollateralizedThresholdPercent,
 	)
 
 	return result, err
@@ -3889,6 +3361,122 @@ func (tbtcs *TBTCSystem) LogFunderRequestedAbortGasEstimate(
 }
 
 // Transaction submission.
+func (tbtcs *TBTCSystem) RenounceOwnership(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction renounceOwnership",
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.RenounceOwnership(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"renounceOwnership",
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction renounceOwnership with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.RenounceOwnership(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"renounceOwnership",
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction renounceOwnership with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallRenounceOwnership(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"renounceOwnership",
+		&result,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) RenounceOwnershipGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"renounceOwnership",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (tbtcs *TBTCSystem) LogStartedLiquidation(
 	_wasFraud bool,
 
@@ -4018,11 +3606,441 @@ func (tbtcs *TBTCSystem) LogStartedLiquidationGasEstimate(
 	return result, err
 }
 
+// Transaction submission.
+func (tbtcs *TBTCSystem) BeginKeepFactoriesUpdate(
+	_keepStakedFactory common.Address,
+	_fullyBackedFactory common.Address,
+	_factorySelector common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction beginKeepFactoriesUpdate",
+		"params: ",
+		fmt.Sprint(
+			_keepStakedFactory,
+			_fullyBackedFactory,
+			_factorySelector,
+		),
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.BeginKeepFactoriesUpdate(
+		transactorOptions,
+		_keepStakedFactory,
+		_fullyBackedFactory,
+		_factorySelector,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"beginKeepFactoriesUpdate",
+			_keepStakedFactory,
+			_fullyBackedFactory,
+			_factorySelector,
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction beginKeepFactoriesUpdate with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.BeginKeepFactoriesUpdate(
+				transactorOptions,
+				_keepStakedFactory,
+				_fullyBackedFactory,
+				_factorySelector,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"beginKeepFactoriesUpdate",
+					_keepStakedFactory,
+					_fullyBackedFactory,
+					_factorySelector,
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction beginKeepFactoriesUpdate with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallBeginKeepFactoriesUpdate(
+	_keepStakedFactory common.Address,
+	_fullyBackedFactory common.Address,
+	_factorySelector common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"beginKeepFactoriesUpdate",
+		&result,
+		_keepStakedFactory,
+		_fullyBackedFactory,
+		_factorySelector,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) BeginKeepFactoriesUpdateGasEstimate(
+	_keepStakedFactory common.Address,
+	_fullyBackedFactory common.Address,
+	_factorySelector common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"beginKeepFactoriesUpdate",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+		_keepStakedFactory,
+		_fullyBackedFactory,
+		_factorySelector,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) LogCreated(
+	_keepAddress common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction logCreated",
+		"params: ",
+		fmt.Sprint(
+			_keepAddress,
+		),
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.LogCreated(
+		transactorOptions,
+		_keepAddress,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"logCreated",
+			_keepAddress,
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction logCreated with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.LogCreated(
+				transactorOptions,
+				_keepAddress,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"logCreated",
+					_keepAddress,
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction logCreated with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallLogCreated(
+	_keepAddress common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"logCreated",
+		&result,
+		_keepAddress,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) LogCreatedGasEstimate(
+	_keepAddress common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"logCreated",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+		_keepAddress,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
+	_digest [32]uint8,
+	_r [32]uint8,
+	_s [32]uint8,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tbtcsLogger.Debug(
+		"submitting transaction logGotRedemptionSignature",
+		"params: ",
+		fmt.Sprint(
+			_digest,
+			_r,
+			_s,
+		),
+	)
+
+	tbtcs.transactionMutex.Lock()
+	defer tbtcs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tbtcs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tbtcs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tbtcs.contract.LogGotRedemptionSignature(
+		transactorOptions,
+		_digest,
+		_r,
+		_s,
+	)
+	if err != nil {
+		return transaction, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.transactorOptions.From,
+			nil,
+			"logGotRedemptionSignature",
+			_digest,
+			_r,
+			_s,
+		)
+	}
+
+	tbtcsLogger.Infof(
+		"submitted transaction logGotRedemptionSignature with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go tbtcs.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := tbtcs.contract.LogGotRedemptionSignature(
+				transactorOptions,
+				_digest,
+				_r,
+				_s,
+			)
+			if err != nil {
+				return transaction, tbtcs.errorResolver.ResolveError(
+					err,
+					tbtcs.transactorOptions.From,
+					nil,
+					"logGotRedemptionSignature",
+					_digest,
+					_r,
+					_s,
+				)
+			}
+
+			tbtcsLogger.Infof(
+				"submitted transaction logGotRedemptionSignature with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	tbtcs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tbtcs *TBTCSystem) CallLogGotRedemptionSignature(
+	_digest [32]uint8,
+	_r [32]uint8,
+	_s [32]uint8,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tbtcs.transactorOptions.From,
+		blockNumber, nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"logGotRedemptionSignature",
+		&result,
+		_digest,
+		_r,
+		_s,
+	)
+
+	return err
+}
+
+func (tbtcs *TBTCSystem) LogGotRedemptionSignatureGasEstimate(
+	_digest [32]uint8,
+	_r [32]uint8,
+	_s [32]uint8,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tbtcs.callerOptions.From,
+		tbtcs.contractAddress,
+		"logGotRedemptionSignature",
+		tbtcs.contractABI,
+		tbtcs.transactor,
+		_digest,
+		_r,
+		_s,
+	)
+
+	return result, err
+}
+
 // ----- Const Methods ------
 
-func (tbtcs *TBTCSystem) GetInitialCollateralizedPercent() (uint16, error) {
-	var result uint16
-	result, err := tbtcs.contract.GetInitialCollateralizedPercent(
+func (tbtcs *TBTCSystem) Owner() (common.Address, error) {
+	var result common.Address
+	result, err := tbtcs.contract.Owner(
 		tbtcs.callerOptions,
 	)
 
@@ -4031,17 +4049,17 @@ func (tbtcs *TBTCSystem) GetInitialCollateralizedPercent() (uint16, error) {
 			err,
 			tbtcs.callerOptions.From,
 			nil,
-			"getInitialCollateralizedPercent",
+			"owner",
 		)
 	}
 
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetInitialCollateralizedPercentAtBlock(
+func (tbtcs *TBTCSystem) OwnerAtBlock(
 	blockNumber *big.Int,
-) (uint16, error) {
-	var result uint16
+) (common.Address, error) {
+	var result common.Address
 
 	err := ethutil.CallAtBlock(
 		tbtcs.callerOptions.From,
@@ -4051,121 +4069,7 @@ func (tbtcs *TBTCSystem) GetInitialCollateralizedPercentAtBlock(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"getInitialCollateralizedPercent",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingLotSizesUpdateTime() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetRemainingLotSizesUpdateTime(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getRemainingLotSizesUpdateTime",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingLotSizesUpdateTimeAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getRemainingLotSizesUpdateTime",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetSeverelyUndercollateralizedThresholdPercent() (uint16, error) {
-	var result uint16
-	result, err := tbtcs.contract.GetSeverelyUndercollateralizedThresholdPercent(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getSeverelyUndercollateralizedThresholdPercent",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetSeverelyUndercollateralizedThresholdPercentAtBlock(
-	blockNumber *big.Int,
-) (uint16, error) {
-	var result uint16
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getSeverelyUndercollateralizedThresholdPercent",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetSignerFeeDivisor() (uint16, error) {
-	var result uint16
-	result, err := tbtcs.contract.GetSignerFeeDivisor(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getSignerFeeDivisor",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetSignerFeeDivisorAtBlock(
-	blockNumber *big.Int,
-) (uint16, error) {
-	var result uint16
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getSignerFeeDivisor",
+		"owner",
 		&result,
 	)
 
@@ -4210,9 +4114,9 @@ func (tbtcs *TBTCSystem) FetchBitcoinPriceAtBlock(
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetPriceFeedGovernanceTimeDelay() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetPriceFeedGovernanceTimeDelay(
+func (tbtcs *TBTCSystem) GetSeverelyUndercollateralizedThresholdPercent() (uint16, error) {
+	var result uint16
+	result, err := tbtcs.contract.GetSeverelyUndercollateralizedThresholdPercent(
 		tbtcs.callerOptions,
 	)
 
@@ -4221,14 +4125,52 @@ func (tbtcs *TBTCSystem) GetPriceFeedGovernanceTimeDelay() (*big.Int, error) {
 			err,
 			tbtcs.callerOptions.From,
 			nil,
-			"getPriceFeedGovernanceTimeDelay",
+			"getSeverelyUndercollateralizedThresholdPercent",
 		)
 	}
 
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetPriceFeedGovernanceTimeDelayAtBlock(
+func (tbtcs *TBTCSystem) GetSeverelyUndercollateralizedThresholdPercentAtBlock(
+	blockNumber *big.Int,
+) (uint16, error) {
+	var result uint16
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getSeverelyUndercollateralizedThresholdPercent",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) FetchRelayCurrentDifficulty() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.FetchRelayCurrentDifficulty(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"fetchRelayCurrentDifficulty",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) FetchRelayCurrentDifficultyAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -4241,7 +4183,7 @@ func (tbtcs *TBTCSystem) GetPriceFeedGovernanceTimeDelayAtBlock(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"getPriceFeedGovernanceTimeDelay",
+		"fetchRelayCurrentDifficulty",
 		&result,
 	)
 
@@ -4324,129 +4266,9 @@ func (tbtcs *TBTCSystem) PriceFeedAtBlock(
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) ApprovedToLog(
-	_caller common.Address,
-) (bool, error) {
-	var result bool
-	result, err := tbtcs.contract.ApprovedToLog(
-		tbtcs.callerOptions,
-		_caller,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"approvedToLog",
-			_caller,
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) ApprovedToLogAtBlock(
-	_caller common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"approvedToLog",
-		&result,
-		_caller,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingEthBtcPriceFeedAdditionTime() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetRemainingEthBtcPriceFeedAdditionTime(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getRemainingEthBtcPriceFeedAdditionTime",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingEthBtcPriceFeedAdditionTimeAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getRemainingEthBtcPriceFeedAdditionTime",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) KeepSize() (uint16, error) {
-	var result uint16
-	result, err := tbtcs.contract.KeepSize(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"keepSize",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) KeepSizeAtBlock(
-	blockNumber *big.Int,
-) (uint16, error) {
-	var result uint16
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"keepSize",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) Owner() (common.Address, error) {
+func (tbtcs *TBTCSystem) Relay() (common.Address, error) {
 	var result common.Address
-	result, err := tbtcs.contract.Owner(
+	result, err := tbtcs.contract.Relay(
 		tbtcs.callerOptions,
 	)
 
@@ -4455,14 +4277,14 @@ func (tbtcs *TBTCSystem) Owner() (common.Address, error) {
 			err,
 			tbtcs.callerOptions.From,
 			nil,
-			"owner",
+			"relay",
 		)
 	}
 
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) OwnerAtBlock(
+func (tbtcs *TBTCSystem) RelayAtBlock(
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
@@ -4475,203 +4297,7 @@ func (tbtcs *TBTCSystem) OwnerAtBlock(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"owner",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetKeepFactoriesUpgradeabilityPeriod() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetKeepFactoriesUpgradeabilityPeriod(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getKeepFactoriesUpgradeabilityPeriod",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetKeepFactoriesUpgradeabilityPeriodAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getKeepFactoriesUpgradeabilityPeriod",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingKeepFactoriesUpdateTime() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetRemainingKeepFactoriesUpdateTime(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getRemainingKeepFactoriesUpdateTime",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingKeepFactoriesUpdateTimeAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getRemainingKeepFactoriesUpdateTime",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) IsAllowedLotSize(
-	_requestedLotSizeSatoshis uint64,
-) (bool, error) {
-	var result bool
-	result, err := tbtcs.contract.IsAllowedLotSize(
-		tbtcs.callerOptions,
-		_requestedLotSizeSatoshis,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"isAllowedLotSize",
-			_requestedLotSizeSatoshis,
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) IsAllowedLotSizeAtBlock(
-	_requestedLotSizeSatoshis uint64,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"isAllowedLotSize",
-		&result,
-		_requestedLotSizeSatoshis,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingCollateralizationThresholdsUpdateTime() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetRemainingCollateralizationThresholdsUpdateTime(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getRemainingCollateralizationThresholdsUpdateTime",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingCollateralizationThresholdsUpdateTimeAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getRemainingCollateralizationThresholdsUpdateTime",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetAllowNewDeposits() (bool, error) {
-	var result bool
-	result, err := tbtcs.contract.GetAllowNewDeposits(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getAllowNewDeposits",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetAllowNewDepositsAtBlock(
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getAllowNewDeposits",
+		"relay",
 		&result,
 	)
 
@@ -4716,9 +4342,9 @@ func (tbtcs *TBTCSystem) GetAllowedLotSizesAtBlock(
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetRemainingPauseTerm() (*big.Int, error) {
+func (tbtcs *TBTCSystem) GetMaximumLotSize() (*big.Int, error) {
 	var result *big.Int
-	result, err := tbtcs.contract.GetRemainingPauseTerm(
+	result, err := tbtcs.contract.GetMaximumLotSize(
 		tbtcs.callerOptions,
 	)
 
@@ -4727,14 +4353,14 @@ func (tbtcs *TBTCSystem) GetRemainingPauseTerm() (*big.Int, error) {
 			err,
 			tbtcs.callerOptions.From,
 			nil,
-			"getRemainingPauseTerm",
+			"getMaximumLotSize",
 		)
 	}
 
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetRemainingPauseTermAtBlock(
+func (tbtcs *TBTCSystem) GetMaximumLotSizeAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -4747,16 +4373,16 @@ func (tbtcs *TBTCSystem) GetRemainingPauseTermAtBlock(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"getRemainingPauseTerm",
+		"getMaximumLotSize",
 		&result,
 	)
 
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetMinimumLotSize() (*big.Int, error) {
+func (tbtcs *TBTCSystem) GetRemainingCollateralizationThresholdsUpdateTime() (*big.Int, error) {
 	var result *big.Int
-	result, err := tbtcs.contract.GetMinimumLotSize(
+	result, err := tbtcs.contract.GetRemainingCollateralizationThresholdsUpdateTime(
 		tbtcs.callerOptions,
 	)
 
@@ -4765,14 +4391,14 @@ func (tbtcs *TBTCSystem) GetMinimumLotSize() (*big.Int, error) {
 			err,
 			tbtcs.callerOptions.From,
 			nil,
-			"getMinimumLotSize",
+			"getRemainingCollateralizationThresholdsUpdateTime",
 		)
 	}
 
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetMinimumLotSizeAtBlock(
+func (tbtcs *TBTCSystem) GetRemainingCollateralizationThresholdsUpdateTimeAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -4785,159 +4411,7 @@ func (tbtcs *TBTCSystem) GetMinimumLotSizeAtBlock(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"getMinimumLotSize",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingKeepFactoriesUpgradeabilityTime() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetRemainingKeepFactoriesUpgradeabilityTime(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getRemainingKeepFactoriesUpgradeabilityTime",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetRemainingKeepFactoriesUpgradeabilityTimeAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getRemainingKeepFactoriesUpgradeabilityTime",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) Relay() (common.Address, error) {
-	var result common.Address
-	result, err := tbtcs.contract.Relay(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"relay",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) RelayAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"relay",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) FetchRelayCurrentDifficulty() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.FetchRelayCurrentDifficulty(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"fetchRelayCurrentDifficulty",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) FetchRelayCurrentDifficultyAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"fetchRelayCurrentDifficulty",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetNewDepositFeeEstimate() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetNewDepositFeeEstimate(
-		tbtcs.callerOptions,
-	)
-
-	if err != nil {
-		return result, tbtcs.errorResolver.ResolveError(
-			err,
-			tbtcs.callerOptions.From,
-			nil,
-			"getNewDepositFeeEstimate",
-		)
-	}
-
-	return result, err
-}
-
-func (tbtcs *TBTCSystem) GetNewDepositFeeEstimateAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tbtcs.callerOptions.From,
-		blockNumber,
-		nil,
-		tbtcs.contractABI,
-		tbtcs.caller,
-		tbtcs.errorResolver,
-		tbtcs.contractAddress,
-		"getNewDepositFeeEstimate",
+		"getRemainingCollateralizationThresholdsUpdateTime",
 		&result,
 	)
 
@@ -4982,6 +4456,44 @@ func (tbtcs *TBTCSystem) GetUndercollateralizedThresholdPercentAtBlock(
 	return result, err
 }
 
+func (tbtcs *TBTCSystem) GetNewDepositFeeEstimate() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetNewDepositFeeEstimate(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getNewDepositFeeEstimate",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetNewDepositFeeEstimateAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getNewDepositFeeEstimate",
+		&result,
+	)
+
+	return result, err
+}
+
 func (tbtcs *TBTCSystem) IsOwner() (bool, error) {
 	var result bool
 	result, err := tbtcs.contract.IsOwner(
@@ -5014,6 +4526,158 @@ func (tbtcs *TBTCSystem) IsOwnerAtBlock(
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
 		"isOwner",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingKeepFactoriesUpgradeabilityTime() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetRemainingKeepFactoriesUpgradeabilityTime(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getRemainingKeepFactoriesUpgradeabilityTime",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingKeepFactoriesUpgradeabilityTimeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getRemainingKeepFactoriesUpgradeabilityTime",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetMinimumLotSize() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetMinimumLotSize(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getMinimumLotSize",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetMinimumLotSizeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getMinimumLotSize",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingEthBtcPriceFeedAdditionTime() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetRemainingEthBtcPriceFeedAdditionTime(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getRemainingEthBtcPriceFeedAdditionTime",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingEthBtcPriceFeedAdditionTimeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getRemainingEthBtcPriceFeedAdditionTime",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetInitialCollateralizedPercent() (uint16, error) {
+	var result uint16
+	result, err := tbtcs.contract.GetInitialCollateralizedPercent(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getInitialCollateralizedPercent",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetInitialCollateralizedPercentAtBlock(
+	blockNumber *big.Int,
+) (uint16, error) {
+	var result uint16
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getInitialCollateralizedPercent",
 		&result,
 	)
 
@@ -5096,10 +4760,13 @@ func (tbtcs *TBTCSystem) GetGovernanceTimeDelayAtBlock(
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetMaximumLotSize() (*big.Int, error) {
-	var result *big.Int
-	result, err := tbtcs.contract.GetMaximumLotSize(
+func (tbtcs *TBTCSystem) IsAllowedLotSize(
+	_requestedLotSizeSatoshis uint64,
+) (bool, error) {
+	var result bool
+	result, err := tbtcs.contract.IsAllowedLotSize(
 		tbtcs.callerOptions,
+		_requestedLotSizeSatoshis,
 	)
 
 	if err != nil {
@@ -5107,17 +4774,19 @@ func (tbtcs *TBTCSystem) GetMaximumLotSize() (*big.Int, error) {
 			err,
 			tbtcs.callerOptions.From,
 			nil,
-			"getMaximumLotSize",
+			"isAllowedLotSize",
+			_requestedLotSizeSatoshis,
 		)
 	}
 
 	return result, err
 }
 
-func (tbtcs *TBTCSystem) GetMaximumLotSizeAtBlock(
+func (tbtcs *TBTCSystem) IsAllowedLotSizeAtBlock(
+	_requestedLotSizeSatoshis uint64,
 	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
+) (bool, error) {
+	var result bool
 
 	err := ethutil.CallAtBlock(
 		tbtcs.callerOptions.From,
@@ -5127,8 +4796,9 @@ func (tbtcs *TBTCSystem) GetMaximumLotSizeAtBlock(
 		tbtcs.caller,
 		tbtcs.errorResolver,
 		tbtcs.contractAddress,
-		"getMaximumLotSize",
+		"isAllowedLotSize",
 		&result,
+		_requestedLotSizeSatoshis,
 	)
 
 	return result, err
@@ -5172,7 +4842,914 @@ func (tbtcs *TBTCSystem) KeepThresholdAtBlock(
 	return result, err
 }
 
+func (tbtcs *TBTCSystem) GetSignerFeeDivisor() (uint16, error) {
+	var result uint16
+	result, err := tbtcs.contract.GetSignerFeeDivisor(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getSignerFeeDivisor",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetSignerFeeDivisorAtBlock(
+	blockNumber *big.Int,
+) (uint16, error) {
+	var result uint16
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getSignerFeeDivisor",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetKeepFactoriesUpgradeabilityPeriod() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetKeepFactoriesUpgradeabilityPeriod(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getKeepFactoriesUpgradeabilityPeriod",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetKeepFactoriesUpgradeabilityPeriodAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getKeepFactoriesUpgradeabilityPeriod",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingPauseTerm() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetRemainingPauseTerm(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getRemainingPauseTerm",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingPauseTermAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getRemainingPauseTerm",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) KeepSize() (uint16, error) {
+	var result uint16
+	result, err := tbtcs.contract.KeepSize(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"keepSize",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) KeepSizeAtBlock(
+	blockNumber *big.Int,
+) (uint16, error) {
+	var result uint16
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"keepSize",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetPriceFeedGovernanceTimeDelay() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetPriceFeedGovernanceTimeDelay(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getPriceFeedGovernanceTimeDelay",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetPriceFeedGovernanceTimeDelayAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getPriceFeedGovernanceTimeDelay",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) ApprovedToLog(
+	_caller common.Address,
+) (bool, error) {
+	var result bool
+	result, err := tbtcs.contract.ApprovedToLog(
+		tbtcs.callerOptions,
+		_caller,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"approvedToLog",
+			_caller,
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) ApprovedToLogAtBlock(
+	_caller common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"approvedToLog",
+		&result,
+		_caller,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetAllowNewDeposits() (bool, error) {
+	var result bool
+	result, err := tbtcs.contract.GetAllowNewDeposits(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getAllowNewDeposits",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetAllowNewDepositsAtBlock(
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getAllowNewDeposits",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingLotSizesUpdateTime() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetRemainingLotSizesUpdateTime(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getRemainingLotSizesUpdateTime",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingLotSizesUpdateTimeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getRemainingLotSizesUpdateTime",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingKeepFactoriesUpdateTime() (*big.Int, error) {
+	var result *big.Int
+	result, err := tbtcs.contract.GetRemainingKeepFactoriesUpdateTime(
+		tbtcs.callerOptions,
+	)
+
+	if err != nil {
+		return result, tbtcs.errorResolver.ResolveError(
+			err,
+			tbtcs.callerOptions.From,
+			nil,
+			"getRemainingKeepFactoriesUpdateTime",
+		)
+	}
+
+	return result, err
+}
+
+func (tbtcs *TBTCSystem) GetRemainingKeepFactoriesUpdateTimeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tbtcs.callerOptions.From,
+		blockNumber,
+		nil,
+		tbtcs.contractABI,
+		tbtcs.caller,
+		tbtcs.errorResolver,
+		tbtcs.contractAddress,
+		"getRemainingKeepFactoriesUpdateTime",
+		&result,
+	)
+
+	return result, err
+}
+
 // ------ Events -------
+
+func (tbtcs *TBTCSystem) AllowNewDepositsUpdated(
+	opts *ethutil.SubscribeOpts,
+) *AllowNewDepositsUpdatedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &AllowNewDepositsUpdatedSubscription{
+		tbtcs,
+		opts,
+	}
+}
+
+type AllowNewDepositsUpdatedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
+}
+
+type tBTCSystemAllowNewDepositsUpdatedFunc func(
+	AllowNewDeposits bool,
+	blockNumber uint64,
+)
+
+func (andus *AllowNewDepositsUpdatedSubscription) OnEvent(
+	handler tBTCSystemAllowNewDepositsUpdatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemAllowNewDepositsUpdated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.AllowNewDeposits,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := andus.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (andus *AllowNewDepositsUpdatedSubscription) Pipe(
+	sink chan *abi.TBTCSystemAllowNewDepositsUpdated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(andus.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := andus.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - andus.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past AllowNewDepositsUpdated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := andus.contract.PastAllowNewDepositsUpdatedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past AllowNewDepositsUpdated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := andus.contract.watchAllowNewDepositsUpdated(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchAllowNewDepositsUpdated(
+	sink chan *abi.TBTCSystemAllowNewDepositsUpdated,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchAllowNewDepositsUpdated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event AllowNewDepositsUpdated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event AllowNewDepositsUpdated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastAllowNewDepositsUpdatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemAllowNewDepositsUpdated, error) {
+	iterator, err := tbtcs.contract.FilterAllowNewDepositsUpdated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past AllowNewDepositsUpdated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemAllowNewDepositsUpdated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) CourtesyCalled(
+	opts *ethutil.SubscribeOpts,
+	_depositContractAddressFilter []common.Address,
+) *CourtesyCalledSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &CourtesyCalledSubscription{
+		tbtcs,
+		opts,
+		_depositContractAddressFilter,
+	}
+}
+
+type CourtesyCalledSubscription struct {
+	contract                      *TBTCSystem
+	opts                          *ethutil.SubscribeOpts
+	_depositContractAddressFilter []common.Address
+}
+
+type tBTCSystemCourtesyCalledFunc func(
+	DepositContractAddress common.Address,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (ccs *CourtesyCalledSubscription) OnEvent(
+	handler tBTCSystemCourtesyCalledFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemCourtesyCalled)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.DepositContractAddress,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := ccs.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ccs *CourtesyCalledSubscription) Pipe(
+	sink chan *abi.TBTCSystemCourtesyCalled,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(ccs.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := ccs.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - ccs.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past CourtesyCalled events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := ccs.contract.PastCourtesyCalledEvents(
+					fromBlock,
+					nil,
+					ccs._depositContractAddressFilter,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past CourtesyCalled events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := ccs.contract.watchCourtesyCalled(
+		sink,
+		ccs._depositContractAddressFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchCourtesyCalled(
+	sink chan *abi.TBTCSystemCourtesyCalled,
+	_depositContractAddressFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchCourtesyCalled(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			_depositContractAddressFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event CourtesyCalled had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event CourtesyCalled failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastCourtesyCalledEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	_depositContractAddressFilter []common.Address,
+) ([]*abi.TBTCSystemCourtesyCalled, error) {
+	iterator, err := tbtcs.contract.FilterCourtesyCalled(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past CourtesyCalled events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemCourtesyCalled, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) FraudDuringSetup(
+	opts *ethutil.SubscribeOpts,
+	_depositContractAddressFilter []common.Address,
+) *FraudDuringSetupSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &FraudDuringSetupSubscription{
+		tbtcs,
+		opts,
+		_depositContractAddressFilter,
+	}
+}
+
+type FraudDuringSetupSubscription struct {
+	contract                      *TBTCSystem
+	opts                          *ethutil.SubscribeOpts
+	_depositContractAddressFilter []common.Address
+}
+
+type tBTCSystemFraudDuringSetupFunc func(
+	DepositContractAddress common.Address,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (fdss *FraudDuringSetupSubscription) OnEvent(
+	handler tBTCSystemFraudDuringSetupFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemFraudDuringSetup)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.DepositContractAddress,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := fdss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (fdss *FraudDuringSetupSubscription) Pipe(
+	sink chan *abi.TBTCSystemFraudDuringSetup,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(fdss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := fdss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - fdss.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past FraudDuringSetup events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := fdss.contract.PastFraudDuringSetupEvents(
+					fromBlock,
+					nil,
+					fdss._depositContractAddressFilter,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past FraudDuringSetup events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := fdss.contract.watchFraudDuringSetup(
+		sink,
+		fdss._depositContractAddressFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchFraudDuringSetup(
+	sink chan *abi.TBTCSystemFraudDuringSetup,
+	_depositContractAddressFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchFraudDuringSetup(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			_depositContractAddressFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event FraudDuringSetup had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event FraudDuringSetup failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastFraudDuringSetupEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	_depositContractAddressFilter []common.Address,
+) ([]*abi.TBTCSystemFraudDuringSetup, error) {
+	iterator, err := tbtcs.contract.FilterFraudDuringSetup(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past FraudDuringSetup events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemFraudDuringSetup, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
 
 func (tbtcs *TBTCSystem) Funded(
 	opts *ethutil.SubscribeOpts,
@@ -5375,9 +5952,9 @@ func (tbtcs *TBTCSystem) PastFundedEvents(
 	return events, nil
 }
 
-func (tbtcs *TBTCSystem) LotSizesUpdateStarted(
+func (tbtcs *TBTCSystem) LotSizesUpdated(
 	opts *ethutil.SubscribeOpts,
-) *LotSizesUpdateStartedSubscription {
+) *LotSizesUpdatedSubscription {
 	if opts == nil {
 		opts = new(ethutil.SubscribeOpts)
 	}
@@ -5388,27 +5965,26 @@ func (tbtcs *TBTCSystem) LotSizesUpdateStarted(
 		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &LotSizesUpdateStartedSubscription{
+	return &LotSizesUpdatedSubscription{
 		tbtcs,
 		opts,
 	}
 }
 
-type LotSizesUpdateStartedSubscription struct {
+type LotSizesUpdatedSubscription struct {
 	contract *TBTCSystem
 	opts     *ethutil.SubscribeOpts
 }
 
-type tBTCSystemLotSizesUpdateStartedFunc func(
+type tBTCSystemLotSizesUpdatedFunc func(
 	LotSizes []uint64,
-	Timestamp *big.Int,
 	blockNumber uint64,
 )
 
-func (lsuss *LotSizesUpdateStartedSubscription) OnEvent(
-	handler tBTCSystemLotSizesUpdateStartedFunc,
+func (lsus *LotSizesUpdatedSubscription) OnEvent(
+	handler tBTCSystemLotSizesUpdatedFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemLotSizesUpdateStarted)
+	eventChan := make(chan *abi.TBTCSystemLotSizesUpdated)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -5419,47 +5995,46 @@ func (lsuss *LotSizesUpdateStartedSubscription) OnEvent(
 			case event := <-eventChan:
 				handler(
 					event.LotSizes,
-					event.Timestamp,
 					event.Raw.BlockNumber,
 				)
 			}
 		}
 	}()
 
-	sub := lsuss.Pipe(eventChan)
+	sub := lsus.Pipe(eventChan)
 	return subscription.NewEventSubscription(func() {
 		sub.Unsubscribe()
 		cancelCtx()
 	})
 }
 
-func (lsuss *LotSizesUpdateStartedSubscription) Pipe(
-	sink chan *abi.TBTCSystemLotSizesUpdateStarted,
+func (lsus *LotSizesUpdatedSubscription) Pipe(
+	sink chan *abi.TBTCSystemLotSizesUpdated,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
-		ticker := time.NewTicker(lsuss.opts.Tick)
+		ticker := time.NewTicker(lsus.opts.Tick)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				lastBlock, err := lsuss.contract.blockCounter.CurrentBlock()
+				lastBlock, err := lsus.contract.blockCounter.CurrentBlock()
 				if err != nil {
 					tbtcsLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
-				fromBlock := lastBlock - lsuss.opts.PastBlocks
+				fromBlock := lastBlock - lsus.opts.PastBlocks
 
 				tbtcsLogger.Infof(
-					"subscription monitoring fetching past LotSizesUpdateStarted events "+
+					"subscription monitoring fetching past LotSizesUpdated events "+
 						"starting from block [%v]",
 					fromBlock,
 				)
-				events, err := lsuss.contract.PastLotSizesUpdateStartedEvents(
+				events, err := lsus.contract.PastLotSizesUpdatedEvents(
 					fromBlock,
 					nil,
 				)
@@ -5471,7 +6046,7 @@ func (lsuss *LotSizesUpdateStartedSubscription) Pipe(
 					continue
 				}
 				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past LotSizesUpdateStarted events",
+					"subscription monitoring fetched [%v] past LotSizesUpdated events",
 					len(events),
 				)
 
@@ -5482,7 +6057,7 @@ func (lsuss *LotSizesUpdateStartedSubscription) Pipe(
 		}
 	}()
 
-	sub := lsuss.contract.watchLotSizesUpdateStarted(
+	sub := lsus.contract.watchLotSizesUpdated(
 		sink,
 	)
 
@@ -5492,11 +6067,11 @@ func (lsuss *LotSizesUpdateStartedSubscription) Pipe(
 	})
 }
 
-func (tbtcs *TBTCSystem) watchLotSizesUpdateStarted(
-	sink chan *abi.TBTCSystemLotSizesUpdateStarted,
+func (tbtcs *TBTCSystem) watchLotSizesUpdated(
+	sink chan *abi.TBTCSystemLotSizesUpdated,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchLotSizesUpdateStarted(
+		return tbtcs.contract.WatchLotSizesUpdated(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 		)
@@ -5504,7 +6079,7 @@ func (tbtcs *TBTCSystem) watchLotSizesUpdateStarted(
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
 		tbtcsLogger.Errorf(
-			"subscription to event LotSizesUpdateStarted had to be "+
+			"subscription to event LotSizesUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"Ethereum connectivity",
 			elapsed,
@@ -5513,7 +6088,7 @@ func (tbtcs *TBTCSystem) watchLotSizesUpdateStarted(
 
 	subscriptionFailedFn := func(err error) {
 		tbtcsLogger.Errorf(
-			"subscription to event LotSizesUpdateStarted failed "+
+			"subscription to event LotSizesUpdated failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
 			err,
@@ -5529,11 +6104,11 @@ func (tbtcs *TBTCSystem) watchLotSizesUpdateStarted(
 	)
 }
 
-func (tbtcs *TBTCSystem) PastLotSizesUpdateStartedEvents(
+func (tbtcs *TBTCSystem) PastLotSizesUpdatedEvents(
 	startBlock uint64,
 	endBlock *uint64,
-) ([]*abi.TBTCSystemLotSizesUpdateStarted, error) {
-	iterator, err := tbtcs.contract.FilterLotSizesUpdateStarted(
+) ([]*abi.TBTCSystemLotSizesUpdated, error) {
+	iterator, err := tbtcs.contract.FilterLotSizesUpdated(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -5541,12 +6116,12 @@ func (tbtcs *TBTCSystem) PastLotSizesUpdateStartedEvents(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error retrieving past LotSizesUpdateStarted events: [%v]",
+			"error retrieving past LotSizesUpdated events: [%v]",
 			err,
 		)
 	}
 
-	events := make([]*abi.TBTCSystemLotSizesUpdateStarted, 0)
+	events := make([]*abi.TBTCSystemLotSizesUpdated, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -5757,10 +6332,9 @@ func (tbtcs *TBTCSystem) PastRedeemedEvents(
 	return events, nil
 }
 
-func (tbtcs *TBTCSystem) RegisteredPubkey(
+func (tbtcs *TBTCSystem) SignerFeeDivisorUpdated(
 	opts *ethutil.SubscribeOpts,
-	_depositContractAddressFilter []common.Address,
-) *RegisteredPubkeySubscription {
+) *SignerFeeDivisorUpdatedSubscription {
 	if opts == nil {
 		opts = new(ethutil.SubscribeOpts)
 	}
@@ -5771,31 +6345,26 @@ func (tbtcs *TBTCSystem) RegisteredPubkey(
 		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &RegisteredPubkeySubscription{
+	return &SignerFeeDivisorUpdatedSubscription{
 		tbtcs,
 		opts,
-		_depositContractAddressFilter,
 	}
 }
 
-type RegisteredPubkeySubscription struct {
-	contract                      *TBTCSystem
-	opts                          *ethutil.SubscribeOpts
-	_depositContractAddressFilter []common.Address
+type SignerFeeDivisorUpdatedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
 }
 
-type tBTCSystemRegisteredPubkeyFunc func(
-	DepositContractAddress common.Address,
-	SigningGroupPubkeyX [32]uint8,
-	SigningGroupPubkeyY [32]uint8,
-	Timestamp *big.Int,
+type tBTCSystemSignerFeeDivisorUpdatedFunc func(
+	SignerFeeDivisor uint16,
 	blockNumber uint64,
 )
 
-func (rps *RegisteredPubkeySubscription) OnEvent(
-	handler tBTCSystemRegisteredPubkeyFunc,
+func (sfdus *SignerFeeDivisorUpdatedSubscription) OnEvent(
+	handler tBTCSystemSignerFeeDivisorUpdatedFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemRegisteredPubkey)
+	eventChan := make(chan *abi.TBTCSystemSignerFeeDivisorUpdated)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -5805,53 +6374,49 @@ func (rps *RegisteredPubkeySubscription) OnEvent(
 				return
 			case event := <-eventChan:
 				handler(
-					event.DepositContractAddress,
-					event.SigningGroupPubkeyX,
-					event.SigningGroupPubkeyY,
-					event.Timestamp,
+					event.SignerFeeDivisor,
 					event.Raw.BlockNumber,
 				)
 			}
 		}
 	}()
 
-	sub := rps.Pipe(eventChan)
+	sub := sfdus.Pipe(eventChan)
 	return subscription.NewEventSubscription(func() {
 		sub.Unsubscribe()
 		cancelCtx()
 	})
 }
 
-func (rps *RegisteredPubkeySubscription) Pipe(
-	sink chan *abi.TBTCSystemRegisteredPubkey,
+func (sfdus *SignerFeeDivisorUpdatedSubscription) Pipe(
+	sink chan *abi.TBTCSystemSignerFeeDivisorUpdated,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
-		ticker := time.NewTicker(rps.opts.Tick)
+		ticker := time.NewTicker(sfdus.opts.Tick)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				lastBlock, err := rps.contract.blockCounter.CurrentBlock()
+				lastBlock, err := sfdus.contract.blockCounter.CurrentBlock()
 				if err != nil {
 					tbtcsLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
-				fromBlock := lastBlock - rps.opts.PastBlocks
+				fromBlock := lastBlock - sfdus.opts.PastBlocks
 
 				tbtcsLogger.Infof(
-					"subscription monitoring fetching past RegisteredPubkey events "+
+					"subscription monitoring fetching past SignerFeeDivisorUpdated events "+
 						"starting from block [%v]",
 					fromBlock,
 				)
-				events, err := rps.contract.PastRegisteredPubkeyEvents(
+				events, err := sfdus.contract.PastSignerFeeDivisorUpdatedEvents(
 					fromBlock,
 					nil,
-					rps._depositContractAddressFilter,
 				)
 				if err != nil {
 					tbtcsLogger.Errorf(
@@ -5861,7 +6426,7 @@ func (rps *RegisteredPubkeySubscription) Pipe(
 					continue
 				}
 				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past RegisteredPubkey events",
+					"subscription monitoring fetched [%v] past SignerFeeDivisorUpdated events",
 					len(events),
 				)
 
@@ -5872,9 +6437,8 @@ func (rps *RegisteredPubkeySubscription) Pipe(
 		}
 	}()
 
-	sub := rps.contract.watchRegisteredPubkey(
+	sub := sfdus.contract.watchSignerFeeDivisorUpdated(
 		sink,
-		rps._depositContractAddressFilter,
 	)
 
 	return subscription.NewEventSubscription(func() {
@@ -5883,21 +6447,19 @@ func (rps *RegisteredPubkeySubscription) Pipe(
 	})
 }
 
-func (tbtcs *TBTCSystem) watchRegisteredPubkey(
-	sink chan *abi.TBTCSystemRegisteredPubkey,
-	_depositContractAddressFilter []common.Address,
+func (tbtcs *TBTCSystem) watchSignerFeeDivisorUpdated(
+	sink chan *abi.TBTCSystemSignerFeeDivisorUpdated,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchRegisteredPubkey(
+		return tbtcs.contract.WatchSignerFeeDivisorUpdated(
 			&bind.WatchOpts{Context: ctx},
 			sink,
-			_depositContractAddressFilter,
 		)
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
 		tbtcsLogger.Errorf(
-			"subscription to event RegisteredPubkey had to be "+
+			"subscription to event SignerFeeDivisorUpdated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"Ethereum connectivity",
 			elapsed,
@@ -5906,7 +6468,7 @@ func (tbtcs *TBTCSystem) watchRegisteredPubkey(
 
 	subscriptionFailedFn := func(err error) {
 		tbtcsLogger.Errorf(
-			"subscription to event RegisteredPubkey failed "+
+			"subscription to event SignerFeeDivisorUpdated failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
 			err,
@@ -5922,12 +6484,379 @@ func (tbtcs *TBTCSystem) watchRegisteredPubkey(
 	)
 }
 
-func (tbtcs *TBTCSystem) PastRegisteredPubkeyEvents(
+func (tbtcs *TBTCSystem) PastSignerFeeDivisorUpdatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemSignerFeeDivisorUpdated, error) {
+	iterator, err := tbtcs.contract.FilterSignerFeeDivisorUpdated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past SignerFeeDivisorUpdated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemSignerFeeDivisorUpdated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) EthBtcPriceFeedAdded(
+	opts *ethutil.SubscribeOpts,
+) *EthBtcPriceFeedAddedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &EthBtcPriceFeedAddedSubscription{
+		tbtcs,
+		opts,
+	}
+}
+
+type EthBtcPriceFeedAddedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
+}
+
+type tBTCSystemEthBtcPriceFeedAddedFunc func(
+	PriceFeed common.Address,
+	blockNumber uint64,
+)
+
+func (ebpfas *EthBtcPriceFeedAddedSubscription) OnEvent(
+	handler tBTCSystemEthBtcPriceFeedAddedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemEthBtcPriceFeedAdded)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.PriceFeed,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := ebpfas.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ebpfas *EthBtcPriceFeedAddedSubscription) Pipe(
+	sink chan *abi.TBTCSystemEthBtcPriceFeedAdded,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(ebpfas.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := ebpfas.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - ebpfas.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past EthBtcPriceFeedAdded events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := ebpfas.contract.PastEthBtcPriceFeedAddedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past EthBtcPriceFeedAdded events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := ebpfas.contract.watchEthBtcPriceFeedAdded(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchEthBtcPriceFeedAdded(
+	sink chan *abi.TBTCSystemEthBtcPriceFeedAdded,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchEthBtcPriceFeedAdded(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event EthBtcPriceFeedAdded had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event EthBtcPriceFeedAdded failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastEthBtcPriceFeedAddedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemEthBtcPriceFeedAdded, error) {
+	iterator, err := tbtcs.contract.FilterEthBtcPriceFeedAdded(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past EthBtcPriceFeedAdded events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemEthBtcPriceFeedAdded, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) FunderAbortRequested(
+	opts *ethutil.SubscribeOpts,
+	_depositContractAddressFilter []common.Address,
+) *FunderAbortRequestedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &FunderAbortRequestedSubscription{
+		tbtcs,
+		opts,
+		_depositContractAddressFilter,
+	}
+}
+
+type FunderAbortRequestedSubscription struct {
+	contract                      *TBTCSystem
+	opts                          *ethutil.SubscribeOpts
+	_depositContractAddressFilter []common.Address
+}
+
+type tBTCSystemFunderAbortRequestedFunc func(
+	DepositContractAddress common.Address,
+	AbortOutputScript []uint8,
+	blockNumber uint64,
+)
+
+func (fars *FunderAbortRequestedSubscription) OnEvent(
+	handler tBTCSystemFunderAbortRequestedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemFunderAbortRequested)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.DepositContractAddress,
+					event.AbortOutputScript,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := fars.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (fars *FunderAbortRequestedSubscription) Pipe(
+	sink chan *abi.TBTCSystemFunderAbortRequested,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(fars.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := fars.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - fars.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past FunderAbortRequested events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := fars.contract.PastFunderAbortRequestedEvents(
+					fromBlock,
+					nil,
+					fars._depositContractAddressFilter,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past FunderAbortRequested events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := fars.contract.watchFunderAbortRequested(
+		sink,
+		fars._depositContractAddressFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchFunderAbortRequested(
+	sink chan *abi.TBTCSystemFunderAbortRequested,
+	_depositContractAddressFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchFunderAbortRequested(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			_depositContractAddressFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event FunderAbortRequested had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event FunderAbortRequested failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastFunderAbortRequestedEvents(
 	startBlock uint64,
 	endBlock *uint64,
 	_depositContractAddressFilter []common.Address,
-) ([]*abi.TBTCSystemRegisteredPubkey, error) {
-	iterator, err := tbtcs.contract.FilterRegisteredPubkey(
+) ([]*abi.TBTCSystemFunderAbortRequested, error) {
+	iterator, err := tbtcs.contract.FilterFunderAbortRequested(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -5936,12 +6865,967 @@ func (tbtcs *TBTCSystem) PastRegisteredPubkeyEvents(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error retrieving past RegisteredPubkey events: [%v]",
+			"error retrieving past FunderAbortRequested events: [%v]",
 			err,
 		)
 	}
 
-	events := make([]*abi.TBTCSystemRegisteredPubkey, 0)
+	events := make([]*abi.TBTCSystemFunderAbortRequested, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) GotRedemptionSignature(
+	opts *ethutil.SubscribeOpts,
+	_depositContractAddressFilter []common.Address,
+	_digestFilter [][32]uint8,
+) *GotRedemptionSignatureSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &GotRedemptionSignatureSubscription{
+		tbtcs,
+		opts,
+		_depositContractAddressFilter,
+		_digestFilter,
+	}
+}
+
+type GotRedemptionSignatureSubscription struct {
+	contract                      *TBTCSystem
+	opts                          *ethutil.SubscribeOpts
+	_depositContractAddressFilter []common.Address
+	_digestFilter                 [][32]uint8
+}
+
+type tBTCSystemGotRedemptionSignatureFunc func(
+	DepositContractAddress common.Address,
+	Digest [32]uint8,
+	R [32]uint8,
+	S [32]uint8,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (grss *GotRedemptionSignatureSubscription) OnEvent(
+	handler tBTCSystemGotRedemptionSignatureFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemGotRedemptionSignature)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.DepositContractAddress,
+					event.Digest,
+					event.R,
+					event.S,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := grss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (grss *GotRedemptionSignatureSubscription) Pipe(
+	sink chan *abi.TBTCSystemGotRedemptionSignature,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(grss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := grss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - grss.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past GotRedemptionSignature events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := grss.contract.PastGotRedemptionSignatureEvents(
+					fromBlock,
+					nil,
+					grss._depositContractAddressFilter,
+					grss._digestFilter,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past GotRedemptionSignature events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := grss.contract.watchGotRedemptionSignature(
+		sink,
+		grss._depositContractAddressFilter,
+		grss._digestFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchGotRedemptionSignature(
+	sink chan *abi.TBTCSystemGotRedemptionSignature,
+	_depositContractAddressFilter []common.Address,
+	_digestFilter [][32]uint8,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchGotRedemptionSignature(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			_depositContractAddressFilter,
+			_digestFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event GotRedemptionSignature had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event GotRedemptionSignature failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastGotRedemptionSignatureEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	_depositContractAddressFilter []common.Address,
+	_digestFilter [][32]uint8,
+) ([]*abi.TBTCSystemGotRedemptionSignature, error) {
+	iterator, err := tbtcs.contract.FilterGotRedemptionSignature(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		_depositContractAddressFilter,
+		_digestFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past GotRedemptionSignature events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemGotRedemptionSignature, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) Liquidated(
+	opts *ethutil.SubscribeOpts,
+	_depositContractAddressFilter []common.Address,
+) *LiquidatedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &LiquidatedSubscription{
+		tbtcs,
+		opts,
+		_depositContractAddressFilter,
+	}
+}
+
+type LiquidatedSubscription struct {
+	contract                      *TBTCSystem
+	opts                          *ethutil.SubscribeOpts
+	_depositContractAddressFilter []common.Address
+}
+
+type tBTCSystemLiquidatedFunc func(
+	DepositContractAddress common.Address,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (ls *LiquidatedSubscription) OnEvent(
+	handler tBTCSystemLiquidatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemLiquidated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.DepositContractAddress,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := ls.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ls *LiquidatedSubscription) Pipe(
+	sink chan *abi.TBTCSystemLiquidated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(ls.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := ls.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - ls.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past Liquidated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := ls.contract.PastLiquidatedEvents(
+					fromBlock,
+					nil,
+					ls._depositContractAddressFilter,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past Liquidated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := ls.contract.watchLiquidated(
+		sink,
+		ls._depositContractAddressFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchLiquidated(
+	sink chan *abi.TBTCSystemLiquidated,
+	_depositContractAddressFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchLiquidated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			_depositContractAddressFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event Liquidated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event Liquidated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastLiquidatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	_depositContractAddressFilter []common.Address,
+) ([]*abi.TBTCSystemLiquidated, error) {
+	iterator, err := tbtcs.contract.FilterLiquidated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past Liquidated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemLiquidated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) StartedLiquidation(
+	opts *ethutil.SubscribeOpts,
+	_depositContractAddressFilter []common.Address,
+) *StartedLiquidationSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &StartedLiquidationSubscription{
+		tbtcs,
+		opts,
+		_depositContractAddressFilter,
+	}
+}
+
+type StartedLiquidationSubscription struct {
+	contract                      *TBTCSystem
+	opts                          *ethutil.SubscribeOpts
+	_depositContractAddressFilter []common.Address
+}
+
+type tBTCSystemStartedLiquidationFunc func(
+	DepositContractAddress common.Address,
+	WasFraud bool,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (sls *StartedLiquidationSubscription) OnEvent(
+	handler tBTCSystemStartedLiquidationFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemStartedLiquidation)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.DepositContractAddress,
+					event.WasFraud,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := sls.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (sls *StartedLiquidationSubscription) Pipe(
+	sink chan *abi.TBTCSystemStartedLiquidation,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(sls.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := sls.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - sls.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past StartedLiquidation events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := sls.contract.PastStartedLiquidationEvents(
+					fromBlock,
+					nil,
+					sls._depositContractAddressFilter,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past StartedLiquidation events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := sls.contract.watchStartedLiquidation(
+		sink,
+		sls._depositContractAddressFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchStartedLiquidation(
+	sink chan *abi.TBTCSystemStartedLiquidation,
+	_depositContractAddressFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchStartedLiquidation(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			_depositContractAddressFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event StartedLiquidation had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event StartedLiquidation failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastStartedLiquidationEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	_depositContractAddressFilter []common.Address,
+) ([]*abi.TBTCSystemStartedLiquidation, error) {
+	iterator, err := tbtcs.contract.FilterStartedLiquidation(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past StartedLiquidation events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemStartedLiquidation, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) CollateralizationThresholdsUpdateStarted(
+	opts *ethutil.SubscribeOpts,
+) *CollateralizationThresholdsUpdateStartedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &CollateralizationThresholdsUpdateStartedSubscription{
+		tbtcs,
+		opts,
+	}
+}
+
+type CollateralizationThresholdsUpdateStartedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
+}
+
+type tBTCSystemCollateralizationThresholdsUpdateStartedFunc func(
+	InitialCollateralizedPercent uint16,
+	UndercollateralizedThresholdPercent uint16,
+	SeverelyUndercollateralizedThresholdPercent uint16,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (ctuss *CollateralizationThresholdsUpdateStartedSubscription) OnEvent(
+	handler tBTCSystemCollateralizationThresholdsUpdateStartedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemCollateralizationThresholdsUpdateStarted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.InitialCollateralizedPercent,
+					event.UndercollateralizedThresholdPercent,
+					event.SeverelyUndercollateralizedThresholdPercent,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := ctuss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ctuss *CollateralizationThresholdsUpdateStartedSubscription) Pipe(
+	sink chan *abi.TBTCSystemCollateralizationThresholdsUpdateStarted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(ctuss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := ctuss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - ctuss.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past CollateralizationThresholdsUpdateStarted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := ctuss.contract.PastCollateralizationThresholdsUpdateStartedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past CollateralizationThresholdsUpdateStarted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := ctuss.contract.watchCollateralizationThresholdsUpdateStarted(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchCollateralizationThresholdsUpdateStarted(
+	sink chan *abi.TBTCSystemCollateralizationThresholdsUpdateStarted,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchCollateralizationThresholdsUpdateStarted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event CollateralizationThresholdsUpdateStarted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event CollateralizationThresholdsUpdateStarted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastCollateralizationThresholdsUpdateStartedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemCollateralizationThresholdsUpdateStarted, error) {
+	iterator, err := tbtcs.contract.FilterCollateralizationThresholdsUpdateStarted(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past CollateralizationThresholdsUpdateStarted events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemCollateralizationThresholdsUpdateStarted, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) CollateralizationThresholdsUpdated(
+	opts *ethutil.SubscribeOpts,
+) *CollateralizationThresholdsUpdatedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &CollateralizationThresholdsUpdatedSubscription{
+		tbtcs,
+		opts,
+	}
+}
+
+type CollateralizationThresholdsUpdatedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
+}
+
+type tBTCSystemCollateralizationThresholdsUpdatedFunc func(
+	InitialCollateralizedPercent uint16,
+	UndercollateralizedThresholdPercent uint16,
+	SeverelyUndercollateralizedThresholdPercent uint16,
+	blockNumber uint64,
+)
+
+func (ctus *CollateralizationThresholdsUpdatedSubscription) OnEvent(
+	handler tBTCSystemCollateralizationThresholdsUpdatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemCollateralizationThresholdsUpdated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.InitialCollateralizedPercent,
+					event.UndercollateralizedThresholdPercent,
+					event.SeverelyUndercollateralizedThresholdPercent,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := ctus.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ctus *CollateralizationThresholdsUpdatedSubscription) Pipe(
+	sink chan *abi.TBTCSystemCollateralizationThresholdsUpdated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(ctus.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := ctus.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - ctus.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past CollateralizationThresholdsUpdated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := ctus.contract.PastCollateralizationThresholdsUpdatedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past CollateralizationThresholdsUpdated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := ctus.contract.watchCollateralizationThresholdsUpdated(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchCollateralizationThresholdsUpdated(
+	sink chan *abi.TBTCSystemCollateralizationThresholdsUpdated,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchCollateralizationThresholdsUpdated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event CollateralizationThresholdsUpdated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event CollateralizationThresholdsUpdated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastCollateralizationThresholdsUpdatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemCollateralizationThresholdsUpdated, error) {
+	iterator, err := tbtcs.contract.FilterCollateralizationThresholdsUpdated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past CollateralizationThresholdsUpdated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemCollateralizationThresholdsUpdated, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -6152,6 +8036,562 @@ func (tbtcs *TBTCSystem) PastCreatedEvents(
 	return events, nil
 }
 
+func (tbtcs *TBTCSystem) LotSizesUpdateStarted(
+	opts *ethutil.SubscribeOpts,
+) *LotSizesUpdateStartedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &LotSizesUpdateStartedSubscription{
+		tbtcs,
+		opts,
+	}
+}
+
+type LotSizesUpdateStartedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
+}
+
+type tBTCSystemLotSizesUpdateStartedFunc func(
+	LotSizes []uint64,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (lsuss *LotSizesUpdateStartedSubscription) OnEvent(
+	handler tBTCSystemLotSizesUpdateStartedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemLotSizesUpdateStarted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.LotSizes,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := lsuss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (lsuss *LotSizesUpdateStartedSubscription) Pipe(
+	sink chan *abi.TBTCSystemLotSizesUpdateStarted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(lsuss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := lsuss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - lsuss.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past LotSizesUpdateStarted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := lsuss.contract.PastLotSizesUpdateStartedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past LotSizesUpdateStarted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := lsuss.contract.watchLotSizesUpdateStarted(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchLotSizesUpdateStarted(
+	sink chan *abi.TBTCSystemLotSizesUpdateStarted,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchLotSizesUpdateStarted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event LotSizesUpdateStarted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event LotSizesUpdateStarted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastLotSizesUpdateStartedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemLotSizesUpdateStarted, error) {
+	iterator, err := tbtcs.contract.FilterLotSizesUpdateStarted(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past LotSizesUpdateStarted events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemLotSizesUpdateStarted, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) RegisteredPubkey(
+	opts *ethutil.SubscribeOpts,
+	_depositContractAddressFilter []common.Address,
+) *RegisteredPubkeySubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &RegisteredPubkeySubscription{
+		tbtcs,
+		opts,
+		_depositContractAddressFilter,
+	}
+}
+
+type RegisteredPubkeySubscription struct {
+	contract                      *TBTCSystem
+	opts                          *ethutil.SubscribeOpts
+	_depositContractAddressFilter []common.Address
+}
+
+type tBTCSystemRegisteredPubkeyFunc func(
+	DepositContractAddress common.Address,
+	SigningGroupPubkeyX [32]uint8,
+	SigningGroupPubkeyY [32]uint8,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (rps *RegisteredPubkeySubscription) OnEvent(
+	handler tBTCSystemRegisteredPubkeyFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemRegisteredPubkey)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.DepositContractAddress,
+					event.SigningGroupPubkeyX,
+					event.SigningGroupPubkeyY,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := rps.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (rps *RegisteredPubkeySubscription) Pipe(
+	sink chan *abi.TBTCSystemRegisteredPubkey,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(rps.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := rps.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - rps.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past RegisteredPubkey events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := rps.contract.PastRegisteredPubkeyEvents(
+					fromBlock,
+					nil,
+					rps._depositContractAddressFilter,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past RegisteredPubkey events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := rps.contract.watchRegisteredPubkey(
+		sink,
+		rps._depositContractAddressFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchRegisteredPubkey(
+	sink chan *abi.TBTCSystemRegisteredPubkey,
+	_depositContractAddressFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchRegisteredPubkey(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			_depositContractAddressFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event RegisteredPubkey had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event RegisteredPubkey failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastRegisteredPubkeyEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	_depositContractAddressFilter []common.Address,
+) ([]*abi.TBTCSystemRegisteredPubkey, error) {
+	iterator, err := tbtcs.contract.FilterRegisteredPubkey(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past RegisteredPubkey events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemRegisteredPubkey, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) SignerFeeDivisorUpdateStarted(
+	opts *ethutil.SubscribeOpts,
+) *SignerFeeDivisorUpdateStartedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &SignerFeeDivisorUpdateStartedSubscription{
+		tbtcs,
+		opts,
+	}
+}
+
+type SignerFeeDivisorUpdateStartedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
+}
+
+type tBTCSystemSignerFeeDivisorUpdateStartedFunc func(
+	SignerFeeDivisor uint16,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (sfduss *SignerFeeDivisorUpdateStartedSubscription) OnEvent(
+	handler tBTCSystemSignerFeeDivisorUpdateStartedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemSignerFeeDivisorUpdateStarted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.SignerFeeDivisor,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := sfduss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (sfduss *SignerFeeDivisorUpdateStartedSubscription) Pipe(
+	sink chan *abi.TBTCSystemSignerFeeDivisorUpdateStarted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(sfduss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := sfduss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - sfduss.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past SignerFeeDivisorUpdateStarted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := sfduss.contract.PastSignerFeeDivisorUpdateStartedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past SignerFeeDivisorUpdateStarted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := sfduss.contract.watchSignerFeeDivisorUpdateStarted(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchSignerFeeDivisorUpdateStarted(
+	sink chan *abi.TBTCSystemSignerFeeDivisorUpdateStarted,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchSignerFeeDivisorUpdateStarted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event SignerFeeDivisorUpdateStarted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event SignerFeeDivisorUpdateStarted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastSignerFeeDivisorUpdateStartedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemSignerFeeDivisorUpdateStarted, error) {
+	iterator, err := tbtcs.contract.FilterSignerFeeDivisorUpdateStarted(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past SignerFeeDivisorUpdateStarted events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemSignerFeeDivisorUpdateStarted, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
 func (tbtcs *TBTCSystem) EthBtcPriceFeedAdditionStarted(
 	opts *ethutil.SubscribeOpts,
 ) *EthBtcPriceFeedAdditionStartedSubscription {
@@ -6324,6 +8764,564 @@ func (tbtcs *TBTCSystem) PastEthBtcPriceFeedAdditionStartedEvents(
 	}
 
 	events := make([]*abi.TBTCSystemEthBtcPriceFeedAdditionStarted, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) ExitedCourtesyCall(
+	opts *ethutil.SubscribeOpts,
+	_depositContractAddressFilter []common.Address,
+) *ExitedCourtesyCallSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &ExitedCourtesyCallSubscription{
+		tbtcs,
+		opts,
+		_depositContractAddressFilter,
+	}
+}
+
+type ExitedCourtesyCallSubscription struct {
+	contract                      *TBTCSystem
+	opts                          *ethutil.SubscribeOpts
+	_depositContractAddressFilter []common.Address
+}
+
+type tBTCSystemExitedCourtesyCallFunc func(
+	DepositContractAddress common.Address,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (eccs *ExitedCourtesyCallSubscription) OnEvent(
+	handler tBTCSystemExitedCourtesyCallFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemExitedCourtesyCall)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.DepositContractAddress,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := eccs.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (eccs *ExitedCourtesyCallSubscription) Pipe(
+	sink chan *abi.TBTCSystemExitedCourtesyCall,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(eccs.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := eccs.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - eccs.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past ExitedCourtesyCall events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := eccs.contract.PastExitedCourtesyCallEvents(
+					fromBlock,
+					nil,
+					eccs._depositContractAddressFilter,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past ExitedCourtesyCall events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := eccs.contract.watchExitedCourtesyCall(
+		sink,
+		eccs._depositContractAddressFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchExitedCourtesyCall(
+	sink chan *abi.TBTCSystemExitedCourtesyCall,
+	_depositContractAddressFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchExitedCourtesyCall(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			_depositContractAddressFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event ExitedCourtesyCall had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event ExitedCourtesyCall failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastExitedCourtesyCallEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	_depositContractAddressFilter []common.Address,
+) ([]*abi.TBTCSystemExitedCourtesyCall, error) {
+	iterator, err := tbtcs.contract.FilterExitedCourtesyCall(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		_depositContractAddressFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past ExitedCourtesyCall events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemExitedCourtesyCall, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) KeepFactoriesUpdateStarted(
+	opts *ethutil.SubscribeOpts,
+) *KeepFactoriesUpdateStartedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &KeepFactoriesUpdateStartedSubscription{
+		tbtcs,
+		opts,
+	}
+}
+
+type KeepFactoriesUpdateStartedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
+}
+
+type tBTCSystemKeepFactoriesUpdateStartedFunc func(
+	KeepStakedFactory common.Address,
+	FullyBackedFactory common.Address,
+	FactorySelector common.Address,
+	Timestamp *big.Int,
+	blockNumber uint64,
+)
+
+func (kfuss *KeepFactoriesUpdateStartedSubscription) OnEvent(
+	handler tBTCSystemKeepFactoriesUpdateStartedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemKeepFactoriesUpdateStarted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.KeepStakedFactory,
+					event.FullyBackedFactory,
+					event.FactorySelector,
+					event.Timestamp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := kfuss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (kfuss *KeepFactoriesUpdateStartedSubscription) Pipe(
+	sink chan *abi.TBTCSystemKeepFactoriesUpdateStarted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(kfuss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := kfuss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - kfuss.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past KeepFactoriesUpdateStarted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := kfuss.contract.PastKeepFactoriesUpdateStartedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past KeepFactoriesUpdateStarted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := kfuss.contract.watchKeepFactoriesUpdateStarted(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchKeepFactoriesUpdateStarted(
+	sink chan *abi.TBTCSystemKeepFactoriesUpdateStarted,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchKeepFactoriesUpdateStarted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event KeepFactoriesUpdateStarted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event KeepFactoriesUpdateStarted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastKeepFactoriesUpdateStartedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemKeepFactoriesUpdateStarted, error) {
+	iterator, err := tbtcs.contract.FilterKeepFactoriesUpdateStarted(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past KeepFactoriesUpdateStarted events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemKeepFactoriesUpdateStarted, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (tbtcs *TBTCSystem) KeepFactoriesUpdated(
+	opts *ethutil.SubscribeOpts,
+) *KeepFactoriesUpdatedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &KeepFactoriesUpdatedSubscription{
+		tbtcs,
+		opts,
+	}
+}
+
+type KeepFactoriesUpdatedSubscription struct {
+	contract *TBTCSystem
+	opts     *ethutil.SubscribeOpts
+}
+
+type tBTCSystemKeepFactoriesUpdatedFunc func(
+	KeepStakedFactory common.Address,
+	FullyBackedFactory common.Address,
+	FactorySelector common.Address,
+	blockNumber uint64,
+)
+
+func (kfus *KeepFactoriesUpdatedSubscription) OnEvent(
+	handler tBTCSystemKeepFactoriesUpdatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TBTCSystemKeepFactoriesUpdated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.KeepStakedFactory,
+					event.FullyBackedFactory,
+					event.FactorySelector,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := kfus.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (kfus *KeepFactoriesUpdatedSubscription) Pipe(
+	sink chan *abi.TBTCSystemKeepFactoriesUpdated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(kfus.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := kfus.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - kfus.opts.PastBlocks
+
+				tbtcsLogger.Infof(
+					"subscription monitoring fetching past KeepFactoriesUpdated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := kfus.contract.PastKeepFactoriesUpdatedEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tbtcsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tbtcsLogger.Infof(
+					"subscription monitoring fetched [%v] past KeepFactoriesUpdated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := kfus.contract.watchKeepFactoriesUpdated(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tbtcs *TBTCSystem) watchKeepFactoriesUpdated(
+	sink chan *abi.TBTCSystemKeepFactoriesUpdated,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return tbtcs.contract.WatchKeepFactoriesUpdated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tbtcsLogger.Errorf(
+			"subscription to event KeepFactoriesUpdated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tbtcsLogger.Errorf(
+			"subscription to event KeepFactoriesUpdated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (tbtcs *TBTCSystem) PastKeepFactoriesUpdatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+) ([]*abi.TBTCSystemKeepFactoriesUpdated, error) {
+	iterator, err := tbtcs.contract.FilterKeepFactoriesUpdated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past KeepFactoriesUpdated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TBTCSystemKeepFactoriesUpdated, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -6931,2986 +9929,6 @@ func (tbtcs *TBTCSystem) PastSetupFailedEvents(
 	}
 
 	events := make([]*abi.TBTCSystemSetupFailed, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) SignerFeeDivisorUpdated(
-	opts *ethutil.SubscribeOpts,
-) *SignerFeeDivisorUpdatedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &SignerFeeDivisorUpdatedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type SignerFeeDivisorUpdatedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemSignerFeeDivisorUpdatedFunc func(
-	SignerFeeDivisor uint16,
-	blockNumber uint64,
-)
-
-func (sfdus *SignerFeeDivisorUpdatedSubscription) OnEvent(
-	handler tBTCSystemSignerFeeDivisorUpdatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemSignerFeeDivisorUpdated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.SignerFeeDivisor,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := sfdus.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (sfdus *SignerFeeDivisorUpdatedSubscription) Pipe(
-	sink chan *abi.TBTCSystemSignerFeeDivisorUpdated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(sfdus.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := sfdus.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - sfdus.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past SignerFeeDivisorUpdated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := sfdus.contract.PastSignerFeeDivisorUpdatedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past SignerFeeDivisorUpdated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := sfdus.contract.watchSignerFeeDivisorUpdated(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchSignerFeeDivisorUpdated(
-	sink chan *abi.TBTCSystemSignerFeeDivisorUpdated,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchSignerFeeDivisorUpdated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event SignerFeeDivisorUpdated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event SignerFeeDivisorUpdated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastSignerFeeDivisorUpdatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemSignerFeeDivisorUpdated, error) {
-	iterator, err := tbtcs.contract.FilterSignerFeeDivisorUpdated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past SignerFeeDivisorUpdated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemSignerFeeDivisorUpdated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) StartedLiquidation(
-	opts *ethutil.SubscribeOpts,
-	_depositContractAddressFilter []common.Address,
-) *StartedLiquidationSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &StartedLiquidationSubscription{
-		tbtcs,
-		opts,
-		_depositContractAddressFilter,
-	}
-}
-
-type StartedLiquidationSubscription struct {
-	contract                      *TBTCSystem
-	opts                          *ethutil.SubscribeOpts
-	_depositContractAddressFilter []common.Address
-}
-
-type tBTCSystemStartedLiquidationFunc func(
-	DepositContractAddress common.Address,
-	WasFraud bool,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (sls *StartedLiquidationSubscription) OnEvent(
-	handler tBTCSystemStartedLiquidationFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemStartedLiquidation)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositContractAddress,
-					event.WasFraud,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := sls.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (sls *StartedLiquidationSubscription) Pipe(
-	sink chan *abi.TBTCSystemStartedLiquidation,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(sls.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := sls.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - sls.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past StartedLiquidation events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := sls.contract.PastStartedLiquidationEvents(
-					fromBlock,
-					nil,
-					sls._depositContractAddressFilter,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past StartedLiquidation events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := sls.contract.watchStartedLiquidation(
-		sink,
-		sls._depositContractAddressFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchStartedLiquidation(
-	sink chan *abi.TBTCSystemStartedLiquidation,
-	_depositContractAddressFilter []common.Address,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchStartedLiquidation(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			_depositContractAddressFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event StartedLiquidation had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event StartedLiquidation failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastStartedLiquidationEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	_depositContractAddressFilter []common.Address,
-) ([]*abi.TBTCSystemStartedLiquidation, error) {
-	iterator, err := tbtcs.contract.FilterStartedLiquidation(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past StartedLiquidation events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemStartedLiquidation, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) CollateralizationThresholdsUpdated(
-	opts *ethutil.SubscribeOpts,
-) *CollateralizationThresholdsUpdatedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &CollateralizationThresholdsUpdatedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type CollateralizationThresholdsUpdatedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemCollateralizationThresholdsUpdatedFunc func(
-	InitialCollateralizedPercent uint16,
-	UndercollateralizedThresholdPercent uint16,
-	SeverelyUndercollateralizedThresholdPercent uint16,
-	blockNumber uint64,
-)
-
-func (ctus *CollateralizationThresholdsUpdatedSubscription) OnEvent(
-	handler tBTCSystemCollateralizationThresholdsUpdatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemCollateralizationThresholdsUpdated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.InitialCollateralizedPercent,
-					event.UndercollateralizedThresholdPercent,
-					event.SeverelyUndercollateralizedThresholdPercent,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := ctus.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (ctus *CollateralizationThresholdsUpdatedSubscription) Pipe(
-	sink chan *abi.TBTCSystemCollateralizationThresholdsUpdated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(ctus.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := ctus.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - ctus.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past CollateralizationThresholdsUpdated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := ctus.contract.PastCollateralizationThresholdsUpdatedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past CollateralizationThresholdsUpdated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := ctus.contract.watchCollateralizationThresholdsUpdated(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchCollateralizationThresholdsUpdated(
-	sink chan *abi.TBTCSystemCollateralizationThresholdsUpdated,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchCollateralizationThresholdsUpdated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event CollateralizationThresholdsUpdated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event CollateralizationThresholdsUpdated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastCollateralizationThresholdsUpdatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemCollateralizationThresholdsUpdated, error) {
-	iterator, err := tbtcs.contract.FilterCollateralizationThresholdsUpdated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past CollateralizationThresholdsUpdated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemCollateralizationThresholdsUpdated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) CourtesyCalled(
-	opts *ethutil.SubscribeOpts,
-	_depositContractAddressFilter []common.Address,
-) *CourtesyCalledSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &CourtesyCalledSubscription{
-		tbtcs,
-		opts,
-		_depositContractAddressFilter,
-	}
-}
-
-type CourtesyCalledSubscription struct {
-	contract                      *TBTCSystem
-	opts                          *ethutil.SubscribeOpts
-	_depositContractAddressFilter []common.Address
-}
-
-type tBTCSystemCourtesyCalledFunc func(
-	DepositContractAddress common.Address,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (ccs *CourtesyCalledSubscription) OnEvent(
-	handler tBTCSystemCourtesyCalledFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemCourtesyCalled)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositContractAddress,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := ccs.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (ccs *CourtesyCalledSubscription) Pipe(
-	sink chan *abi.TBTCSystemCourtesyCalled,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(ccs.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := ccs.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - ccs.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past CourtesyCalled events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := ccs.contract.PastCourtesyCalledEvents(
-					fromBlock,
-					nil,
-					ccs._depositContractAddressFilter,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past CourtesyCalled events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := ccs.contract.watchCourtesyCalled(
-		sink,
-		ccs._depositContractAddressFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchCourtesyCalled(
-	sink chan *abi.TBTCSystemCourtesyCalled,
-	_depositContractAddressFilter []common.Address,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchCourtesyCalled(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			_depositContractAddressFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event CourtesyCalled had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event CourtesyCalled failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastCourtesyCalledEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	_depositContractAddressFilter []common.Address,
-) ([]*abi.TBTCSystemCourtesyCalled, error) {
-	iterator, err := tbtcs.contract.FilterCourtesyCalled(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past CourtesyCalled events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemCourtesyCalled, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) FunderAbortRequested(
-	opts *ethutil.SubscribeOpts,
-	_depositContractAddressFilter []common.Address,
-) *FunderAbortRequestedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &FunderAbortRequestedSubscription{
-		tbtcs,
-		opts,
-		_depositContractAddressFilter,
-	}
-}
-
-type FunderAbortRequestedSubscription struct {
-	contract                      *TBTCSystem
-	opts                          *ethutil.SubscribeOpts
-	_depositContractAddressFilter []common.Address
-}
-
-type tBTCSystemFunderAbortRequestedFunc func(
-	DepositContractAddress common.Address,
-	AbortOutputScript []uint8,
-	blockNumber uint64,
-)
-
-func (fars *FunderAbortRequestedSubscription) OnEvent(
-	handler tBTCSystemFunderAbortRequestedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemFunderAbortRequested)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositContractAddress,
-					event.AbortOutputScript,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := fars.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (fars *FunderAbortRequestedSubscription) Pipe(
-	sink chan *abi.TBTCSystemFunderAbortRequested,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(fars.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := fars.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - fars.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past FunderAbortRequested events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := fars.contract.PastFunderAbortRequestedEvents(
-					fromBlock,
-					nil,
-					fars._depositContractAddressFilter,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past FunderAbortRequested events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := fars.contract.watchFunderAbortRequested(
-		sink,
-		fars._depositContractAddressFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchFunderAbortRequested(
-	sink chan *abi.TBTCSystemFunderAbortRequested,
-	_depositContractAddressFilter []common.Address,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchFunderAbortRequested(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			_depositContractAddressFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event FunderAbortRequested had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event FunderAbortRequested failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastFunderAbortRequestedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	_depositContractAddressFilter []common.Address,
-) ([]*abi.TBTCSystemFunderAbortRequested, error) {
-	iterator, err := tbtcs.contract.FilterFunderAbortRequested(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past FunderAbortRequested events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemFunderAbortRequested, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) KeepFactoriesUpdateStarted(
-	opts *ethutil.SubscribeOpts,
-) *KeepFactoriesUpdateStartedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &KeepFactoriesUpdateStartedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type KeepFactoriesUpdateStartedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemKeepFactoriesUpdateStartedFunc func(
-	KeepStakedFactory common.Address,
-	FullyBackedFactory common.Address,
-	FactorySelector common.Address,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (kfuss *KeepFactoriesUpdateStartedSubscription) OnEvent(
-	handler tBTCSystemKeepFactoriesUpdateStartedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemKeepFactoriesUpdateStarted)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.KeepStakedFactory,
-					event.FullyBackedFactory,
-					event.FactorySelector,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := kfuss.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (kfuss *KeepFactoriesUpdateStartedSubscription) Pipe(
-	sink chan *abi.TBTCSystemKeepFactoriesUpdateStarted,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(kfuss.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := kfuss.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - kfuss.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past KeepFactoriesUpdateStarted events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := kfuss.contract.PastKeepFactoriesUpdateStartedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past KeepFactoriesUpdateStarted events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := kfuss.contract.watchKeepFactoriesUpdateStarted(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchKeepFactoriesUpdateStarted(
-	sink chan *abi.TBTCSystemKeepFactoriesUpdateStarted,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchKeepFactoriesUpdateStarted(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event KeepFactoriesUpdateStarted had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event KeepFactoriesUpdateStarted failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastKeepFactoriesUpdateStartedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemKeepFactoriesUpdateStarted, error) {
-	iterator, err := tbtcs.contract.FilterKeepFactoriesUpdateStarted(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past KeepFactoriesUpdateStarted events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemKeepFactoriesUpdateStarted, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) KeepFactoriesUpdated(
-	opts *ethutil.SubscribeOpts,
-) *KeepFactoriesUpdatedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &KeepFactoriesUpdatedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type KeepFactoriesUpdatedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemKeepFactoriesUpdatedFunc func(
-	KeepStakedFactory common.Address,
-	FullyBackedFactory common.Address,
-	FactorySelector common.Address,
-	blockNumber uint64,
-)
-
-func (kfus *KeepFactoriesUpdatedSubscription) OnEvent(
-	handler tBTCSystemKeepFactoriesUpdatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemKeepFactoriesUpdated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.KeepStakedFactory,
-					event.FullyBackedFactory,
-					event.FactorySelector,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := kfus.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (kfus *KeepFactoriesUpdatedSubscription) Pipe(
-	sink chan *abi.TBTCSystemKeepFactoriesUpdated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(kfus.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := kfus.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - kfus.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past KeepFactoriesUpdated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := kfus.contract.PastKeepFactoriesUpdatedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past KeepFactoriesUpdated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := kfus.contract.watchKeepFactoriesUpdated(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchKeepFactoriesUpdated(
-	sink chan *abi.TBTCSystemKeepFactoriesUpdated,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchKeepFactoriesUpdated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event KeepFactoriesUpdated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event KeepFactoriesUpdated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastKeepFactoriesUpdatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemKeepFactoriesUpdated, error) {
-	iterator, err := tbtcs.contract.FilterKeepFactoriesUpdated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past KeepFactoriesUpdated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemKeepFactoriesUpdated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) LotSizesUpdated(
-	opts *ethutil.SubscribeOpts,
-) *LotSizesUpdatedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &LotSizesUpdatedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type LotSizesUpdatedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemLotSizesUpdatedFunc func(
-	LotSizes []uint64,
-	blockNumber uint64,
-)
-
-func (lsus *LotSizesUpdatedSubscription) OnEvent(
-	handler tBTCSystemLotSizesUpdatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemLotSizesUpdated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.LotSizes,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := lsus.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (lsus *LotSizesUpdatedSubscription) Pipe(
-	sink chan *abi.TBTCSystemLotSizesUpdated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(lsus.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := lsus.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - lsus.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past LotSizesUpdated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := lsus.contract.PastLotSizesUpdatedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past LotSizesUpdated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := lsus.contract.watchLotSizesUpdated(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchLotSizesUpdated(
-	sink chan *abi.TBTCSystemLotSizesUpdated,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchLotSizesUpdated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event LotSizesUpdated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event LotSizesUpdated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastLotSizesUpdatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemLotSizesUpdated, error) {
-	iterator, err := tbtcs.contract.FilterLotSizesUpdated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past LotSizesUpdated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemLotSizesUpdated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) SignerFeeDivisorUpdateStarted(
-	opts *ethutil.SubscribeOpts,
-) *SignerFeeDivisorUpdateStartedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &SignerFeeDivisorUpdateStartedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type SignerFeeDivisorUpdateStartedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemSignerFeeDivisorUpdateStartedFunc func(
-	SignerFeeDivisor uint16,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (sfduss *SignerFeeDivisorUpdateStartedSubscription) OnEvent(
-	handler tBTCSystemSignerFeeDivisorUpdateStartedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemSignerFeeDivisorUpdateStarted)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.SignerFeeDivisor,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := sfduss.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (sfduss *SignerFeeDivisorUpdateStartedSubscription) Pipe(
-	sink chan *abi.TBTCSystemSignerFeeDivisorUpdateStarted,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(sfduss.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := sfduss.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - sfduss.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past SignerFeeDivisorUpdateStarted events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := sfduss.contract.PastSignerFeeDivisorUpdateStartedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past SignerFeeDivisorUpdateStarted events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := sfduss.contract.watchSignerFeeDivisorUpdateStarted(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchSignerFeeDivisorUpdateStarted(
-	sink chan *abi.TBTCSystemSignerFeeDivisorUpdateStarted,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchSignerFeeDivisorUpdateStarted(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event SignerFeeDivisorUpdateStarted had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event SignerFeeDivisorUpdateStarted failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastSignerFeeDivisorUpdateStartedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemSignerFeeDivisorUpdateStarted, error) {
-	iterator, err := tbtcs.contract.FilterSignerFeeDivisorUpdateStarted(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past SignerFeeDivisorUpdateStarted events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemSignerFeeDivisorUpdateStarted, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) CollateralizationThresholdsUpdateStarted(
-	opts *ethutil.SubscribeOpts,
-) *CollateralizationThresholdsUpdateStartedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &CollateralizationThresholdsUpdateStartedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type CollateralizationThresholdsUpdateStartedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemCollateralizationThresholdsUpdateStartedFunc func(
-	InitialCollateralizedPercent uint16,
-	UndercollateralizedThresholdPercent uint16,
-	SeverelyUndercollateralizedThresholdPercent uint16,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (ctuss *CollateralizationThresholdsUpdateStartedSubscription) OnEvent(
-	handler tBTCSystemCollateralizationThresholdsUpdateStartedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemCollateralizationThresholdsUpdateStarted)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.InitialCollateralizedPercent,
-					event.UndercollateralizedThresholdPercent,
-					event.SeverelyUndercollateralizedThresholdPercent,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := ctuss.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (ctuss *CollateralizationThresholdsUpdateStartedSubscription) Pipe(
-	sink chan *abi.TBTCSystemCollateralizationThresholdsUpdateStarted,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(ctuss.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := ctuss.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - ctuss.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past CollateralizationThresholdsUpdateStarted events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := ctuss.contract.PastCollateralizationThresholdsUpdateStartedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past CollateralizationThresholdsUpdateStarted events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := ctuss.contract.watchCollateralizationThresholdsUpdateStarted(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchCollateralizationThresholdsUpdateStarted(
-	sink chan *abi.TBTCSystemCollateralizationThresholdsUpdateStarted,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchCollateralizationThresholdsUpdateStarted(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event CollateralizationThresholdsUpdateStarted had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event CollateralizationThresholdsUpdateStarted failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastCollateralizationThresholdsUpdateStartedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemCollateralizationThresholdsUpdateStarted, error) {
-	iterator, err := tbtcs.contract.FilterCollateralizationThresholdsUpdateStarted(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past CollateralizationThresholdsUpdateStarted events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemCollateralizationThresholdsUpdateStarted, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) FraudDuringSetup(
-	opts *ethutil.SubscribeOpts,
-	_depositContractAddressFilter []common.Address,
-) *FraudDuringSetupSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &FraudDuringSetupSubscription{
-		tbtcs,
-		opts,
-		_depositContractAddressFilter,
-	}
-}
-
-type FraudDuringSetupSubscription struct {
-	contract                      *TBTCSystem
-	opts                          *ethutil.SubscribeOpts
-	_depositContractAddressFilter []common.Address
-}
-
-type tBTCSystemFraudDuringSetupFunc func(
-	DepositContractAddress common.Address,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (fdss *FraudDuringSetupSubscription) OnEvent(
-	handler tBTCSystemFraudDuringSetupFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemFraudDuringSetup)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositContractAddress,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := fdss.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (fdss *FraudDuringSetupSubscription) Pipe(
-	sink chan *abi.TBTCSystemFraudDuringSetup,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(fdss.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := fdss.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - fdss.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past FraudDuringSetup events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := fdss.contract.PastFraudDuringSetupEvents(
-					fromBlock,
-					nil,
-					fdss._depositContractAddressFilter,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past FraudDuringSetup events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := fdss.contract.watchFraudDuringSetup(
-		sink,
-		fdss._depositContractAddressFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchFraudDuringSetup(
-	sink chan *abi.TBTCSystemFraudDuringSetup,
-	_depositContractAddressFilter []common.Address,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchFraudDuringSetup(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			_depositContractAddressFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event FraudDuringSetup had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event FraudDuringSetup failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastFraudDuringSetupEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	_depositContractAddressFilter []common.Address,
-) ([]*abi.TBTCSystemFraudDuringSetup, error) {
-	iterator, err := tbtcs.contract.FilterFraudDuringSetup(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past FraudDuringSetup events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemFraudDuringSetup, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) ExitedCourtesyCall(
-	opts *ethutil.SubscribeOpts,
-	_depositContractAddressFilter []common.Address,
-) *ExitedCourtesyCallSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &ExitedCourtesyCallSubscription{
-		tbtcs,
-		opts,
-		_depositContractAddressFilter,
-	}
-}
-
-type ExitedCourtesyCallSubscription struct {
-	contract                      *TBTCSystem
-	opts                          *ethutil.SubscribeOpts
-	_depositContractAddressFilter []common.Address
-}
-
-type tBTCSystemExitedCourtesyCallFunc func(
-	DepositContractAddress common.Address,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (eccs *ExitedCourtesyCallSubscription) OnEvent(
-	handler tBTCSystemExitedCourtesyCallFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemExitedCourtesyCall)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositContractAddress,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := eccs.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (eccs *ExitedCourtesyCallSubscription) Pipe(
-	sink chan *abi.TBTCSystemExitedCourtesyCall,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(eccs.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := eccs.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - eccs.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past ExitedCourtesyCall events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := eccs.contract.PastExitedCourtesyCallEvents(
-					fromBlock,
-					nil,
-					eccs._depositContractAddressFilter,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past ExitedCourtesyCall events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := eccs.contract.watchExitedCourtesyCall(
-		sink,
-		eccs._depositContractAddressFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchExitedCourtesyCall(
-	sink chan *abi.TBTCSystemExitedCourtesyCall,
-	_depositContractAddressFilter []common.Address,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchExitedCourtesyCall(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			_depositContractAddressFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event ExitedCourtesyCall had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event ExitedCourtesyCall failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastExitedCourtesyCallEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	_depositContractAddressFilter []common.Address,
-) ([]*abi.TBTCSystemExitedCourtesyCall, error) {
-	iterator, err := tbtcs.contract.FilterExitedCourtesyCall(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past ExitedCourtesyCall events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemExitedCourtesyCall, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) GotRedemptionSignature(
-	opts *ethutil.SubscribeOpts,
-	_depositContractAddressFilter []common.Address,
-	_digestFilter [][32]uint8,
-) *GotRedemptionSignatureSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &GotRedemptionSignatureSubscription{
-		tbtcs,
-		opts,
-		_depositContractAddressFilter,
-		_digestFilter,
-	}
-}
-
-type GotRedemptionSignatureSubscription struct {
-	contract                      *TBTCSystem
-	opts                          *ethutil.SubscribeOpts
-	_depositContractAddressFilter []common.Address
-	_digestFilter                 [][32]uint8
-}
-
-type tBTCSystemGotRedemptionSignatureFunc func(
-	DepositContractAddress common.Address,
-	Digest [32]uint8,
-	R [32]uint8,
-	S [32]uint8,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (grss *GotRedemptionSignatureSubscription) OnEvent(
-	handler tBTCSystemGotRedemptionSignatureFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemGotRedemptionSignature)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositContractAddress,
-					event.Digest,
-					event.R,
-					event.S,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := grss.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (grss *GotRedemptionSignatureSubscription) Pipe(
-	sink chan *abi.TBTCSystemGotRedemptionSignature,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(grss.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := grss.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - grss.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past GotRedemptionSignature events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := grss.contract.PastGotRedemptionSignatureEvents(
-					fromBlock,
-					nil,
-					grss._depositContractAddressFilter,
-					grss._digestFilter,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past GotRedemptionSignature events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := grss.contract.watchGotRedemptionSignature(
-		sink,
-		grss._depositContractAddressFilter,
-		grss._digestFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchGotRedemptionSignature(
-	sink chan *abi.TBTCSystemGotRedemptionSignature,
-	_depositContractAddressFilter []common.Address,
-	_digestFilter [][32]uint8,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchGotRedemptionSignature(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			_depositContractAddressFilter,
-			_digestFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event GotRedemptionSignature had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event GotRedemptionSignature failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastGotRedemptionSignatureEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	_depositContractAddressFilter []common.Address,
-	_digestFilter [][32]uint8,
-) ([]*abi.TBTCSystemGotRedemptionSignature, error) {
-	iterator, err := tbtcs.contract.FilterGotRedemptionSignature(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		_depositContractAddressFilter,
-		_digestFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past GotRedemptionSignature events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemGotRedemptionSignature, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) Liquidated(
-	opts *ethutil.SubscribeOpts,
-	_depositContractAddressFilter []common.Address,
-) *LiquidatedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &LiquidatedSubscription{
-		tbtcs,
-		opts,
-		_depositContractAddressFilter,
-	}
-}
-
-type LiquidatedSubscription struct {
-	contract                      *TBTCSystem
-	opts                          *ethutil.SubscribeOpts
-	_depositContractAddressFilter []common.Address
-}
-
-type tBTCSystemLiquidatedFunc func(
-	DepositContractAddress common.Address,
-	Timestamp *big.Int,
-	blockNumber uint64,
-)
-
-func (ls *LiquidatedSubscription) OnEvent(
-	handler tBTCSystemLiquidatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemLiquidated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.DepositContractAddress,
-					event.Timestamp,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := ls.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (ls *LiquidatedSubscription) Pipe(
-	sink chan *abi.TBTCSystemLiquidated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(ls.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := ls.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - ls.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past Liquidated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := ls.contract.PastLiquidatedEvents(
-					fromBlock,
-					nil,
-					ls._depositContractAddressFilter,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past Liquidated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := ls.contract.watchLiquidated(
-		sink,
-		ls._depositContractAddressFilter,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchLiquidated(
-	sink chan *abi.TBTCSystemLiquidated,
-	_depositContractAddressFilter []common.Address,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchLiquidated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-			_depositContractAddressFilter,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event Liquidated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event Liquidated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastLiquidatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	_depositContractAddressFilter []common.Address,
-) ([]*abi.TBTCSystemLiquidated, error) {
-	iterator, err := tbtcs.contract.FilterLiquidated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		_depositContractAddressFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past Liquidated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemLiquidated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) AllowNewDepositsUpdated(
-	opts *ethutil.SubscribeOpts,
-) *AllowNewDepositsUpdatedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &AllowNewDepositsUpdatedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type AllowNewDepositsUpdatedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemAllowNewDepositsUpdatedFunc func(
-	AllowNewDeposits bool,
-	blockNumber uint64,
-)
-
-func (andus *AllowNewDepositsUpdatedSubscription) OnEvent(
-	handler tBTCSystemAllowNewDepositsUpdatedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemAllowNewDepositsUpdated)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.AllowNewDeposits,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := andus.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (andus *AllowNewDepositsUpdatedSubscription) Pipe(
-	sink chan *abi.TBTCSystemAllowNewDepositsUpdated,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(andus.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := andus.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - andus.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past AllowNewDepositsUpdated events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := andus.contract.PastAllowNewDepositsUpdatedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past AllowNewDepositsUpdated events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := andus.contract.watchAllowNewDepositsUpdated(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchAllowNewDepositsUpdated(
-	sink chan *abi.TBTCSystemAllowNewDepositsUpdated,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchAllowNewDepositsUpdated(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event AllowNewDepositsUpdated had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event AllowNewDepositsUpdated failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastAllowNewDepositsUpdatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemAllowNewDepositsUpdated, error) {
-	iterator, err := tbtcs.contract.FilterAllowNewDepositsUpdated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past AllowNewDepositsUpdated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemAllowNewDepositsUpdated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (tbtcs *TBTCSystem) EthBtcPriceFeedAdded(
-	opts *ethutil.SubscribeOpts,
-) *EthBtcPriceFeedAddedSubscription {
-	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
-	}
-	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
-	}
-	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
-	}
-
-	return &EthBtcPriceFeedAddedSubscription{
-		tbtcs,
-		opts,
-	}
-}
-
-type EthBtcPriceFeedAddedSubscription struct {
-	contract *TBTCSystem
-	opts     *ethutil.SubscribeOpts
-}
-
-type tBTCSystemEthBtcPriceFeedAddedFunc func(
-	PriceFeed common.Address,
-	blockNumber uint64,
-)
-
-func (ebpfas *EthBtcPriceFeedAddedSubscription) OnEvent(
-	handler tBTCSystemEthBtcPriceFeedAddedFunc,
-) subscription.EventSubscription {
-	eventChan := make(chan *abi.TBTCSystemEthBtcPriceFeedAdded)
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-eventChan:
-				handler(
-					event.PriceFeed,
-					event.Raw.BlockNumber,
-				)
-			}
-		}
-	}()
-
-	sub := ebpfas.Pipe(eventChan)
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (ebpfas *EthBtcPriceFeedAddedSubscription) Pipe(
-	sink chan *abi.TBTCSystemEthBtcPriceFeedAdded,
-) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	go func() {
-		ticker := time.NewTicker(ebpfas.opts.Tick)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				lastBlock, err := ebpfas.contract.blockCounter.CurrentBlock()
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-				}
-				fromBlock := lastBlock - ebpfas.opts.PastBlocks
-
-				tbtcsLogger.Infof(
-					"subscription monitoring fetching past EthBtcPriceFeedAdded events "+
-						"starting from block [%v]",
-					fromBlock,
-				)
-				events, err := ebpfas.contract.PastEthBtcPriceFeedAddedEvents(
-					fromBlock,
-					nil,
-				)
-				if err != nil {
-					tbtcsLogger.Errorf(
-						"subscription failed to pull events: [%v]",
-						err,
-					)
-					continue
-				}
-				tbtcsLogger.Infof(
-					"subscription monitoring fetched [%v] past EthBtcPriceFeedAdded events",
-					len(events),
-				)
-
-				for _, event := range events {
-					sink <- event
-				}
-			}
-		}
-	}()
-
-	sub := ebpfas.contract.watchEthBtcPriceFeedAdded(
-		sink,
-	)
-
-	return subscription.NewEventSubscription(func() {
-		sub.Unsubscribe()
-		cancelCtx()
-	})
-}
-
-func (tbtcs *TBTCSystem) watchEthBtcPriceFeedAdded(
-	sink chan *abi.TBTCSystemEthBtcPriceFeedAdded,
-) event.Subscription {
-	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return tbtcs.contract.WatchEthBtcPriceFeedAdded(
-			&bind.WatchOpts{Context: ctx},
-			sink,
-		)
-	}
-
-	thresholdViolatedFn := func(elapsed time.Duration) {
-		tbtcsLogger.Errorf(
-			"subscription to event EthBtcPriceFeedAdded had to be "+
-				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
-			elapsed,
-		)
-	}
-
-	subscriptionFailedFn := func(err error) {
-		tbtcsLogger.Errorf(
-			"subscription to event EthBtcPriceFeedAdded failed "+
-				"with error: [%v]; resubscription attempt will be "+
-				"performed",
-			err,
-		)
-	}
-
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
-		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
-		thresholdViolatedFn,
-		subscriptionFailedFn,
-	)
-}
-
-func (tbtcs *TBTCSystem) PastEthBtcPriceFeedAddedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-) ([]*abi.TBTCSystemEthBtcPriceFeedAdded, error) {
-	iterator, err := tbtcs.contract.FilterEthBtcPriceFeedAdded(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past EthBtcPriceFeedAdded events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TBTCSystemEthBtcPriceFeedAdded, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
