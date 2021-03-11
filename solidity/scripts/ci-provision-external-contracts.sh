@@ -26,7 +26,7 @@ function fetch_contract_address() {
   gsutil -q cp gs://${CONTRACT_DATA_BUCKET}/${CONTRACT_DATA_BUCKET_DIR}/${ARTIFACT_FILENAME} .
 
   local ADDRESS=$(cat ./${ARTIFACT_FILENAME} | jq "$JSON_QUERY" | tr -d '"')
-  sed -i -e "/${PROPERTY_NAME}/s/0x[a-fA-F0-9]\{0,40\}/${ADDRESS}/" $DESTINATION_FILE
+  sed -i -e "/${PROPERTY_NAME}/s/0x[a-zA-Z0-9]\{0,40\}/${ADDRESS}/" $DESTINATION_FILE
 }
 
 fetch_contract_address "BondedECDSAKeepFactory.json" "BondedECDSAKeepFactoryAddress"
