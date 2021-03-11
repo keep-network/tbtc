@@ -86,9 +86,12 @@ jobs:
 
   migrate-and-publish-celo:
     needs: [build-and-test, lint]
+    # FIXME: alfajores branch and pull request events are for test purposes only - revert once done
     if: |
-      github.ref == 'refs/heads/master'
+      (startsWith(github.head_ref, 'releases/alfajores/')
+        || github.ref == 'refs/heads/master')
         && (github.event_name == 'push'
+        || github.event_name == 'pull_request'
         || github.event_name == 'workflow_dispatch')
     environment: keep-test
     runs-on: ubuntu-latest
