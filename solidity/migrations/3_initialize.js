@@ -1,4 +1,5 @@
 const truffleContract = require("@truffle/contract")
+const Kit = require("@celo/contractkit")
 
 const TBTCSystem = artifacts.require("TBTCSystem")
 
@@ -76,9 +77,14 @@ module.exports = async function(deployer, network, accounts) {
   const BondedECDSAKeepFactory = await BondedECDSAKeepFactoryContract.at(
     BondedECDSAKeepFactoryAddress,
   )
-  await BondedECDSAKeepFactory.createSortitionPool(TBTCSystem.address, {
-    from: accounts[0],
-  })
+
+  if (network === "alfajores") {
+    await createSortitionPoolCelo(accounts[0])
+  } else {
+    await BondedECDSAKeepFactory.createSortitionPool(TBTCSystem.address, {
+      from: accounts[0],
+    })
+  }
 
   const sortitionPoolContractAddress = await BondedECDSAKeepFactory.getSortitionPool.call(
     TBTCSystem.address,
@@ -88,4 +94,20 @@ module.exports = async function(deployer, network, accounts) {
   // Initialize minimum bondable value in newly created sortition pool.
   console.log("Refreshing minimum bondable value")
   await tbtcSystem.refreshMinimumBondableValue()
+}
+
+async function createSortitionPoolCelo(account) {
+  const celoKit = Kit.newKitFromWeb3(web3)
+
+  const BondedECDSAKeepFactory = new web3.eth.Contract(
+    BondedECDSAKeepFactoryJson.abi,
+    BondedECDSAKeepFactoryAddress,
+  )
+
+  const txObject = await BondedECDSAKeepFactory.methods.createSortitionPool(
+    TBTCSystem.address,
+  )
+
+  const tx = await celoKit.sendTransactionObject(txObject, {from: account})
+  await tx.waitReceipt()
 }
