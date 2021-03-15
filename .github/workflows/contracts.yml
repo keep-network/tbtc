@@ -126,7 +126,7 @@ jobs:
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
           CONTRACT_DATA_BUCKET_DIR: keep-ecdsa-celo
-          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_ETH_NETWORK_ID }}
+          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Migrate contracts
