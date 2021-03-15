@@ -1,0 +1,14 @@
+# This is a TOML configuration file.
+
+# Connection details of Ethereum blockchain.
+[ethereum]
+  URL = "ws://127.0.0.1:8545"
+  URLRPC = "http://127.0.0.1:8546"
+
+# Account details for Ethereum blockchain.
+[ethereum.account]
+  KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+# Addresses of contracts deployed on Ethereum blockchain.
+[ethereum.ContractAddresses]
+  Relay = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"

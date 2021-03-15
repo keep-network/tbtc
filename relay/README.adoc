@@ -1,0 +1,29 @@
+:toc: macro
+
+= Relay maintainer
+
+== Prerequisites
+- https://golang.org/[Go] (at least 1.15.7)
+
+== Build
+
+Build the binary using:
+```
+go build
+```
+An executable named `relay` will be created.
+
+== Run
+
+To run the application invoke:
+```
+./relay start
+```
+Usually, you'll want to set the log level and pass the operator key file
+password while running the `start` command. To do so, you can use `LOG_LEVEL`
+and `OPERATOR_KEY_FILE_PASSWORD` environment variables. For additional
+info, please refer those help commands:
+```
+./relay --help
+./relay start --help
+```
