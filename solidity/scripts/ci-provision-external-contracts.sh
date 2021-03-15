@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-# Fetch addresses of contacts migrated from keep-network/keep-core project.
+# Fetch addresses of contacts migrated from keep-network/keep-ecdsa project.
 # CONTRACT_DATA_BUCKET and ETH_NETWORK_ID should be passed as environment
 # variables straight from the CI context.
 

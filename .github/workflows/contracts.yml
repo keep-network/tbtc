@@ -86,12 +86,9 @@ jobs:
 
   migrate-and-publish-celo:
     needs: [build-and-test, lint]
-    # FIXME: alfajores branch and pull request events are for test purposes only - revert once done
     if: |
-      (startsWith(github.head_ref, 'releases/alfajores/')
-        || github.ref == 'refs/heads/master')
+      github.ref == 'refs/heads/master'
         && (github.event_name == 'push'
-        || github.event_name == 'pull_request'
         || github.event_name == 'workflow_dispatch')
     environment: keep-test
     runs-on: ubuntu-latest
@@ -129,16 +126,15 @@ jobs:
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
           CONTRACT_DATA_BUCKET_DIR: keep-ecdsa-celo
-          ETH_NETWORK_ID: 44787 # Alfajores network ID
+          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_ETH_NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Migrate contracts
         env:
+          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_CELO_TRUFFLE_NETWORK }}
           CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: npx truffle migrate --reset --network alfajores
-
-      # TODO: if Celo works with Tenderly, add appropriate push step
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Upload contract data
         env:
