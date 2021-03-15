@@ -16,6 +16,7 @@ import (
 	"github.com/celo-org/celo-blockchain/accounts/keystore"
 	"github.com/celo-org/celo-blockchain/common"
 	"github.com/celo-org/celo-blockchain/core/types"
+	"github.com/celo-org/celo-blockchain/crypto"
 	"github.com/celo-org/celo-blockchain/event"
 
 	"github.com/ipfs/go-log"
@@ -49,6 +50,7 @@ type TBTCSystem struct {
 
 func NewTBTCSystem(
 	contractAddress common.Address,
+	chainId *big.Int,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethlike.NonceManager,
@@ -60,9 +62,28 @@ func NewTBTCSystem(
 		From: accountKey.Address,
 	}
 
-	transactorOptions := bind.NewKeyedTransactor(
-		accountKey.PrivateKey,
-	)
+	// FIXME Switch to bind.NewKeyedTransactorWithChainID when go-ethereum dep
+	// FIXME bumps beyond 1.9.25.
+	key := accountKey.PrivateKey
+	keyAddress := crypto.PubkeyToAddress(key.PublicKey)
+	if chainId == nil {
+		return nil, fmt.Errorf("no chain id specified")
+	}
+	transactorOptions := &bind.TransactOpts{
+		From: keyAddress,
+		Signer: func(_ types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			signer := types.NewEIP155Signer(chainId)
+
+			if address != keyAddress {
+				return nil, fmt.Errorf("not authorized to sign this account")
+			}
+			signature, err := crypto.Sign(signer.Hash(tx).Bytes(), key)
+			if err != nil {
+				return nil, err
+			}
+			return tx.WithSignature(signer, signature)
+		},
+	}
 
 	contract, err := abi.NewTBTCSystem(
 		contractAddress,
