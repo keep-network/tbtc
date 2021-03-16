@@ -79,6 +79,8 @@ jobs:
           name: Run NPM tests
           working_directory: ~/project/solidity
           command: npm run test:quick
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml)
+  # has been created as part of work on RFC-18
   migrate_contracts:
     executor: docker-node-gcloud
     steps:
@@ -110,6 +112,8 @@ jobs:
           root: /tmp/tbtc
           paths:
             - contracts
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml)
+  # has been created as part of work on RFC-18
   publish_npm_package:
     executor: docker-node
     steps:
@@ -151,6 +155,8 @@ jobs:
             # Publish to npm.
             echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
             npm publish --access=public
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml)
+  # has been created as part of work on RFC-18
   publish_contract_data:
     executor: gcp-cli/default
     steps:
