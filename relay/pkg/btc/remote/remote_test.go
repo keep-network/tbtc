@@ -1,4 +1,4 @@
-package btc
+package remote
 
 import "testing"
 
