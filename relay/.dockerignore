@@ -1,6 +1,9 @@
 # Hidden files and directories.
 .*
 
+# Top-level directories unrelated to the build.
+scripts/
+
 # Top-level files unrealted to the build.
 Dockerfile
 *.adoc

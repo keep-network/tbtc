@@ -1,2 +1,4 @@
 relay
 config/*.toml
+build/
+node_modules/
