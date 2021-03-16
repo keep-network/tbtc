@@ -1,18 +1,20 @@
-package forwarder
+package node
 
 import (
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 	"github.com/keep-network/tbtc/relay/pkg/chain"
+	"github.com/keep-network/tbtc/relay/pkg/forwarder"
 )
 
-// Initialize initializes the header forwarder process.
+// Initialize initializes the relay node.
 func Initialize(
 	btcChain btc.Handle,
 	hostChain chain.Handle,
 ) error {
-	// TODO: implementation:
-	//  - implement pull logic using `btcChain`
-	//	- implement push logic using `hostChain`
+	err := forwarder.Initialize(btcChain, hostChain)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

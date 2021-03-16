@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/keep-network/tbtc/relay/pkg/btc/remote"
+	"github.com/keep-network/tbtc/relay/pkg/node"
+
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/tbtc/relay/config"
-	"github.com/keep-network/tbtc/relay/pkg/btc"
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 	"github.com/keep-network/tbtc/relay/pkg/chain/ethereum"
-	"github.com/keep-network/tbtc/relay/pkg/forwarder"
 	"github.com/urfave/cli"
 )
 
@@ -39,7 +40,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not read config file: [%v]", err)
 	}
 
-	btcChain, err := btc.Connect()
+	btcChain, err := remote.Connect()
 	if err != nil {
 		return fmt.Errorf("could not connect BTC chain: [%v]", err)
 	}
@@ -49,12 +50,12 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not connect host chain: [%v]", err)
 	}
 
-	err = forwarder.Initialize(btcChain, hostChain)
+	err = node.Initialize(btcChain, hostChain)
 	if err != nil {
-		return fmt.Errorf("could not initialize header forwarder: [%v]", err)
+		return fmt.Errorf("could not initialize relay node: [%v]", err)
 	}
 
-	logger.Info("relay maintainer started")
+	logger.Info("relay started")
 
 	<-ctx.Done()
 	return fmt.Errorf("unexpected context cancellation")
