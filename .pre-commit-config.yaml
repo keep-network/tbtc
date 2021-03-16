@@ -1,3 +1,9 @@
+repos:
+ - repo: https://github.com/keep-network/pre-commit-golang.git
+   rev: 4cc73f21101f9da1208719b02bbbe0a4c491497e
+   hooks:
+    - id: go-imports
+    - id: go-lint
  - repo: https://github.com/keep-network/pre-commit-hooks.git
    rev: v1.3.0
    hooks:
