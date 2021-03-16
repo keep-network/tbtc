@@ -24,7 +24,7 @@ func Connect(
 	config *ethereum.Config,
 ) (chain.Handle, error) {
 	// TODO: implementation
-	logger.Infof("connecting Ethereum chain")
+	logger.Infof("connecting Ethereum host chain")
 
 	return &ethereumChain{}, nil
 }

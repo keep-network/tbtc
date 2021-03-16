@@ -4,13 +4,6 @@ repos:
    hooks:
     - id: go-imports
     - id: go-lint
- - repo: https://github.com/tekwizely/pre-commit-golang.git
-   rev: v0.8.2
-   hooks:
-     # The `go-vet` hook is taken from the `tekwizely/pre-commit-golang.git`
-     # repo because `go-vet` from `keep-network/pre-commit-golang.git` doesn't
-     # work if Go files don't exist at the project root level.
-     - id: go-vet
  - repo: https://github.com/keep-network/pre-commit-hooks.git
    rev: v1.3.0
    hooks:
