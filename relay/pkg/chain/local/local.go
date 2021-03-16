@@ -15,7 +15,7 @@ type localChain struct {
 // Connect performs initialization for communication with the local blockchain.
 func Connect() (chain.Handle, error) {
 	// TODO: implementation
-	logger.Infof("connecting local chain")
+	logger.Infof("connecting local host chain")
 
 	return &localChain{}, nil
 }
