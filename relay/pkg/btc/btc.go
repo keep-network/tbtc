@@ -10,7 +10,11 @@ var logger = log.Logger("relay-btc")
 
 // Header represents a Bitcoin block header.
 type Header struct {
-	// TODO: implementation
+	raw        []byte
+	hash       [32]byte
+	height     uint64
+	prevhash   [32]byte
+	merkleRoot [32]byte
 }
 
 // Client exposes methods needed to interact with the BTC blockchain.
