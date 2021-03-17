@@ -12,8 +12,8 @@ Dockerfile
 **/node_modules/*
 
 # Solidity stuff.
-# We want to include only bare contracts and NPM package configuration for Go code
-# generator.
+# We want to include only bare contracts and NPM package configuration for
+# Go code generator.
 solidity/
 !solidity/contracts
 !solidity/package.json

@@ -17,7 +17,7 @@ RUN apk add --update --no-cache \
 	linux-headers \
 	make \
 	nodejs \
-    npm \
+	npm \
 	git && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man

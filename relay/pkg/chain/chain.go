@@ -8,5 +8,5 @@ type Handle interface {
 // Relay is an interface that provides ability to interact with Relay contract.
 type Relay interface {
 	// GetBestKnownDigest returns the best known digest.
-	GetBestKnownDigest() ([32]byte, error)
+	GetBestKnownDigest() ([32]uint8, error)
 }

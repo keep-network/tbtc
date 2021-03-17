@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	commoneth "github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/tbtc/relay/pkg/chain/ethereum"
+
 	"github.com/keep-network/tbtc/relay/pkg/btc/remote"
 	"github.com/keep-network/tbtc/relay/pkg/node"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/tbtc/relay/config"
 	"github.com/keep-network/tbtc/relay/pkg/chain"
-	"github.com/keep-network/tbtc/relay/pkg/chain/ethereum"
 	"github.com/urfave/cli"
 )
 
@@ -66,5 +69,24 @@ func connectHostChain(
 	config *config.Config,
 ) (chain.Handle, error) {
 	// TODO: add support for multiple host chains (like Celo).
-	return ethereum.Connect(ctx, nil, nil)
+	return connectEthereum(ctx, config.Ethereum)
+}
+
+func connectEthereum(
+	ctx context.Context,
+	config commoneth.Config,
+) (chain.Handle, error) {
+	key, err := ethutil.DecryptKeyFile(
+		config.Account.KeyFile,
+		config.Account.KeyFilePassword,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to read key file [%s]: [%v]",
+			config.Account.KeyFile,
+			err,
+		)
+	}
+
+	return ethereum.Connect(ctx, key, &config)
 }
