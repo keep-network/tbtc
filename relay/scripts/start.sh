@@ -12,12 +12,6 @@ LOG_LEVEL_DEFAULT="info"
 CONFIG_DIR_PATH_DEFAULT="$RELAY_PATH/config"
 CONFIG_DIR_PATH=$(realpath "${CONFIG_DIR_PATH:-$CONFIG_DIR_PATH_DEFAULT}")
 
-# Read user inputs.
-OPERATOR_KEY_FILE_PASSWORD_DEFAULT=password
-read -p "Enter operator key file \
-password [$OPERATOR_KEY_FILE_PASSWORD_DEFAULT]: " operator_password
-OPERATOR_KEY_FILE_PASSWORD=${operator_password:-$OPERATOR_KEY_FILE_PASSWORD_DEFAULT}
-
 help()
 {
    echo -e "\nUsage: ENV_VAR(S) $0"
@@ -34,6 +28,12 @@ do
       ? ) help ;; # Print help in case parameter is non-existent
    esac
 done
+
+# Read user inputs.
+OPERATOR_KEY_FILE_PASSWORD_DEFAULT=password
+read -p "Enter operator key file \
+password [$OPERATOR_KEY_FILE_PASSWORD_DEFAULT]: " operator_password
+OPERATOR_KEY_FILE_PASSWORD=${operator_password:-$OPERATOR_KEY_FILE_PASSWORD_DEFAULT}
 
 config_files=($CONFIG_DIR_PATH/*.toml)
 config_files_count=${#config_files[@]}
