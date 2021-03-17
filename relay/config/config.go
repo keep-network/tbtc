@@ -6,6 +6,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+	"github.com/keep-network/tbtc/relay/pkg/btc"
 )
 
 // PasswordEnvVariable environment variable name for operator key file password.
@@ -18,6 +19,7 @@ const PasswordEnvVariable = "OPERATOR_KEY_FILE_PASSWORD"
 // Config is the top level config structure.
 type Config struct {
 	Ethereum ethereum.Config
+	Bitcoin  btc.Config
 }
 
 // ReadConfig reads in the configuration file in .toml format. Chain key file
