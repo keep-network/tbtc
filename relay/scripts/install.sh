@@ -47,7 +47,7 @@ BTC_NETWORK=$BTC_NETWORK npx truffle migrate --reset --network $ETH_NETWORK
 
 printf "${LOG_START}Building relay node client...${LOG_END}"
 cd $RELAY_PATH
-#go generate ./...
+go generate ./...
 go build -a -o relay .
 
 # TODO: set contract address in client config

@@ -2,3 +2,4 @@ relay
 config/*.toml
 build/
 node_modules/
+pkg/chain/*/gen/abi/**/*.abi
