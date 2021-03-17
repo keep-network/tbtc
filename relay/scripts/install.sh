@@ -13,6 +13,8 @@ RELAY_SOL_PATH=$(realpath $RELAY_PATH/solidity)
 # Defaults, can be overwritten by env variables/input parameters
 BTC_NETWORK=${BTC_NETWORK:-"testnet"}
 ETH_NETWORK=${ETH_NETWORK:-"local"}
+CONFIG_DIR_PATH_DEFAULT="$RELAY_PATH/config"
+CONFIG_DIR_PATH=$(realpath "${CONFIG_DIR_PATH:-$CONFIG_DIR_PATH_DEFAULT}")
 
 help()
 {
@@ -22,6 +24,8 @@ help()
            "Default value is 'testnet'."
    echo -e "\tETH_NETWORK: Which ETH network should be used." \
            "Default value is 'local'."
+   echo -e "\tCONFIG_DIR_PATH: Location of relay config file(s)." \
+           "Default value is 'config' dir placed under project root."
    exit 1 # Exit script after printing help
 }
 
@@ -50,6 +54,13 @@ cd $RELAY_PATH
 go generate ./...
 go build -a -o relay .
 
-# TODO: set contract address in client config
+printf "${LOG_START}Updating relay config files...${LOG_END}"
+cd $RELAY_SOL_PATH
+for CONFIG_FILE in $CONFIG_DIR_PATH/*.toml
+do
+  BTC_NETWORK=$BTC_NETWORK \
+    CONFIG_FILE_PATH=$CONFIG_FILE \
+    npx truffle exec scripts/lcl-client-config.js --network $ETH_NETWORK
+done
 
 printf "${DONE_START}Installation completed!${DONE_END}"

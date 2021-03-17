@@ -57,3 +57,17 @@ func (lc *localChain) AddHeadersWithRetarget(
 ) error {
 	panic("not implemented yet")
 }
+
+// MarkNewHeaviest gives a new starting point for the relay. The ancestor param
+// is the digest of the most recent common ancestor. The currentBest is a
+// 80-byte header referenced by bestKnownDigest while the newBast param should
+// be the header to mark as new best. Limit parameter limits the amount of
+// traversal of the chain.
+func (lc *localChain) MarkNewHeaviest(
+	ancestor [32]uint8,
+	currentBest []uint8,
+	newBest []uint8,
+	limit *big.Int,
+) error {
+	panic("not implemented yet")
+}
