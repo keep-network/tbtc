@@ -1,14 +1,24 @@
 package remote
 
-import "testing"
+import (
+	"testing"
 
-func TestConnect(t *testing.T) {
-	btcChain, err := Connect()
-	if err != nil {
-		t.Fatal(err)
+	"github.com/keep-network/tbtc/relay/pkg/btc"
+)
+
+func TestConnectionWrongURL(t *testing.T) {
+	config := &btc.Config{
+		URL:      "dummyURL",
+		Password: "pass",
+		Username: "user",
 	}
 
-	if btcChain == nil {
-		t.Errorf("btc chain handle is null")
+	btcChain, err := Connect(config)
+	if err == nil {
+		t.Fatal("No error received")
+	}
+
+	if btcChain != nil {
+		t.Errorf("Non nil btc chain received")
 	}
 }
