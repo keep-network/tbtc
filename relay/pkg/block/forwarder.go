@@ -23,8 +23,9 @@ const (
 	// Block duration of a Bitcoin difficulty epoch.
 	difficultyEpochDuration = 2016
 
-	// Frequency of the forwarder loop tick.
-	forwarderTick = 45 * time.Second
+	// Duration for which the forwarder should rest after performing
+	// a push action.
+	forwarderSleepTime = 45 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
@@ -64,12 +65,14 @@ func RunForwarder(
 func (f *Forwarder) loop(ctx context.Context) {
 	logger.Infof("running forwarder loop")
 
-	ticker := time.NewTicker(forwarderTick)
-	defer ticker.Stop()
+	// Init the forwarder timer with a short value for the first time.
+	timer := time.After(10 * time.Second)
 
 	for {
 		select {
-		case <-ticker.C:
+		case <-timer:
+			logger.Debugf("running forwarder iteration")
+
 			headers := f.pullHeaders()
 			if len(headers) == 0 {
 				continue
@@ -78,6 +81,8 @@ func (f *Forwarder) loop(ctx context.Context) {
 			logger.Infof("pushing [%v] headers", len(headers))
 
 			f.pushHeaders(headers)
+
+			timer = time.After(forwarderSleepTime)
 		case <-ctx.Done():
 			logger.Infof("forwarder loop context is done")
 			return
@@ -95,7 +100,9 @@ func (f *Forwarder) pullHeaders() []*btc.Header {
 		case header := <-f.headersQueue:
 			headers = append(headers, header)
 		case <-time.After(headerTimeout):
-			break
+			if len(headers) > 0 {
+				break
+			}
 		}
 	}
 
