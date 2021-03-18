@@ -13,4 +13,5 @@ type Handle interface {
 // Header represents a Bitcoin block header.
 type Header struct {
 	// TODO: implementation
+	Height int64
 }

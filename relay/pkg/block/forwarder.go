@@ -2,10 +2,29 @@ package block
 
 import (
 	"context"
+	"time"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 	"github.com/keep-network/tbtc/relay/pkg/chain"
+)
+
+const (
+	// Size of the headers queue.
+	headersQueueSize = 50
+
+	// Maximum size of processed headers batch.
+	headersBatchSize = 5
+
+	// Maximum time for which the pulling process will wait for a single header
+	// to be delivered by the headers queue.
+	headerTimeout = 1 * time.Second
+
+	// Block duration of a Bitcoin difficulty epoch.
+	difficultyEpochDuration = 2016
+
+	// Frequency of the forwarder loop tick.
+	forwarderTick = 45 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
@@ -13,7 +32,13 @@ var logger = log.Logger("relay-block-forwarder")
 // Forwarder takes blocks from the Bitcoin chain and forwards them to the
 // given host chain.
 type Forwarder struct {
-	errChan chan error
+	btcChain  btc.Handle
+	hostChain chain.Handle
+
+	processedHeaders int
+
+	headersQueue chan *btc.Header
+	errChan      chan error
 }
 
 // RunForwarder creates an instance of the block forwarder and runs its
@@ -25,7 +50,10 @@ func RunForwarder(
 	hostChain chain.Handle,
 ) *Forwarder {
 	forwarder := &Forwarder{
-		errChan: make(chan error, 1),
+		btcChain:     btcChain,
+		hostChain:    hostChain,
+		headersQueue: make(chan *btc.Header, headersQueueSize),
+		errChan:      make(chan error, 1),
 	}
 
 	go forwarder.loop(ctx)
@@ -36,14 +64,72 @@ func RunForwarder(
 func (f *Forwarder) loop(ctx context.Context) {
 	logger.Infof("running forwarder loop")
 
+	ticker := time.NewTicker(forwarderTick)
+
 	for {
 		select {
-		// TODO: implementation
+		case <-ticker.C:
+			headers := f.pullHeaders()
+			if len(headers) == 0 {
+				continue
+			}
+
+			logger.Infof("pushing [%v] headers", len(headers))
+
+			f.pushHeaders(headers)
 		case <-ctx.Done():
-			logger.Infof("forwarder context is done")
+			logger.Infof("forwarder loop context is done")
 			return
 		}
 	}
+}
+
+// pullHeaders wait until we have `headersBatchSize` headers from the queue or
+// until the queue fails to yield a header for `headerTimeout`.
+func (f *Forwarder) pullHeaders() []*btc.Header {
+	headers := make([]*btc.Header, 0)
+
+	for len(headers) < headersBatchSize {
+		select {
+		case header := <-f.headersQueue:
+			headers = append(headers, header)
+		case <-time.After(headerTimeout):
+			break
+		}
+	}
+
+	return headers
+}
+
+func (f *Forwarder) pushHeaders(headers []*btc.Header) {
+	if len(headers) == 0 {
+		return
+	}
+
+	startDifficulty := headers[0].Height % difficultyEpochDuration
+	endDifficulty := headers[len(headers)-1].Height % difficultyEpochDuration
+
+	if startDifficulty == 0 {
+		// we have a difficulty change first
+		// TODO: implementation
+	} else if startDifficulty > endDifficulty {
+		// we span a difficulty change
+		// TODO: implementation
+	} else {
+		// no difficulty change
+		// TODO: implementation
+	}
+
+	f.processedHeaders += len(headers)
+	if f.processedHeaders >= headersBatchSize {
+		newBestHeader := headers[len(headers)-1]
+		f.updateBestHeader(newBestHeader)
+		f.processedHeaders = 0
+	}
+}
+
+func (f *Forwarder) updateBestHeader(header *btc.Header) {
+	// TODO: implementation
 }
 
 // ErrChan returns the error channel of the forwarder. Once an error
