@@ -1,0 +1,6 @@
+# Hidden files and directories.
+.*
+
+# Top-level files unrealted to the build.
+Dockerfile
+*.adoc
