@@ -41,7 +41,6 @@ func Start(c *cli.Context) error {
 	}
 
 	btcChain, err := remote.Connect(&config.Bitcoin)
-
 	if err != nil {
 		return fmt.Errorf("could not connect BTC chain: [%v]", err)
 	}
