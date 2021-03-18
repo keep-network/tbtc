@@ -53,10 +53,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not connect host chain: [%v]", err)
 	}
 
-	err = node.Initialize(btcChain, hostChain)
-	if err != nil {
-		return fmt.Errorf("could not initialize relay node: [%v]", err)
-	}
+	node.Initialize(ctx, btcChain, hostChain)
 
 	logger.Info("relay started")
 
