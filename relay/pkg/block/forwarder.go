@@ -65,6 +65,7 @@ func (f *Forwarder) loop(ctx context.Context) {
 	logger.Infof("running forwarder loop")
 
 	ticker := time.NewTicker(forwarderTick)
+	defer ticker.Stop()
 
 	for {
 		select {
