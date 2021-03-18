@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"time"
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
@@ -38,11 +39,11 @@ func Connect(config *btc.Config) (btc.Handle, error) {
 		)
 	}
 
-	// TODO: Try to find a better way to test connection
-	_, err = client.GetBlockCount()
+	err = testConnection(client, time.Second*3)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"rpc client failed to connect at [%s]: [%v]",
+			"Error while connecting to [%s]: [%v] - check if the Bitcoin node "+
+				"is running and you provided correct credentials and url",
 			config.URL,
 			err,
 		)
@@ -90,6 +91,25 @@ func (rc *remoteChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
 	}
 
 	return relayHeader, nil
+}
+
+func testConnection(client *rpcclient.Client, timeout time.Duration) error {
+	channel := make(chan error, 1)
+
+	go func() {
+		_, err := client.GetBlockCount()
+		channel <- err
+	}()
+
+	var err error
+
+	select {
+	case err = <-channel:
+	case <-time.After(timeout):
+		err = fmt.Errorf("Connection timed out after %f seconds", timeout.Seconds())
+	}
+
+	return err
 }
 
 func serializeHeader(header *wire.BlockHeader) ([]byte, error) {
