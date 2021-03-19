@@ -105,15 +105,15 @@ func (rc *remoteChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
 }
 
 func testConnection(client *rpcclient.Client, timeout time.Duration) error {
-	channel := make(chan error, 1)
+	errChan := make(chan error, 1)
 
 	go func() {
 		_, err := client.GetBlockCount()
-		channel <- err
+		errChan <- err
 	}()
 
 	select {
-	case err := <-channel:
+	case err := <-errChan:
 		return err
 	case <-time.After(timeout):
 		return fmt.Errorf(
