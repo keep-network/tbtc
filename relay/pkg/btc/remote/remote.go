@@ -112,15 +112,15 @@ func testConnection(client *rpcclient.Client, timeout time.Duration) error {
 		channel <- err
 	}()
 
-	var err error
-
 	select {
-	case err = <-channel:
+	case err := <-channel:
+		return err
 	case <-time.After(timeout):
-		err = fmt.Errorf("Connection timed out after %f seconds", timeout.Seconds())
+		return fmt.Errorf(
+			"connection timed out after [%f] seconds",
+			timeout.Seconds(),
+		)
 	}
-
-	return err
 }
 
 func shutdownClient(ctx context.Context, client *rpcclient.Client) {
