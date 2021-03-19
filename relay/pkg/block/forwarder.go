@@ -65,44 +65,60 @@ func RunForwarder(
 func (f *Forwarder) loop(ctx context.Context) {
 	logger.Infof("running forwarder loop")
 
-	// Init the forwarder timer with a short value for the first time.
-	timer := time.After(10 * time.Second)
-
 	for {
 		select {
-		case <-timer:
-			logger.Debugf("running forwarder iteration")
+		case <-ctx.Done():
+			logger.Infof("forwarder loop context is done")
+			return
+		default:
+			logger.Debugf("running forwarder loop iteration")
 
-			headers := f.pullHeaders()
+			headers := f.waitHeaders(ctx)
 			if len(headers) == 0 {
 				continue
 			}
 
-			logger.Infof("pushing [%v] headers", len(headers))
+			logger.Infof("pushing [%v] header(s)", len(headers))
 
 			f.pushHeaders(headers)
 
-			timer = time.After(forwarderSleepTime)
-		case <-ctx.Done():
-			logger.Infof("forwarder loop context is done")
-			return
+			// Sleep for a while to achieve a limited rate.
+			select {
+			case <-time.After(forwarderSleepTime):
+			case <-ctx.Done():
+			}
 		}
 	}
 }
 
-// pullHeaders wait until we have `headersBatchSize` headers from the queue or
-// until the queue fails to yield a header for `headerTimeout`.
-func (f *Forwarder) pullHeaders() []*btc.Header {
+// waitHeaders waits until we have `headersBatchSize` headers from the queue or
+// until the queue fails to yield a header for `headerTimeout` duration.
+func (f *Forwarder) waitHeaders(ctx context.Context) []*btc.Header {
 	headers := make([]*btc.Header, 0)
+
+	headerTimer := time.NewTimer(headerTimeout)
+	defer headerTimer.Stop()
 
 	for len(headers) < headersBatchSize {
 		select {
 		case header := <-f.headersQueue:
 			headers = append(headers, header)
-		case <-time.After(headerTimeout):
-			if len(headers) > 0 {
-				break
+
+			// Stop the timer. In case it already expired, drain the channel
+			// before performing reset.
+			if !headerTimer.Stop() {
+				<-headerTimer.C
 			}
+			headerTimer.Reset(headerTimeout)
+		case <-headerTimer.C:
+			if len(headers) > 0 {
+				return headers
+			}
+
+			// Timer expired and channel is drained so one can reset directly.
+			headerTimer.Reset(headerTimeout)
+		case <-ctx.Done():
+			return headers
 		}
 	}
 
