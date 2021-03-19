@@ -1,6 +1,7 @@
 package remote
 
 import (
+	"context"
 	"testing"
 
 	"github.com/keep-network/tbtc/relay/pkg/btc"
@@ -13,7 +14,9 @@ func TestConnectionWrongURL(t *testing.T) {
 		Username: "user",
 	}
 
-	btcChain, err := Connect(config)
+	ctx := context.Background()
+
+	btcChain, err := Connect(ctx, config)
 	if err == nil {
 		t.Fatal("No error received")
 	}
