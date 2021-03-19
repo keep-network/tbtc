@@ -146,7 +146,8 @@ func addClientWrappers(
 	return loggingClient
 }
 
-// GetBestKnownDigest returns the best known digest.
+// GetBestKnownDigest returns the best known digest. Returned digest is
+// presented in little-endian system.
 func (ec *ethereumChain) GetBestKnownDigest() ([32]uint8, error) {
 	return ec.relayContract.GetBestKnownDigest()
 }

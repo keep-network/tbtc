@@ -9,7 +9,8 @@ type Handle interface {
 
 // Relay is an interface that provides ability to interact with Relay contract.
 type Relay interface {
-	// GetBestKnownDigest returns the best known digest.
+	// GetBestKnownDigest returns the best known digest. Returned digest is
+	// presented in little-endian system.
 	GetBestKnownDigest() ([32]uint8, error)
 
 	// IsAncestor checks if a digest is an ancestor of the given descendant.

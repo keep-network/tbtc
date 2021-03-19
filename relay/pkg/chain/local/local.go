@@ -19,7 +19,8 @@ func Connect() (chain.Handle, error) {
 	return &localChain{}, nil
 }
 
-// GetBestKnownDigest returns the best known digest.
+// GetBestKnownDigest returns the best known digest. Returned digest is
+// presented in little-endian system.
 func (lc *localChain) GetBestKnownDigest() ([32]uint8, error) {
 	panic("not implemented yet")
 }

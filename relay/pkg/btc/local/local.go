@@ -23,3 +23,9 @@ func Connect() (btc.Handle, error) {
 func (lc *localChain) GetHeaderByHeight(height *big.Int) *btc.Header {
 	panic("not implemented yet")
 }
+
+// GetHeaderByDigest returns the block header for given digest (hash).
+// The digest should be passed in little-endian system.
+func (lc *localChain) GetHeaderByDigest(digest [32]uint8) (*btc.Header, error) {
+	panic("not implemented yet")
+}

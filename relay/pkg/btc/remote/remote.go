@@ -27,3 +27,12 @@ func (rc *remoteChain) GetHeaderByHeight(height *big.Int) *btc.Header {
 	// TODO: implementation
 	return nil
 }
+
+// GetHeaderByDigest returns the block header for given digest (hash).
+// The digest should be passed in little-endian system.
+func (rc *remoteChain) GetHeaderByDigest(
+	digest [32]uint8,
+) (*btc.Header, error) {
+	// TODO: implementation
+	return nil, nil
+}

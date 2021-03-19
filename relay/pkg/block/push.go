@@ -2,6 +2,8 @@ package block
 
 import (
 	"context"
+	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/keep-network/tbtc/relay/pkg/btc"
@@ -77,7 +79,7 @@ func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) error {
 		)
 
 		if err := f.addHeaders(headers); err != nil {
-			return err
+			return fmt.Errorf("could not add headers: [%v]", err)
 		}
 	}
 
@@ -86,7 +88,7 @@ func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) error {
 		newBestHeader := headers[len(headers)-1]
 
 		if err := f.updateBestHeader(newBestHeader); err != nil {
-			return err
+			return fmt.Errorf("could not update best header: [%v]", err)
 		}
 
 		f.processedHeaders = 0
@@ -96,16 +98,57 @@ func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) error {
 }
 
 func (f *Forwarder) addHeaders(headers []*btc.Header) error {
-	// TODO: Get real anchor by calling f.btcChain.GetHeaderByHash with
-	//  the `PrevHash` value of the first header from headers slice.
-	var anchor []uint8
+	anchorDigest := headers[0].PrevHash
 
-	return f.hostChain.AddHeaders(anchor, packHeaders(headers))
+	anchorHeader, err := f.btcChain.GetHeaderByDigest(anchorDigest)
+	if err != nil {
+		return fmt.Errorf(
+			"could not get anchor header by digest: [%v]",
+			err,
+		)
+	}
+
+	return f.hostChain.AddHeaders(anchorHeader.Raw, packHeaders(headers))
 }
 
-func (f *Forwarder) updateBestHeader(header *btc.Header) error {
+func (f *Forwarder) updateBestHeader(newBestHeader *btc.Header) error {
+	currentBestDigest, err := f.hostChain.GetBestKnownDigest()
+	if err != nil {
+		return fmt.Errorf("could not get best known digest: [%v]", err)
+	}
+
+	currentBestHeader, err := f.btcChain.GetHeaderByDigest(currentBestDigest)
+	if err != nil {
+		return fmt.Errorf(
+			"could not get current best header by digest: [%v]",
+			err,
+		)
+	}
+
+	lastCommonAncestor, err := f.findLastCommonAncestor(
+		newBestHeader,
+		currentBestHeader,
+	)
+	if err != nil {
+		return fmt.Errorf("could not find last common ancestor: [%v]", err)
+	}
+
+	limit := newBestHeader.Height - lastCommonAncestor.Height + 1
+
+	return f.hostChain.MarkNewHeaviest(
+		lastCommonAncestor.Hash,
+		currentBestHeader.Raw,
+		newBestHeader.Raw,
+		big.NewInt(limit),
+	)
+}
+
+func (f *Forwarder) findLastCommonAncestor(
+	newBestHeader *btc.Header,
+	currentBestHeader *btc.Header,
+) (*btc.Header, error) {
 	// TODO: implementation
-	return nil
+	return nil, nil
 }
 
 func packHeaders(headers []*btc.Header) []uint8 {
