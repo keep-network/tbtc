@@ -40,7 +40,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not read config file: [%v]", err)
 	}
 
-	btcChain, err := remote.Connect(&config.Bitcoin)
+	btcChain, err := remote.Connect(ctx, &config.Bitcoin)
 	if err != nil {
 		return fmt.Errorf("could not connect BTC chain: [%v]", err)
 	}

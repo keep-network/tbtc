@@ -2,6 +2,7 @@ package remote
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"math/big"
@@ -21,7 +22,10 @@ type remoteChain struct {
 }
 
 // Connect connects to the Bitcoin chain and returns a chain handle.
-func Connect(config *btc.Config) (btc.Handle, error) {
+func Connect(
+	ctx context.Context,
+	config *btc.Config,
+) (btc.Handle, error) {
 	connCfg := &rpcclient.ConnConfig{
 		User:         config.Username,
 		Pass:         config.Password,
@@ -39,6 +43,10 @@ func Connect(config *btc.Config) (btc.Handle, error) {
 		)
 	}
 
+	// when we are exiting the program, cancel all requests from the rpc client
+	// and disconnect it
+	go shutdownClient(ctx, client)
+
 	err = testConnection(client, time.Second*3)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -49,7 +57,6 @@ func Connect(config *btc.Config) (btc.Handle, error) {
 		)
 	}
 
-	// TODO: Remember to shutdown client
 	return &remoteChain{client: client}, nil
 }
 
@@ -110,6 +117,12 @@ func testConnection(client *rpcclient.Client, timeout time.Duration) error {
 	}
 
 	return err
+}
+
+func shutdownClient(ctx context.Context, client *rpcclient.Client) {
+	<-ctx.Done()
+	logger.Info("Shutting down Bitcoin rpc client")
+	client.Shutdown()
 }
 
 func serializeHeader(header *wire.BlockHeader) ([]byte, error) {
