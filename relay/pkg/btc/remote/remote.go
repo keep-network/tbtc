@@ -16,6 +16,8 @@ import (
 
 var logger = log.Logger("relay-btc-remote")
 
+const connectionTimeout = 3 * time.Second
+
 // remoteChain represents a remote Bitcoin chain.
 type remoteChain struct {
 	client *rpcclient.Client
@@ -49,7 +51,7 @@ func Connect(
 	// and disconnect it
 	go shutdownClient(ctx, client)
 
-	err = testConnection(client, time.Second*3)
+	err = testConnection(client, connectionTimeout)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error while connecting to [%s]: [%v]; check if the Bitcoin node "+
