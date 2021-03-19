@@ -19,31 +19,30 @@ func Connect() (chain.Handle, error) {
 	return &localChain{}, nil
 }
 
-// GetBestKnownDigest returns the best known digest. Returned digest is
-// presented in little-endian system.
-func (lc *localChain) GetBestKnownDigest() ([32]uint8, error) {
+// GetBestKnownDigest returns the best known digest.
+func (lc *localChain) GetBestKnownDigest() ([32]byte, error) {
 	panic("not implemented yet")
 }
 
-// IsAncestor checks if a digest is an ancestor of the given descendant. The
-// limit parameter determines the number of blocks to check.
+// IsAncestor checks if ancestorDigest is an ancestor of the descendantDigest.
+// The limit parameter determines the number of blocks to check.
 func (lc *localChain) IsAncestor(
-	ancestor [32]uint8,
-	descendant [32]uint8,
+	ancestorDigest [32]byte,
+	descendantDigest [32]byte,
 	limit *big.Int,
 ) (bool, error) {
 	panic("not implemented yet")
 }
 
 // FindHeight finds the height of a header by its digest.
-func (lc *localChain) FindHeight(digest [32]uint8) (*big.Int, error) {
+func (lc *localChain) FindHeight(digest [32]byte) (*big.Int, error) {
 	panic("not implemented yet")
 }
 
-// AddHeaders adds headers to storage after validating. The anchor parameter is
-// the header immediately preceding the new chain. Headers parameter should be
-// a tightly-packed list of 80-byte Bitcoin headers.
-func (lc *localChain) AddHeaders(anchor []uint8, headers []uint8) error {
+// AddHeaders adds headers to storage after validating. The anchorHeader
+// parameter is the header immediately preceding the new chain. Headers
+// parameter should be a tightly-packed list of 80-byte Bitcoin headers.
+func (lc *localChain) AddHeaders(anchorHeader []byte, headers []byte) error {
 	panic("not implemented yet")
 }
 
@@ -52,22 +51,22 @@ func (lc *localChain) AddHeaders(anchor []uint8, headers []uint8) error {
 // difficulty period being closed while oldPeriodEndHeader is the last.
 // Headers parameter should be a tightly-packed list of 80-byte Bitcoin headers.
 func (lc *localChain) AddHeadersWithRetarget(
-	oldPeriodStartHeader []uint8,
-	oldPeriodEndHeader []uint8,
-	headers []uint8,
+	oldPeriodStartHeader []byte,
+	oldPeriodEndHeader []byte,
+	headers []byte,
 ) error {
 	panic("not implemented yet")
 }
 
-// MarkNewHeaviest gives a new starting point for the relay. The ancestor param
-// is the digest of the most recent common ancestor. The currentBest is a
-// 80-byte header referenced by bestKnownDigest while the newBast param should
-// be the header to mark as new best. Limit parameter limits the amount of
-// traversal of the chain.
+// MarkNewHeaviest gives a new starting point for the relay. The
+// ancestorDigest param is the digest of the most recent common ancestor.
+// The currentBestHeader is a 80-byte header referenced by bestKnownDigest
+// while the newBestHeader param should be the header to mark as new best.
+// Limit parameter limits the amount of traversal of the chain.
 func (lc *localChain) MarkNewHeaviest(
-	ancestor [32]uint8,
-	currentBest []uint8,
-	newBest []uint8,
+	ancestorDigest [32]byte,
+	currentBestHeader []byte,
+	newBestHeader []byte,
 	limit *big.Int,
 ) error {
 	panic("not implemented yet")

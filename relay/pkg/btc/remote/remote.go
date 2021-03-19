@@ -97,9 +97,9 @@ func (rc *remoteChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
 	}
 
 	relayHeader := &btc.Header{
-		Hash:       blockHeader.BlockHash(),
-		PrevHash:   blockHeader.PrevBlock,
-		MerkleRoot: blockHeader.MerkleRoot,
+		Hash:       btc.Digest(blockHeader.BlockHash()),
+		PrevHash:   btc.Digest(blockHeader.PrevBlock),
+		MerkleRoot: btc.Digest(blockHeader.MerkleRoot),
 		Raw:        rawHeader,
 		Height:     height.Int64(),
 	}
@@ -138,9 +138,8 @@ func serializeHeader(header *wire.BlockHeader) ([]byte, error) {
 }
 
 // GetHeaderByDigest returns the block header for given digest (hash).
-// The digest should be passed in little-endian system.
 func (rc *remoteChain) GetHeaderByDigest(
-	digest [32]uint8,
+	digest btc.Digest,
 ) (*btc.Header, error) {
 	// TODO: implementation
 	return nil, nil
