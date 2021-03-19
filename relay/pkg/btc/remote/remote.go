@@ -69,7 +69,7 @@ func (rc *remoteChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
 	blockHash, err := rc.client.GetBlockHash(height.Int64())
 	if err != nil {
 		return nil, fmt.Errorf(
-			"getblockhash failed for height [%d]: [%v]",
+			"could not get block hash for height [%d]: [%v]",
 			height.Int64(),
 			err,
 		)
@@ -78,7 +78,7 @@ func (rc *remoteChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
 	blockHeader, err := rc.client.GetBlockHeader(blockHash)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"getblockheader failed for block with hash [%s]: [%v]",
+			"could not get block header for hash [%s]: [%v]",
 			blockHash.String(),
 			err,
 		)
