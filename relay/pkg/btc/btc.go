@@ -14,4 +14,5 @@ type Handle interface {
 type Header struct {
 	// TODO: implementation
 	Height int64
+	Raw    []byte
 }

@@ -2,6 +2,7 @@ package block
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -83,7 +84,10 @@ func (f *Forwarder) loop(ctx context.Context) {
 				len(headers),
 			)
 
-			f.pushHeadersToHostChain(headers)
+			if err := f.pushHeadersToHostChain(headers); err != nil {
+				f.errChan <- fmt.Errorf("could not push headers: [%v]", err)
+				return
+			}
 
 			logger.Infof(
 				"suspending forwarder for [%v]",

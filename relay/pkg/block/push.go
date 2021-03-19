@@ -55,9 +55,9 @@ func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
 	return headers
 }
 
-func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) {
+func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) error {
 	if len(headers) == 0 {
-		return
+		return nil
 	}
 
 	startDifficulty := headers[0].Height % difficultyEpochDuration
@@ -71,17 +71,49 @@ func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) {
 		// TODO: implementation
 	} else {
 		// no difficulty change
-		// TODO: implementation
+		logger.Infof(
+			"performing simple headers adding as difficulty doesn't " +
+				"change within headers batch",
+		)
+
+		if err := f.addHeaders(headers); err != nil {
+			return err
+		}
 	}
 
 	f.processedHeaders += len(headers)
 	if f.processedHeaders >= headersBatchSize {
 		newBestHeader := headers[len(headers)-1]
-		f.updateBestHeader(newBestHeader)
+
+		if err := f.updateBestHeader(newBestHeader); err != nil {
+			return err
+		}
+
 		f.processedHeaders = 0
 	}
+
+	return nil
 }
 
-func (f *Forwarder) updateBestHeader(header *btc.Header) {
+func (f *Forwarder) addHeaders(headers []*btc.Header) error {
+	// TODO: Get real anchor by calling f.btcChain.GetHeaderByHash with
+	//  the `PrevHash` value of the first header from headers slice.
+	var anchor []uint8
+
+	return f.hostChain.AddHeaders(anchor, packHeaders(headers))
+}
+
+func (f *Forwarder) updateBestHeader(header *btc.Header) error {
 	// TODO: implementation
+	return nil
+}
+
+func packHeaders(headers []*btc.Header) []uint8 {
+	packed := make([]uint8, 0)
+
+	for _, header := range headers {
+		packed = append(packed, header.Raw...)
+	}
+
+	return packed
 }
