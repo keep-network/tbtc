@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"math/big"
 	"time"
 
@@ -131,8 +130,8 @@ func shutdownClient(ctx context.Context, client *rpcclient.Client) {
 
 func serializeHeader(header *wire.BlockHeader) ([]byte, error) {
 	var buffer bytes.Buffer
-	writer := io.Writer(&buffer)
-	err := header.Serialize(writer)
+
+	err := header.Serialize(&buffer)
 	if err != nil {
 		return nil, err
 	}
