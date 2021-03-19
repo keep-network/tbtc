@@ -12,3 +12,9 @@
 # Addresses of contracts deployed on Ethereum blockchain.
 [ethereum.ContractAddresses]
   Relay = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+# Connection details of Bitcoin blockchain
+[bitcoin]
+  URL = "127.0.0.1:8332"
+  Password = "password"
+  Username = "user"
