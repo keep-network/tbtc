@@ -26,6 +26,8 @@ func Connect(
 	ctx context.Context,
 	config *btc.Config,
 ) (btc.Handle, error) {
+	logger.Infof("connecting remote Bitcoin chain")
+
 	connCfg := &rpcclient.ConnConfig{
 		User:         config.Username,
 		Pass:         config.Password,
