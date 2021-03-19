@@ -46,10 +46,6 @@ func Connect(
 		)
 	}
 
-	// when we are exiting the program, cancel all requests from the rpc client
-	// and disconnect it
-	go shutdownClient(ctx, client)
-
 	err = testConnection(client, connectionTimeout)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -59,6 +55,14 @@ func Connect(
 			err,
 		)
 	}
+
+	// When the context is done, cancel all requests from the RPC client
+	// and disconnect it.
+	go func() {
+		<-ctx.Done()
+		logger.Info("disconnecting from remote Bitcoin chain")
+		client.Shutdown()
+	}()
 
 	return &remoteChain{client: client}, nil
 }
@@ -120,12 +124,6 @@ func testConnection(client *rpcclient.Client, timeout time.Duration) error {
 			timeout.Seconds(),
 		)
 	}
-}
-
-func shutdownClient(ctx context.Context, client *rpcclient.Client) {
-	<-ctx.Done()
-	logger.Info("Shutting down Bitcoin rpc client")
-	client.Shutdown()
 }
 
 func serializeHeader(header *wire.BlockHeader) ([]byte, error) {
