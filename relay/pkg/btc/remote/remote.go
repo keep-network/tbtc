@@ -52,7 +52,7 @@ func Connect(
 	err = testConnection(client, time.Second*3)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Error while connecting to [%s]: [%v] - check if the Bitcoin node "+
+			"error while connecting to [%s]: [%v]; check if the Bitcoin node "+
 				"is running and you provided correct credentials and url",
 			config.URL,
 			err,
