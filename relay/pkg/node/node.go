@@ -49,7 +49,7 @@ func runForwarderControlLoop(
 				err,
 			)
 		case <-ctx.Done():
-			logger.Infof("context of forwarder control loop is done")
+			logger.Infof("forwarder control loop context is done")
 			return
 		}
 	}

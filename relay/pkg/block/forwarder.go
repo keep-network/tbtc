@@ -63,24 +63,32 @@ func RunForwarder(
 }
 
 func (f *Forwarder) loop(ctx context.Context) {
-	logger.Infof("running forwarder loop")
+	logger.Infof("running forwarder")
 
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Infof("forwarder loop context is done")
+			logger.Infof("forwarder context is done")
 			return
 		default:
-			logger.Debugf("running forwarder loop iteration")
+			logger.Infof("pulling new headers from queue")
 
-			headers := f.waitHeaders(ctx)
+			headers := f.pullHeadersFromQueue(ctx)
 			if len(headers) == 0 {
 				continue
 			}
 
-			logger.Infof("pushing [%v] header(s)", len(headers))
+			logger.Infof(
+				"pushing [%v] header(s) to host chain",
+				len(headers),
+			)
 
-			f.pushHeaders(headers)
+			f.pushHeadersToChain(headers)
+
+			logger.Infof(
+				"suspending forwarder for [%v]",
+				forwarderSleepTime,
+			)
 
 			// Sleep for a while to achieve a limited rate.
 			select {
@@ -91,17 +99,22 @@ func (f *Forwarder) loop(ctx context.Context) {
 	}
 }
 
-// waitHeaders waits until we have `headersBatchSize` headers from the queue or
-// until the queue fails to yield a header for `headerTimeout` duration.
-func (f *Forwarder) waitHeaders(ctx context.Context) []*btc.Header {
+// pullHeadersFromQueue waits until we have `headersBatchSize` headers from
+// the queue or until the queue fails to yield a header for
+// `headerTimeout` duration.
+func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
 	headers := make([]*btc.Header, 0)
 
 	headerTimer := time.NewTimer(headerTimeout)
 	defer headerTimer.Stop()
 
 	for len(headers) < headersBatchSize {
+		logger.Debugf("waiting for new header appear on queue")
+
 		select {
 		case header := <-f.headersQueue:
+			logger.Debugf("got header (%v) from queue", header.Height)
+
 			headers = append(headers, header)
 
 			// Stop the timer. In case it already expired, drain the channel
@@ -112,8 +125,17 @@ func (f *Forwarder) waitHeaders(ctx context.Context) []*btc.Header {
 			headerTimer.Reset(headerTimeout)
 		case <-headerTimer.C:
 			if len(headers) > 0 {
+				logger.Debugf(
+					"new header did not appear in the given timeout; " +
+						"returning headers pulled so far",
+				)
 				return headers
 			}
+
+			logger.Debugf(
+				"new header did not appear in the given timeout; " +
+					"resetting timer as no headers have been pulled so far",
+			)
 
 			// Timer expired and channel is drained so one can reset directly.
 			headerTimer.Reset(headerTimeout)
@@ -125,7 +147,7 @@ func (f *Forwarder) waitHeaders(ctx context.Context) []*btc.Header {
 	return headers
 }
 
-func (f *Forwarder) pushHeaders(headers []*btc.Header) {
+func (f *Forwarder) pushHeadersToChain(headers []*btc.Header) {
 	if len(headers) == 0 {
 		return
 	}
