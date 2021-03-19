@@ -20,6 +20,6 @@ func Connect() (btc.Handle, error) {
 }
 
 // GetHeaderByHeight returns the block header for the given block height.
-func (lc *localChain) GetHeaderByHeight(height *big.Int) *btc.Header {
+func (lc *localChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
 	panic("not implemented yet")
 }
