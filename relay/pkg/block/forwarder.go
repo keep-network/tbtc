@@ -44,8 +44,8 @@ type Forwarder struct {
 }
 
 // RunForwarder creates an instance of the block forwarder and runs its
-// processing loop. The lifecycle of the forwarder loop can be managed
-// using the passed context.
+// processing loops. The lifecycle of the forwarder can be managed using the
+// passed context.
 func RunForwarder(
 	ctx context.Context,
 	btcChain btc.Handle,

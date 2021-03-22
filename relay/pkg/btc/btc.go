@@ -3,13 +3,12 @@ package btc
 import (
 	"encoding/hex"
 	"fmt"
-	"math/big"
 )
 
 // Handle represents a handle to the Bitcoin chain.
 type Handle interface {
 	// GetHeaderByHeight returns the block header for the given block height.
-	GetHeaderByHeight(height *big.Int) (*Header, error)
+	GetHeaderByHeight(height int64) (*Header, error)
 
 	// GetHeaderByDigest returns the block header for given digest (hash).
 	GetHeaderByDigest(digest Digest) (*Header, error)
