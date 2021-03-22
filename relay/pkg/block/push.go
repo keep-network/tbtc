@@ -11,7 +11,7 @@ import (
 
 // pullHeadersFromQueue waits until we have `headersBatchSize` headers from
 // the queue or until the queue fails to yield a header for
-// `headerTimeout` duration.
+// `headerTimeout` duration and returns them from the function.
 func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
 	headers := make([]*btc.Header, 0)
 

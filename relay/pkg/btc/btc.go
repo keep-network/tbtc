@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+// TODO: Refactor `remote` and `local` packages. Make just `btc/client.go`
+//  and `btc/client_local.go` with `Connect` and `ConnectLocal` functions
+//  respectively.
+
 // Handle represents a handle to the Bitcoin chain.
 type Handle interface {
 	// GetHeaderByHeight returns the block header for the given block height.

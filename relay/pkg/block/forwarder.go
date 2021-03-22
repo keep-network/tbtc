@@ -64,12 +64,11 @@ func RunForwarder(
 }
 
 func (f *Forwarder) pushingLoop(ctx context.Context) {
-	logger.Infof("running forwarder pushing loop")
+	logger.Infof("running new block pushing loop")
 
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Infof("forwarder context is done")
 			return
 		default:
 			logger.Infof("pulling new headers from queue")
@@ -90,7 +89,7 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 			}
 
 			logger.Infof(
-				"suspending forwarder pushing loop for [%v]",
+				"suspending block pushing loop for [%v]",
 				forwarderPushingSleepTime,
 			)
 

@@ -34,22 +34,19 @@ func runForwarderControlLoop(
 	btcChain btc.Handle,
 	hostChain chain.Handle,
 ) {
-	logger.Infof("running forwarder control loop")
+	logger.Infof("running block forwarding")
 
 	for {
-		logger.Infof("running new forwarder instance")
-
 		forwarder := block.RunForwarder(ctx, btcChain, hostChain)
 
 		select {
 		case err := <-forwarder.ErrChan():
 			logger.Errorf(
-				"forwarder terminated with error: [%v] "+
-					"and will be restarted immediately",
+				"error occurred during block forwarding: [%v]",
 				err,
 			)
 		case <-ctx.Done():
-			logger.Infof("forwarder control loop context is done")
+			logger.Infof("stopping block forwarding")
 			return
 		}
 	}
