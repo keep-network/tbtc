@@ -62,13 +62,13 @@ func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) error {
 		return nil
 	}
 
-	startDifficulty := headers[0].Height % difficultyEpochDuration
-	endDifficulty := headers[len(headers)-1].Height % difficultyEpochDuration
+	startMod := headers[0].Height % difficultyEpochDuration
+	endMod := headers[len(headers)-1].Height % difficultyEpochDuration
 
-	if startDifficulty == 0 {
+	if startMod == 0 {
 		// we have a difficulty change first
 		// TODO: implementation
-	} else if startDifficulty > endDifficulty {
+	} else if startMod > endMod {
 		// we span a difficulty change
 		// TODO: implementation
 	} else {
@@ -151,8 +151,8 @@ func (f *Forwarder) findLastCommonAncestor(
 	return nil, nil
 }
 
-func packHeaders(headers []*btc.Header) []uint8 {
-	packed := make([]uint8, 0)
+func packHeaders(headers []*btc.Header) []byte {
+	packed := make([]byte, 0)
 
 	for _, header := range headers {
 		packed = append(packed, header.Raw...)

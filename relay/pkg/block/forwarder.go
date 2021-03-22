@@ -26,7 +26,7 @@ const (
 
 	// Duration for which the forwarder should rest after performing
 	// a push action.
-	forwarderSleepTime = 45 * time.Second
+	forwarderPushingSleepTime = 45 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
@@ -58,13 +58,13 @@ func RunForwarder(
 		errChan:      make(chan error, 1),
 	}
 
-	go forwarder.loop(ctx)
+	go forwarder.pushingLoop(ctx)
 
 	return forwarder
 }
 
-func (f *Forwarder) loop(ctx context.Context) {
-	logger.Infof("running forwarder")
+func (f *Forwarder) pushingLoop(ctx context.Context) {
+	logger.Infof("running forwarder pushing loop")
 
 	for {
 		select {
@@ -90,13 +90,13 @@ func (f *Forwarder) loop(ctx context.Context) {
 			}
 
 			logger.Infof(
-				"suspending forwarder for [%v]",
-				forwarderSleepTime,
+				"suspending forwarder pushing loop for [%v]",
+				forwarderPushingSleepTime,
 			)
 
 			// Sleep for a while to achieve a limited rate.
 			select {
-			case <-time.After(forwarderSleepTime):
+			case <-time.After(forwarderPushingSleepTime):
 			case <-ctx.Done():
 			}
 		}
