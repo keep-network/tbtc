@@ -66,7 +66,6 @@ type ethereumChain struct {
 // Connect performs initialization for communication with Ethereum blockchain
 // based on provided config.
 func Connect(
-	_ context.Context,
 	accountKey *keystore.Key,
 	config *ethereum.Config,
 ) (chain.Handle, error) {

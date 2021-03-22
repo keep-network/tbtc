@@ -48,7 +48,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not connect BTC chain: [%v]", err)
 	}
 
-	hostChain, err := connectHostChain(ctx, config)
+	hostChain, err := connectHostChain(config)
 	if err != nil {
 		return fmt.Errorf("could not connect host chain: [%v]", err)
 	}
@@ -64,18 +64,12 @@ func Start(c *cli.Context) error {
 	return fmt.Errorf("unexpected context cancellation")
 }
 
-func connectHostChain(
-	ctx context.Context,
-	config *config.Config,
-) (chain.Handle, error) {
+func connectHostChain(config *config.Config) (chain.Handle, error) {
 	// TODO: add support for multiple host chains (like Celo).
-	return connectEthereum(ctx, config.Ethereum)
+	return connectEthereum(config.Ethereum)
 }
 
-func connectEthereum(
-	ctx context.Context,
-	config commoneth.Config,
-) (chain.Handle, error) {
+func connectEthereum(config commoneth.Config) (chain.Handle, error) {
 	key, err := ethutil.DecryptKeyFile(
 		config.Account.KeyFile,
 		config.Account.KeyFilePassword,
@@ -88,5 +82,5 @@ func connectEthereum(
 		)
 	}
 
-	return ethereum.Connect(ctx, key, &config)
+	return ethereum.Connect(key, &config)
 }
