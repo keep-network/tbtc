@@ -1,8 +1,11 @@
 package block
 
 import (
+	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -68,8 +71,62 @@ func RunForwarder(
 	return forwarder
 }
 
+func (f *Forwarder) findBestBlock() (*btc.Header, error) {
+	currentBestDigest, err := f.hostChain.GetBestKnownDigest()
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Infof("best known digest returned from Ethereum network: %s",
+		hex.EncodeToString(currentBestDigest[:]),
+	)
+
+	bestHeader, err := f.btcChain.GetHeaderByDigest(currentBestDigest)
+	if err != nil {
+		return nil, err
+	}
+
+	betterOrSameHeader, err := f.btcChain.GetHeaderByHeight(
+		big.NewInt(bestHeader.Height))
+	if err != nil {
+		return nil, err
+	}
+
+	// see if there's a better block at that height
+	// if so, crawl backwards
+
+	// TODO: Is it ever possible that bestHeader and betterOrSameHeader are not
+	// equal?
+	for !headersEqual(bestHeader, betterOrSameHeader) {
+		bestHeader, err = f.btcChain.GetHeaderByDigest(bestHeader.PrevHash)
+		if err != nil {
+			return nil, err
+		}
+
+		betterOrSameHeader, err = f.btcChain.GetHeaderByHeight(
+			big.NewInt(bestHeader.Height))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return bestHeader, nil
+}
+
 func (f *Forwarder) pullingLoop(ctx context.Context) {
 	logger.Infof("running forwarder pulling loop")
+
+	latestHeader, err := f.findBestBlock()
+	if err != nil {
+		f.errChan <- fmt.Errorf(
+			"failure while trying to find best block for pulling loop: [%v]",
+			err,
+		)
+		return
+	}
+
+	logger.Infof("starting pulling loop with header: hash %s at height %d",
+		latestHeader.Hash.String(), latestHeader.Height)
 
 	for {
 		select {
@@ -132,4 +189,12 @@ func (f *Forwarder) loop(ctx context.Context) {
 // appears here, the forwarder loop is immediately terminated.
 func (f *Forwarder) ErrChan() <-chan error {
 	return f.errChan
+}
+
+func headersEqual(first, second *btc.Header) bool {
+	return first.Hash == second.Hash &&
+		first.Height == second.Height &&
+		first.PrevHash == second.PrevHash &&
+		first.MerkleRoot == second.MerkleRoot &&
+		bytes.Compare(first.Raw, second.Raw) == 0
 }
