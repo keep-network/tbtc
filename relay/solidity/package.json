@@ -1,0 +1,13 @@
+{
+  "name": "relay",
+  "version": "1.0.0",
+  "dependencies": {
+    "@babel/core": "^7.13.10",
+    "@babel/polyfill": "^7.12.1",
+    "@babel/register": "^7.13.8",
+    "@summa-tx/relay-sol": "^2.0.2",
+    "bn.js": "^5.2.0",
+    "toml": "^3.0.0",
+    "tomlify-j0.4": "^3.0.0"
+  }
+}

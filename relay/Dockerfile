@@ -16,9 +16,14 @@ RUN apk add --update --no-cache \
 	g++ \
 	linux-headers \
 	make \
+	nodejs \
+	npm \
 	git && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
+
+# Install Solidity compiler.
+COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
 # Get gotestsum tool
 RUN go get gotest.tools/gotestsum
@@ -26,6 +31,19 @@ RUN go get gotest.tools/gotestsum
 # Configure working directory.
 RUN mkdir -p $APP_DIR
 WORKDIR $APP_DIR
+
+# Get dependencies.
+COPY go.mod $APP_DIR/
+COPY go.sum $APP_DIR/
+RUN go mod download
+
+# Install Solidity contracts.
+COPY ./solidity $APP_DIR/solidity
+RUN cd $APP_DIR/solidity && npm install
+
+# Generate code.
+COPY ./pkg/chain/ethereum/gen $APP_DIR/pkg/chain/ethereum/gen
+RUN go generate ./...
 
 # Copy app files.
 COPY ./ $APP_DIR/
