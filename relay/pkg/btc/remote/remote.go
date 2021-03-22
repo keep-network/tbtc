@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/ipfs/go-log"
@@ -141,6 +142,41 @@ func serializeHeader(header *wire.BlockHeader) ([]byte, error) {
 func (rc *remoteChain) GetHeaderByDigest(
 	digest btc.Digest,
 ) (*btc.Header, error) {
-	// TODO: implementation
-	return nil, nil
+
+	blockHeader, err := rc.client.GetBlockHeader((*chainhash.Hash)(&digest))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not get block header for hash [%s]: [%v]",
+			digest.String(),
+			err,
+		)
+	}
+
+	headerVerbose, err := rc.client.GetBlockHeaderVerbose((*chainhash.Hash)(&digest))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not get block header verbose for hash [%s]: [%v]",
+			digest.String(),
+			err,
+		)
+	}
+
+	rawHeader, err := serializeHeader(blockHeader)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to serialize header for block with hash [%s]: [%v]",
+			digest.String(),
+			err,
+		)
+	}
+
+	relayHeader := &btc.Header{
+		Hash:       btc.Digest(blockHeader.BlockHash()),
+		PrevHash:   btc.Digest(blockHeader.PrevBlock),
+		MerkleRoot: btc.Digest(blockHeader.MerkleRoot),
+		Raw:        rawHeader,
+		Height:     int64(headerVerbose.Height),
+	}
+
+	return relayHeader, nil
 }
