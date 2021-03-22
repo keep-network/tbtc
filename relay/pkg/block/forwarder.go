@@ -84,7 +84,7 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 				len(headers),
 			)
 
-			if err := f.pushHeadersToHostChain(headers); err != nil {
+			if err := f.pushHeadersToHostChain(ctx, headers); err != nil {
 				f.errChan <- fmt.Errorf("could not push headers: [%v]", err)
 				return
 			}

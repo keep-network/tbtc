@@ -57,7 +57,10 @@ func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
 	return headers
 }
 
-func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) error {
+func (f *Forwarder) pushHeadersToHostChain(
+	ctx context.Context,
+	headers []*btc.Header,
+) error {
 	if len(headers) == 0 {
 		return nil
 	}
@@ -87,7 +90,7 @@ func (f *Forwarder) pushHeadersToHostChain(headers []*btc.Header) error {
 	if f.processedHeaders >= headersBatchSize {
 		newBestHeader := headers[len(headers)-1]
 
-		if err := f.updateBestHeader(newBestHeader); err != nil {
+		if err := f.updateBestHeader(ctx, newBestHeader); err != nil {
 			return fmt.Errorf("could not update best header: [%v]", err)
 		}
 
@@ -111,7 +114,10 @@ func (f *Forwarder) addHeaders(headers []*btc.Header) error {
 	return f.hostChain.AddHeaders(anchorHeader.Raw, packHeaders(headers))
 }
 
-func (f *Forwarder) updateBestHeader(newBestHeader *btc.Header) error {
+func (f *Forwarder) updateBestHeader(
+	ctx context.Context,
+	newBestHeader *btc.Header,
+) error {
 	currentBestDigest, err := f.hostChain.GetBestKnownDigest()
 	if err != nil {
 		return fmt.Errorf("could not get best known digest: [%v]", err)
@@ -126,6 +132,7 @@ func (f *Forwarder) updateBestHeader(newBestHeader *btc.Header) error {
 	}
 
 	lastCommonAncestor, err := f.findLastCommonAncestor(
+		ctx,
 		newBestHeader,
 		currentBestHeader,
 	)
@@ -144,11 +151,56 @@ func (f *Forwarder) updateBestHeader(newBestHeader *btc.Header) error {
 }
 
 func (f *Forwarder) findLastCommonAncestor(
+	ctx context.Context,
 	newBestHeader *btc.Header,
 	currentBestHeader *btc.Header,
 ) (*btc.Header, error) {
-	// TODO: implementation
-	return nil, nil
+	totalAttempts := 5
+
+	for attempt := 1; attempt <= totalAttempts; attempt++ {
+		logger.Infof(
+			"attempt [%v] to find LCA in in previous 20 blocks",
+			attempt,
+		)
+
+		ancestorHeader := currentBestHeader
+
+		for i := 0; i < 20; i++ {
+			isAncestor, err := f.hostChain.IsAncestor(
+				ancestorHeader.Hash,
+				newBestHeader.Hash,
+				big.NewInt(240), // default value used in legacy relay
+			)
+			if err != nil {
+				return nil, fmt.Errorf("could not check ancestry: [%v]", err)
+			}
+
+			if isAncestor {
+				return ancestorHeader, nil
+			}
+
+			ancestorHeader, err = f.btcChain.GetHeaderByDigest(
+				ancestorHeader.PrevHash,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"could not get header by digest: [%v]",
+					err,
+				)
+			}
+		}
+
+		// wait a constant back-off time
+		select {
+		case <-time.After(15 * time.Second):
+		case <-ctx.Done():
+		}
+	}
+
+	return nil, fmt.Errorf(
+		"could not find LCA after [%v] attempts",
+		totalAttempts,
+	)
 }
 
 func packHeaders(headers []*btc.Header) []byte {
