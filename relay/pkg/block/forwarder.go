@@ -27,6 +27,10 @@ const (
 	// Duration for which the forwarder should rest after performing
 	// a push action.
 	forwarderSleepTime = 45 * time.Second
+
+	// Duration for which the forwarder should rest after reaching the tip if
+	// Bitcoin blockchain
+	forwarderPullingSleepTime = 60 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
@@ -58,9 +62,30 @@ func RunForwarder(
 		errChan:      make(chan error, 1),
 	}
 
+	go forwarder.pullingLoop(ctx)
 	go forwarder.loop(ctx)
 
 	return forwarder
+}
+
+func (f *Forwarder) pullingLoop(ctx context.Context) {
+	logger.Infof("running forwarder pulling loop")
+
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Infof("forwarder context is done")
+			return
+		default:
+			//TODO: Start pulling blocks
+
+			// Sleep for a while until the Bitcoin blockchain has more blocks
+			select {
+			case <-time.After(forwarderPullingSleepTime):
+			case <-ctx.Done():
+			}
+		}
+	}
 }
 
 func (f *Forwarder) loop(ctx context.Context) {
