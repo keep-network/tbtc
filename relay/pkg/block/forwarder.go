@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -29,7 +28,7 @@ const (
 
 	// Duration for which the forwarder should rest after performing
 	// a push action.
-	forwarderSleepTime = 45 * time.Second
+	forwarderPushingSleepTime = 45 * time.Second
 
 	// Duration for which the forwarder should rest after reaching the tip of
 	// Bitcoin blockchain
@@ -51,8 +50,8 @@ type Forwarder struct {
 }
 
 // RunForwarder creates an instance of the block forwarder and runs its
-// processing loop. The lifecycle of the forwarder loop can be managed
-// using the passed context.
+// processing loops. The lifecycle of the forwarder can be managed using the
+// passed context.
 func RunForwarder(
 	ctx context.Context,
 	btcChain btc.Handle,
@@ -66,7 +65,7 @@ func RunForwarder(
 	}
 
 	go forwarder.pullingLoop(ctx)
-	go forwarder.loop(ctx)
+	go forwarder.pushingLoop(ctx)
 
 	return forwarder
 }
@@ -86,8 +85,7 @@ func (f *Forwarder) findBestBlock() (*btc.Header, error) {
 		return nil, err
 	}
 
-	betterOrSameHeader, err := f.btcChain.GetHeaderByHeight(
-		big.NewInt(bestHeader.Height))
+	betterOrSameHeader, err := f.btcChain.GetHeaderByHeight(bestHeader.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +102,7 @@ func (f *Forwarder) findBestBlock() (*btc.Header, error) {
 			return nil, err
 		}
 
-		betterOrSameHeader, err = f.btcChain.GetHeaderByHeight(
-			big.NewInt(bestHeader.Height))
+		betterOrSameHeader, err = f.btcChain.GetHeaderByHeight(bestHeader.Height)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +142,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 			}
 
 			if latestHeight <= chainHeight {
-				newHeader, err := f.btcChain.GetHeaderByHeight(big.NewInt(latestHeight))
+				newHeader, err := f.btcChain.GetHeaderByHeight(latestHeight)
 				if err != nil {
 					f.errChan <- fmt.Errorf(
 						"could not get header by height at %d: [%v]",
@@ -172,13 +169,12 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 	}
 }
 
-func (f *Forwarder) loop(ctx context.Context) {
-	logger.Infof("running forwarder")
+func (f *Forwarder) pushingLoop(ctx context.Context) {
+	logger.Infof("running new block pushing loop")
 
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Infof("forwarder context is done")
 			return
 		default:
 			logger.Infof("pulling new headers from queue")
@@ -193,19 +189,19 @@ func (f *Forwarder) loop(ctx context.Context) {
 				len(headers),
 			)
 
-			if err := f.pushHeadersToHostChain(headers); err != nil {
+			if err := f.pushHeadersToHostChain(ctx, headers); err != nil {
 				f.errChan <- fmt.Errorf("could not push headers: [%v]", err)
 				return
 			}
 
 			logger.Infof(
-				"suspending forwarder for [%v]",
-				forwarderSleepTime,
+				"suspending block pushing loop for [%v]",
+				forwarderPushingSleepTime,
 			)
 
 			// Sleep for a while to achieve a limited rate.
 			select {
-			case <-time.After(forwarderSleepTime):
+			case <-time.After(forwarderPushingSleepTime):
 			case <-ctx.Done():
 			}
 		}

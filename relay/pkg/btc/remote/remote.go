@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -69,12 +68,12 @@ func Connect(
 }
 
 // GetHeaderByHeight returns the block header for the given block height.
-func (rc *remoteChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
-	blockHash, err := rc.client.GetBlockHash(height.Int64())
+func (rc *remoteChain) GetHeaderByHeight(height int64) (*btc.Header, error) {
+	blockHash, err := rc.client.GetBlockHash(height)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"could not get block hash for height [%d]: [%v]",
-			height.Int64(),
+			height,
 			err,
 		)
 	}
@@ -102,7 +101,7 @@ func (rc *remoteChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
 		PrevHash:   btc.Digest(blockHeader.PrevBlock),
 		MerkleRoot: btc.Digest(blockHeader.MerkleRoot),
 		Raw:        rawHeader,
-		Height:     height.Int64(),
+		Height:     height,
 	}
 
 	return relayHeader, nil
