@@ -30,3 +30,8 @@ func (lc *localChain) GetHeaderByDigest(
 ) (*btc.Header, error) {
 	panic("not implemented yet")
 }
+
+// GetBlockCount returns the number of blocks in the longest blockchain
+func (lc *localChain) GetBlockCount() (int64, error) {
+	panic("not implemented yet")
+}

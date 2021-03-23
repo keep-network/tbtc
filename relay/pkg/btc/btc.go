@@ -13,6 +13,9 @@ type Handle interface {
 
 	// GetHeaderByDigest returns the block header for given digest (hash).
 	GetHeaderByDigest(digest Digest) (*Header, error)
+
+	// GetBlockCount returns the number of blocks in the longest blockchain
+	GetBlockCount() (int64, error)
 }
 
 // Digests represents a 32-byte little-endian Bitcoin digest.

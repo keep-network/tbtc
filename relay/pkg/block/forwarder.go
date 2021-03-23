@@ -97,6 +97,7 @@ func (f *Forwarder) findBestBlock() (*btc.Header, error) {
 
 	// TODO: Is it ever possible that bestHeader and betterOrSameHeader are not
 	// equal?
+	// TODO: Consider just comparing hashes - it should be enough
 	for !headersEqual(bestHeader, betterOrSameHeader) {
 		bestHeader, err = f.btcChain.GetHeaderByDigest(bestHeader.PrevHash)
 		if err != nil {
@@ -128,18 +129,44 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 	logger.Infof("starting pulling loop with header: hash %s at height %d",
 		latestHeader.Hash.String(), latestHeader.Height)
 
+	latestHeight := latestHeader.Height + 1
+	lastAdded := &btc.Header{}
+
 	for {
 		select {
 		case <-ctx.Done():
 			logger.Infof("forwarder context is done")
 			return
 		default:
-			//TODO: Start pulling blocks
+			chainHeight, err := f.btcChain.GetBlockCount()
+			if err != nil {
+				f.errChan <- fmt.Errorf("could not get block count [%v]", err)
+				return
+			}
 
-			// Sleep for a while until the Bitcoin blockchain has more blocks
-			select {
-			case <-time.After(forwarderPullingSleepTime):
-			case <-ctx.Done():
+			if latestHeight <= chainHeight {
+				newHeader, err := f.btcChain.GetHeaderByHeight(big.NewInt(latestHeight))
+				if err != nil {
+					f.errChan <- fmt.Errorf(
+						"could not get header by height at %d: [%v]",
+						latestHeight,
+						err,
+					)
+					return
+				}
+
+				// TODO: Consider just comparing hashes - should be enough
+				if !headersEqual(newHeader, lastAdded) {
+					f.headersQueue <- newHeader
+					*lastAdded = *newHeader
+					latestHeight++
+				}
+			} else {
+				// Sleep for a while until the Bitcoin blockchain has more blocks
+				select {
+				case <-time.After(forwarderPullingSleepTime):
+				case <-ctx.Done():
+				}
 			}
 		}
 	}

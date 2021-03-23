@@ -108,6 +108,11 @@ func (rc *remoteChain) GetHeaderByHeight(height *big.Int) (*btc.Header, error) {
 	return relayHeader, nil
 }
 
+// GetBlockCount returns the number of blocks in the longest blockchain
+func (rc *remoteChain) GetBlockCount() (int64, error) {
+	return rc.client.GetBlockCount()
+}
+
 func testConnection(client *rpcclient.Client, timeout time.Duration) error {
 	errChan := make(chan error, 1)
 
