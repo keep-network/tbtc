@@ -100,7 +100,7 @@ func (rc *remoteChain) GetHeaderByHeight(height int64) (*btc.Header, error) {
 		PrevHash:   btc.Digest(blockHeader.PrevBlock),
 		MerkleRoot: btc.Digest(blockHeader.MerkleRoot),
 		Raw:        rawHeader,
-		Height:     height.Int64(),
+		Height:     height,
 	}
 
 	return relayHeader, nil
