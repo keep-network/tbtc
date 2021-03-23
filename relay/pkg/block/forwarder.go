@@ -65,6 +65,7 @@ func RunForwarder(
 
 func (f *Forwarder) pushingLoop(ctx context.Context) {
 	logger.Infof("running new block pushing loop")
+	defer logger.Infof("stopping current block pushing loop")
 
 	for {
 		select {
@@ -78,10 +79,7 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 				continue
 			}
 
-			logger.Infof(
-				"pushing [%v] header(s) to host chain",
-				len(headers),
-			)
+			logger.Infof("pushing %v to host chain", headersSummary(headers))
 
 			if err := f.pushHeadersToHostChain(ctx, headers); err != nil {
 				f.errChan <- fmt.Errorf("could not push headers: [%v]", err)
@@ -106,4 +104,24 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 // appears here, the forwarder loop is immediately terminated.
 func (f *Forwarder) ErrChan() <-chan error {
 	return f.errChan
+}
+
+func headersSummary(headers []*btc.Header) string {
+	if len(headers) == 0 {
+		return "no headers"
+	}
+
+	firstHeaderHeight := headers[0].Height
+	lastHeaderHeight := headers[len(headers)-1].Height
+
+	if firstHeaderHeight == lastHeaderHeight {
+		return fmt.Sprintf("one header (%v)", firstHeaderHeight)
+	}
+
+	return fmt.Sprintf(
+		"%v headers (%v...%v)",
+		len(headers),
+		firstHeaderHeight,
+		lastHeaderHeight,
+	)
 }
