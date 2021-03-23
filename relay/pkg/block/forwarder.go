@@ -115,11 +115,11 @@ func headersSummary(headers []*btc.Header) string {
 	lastHeaderHeight := headers[len(headers)-1].Height
 
 	if firstHeaderHeight == lastHeaderHeight {
-		return fmt.Sprintf("one header (%v)", firstHeaderHeight)
+		return fmt.Sprintf("[1] header (%v)", firstHeaderHeight)
 	}
 
 	return fmt.Sprintf(
-		"%v headers (%v...%v)",
+		"[%v] headers (from %v to %v)",
 		len(headers),
 		firstHeaderHeight,
 		lastHeaderHeight,
