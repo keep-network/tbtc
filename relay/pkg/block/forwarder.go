@@ -31,7 +31,7 @@ const (
 	// a push action.
 	forwarderSleepTime = 45 * time.Second
 
-	// Duration for which the forwarder should rest after reaching the tip if
+	// Duration for which the forwarder should rest after reaching the tip of
 	// Bitcoin blockchain
 	forwarderPullingSleepTime = 60 * time.Second
 )
@@ -158,7 +158,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 				// TODO: Consider just comparing hashes - should be enough
 				if !headersEqual(newHeader, lastAdded) {
 					f.headersQueue <- newHeader
-					*lastAdded = *newHeader
+					copyHeaders(lastAdded, newHeader)
 					latestHeight++
 				}
 			} else {
@@ -224,4 +224,10 @@ func headersEqual(first, second *btc.Header) bool {
 		first.PrevHash == second.PrevHash &&
 		first.MerkleRoot == second.MerkleRoot &&
 		bytes.Compare(first.Raw, second.Raw) == 0
+}
+
+func copyHeaders(dest, src *btc.Header) {
+	*dest = *src
+	dest.Raw = make([]byte, len(src.Raw))
+	copy(dest.Raw, src.Raw)
 }
