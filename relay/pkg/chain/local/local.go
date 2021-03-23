@@ -21,7 +21,7 @@ func Connect() (chain.Handle, error) {
 
 // GetBestKnownDigest returns the best known digest.
 func (lc *localChain) GetBestKnownDigest() ([32]byte, error) {
-	panic("not implemented yet")
+	return [32]byte{}, nil
 }
 
 // IsAncestor checks if ancestorDigest is an ancestor of the descendantDigest.
