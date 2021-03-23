@@ -47,6 +47,7 @@ type Forwarder struct {
 
 	headersQueue chan *btc.Header
 	errChan      chan error
+	quit         chan bool
 }
 
 // RunForwarder creates an instance of the block forwarder and runs its
@@ -62,6 +63,7 @@ func RunForwarder(
 		hostChain:    hostChain,
 		headersQueue: make(chan *btc.Header, headersQueueSize),
 		errChan:      make(chan error, 1),
+		quit:         make(chan bool, 1),
 	}
 
 	go forwarder.pullingLoop(ctx)
@@ -134,6 +136,8 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 		case <-ctx.Done():
 			logger.Infof("forwarder context is done")
 			return
+		case <-f.quit:
+			return
 		default:
 			chainHeight, err := f.btcChain.GetBlockCount()
 			if err != nil {
@@ -163,6 +167,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 				select {
 				case <-time.After(forwarderPullingSleepTime):
 				case <-ctx.Done():
+				case <-f.quit:
 				}
 			}
 		}
@@ -175,6 +180,8 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case <-f.quit:
 			return
 		default:
 			logger.Infof("pulling new headers from queue")
@@ -203,6 +210,7 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 			select {
 			case <-time.After(forwarderPushingSleepTime):
 			case <-ctx.Done():
+			case <-f.quit:
 			}
 		}
 	}
@@ -212,6 +220,12 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 // appears here, the forwarder loop is immediately terminated.
 func (f *Forwarder) ErrChan() <-chan error {
 	return f.errChan
+}
+
+// QuitChan returns the quit channel of the forwarder. It is used to indicate
+// that a pulling or pushing loop must stop because an error occurred.
+func (f *Forwarder) QuitChan() chan<- bool {
+	return f.quit
 }
 
 func headersEqual(first, second *btc.Header) bool {
