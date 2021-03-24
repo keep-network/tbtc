@@ -44,6 +44,9 @@ type Header struct {
 }
 
 func (header *Header) Equals(other *Header) bool {
+	if other == nil {
+		return false
+	}
 	return header.Hash == other.Hash &&
 		header.Height == other.Height &&
 		header.PrevHash == other.PrevHash &&

@@ -94,7 +94,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 
 	// Start pulling Bitcoin headers with the one above the latest header
 	nextHeaderHeight := latestHeader.Height + 1
-	lastAdded := &btc.Header{}
+	var lastAdded *btc.Header
 
 	for {
 		select {
@@ -125,7 +125,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 				// TODO: Consider just comparing hashes - should be enough
 				if !nextHeader.Equals(lastAdded) {
 					f.headersQueue <- nextHeader
-					copyHeaders(lastAdded, nextHeader)
+					lastAdded = nextHeader
 					nextHeaderHeight++
 				}
 			} else {
@@ -183,12 +183,6 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 // appears here, the forwarder loop is immediately terminated.
 func (f *Forwarder) ErrChan() <-chan error {
 	return f.errChan
-}
-
-func copyHeaders(dest, src *btc.Header) {
-	*dest = *src
-	dest.Raw = make([]byte, len(src.Raw))
-	copy(dest.Raw, src.Raw)
 }
 
 func headersSummary(headers []*btc.Header) string {
