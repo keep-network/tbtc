@@ -50,17 +50,16 @@ func (f *Forwarder) findBestHeader() (*btc.Header, error) {
 		return nil, err
 	}
 
+	// It may happen that the best header returned from the host chain is no
+	// longer part of the longest bitcoin block chain (perhaps we registered
+	// a header on the host chain and crashed and reorg happened on the Bitcoin
+	// chain before we recovered from the crash).
 	betterOrSameHeader, err := f.btcChain.GetHeaderByHeight(bestHeader.Height)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Is it ever possible that bestHeader and betterOrSameHeader are not
-	// equal?
-	// TODO: Consider just comparing hashes - it should be enough
-
-	// see if there's a better block at that height
-	// if so, crawl backwards
+	// See if there's a better block at that height. If so, crawl backwards.
 	for !bestHeader.Equals(betterOrSameHeader) {
 		bestHeader, err = f.btcChain.GetHeaderByDigest(bestHeader.PrevHash)
 		if err != nil {
