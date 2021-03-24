@@ -110,7 +110,14 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 			// Check if there are more headers to pull or we are above the chain's
 			// tip and need to sleep until the chain adds more headers
 			if f.nextPullHeaderHeight <= chainHeight {
-				f.pullNextHeader()
+				err = f.pullNextHeader()
+				if err != nil {
+					f.errChan <- fmt.Errorf(
+						"could not pull header: [%v]",
+						err,
+					)
+					return
+				}
 			} else {
 				select {
 				case <-time.After(forwarderPullingSleepTime):
