@@ -97,34 +97,16 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 	logger.Infof("starting pulling from block: [%d]", latestHeader.Height+1)
 
 	for {
-		select {
-		case <-ctx.Done():
+		newHeader, err := f.pullHeaderFromBtcChain(ctx)
+		if err != nil {
+			f.errChan <- fmt.Errorf(
+				"could not pool header from btc network: [%v]",
+				err,
+			)
 			return
-		default:
-			chainHeight, err := f.btcChain.GetBlockCount()
-			if err != nil {
-				f.errChan <- fmt.Errorf("could not get block count [%v]", err)
-				return
-			}
-
-			// Check if there are more headers to pull or we are above the chain's
-			// tip and need to sleep until the chain adds more headers
-			if f.nextPullHeaderHeight <= chainHeight {
-				err = f.pullNextHeader()
-				if err != nil {
-					f.errChan <- fmt.Errorf(
-						"could not pull header: [%v]",
-						err,
-					)
-					return
-				}
-			} else {
-				select {
-				case <-time.After(forwarderPullingSleepTime):
-				case <-ctx.Done():
-				}
-			}
 		}
+
+		f.pushHeaderToQueue(newHeader)
 	}
 }
 
