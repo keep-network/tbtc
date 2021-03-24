@@ -81,7 +81,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 		f.loopExitHandler()
 	}()
 
-	latestHeader, err := f.findBestBlock()
+	latestHeader, err := f.findBestHeader()
 	if err != nil {
 		f.errChan <- fmt.Errorf(
 			"could not find best block for pulling loop: [%v]",

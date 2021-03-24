@@ -10,7 +10,7 @@ func (f *Forwarder) pushHeaderToQueue(header *btc.Header) {
 	f.headersQueue <- header
 }
 
-func (f *Forwarder) findBestBlock() (*btc.Header, error) {
+func (f *Forwarder) findBestHeader() (*btc.Header, error) {
 	currentBestDigest, err := f.hostChain.GetBestKnownDigest()
 	if err != nil {
 		return nil, err
