@@ -3,7 +3,6 @@ package block
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -81,10 +80,6 @@ func (f *Forwarder) findBestBlock() (*btc.Header, error) {
 		return nil, err
 	}
 
-	logger.Infof("best known digest returned from Ethereum network: %s",
-		hex.EncodeToString(currentBestDigest[:]),
-	)
-
 	bestHeader, err := f.btcChain.GetHeaderByDigest(currentBestDigest)
 	if err != nil {
 		return nil, err
@@ -95,12 +90,12 @@ func (f *Forwarder) findBestBlock() (*btc.Header, error) {
 		return nil, err
 	}
 
-	// see if there's a better block at that height
-	// if so, crawl backwards
-
 	// TODO: Is it ever possible that bestHeader and betterOrSameHeader are not
 	// equal?
 	// TODO: Consider just comparing hashes - it should be enough
+
+	// see if there's a better block at that height
+	// if so, crawl backwards
 	for !headersEqual(bestHeader, betterOrSameHeader) {
 		bestHeader, err = f.btcChain.GetHeaderByDigest(bestHeader.PrevHash)
 		if err != nil {
@@ -117,27 +112,31 @@ func (f *Forwarder) findBestBlock() (*btc.Header, error) {
 }
 
 func (f *Forwarder) pullingLoop(ctx context.Context) {
-	logger.Infof("running forwarder pulling loop")
+	logger.Infof("running new block pulling loop")
+
+	defer func() {
+		logger.Infof("stopping current block pulling loop")
+		f.loopExitHandler()
+	}()
 
 	latestHeader, err := f.findBestBlock()
 	if err != nil {
 		f.errChan <- fmt.Errorf(
-			"failure while trying to find best block for pulling loop: [%v]",
+			"could not find best block for pulling loop: [%v]",
 			err,
 		)
 		return
 	}
 
-	logger.Infof("starting pulling loop with header: hash %s at height %d",
-		latestHeader.Hash.String(), latestHeader.Height)
+	logger.Infof("starting pulling from block: [%d]", latestHeader.Height)
 
-	latestHeight := latestHeader.Height + 1
+	// Start pulling Bitcoin headers with the one above the latest header
+	nextHeaderHeight := latestHeader.Height + 1
 	lastAdded := &btc.Header{}
 
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Infof("forwarder context is done")
 			return
 		default:
 			chainHeight, err := f.btcChain.GetBlockCount()
@@ -146,25 +145,26 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 				return
 			}
 
-			if latestHeight <= chainHeight {
-				newHeader, err := f.btcChain.GetHeaderByHeight(latestHeight)
+			// Check if there are more headers to pull or we are above the chain's
+			// tip and need to sleep until the chain adds more headers
+			if nextHeaderHeight <= chainHeight {
+				nextHeader, err := f.btcChain.GetHeaderByHeight(nextHeaderHeight)
 				if err != nil {
 					f.errChan <- fmt.Errorf(
 						"could not get header by height at %d: [%v]",
-						latestHeight,
+						nextHeaderHeight,
 						err,
 					)
 					return
 				}
 
 				// TODO: Consider just comparing hashes - should be enough
-				if !headersEqual(newHeader, lastAdded) {
-					f.headersQueue <- newHeader
-					copyHeaders(lastAdded, newHeader)
-					latestHeight++
+				if !headersEqual(nextHeader, lastAdded) {
+					f.headersQueue <- nextHeader
+					copyHeaders(lastAdded, nextHeader)
+					nextHeaderHeight++
 				}
 			} else {
-				// Sleep for a while until the Bitcoin blockchain has more blocks
 				select {
 				case <-time.After(forwarderPullingSleepTime):
 				case <-ctx.Done():
