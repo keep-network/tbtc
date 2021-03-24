@@ -71,7 +71,7 @@ func (f *Forwarder) pushHeadersToHostChain(
 	if startMod == 0 {
 		// we have a difficulty change first
 		logger.Infof(
-			"adding headers with retarget as there is a difficulty " +
+			"adding all headers with retarget as there is a difficulty " +
 				"change at the beginning of headers batch",
 		)
 
@@ -80,11 +80,31 @@ func (f *Forwarder) pushHeadersToHostChain(
 		}
 	} else if startMod > endMod {
 		// we span a difficulty change
-		// TODO: implementation
+		logger.Infof(
+			"adding some headers with retarget as there is a difficulty " +
+				"change in the middle of headers batch",
+		)
+
+		preChangeHeaders, postChangeHeaders := splitBatch(headers, startMod)
+
+		if len(preChangeHeaders) > 0 {
+			if err := f.addHeaders(preChangeHeaders); err != nil {
+				return fmt.Errorf("could not add headers: [%v]", err)
+			}
+		}
+
+		if len(postChangeHeaders) > 0 {
+			if err := f.addHeadersWithRetarget(postChangeHeaders); err != nil {
+				return fmt.Errorf(
+					"could not add headers with retarget: [%v]",
+					err,
+				)
+			}
+		}
 	} else {
 		// no difficulty change
 		logger.Infof(
-			"simply adding headers as there is no difficulty change " +
+			"simply adding all headers as there is no difficulty change " +
 				"within headers batch",
 		)
 
@@ -288,4 +308,24 @@ func packHeaders(headers []*btc.Header) []byte {
 	}
 
 	return packed
+}
+
+func splitBatch(headers []*btc.Header, startMod int64) (
+	preChangeHeaders,
+	postChangeHeaders []*btc.Header,
+) {
+	for _, header := range headers {
+		if header.Height%difficultyEpochDuration >= startMod {
+			preChangeHeaders = append(preChangeHeaders, header)
+		} else if header.Height%difficultyEpochDuration < startMod {
+			postChangeHeaders = append(postChangeHeaders, header)
+		} else {
+			logger.Warnf(
+				"could not assign header [%v] to pre/post-change part",
+				header,
+			)
+		}
+	}
+
+	return
 }
