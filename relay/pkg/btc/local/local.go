@@ -51,7 +51,7 @@ func (c *Chain) GetHeaderByDigest(
 }
 
 // GetBlockCount returns the number of blocks in the longest blockchain
-func (lc *localChain) GetBlockCount() (int64, error) {
+func (lc *Chain) GetBlockCount() (int64, error) {
 	return int64(len(lc.headers)), nil
 }
 
