@@ -97,16 +97,20 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 	logger.Infof("starting pulling from block: [%d]", latestHeader.Height+1)
 
 	for {
-		newHeader, err := f.pullHeaderFromBtcChain(ctx)
-		if err != nil {
-			f.errChan <- fmt.Errorf(
-				"could not pool header from btc network: [%v]",
-				err,
-			)
+		select {
+		case <-ctx.Done():
 			return
-		}
+		default:
+			logger.Infof("pulling new header from BTC chain")
+			header, err := f.pullHeaderFromBtcChain(ctx)
+			if err != nil {
+				f.errChan <- fmt.Errorf("could not pull header: [%v]", err)
+				return
+			}
 
-		f.pushHeaderToQueue(newHeader)
+			logger.Infof("pushing new header to the queue")
+			f.pushHeaderToQueue(header)
+		}
 	}
 }
 
