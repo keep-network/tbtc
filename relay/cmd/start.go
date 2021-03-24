@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/keep-network/tbtc/relay/pkg/btc"
+
 	commoneth "github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/tbtc/relay/pkg/chain/ethereum"
 
-	"github.com/keep-network/tbtc/relay/pkg/btc/remote"
 	"github.com/keep-network/tbtc/relay/pkg/node"
 
 	"github.com/ipfs/go-log"
@@ -43,7 +44,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not read config file: [%v]", err)
 	}
 
-	btcChain, err := remote.Connect(ctx, &config.Bitcoin)
+	btcChain, err := btc.Connect(ctx, &config.Bitcoin)
 	if err != nil {
 		return fmt.Errorf("could not connect BTC chain: [%v]", err)
 	}

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/keep-network/tbtc/relay/pkg/btc"
-	btclocal "github.com/keep-network/tbtc/relay/pkg/btc/local"
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
@@ -96,12 +95,12 @@ func TestPushHeadersToHostChain_AddHeaders(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	bc, err := btclocal.Connect()
+	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	btcChain := bc.(*btclocal.Chain)
+	btcChain := bc.(*btc.LocalChain)
 
 	// When adding headers, the ancestor of the first header in batch
 	// will be searched by its digest. Because of that, the local BTC
@@ -186,12 +185,12 @@ func TestPushHeadersToHostChain_AddHeadersWithUpdateBestHeader(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	bc, err := btclocal.Connect()
+	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	btcChain := bc.(*btclocal.Chain)
+	btcChain := bc.(*btc.LocalChain)
 
 	// When adding headers, the ancestor of the first header in batch
 	// will be searched by its digest. Because of that, the local BTC

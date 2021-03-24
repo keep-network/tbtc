@@ -3,11 +3,11 @@ package btc
 import (
 	"encoding/hex"
 	"fmt"
+
+	"github.com/ipfs/go-log"
 )
 
-// TODO: Refactor `remote` and `local` packages. Make just `btc/client.go`
-//  and `btc/client_local.go` with `Connect` and `ConnectLocal` functions
-//  respectively.
+var logger = log.Logger("relay-btc")
 
 // Handle represents a handle to the Bitcoin chain.
 type Handle interface {
