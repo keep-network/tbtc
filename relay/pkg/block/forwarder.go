@@ -41,7 +41,9 @@ type Forwarder struct {
 	btcChain  btc.Handle
 	hostChain chain.Handle
 
-	processedHeaders int
+	processedHeaders     int
+	nextPullHeaderHeight int64
+	lastPulledHeader     *btc.Header
 
 	headersQueue chan *btc.Header
 	errChan      chan error
@@ -90,11 +92,9 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 		return
 	}
 
-	logger.Infof("starting pulling from block: [%d]", latestHeader.Height)
-
 	// Start pulling Bitcoin headers with the one above the latest header
-	nextHeaderHeight := latestHeader.Height + 1
-	var lastAdded *btc.Header
+	f.setNextPullHeaderHeight(latestHeader.Height + 1)
+	logger.Infof("starting pulling from block: [%d]", latestHeader.Height+1)
 
 	for {
 		select {
@@ -109,25 +109,8 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 
 			// Check if there are more headers to pull or we are above the chain's
 			// tip and need to sleep until the chain adds more headers
-			if nextHeaderHeight <= chainHeight {
-				nextHeader, err := f.pullHeaderFromBtcChain(nextHeaderHeight)
-				if err != nil {
-					f.errChan <- fmt.Errorf(
-						"could not get header by height at [%d]: [%v]",
-						nextHeaderHeight,
-						err,
-					)
-					return
-				}
-
-				// TODO: Check whether it is ever possible that newHeader and
-				// lastAdded are equal
-				// TODO: Consider just comparing hashes - should be enough
-				if !nextHeader.Equals(lastAdded) {
-					f.pushHeaderToQueue(nextHeader)
-					lastAdded = nextHeader
-					nextHeaderHeight++
-				}
+			if f.nextPullHeaderHeight <= chainHeight {
+				f.pullNextHeader()
 			} else {
 				select {
 				case <-time.After(forwarderPullingSleepTime):
