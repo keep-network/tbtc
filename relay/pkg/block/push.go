@@ -70,15 +70,22 @@ func (f *Forwarder) pushHeadersToHostChain(
 
 	if startMod == 0 {
 		// we have a difficulty change first
-		// TODO: implementation
+		logger.Infof(
+			"adding headers with retarget as there is a difficulty " +
+				"change at the beginning of headers batch",
+		)
+
+		if err := f.addHeadersWithRetarget(headers); err != nil {
+			return fmt.Errorf("could not add headers with retarget: [%v]", err)
+		}
 	} else if startMod > endMod {
 		// we span a difficulty change
 		// TODO: implementation
 	} else {
 		// no difficulty change
 		logger.Infof(
-			"performing simple headers adding as difficulty doesn't " +
-				"change within headers batch",
+			"simply adding headers as there is no difficulty change " +
+				"within headers batch",
 		)
 
 		if err := f.addHeaders(headers); err != nil {
@@ -112,6 +119,35 @@ func (f *Forwarder) addHeaders(headers []*btc.Header) error {
 	}
 
 	return f.hostChain.AddHeaders(anchorHeader.Raw, packHeaders(headers))
+}
+
+func (f *Forwarder) addHeadersWithRetarget(headers []*btc.Header) error {
+	epochStart := headers[0].Height - difficultyEpochDuration
+	epochEnd := epochStart + difficultyEpochDuration - 1
+
+	oldPeriodStartHeader, err := f.btcChain.GetHeaderByHeight(epochStart)
+	if err != nil {
+		return fmt.Errorf(
+			"could not get header by height [%v]: [%v]",
+			epochStart,
+			err,
+		)
+	}
+
+	oldPeriodEndHeader, err := f.btcChain.GetHeaderByHeight(epochEnd)
+	if err != nil {
+		return fmt.Errorf(
+			"could not get header by height [%v]: [%v]",
+			epochEnd,
+			err,
+		)
+	}
+
+	return f.hostChain.AddHeadersWithRetarget(
+		oldPeriodStartHeader.Raw,
+		oldPeriodEndHeader.Raw,
+		packHeaders(headers),
+	)
 }
 
 func (f *Forwarder) updateBestHeader(
