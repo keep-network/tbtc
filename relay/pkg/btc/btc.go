@@ -43,14 +43,21 @@ type Header struct {
 	Raw []byte
 }
 
-func (h *Header) String() string {
+func (header *Header) Equals(other *Header) bool {
+	return header.Hash == other.Hash &&
+		header.Height == other.Height &&
+		header.PrevHash == other.PrevHash &&
+		header.MerkleRoot == other.MerkleRoot
+}
+
+func (header *Header) String() string {
 	return fmt.Sprintf(
 		"Hash: %s, Height: %d, PrevHash: %s, MerkleRoot: %s, Raw: %s",
-		h.Hash,
-		h.Height,
-		h.PrevHash,
-		h.MerkleRoot,
-		hex.EncodeToString(h.Raw),
+		header.Hash,
+		header.Height,
+		header.PrevHash,
+		header.MerkleRoot,
+		hex.EncodeToString(header.Raw),
 	)
 }
 

@@ -1,7 +1,6 @@
 package block
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -96,7 +95,7 @@ func (f *Forwarder) findBestBlock() (*btc.Header, error) {
 
 	// see if there's a better block at that height
 	// if so, crawl backwards
-	for !headersEqual(bestHeader, betterOrSameHeader) {
+	for !bestHeader.Equals(betterOrSameHeader) {
 		bestHeader, err = f.btcChain.GetHeaderByDigest(bestHeader.PrevHash)
 		if err != nil {
 			return nil, err
@@ -158,8 +157,10 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 					return
 				}
 
+				// TODO: Check whether it is ever possible that newHeader and
+				// lastAdded are equal
 				// TODO: Consider just comparing hashes - should be enough
-				if !headersEqual(nextHeader, lastAdded) {
+				if !nextHeader.Equals(lastAdded) {
 					f.headersQueue <- nextHeader
 					copyHeaders(lastAdded, nextHeader)
 					nextHeaderHeight++
@@ -219,14 +220,6 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 // appears here, the forwarder loop is immediately terminated.
 func (f *Forwarder) ErrChan() <-chan error {
 	return f.errChan
-}
-
-func headersEqual(first, second *btc.Header) bool {
-	return first.Hash == second.Hash &&
-		first.Height == second.Height &&
-		first.PrevHash == second.PrevHash &&
-		first.MerkleRoot == second.MerkleRoot &&
-		bytes.Compare(first.Raw, second.Raw) == 0
 }
 
 func copyHeaders(dest, src *btc.Header) {
