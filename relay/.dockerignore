@@ -1,6 +1,20 @@
 # Hidden files and directories.
 .*
 
+# Top-level directories unrelated to the build.
+scripts/
+
 # Top-level files unrealted to the build.
 Dockerfile
 *.adoc
+
+# NPM stuff.
+**/node_modules/*
+
+# Solidity stuff.
+# We want to include only bare contracts and NPM package configuration for
+# Go code generator.
+solidity/
+!solidity/contracts
+!solidity/package.json
+!solidity/package-lock.json

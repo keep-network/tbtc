@@ -3,27 +3,34 @@
 = Relay maintainer
 
 == Prerequisites
-- https://golang.org/[Go] (at least 1.15.7)
+- https://golang.org/[Go], at least 1.15.7
+- https://github.com/ethereum/solidity[Solidity], at least 0.5.17
+- https://nodejs.org/en/[Node.js], at least v11.15.0
 
-== Build
+== Installation
 
-Build the binary using:
+First, run your Bitcoin and Ethereum nodes. Make sure your Ethereum node
+params matches the desired network params in the `solidity/truffle-config.json`
+file.
+
+Then, run the install script by doing:
 ```
-go build
+./scripts/install.sh
 ```
-An executable named `relay` will be created.
+You can also run it with the `-h` flag to get more details about its params
+and env variables.
+
+After the script finish its work, appropriate relay contract will be deployed
+on Ethereum network and the relay client binary will be ready to use.
 
 == Run
 
-To run the application invoke:
+Make sure the desired config file is placed under `config` directory and its
+content is right.
+
+Then, invoke the start script by doing:
 ```
-./relay start
+./scripts/start.sh
 ```
-Usually, you'll want to set the log level and pass the operator key file
-password while running the `start` command. To do so, you can use `LOG_LEVEL`
-and `OPERATOR_KEY_FILE_PASSWORD` environment variables. For additional
-info, please refer those help commands:
-```
-./relay --help
-./relay start --help
-```
+And follow the prompts displayed in the console. After that, the relay client
+should be up and running.
