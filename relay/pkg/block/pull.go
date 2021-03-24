@@ -2,7 +2,7 @@ package block
 
 import "github.com/keep-network/tbtc/relay/pkg/btc"
 
-func (f *Forwarder) pullHeaderFromBtcNetwork(height int64) (*btc.Header, error) {
+func (f *Forwarder) pullHeaderFromBtcChain(height int64) (*btc.Header, error) {
 	return f.btcChain.GetHeaderByHeight(height)
 }
 
