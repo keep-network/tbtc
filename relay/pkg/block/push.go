@@ -118,35 +118,69 @@ func (f *Forwarder) updateBestHeader(
 	ctx context.Context,
 	newBestHeader *btc.Header,
 ) error {
-	currentBestDigest, err := f.hostChain.GetBestKnownDigest()
-	if err != nil {
-		return fmt.Errorf("could not get best known digest: [%v]", err)
-	}
+	totalAttempts := 30
 
-	currentBestHeader, err := f.btcChain.GetHeaderByDigest(currentBestDigest)
-	if err != nil {
-		return fmt.Errorf(
-			"could not get current best header by digest: [%v]",
-			err,
+	for attempt := 1; attempt <= totalAttempts; attempt++ {
+		logger.Infof(
+			"attempt [%v] to set header [%v] as new best",
+			attempt,
+			newBestHeader.Height,
 		)
+
+		currentBestDigest, err := f.hostChain.GetBestKnownDigest()
+		if err != nil {
+			return fmt.Errorf("could not get best known digest: [%v]", err)
+		}
+
+		currentBestHeader, err := f.btcChain.GetHeaderByDigest(
+			currentBestDigest,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"could not get current best header by digest: [%v]",
+				err,
+			)
+		}
+
+		lastCommonAncestor, err := f.findLastCommonAncestor(
+			ctx,
+			newBestHeader,
+			currentBestHeader,
+		)
+		if err != nil {
+			return fmt.Errorf("could not find last common ancestor: [%v]", err)
+		}
+
+		limit := big.NewInt(
+			newBestHeader.Height - lastCommonAncestor.Height + 1,
+		)
+
+		if willSucceed := f.hostChain.MarkNewHeaviestPreflight(
+			lastCommonAncestor.Hash,
+			currentBestHeader.Raw,
+			newBestHeader.Raw,
+			limit,
+		); willSucceed {
+			return f.hostChain.MarkNewHeaviest(
+				lastCommonAncestor.Hash,
+				currentBestHeader.Raw,
+				newBestHeader.Raw,
+				limit,
+			)
+		}
+
+		// wait a constant back-off time
+		select {
+		case <-time.After(10 * time.Second):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 
-	lastCommonAncestor, err := f.findLastCommonAncestor(
-		ctx,
-		newBestHeader,
-		currentBestHeader,
-	)
-	if err != nil {
-		return fmt.Errorf("could not find last common ancestor: [%v]", err)
-	}
-
-	limit := newBestHeader.Height - lastCommonAncestor.Height + 1
-
-	return f.hostChain.MarkNewHeaviest(
-		lastCommonAncestor.Hash,
-		currentBestHeader.Raw,
-		newBestHeader.Raw,
-		big.NewInt(limit),
+	return fmt.Errorf(
+		"could not set header [%v] as new best after [%v] attempts",
+		newBestHeader.Height,
+		totalAttempts,
 	)
 }
 
@@ -166,6 +200,12 @@ func (f *Forwarder) findLastCommonAncestor(
 		ancestorHeader := currentBestHeader
 
 		for i := 0; i < 20; i++ {
+			// This loop can be long-running so check the context before
+			// each iteration.
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+
 			isAncestor, err := f.hostChain.IsAncestor(
 				ancestorHeader.Hash,
 				newBestHeader.Hash,
@@ -194,6 +234,7 @@ func (f *Forwarder) findLastCommonAncestor(
 		select {
 		case <-time.After(15 * time.Second):
 		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 	}
 

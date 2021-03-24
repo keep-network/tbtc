@@ -104,6 +104,18 @@ func (c *Chain) MarkNewHeaviest(
 	return nil
 }
 
+// MarkNewHeaviestPreflight performs a preflight call of the
+// MarkNewHeaviest method to check whether its execution will
+// succeed.
+func (c *Chain) MarkNewHeaviestPreflight(
+	ancestorDigest [32]byte,
+	currentBestHeader []byte,
+	newBestHeader []byte,
+	limit *big.Int,
+) bool {
+	return true
+}
+
 // AddHeadersEvents returns all invocations of the AddHeaders method for
 // testing purposes.
 func (c *Chain) AddHeadersEvents() []*AddHeadersEvent {
