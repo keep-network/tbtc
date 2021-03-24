@@ -16,7 +16,7 @@ func TestForwarder_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	btcChain, err := btclocal.Connect([]*btc.Header{})
+	btcChain, err := btclocal.Connect()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,16 +59,16 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	btcChain, err := btclocal.Connect([]*btc.Header{
-		{
-			Hash:     [32]byte{255},
-			Height:   255,
-			PrevHash: [32]byte{254},
-		},
-	})
+	bc, err := btclocal.Connect()
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	btcChain := bc.(*btclocal.Chain)
+
+	btcChain.SetHeaders([]*btc.Header{
+		{Hash: [32]byte{255}, Height: 255, PrevHash: [32]byte{254}},
+	})
 
 	localChain, err := chainlocal.Connect()
 	if err != nil {

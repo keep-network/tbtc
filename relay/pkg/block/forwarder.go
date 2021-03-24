@@ -47,6 +47,8 @@ type Forwarder struct {
 
 	headersQueue chan *btc.Header
 	errChan      chan error
+
+	loopExitHandler func()
 }
 
 // RunForwarder creates an instance of the block forwarder and runs its
@@ -57,15 +59,18 @@ func RunForwarder(
 	btcChain btc.Handle,
 	hostChain chain.Handle,
 ) *Forwarder {
+	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
+
 	forwarder := &Forwarder{
-		btcChain:     btcChain,
-		hostChain:    hostChain,
-		headersQueue: make(chan *btc.Header, headersQueueSize),
-		errChan:      make(chan error, 1),
+		btcChain:        btcChain,
+		hostChain:       hostChain,
+		headersQueue:    make(chan *btc.Header, headersQueueSize),
+		errChan:         make(chan error, 1),
+		loopExitHandler: cancelLoopCtx,
 	}
 
-	go forwarder.pullingLoop(ctx)
-	go forwarder.pushingLoop(ctx)
+	go forwarder.pullingLoop(loopCtx)
+	go forwarder.pushingLoop(loopCtx)
 
 	return forwarder
 }
@@ -172,6 +177,11 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 func (f *Forwarder) pushingLoop(ctx context.Context) {
 	logger.Infof("running new block pushing loop")
 
+	defer func() {
+		logger.Infof("stopping current block pushing loop")
+		f.loopExitHandler()
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -184,10 +194,7 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 				continue
 			}
 
-			logger.Infof(
-				"pushing [%v] header(s) to host chain",
-				len(headers),
-			)
+			logger.Infof("pushing %v to host chain", headersSummary(headers))
 
 			if err := f.pushHeadersToHostChain(ctx, headers); err != nil {
 				f.errChan <- fmt.Errorf("could not push headers: [%v]", err)
@@ -226,4 +233,24 @@ func copyHeaders(dest, src *btc.Header) {
 	*dest = *src
 	dest.Raw = make([]byte, len(src.Raw))
 	copy(dest.Raw, src.Raw)
+}
+
+func headersSummary(headers []*btc.Header) string {
+	if len(headers) == 0 {
+		return "no headers"
+	}
+
+	firstHeaderHeight := headers[0].Height
+	lastHeaderHeight := headers[len(headers)-1].Height
+
+	if firstHeaderHeight == lastHeaderHeight {
+		return fmt.Sprintf("[1] header (%v)", firstHeaderHeight)
+	}
+
+	return fmt.Sprintf(
+		"[%v] headers (from %v to %v)",
+		len(headers),
+		firstHeaderHeight,
+		lastHeaderHeight,
+	)
 }
