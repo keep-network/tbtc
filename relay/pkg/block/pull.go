@@ -2,6 +2,14 @@ package block
 
 import "github.com/keep-network/tbtc/relay/pkg/btc"
 
+func (f *Forwarder) pullHeaderFromBtcNetwork(height int64) (*btc.Header, error) {
+	return f.btcChain.GetHeaderByHeight(height)
+}
+
+func (f *Forwarder) pushHeaderToQueue(header *btc.Header) {
+	f.headersQueue <- header
+}
+
 func (f *Forwarder) findBestBlock() (*btc.Header, error) {
 	currentBestDigest, err := f.hostChain.GetBestKnownDigest()
 	if err != nil {

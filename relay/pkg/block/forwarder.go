@@ -110,10 +110,10 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 			// Check if there are more headers to pull or we are above the chain's
 			// tip and need to sleep until the chain adds more headers
 			if nextHeaderHeight <= chainHeight {
-				nextHeader, err := f.btcChain.GetHeaderByHeight(nextHeaderHeight)
+				nextHeader, err := f.pullHeaderFromBtcNetwork(nextHeaderHeight)
 				if err != nil {
 					f.errChan <- fmt.Errorf(
-						"could not get header by height at %d: [%v]",
+						"could not get header by height at [%d]: [%v]",
 						nextHeaderHeight,
 						err,
 					)
@@ -124,7 +124,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 				// lastAdded are equal
 				// TODO: Consider just comparing hashes - should be enough
 				if !nextHeader.Equals(lastAdded) {
-					f.headersQueue <- nextHeader
+					f.pushHeaderToQueue(nextHeader)
 					lastAdded = nextHeader
 					nextHeaderHeight++
 				}
