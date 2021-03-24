@@ -63,7 +63,8 @@ func Connect(
 	return &remoteChain{client: client}, nil
 }
 
-// GetHeaderByHeight returns the block header for the given block height.
+// GetHeaderByHeight returns the block header from the longest block chain at
+// the given block height.
 func (rc *remoteChain) GetHeaderByHeight(height int64) (*Header, error) {
 	blockHash, err := rc.client.GetBlockHash(height)
 	if err != nil {
@@ -103,7 +104,7 @@ func (rc *remoteChain) GetHeaderByHeight(height int64) (*Header, error) {
 	return relayHeader, nil
 }
 
-// GetBlockCount returns the number of blocks in the longest blockchain
+// GetBlockCount returns the number of blocks in the longest block chain
 func (rc *remoteChain) GetBlockCount() (int64, error) {
 	return rc.client.GetBlockCount()
 }
