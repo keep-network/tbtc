@@ -45,7 +45,6 @@ func runForwarderControlLoop(
 				"error occurred during block forwarding: [%v]",
 				err,
 			)
-			close(forwarder.QuitChan())
 		case <-ctx.Done():
 			logger.Infof("stopping block forwarding")
 			return
