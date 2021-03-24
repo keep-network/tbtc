@@ -93,7 +93,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 	}
 
 	// Start pulling Bitcoin headers with the one above the latest header
-	f.setNextPullHeaderHeight(latestHeader.Height + 1)
+	f.nextPullHeaderHeight = latestHeader.Height + 1
 	logger.Infof("starting pulling from block: [%d]", latestHeader.Height+1)
 
 	for {
