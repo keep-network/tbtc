@@ -42,7 +42,7 @@ func (f *Forwarder) pullHeaderFromBtcChain(
 		}
 
 		select {
-		case <-time.After(forwarderPullingSleepTime):
+		case <-time.After(f.forwarderPullingSleepTime):
 		case <-ctx.Done():
 		}
 	}

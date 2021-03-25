@@ -18,7 +18,8 @@ func TestPullHeadersFromQueue(t *testing.T) {
 	defer cancelCtx()
 
 	forwarder := &Forwarder{
-		headersQueue: make(chan *btc.Header, headersQueueSize),
+		headersQueue:              make(chan *btc.Header, headersQueueSize),
+		forwarderPullingSleepTime: defaultForwarderPullingSleepTime,
 	}
 
 	var wg sync.WaitGroup
@@ -118,8 +119,9 @@ func TestPushHeadersToHostChain_AddHeaders(t *testing.T) {
 	localChain := lc.(*chainlocal.Chain)
 
 	forwarder := &Forwarder{
-		btcChain:  btcChain,
-		hostChain: localChain,
+		btcChain:                  btcChain,
+		hostChain:                 localChain,
+		forwarderPullingSleepTime: defaultForwarderPullingSleepTime,
 	}
 
 	headers := []*btc.Header{
@@ -212,8 +214,9 @@ func TestPushHeadersToHostChain_AddHeadersWithUpdateBestHeader(t *testing.T) {
 	localChain.SetBestKnownDigest([32]byte{1})
 
 	forwarder := &Forwarder{
-		btcChain:  btcChain,
-		hostChain: localChain,
+		btcChain:                  btcChain,
+		hostChain:                 localChain,
+		forwarderPullingSleepTime: defaultForwarderPullingSleepTime,
 	}
 
 	headers := []*btc.Header{

@@ -55,7 +55,12 @@ func (lc *Chain) GetBlockCount() (int64, error) {
 	return int64(len(lc.headers)), nil
 }
 
-// SetHeaders set internal headers for testing purposes.
+// SetHeaders sets internal headers for testing purposes.
 func (c *Chain) SetHeaders(headers []*btc.Header) {
 	c.headers = headers
+}
+
+// AppendHeader appends internal header for testing purposes.
+func (c *Chain) AppendHeader(header *btc.Header) {
+	c.headers = append(c.headers, header)
 }

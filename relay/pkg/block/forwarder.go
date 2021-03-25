@@ -28,9 +28,9 @@ const (
 	// a push action.
 	forwarderPushingSleepTime = 45 * time.Second
 
-	// Duration for which the forwarder should rest after reaching the tip of
+	// Default duration for which the forwarder should rest after reaching the tip of
 	// Bitcoin blockchain
-	forwarderPullingSleepTime = 60 * time.Second
+	defaultForwarderPullingSleepTime = 60 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
@@ -40,6 +40,8 @@ var logger = log.Logger("relay-block-forwarder")
 type Forwarder struct {
 	btcChain  btc.Handle
 	hostChain chain.Handle
+
+	forwarderPullingSleepTime time.Duration
 
 	processedHeaders     int
 	nextPullHeaderHeight int64
@@ -62,11 +64,12 @@ func RunForwarder(
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 
 	forwarder := &Forwarder{
-		btcChain:        btcChain,
-		hostChain:       hostChain,
-		headersQueue:    make(chan *btc.Header, headersQueueSize),
-		errChan:         make(chan error, 1),
-		loopExitHandler: cancelLoopCtx,
+		btcChain:                  btcChain,
+		hostChain:                 hostChain,
+		forwarderPullingSleepTime: defaultForwarderPullingSleepTime,
+		headersQueue:              make(chan *btc.Header, headersQueueSize),
+		errChan:                   make(chan error, 1),
+		loopExitHandler:           cancelLoopCtx,
 	}
 
 	go forwarder.pullingLoop(loopCtx)
