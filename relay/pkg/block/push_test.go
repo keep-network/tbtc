@@ -119,9 +119,8 @@ func TestPushHeadersToHostChain_AddHeaders(t *testing.T) {
 	localChain := lc.(*chainlocal.Chain)
 
 	forwarder := &Forwarder{
-		btcChain:                  btcChain,
-		hostChain:                 localChain,
-		forwarderPullingSleepTime: defaultForwarderPullingSleepTime,
+		btcChain:  btcChain,
+		hostChain: localChain,
 	}
 
 	headers := []*btc.Header{
@@ -214,9 +213,8 @@ func TestPushHeadersToHostChain_AddHeadersWithUpdateBestHeader(t *testing.T) {
 	localChain.SetBestKnownDigest([32]byte{1})
 
 	forwarder := &Forwarder{
-		btcChain:                  btcChain,
-		hostChain:                 localChain,
-		forwarderPullingSleepTime: defaultForwarderPullingSleepTime,
+		btcChain:  btcChain,
+		hostChain: localChain,
 	}
 
 	headers := []*btc.Header{

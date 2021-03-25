@@ -8,6 +8,7 @@ import (
 
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 	btclocal "github.com/keep-network/tbtc/relay/pkg/btc/local"
+	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
 func TestPushHeaderToQueue(t *testing.T) {
@@ -36,7 +37,8 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 		nextPullHeaderHeight:      1,
 	}
 
-	// Test that we can pull headers without waiting when
+	// Test that we can pull headers without waiting when we have not reached
+	// Bitcoin chain tip
 	var headers []btc.Header
 	for i := 0; i < 2; i++ {
 		header, err := forwarder.pullHeaderFromBtcChain(ctx)
@@ -96,13 +98,114 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 				"unexpected header:\n"+
 					"expected: [%+v]\n"+
 					"actual:   [%+v]\n",
-				expectedHeaders,
+				expectedHeader,
 				header,
 			)
 		}
 	}
 }
 
-func TestFindBestHeader(t *testing.T) {
-	//TODO
+func TestFindBestHeader_HostChainReturnsBestBlock(t *testing.T) {
+	bc, err := btclocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	btcChain := bc.(*btclocal.Chain)
+
+	btcChain.SetHeaders([]*btc.Header{
+		{Height: 1, Hash: [32]byte{1}, Raw: []byte{1}},
+		{Height: 2, Hash: [32]byte{2}, Raw: []byte{2}},
+	})
+
+	lc, err := chainlocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain := lc.(*chainlocal.Chain)
+	localChain.SetBestKnownDigest([32]byte{2})
+
+	forwarder := &Forwarder{
+		btcChain:  btcChain,
+		hostChain: localChain,
+	}
+
+	header, err := forwarder.findBestHeader()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedHeader := &btc.Header{Height: 2, Hash: [32]byte{2}, Raw: []byte{2}}
+	if !header.Equals(expectedHeader) {
+		t.Errorf(
+			"unexpected header:\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]\n",
+			expectedHeader,
+			header,
+		)
+	}
+}
+
+func TestFindBestHeader_HostChainDoesNoReturnBestBlock(t *testing.T) {
+	bc, err := btclocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a split in chain
+	//
+	// 	       6 - 7  orphaned blocks
+	// 	     /
+	// 1 - 2
+	// 	     \
+	// 	       3 - 4 - 5  longest chain
+
+	btcChain := bc.(*btclocal.Chain)
+
+	btcChain.SetHeaders([]*btc.Header{
+		{Height: 1, Hash: [32]byte{1}, PrevHash: [32]byte{0}},
+		{Height: 2, Hash: [32]byte{2}, PrevHash: [32]byte{1}},
+		{Height: 3, Hash: [32]byte{3}, PrevHash: [32]byte{2}},
+		{Height: 4, Hash: [32]byte{4}, PrevHash: [32]byte{3}},
+		{Height: 5, Hash: [32]byte{5}, PrevHash: [32]byte{4}},
+	})
+
+	btcChain.SetOrphanedHeaders([]*btc.Header{
+		{Height: 3, Hash: [32]byte{6}, PrevHash: [32]byte{2}},
+		{Height: 4, Hash: [32]byte{7}, PrevHash: [32]byte{6}},
+	})
+
+	lc, err := chainlocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain := lc.(*chainlocal.Chain)
+	localChain.SetBestKnownDigest([32]byte{7})
+
+	forwarder := &Forwarder{
+		btcChain:  btcChain,
+		hostChain: localChain,
+	}
+
+	header, err := forwarder.findBestHeader()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Should return header of the last common block
+	expectedHeader := &btc.Header{
+		Height: 2, Hash: [32]byte{2}, PrevHash: [32]byte{1},
+	}
+	if !header.Equals(expectedHeader) {
+		t.Errorf(
+			"unexpected header:\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]\n",
+			expectedHeader,
+			header,
+		)
+	}
 }

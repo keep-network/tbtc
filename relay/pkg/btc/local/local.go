@@ -13,7 +13,8 @@ var logger = log.Logger("relay-btc-local")
 
 // Chain represents a local Bitcoin chain.
 type Chain struct {
-	headers []*btc.Header
+	headers         []*btc.Header
+	orphanedHeaders []*btc.Header
 }
 
 // Connect connects to the local Bitcoin chain and returns a chain handle.
@@ -44,6 +45,12 @@ func (c *Chain) GetHeaderByDigest(
 		}
 	}
 
+	for _, header := range c.orphanedHeaders {
+		if bytes.Equal(header.Hash[:], digest[:]) {
+			return header, nil
+		}
+	}
+
 	return nil, fmt.Errorf(
 		"no header with digest [%v]",
 		hex.EncodeToString(digest[:]),
@@ -63,4 +70,9 @@ func (c *Chain) SetHeaders(headers []*btc.Header) {
 // AppendHeader appends internal header for testing purposes.
 func (c *Chain) AppendHeader(header *btc.Header) {
 	c.headers = append(c.headers, header)
+}
+
+// SetOrphanedHeaders sets internal orphaned headers for testing purposes.
+func (c *Chain) SetOrphanedHeaders(headers []*btc.Header) {
+	c.orphanedHeaders = headers
 }
