@@ -12,6 +12,44 @@ import (
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
+func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	bc, err := btclocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+	btcChain := bc.(*btclocal.Chain)
+
+	localChain, err := chainlocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Run forwarder with an empty Bitcoin chain and wait for a moment so
+	// the pulling loop goes to sleep
+	forwarder := RunForwarder(ctx, btcChain, localChain)
+	time.Sleep(1 * time.Second)
+
+	// While the pulling loop is sleeping, add headers to Bitcoin chain and
+	// cancel context
+	btcChain.SetHeaders([]*btc.Header{
+		{Height: 1, Hash: [32]byte{1}, PrevHash: [32]byte{0}},
+		{Height: 2, Hash: [32]byte{2}, PrevHash: [32]byte{1}},
+	})
+	cancelCtx()
+
+	// The forwarder's queue should be empty
+	queueLength := len(forwarder.headersQueue)
+	if queueLength != 0 {
+		t.Errorf(
+			"unexpected headers in queue, queue length: [%d]\n",
+			queueLength,
+		)
+	}
+}
+
 func TestForwarder_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
