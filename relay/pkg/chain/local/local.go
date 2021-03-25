@@ -14,8 +14,9 @@ var logger = log.Logger("relay-chain-local")
 type Chain struct {
 	bestKnownDigest [32]byte
 
-	addHeadersEvents     []*AddHeadersEvent
-	markNewHeaviestEvent []*MarkNewHeaviestEvent
+	addHeadersEvents             []*AddHeadersEvent
+	addHeadersWithRetargetEvents []*AddHeadersWithRetargetEvent
+	markNewHeaviestEvent         []*MarkNewHeaviestEvent
 }
 
 // Connect performs initialization for communication with the local blockchain.
@@ -23,8 +24,9 @@ func Connect() (chain.Handle, error) {
 	logger.Infof("connecting local host chain")
 
 	return &Chain{
-		addHeadersEvents:     make([]*AddHeadersEvent, 0),
-		markNewHeaviestEvent: make([]*MarkNewHeaviestEvent, 0),
+		addHeadersEvents:             make([]*AddHeadersEvent, 0),
+		addHeadersWithRetargetEvents: make([]*AddHeadersWithRetargetEvent, 0),
+		markNewHeaviestEvent:         make([]*MarkNewHeaviestEvent, 0),
 	}, nil
 }
 
@@ -77,7 +79,16 @@ func (c *Chain) AddHeadersWithRetarget(
 	oldPeriodEndHeader []byte,
 	headers []byte,
 ) error {
-	panic("not implemented yet")
+	c.addHeadersWithRetargetEvents = append(
+		c.addHeadersWithRetargetEvents,
+		&AddHeadersWithRetargetEvent{
+			OldPeriodStartHeader: oldPeriodStartHeader,
+			OldPeriodEndHeader:   oldPeriodEndHeader,
+			Headers:              headers,
+		},
+	)
+
+	return nil
 }
 
 // MarkNewHeaviest gives a new starting point for the relay. The
@@ -122,6 +133,12 @@ func (c *Chain) AddHeadersEvents() []*AddHeadersEvent {
 	return c.addHeadersEvents
 }
 
+// AddHeadersWithRetargetEvents returns all invocations of the
+// AddHeadersWithRetarget method for testing purposes.
+func (c *Chain) AddHeadersWithRetargetEvents() []*AddHeadersWithRetargetEvent {
+	return c.addHeadersWithRetargetEvents
+}
+
 // MarkNewHeaviestEvents returns all invocations of the MarkNewHeaviest method
 // for testing purposes.
 func (c *Chain) MarkNewHeaviestEvents() []*MarkNewHeaviestEvent {
@@ -137,6 +154,14 @@ func (c *Chain) SetBestKnownDigest(bestKnownDigest [32]byte) {
 type AddHeadersEvent struct {
 	AnchorHeader []byte
 	Headers      []byte
+}
+
+// AddHeadersWithRetargetEvent represents an invocation of the
+// AddHeadersWithRetarget method.
+type AddHeadersWithRetargetEvent struct {
+	OldPeriodStartHeader []byte
+	OldPeriodEndHeader   []byte
+	Headers              []byte
 }
 
 // MarkNewHeaviestEvent represents an invocation of the MarkNewHeaviest method.
