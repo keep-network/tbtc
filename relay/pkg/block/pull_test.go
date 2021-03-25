@@ -143,14 +143,13 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 		t.Fatal("failed to return header")
 	case header := <-headerChan:
 		expectedHeader := &btc.Header{Height: 3, Hash: [32]byte{3}, Raw: []byte{3}}
-
-		if !reflect.DeepEqual(expectedHeader, header) {
+		if !header.Equals(expectedHeader) {
 			t.Errorf(
 				"unexpected header:\n"+
-					"expected: [%+v]\n"+
-					"actual:   [%+v]\n",
-				expectedHeader,
-				header,
+					"expected: [%s]\n"+
+					"actual:   [%s]\n",
+				expectedHeader.String(),
+				header.String(),
 			)
 		}
 	}
@@ -191,10 +190,10 @@ func TestFindBestHeader_HostChainReturnsBestBlock(t *testing.T) {
 	if !header.Equals(expectedHeader) {
 		t.Errorf(
 			"unexpected header:\n"+
-				"expected: [%+v]\n"+
-				"actual:   [%+v]\n",
-			expectedHeader,
-			header,
+				"expected: [%s]\n"+
+				"actual:   [%s]\n",
+			expectedHeader.String(),
+			header.String(),
 		)
 	}
 }
@@ -253,10 +252,10 @@ func TestFindBestHeader_HostChainDoesNoReturnBestBlock(t *testing.T) {
 	if !header.Equals(expectedHeader) {
 		t.Errorf(
 			"unexpected header:\n"+
-				"expected: [%+v]\n"+
-				"actual:   [%+v]\n",
-			expectedHeader,
-			header,
+				"expected: [%s]\n"+
+				"actual:   [%s]\n",
+			expectedHeader.String(),
+			header.String(),
 		)
 	}
 }
