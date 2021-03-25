@@ -24,7 +24,8 @@ func Connect() (btc.Handle, error) {
 	return &Chain{}, nil
 }
 
-// GetHeaderByHeight returns the block header for the given block height.
+// GetHeaderByHeight returns the block header from the longest block chain at
+// the given block height.
 func (c *Chain) GetHeaderByHeight(height int64) (*btc.Header, error) {
 	for _, header := range c.headers {
 		if header.Height == height {

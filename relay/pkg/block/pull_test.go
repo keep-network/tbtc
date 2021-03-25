@@ -12,7 +12,58 @@ import (
 )
 
 func TestPushHeaderToQueue(t *testing.T) {
-	// TODO
+	forwarder := &Forwarder{
+		headersQueue:         make(chan *btc.Header, headersQueueSize),
+		nextPullHeaderHeight: 1,
+	}
+
+	headers := []*btc.Header{
+		{Hash: [32]byte{1}, Height: 1, PrevHash: [32]byte{0}},
+		{Hash: [32]byte{2}, Height: 2, PrevHash: [32]byte{1}},
+	}
+
+	for _, header := range headers {
+		forwarder.pushHeaderToQueue(header)
+	}
+
+	// Check nextPullHeaderHeight
+	expectedNextPullHeight := int64(3)
+	actualNextPullHeight := forwarder.nextPullHeaderHeight
+
+	if actualNextPullHeight != expectedNextPullHeight {
+		t.Errorf(
+			"unexpected add headers event:\n"+
+				"expected: [%d]\n"+
+				"actual:   [%d]\n",
+			expectedNextPullHeight,
+			actualNextPullHeight,
+		)
+	}
+
+	// Check headers on the queue
+	expectedNoOfHeaders := 2
+	if len(forwarder.headersQueue) != expectedNoOfHeaders {
+		t.Errorf(
+			"unexpected number of headers in channel:\n"+
+				"expected: [%d]\n"+
+				"actual:   [%d]\n",
+			expectedNoOfHeaders,
+			len(forwarder.headersQueue),
+		)
+	}
+
+	for _, expectedHeader := range headers {
+		actualHeader := <-forwarder.headersQueue
+		if !actualHeader.Equals(expectedHeader) {
+			t.Errorf(
+				"unexpected header in queue:\n"+
+					"expected: [%s]\n"+
+					"actual:   [%s]\n",
+				expectedHeader.String(),
+				actualHeader.String(),
+			)
+		}
+	}
 }
 
 func TestPullHeaderFromBtcChain(t *testing.T) {
