@@ -74,6 +74,11 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Setting this allows the pulling loop to start the work in a proper way
+	// and prevents it to fail earlier than the planned failure of the
+	// pushing loop.
+	localChain.(*chainlocal.Chain).SetBestKnownDigest([32]byte{255})
+
 	forwarder := RunForwarder(ctx, btcChain, localChain)
 
 	// Fill the queue with two headers batches.
