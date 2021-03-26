@@ -30,7 +30,7 @@ func TestPushHeaderToQueue(t *testing.T) {
 	expectedNextPullHeight := int64(3)
 	actualNextPullHeight := forwarder.nextPullHeaderHeight
 
-	if actualNextPullHeight != expectedNextPullHeight {
+	if expectedNextPullHeight != actualNextPullHeight {
 		t.Errorf(
 			"unexpected add headers event:\n"+
 				"expected: [%d]\n"+
@@ -41,26 +41,27 @@ func TestPushHeaderToQueue(t *testing.T) {
 	}
 
 	// Check headers on the queue
-	expectedNoOfHeaders := 2
-	if len(forwarder.headersQueue) != expectedNoOfHeaders {
+	expectedQueueLength := 2
+	actualQueueLength := len(forwarder.headersQueue)
+	if expectedQueueLength != actualQueueLength {
 		t.Errorf(
-			"unexpected number of headers in channel:\n"+
-				"expected: [%d]\n"+
-				"actual:   [%d]\n",
-			expectedNoOfHeaders,
-			len(forwarder.headersQueue),
+			"unexpected header queue length :\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedQueueLength,
+			actualQueueLength,
 		)
 	}
 
 	for _, expectedHeader := range headers {
 		actualHeader := <-forwarder.headersQueue
-		if !actualHeader.Equals(expectedHeader) {
+		if !expectedHeader.Equals(actualHeader) {
 			t.Errorf(
 				"unexpected header in queue:\n"+
-					"expected: [%s]\n"+
-					"actual:   [%s]\n",
-				expectedHeader.String(),
-				actualHeader.String(),
+					"expected: [%+v]\n"+
+					"actual:   [%+v]\n",
+				expectedHeader,
+				actualHeader,
 			)
 		}
 	}
@@ -131,7 +132,7 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 	select {
 	case <-time.After(time.Second):
 	case header := <-headerChan:
-		t.Fatalf("unexpected header returned[%v]", header)
+		t.Fatalf("unexpected header returned [%+v]", header)
 	}
 
 	btcChain.AppendHeader(
@@ -140,16 +141,16 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 
 	select {
 	case <-time.After(3 * time.Second):
-		t.Fatal("failed to return header")
+		t.Fatal("header timeout has been exceeded")
 	case header := <-headerChan:
 		expectedHeader := &btc.Header{Height: 3, Hash: [32]byte{3}, Raw: []byte{3}}
-		if !header.Equals(expectedHeader) {
+		if !expectedHeader.Equals(header) {
 			t.Errorf(
 				"unexpected header:\n"+
-					"expected: [%s]\n"+
-					"actual:   [%s]\n",
-				expectedHeader.String(),
-				header.String(),
+					"expected: [%+v]\n"+
+					"actual:   [%+v]\n",
+				expectedHeader,
+				header,
 			)
 		}
 	}
@@ -187,18 +188,18 @@ func TestFindBestHeader_HostChainReturnsBestBlock(t *testing.T) {
 	}
 
 	expectedHeader := &btc.Header{Height: 2, Hash: [32]byte{2}, Raw: []byte{2}}
-	if !header.Equals(expectedHeader) {
+	if !expectedHeader.Equals(header) {
 		t.Errorf(
 			"unexpected header:\n"+
-				"expected: [%s]\n"+
-				"actual:   [%s]\n",
-			expectedHeader.String(),
-			header.String(),
+				"expected: [%+v]\n"+
+				"actual:   [%+v]\n",
+			expectedHeader,
+			header,
 		)
 	}
 }
 
-func TestFindBestHeader_HostChainDoesNoReturnBestBlock(t *testing.T) {
+func TestFindBestHeader_HostChainDoesNotReturnBestBlock(t *testing.T) {
 	bc, err := btclocal.Connect()
 	if err != nil {
 		t.Fatal(err)
@@ -249,13 +250,13 @@ func TestFindBestHeader_HostChainDoesNoReturnBestBlock(t *testing.T) {
 	expectedHeader := &btc.Header{
 		Height: 2, Hash: [32]byte{2}, PrevHash: [32]byte{1},
 	}
-	if !header.Equals(expectedHeader) {
+	if !expectedHeader.Equals(header) {
 		t.Errorf(
 			"unexpected header:\n"+
-				"expected: [%s]\n"+
-				"actual:   [%s]\n",
-			expectedHeader.String(),
-			header.String(),
+				"expected: [%+v]\n"+
+				"actual:   [%+v]\n",
+			expectedHeader,
+			header,
 		)
 	}
 }

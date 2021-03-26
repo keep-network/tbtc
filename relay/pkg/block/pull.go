@@ -35,7 +35,7 @@ func (f *Forwarder) pullHeaderFromBtcChain(
 
 			// TODO: Consider just comparing hashes - should be enough
 			//  and check if nextHeader and lastPulledHeader header can ever
-			//  be not equal
+			//  be equal
 			if !nextHeader.Equals(f.lastPulledHeader) {
 				return nextHeader, nil
 			}

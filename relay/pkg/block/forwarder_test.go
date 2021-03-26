@@ -41,11 +41,15 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 	cancelCtx()
 
 	// The forwarder's queue should be empty
-	queueLength := len(forwarder.headersQueue)
-	if queueLength != 0 {
+	expectedQueueLength := 0
+	actualQueueLength := len(forwarder.headersQueue)
+	if expectedQueueLength != actualQueueLength {
 		t.Errorf(
-			"unexpected headers in queue, queue length: [%d]\n",
-			queueLength,
+			"unexpected headers queue length:\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedQueueLength,
+			actualQueueLength,
 		)
 	}
 }
