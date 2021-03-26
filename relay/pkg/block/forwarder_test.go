@@ -55,6 +55,72 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 	}
 }
 
+func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	bc, err := btclocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	btcChain := bc.(*btclocal.Chain)
+
+	lc, err := chainlocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain := lc.(*chainlocal.Chain)
+
+	// Add one block to Bitcoin chain and set a best known digest in host chain
+	// that does not correspond to any block in Bitcoin chain
+	btcChain.SetHeaders([]*btc.Header{
+		{Hash: [32]byte{1}, Height: 1, PrevHash: [32]byte{0}},
+	})
+
+	localChain.SetBestKnownDigest([32]byte{2})
+
+	forwarder := RunForwarder(ctx, btcChain, localChain)
+
+	select {
+	case err = <-forwarder.ErrChan():
+	case <-time.After(10 * time.Second):
+		t.Fatal("test timeout has been exceeded")
+	}
+
+	// An error should appear as the host chain returns digest that the Bitcoin
+	// chain does not recognize
+	expectedError := fmt.Errorf(
+		"could not find best block for pulling loop: " +
+			"[no header with digest " +
+			"[02000000000000000000000000000000000" +
+			"00000000000000000000000000000]]",
+	)
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error:\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedError,
+			err,
+		)
+	}
+
+	// Because the pulling loop returns early, the header queue should be empty
+	expectedQueueLength := 0
+	actualQueueLength := len(forwarder.headersQueue)
+	if expectedQueueLength != actualQueueLength {
+		t.Errorf(
+			"unexpected headers queue length:\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedQueueLength,
+			actualQueueLength,
+		)
+	}
+}
+
 func TestForwarder_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
