@@ -25,7 +25,7 @@ func TestForwarder_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	forwarder := RunForwarder(ctx, btcChain, localChain, &mockObserver{})
 
 	// Shutdown the pushing loop.
 	cancelCtx()
@@ -79,7 +79,7 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 	// pushing loop.
 	localChain.(*chainlocal.Chain).SetBestKnownDigest([32]byte{255})
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	forwarder := RunForwarder(ctx, btcChain, localChain, &mockObserver{})
 
 	// Fill the queue with two headers batches.
 	for i := 1; i <= 10; i++ {
@@ -135,4 +135,14 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 			actualQueueLength,
 		)
 	}
+}
+
+type mockObserver struct{}
+
+func (mo *mockObserver) NotifyBlockPulled(blockNumber int64) {
+	// no-op
+}
+
+func (mo *mockObserver) NotifyBlocksPushed(blockNumbers []int64) {
+	// no-op
 }
