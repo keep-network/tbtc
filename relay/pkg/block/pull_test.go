@@ -85,7 +85,7 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 
 	forwarder := &Forwarder{
 		btcChain:                  btcChain,
-		forwarderPullingSleepTime: 3 * time.Second,
+		forwarderPullingSleepTime: 300 * time.Millisecond,
 		nextPullHeaderHeight:      1,
 	}
 
@@ -130,7 +130,7 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 	}()
 
 	select {
-	case <-time.After(time.Second):
+	case <-time.After(100 * time.Millisecond):
 	case header := <-headerChan:
 		t.Fatalf("unexpected header returned [%+v]", header)
 	}
@@ -140,7 +140,7 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 	)
 
 	select {
-	case <-time.After(3 * time.Second):
+	case <-time.After(300 * time.Millisecond):
 		t.Fatal("header timeout has been exceeded")
 	case header := <-headerChan:
 		expectedHeader := &btc.Header{Height: 3, Hash: [32]byte{3}, Raw: []byte{3}}

@@ -18,8 +18,7 @@ func TestPullHeadersFromQueue(t *testing.T) {
 	defer cancelCtx()
 
 	forwarder := &Forwarder{
-		headersQueue:              make(chan *btc.Header, headersQueueSize),
-		forwarderPullingSleepTime: defaultForwarderPullingSleepTime,
+		headersQueue: make(chan *btc.Header, headersQueueSize),
 	}
 
 	var wg sync.WaitGroup

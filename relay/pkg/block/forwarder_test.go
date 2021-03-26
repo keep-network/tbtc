@@ -30,7 +30,7 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 	// Run forwarder with an empty Bitcoin chain and wait for a moment so
 	// the pulling loop goes to sleep
 	forwarder := RunForwarder(ctx, btcChain, localChain)
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 
 	// While the pulling loop is sleeping, add headers to Bitcoin chain and
 	// cancel context
@@ -39,6 +39,7 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 		{Height: 2, Hash: [32]byte{2}, PrevHash: [32]byte{1}},
 	})
 	cancelCtx()
+	time.Sleep(100 * time.Millisecond)
 
 	// The forwarder's queue should be empty
 	expectedQueueLength := 0
