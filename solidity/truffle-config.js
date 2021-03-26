@@ -72,7 +72,9 @@ module.exports = {
       },
       gas: 8000000,
       network_id: 3,
-      skipDryRun: true
+      skipDryRun: true,
+      networkCheckTimeout: 120000,
+      timeoutBlocks: 200, // # of blocks before a deployment times out  (minimum/default: 50)
     },
 
     alfajores: {
