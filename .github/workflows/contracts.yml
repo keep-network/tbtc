@@ -29,8 +29,7 @@ jobs:
     needs: contracts-detect-changes
     if: |
       github.event_name != 'pull_request'
-        || (github.event_name == 'pull_request'
-        && needs.contracts-detect-changes.outputs.path-filter == 'true') 
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,8 +66,7 @@ jobs:
     needs: contracts-detect-changes
     if: |
       github.event_name != 'pull_request'
-        || (github.event_name == 'pull_request'
-        && needs.contracts-detect-changes.outputs.path-filter == 'true') 
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
