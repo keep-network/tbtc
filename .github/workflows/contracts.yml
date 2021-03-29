@@ -1,27 +1,35 @@
 name: Solidity
 
-#TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
     branches:
-      # TODO: Run only on master after we're fully migrated from Circle CI
-      - "rfc-18/**"
       - master
     paths:
       - "solidity/**"
-      - ".github/workflows/contracts.yml"
   pull_request:
-    branches:
-      # TODO: Run on all branches after we're fully migrated from Circle CI
-      - "rfc-18/**"
-      - master
-    paths:
-      - "solidity/**"
-      - ".github/workflows/contracts.yml"
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  contracts-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './solidity/**'
+
+  contracts-build-and-test:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -54,7 +62,11 @@ jobs:
       - name: Run tests
         run: npm run test:quick
 
-  lint:
+  contracts-lint:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -84,14 +96,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  migrate-and-publish-ethereum:
-    needs: [build-and-test, lint]
-    # TODO: Remove 'rfc-18/' condition once migration to GH Actions is done
+  contracts-migrate-and-publish-ethereum:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
-      (startsWith(github.ref, 'refs/heads/rfc-18/')
-        || github.ref == 'refs/heads/master')
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+      github.ref == 'refs/heads/master'
+        && github.event_name != 'pull_request'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -176,17 +185,15 @@ jobs:
           workDir: ./solidity
 
       - name: Publish to npm
-        # TODO: --dry-run to be removed once testing of workflow is done
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
-          npm publish --access=public --dry-run
+          npm publish --access=public
 
-  migrate-and-publish-celo:
-    needs: [build-and-test, lint]
+  contracts-migrate-and-publish-celo:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
       github.ref == 'refs/heads/master'
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+        && github.event_name != 'pull_request'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
