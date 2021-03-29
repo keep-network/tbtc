@@ -85,6 +85,8 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 
 			headers := f.pullHeadersFromQueue(ctx)
 			if len(headers) == 0 {
+				// Empty headers slice is returned only in case when context
+				// has been cancelled.
 				continue
 			}
 
