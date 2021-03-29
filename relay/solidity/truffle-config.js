@@ -8,6 +8,7 @@
 
 require("@babel/register")
 require("@babel/polyfill")
+const HDWalletProvider = require("@truffle/hdwallet-provider")
 
 module.exports = {
     /**
@@ -23,6 +24,17 @@ module.exports = {
             port: 8546,
             network_id: 1101,
             websockets: true,
+        },
+        ropsten: {
+            provider: function () {
+                return new HDWalletProvider(
+                    process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY,
+                    process.env.HOSTNAME
+                )
+            },
+            gas: 8000000,
+            network_id: 3,
+            skipDryRun: true
         },
     },
     // Configure your compilers
