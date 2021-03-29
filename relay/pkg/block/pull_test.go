@@ -91,14 +91,33 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 
 	// Test that we can pull headers without waiting when we have not reached
 	// Bitcoin chain tip
+	type result struct {
+		header *btc.Header
+		err    error
+	}
+
+	resultChan := make(chan result, 2)
+
+	go func() {
+		for i := 0; i < 2; i++ {
+			header, err := forwarder.pullHeaderFromBtcChain(ctx)
+			resultChan <- result{header, err}
+			forwarder.nextPullHeaderHeight++
+		}
+	}()
+
 	var headers []btc.Header
 	for i := 0; i < 2; i++ {
-		header, err := forwarder.pullHeaderFromBtcChain(ctx)
-		if err != nil {
-			t.Fatal(err)
+		select {
+		case <-time.After(10 * time.Millisecond):
+			t.Fatal("header timeout has been exceeded")
+		case result := <-resultChan:
+			if result.err != nil {
+				t.Fatal(err)
+			} else {
+				headers = append(headers, *result.header)
+			}
 		}
-		headers = append(headers, *header)
-		forwarder.nextPullHeaderHeight++
 	}
 
 	expectedHeaders := []btc.Header{
@@ -118,21 +137,19 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 
 	// Test that function hangs after we have reached the tip of Bitcoin chain
 	// and waits for more blocks to be appended
-	headerChan := make(chan *btc.Header, 1)
-
 	go func() {
 		header, err := forwarder.pullHeaderFromBtcChain(ctx)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		headerChan <- header
+		resultChan <- result{header, err}
 	}()
 
 	select {
 	case <-time.After(100 * time.Millisecond):
-	case header := <-headerChan:
-		t.Fatalf("unexpected header returned [%+v]", header)
+	case result := <-resultChan:
+		if err != nil {
+			t.Fatal(result.err)
+		} else {
+			t.Fatalf("unexpected header returned [%+v]", result.header)
+		}
 	}
 
 	btcChain.AppendHeader(
@@ -142,15 +159,19 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 	select {
 	case <-time.After(300 * time.Millisecond):
 		t.Fatal("header timeout has been exceeded")
-	case header := <-headerChan:
+	case result := <-resultChan:
+		if result.err != nil {
+			t.Fatal(err)
+		}
+
 		expectedHeader := &btc.Header{Height: 3, Hash: [32]byte{3}, Raw: []byte{3}}
-		if !expectedHeader.Equals(header) {
+		if !expectedHeader.Equals(result.header) {
 			t.Errorf(
 				"unexpected header:\n"+
 					"expected: [%+v]\n"+
 					"actual:   [%+v]\n",
 				expectedHeader,
-				header,
+				result.header,
 			)
 		}
 	}
