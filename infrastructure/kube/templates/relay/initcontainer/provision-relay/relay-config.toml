@@ -1,0 +1,31 @@
+# This is a TOML configuration file.
+
+# Connection details of Ethereum blockchain.
+[ethereum]
+  URL = ""
+  URLRPC = ""
+
+# Account details for Ethereum blockchain.
+[ethereum.account]
+  KeyFile = ""
+
+# Addresses of contracts deployed on Ethereum blockchain.
+[ethereum.ContractAddresses]
+  Relay = ""
+
+# Connection details of Bitcoin blockchain
+[bitcoin]
+  URL = ""
+  Password = ""
+  Username = ""
+
+# The port on which the `/metrics` endpoint will be available and the frequency
+# with which the metrics will be collected can be customized using the
+# below parameters. `ChainMetricsTick` determines the tick of metrics related
+# with BTC and host chains and should be set carefully as it may greatly
+# increase the number of requests sent to the chain clients. `NodeMetricsTick`
+# sets the tick for metrics related with the relay node itself.
+[Metrics]
+  Port = ""
+  ChainMetricsTick = ""
+  NodeMetricsTick = ""
