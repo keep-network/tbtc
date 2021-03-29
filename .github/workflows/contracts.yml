@@ -1,20 +1,13 @@
 name: Solidity
 
-#TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
     branches:
-      # TODO: Run only on master after we're fully migrated from Circle CI
-      - "rfc-18/**"
       - master
     paths:
       - "solidity/**"
       - ".github/workflows/contracts.yml"
   pull_request:
-    branches:
-      # TODO: Run on all branches after we're fully migrated from Circle CI
-      - "rfc-18/**"
-      - master
     paths:
       - "solidity/**"
       - ".github/workflows/contracts.yml"
@@ -86,10 +79,8 @@ jobs:
 
   migrate-and-publish-ethereum:
     needs: [build-and-test, lint]
-    # TODO: Remove 'rfc-18/' condition once migration to GH Actions is done
     if: |
-      (startsWith(github.ref, 'refs/heads/rfc-18/')
-        || github.ref == 'refs/heads/master')
+      github.ref == 'refs/heads/master'
         && (github.event_name == 'push'
         || github.event_name == 'workflow_dispatch')
     environment: keep-test # keep-test requires a manual aproval
@@ -176,10 +167,9 @@ jobs:
           workDir: ./solidity
 
       - name: Publish to npm
-        # TODO: --dry-run to be removed once testing of workflow is done
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
-          npm publish --access=public --dry-run
+          npm publish --access=public
 
   migrate-and-publish-celo:
     needs: [build-and-test, lint]
