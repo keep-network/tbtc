@@ -6,15 +6,31 @@ on:
       - master
     paths:
       - "solidity/**"
-      - ".github/workflows/contracts.yml"
   pull_request:
-    paths:
-      - "solidity/**"
-      - ".github/workflows/contracts.yml"
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  contracts-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './solidity/**'
+
+  contracts-build-and-test:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || (github.event_name == 'pull_request'
+        && needs.contracts-detect-changes.outputs.path-filter == 'true') 
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -47,7 +63,12 @@ jobs:
       - name: Run tests
         run: npm run test:quick
 
-  lint:
+  contracts-lint:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || (github.event_name == 'pull_request'
+        && needs.contracts-detect-changes.outputs.path-filter == 'true') 
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -77,12 +98,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  migrate-and-publish-ethereum:
-    needs: [build-and-test, lint]
+  contracts-migrate-and-publish-ethereum:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
       github.ref == 'refs/heads/master'
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+        && github.event_name != 'pull_request'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -171,12 +191,11 @@ jobs:
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
 
-  migrate-and-publish-celo:
-    needs: [build-and-test, lint]
+  contracts-migrate-and-publish-celo:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
       github.ref == 'refs/heads/master'
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+        && github.event_name != 'pull_request'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
