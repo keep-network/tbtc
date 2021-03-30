@@ -236,3 +236,27 @@ func (ec *ethereumChain) MarkNewHeaviest(
 
 	return nil
 }
+
+// MarkNewHeaviestPreflight performs a preflight call of the
+// MarkNewHeaviest method to check whether its execution will
+// succeed.
+func (ec *ethereumChain) MarkNewHeaviestPreflight(
+	ancestorDigest [32]byte,
+	currentBestHeader []byte,
+	newBestHeader []byte,
+	limit *big.Int,
+) bool {
+	result, err := ec.relayContract.CallMarkNewHeaviest(
+		ancestorDigest,
+		currentBestHeader,
+		newBestHeader,
+		limit,
+		nil,
+	)
+	if err != nil {
+		logger.Warnf("MarkNewHeaviest preflight failed with: [%v]", err)
+		return false
+	}
+
+	return result
+}

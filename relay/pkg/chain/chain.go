@@ -53,4 +53,15 @@ type Relay interface {
 		newBestHeader []byte,
 		limit *big.Int,
 	) error
+
+	// MarkNewHeaviestPreflight performs a preflight call of the
+	// MarkNewHeaviest method to check whether its execution will
+	// succeed. If the preflight call was successful, `true` is returned.
+	// In case the preflight returns an error, `false` is returned.
+	MarkNewHeaviestPreflight(
+		ancestorDigest [32]byte,
+		currentBestHeader []byte,
+		newBestHeader []byte,
+		limit *big.Int,
+	) bool
 }

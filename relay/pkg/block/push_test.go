@@ -2,6 +2,7 @@ package block
 
 import (
 	"context"
+	"encoding/binary"
 	"math/big"
 	"reflect"
 	"sync"
@@ -91,7 +92,7 @@ func TestPullHeadersFromQueue(t *testing.T) {
 	}
 }
 
-func TestPushHeadersToHostChain_AddHeaders(t *testing.T) {
+func TestPushHeadersToHostChain_NoDifficultyChange(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
@@ -181,7 +182,9 @@ func TestPushHeadersToHostChain_AddHeaders(t *testing.T) {
 	}
 }
 
-func TestPushHeadersToHostChain_AddHeadersWithUpdateBestHeader(t *testing.T) {
+func TestPushHeadersToHostChain_NoDifficultyChange_WithUpdateBestHeader(
+	t *testing.T,
+) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
@@ -291,4 +294,244 @@ func TestPushHeadersToHostChain_AddHeadersWithUpdateBestHeader(t *testing.T) {
 			actualMarkNewHeaviestEvent,
 		)
 	}
+}
+
+func TestPushHeadersToHostChain_DifficultyChangeAtBeginning(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	bc, err := btc.ConnectLocal()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	btcChain := bc.(*btc.LocalChain)
+
+	// When adding headers with retarget, previous epoch boundary headers will
+	// be searched by heights. Because of that, the local BTC chain must be
+	// aware of it.
+	btcChain.SetHeaders([]*btc.Header{
+		{Hash: to32Bytes(2016), Height: 2016, Raw: toBytes(2016)},
+		{Hash: to32Bytes(4031), Height: 4031, Raw: toBytes(4031)},
+	})
+
+	lc, err := chainlocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain := lc.(*chainlocal.Chain)
+
+	forwarder := &Forwarder{
+		btcChain:  btcChain,
+		hostChain: localChain,
+	}
+
+	headers := []*btc.Header{
+		// First header's height modulo epoch duration (2016) must be zero.
+		{Hash: to32Bytes(4032), Height: 4032, Raw: toBytes(4032)},
+		{Hash: to32Bytes(4033), Height: 4033, Raw: toBytes(4033)},
+		{Hash: to32Bytes(4034), Height: 4034, Raw: toBytes(4034)},
+		{Hash: to32Bytes(4035), Height: 4035, Raw: toBytes(4035)},
+	}
+
+	err = forwarder.pushHeadersToHostChain(ctx, headers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	addHeadersWithRetargetEvents := localChain.AddHeadersWithRetargetEvents()
+
+	expectedEventsCount := 1
+	actualEventsCount := len(addHeadersWithRetargetEvents)
+	if expectedEventsCount != actualEventsCount {
+		t.Fatalf(
+			"unexpected number of add headers with retarget events:\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedEventsCount,
+			actualEventsCount,
+		)
+	}
+
+	expectedAddHeadersWithRetargetEvent := &chainlocal.AddHeadersWithRetargetEvent{
+		OldPeriodStartHeader: toBytes(2016),
+		OldPeriodEndHeader:   toBytes(4031),
+		Headers:              toBytes(4032, 4033, 4034, 4035),
+	}
+	actualAddHeadersWithRetargetEvent := addHeadersWithRetargetEvents[0]
+	if !reflect.DeepEqual(
+		expectedAddHeadersWithRetargetEvent,
+		actualAddHeadersWithRetargetEvent,
+	) {
+		t.Errorf(
+			"unexpected add headers with retarget event:\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]\n",
+			expectedAddHeadersWithRetargetEvent,
+			actualAddHeadersWithRetargetEvent,
+		)
+	}
+
+	markNewHeaviestEvents := localChain.MarkNewHeaviestEvents()
+
+	// Four headers have been added. This number is not bigger or equal than
+	// the batch size so update of best header should not be triggered.
+	expectedEventsCount = 0
+	actualEventsCount = len(markNewHeaviestEvents)
+	if expectedEventsCount != actualEventsCount {
+		t.Fatalf(
+			"unexpected number of mark new heaviest events:\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedEventsCount,
+			actualEventsCount,
+		)
+	}
+}
+
+func TestPushHeadersToHostChain_DifficultyChangeInMiddle(t *testing.T) {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	bc, err := btc.ConnectLocal()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	btcChain := bc.(*btc.LocalChain)
+
+	// Headers will be added with and without retarget. Because of that, BTC
+	// chain must be aware about the ancestor of the first header in the
+	// pre-change batch. It must be also aware of previous epoch boundary
+	// headers for the post-change batch.
+	btcChain.SetHeaders([]*btc.Header{
+		{Hash: to32Bytes(2016), Height: 2016, Raw: toBytes(2016)},
+		{Hash: to32Bytes(4029), Height: 4029, Raw: toBytes(4029)},
+		{Hash: to32Bytes(4031), Height: 4031, Raw: toBytes(4031)},
+	})
+
+	lc, err := chainlocal.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localChain := lc.(*chainlocal.Chain)
+
+	forwarder := &Forwarder{
+		btcChain:  btcChain,
+		hostChain: localChain,
+	}
+
+	headers := []*btc.Header{
+		// Setting the first header's ancestor by setting the right value
+		// of the PrevHash field.
+		{Hash: to32Bytes(4030), Height: 4030, PrevHash: to32Bytes(4029), Raw: toBytes(4030)},
+		{Hash: to32Bytes(4031), Height: 4031, PrevHash: to32Bytes(4030), Raw: toBytes(4031)},
+		// Difficulty change occurs on the third header as their height
+		// modulo 2016 is zero.
+		{Hash: to32Bytes(4032), Height: 4032, PrevHash: to32Bytes(4031), Raw: toBytes(4032)},
+		{Hash: to32Bytes(4033), Height: 4033, PrevHash: to32Bytes(4032), Raw: toBytes(4033)},
+	}
+
+	err = forwarder.pushHeadersToHostChain(ctx, headers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	addHeadersEvents := localChain.AddHeadersEvents()
+
+	expectedEventsCount := 1
+	actualEventsCount := len(addHeadersEvents)
+	if expectedEventsCount != actualEventsCount {
+		t.Fatalf(
+			"unexpected number of add headers events:\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedEventsCount,
+			actualEventsCount,
+		)
+	}
+
+	expectedAddHeadersEvent := &chainlocal.AddHeadersEvent{
+		AnchorHeader: toBytes(4029),
+		Headers:      toBytes(4030, 4031),
+	}
+	actualAddHeadersEvent := addHeadersEvents[0]
+	if !reflect.DeepEqual(expectedAddHeadersEvent, actualAddHeadersEvent) {
+		t.Errorf(
+			"unexpected add headers event:\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]\n",
+			expectedAddHeadersEvent,
+			actualAddHeadersEvent,
+		)
+	}
+
+	addHeadersWithRetargetEvents := localChain.AddHeadersWithRetargetEvents()
+
+	expectedEventsCount = 1
+	actualEventsCount = len(addHeadersWithRetargetEvents)
+	if expectedEventsCount != actualEventsCount {
+		t.Fatalf(
+			"unexpected number of add headers with retarget events:\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedEventsCount,
+			actualEventsCount,
+		)
+	}
+
+	expectedAddHeadersWithRetargetEvent := &chainlocal.AddHeadersWithRetargetEvent{
+		OldPeriodStartHeader: toBytes(2016),
+		OldPeriodEndHeader:   toBytes(4031),
+		Headers:              toBytes(4032, 4033),
+	}
+	actualAddHeadersWithRetargetEvent := addHeadersWithRetargetEvents[0]
+	if !reflect.DeepEqual(
+		expectedAddHeadersWithRetargetEvent,
+		actualAddHeadersWithRetargetEvent,
+	) {
+		t.Errorf(
+			"unexpected add headers with retarget event:\n"+
+				"expected: [%+v]\n"+
+				"actual:   [%+v]\n",
+			expectedAddHeadersWithRetargetEvent,
+			actualAddHeadersWithRetargetEvent,
+		)
+	}
+
+	markNewHeaviestEvents := localChain.MarkNewHeaviestEvents()
+
+	// Four headers have been added. This number is not bigger or equal than
+	// the batch size so update of best header should not be triggered.
+	expectedEventsCount = 0
+	actualEventsCount = len(markNewHeaviestEvents)
+	if expectedEventsCount != actualEventsCount {
+		t.Fatalf(
+			"unexpected number of mark new heaviest events:\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]\n",
+			expectedEventsCount,
+			actualEventsCount,
+		)
+	}
+}
+
+func toBytes(values ...int) []byte {
+	result := make([]byte, 0)
+
+	for _, value := range values {
+		valueResult := make([]byte, 4)
+		binary.LittleEndian.PutUint32(valueResult, uint32(value))
+		result = append(result, valueResult...)
+	}
+
+	return result
+}
+
+func to32Bytes(value int) [32]byte {
+	result := [32]byte{}
+	copy(result[:], toBytes(value))
+	return result
 }

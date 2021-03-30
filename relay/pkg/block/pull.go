@@ -12,10 +12,6 @@ func (f *Forwarder) pullHeaderFromBtcChain(
 	ctx context.Context,
 ) (*btc.Header, error) {
 	for {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-
 		chainHeight, err := f.btcChain.GetBlockCount()
 		if err != nil {
 			return nil, fmt.Errorf("could not get block count [%v]", err)
@@ -44,6 +40,7 @@ func (f *Forwarder) pullHeaderFromBtcChain(
 		select {
 		case <-time.After(f.pullingSleepTime):
 		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 	}
 }

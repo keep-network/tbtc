@@ -78,15 +78,42 @@ func (f *Forwarder) pushHeadersToHostChain(
 
 	if startMod == 0 {
 		// we have a difficulty change first
-		// TODO: implementation
+		logger.Info(
+			"adding all headers with retarget as there is a difficulty " +
+				"change at the beginning of headers batch",
+		)
+
+		if err := f.addHeadersWithRetarget(headers); err != nil {
+			return fmt.Errorf("could not add headers with retarget: [%v]", err)
+		}
 	} else if startMod > endMod {
 		// we span a difficulty change
-		// TODO: implementation
+		logger.Info(
+			"adding some headers with retarget as there is a difficulty " +
+				"change in the middle of headers batch",
+		)
+
+		preChangeHeaders, postChangeHeaders := splitBatch(headers, startMod)
+
+		if len(preChangeHeaders) > 0 {
+			if err := f.addHeaders(preChangeHeaders); err != nil {
+				return fmt.Errorf("could not add headers: [%v]", err)
+			}
+		}
+
+		if len(postChangeHeaders) > 0 {
+			if err := f.addHeadersWithRetarget(postChangeHeaders); err != nil {
+				return fmt.Errorf(
+					"could not add headers with retarget: [%v]",
+					err,
+				)
+			}
+		}
 	} else {
 		// no difficulty change
-		logger.Infof(
-			"performing simple headers adding as difficulty doesn't " +
-				"change within headers batch",
+		logger.Info(
+			"adding all headers without retarget as there is no " +
+				"difficulty change within headers batch",
 		)
 
 		if err := f.addHeaders(headers); err != nil {
@@ -122,39 +149,100 @@ func (f *Forwarder) addHeaders(headers []*btc.Header) error {
 	return f.hostChain.AddHeaders(anchorHeader.Raw, packHeaders(headers))
 }
 
-func (f *Forwarder) updateBestHeader(
-	ctx context.Context,
-	newBestHeader *btc.Header,
-) error {
-	currentBestDigest, err := f.hostChain.GetBestKnownDigest()
-	if err != nil {
-		return fmt.Errorf("could not get best known digest: [%v]", err)
-	}
+func (f *Forwarder) addHeadersWithRetarget(headers []*btc.Header) error {
+	epochStart := headers[0].Height - difficultyEpochDuration
+	epochEnd := epochStart + difficultyEpochDuration - 1
 
-	currentBestHeader, err := f.btcChain.GetHeaderByDigest(currentBestDigest)
+	oldPeriodStartHeader, err := f.btcChain.GetHeaderByHeight(epochStart)
 	if err != nil {
 		return fmt.Errorf(
-			"could not get current best header by digest: [%v]",
+			"could not get header by height [%v]: [%v]",
+			epochStart,
 			err,
 		)
 	}
 
-	lastCommonAncestor, err := f.findLastCommonAncestor(
-		ctx,
-		newBestHeader,
-		currentBestHeader,
-	)
+	oldPeriodEndHeader, err := f.btcChain.GetHeaderByHeight(epochEnd)
 	if err != nil {
-		return fmt.Errorf("could not find last common ancestor: [%v]", err)
+		return fmt.Errorf(
+			"could not get header by height [%v]: [%v]",
+			epochEnd,
+			err,
+		)
 	}
 
-	limit := newBestHeader.Height - lastCommonAncestor.Height + 1
+	return f.hostChain.AddHeadersWithRetarget(
+		oldPeriodStartHeader.Raw,
+		oldPeriodEndHeader.Raw,
+		packHeaders(headers),
+	)
+}
 
-	return f.hostChain.MarkNewHeaviest(
-		lastCommonAncestor.Hash,
-		currentBestHeader.Raw,
-		newBestHeader.Raw,
-		big.NewInt(limit),
+func (f *Forwarder) updateBestHeader(
+	ctx context.Context,
+	newBestHeader *btc.Header,
+) error {
+	for attempt := 1; attempt <= updateBestHeaderMaxAttempts; attempt++ {
+		logger.Infof(
+			"attempt [%v] to set header [%v] as new best",
+			attempt,
+			newBestHeader.Height,
+		)
+
+		currentBestDigest, err := f.hostChain.GetBestKnownDigest()
+		if err != nil {
+			return fmt.Errorf("could not get best known digest: [%v]", err)
+		}
+
+		currentBestHeader, err := f.btcChain.GetHeaderByDigest(
+			currentBestDigest,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"could not get current best header by digest: [%v]",
+				err,
+			)
+		}
+
+		lastCommonAncestor, err := f.findLastCommonAncestor(
+			ctx,
+			newBestHeader,
+			currentBestHeader,
+		)
+		if err != nil {
+			return fmt.Errorf("could not find last common ancestor: [%v]", err)
+		}
+
+		limit := big.NewInt(
+			newBestHeader.Height - lastCommonAncestor.Height + 1,
+		)
+
+		if willSucceed := f.hostChain.MarkNewHeaviestPreflight(
+			lastCommonAncestor.Hash,
+			currentBestHeader.Raw,
+			newBestHeader.Raw,
+			limit,
+		); willSucceed {
+			return f.hostChain.MarkNewHeaviest(
+				lastCommonAncestor.Hash,
+				currentBestHeader.Raw,
+				newBestHeader.Raw,
+				limit,
+			)
+		}
+
+		// wait a constant back-off time
+		select {
+		case <-time.After(updateBestHeaderBackoffTime):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
+	return fmt.Errorf(
+		"could not set header [%v] as new best after [%v] attempts",
+		newBestHeader.Height,
+		updateBestHeaderMaxAttempts,
 	)
 }
 
@@ -174,6 +262,12 @@ func (f *Forwarder) findLastCommonAncestor(
 		ancestorHeader := currentBestHeader
 
 		for i := 0; i < 20; i++ {
+			// This loop can be long-running so check the context before
+			// each iteration.
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+
 			isAncestor, err := f.hostChain.IsAncestor(
 				ancestorHeader.Hash,
 				newBestHeader.Hash,
@@ -202,6 +296,7 @@ func (f *Forwarder) findLastCommonAncestor(
 		select {
 		case <-time.After(15 * time.Second):
 		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 	}
 
@@ -219,4 +314,26 @@ func packHeaders(headers []*btc.Header) []byte {
 	}
 
 	return packed
+}
+
+func splitBatch(headers []*btc.Header, startMod int64) (
+	preChangeHeaders,
+	postChangeHeaders []*btc.Header,
+) {
+	for _, header := range headers {
+		if header.Height%difficultyEpochDuration >= startMod {
+			preChangeHeaders = append(preChangeHeaders, header)
+		} else if header.Height%difficultyEpochDuration < startMod {
+			postChangeHeaders = append(postChangeHeaders, header)
+		} else {
+			logger.Errorf(
+				"could not assign header [%v] to pre/post-change "+
+					"part where start mod is [%v]",
+				header,
+				startMod,
+			)
+		}
+	}
+
+	return
 }
