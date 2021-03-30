@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/keep-network/tbtc/relay/pkg/btc"
-	btclocal "github.com/keep-network/tbtc/relay/pkg/btc/local"
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
@@ -71,12 +70,12 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	bc, err := btclocal.Connect()
+	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	btcChain := bc.(*btclocal.Chain)
+	btcChain := bc.(*btc.LocalChain)
 
 	btcChain.SetHeaders([]*btc.Header{
 		{Height: 1, Hash: [32]byte{1}, Raw: []byte{1}},
@@ -178,12 +177,12 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 }
 
 func TestFindBestHeader_HostChainReturnsBestBlock(t *testing.T) {
-	bc, err := btclocal.Connect()
+	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	btcChain := bc.(*btclocal.Chain)
+	btcChain := bc.(*btc.LocalChain)
 
 	btcChain.SetHeaders([]*btc.Header{
 		{Height: 1, Hash: [32]byte{1}, Raw: []byte{1}},
@@ -221,7 +220,7 @@ func TestFindBestHeader_HostChainReturnsBestBlock(t *testing.T) {
 }
 
 func TestFindBestHeader_HostChainDoesNotReturnBestBlock(t *testing.T) {
-	bc, err := btclocal.Connect()
+	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,7 +233,7 @@ func TestFindBestHeader_HostChainDoesNotReturnBestBlock(t *testing.T) {
 	// 	     \
 	// 	       3 - 4 - 5  longest chain
 
-	btcChain := bc.(*btclocal.Chain)
+	btcChain := bc.(*btc.LocalChain)
 
 	btcChain.SetHeaders([]*btc.Header{
 		{Height: 1, Hash: [32]byte{1}, PrevHash: [32]byte{0}},
