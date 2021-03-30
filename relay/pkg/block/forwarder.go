@@ -10,6 +10,11 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
 
+// TODO: Make the following refactoring:
+//  - rename `block` package to `header` (align all logging and stuff)
+//  - rename `Forwarder` to `Relay`
+//  - rename `RunForwarder` to `StartRelay`
+
 const (
 	// Size of the headers queue.
 	headersQueueSize = 50
