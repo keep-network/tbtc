@@ -17,6 +17,9 @@ type Node struct {
 }
 
 // Initialize initializes the relay node.
+//
+// TODO: This function will be probably the right place to handle relay auctions
+//  which will require starting and stopping the block forwarder.
 func Initialize(
 	ctx context.Context,
 	btcChain btc.Handle,

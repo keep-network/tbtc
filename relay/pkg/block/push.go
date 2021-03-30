@@ -9,9 +9,17 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 )
 
-// pullHeadersFromQueue waits until we have `headersBatchSize` headers from
-// the queue or until the queue fails to yield a header for
-// `headerTimeout` duration and returns them from the function.
+// TODO: Make a small refactor:
+//  - On top of push.go and pull.go put a comment explaining the flow:
+//    eg.: f.headersQueue -> pullHeadersFromQueue -> pushHeadersToHostChain
+//  - Rename `pullHeadersFromQueue` to `getHeadersFromQueue`
+//  - Rename `pushHeadersToQueue` to `putHeadersToQueue`
+
+// pullHeadersFromQueue blocks until there is `headersBatchSize` headers in
+// the queue or until `headerTimeout` is hit and no more headers are available
+// in the queue. Normally, this function returns headers from the queue but not
+// less than one and no more than `headersBatchSize` headers. Empty headers
+// slice can be returned only in case the provided context is cancelled.
 func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
 	headers := make([]*btc.Header, 0)
 
@@ -70,7 +78,7 @@ func (f *Forwarder) pushHeadersToHostChain(
 
 	if startMod == 0 {
 		// we have a difficulty change first
-		logger.Infof(
+		logger.Info(
 			"adding all headers with retarget as there is a difficulty " +
 				"change at the beginning of headers batch",
 		)
@@ -80,7 +88,7 @@ func (f *Forwarder) pushHeadersToHostChain(
 		}
 	} else if startMod > endMod {
 		// we span a difficulty change
-		logger.Infof(
+		logger.Info(
 			"adding some headers with retarget as there is a difficulty " +
 				"change in the middle of headers batch",
 		)
@@ -103,9 +111,9 @@ func (f *Forwarder) pushHeadersToHostChain(
 		}
 	} else {
 		// no difficulty change
-		logger.Infof(
-			"simply adding all headers as there is no difficulty change " +
-				"within headers batch",
+		logger.Info(
+			"adding all headers without retarget as there is no " +
+				"difficulty change within headers batch",
 		)
 
 		if err := f.addHeaders(headers); err != nil {
@@ -174,9 +182,7 @@ func (f *Forwarder) updateBestHeader(
 	ctx context.Context,
 	newBestHeader *btc.Header,
 ) error {
-	totalAttempts := 30
-
-	for attempt := 1; attempt <= totalAttempts; attempt++ {
+	for attempt := 1; attempt <= updateBestHeaderMaxAttempts; attempt++ {
 		logger.Infof(
 			"attempt [%v] to set header [%v] as new best",
 			attempt,
@@ -227,7 +233,7 @@ func (f *Forwarder) updateBestHeader(
 
 		// wait a constant back-off time
 		select {
-		case <-time.After(10 * time.Second):
+		case <-time.After(updateBestHeaderBackoffTime):
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -236,7 +242,7 @@ func (f *Forwarder) updateBestHeader(
 	return fmt.Errorf(
 		"could not set header [%v] as new best after [%v] attempts",
 		newBestHeader.Height,
-		totalAttempts,
+		updateBestHeaderMaxAttempts,
 	)
 }
 
@@ -320,9 +326,11 @@ func splitBatch(headers []*btc.Header, startMod int64) (
 		} else if header.Height%difficultyEpochDuration < startMod {
 			postChangeHeaders = append(postChangeHeaders, header)
 		} else {
-			logger.Warnf(
-				"could not assign header [%v] to pre/post-change part",
+			logger.Errorf(
+				"could not assign header [%v] to pre/post-change "+
+					"part where start mod is [%v]",
 				header,
+				startMod,
 			)
 		}
 	}

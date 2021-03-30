@@ -10,6 +10,11 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
 
+// TODO: Make the following refactoring:
+//  - rename `block` package to `header` (align all logging and stuff)
+//  - rename `Forwarder` to `Relay`
+//  - rename `RunForwarder` to `StartRelay`
+
 const (
 	// Size of the headers queue.
 	headersQueueSize = 50
@@ -28,9 +33,19 @@ const (
 	// a push action.
 	forwarderPushingSleepTime = 45 * time.Second
 
-	// Duration for which the forwarder should rest after reaching the tip of
-	// Bitcoin blockchain
+	// Duration for which the forwarder should rest after reaching the
+	// tip of Bitcoin blockchain. The forwarder waits for this time before
+	// it tries to fetch a new tip from the Bitcoin blockchain, giving it
+	// some time to mine new blocks.
 	forwarderPullingSleepTime = 60 * time.Second
+
+	// Maximum number of attempts which will be performed while trying
+	// to update the best header.
+	updateBestHeaderMaxAttempts = 30
+
+	// Back-off time which should be applied between updating best header
+	// attempts.
+	updateBestHeaderBackoffTime = 10 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
@@ -52,14 +67,14 @@ type Forwarder struct {
 	btcChain  btc.Handle
 	hostChain chain.Handle
 
+	pullingSleepTime time.Duration
+
 	processedHeaders     int
 	nextPullHeaderHeight int64
 	lastPulledHeader     *btc.Header
 
 	headersQueue chan *btc.Header
 	errChan      chan error
-
-	loopExitHandler func()
 
 	observer ForwarderObserver
 }
@@ -76,27 +91,30 @@ func RunForwarder(
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 
 	forwarder := &Forwarder{
-		btcChain:        btcChain,
-		hostChain:       hostChain,
-		headersQueue:    make(chan *btc.Header, headersQueueSize),
-		errChan:         make(chan error, 1),
-		loopExitHandler: cancelLoopCtx,
-		observer:        observer,
+		btcChain:         btcChain,
+		hostChain:        hostChain,
+		pullingSleepTime: forwarderPullingSleepTime,
+		headersQueue:     make(chan *btc.Header, headersQueueSize),
+		errChan:          make(chan error, 1),
+		observer:         observer,
 	}
 
-	go forwarder.pullingLoop(loopCtx)
-	go forwarder.pushingLoop(loopCtx)
+	go func() {
+		forwarder.pullingLoop(loopCtx)
+		cancelLoopCtx() // loop exited, cancel the context
+	}()
+
+	go func() {
+		forwarder.pushingLoop(loopCtx)
+		cancelLoopCtx() // loop exited, cancel the context
+	}()
 
 	return forwarder
 }
 
 func (f *Forwarder) pullingLoop(ctx context.Context) {
 	logger.Infof("running new block pulling loop")
-
-	defer func() {
-		logger.Infof("stopping current block pulling loop")
-		f.loopExitHandler()
-	}()
+	defer logger.Infof("stopping current block pulling loop")
 
 	latestHeader, err := f.findBestHeader()
 	if err != nil {
@@ -135,11 +153,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 
 func (f *Forwarder) pushingLoop(ctx context.Context) {
 	logger.Infof("running new block pushing loop")
-
-	defer func() {
-		logger.Infof("stopping current block pushing loop")
-		f.loopExitHandler()
-	}()
+	defer logger.Infof("stopping current block pushing loop")
 
 	for {
 		select {
@@ -150,6 +164,8 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 
 			headers := f.pullHeadersFromQueue(ctx)
 			if len(headers) == 0 {
+				// Empty headers slice is returned only in case when context
+				// has been cancelled.
 				continue
 			}
 
@@ -157,6 +173,10 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 
 			if err := f.pushHeadersToHostChain(ctx, headers); err != nil {
 				f.errChan <- fmt.Errorf("could not push headers: [%v]", err)
+				// We exit on the first error letting the code controlling the
+				// relay to restart it. The relay is stateful and it is easier
+				// to fetch the most recent information from BTC after the
+				// restart instead of trying to recover here.
 				return
 			}
 
