@@ -1,22 +1,13 @@
 version: 2.1
 
 orbs:
-  gcp-cli: circleci/gcp-cli@1.8.2
   gcp-gcr: circleci/gcp-gcr@0.0.4
 
 executors:
   docker-node:
     docker:
       - image: circleci/node:12
-  docker-node-gcloud:
-    docker:
-      - image: appfarm/node-gcloud-base
-  docker-git:
-    docker:
-      - image: docker:18.06.0-ce-git
-  docker-thesis-buildpack:
-    docker:
-      - image: thesisco/docker-buildpack:bionic
+
 jobs:
   resolve_latest:
     executor: docker-node
@@ -53,120 +44,6 @@ jobs:
           paths:
            - solidity/node_modules
            - solidity/build/contracts
-  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml)
-  # has been created as part of work on RFC-18
-  lint:
-    executor: docker-node
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Lint Implementation
-          working_directory: ~/project/solidity
-          command: |
-            set -ex
-            npm run lint
-  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml)
-  # has been created as part of work on RFC-18
-  unit_test_contracts:
-    executor: docker-node
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Run NPM tests
-          working_directory: ~/project/solidity
-          command: npm run test:quick
-  migrate_contracts:
-    executor: docker-node-gcloud
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - attach_workspace:
-          at: .
-      - run:
-          name: Set Gcloud Auth for bucket access
-          command: |
-            echo $GCLOUD_SERVICE_KEY > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
-      - run:
-          name: Provision External Contract Addresses
-          command: |
-            # This needs to be part of a base docker image, not installed here.
-            apt-get update
-            apt-get install jq -y
-
-            solidity/scripts/ci-provision-external-contracts.sh
-      - run:
-          name: Migrate Contracts
-          command: |
-            export BUILD_TAG=$CIRCLE_SHA1
-            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
-            solidity/scripts/circleci-migrate-contracts.sh
-      - persist_to_workspace:
-          root: /tmp/tbtc
-          paths:
-            - contracts
-  publish_npm_package:
-    executor: docker-node
-    steps:
-      - attach_workspace:
-          at: /tmp/tbtc
-      - checkout
-      - run:
-          name: Bump and publish npm package
-          working_directory: ~/project/solidity
-          command: |
-            set -x
-            mkdir -p artifacts
-            cp -r /tmp/tbtc/contracts/* artifacts/
-            name=$(jq --raw-output .name package.json)
-            version=$(jq --raw-output .version package.json)
-            preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
-
-            # Find the latest published package version matching this preid.
-            # Note that in jq, we wrap the result in an array and then flatten;
-            # this is because npm show json contains a single string if there
-            # is only one matching version, or an array if there are multiple,
-            # and we want to look at an array always.
-            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | .[-1]")
-            latest_version=${latest_version:-$version}
-            if [ -z $latest_version ]; then
-              echo "Latest version calculation failed. Resolved info:"
-              echo "$name@$version ; preid $preid"
-              exit 1
-            fi
-
-            # Update package.json with the latest published package version matching this
-            # preid to prepare for bumping.
-            echo $(jq -M ".version=\"${latest_version}\"" package.json) > package.json
-
-            # Bump without doing any git work. Versioning is a build-time action for us.
-            # Consider including commit id? Would be +<commit id>.
-            npm version prerelease --preid=$preid --no-git-tag-version
-
-            # Publish to npm.
-            echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
-            npm publish --access=public
-  publish_contract_data:
-    executor: gcp-cli/default
-    steps:
-      - attach_workspace:
-          at: /tmp/tbtc
-      - gcp-cli/install
-      - gcp-cli/initialize:
-          google-project-id: GOOGLE_PROJECT_ID
-          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
-          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
-          gcloud-service-key: GCLOUD_SERVICE_KEY
-      - run:
-          name: Upload contract data
-          command: |
-            cd /tmp/tbtc/contracts
-            gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/tbtc
   build_relay_maintainer_initcontainer:
     executor: docker-node
     steps:
@@ -211,18 +88,6 @@ jobs:
 
 workflows:
   version: 2
-  lint:
-    jobs:
-      - compile_contracts
-      - lint:
-          requires:
-            - compile_contracts
-  test:
-    jobs:
-      - compile_contracts
-      - unit_test_contracts:
-          requires:
-            - compile_contracts
   build_publish_keep_dev:
     jobs:
       - compile_contracts
@@ -263,33 +128,6 @@ workflows:
               only: /releases\/.*/
           requires:
             - resolve_latest
-      - migrate_contracts:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: /releases\/.*/
-          context: keep-test
-          requires:
-            - compile_contracts
-      - publish_npm_package:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: /releases\/.*/
-          context: keep-test
-          requires:
-            - migrate_contracts
-      - publish_contract_data:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: /releases\/.*/
-          context: keep-test
-          requires:
-            - migrate_contracts
       - build_relay_maintainer_initcontainer:
           filters:
             tags:
@@ -297,8 +135,6 @@ workflows:
             branches:
               only: /releases\/.*/
           context: keep-test
-          requires:
-            - publish_npm_package
       - publish_relay_maintainer_initcontainer:
           filters:
             tags:
