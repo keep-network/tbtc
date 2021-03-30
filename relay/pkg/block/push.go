@@ -112,8 +112,8 @@ func (f *Forwarder) pushHeadersToHostChain(
 	} else {
 		// no difficulty change
 		logger.Infof(
-			"simply adding all headers as there is no difficulty change " +
-				"within headers batch",
+			"adding all headers without retarget as there is no " +
+				"difficulty change within headers batch",
 		)
 
 		if err := f.addHeaders(headers); err != nil {
@@ -326,9 +326,11 @@ func splitBatch(headers []*btc.Header, startMod int64) (
 		} else if header.Height%difficultyEpochDuration < startMod {
 			postChangeHeaders = append(postChangeHeaders, header)
 		} else {
-			logger.Warnf(
-				"could not assign header [%v] to pre/post-change part",
+			logger.Errorf(
+				"could not assign header [%v] to pre/post-change "+
+					"part where start mod is [%v]",
 				header,
+				startMod,
 			)
 		}
 	}
