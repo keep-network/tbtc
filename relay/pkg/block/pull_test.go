@@ -84,9 +84,9 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 	})
 
 	forwarder := &Forwarder{
-		btcChain:                  btcChain,
-		forwarderPullingSleepTime: 300 * time.Millisecond,
-		nextPullHeaderHeight:      1,
+		btcChain:             btcChain,
+		pullingSleepTime:     300 * time.Millisecond,
+		nextPullHeaderHeight: 1,
 	}
 
 	// Test that we can pull headers without waiting when we have not reached

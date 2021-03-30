@@ -28,10 +28,10 @@ const (
 	// a push action.
 	forwarderPushingSleepTime = 45 * time.Second
 
-	// Default duration for which the forwarder should rest after reaching the
+	// Duration for which the forwarder should rest after reaching the
 	// tip of Bitcoin blockchain. The forwarder waits for this time before
-	// it tries to fetch a new tip from the Bitcoin blockchain, giving it some
-	// time to mine new blocks.
+	// it tries to fetch a new tip from the Bitcoin blockchain, giving it
+	// some time to mine new blocks.
 	forwarderPullingSleepTime = 60 * time.Second
 )
 
@@ -43,7 +43,7 @@ type Forwarder struct {
 	btcChain  btc.Handle
 	hostChain chain.Handle
 
-	forwarderPullingSleepTime time.Duration
+	pullingSleepTime time.Duration
 
 	processedHeaders     int
 	nextPullHeaderHeight int64
@@ -66,12 +66,12 @@ func RunForwarder(
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 
 	forwarder := &Forwarder{
-		btcChain:                  btcChain,
-		hostChain:                 hostChain,
-		forwarderPullingSleepTime: forwarderPullingSleepTime,
-		headersQueue:              make(chan *btc.Header, headersQueueSize),
-		errChan:                   make(chan error, 1),
-		loopExitHandler:           cancelLoopCtx,
+		btcChain:         btcChain,
+		hostChain:        hostChain,
+		pullingSleepTime: forwarderPullingSleepTime,
+		headersQueue:     make(chan *btc.Header, headersQueueSize),
+		errChan:          make(chan error, 1),
+		loopExitHandler:  cancelLoopCtx,
 	}
 
 	go forwarder.pullingLoop(loopCtx)
