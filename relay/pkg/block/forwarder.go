@@ -28,9 +28,11 @@ const (
 	// a push action.
 	forwarderPushingSleepTime = 45 * time.Second
 
-	// Default duration for which the forwarder should rest after reaching the tip of
-	// Bitcoin blockchain
-	defaultForwarderPullingSleepTime = 60 * time.Second
+	// Default duration for which the forwarder should rest after reaching the
+	// tip of Bitcoin blockchain. The forwarder waits for this time before
+	// it tries to fetch a new tip from the Bitcoin blockchain, giving it some
+	// time to mine new blocks.
+	forwarderPullingSleepTime = 60 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
@@ -66,7 +68,7 @@ func RunForwarder(
 	forwarder := &Forwarder{
 		btcChain:                  btcChain,
 		hostChain:                 hostChain,
-		forwarderPullingSleepTime: defaultForwarderPullingSleepTime,
+		forwarderPullingSleepTime: forwarderPullingSleepTime,
 		headersQueue:              make(chan *btc.Header, headersQueueSize),
 		errChan:                   make(chan error, 1),
 		loopExitHandler:           cancelLoopCtx,
