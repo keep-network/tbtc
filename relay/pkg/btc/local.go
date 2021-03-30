@@ -9,7 +9,7 @@ import (
 // LocalChain represents a local Bitcoin chain.
 type LocalChain struct {
 	headers         []*Header
-	orphanedHeaders []*btc.Header
+	orphanedHeaders []*Header
 }
 
 // ConnectLocal connects to the local Bitcoin chain and returns a chain handle.
@@ -64,11 +64,11 @@ func (lc *LocalChain) SetHeaders(headers []*Header) {
 }
 
 // AppendHeader appends internal header for testing purposes.
-func (c *Chain) AppendHeader(header *btc.Header) {
-	c.headers = append(c.headers, header)
+func (lc *LocalChain) AppendHeader(header *Header) {
+	lc.headers = append(lc.headers, header)
 }
 
 // SetOrphanedHeaders sets internal orphaned headers for testing purposes.
-func (c *Chain) SetOrphanedHeaders(headers []*btc.Header) {
-	c.orphanedHeaders = headers
+func (lc *LocalChain) SetOrphanedHeaders(headers []*Header) {
+	lc.orphanedHeaders = headers
 }
