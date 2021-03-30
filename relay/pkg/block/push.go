@@ -9,9 +9,17 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 )
 
-// pullHeadersFromQueue waits until we have `headersBatchSize` headers from
-// the queue or until the queue fails to yield a header for
-// `headerTimeout` duration and returns them from the function.
+// TODO: Make a small refactor:
+//  - On top of push.go and pull.go put a comment explaining the flow:
+//    eg.: f.headersQueue -> pullHeadersFromQueue -> pushHeadersToHostChain
+//  - Rename `pullHeadersFromQueue` to `getHeadersFromQueue`
+//  - Rename `pushHeadersToQueue` to `putHeadersToQueue`
+
+// pullHeadersFromQueue blocks until there is `headersBatchSize` headers in
+// the queue or until `headerTimeout` is hit and no more headers are available
+// in the queue. Normally, this function returns headers from the queue but not
+// less than one and no more than `headersBatchSize` headers. Empty headers
+// slice can be returned only in case the provided context is cancelled.
 func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
 	headers := make([]*btc.Header, 0)
 

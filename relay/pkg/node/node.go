@@ -13,8 +13,8 @@ var logger = log.Logger("relay-node")
 
 // Initialize initializes the relay node.
 //
-// TODO: This function will be probably the right place to handle new
-//  requirements which will require starting and stopping the block forwarder.
+// TODO: This function will be probably the right place to handle relay auctions
+//  which will require starting and stopping the block forwarder.
 func Initialize(
 	ctx context.Context,
 	btcChain btc.Handle,

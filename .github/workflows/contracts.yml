@@ -1,27 +1,35 @@
 name: Solidity
 
-#TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
     branches:
-      # TODO: Run only on master after we're fully migrated from Circle CI
-      - "rfc-18/**"
       - master
     paths:
       - "solidity/**"
-      - ".github/workflows/contracts.yml"
   pull_request:
-    branches:
-      # TODO: Run on all branches after we're fully migrated from Circle CI
-      - "rfc-18/**"
-      - master
-    paths:
-      - "solidity/**"
-      - ".github/workflows/contracts.yml"
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  contracts-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './solidity/**'
+
+  contracts-build-and-test:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -54,7 +62,11 @@ jobs:
       - name: Run tests
         run: npm run test:quick
 
-  lint:
+  contracts-lint:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -84,12 +96,104 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  migrate-and-publish-celo:
-    needs: [build-and-test, lint]
+  contracts-migrate-and-publish-ethereum:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
       github.ref == 'refs/heads/master'
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+        && github.event_name != 'pull_request'
+    environment: keep-test # keep-test requires a manual aproval
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    defaults:
+      run:
+        working-directory: ./solidity
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Fetch external contracts artifacts
+        env:
+          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
+          CONTRACT_DATA_BUCKET_DIR: keep-ecdsa
+          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
+        run: ./scripts/ci-provision-external-contracts.sh
+
+      - name: Resolve latest contracts
+        run: npm update @keep-network/keep-ecdsa
+
+      - name: Migrate contracts
+        env:
+          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_ETH_TRUFFLE_NETWORK }}
+          ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      - name: Push contracts to Tenderly
+        # TODO: once below action gets tagged replace `@main` with `@v1`
+        uses: keep-network/tenderly-push-action@main
+        continue-on-error: true
+        with:
+          working-directory: ./solidity
+          tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
+          tenderly-project: thesis/keep-test
+          eth-network-id: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          github-project-name: tbtc
+          # version-tag: # TODO: resolve npm package version
+
+      - name: Upload contract data
+        env:
+          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
+        run: |
+          cd build/contracts
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/tbtc
+
+      - name: Copy artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r build/contracts/* artifacts/
+
+      - name: Bump up package version
+        uses: keep-network/npm-version-bump@v1
+        with:
+          workDir: ./solidity
+
+      - name: Publish to npm
+        run: |
+          echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
+          npm publish --access=public
+
+  contracts-migrate-and-publish-celo:
+    needs: [contracts-build-and-test, contracts-lint]
+    if: |
+      github.ref == 'refs/heads/master'
+        && github.event_name != 'pull_request'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
@@ -128,6 +232,9 @@ jobs:
           CONTRACT_DATA_BUCKET_DIR: keep-ecdsa-celo
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
+
+      - name: Resolve latest contracts
+        run: npm update @keep-network/keep-ecdsa
 
       - name: Migrate contracts
         env:
