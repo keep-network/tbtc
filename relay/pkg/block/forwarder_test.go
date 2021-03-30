@@ -28,7 +28,7 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 
 	// Run forwarder with an empty Bitcoin chain and wait for a moment so
 	// the pulling loop goes to sleep
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	forwarder := RunForwarder(ctx, btcChain, localChain, &mockObserver{})
 	time.Sleep(100 * time.Millisecond)
 
 	// While the pulling loop is sleeping, add headers to Bitcoin chain and
@@ -80,7 +80,7 @@ func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
 
 	localChain.SetBestKnownDigest([32]byte{2})
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	forwarder := RunForwarder(ctx, btcChain, localChain, &mockObserver{})
 
 	select {
 	case err = <-forwarder.ErrChan():
