@@ -22,7 +22,7 @@ func (f *Forwarder) pullHeaderFromBtcChain(
 		}
 
 		// Check if there are more headers to pull or we are above the chain's
-		// tip and need to sleep until the chain adds more headers
+		// tip and need to sleep until the Bitcoin chain adds more blocks
 		if f.nextPullHeaderHeight <= chainHeight {
 			nextHeader, err := f.btcChain.GetHeaderByHeight(f.nextPullHeaderHeight)
 			if err != nil {
@@ -33,16 +33,16 @@ func (f *Forwarder) pullHeaderFromBtcChain(
 				)
 			}
 
-			// TODO: Consider just comparing hashes - should be enough
-			//  and check if nextHeader and lastPulledHeader header can ever
-			//  be not equal
+			// TODO: Consider just comparing hashes (it should be enough)
+			// and check if nextHeader and lastPulledHeader header can ever
+			// be equal
 			if !nextHeader.Equals(f.lastPulledHeader) {
 				return nextHeader, nil
 			}
 		}
 
 		select {
-		case <-time.After(forwarderPullingSleepTime):
+		case <-time.After(f.pullingSleepTime):
 		case <-ctx.Done():
 		}
 	}

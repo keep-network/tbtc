@@ -8,7 +8,8 @@ import (
 
 // LocalChain represents a local Bitcoin chain.
 type LocalChain struct {
-	headers []*Header
+	headers         []*Header
+	orphanedHeaders []*btc.Header
 }
 
 // ConnectLocal connects to the local Bitcoin chain and returns a chain handle.
@@ -18,7 +19,8 @@ func ConnectLocal() (Handle, error) {
 	return &LocalChain{}, nil
 }
 
-// GetHeaderByHeight returns the block header for the given block height.
+// GetHeaderByHeight returns the block header from the longest block chain at
+// the given block height.
 func (lc *LocalChain) GetHeaderByHeight(height int64) (*Header, error) {
 	for _, header := range lc.headers {
 		if header.Height == height {
@@ -39,6 +41,12 @@ func (lc *LocalChain) GetHeaderByDigest(
 		}
 	}
 
+	for _, header := range lc.orphanedHeaders {
+		if bytes.Equal(header.Hash[:], digest[:]) {
+			return header, nil
+		}
+	}
+
 	return nil, fmt.Errorf(
 		"no header with digest [%v]",
 		hex.EncodeToString(digest[:]),
@@ -50,7 +58,17 @@ func (lc *LocalChain) GetBlockCount() (int64, error) {
 	return int64(len(lc.headers)), nil
 }
 
-// SetHeaders set internal headers for testing purposes.
+// SetHeaders sets internal headers for testing purposes.
 func (lc *LocalChain) SetHeaders(headers []*Header) {
 	lc.headers = headers
+}
+
+// AppendHeader appends internal header for testing purposes.
+func (c *Chain) AppendHeader(header *btc.Header) {
+	c.headers = append(c.headers, header)
+}
+
+// SetOrphanedHeaders sets internal orphaned headers for testing purposes.
+func (c *Chain) SetOrphanedHeaders(headers []*btc.Header) {
+	c.orphanedHeaders = headers
 }

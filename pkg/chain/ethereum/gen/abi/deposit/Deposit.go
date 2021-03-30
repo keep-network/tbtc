@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindDeposit(address common.Address, caller bind.ContractCaller, transactor 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Deposit *DepositRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Deposit *DepositRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Deposit.Contract.DepositCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_Deposit *DepositRaw) Transact(opts *bind.TransactOpts, method string, par
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Deposit *DepositCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Deposit *DepositCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Deposit.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,103 +173,128 @@ func (_Deposit *DepositTransactorRaw) Transact(opts *bind.TransactOpts, method s
 
 // AuctionValue is a free data retrieval call binding the contract method 0x13f654df.
 //
-// Solidity: function auctionValue() constant returns(uint256)
+// Solidity: function auctionValue() view returns(uint256)
 func (_Deposit *DepositCaller) AuctionValue(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "auctionValue")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "auctionValue")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // AuctionValue is a free data retrieval call binding the contract method 0x13f654df.
 //
-// Solidity: function auctionValue() constant returns(uint256)
+// Solidity: function auctionValue() view returns(uint256)
 func (_Deposit *DepositSession) AuctionValue() (*big.Int, error) {
 	return _Deposit.Contract.AuctionValue(&_Deposit.CallOpts)
 }
 
 // AuctionValue is a free data retrieval call binding the contract method 0x13f654df.
 //
-// Solidity: function auctionValue() constant returns(uint256)
+// Solidity: function auctionValue() view returns(uint256)
 func (_Deposit *DepositCallerSession) AuctionValue() (*big.Int, error) {
 	return _Deposit.Contract.AuctionValue(&_Deposit.CallOpts)
 }
 
 // CollateralizationPercentage is a free data retrieval call binding the contract method 0x6e4668be.
 //
-// Solidity: function collateralizationPercentage() constant returns(uint256)
+// Solidity: function collateralizationPercentage() view returns(uint256)
 func (_Deposit *DepositCaller) CollateralizationPercentage(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "collateralizationPercentage")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "collateralizationPercentage")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // CollateralizationPercentage is a free data retrieval call binding the contract method 0x6e4668be.
 //
-// Solidity: function collateralizationPercentage() constant returns(uint256)
+// Solidity: function collateralizationPercentage() view returns(uint256)
 func (_Deposit *DepositSession) CollateralizationPercentage() (*big.Int, error) {
 	return _Deposit.Contract.CollateralizationPercentage(&_Deposit.CallOpts)
 }
 
 // CollateralizationPercentage is a free data retrieval call binding the contract method 0x6e4668be.
 //
-// Solidity: function collateralizationPercentage() constant returns(uint256)
+// Solidity: function collateralizationPercentage() view returns(uint256)
 func (_Deposit *DepositCallerSession) CollateralizationPercentage() (*big.Int, error) {
 	return _Deposit.Contract.CollateralizationPercentage(&_Deposit.CallOpts)
 }
 
 // CurrentState is a free data retrieval call binding the contract method 0x0c3f6acf.
 //
-// Solidity: function currentState() constant returns(uint256)
+// Solidity: function currentState() view returns(uint256)
 func (_Deposit *DepositCaller) CurrentState(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "currentState")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "currentState")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // CurrentState is a free data retrieval call binding the contract method 0x0c3f6acf.
 //
-// Solidity: function currentState() constant returns(uint256)
+// Solidity: function currentState() view returns(uint256)
 func (_Deposit *DepositSession) CurrentState() (*big.Int, error) {
 	return _Deposit.Contract.CurrentState(&_Deposit.CallOpts)
 }
 
 // CurrentState is a free data retrieval call binding the contract method 0x0c3f6acf.
 //
-// Solidity: function currentState() constant returns(uint256)
+// Solidity: function currentState() view returns(uint256)
 func (_Deposit *DepositCallerSession) CurrentState() (*big.Int, error) {
 	return _Deposit.Contract.CurrentState(&_Deposit.CallOpts)
 }
 
 // FundingInfo is a free data retrieval call binding the contract method 0xdba49153.
 //
-// Solidity: function fundingInfo() constant returns(bytes8 utxoValueBytes, uint256 fundedAt, bytes utxoOutpoint)
+// Solidity: function fundingInfo() view returns(bytes8 utxoValueBytes, uint256 fundedAt, bytes utxoOutpoint)
 func (_Deposit *DepositCaller) FundingInfo(opts *bind.CallOpts) (struct {
 	UtxoValueBytes [8]byte
 	FundedAt       *big.Int
 	UtxoOutpoint   []byte
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "fundingInfo")
+
+	outstruct := new(struct {
 		UtxoValueBytes [8]byte
 		FundedAt       *big.Int
 		UtxoOutpoint   []byte
 	})
-	out := ret
-	err := _Deposit.contract.Call(opts, out, "fundingInfo")
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.UtxoValueBytes = *abi.ConvertType(out[0], new([8]byte)).(*[8]byte)
+	outstruct.FundedAt = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.UtxoOutpoint = *abi.ConvertType(out[2], new([]byte)).(*[]byte)
+
+	return *outstruct, err
+
 }
 
 // FundingInfo is a free data retrieval call binding the contract method 0xdba49153.
 //
-// Solidity: function fundingInfo() constant returns(bytes8 utxoValueBytes, uint256 fundedAt, bytes utxoOutpoint)
+// Solidity: function fundingInfo() view returns(bytes8 utxoValueBytes, uint256 fundedAt, bytes utxoOutpoint)
 func (_Deposit *DepositSession) FundingInfo() (struct {
 	UtxoValueBytes [8]byte
 	FundedAt       *big.Int
@@ -281,7 +305,7 @@ func (_Deposit *DepositSession) FundingInfo() (struct {
 
 // FundingInfo is a free data retrieval call binding the contract method 0xdba49153.
 //
-// Solidity: function fundingInfo() constant returns(bytes8 utxoValueBytes, uint256 fundedAt, bytes utxoOutpoint)
+// Solidity: function fundingInfo() view returns(bytes8 utxoValueBytes, uint256 fundedAt, bytes utxoOutpoint)
 func (_Deposit *DepositCallerSession) FundingInfo() (struct {
 	UtxoValueBytes [8]byte
 	FundedAt       *big.Int
@@ -292,338 +316,403 @@ func (_Deposit *DepositCallerSession) FundingInfo() (struct {
 
 // GetOwnerRedemptionTbtcRequirement is a free data retrieval call binding the contract method 0xd8d02330.
 //
-// Solidity: function getOwnerRedemptionTbtcRequirement(address _redeemer) constant returns(uint256)
+// Solidity: function getOwnerRedemptionTbtcRequirement(address _redeemer) view returns(uint256)
 func (_Deposit *DepositCaller) GetOwnerRedemptionTbtcRequirement(opts *bind.CallOpts, _redeemer common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "getOwnerRedemptionTbtcRequirement", _redeemer)
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "getOwnerRedemptionTbtcRequirement", _redeemer)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetOwnerRedemptionTbtcRequirement is a free data retrieval call binding the contract method 0xd8d02330.
 //
-// Solidity: function getOwnerRedemptionTbtcRequirement(address _redeemer) constant returns(uint256)
+// Solidity: function getOwnerRedemptionTbtcRequirement(address _redeemer) view returns(uint256)
 func (_Deposit *DepositSession) GetOwnerRedemptionTbtcRequirement(_redeemer common.Address) (*big.Int, error) {
 	return _Deposit.Contract.GetOwnerRedemptionTbtcRequirement(&_Deposit.CallOpts, _redeemer)
 }
 
 // GetOwnerRedemptionTbtcRequirement is a free data retrieval call binding the contract method 0xd8d02330.
 //
-// Solidity: function getOwnerRedemptionTbtcRequirement(address _redeemer) constant returns(uint256)
+// Solidity: function getOwnerRedemptionTbtcRequirement(address _redeemer) view returns(uint256)
 func (_Deposit *DepositCallerSession) GetOwnerRedemptionTbtcRequirement(_redeemer common.Address) (*big.Int, error) {
 	return _Deposit.Contract.GetOwnerRedemptionTbtcRequirement(&_Deposit.CallOpts, _redeemer)
 }
 
 // GetRedemptionTbtcRequirement is a free data retrieval call binding the contract method 0xd02fd958.
 //
-// Solidity: function getRedemptionTbtcRequirement(address _redeemer) constant returns(uint256)
+// Solidity: function getRedemptionTbtcRequirement(address _redeemer) view returns(uint256)
 func (_Deposit *DepositCaller) GetRedemptionTbtcRequirement(opts *bind.CallOpts, _redeemer common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "getRedemptionTbtcRequirement", _redeemer)
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "getRedemptionTbtcRequirement", _redeemer)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetRedemptionTbtcRequirement is a free data retrieval call binding the contract method 0xd02fd958.
 //
-// Solidity: function getRedemptionTbtcRequirement(address _redeemer) constant returns(uint256)
+// Solidity: function getRedemptionTbtcRequirement(address _redeemer) view returns(uint256)
 func (_Deposit *DepositSession) GetRedemptionTbtcRequirement(_redeemer common.Address) (*big.Int, error) {
 	return _Deposit.Contract.GetRedemptionTbtcRequirement(&_Deposit.CallOpts, _redeemer)
 }
 
 // GetRedemptionTbtcRequirement is a free data retrieval call binding the contract method 0xd02fd958.
 //
-// Solidity: function getRedemptionTbtcRequirement(address _redeemer) constant returns(uint256)
+// Solidity: function getRedemptionTbtcRequirement(address _redeemer) view returns(uint256)
 func (_Deposit *DepositCallerSession) GetRedemptionTbtcRequirement(_redeemer common.Address) (*big.Int, error) {
 	return _Deposit.Contract.GetRedemptionTbtcRequirement(&_Deposit.CallOpts, _redeemer)
 }
 
 // InActive is a free data retrieval call binding the contract method 0xf97a02fa.
 //
-// Solidity: function inActive() constant returns(bool)
+// Solidity: function inActive() view returns(bool)
 func (_Deposit *DepositCaller) InActive(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "inActive")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "inActive")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // InActive is a free data retrieval call binding the contract method 0xf97a02fa.
 //
-// Solidity: function inActive() constant returns(bool)
+// Solidity: function inActive() view returns(bool)
 func (_Deposit *DepositSession) InActive() (bool, error) {
 	return _Deposit.Contract.InActive(&_Deposit.CallOpts)
 }
 
 // InActive is a free data retrieval call binding the contract method 0xf97a02fa.
 //
-// Solidity: function inActive() constant returns(bool)
+// Solidity: function inActive() view returns(bool)
 func (_Deposit *DepositCallerSession) InActive() (bool, error) {
 	return _Deposit.Contract.InActive(&_Deposit.CallOpts)
 }
 
 // InitialCollateralizedPercent is a free data retrieval call binding the contract method 0x76ef5510.
 //
-// Solidity: function initialCollateralizedPercent() constant returns(uint16)
+// Solidity: function initialCollateralizedPercent() view returns(uint16)
 func (_Deposit *DepositCaller) InitialCollateralizedPercent(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "initialCollateralizedPercent")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "initialCollateralizedPercent")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // InitialCollateralizedPercent is a free data retrieval call binding the contract method 0x76ef5510.
 //
-// Solidity: function initialCollateralizedPercent() constant returns(uint16)
+// Solidity: function initialCollateralizedPercent() view returns(uint16)
 func (_Deposit *DepositSession) InitialCollateralizedPercent() (uint16, error) {
 	return _Deposit.Contract.InitialCollateralizedPercent(&_Deposit.CallOpts)
 }
 
 // InitialCollateralizedPercent is a free data retrieval call binding the contract method 0x76ef5510.
 //
-// Solidity: function initialCollateralizedPercent() constant returns(uint16)
+// Solidity: function initialCollateralizedPercent() view returns(uint16)
 func (_Deposit *DepositCallerSession) InitialCollateralizedPercent() (uint16, error) {
 	return _Deposit.Contract.InitialCollateralizedPercent(&_Deposit.CallOpts)
 }
 
 // KeepAddress is a free data retrieval call binding the contract method 0x6c3b0114.
 //
-// Solidity: function keepAddress() constant returns(address)
+// Solidity: function keepAddress() view returns(address)
 func (_Deposit *DepositCaller) KeepAddress(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "keepAddress")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "keepAddress")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // KeepAddress is a free data retrieval call binding the contract method 0x6c3b0114.
 //
-// Solidity: function keepAddress() constant returns(address)
+// Solidity: function keepAddress() view returns(address)
 func (_Deposit *DepositSession) KeepAddress() (common.Address, error) {
 	return _Deposit.Contract.KeepAddress(&_Deposit.CallOpts)
 }
 
 // KeepAddress is a free data retrieval call binding the contract method 0x6c3b0114.
 //
-// Solidity: function keepAddress() constant returns(address)
+// Solidity: function keepAddress() view returns(address)
 func (_Deposit *DepositCallerSession) KeepAddress() (common.Address, error) {
 	return _Deposit.Contract.KeepAddress(&_Deposit.CallOpts)
 }
 
 // LotSizeSatoshis is a free data retrieval call binding the contract method 0x90a2f687.
 //
-// Solidity: function lotSizeSatoshis() constant returns(uint64)
+// Solidity: function lotSizeSatoshis() view returns(uint64)
 func (_Deposit *DepositCaller) LotSizeSatoshis(opts *bind.CallOpts) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "lotSizeSatoshis")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "lotSizeSatoshis")
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // LotSizeSatoshis is a free data retrieval call binding the contract method 0x90a2f687.
 //
-// Solidity: function lotSizeSatoshis() constant returns(uint64)
+// Solidity: function lotSizeSatoshis() view returns(uint64)
 func (_Deposit *DepositSession) LotSizeSatoshis() (uint64, error) {
 	return _Deposit.Contract.LotSizeSatoshis(&_Deposit.CallOpts)
 }
 
 // LotSizeSatoshis is a free data retrieval call binding the contract method 0x90a2f687.
 //
-// Solidity: function lotSizeSatoshis() constant returns(uint64)
+// Solidity: function lotSizeSatoshis() view returns(uint64)
 func (_Deposit *DepositCallerSession) LotSizeSatoshis() (uint64, error) {
 	return _Deposit.Contract.LotSizeSatoshis(&_Deposit.CallOpts)
 }
 
 // LotSizeTbtc is a free data retrieval call binding the contract method 0x946fbf4c.
 //
-// Solidity: function lotSizeTbtc() constant returns(uint256)
+// Solidity: function lotSizeTbtc() view returns(uint256)
 func (_Deposit *DepositCaller) LotSizeTbtc(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "lotSizeTbtc")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "lotSizeTbtc")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // LotSizeTbtc is a free data retrieval call binding the contract method 0x946fbf4c.
 //
-// Solidity: function lotSizeTbtc() constant returns(uint256)
+// Solidity: function lotSizeTbtc() view returns(uint256)
 func (_Deposit *DepositSession) LotSizeTbtc() (*big.Int, error) {
 	return _Deposit.Contract.LotSizeTbtc(&_Deposit.CallOpts)
 }
 
 // LotSizeTbtc is a free data retrieval call binding the contract method 0x946fbf4c.
 //
-// Solidity: function lotSizeTbtc() constant returns(uint256)
+// Solidity: function lotSizeTbtc() view returns(uint256)
 func (_Deposit *DepositCallerSession) LotSizeTbtc() (*big.Int, error) {
 	return _Deposit.Contract.LotSizeTbtc(&_Deposit.CallOpts)
 }
 
 // RemainingTerm is a free data retrieval call binding the contract method 0x35bc0ebe.
 //
-// Solidity: function remainingTerm() constant returns(uint256)
+// Solidity: function remainingTerm() view returns(uint256)
 func (_Deposit *DepositCaller) RemainingTerm(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "remainingTerm")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "remainingTerm")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // RemainingTerm is a free data retrieval call binding the contract method 0x35bc0ebe.
 //
-// Solidity: function remainingTerm() constant returns(uint256)
+// Solidity: function remainingTerm() view returns(uint256)
 func (_Deposit *DepositSession) RemainingTerm() (*big.Int, error) {
 	return _Deposit.Contract.RemainingTerm(&_Deposit.CallOpts)
 }
 
 // RemainingTerm is a free data retrieval call binding the contract method 0x35bc0ebe.
 //
-// Solidity: function remainingTerm() constant returns(uint256)
+// Solidity: function remainingTerm() view returns(uint256)
 func (_Deposit *DepositCallerSession) RemainingTerm() (*big.Int, error) {
 	return _Deposit.Contract.RemainingTerm(&_Deposit.CallOpts)
 }
 
 // SeverelyUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x0d5889f4.
 //
-// Solidity: function severelyUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function severelyUndercollateralizedThresholdPercent() view returns(uint16)
 func (_Deposit *DepositCaller) SeverelyUndercollateralizedThresholdPercent(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "severelyUndercollateralizedThresholdPercent")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "severelyUndercollateralizedThresholdPercent")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // SeverelyUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x0d5889f4.
 //
-// Solidity: function severelyUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function severelyUndercollateralizedThresholdPercent() view returns(uint16)
 func (_Deposit *DepositSession) SeverelyUndercollateralizedThresholdPercent() (uint16, error) {
 	return _Deposit.Contract.SeverelyUndercollateralizedThresholdPercent(&_Deposit.CallOpts)
 }
 
 // SeverelyUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x0d5889f4.
 //
-// Solidity: function severelyUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function severelyUndercollateralizedThresholdPercent() view returns(uint16)
 func (_Deposit *DepositCallerSession) SeverelyUndercollateralizedThresholdPercent() (uint16, error) {
 	return _Deposit.Contract.SeverelyUndercollateralizedThresholdPercent(&_Deposit.CallOpts)
 }
 
 // SignerFeeTbtc is a free data retrieval call binding the contract method 0x058d3703.
 //
-// Solidity: function signerFeeTbtc() constant returns(uint256)
+// Solidity: function signerFeeTbtc() view returns(uint256)
 func (_Deposit *DepositCaller) SignerFeeTbtc(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "signerFeeTbtc")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "signerFeeTbtc")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // SignerFeeTbtc is a free data retrieval call binding the contract method 0x058d3703.
 //
-// Solidity: function signerFeeTbtc() constant returns(uint256)
+// Solidity: function signerFeeTbtc() view returns(uint256)
 func (_Deposit *DepositSession) SignerFeeTbtc() (*big.Int, error) {
 	return _Deposit.Contract.SignerFeeTbtc(&_Deposit.CallOpts)
 }
 
 // SignerFeeTbtc is a free data retrieval call binding the contract method 0x058d3703.
 //
-// Solidity: function signerFeeTbtc() constant returns(uint256)
+// Solidity: function signerFeeTbtc() view returns(uint256)
 func (_Deposit *DepositCallerSession) SignerFeeTbtc() (*big.Int, error) {
 	return _Deposit.Contract.SignerFeeTbtc(&_Deposit.CallOpts)
 }
 
 // UndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x85df153d.
 //
-// Solidity: function undercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function undercollateralizedThresholdPercent() view returns(uint16)
 func (_Deposit *DepositCaller) UndercollateralizedThresholdPercent(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "undercollateralizedThresholdPercent")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "undercollateralizedThresholdPercent")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // UndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x85df153d.
 //
-// Solidity: function undercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function undercollateralizedThresholdPercent() view returns(uint16)
 func (_Deposit *DepositSession) UndercollateralizedThresholdPercent() (uint16, error) {
 	return _Deposit.Contract.UndercollateralizedThresholdPercent(&_Deposit.CallOpts)
 }
 
 // UndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x85df153d.
 //
-// Solidity: function undercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function undercollateralizedThresholdPercent() view returns(uint16)
 func (_Deposit *DepositCallerSession) UndercollateralizedThresholdPercent() (uint16, error) {
 	return _Deposit.Contract.UndercollateralizedThresholdPercent(&_Deposit.CallOpts)
 }
 
 // UtxoValue is a free data retrieval call binding the contract method 0x87a90d80.
 //
-// Solidity: function utxoValue() constant returns(uint256)
+// Solidity: function utxoValue() view returns(uint256)
 func (_Deposit *DepositCaller) UtxoValue(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "utxoValue")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "utxoValue")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // UtxoValue is a free data retrieval call binding the contract method 0x87a90d80.
 //
-// Solidity: function utxoValue() constant returns(uint256)
+// Solidity: function utxoValue() view returns(uint256)
 func (_Deposit *DepositSession) UtxoValue() (*big.Int, error) {
 	return _Deposit.Contract.UtxoValue(&_Deposit.CallOpts)
 }
 
 // UtxoValue is a free data retrieval call binding the contract method 0x87a90d80.
 //
-// Solidity: function utxoValue() constant returns(uint256)
+// Solidity: function utxoValue() view returns(uint256)
 func (_Deposit *DepositCallerSession) UtxoValue() (*big.Int, error) {
 	return _Deposit.Contract.UtxoValue(&_Deposit.CallOpts)
 }
 
 // WithdrawableAmount is a free data retrieval call binding the contract method 0x951303f5.
 //
-// Solidity: function withdrawableAmount() constant returns(uint256)
+// Solidity: function withdrawableAmount() view returns(uint256)
 func (_Deposit *DepositCaller) WithdrawableAmount(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Deposit.contract.Call(opts, out, "withdrawableAmount")
-	return *ret0, err
+	var out []interface{}
+	err := _Deposit.contract.Call(opts, &out, "withdrawableAmount")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // WithdrawableAmount is a free data retrieval call binding the contract method 0x951303f5.
 //
-// Solidity: function withdrawableAmount() constant returns(uint256)
+// Solidity: function withdrawableAmount() view returns(uint256)
 func (_Deposit *DepositSession) WithdrawableAmount() (*big.Int, error) {
 	return _Deposit.Contract.WithdrawableAmount(&_Deposit.CallOpts)
 }
 
 // WithdrawableAmount is a free data retrieval call binding the contract method 0x951303f5.
 //
-// Solidity: function withdrawableAmount() constant returns(uint256)
+// Solidity: function withdrawableAmount() view returns(uint256)
 func (_Deposit *DepositCallerSession) WithdrawableAmount() (*big.Int, error) {
 	return _Deposit.Contract.WithdrawableAmount(&_Deposit.CallOpts)
 }
@@ -693,21 +782,21 @@ func (_Deposit *DepositTransactorSession) Initialize(_factory common.Address) (*
 
 // InitializeDeposit is a paid mutator transaction binding the contract method 0xa81e63f7.
 //
-// Solidity: function initializeDeposit(address _tbtcSystem, address _tbtcToken, address _tbtcDepositToken, address _feeRebateToken, address _vendingMachineAddress, uint64 _lotSizeSatoshis) returns()
+// Solidity: function initializeDeposit(address _tbtcSystem, address _tbtcToken, address _tbtcDepositToken, address _feeRebateToken, address _vendingMachineAddress, uint64 _lotSizeSatoshis) payable returns()
 func (_Deposit *DepositTransactor) InitializeDeposit(opts *bind.TransactOpts, _tbtcSystem common.Address, _tbtcToken common.Address, _tbtcDepositToken common.Address, _feeRebateToken common.Address, _vendingMachineAddress common.Address, _lotSizeSatoshis uint64) (*types.Transaction, error) {
 	return _Deposit.contract.Transact(opts, "initializeDeposit", _tbtcSystem, _tbtcToken, _tbtcDepositToken, _feeRebateToken, _vendingMachineAddress, _lotSizeSatoshis)
 }
 
 // InitializeDeposit is a paid mutator transaction binding the contract method 0xa81e63f7.
 //
-// Solidity: function initializeDeposit(address _tbtcSystem, address _tbtcToken, address _tbtcDepositToken, address _feeRebateToken, address _vendingMachineAddress, uint64 _lotSizeSatoshis) returns()
+// Solidity: function initializeDeposit(address _tbtcSystem, address _tbtcToken, address _tbtcDepositToken, address _feeRebateToken, address _vendingMachineAddress, uint64 _lotSizeSatoshis) payable returns()
 func (_Deposit *DepositSession) InitializeDeposit(_tbtcSystem common.Address, _tbtcToken common.Address, _tbtcDepositToken common.Address, _feeRebateToken common.Address, _vendingMachineAddress common.Address, _lotSizeSatoshis uint64) (*types.Transaction, error) {
 	return _Deposit.Contract.InitializeDeposit(&_Deposit.TransactOpts, _tbtcSystem, _tbtcToken, _tbtcDepositToken, _feeRebateToken, _vendingMachineAddress, _lotSizeSatoshis)
 }
 
 // InitializeDeposit is a paid mutator transaction binding the contract method 0xa81e63f7.
 //
-// Solidity: function initializeDeposit(address _tbtcSystem, address _tbtcToken, address _tbtcDepositToken, address _feeRebateToken, address _vendingMachineAddress, uint64 _lotSizeSatoshis) returns()
+// Solidity: function initializeDeposit(address _tbtcSystem, address _tbtcToken, address _tbtcDepositToken, address _feeRebateToken, address _vendingMachineAddress, uint64 _lotSizeSatoshis) payable returns()
 func (_Deposit *DepositTransactorSession) InitializeDeposit(_tbtcSystem common.Address, _tbtcToken common.Address, _tbtcDepositToken common.Address, _feeRebateToken common.Address, _vendingMachineAddress common.Address, _lotSizeSatoshis uint64) (*types.Transaction, error) {
 	return _Deposit.Contract.InitializeDeposit(&_Deposit.TransactOpts, _tbtcSystem, _tbtcToken, _tbtcDepositToken, _feeRebateToken, _vendingMachineAddress, _lotSizeSatoshis)
 }
@@ -1088,4 +1177,25 @@ func (_Deposit *DepositSession) WithdrawFunds() (*types.Transaction, error) {
 // Solidity: function withdrawFunds() returns()
 func (_Deposit *DepositTransactorSession) WithdrawFunds() (*types.Transaction, error) {
 	return _Deposit.Contract.WithdrawFunds(&_Deposit.TransactOpts)
+}
+
+// Fallback is a paid mutator transaction binding the contract fallback function.
+//
+// Solidity: fallback() payable returns()
+func (_Deposit *DepositTransactor) Fallback(opts *bind.TransactOpts, calldata []byte) (*types.Transaction, error) {
+	return _Deposit.contract.RawTransact(opts, calldata)
+}
+
+// Fallback is a paid mutator transaction binding the contract fallback function.
+//
+// Solidity: fallback() payable returns()
+func (_Deposit *DepositSession) Fallback(calldata []byte) (*types.Transaction, error) {
+	return _Deposit.Contract.Fallback(&_Deposit.TransactOpts, calldata)
+}
+
+// Fallback is a paid mutator transaction binding the contract fallback function.
+//
+// Solidity: fallback() payable returns()
+func (_Deposit *DepositTransactorSession) Fallback(calldata []byte) (*types.Transaction, error) {
+	return _Deposit.Contract.Fallback(&_Deposit.TransactOpts, calldata)
 }
