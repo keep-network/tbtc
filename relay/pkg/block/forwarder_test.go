@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/keep-network/tbtc/relay/pkg/btc"
-	btclocal "github.com/keep-network/tbtc/relay/pkg/btc/local"
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
@@ -16,11 +15,11 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	bc, err := btclocal.Connect()
+	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
 	}
-	btcChain := bc.(*btclocal.Chain)
+	btcChain := bc.(*btc.LocalChain)
 
 	localChain, err := chainlocal.Connect()
 	if err != nil {
@@ -59,12 +58,12 @@ func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	bc, err := btclocal.Connect()
+	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	btcChain := bc.(*btclocal.Chain)
+	btcChain := bc.(*btc.LocalChain)
 
 	lc, err := chainlocal.Connect()
 	if err != nil {
