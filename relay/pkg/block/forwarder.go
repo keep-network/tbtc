@@ -74,7 +74,10 @@ func RunForwarder(
 		loopExitHandler:  cancelLoopCtx,
 	}
 
-	go forwarder.pullingLoop(loopCtx)
+	go func() {
+		forwarder.pullingLoop(loopCtx)
+		cancelLoopCtx() // loop exited, cancel the context
+	}()
 	go forwarder.pushingLoop(loopCtx)
 
 	return forwarder
@@ -82,11 +85,7 @@ func RunForwarder(
 
 func (f *Forwarder) pullingLoop(ctx context.Context) {
 	logger.Infof("running new block pulling loop")
-
-	defer func() {
-		logger.Infof("stopping current block pulling loop")
-		f.loopExitHandler()
-	}()
+	defer logger.Infof("stopping current block pulling loop")
 
 	latestHeader, err := f.findBestHeader()
 	if err != nil {
