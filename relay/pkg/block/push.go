@@ -182,9 +182,7 @@ func (f *Forwarder) updateBestHeader(
 	ctx context.Context,
 	newBestHeader *btc.Header,
 ) error {
-	totalAttempts := 30
-
-	for attempt := 1; attempt <= totalAttempts; attempt++ {
+	for attempt := 1; attempt <= updateBestHeaderMaxAttempts; attempt++ {
 		logger.Infof(
 			"attempt [%v] to set header [%v] as new best",
 			attempt,
@@ -235,7 +233,7 @@ func (f *Forwarder) updateBestHeader(
 
 		// wait a constant back-off time
 		select {
-		case <-time.After(10 * time.Second):
+		case <-time.After(updateBestHeaderBackoffTime):
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -244,7 +242,7 @@ func (f *Forwarder) updateBestHeader(
 	return fmt.Errorf(
 		"could not set header [%v] as new best after [%v] attempts",
 		newBestHeader.Height,
-		totalAttempts,
+		updateBestHeaderMaxAttempts,
 	)
 }
 

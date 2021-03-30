@@ -38,6 +38,14 @@ const (
 	// it tries to fetch a new tip from the Bitcoin blockchain, giving it
 	// some time to mine new blocks.
 	forwarderPullingSleepTime = 60 * time.Second
+
+	// Maximum number of attempts which will be performed while trying
+	// to update the best header.
+	updateBestHeaderMaxAttempts = 30
+
+	// Back-off time which should be applied between updating best header
+	// attempts.
+	updateBestHeaderBackoffTime = 10 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
