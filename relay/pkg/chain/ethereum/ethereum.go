@@ -146,30 +146,30 @@ func addClientWrappers(
 }
 
 // GetBestKnownDigest returns the best known digest.
-func (ec *ethereumChain) GetBestKnownDigest() ([32]uint8, error) {
+func (ec *ethereumChain) GetBestKnownDigest() ([32]byte, error) {
 	return ec.relayContract.GetBestKnownDigest()
 }
 
-// IsAncestor checks if a digest is an ancestor of the given descendant. The
-// limit parameter determines the number of blocks to check.
+// IsAncestor checks if ancestorDigest is an ancestor of the descendantDigest.
+// The limit parameter determines the number of blocks to check.
 func (ec *ethereumChain) IsAncestor(
-	ancestor [32]uint8,
-	descendant [32]uint8,
+	ancestorDigest [32]byte,
+	descendantDigest [32]byte,
 	limit *big.Int,
 ) (bool, error) {
-	return ec.relayContract.IsAncestor(ancestor, descendant, limit)
+	return ec.relayContract.IsAncestor(ancestorDigest, descendantDigest, limit)
 }
 
 // FindHeight finds the height of a header by its digest.
-func (ec *ethereumChain) FindHeight(digest [32]uint8) (*big.Int, error) {
+func (ec *ethereumChain) FindHeight(digest [32]byte) (*big.Int, error) {
 	return ec.relayContract.FindHeight(digest)
 }
 
-// AddHeaders adds headers to storage after validating. The anchor parameter is
-// the header immediately preceding the new chain. Headers parameter should be
-// a tightly-packed list of 80-byte Bitcoin headers.
-func (ec *ethereumChain) AddHeaders(anchor []uint8, headers []uint8) error {
-	transaction, err := ec.relayContract.AddHeaders(anchor, headers)
+// AddHeaders adds headers to storage after validating. The anchorHeader
+// parameter is the header immediately preceding the new chain. Headers
+// parameter should be a tightly-packed list of 80-byte Bitcoin headers.
+func (ec *ethereumChain) AddHeaders(anchorHeader []byte, headers []byte) error {
+	transaction, err := ec.relayContract.AddHeaders(anchorHeader, headers)
 	if err != nil {
 		return err
 	}
@@ -187,9 +187,9 @@ func (ec *ethereumChain) AddHeaders(anchor []uint8, headers []uint8) error {
 // difficulty period being closed while oldPeriodEndHeader is the last.
 // Headers parameter should be a tightly-packed list of 80-byte Bitcoin headers.
 func (ec *ethereumChain) AddHeadersWithRetarget(
-	oldPeriodStartHeader []uint8,
-	oldPeriodEndHeader []uint8,
-	headers []uint8,
+	oldPeriodStartHeader []byte,
+	oldPeriodEndHeader []byte,
+	headers []byte,
 ) error {
 	transaction, err := ec.relayContract.AddHeadersWithRetarget(
 		oldPeriodStartHeader,
@@ -208,21 +208,21 @@ func (ec *ethereumChain) AddHeadersWithRetarget(
 	return nil
 }
 
-// MarkNewHeaviest gives a new starting point for the relay. The ancestor param
-// is the digest of the most recent common ancestor. The currentBest is a
-// 80-byte header referenced by bestKnownDigest while the newBast param should
-// be the header to mark as new best. Limit parameter limits the amount of
-// traversal of the chain.
+// MarkNewHeaviest gives a new starting point for the relay. The
+// ancestorDigest param is the digest of the most recent common ancestor.
+// The currentBestHeader is a 80-byte header referenced by bestKnownDigest
+// while the newBestHeader param should be the header to mark as new best.
+// Limit parameter limits the amount of traversal of the chain.
 func (ec *ethereumChain) MarkNewHeaviest(
-	ancestor [32]uint8,
-	currentBest []uint8,
-	newBest []uint8,
+	ancestorDigest [32]byte,
+	currentBestHeader []byte,
+	newBestHeader []byte,
 	limit *big.Int,
 ) error {
 	transaction, err := ec.relayContract.MarkNewHeaviest(
-		ancestor,
-		currentBest,
-		newBest,
+		ancestorDigest,
+		currentBestHeader,
+		newBestHeader,
 		limit,
 	)
 	if err != nil {

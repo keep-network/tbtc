@@ -1,20 +1,53 @@
 package node
 
 import (
+	"context"
+
+	"github.com/ipfs/go-log"
+	"github.com/keep-network/tbtc/relay/pkg/block"
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 	"github.com/keep-network/tbtc/relay/pkg/chain"
-	"github.com/keep-network/tbtc/relay/pkg/forwarder"
 )
 
+var logger = log.Logger("relay-node")
+
 // Initialize initializes the relay node.
+//
+// TODO: This function will be probably the right place to handle relay auctions
+//  which will require starting and stopping the block forwarder.
 func Initialize(
+	ctx context.Context,
 	btcChain btc.Handle,
 	hostChain chain.Handle,
-) error {
-	err := forwarder.Initialize(btcChain, hostChain)
-	if err != nil {
-		return err
-	}
+) {
+	logger.Infof("initializing relay node")
 
-	return nil
+	go runForwarderControlLoop(ctx, btcChain, hostChain)
+}
+
+// runForwarderControlLoop runs a block forwarder control loop which is
+// responsible for starting the forwarder and acting upon errors by restarting
+// the forwarder instance. The lifecycle of the control loop itself can
+// be managed using the passed context.
+func runForwarderControlLoop(
+	ctx context.Context,
+	btcChain btc.Handle,
+	hostChain chain.Handle,
+) {
+	logger.Infof("running block forwarding")
+
+	for {
+		forwarder := block.RunForwarder(ctx, btcChain, hostChain)
+
+		select {
+		case err := <-forwarder.ErrChan():
+			logger.Errorf(
+				"error occurred during block forwarding: [%v]",
+				err,
+			)
+		case <-ctx.Done():
+			logger.Infof("stopping block forwarding")
+			return
+		}
+	}
 }

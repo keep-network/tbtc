@@ -2,6 +2,8 @@ package chain
 
 import "math/big"
 
+// TODO: Use btc.Digest where appropriate.
+
 // Handle represents a handle to a host chain.
 type Handle interface {
 	Relay
@@ -10,23 +12,24 @@ type Handle interface {
 // Relay is an interface that provides ability to interact with Relay contract.
 type Relay interface {
 	// GetBestKnownDigest returns the best known digest.
-	GetBestKnownDigest() ([32]uint8, error)
+	GetBestKnownDigest() ([32]byte, error)
 
-	// IsAncestor checks if a digest is an ancestor of the given descendant.
-	// The limit parameter determines the number of blocks to check.
+	// IsAncestor checks if ancestorDigest is an ancestor of the
+	// descendantDigest. The limit parameter determines the number of blocks
+	// to check.
 	IsAncestor(
-		ancestor [32]uint8,
-		descendant [32]uint8,
+		ancestorDigest [32]byte,
+		descendantDigest [32]byte,
 		limit *big.Int,
 	) (bool, error)
 
 	// FindHeight finds the height of a header by its digest.
-	FindHeight(digest [32]uint8) (*big.Int, error)
+	FindHeight(digest [32]byte) (*big.Int, error)
 
-	// AddHeaders adds headers to storage after validating. The anchor
+	// AddHeaders adds headers to storage after validating. The anchorHeader
 	// parameter is the header immediately preceding the new chain. Headers
 	// parameter should be a tightly-packed list of 80-byte Bitcoin headers.
-	AddHeaders(anchor []uint8, headers []uint8) error
+	AddHeaders(anchorHeader []byte, headers []byte) error
 
 	// AddHeadersWithRetarget adds headers to storage, performs additional
 	// validation of retarget. The oldPeriodStartHeader is the first header in
@@ -34,20 +37,20 @@ type Relay interface {
 	// Headers parameter should be a tightly-packed list of 80-byte
 	// Bitcoin headers.
 	AddHeadersWithRetarget(
-		oldPeriodStartHeader []uint8,
-		oldPeriodEndHeader []uint8,
-		headers []uint8,
+		oldPeriodStartHeader []byte,
+		oldPeriodEndHeader []byte,
+		headers []byte,
 	) error
 
-	// MarkNewHeaviest gives a new starting point for the relay. The ancestor
-	// param is the digest of the most recent common ancestor. The currentBest
-	// is a 80-byte header referenced by bestKnownDigest while the newBast
-	// param should be the header to mark as new best. Limit parameter limits
-	// the amount of traversal of the chain.
+	// MarkNewHeaviest gives a new starting point for the relay. The
+	// ancestorDigest param is the digest of the most recent common ancestor.
+	// The currentBestHeader is a 80-byte header referenced by bestKnownDigest
+	// while the newBestHeader param should be the header to mark as new best.
+	// Limit parameter limits the amount of traversal of the chain.
 	MarkNewHeaviest(
-		ancestor [32]uint8,
-		currentBest []uint8,
-		newBest []uint8,
+		ancestorDigest [32]byte,
+		currentBestHeader []byte,
+		newBestHeader []byte,
 		limit *big.Int,
 	) error
 }

@@ -1,6 +1,7 @@
 package local
 
 import (
+	"encoding/binary"
 	"math/big"
 
 	"github.com/ipfs/go-log"
@@ -9,65 +10,127 @@ import (
 
 var logger = log.Logger("relay-chain-local")
 
-// localChain is a local implementation of the host chain interface.
-type localChain struct{}
+// Chain is a local implementation of the host chain interface.
+type Chain struct {
+	bestKnownDigest [32]byte
+
+	addHeadersEvents     []*AddHeadersEvent
+	markNewHeaviestEvent []*MarkNewHeaviestEvent
+}
 
 // Connect performs initialization for communication with the local blockchain.
 func Connect() (chain.Handle, error) {
 	logger.Infof("connecting local host chain")
 
-	return &localChain{}, nil
+	return &Chain{
+		addHeadersEvents:     make([]*AddHeadersEvent, 0),
+		markNewHeaviestEvent: make([]*MarkNewHeaviestEvent, 0),
+	}, nil
 }
 
 // GetBestKnownDigest returns the best known digest.
-func (lc *localChain) GetBestKnownDigest() ([32]uint8, error) {
-	panic("not implemented yet")
+func (c *Chain) GetBestKnownDigest() ([32]byte, error) {
+	return c.bestKnownDigest, nil
 }
 
-// IsAncestor checks if a digest is an ancestor of the given descendant. The
-// limit parameter determines the number of blocks to check.
-func (lc *localChain) IsAncestor(
-	ancestor [32]uint8,
-	descendant [32]uint8,
+// IsAncestor checks if ancestorDigest is an ancestor of the descendantDigest.
+// The limit parameter determines the number of blocks to check.
+func (c *Chain) IsAncestor(
+	ancestorDigest [32]byte,
+	descendantDigest [32]byte,
 	limit *big.Int,
 ) (bool, error) {
-	panic("not implemented yet")
+	// Naive implementation for testing purposes. If the int representation
+	// of the descendant digest is bigger than the ancestor's one, that
+	// means the condition is true.
+	descendant := binary.LittleEndian.Uint32(descendantDigest[:])
+	ancestor := binary.LittleEndian.Uint32(ancestorDigest[:])
+	return descendant > ancestor, nil
 }
 
 // FindHeight finds the height of a header by its digest.
-func (lc *localChain) FindHeight(digest [32]uint8) (*big.Int, error) {
+func (c *Chain) FindHeight(digest [32]byte) (*big.Int, error) {
 	panic("not implemented yet")
 }
 
-// AddHeaders adds headers to storage after validating. The anchor parameter is
-// the header immediately preceding the new chain. Headers parameter should be
-// a tightly-packed list of 80-byte Bitcoin headers.
-func (lc *localChain) AddHeaders(anchor []uint8, headers []uint8) error {
-	panic("not implemented yet")
+// AddHeaders adds headers to storage after validating. The anchorHeader
+// parameter is the header immediately preceding the new chain. Headers
+// parameter should be a tightly-packed list of 80-byte Bitcoin headers.
+func (c *Chain) AddHeaders(anchorHeader []byte, headers []byte) error {
+	c.addHeadersEvents = append(
+		c.addHeadersEvents,
+		&AddHeadersEvent{
+			AnchorHeader: anchorHeader,
+			Headers:      headers,
+		},
+	)
+
+	return nil
 }
 
 // AddHeadersWithRetarget adds headers to storage, performs additional
 // validation of retarget. The oldPeriodStartHeader is the first header in the
 // difficulty period being closed while oldPeriodEndHeader is the last.
 // Headers parameter should be a tightly-packed list of 80-byte Bitcoin headers.
-func (lc *localChain) AddHeadersWithRetarget(
-	oldPeriodStartHeader []uint8,
-	oldPeriodEndHeader []uint8,
-	headers []uint8,
+func (c *Chain) AddHeadersWithRetarget(
+	oldPeriodStartHeader []byte,
+	oldPeriodEndHeader []byte,
+	headers []byte,
 ) error {
 	panic("not implemented yet")
 }
 
-// MarkNewHeaviest gives a new starting point for the relay. The ancestor param
-// is the digest of the most recent common ancestor. The currentBest is a
-// 80-byte header referenced by bestKnownDigest while the newBast param should
-// be the header to mark as new best. Limit parameter limits the amount of
-// traversal of the chain.
-func (lc *localChain) MarkNewHeaviest(
-	ancestor [32]uint8,
-	currentBest []uint8,
-	newBest []uint8,
+// MarkNewHeaviest gives a new starting point for the relay. The
+// ancestorDigest param is the digest of the most recent common ancestor.
+// The currentBestHeader is a 80-byte header referenced by bestKnownDigest
+// while the newBestHeader param should be the header to mark as new best.
+// Limit parameter limits the amount of traversal of the chain.
+func (c *Chain) MarkNewHeaviest(
+	ancestorDigest [32]byte,
+	currentBestHeader []byte,
+	newBestHeader []byte,
 	limit *big.Int,
 ) error {
-	panic("not implemented yet")
+	c.markNewHeaviestEvent = append(
+		c.markNewHeaviestEvent,
+		&MarkNewHeaviestEvent{
+			AncestorDigest:    ancestorDigest,
+			CurrentBestHeader: currentBestHeader,
+			NewBestHeader:     newBestHeader,
+			Limit:             limit,
+		},
+	)
+
+	return nil
+}
+
+// AddHeadersEvents returns all invocations of the AddHeaders method for
+// testing purposes.
+func (c *Chain) AddHeadersEvents() []*AddHeadersEvent {
+	return c.addHeadersEvents
+}
+
+// MarkNewHeaviestEvents returns all invocations of the MarkNewHeaviest method
+// for testing purposes.
+func (c *Chain) MarkNewHeaviestEvents() []*MarkNewHeaviestEvent {
+	return c.markNewHeaviestEvent
+}
+
+// SetBestKnownDigest sets the internal best known digest for testing purposes.
+func (c *Chain) SetBestKnownDigest(bestKnownDigest [32]byte) {
+	c.bestKnownDigest = bestKnownDigest
+}
+
+// AddHeadersEvent represents an invocation of the AddHeaders method.
+type AddHeadersEvent struct {
+	AnchorHeader []byte
+	Headers      []byte
+}
+
+// MarkNewHeaviestEvent represents an invocation of the MarkNewHeaviest method.
+type MarkNewHeaviestEvent struct {
+	AncestorDigest    [32]byte
+	CurrentBestHeader []byte
+	NewBestHeader     []byte
+	Limit             *big.Int
 }
