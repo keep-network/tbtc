@@ -10,6 +10,11 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
 
+// TODO: Make the following refactoring:
+//  - rename `block` package to `header` (align all logging and stuff)
+//  - rename `Forwarder` to `Relay`
+//  - rename `RunForwarder` to `StartRelay`
+
 const (
 	// Size of the headers queue.
 	headersQueueSize = 50
@@ -51,8 +56,6 @@ type Forwarder struct {
 
 	headersQueue chan *btc.Header
 	errChan      chan error
-
-	loopExitHandler func()
 }
 
 // RunForwarder creates an instance of the block forwarder and runs its
@@ -71,14 +74,17 @@ func RunForwarder(
 		pullingSleepTime: forwarderPullingSleepTime,
 		headersQueue:     make(chan *btc.Header, headersQueueSize),
 		errChan:          make(chan error, 1),
-		loopExitHandler:  cancelLoopCtx,
 	}
 
 	go func() {
 		forwarder.pullingLoop(loopCtx)
 		cancelLoopCtx() // loop exited, cancel the context
 	}()
-	go forwarder.pushingLoop(loopCtx)
+
+	go func() {
+		forwarder.pushingLoop(loopCtx)
+		cancelLoopCtx() // loop exited, cancel the context
+	}()
 
 	return forwarder
 }
@@ -120,11 +126,7 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 
 func (f *Forwarder) pushingLoop(ctx context.Context) {
 	logger.Infof("running new block pushing loop")
-
-	defer func() {
-		logger.Infof("stopping current block pushing loop")
-		f.loopExitHandler()
-	}()
+	defer logger.Infof("stopping current block pushing loop")
 
 	for {
 		select {
@@ -135,6 +137,8 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 
 			headers := f.pullHeadersFromQueue(ctx)
 			if len(headers) == 0 {
+				// Empty headers slice is returned only in case when context
+				// has been cancelled.
 				continue
 			}
 
@@ -142,6 +146,10 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 
 			if err := f.pushHeadersToHostChain(ctx, headers); err != nil {
 				f.errChan <- fmt.Errorf("could not push headers: [%v]", err)
+				// We exit on the first error letting the code controlling the
+				// relay to restart it. The relay is stateful and it is easier
+				// to fetch the most recent information from BTC after the
+				// restart instead of trying to recover here.
 				return
 			}
 

@@ -2,6 +2,8 @@ package chain
 
 import "math/big"
 
+// TODO: Use btc.Digest where appropriate.
+
 // Handle represents a handle to a host chain.
 type Handle interface {
 	Relay

@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindTBTCSystem(address common.Address, caller bind.ContractCaller, transact
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TBTCSystem *TBTCSystemRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TBTCSystem *TBTCSystemRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TBTCSystem.Contract.TBTCSystemCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_TBTCSystem *TBTCSystemRaw) Transact(opts *bind.TransactOpts, method strin
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TBTCSystem *TBTCSystemCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TBTCSystem *TBTCSystemCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TBTCSystem.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,780 +173,930 @@ func (_TBTCSystem *TBTCSystemTransactorRaw) Transact(opts *bind.TransactOpts, me
 
 // ApprovedToLog is a free data retrieval call binding the contract method 0x9ffb3862.
 //
-// Solidity: function approvedToLog(address _caller) constant returns(bool)
+// Solidity: function approvedToLog(address _caller) view returns(bool)
 func (_TBTCSystem *TBTCSystemCaller) ApprovedToLog(opts *bind.CallOpts, _caller common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "approvedToLog", _caller)
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "approvedToLog", _caller)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // ApprovedToLog is a free data retrieval call binding the contract method 0x9ffb3862.
 //
-// Solidity: function approvedToLog(address _caller) constant returns(bool)
+// Solidity: function approvedToLog(address _caller) view returns(bool)
 func (_TBTCSystem *TBTCSystemSession) ApprovedToLog(_caller common.Address) (bool, error) {
 	return _TBTCSystem.Contract.ApprovedToLog(&_TBTCSystem.CallOpts, _caller)
 }
 
 // ApprovedToLog is a free data retrieval call binding the contract method 0x9ffb3862.
 //
-// Solidity: function approvedToLog(address _caller) constant returns(bool)
+// Solidity: function approvedToLog(address _caller) view returns(bool)
 func (_TBTCSystem *TBTCSystemCallerSession) ApprovedToLog(_caller common.Address) (bool, error) {
 	return _TBTCSystem.Contract.ApprovedToLog(&_TBTCSystem.CallOpts, _caller)
 }
 
 // FetchBitcoinPrice is a free data retrieval call binding the contract method 0xa6c1691c.
 //
-// Solidity: function fetchBitcoinPrice() constant returns(uint256)
+// Solidity: function fetchBitcoinPrice() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) FetchBitcoinPrice(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "fetchBitcoinPrice")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "fetchBitcoinPrice")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // FetchBitcoinPrice is a free data retrieval call binding the contract method 0xa6c1691c.
 //
-// Solidity: function fetchBitcoinPrice() constant returns(uint256)
+// Solidity: function fetchBitcoinPrice() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) FetchBitcoinPrice() (*big.Int, error) {
 	return _TBTCSystem.Contract.FetchBitcoinPrice(&_TBTCSystem.CallOpts)
 }
 
 // FetchBitcoinPrice is a free data retrieval call binding the contract method 0xa6c1691c.
 //
-// Solidity: function fetchBitcoinPrice() constant returns(uint256)
+// Solidity: function fetchBitcoinPrice() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) FetchBitcoinPrice() (*big.Int, error) {
 	return _TBTCSystem.Contract.FetchBitcoinPrice(&_TBTCSystem.CallOpts)
 }
 
 // FetchRelayCurrentDifficulty is a free data retrieval call binding the contract method 0xdab70cb1.
 //
-// Solidity: function fetchRelayCurrentDifficulty() constant returns(uint256)
+// Solidity: function fetchRelayCurrentDifficulty() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) FetchRelayCurrentDifficulty(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "fetchRelayCurrentDifficulty")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "fetchRelayCurrentDifficulty")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // FetchRelayCurrentDifficulty is a free data retrieval call binding the contract method 0xdab70cb1.
 //
-// Solidity: function fetchRelayCurrentDifficulty() constant returns(uint256)
+// Solidity: function fetchRelayCurrentDifficulty() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) FetchRelayCurrentDifficulty() (*big.Int, error) {
 	return _TBTCSystem.Contract.FetchRelayCurrentDifficulty(&_TBTCSystem.CallOpts)
 }
 
 // FetchRelayCurrentDifficulty is a free data retrieval call binding the contract method 0xdab70cb1.
 //
-// Solidity: function fetchRelayCurrentDifficulty() constant returns(uint256)
+// Solidity: function fetchRelayCurrentDifficulty() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) FetchRelayCurrentDifficulty() (*big.Int, error) {
 	return _TBTCSystem.Contract.FetchRelayCurrentDifficulty(&_TBTCSystem.CallOpts)
 }
 
 // FetchRelayPreviousDifficulty is a free data retrieval call binding the contract method 0x402b783d.
 //
-// Solidity: function fetchRelayPreviousDifficulty() constant returns(uint256)
+// Solidity: function fetchRelayPreviousDifficulty() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) FetchRelayPreviousDifficulty(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "fetchRelayPreviousDifficulty")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "fetchRelayPreviousDifficulty")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // FetchRelayPreviousDifficulty is a free data retrieval call binding the contract method 0x402b783d.
 //
-// Solidity: function fetchRelayPreviousDifficulty() constant returns(uint256)
+// Solidity: function fetchRelayPreviousDifficulty() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) FetchRelayPreviousDifficulty() (*big.Int, error) {
 	return _TBTCSystem.Contract.FetchRelayPreviousDifficulty(&_TBTCSystem.CallOpts)
 }
 
 // FetchRelayPreviousDifficulty is a free data retrieval call binding the contract method 0x402b783d.
 //
-// Solidity: function fetchRelayPreviousDifficulty() constant returns(uint256)
+// Solidity: function fetchRelayPreviousDifficulty() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) FetchRelayPreviousDifficulty() (*big.Int, error) {
 	return _TBTCSystem.Contract.FetchRelayPreviousDifficulty(&_TBTCSystem.CallOpts)
 }
 
 // GetAllowNewDeposits is a free data retrieval call binding the contract method 0x0d7eb1c4.
 //
-// Solidity: function getAllowNewDeposits() constant returns(bool)
+// Solidity: function getAllowNewDeposits() view returns(bool)
 func (_TBTCSystem *TBTCSystemCaller) GetAllowNewDeposits(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getAllowNewDeposits")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getAllowNewDeposits")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // GetAllowNewDeposits is a free data retrieval call binding the contract method 0x0d7eb1c4.
 //
-// Solidity: function getAllowNewDeposits() constant returns(bool)
+// Solidity: function getAllowNewDeposits() view returns(bool)
 func (_TBTCSystem *TBTCSystemSession) GetAllowNewDeposits() (bool, error) {
 	return _TBTCSystem.Contract.GetAllowNewDeposits(&_TBTCSystem.CallOpts)
 }
 
 // GetAllowNewDeposits is a free data retrieval call binding the contract method 0x0d7eb1c4.
 //
-// Solidity: function getAllowNewDeposits() constant returns(bool)
+// Solidity: function getAllowNewDeposits() view returns(bool)
 func (_TBTCSystem *TBTCSystemCallerSession) GetAllowNewDeposits() (bool, error) {
 	return _TBTCSystem.Contract.GetAllowNewDeposits(&_TBTCSystem.CallOpts)
 }
 
 // GetAllowedLotSizes is a free data retrieval call binding the contract method 0x086c9edd.
 //
-// Solidity: function getAllowedLotSizes() constant returns(uint64[])
+// Solidity: function getAllowedLotSizes() view returns(uint64[])
 func (_TBTCSystem *TBTCSystemCaller) GetAllowedLotSizes(opts *bind.CallOpts) ([]uint64, error) {
-	var (
-		ret0 = new([]uint64)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getAllowedLotSizes")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getAllowedLotSizes")
+
+	if err != nil {
+		return *new([]uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]uint64)).(*[]uint64)
+
+	return out0, err
+
 }
 
 // GetAllowedLotSizes is a free data retrieval call binding the contract method 0x086c9edd.
 //
-// Solidity: function getAllowedLotSizes() constant returns(uint64[])
+// Solidity: function getAllowedLotSizes() view returns(uint64[])
 func (_TBTCSystem *TBTCSystemSession) GetAllowedLotSizes() ([]uint64, error) {
 	return _TBTCSystem.Contract.GetAllowedLotSizes(&_TBTCSystem.CallOpts)
 }
 
 // GetAllowedLotSizes is a free data retrieval call binding the contract method 0x086c9edd.
 //
-// Solidity: function getAllowedLotSizes() constant returns(uint64[])
+// Solidity: function getAllowedLotSizes() view returns(uint64[])
 func (_TBTCSystem *TBTCSystemCallerSession) GetAllowedLotSizes() ([]uint64, error) {
 	return _TBTCSystem.Contract.GetAllowedLotSizes(&_TBTCSystem.CallOpts)
 }
 
 // GetGovernanceTimeDelay is a free data retrieval call binding the contract method 0xf2e72347.
 //
-// Solidity: function getGovernanceTimeDelay() constant returns(uint256)
+// Solidity: function getGovernanceTimeDelay() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetGovernanceTimeDelay(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getGovernanceTimeDelay")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getGovernanceTimeDelay")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetGovernanceTimeDelay is a free data retrieval call binding the contract method 0xf2e72347.
 //
-// Solidity: function getGovernanceTimeDelay() constant returns(uint256)
+// Solidity: function getGovernanceTimeDelay() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetGovernanceTimeDelay() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetGovernanceTimeDelay(&_TBTCSystem.CallOpts)
 }
 
 // GetGovernanceTimeDelay is a free data retrieval call binding the contract method 0xf2e72347.
 //
-// Solidity: function getGovernanceTimeDelay() constant returns(uint256)
+// Solidity: function getGovernanceTimeDelay() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetGovernanceTimeDelay() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetGovernanceTimeDelay(&_TBTCSystem.CallOpts)
 }
 
 // GetInitialCollateralizedPercent is a free data retrieval call binding the contract method 0x987ecea7.
 //
-// Solidity: function getInitialCollateralizedPercent() constant returns(uint16)
+// Solidity: function getInitialCollateralizedPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCaller) GetInitialCollateralizedPercent(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getInitialCollateralizedPercent")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getInitialCollateralizedPercent")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // GetInitialCollateralizedPercent is a free data retrieval call binding the contract method 0x987ecea7.
 //
-// Solidity: function getInitialCollateralizedPercent() constant returns(uint16)
+// Solidity: function getInitialCollateralizedPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemSession) GetInitialCollateralizedPercent() (uint16, error) {
 	return _TBTCSystem.Contract.GetInitialCollateralizedPercent(&_TBTCSystem.CallOpts)
 }
 
 // GetInitialCollateralizedPercent is a free data retrieval call binding the contract method 0x987ecea7.
 //
-// Solidity: function getInitialCollateralizedPercent() constant returns(uint16)
+// Solidity: function getInitialCollateralizedPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCallerSession) GetInitialCollateralizedPercent() (uint16, error) {
 	return _TBTCSystem.Contract.GetInitialCollateralizedPercent(&_TBTCSystem.CallOpts)
 }
 
 // GetKeepFactoriesUpgradeabilityPeriod is a free data retrieval call binding the contract method 0xe5a6d77d.
 //
-// Solidity: function getKeepFactoriesUpgradeabilityPeriod() constant returns(uint256)
+// Solidity: function getKeepFactoriesUpgradeabilityPeriod() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetKeepFactoriesUpgradeabilityPeriod(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getKeepFactoriesUpgradeabilityPeriod")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getKeepFactoriesUpgradeabilityPeriod")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetKeepFactoriesUpgradeabilityPeriod is a free data retrieval call binding the contract method 0xe5a6d77d.
 //
-// Solidity: function getKeepFactoriesUpgradeabilityPeriod() constant returns(uint256)
+// Solidity: function getKeepFactoriesUpgradeabilityPeriod() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetKeepFactoriesUpgradeabilityPeriod() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetKeepFactoriesUpgradeabilityPeriod(&_TBTCSystem.CallOpts)
 }
 
 // GetKeepFactoriesUpgradeabilityPeriod is a free data retrieval call binding the contract method 0xe5a6d77d.
 //
-// Solidity: function getKeepFactoriesUpgradeabilityPeriod() constant returns(uint256)
+// Solidity: function getKeepFactoriesUpgradeabilityPeriod() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetKeepFactoriesUpgradeabilityPeriod() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetKeepFactoriesUpgradeabilityPeriod(&_TBTCSystem.CallOpts)
 }
 
 // GetMaximumLotSize is a free data retrieval call binding the contract method 0x2753d84b.
 //
-// Solidity: function getMaximumLotSize() constant returns(uint256)
+// Solidity: function getMaximumLotSize() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetMaximumLotSize(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getMaximumLotSize")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getMaximumLotSize")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetMaximumLotSize is a free data retrieval call binding the contract method 0x2753d84b.
 //
-// Solidity: function getMaximumLotSize() constant returns(uint256)
+// Solidity: function getMaximumLotSize() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetMaximumLotSize() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetMaximumLotSize(&_TBTCSystem.CallOpts)
 }
 
 // GetMaximumLotSize is a free data retrieval call binding the contract method 0x2753d84b.
 //
-// Solidity: function getMaximumLotSize() constant returns(uint256)
+// Solidity: function getMaximumLotSize() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetMaximumLotSize() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetMaximumLotSize(&_TBTCSystem.CallOpts)
 }
 
 // GetMinimumLotSize is a free data retrieval call binding the contract method 0x34d534a9.
 //
-// Solidity: function getMinimumLotSize() constant returns(uint256)
+// Solidity: function getMinimumLotSize() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetMinimumLotSize(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getMinimumLotSize")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getMinimumLotSize")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetMinimumLotSize is a free data retrieval call binding the contract method 0x34d534a9.
 //
-// Solidity: function getMinimumLotSize() constant returns(uint256)
+// Solidity: function getMinimumLotSize() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetMinimumLotSize() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetMinimumLotSize(&_TBTCSystem.CallOpts)
 }
 
 // GetMinimumLotSize is a free data retrieval call binding the contract method 0x34d534a9.
 //
-// Solidity: function getMinimumLotSize() constant returns(uint256)
+// Solidity: function getMinimumLotSize() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetMinimumLotSize() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetMinimumLotSize(&_TBTCSystem.CallOpts)
 }
 
 // GetNewDepositFeeEstimate is a free data retrieval call binding the contract method 0x2d00f1ee.
 //
-// Solidity: function getNewDepositFeeEstimate() constant returns(uint256)
+// Solidity: function getNewDepositFeeEstimate() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetNewDepositFeeEstimate(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getNewDepositFeeEstimate")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getNewDepositFeeEstimate")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetNewDepositFeeEstimate is a free data retrieval call binding the contract method 0x2d00f1ee.
 //
-// Solidity: function getNewDepositFeeEstimate() constant returns(uint256)
+// Solidity: function getNewDepositFeeEstimate() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetNewDepositFeeEstimate() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetNewDepositFeeEstimate(&_TBTCSystem.CallOpts)
 }
 
 // GetNewDepositFeeEstimate is a free data retrieval call binding the contract method 0x2d00f1ee.
 //
-// Solidity: function getNewDepositFeeEstimate() constant returns(uint256)
+// Solidity: function getNewDepositFeeEstimate() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetNewDepositFeeEstimate() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetNewDepositFeeEstimate(&_TBTCSystem.CallOpts)
 }
 
 // GetPriceFeedGovernanceTimeDelay is a free data retrieval call binding the contract method 0xae7f4a5f.
 //
-// Solidity: function getPriceFeedGovernanceTimeDelay() constant returns(uint256)
+// Solidity: function getPriceFeedGovernanceTimeDelay() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetPriceFeedGovernanceTimeDelay(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getPriceFeedGovernanceTimeDelay")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getPriceFeedGovernanceTimeDelay")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetPriceFeedGovernanceTimeDelay is a free data retrieval call binding the contract method 0xae7f4a5f.
 //
-// Solidity: function getPriceFeedGovernanceTimeDelay() constant returns(uint256)
+// Solidity: function getPriceFeedGovernanceTimeDelay() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetPriceFeedGovernanceTimeDelay() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetPriceFeedGovernanceTimeDelay(&_TBTCSystem.CallOpts)
 }
 
 // GetPriceFeedGovernanceTimeDelay is a free data retrieval call binding the contract method 0xae7f4a5f.
 //
-// Solidity: function getPriceFeedGovernanceTimeDelay() constant returns(uint256)
+// Solidity: function getPriceFeedGovernanceTimeDelay() pure returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetPriceFeedGovernanceTimeDelay() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetPriceFeedGovernanceTimeDelay(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingCollateralizationThresholdsUpdateTime is a free data retrieval call binding the contract method 0xc074d550.
 //
-// Solidity: function getRemainingCollateralizationThresholdsUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingCollateralizationThresholdsUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetRemainingCollateralizationThresholdsUpdateTime(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getRemainingCollateralizationThresholdsUpdateTime")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getRemainingCollateralizationThresholdsUpdateTime")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetRemainingCollateralizationThresholdsUpdateTime is a free data retrieval call binding the contract method 0xc074d550.
 //
-// Solidity: function getRemainingCollateralizationThresholdsUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingCollateralizationThresholdsUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetRemainingCollateralizationThresholdsUpdateTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingCollateralizationThresholdsUpdateTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingCollateralizationThresholdsUpdateTime is a free data retrieval call binding the contract method 0xc074d550.
 //
-// Solidity: function getRemainingCollateralizationThresholdsUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingCollateralizationThresholdsUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetRemainingCollateralizationThresholdsUpdateTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingCollateralizationThresholdsUpdateTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingEthBtcPriceFeedAdditionTime is a free data retrieval call binding the contract method 0x0af488f9.
 //
-// Solidity: function getRemainingEthBtcPriceFeedAdditionTime() constant returns(uint256)
+// Solidity: function getRemainingEthBtcPriceFeedAdditionTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetRemainingEthBtcPriceFeedAdditionTime(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getRemainingEthBtcPriceFeedAdditionTime")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getRemainingEthBtcPriceFeedAdditionTime")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetRemainingEthBtcPriceFeedAdditionTime is a free data retrieval call binding the contract method 0x0af488f9.
 //
-// Solidity: function getRemainingEthBtcPriceFeedAdditionTime() constant returns(uint256)
+// Solidity: function getRemainingEthBtcPriceFeedAdditionTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetRemainingEthBtcPriceFeedAdditionTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingEthBtcPriceFeedAdditionTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingEthBtcPriceFeedAdditionTime is a free data retrieval call binding the contract method 0x0af488f9.
 //
-// Solidity: function getRemainingEthBtcPriceFeedAdditionTime() constant returns(uint256)
+// Solidity: function getRemainingEthBtcPriceFeedAdditionTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetRemainingEthBtcPriceFeedAdditionTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingEthBtcPriceFeedAdditionTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingKeepFactoriesUpdateTime is a free data retrieval call binding the contract method 0x57535088.
 //
-// Solidity: function getRemainingKeepFactoriesUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingKeepFactoriesUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetRemainingKeepFactoriesUpdateTime(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getRemainingKeepFactoriesUpdateTime")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getRemainingKeepFactoriesUpdateTime")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetRemainingKeepFactoriesUpdateTime is a free data retrieval call binding the contract method 0x57535088.
 //
-// Solidity: function getRemainingKeepFactoriesUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingKeepFactoriesUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetRemainingKeepFactoriesUpdateTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingKeepFactoriesUpdateTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingKeepFactoriesUpdateTime is a free data retrieval call binding the contract method 0x57535088.
 //
-// Solidity: function getRemainingKeepFactoriesUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingKeepFactoriesUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetRemainingKeepFactoriesUpdateTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingKeepFactoriesUpdateTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingKeepFactoriesUpgradeabilityTime is a free data retrieval call binding the contract method 0xb196b5a3.
 //
-// Solidity: function getRemainingKeepFactoriesUpgradeabilityTime() constant returns(uint256)
+// Solidity: function getRemainingKeepFactoriesUpgradeabilityTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetRemainingKeepFactoriesUpgradeabilityTime(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getRemainingKeepFactoriesUpgradeabilityTime")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getRemainingKeepFactoriesUpgradeabilityTime")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetRemainingKeepFactoriesUpgradeabilityTime is a free data retrieval call binding the contract method 0xb196b5a3.
 //
-// Solidity: function getRemainingKeepFactoriesUpgradeabilityTime() constant returns(uint256)
+// Solidity: function getRemainingKeepFactoriesUpgradeabilityTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetRemainingKeepFactoriesUpgradeabilityTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingKeepFactoriesUpgradeabilityTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingKeepFactoriesUpgradeabilityTime is a free data retrieval call binding the contract method 0xb196b5a3.
 //
-// Solidity: function getRemainingKeepFactoriesUpgradeabilityTime() constant returns(uint256)
+// Solidity: function getRemainingKeepFactoriesUpgradeabilityTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetRemainingKeepFactoriesUpgradeabilityTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingKeepFactoriesUpgradeabilityTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingLotSizesUpdateTime is a free data retrieval call binding the contract method 0x3ee850bc.
 //
-// Solidity: function getRemainingLotSizesUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingLotSizesUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetRemainingLotSizesUpdateTime(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getRemainingLotSizesUpdateTime")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getRemainingLotSizesUpdateTime")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetRemainingLotSizesUpdateTime is a free data retrieval call binding the contract method 0x3ee850bc.
 //
-// Solidity: function getRemainingLotSizesUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingLotSizesUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetRemainingLotSizesUpdateTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingLotSizesUpdateTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingLotSizesUpdateTime is a free data retrieval call binding the contract method 0x3ee850bc.
 //
-// Solidity: function getRemainingLotSizesUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingLotSizesUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetRemainingLotSizesUpdateTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingLotSizesUpdateTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingPauseTerm is a free data retrieval call binding the contract method 0x013b0f30.
 //
-// Solidity: function getRemainingPauseTerm() constant returns(uint256)
+// Solidity: function getRemainingPauseTerm() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetRemainingPauseTerm(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getRemainingPauseTerm")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getRemainingPauseTerm")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetRemainingPauseTerm is a free data retrieval call binding the contract method 0x013b0f30.
 //
-// Solidity: function getRemainingPauseTerm() constant returns(uint256)
+// Solidity: function getRemainingPauseTerm() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetRemainingPauseTerm() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingPauseTerm(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingPauseTerm is a free data retrieval call binding the contract method 0x013b0f30.
 //
-// Solidity: function getRemainingPauseTerm() constant returns(uint256)
+// Solidity: function getRemainingPauseTerm() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetRemainingPauseTerm() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingPauseTerm(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingSignerFeeDivisorUpdateTime is a free data retrieval call binding the contract method 0xb792a38e.
 //
-// Solidity: function getRemainingSignerFeeDivisorUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingSignerFeeDivisorUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCaller) GetRemainingSignerFeeDivisorUpdateTime(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getRemainingSignerFeeDivisorUpdateTime")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getRemainingSignerFeeDivisorUpdateTime")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetRemainingSignerFeeDivisorUpdateTime is a free data retrieval call binding the contract method 0xb792a38e.
 //
-// Solidity: function getRemainingSignerFeeDivisorUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingSignerFeeDivisorUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemSession) GetRemainingSignerFeeDivisorUpdateTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingSignerFeeDivisorUpdateTime(&_TBTCSystem.CallOpts)
 }
 
 // GetRemainingSignerFeeDivisorUpdateTime is a free data retrieval call binding the contract method 0xb792a38e.
 //
-// Solidity: function getRemainingSignerFeeDivisorUpdateTime() constant returns(uint256)
+// Solidity: function getRemainingSignerFeeDivisorUpdateTime() view returns(uint256)
 func (_TBTCSystem *TBTCSystemCallerSession) GetRemainingSignerFeeDivisorUpdateTime() (*big.Int, error) {
 	return _TBTCSystem.Contract.GetRemainingSignerFeeDivisorUpdateTime(&_TBTCSystem.CallOpts)
 }
 
 // GetSeverelyUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x6f4fef62.
 //
-// Solidity: function getSeverelyUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function getSeverelyUndercollateralizedThresholdPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCaller) GetSeverelyUndercollateralizedThresholdPercent(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getSeverelyUndercollateralizedThresholdPercent")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getSeverelyUndercollateralizedThresholdPercent")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // GetSeverelyUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x6f4fef62.
 //
-// Solidity: function getSeverelyUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function getSeverelyUndercollateralizedThresholdPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemSession) GetSeverelyUndercollateralizedThresholdPercent() (uint16, error) {
 	return _TBTCSystem.Contract.GetSeverelyUndercollateralizedThresholdPercent(&_TBTCSystem.CallOpts)
 }
 
 // GetSeverelyUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0x6f4fef62.
 //
-// Solidity: function getSeverelyUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function getSeverelyUndercollateralizedThresholdPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCallerSession) GetSeverelyUndercollateralizedThresholdPercent() (uint16, error) {
 	return _TBTCSystem.Contract.GetSeverelyUndercollateralizedThresholdPercent(&_TBTCSystem.CallOpts)
 }
 
 // GetSignerFeeDivisor is a free data retrieval call binding the contract method 0x60e98d59.
 //
-// Solidity: function getSignerFeeDivisor() constant returns(uint16)
+// Solidity: function getSignerFeeDivisor() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCaller) GetSignerFeeDivisor(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getSignerFeeDivisor")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getSignerFeeDivisor")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // GetSignerFeeDivisor is a free data retrieval call binding the contract method 0x60e98d59.
 //
-// Solidity: function getSignerFeeDivisor() constant returns(uint16)
+// Solidity: function getSignerFeeDivisor() view returns(uint16)
 func (_TBTCSystem *TBTCSystemSession) GetSignerFeeDivisor() (uint16, error) {
 	return _TBTCSystem.Contract.GetSignerFeeDivisor(&_TBTCSystem.CallOpts)
 }
 
 // GetSignerFeeDivisor is a free data retrieval call binding the contract method 0x60e98d59.
 //
-// Solidity: function getSignerFeeDivisor() constant returns(uint16)
+// Solidity: function getSignerFeeDivisor() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCallerSession) GetSignerFeeDivisor() (uint16, error) {
 	return _TBTCSystem.Contract.GetSignerFeeDivisor(&_TBTCSystem.CallOpts)
 }
 
 // GetUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0xa2cd75da.
 //
-// Solidity: function getUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function getUndercollateralizedThresholdPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCaller) GetUndercollateralizedThresholdPercent(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "getUndercollateralizedThresholdPercent")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "getUndercollateralizedThresholdPercent")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // GetUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0xa2cd75da.
 //
-// Solidity: function getUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function getUndercollateralizedThresholdPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemSession) GetUndercollateralizedThresholdPercent() (uint16, error) {
 	return _TBTCSystem.Contract.GetUndercollateralizedThresholdPercent(&_TBTCSystem.CallOpts)
 }
 
 // GetUndercollateralizedThresholdPercent is a free data retrieval call binding the contract method 0xa2cd75da.
 //
-// Solidity: function getUndercollateralizedThresholdPercent() constant returns(uint16)
+// Solidity: function getUndercollateralizedThresholdPercent() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCallerSession) GetUndercollateralizedThresholdPercent() (uint16, error) {
 	return _TBTCSystem.Contract.GetUndercollateralizedThresholdPercent(&_TBTCSystem.CallOpts)
 }
 
 // IsAllowedLotSize is a free data retrieval call binding the contract method 0xa28b79f1.
 //
-// Solidity: function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) constant returns(bool)
+// Solidity: function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) view returns(bool)
 func (_TBTCSystem *TBTCSystemCaller) IsAllowedLotSize(opts *bind.CallOpts, _requestedLotSizeSatoshis uint64) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "isAllowedLotSize", _requestedLotSizeSatoshis)
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "isAllowedLotSize", _requestedLotSizeSatoshis)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsAllowedLotSize is a free data retrieval call binding the contract method 0xa28b79f1.
 //
-// Solidity: function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) constant returns(bool)
+// Solidity: function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) view returns(bool)
 func (_TBTCSystem *TBTCSystemSession) IsAllowedLotSize(_requestedLotSizeSatoshis uint64) (bool, error) {
 	return _TBTCSystem.Contract.IsAllowedLotSize(&_TBTCSystem.CallOpts, _requestedLotSizeSatoshis)
 }
 
 // IsAllowedLotSize is a free data retrieval call binding the contract method 0xa28b79f1.
 //
-// Solidity: function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) constant returns(bool)
+// Solidity: function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) view returns(bool)
 func (_TBTCSystem *TBTCSystemCallerSession) IsAllowedLotSize(_requestedLotSizeSatoshis uint64) (bool, error) {
 	return _TBTCSystem.Contract.IsAllowedLotSize(&_TBTCSystem.CallOpts, _requestedLotSizeSatoshis)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_TBTCSystem *TBTCSystemCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "isOwner")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "isOwner")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_TBTCSystem *TBTCSystemSession) IsOwner() (bool, error) {
 	return _TBTCSystem.Contract.IsOwner(&_TBTCSystem.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_TBTCSystem *TBTCSystemCallerSession) IsOwner() (bool, error) {
 	return _TBTCSystem.Contract.IsOwner(&_TBTCSystem.CallOpts)
 }
 
 // KeepSize is a free data retrieval call binding the contract method 0x64bdb667.
 //
-// Solidity: function keepSize() constant returns(uint16)
+// Solidity: function keepSize() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCaller) KeepSize(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "keepSize")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "keepSize")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // KeepSize is a free data retrieval call binding the contract method 0x64bdb667.
 //
-// Solidity: function keepSize() constant returns(uint16)
+// Solidity: function keepSize() view returns(uint16)
 func (_TBTCSystem *TBTCSystemSession) KeepSize() (uint16, error) {
 	return _TBTCSystem.Contract.KeepSize(&_TBTCSystem.CallOpts)
 }
 
 // KeepSize is a free data retrieval call binding the contract method 0x64bdb667.
 //
-// Solidity: function keepSize() constant returns(uint16)
+// Solidity: function keepSize() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCallerSession) KeepSize() (uint16, error) {
 	return _TBTCSystem.Contract.KeepSize(&_TBTCSystem.CallOpts)
 }
 
 // KeepThreshold is a free data retrieval call binding the contract method 0xe5426d2e.
 //
-// Solidity: function keepThreshold() constant returns(uint16)
+// Solidity: function keepThreshold() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCaller) KeepThreshold(opts *bind.CallOpts) (uint16, error) {
-	var (
-		ret0 = new(uint16)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "keepThreshold")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "keepThreshold")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
 }
 
 // KeepThreshold is a free data retrieval call binding the contract method 0xe5426d2e.
 //
-// Solidity: function keepThreshold() constant returns(uint16)
+// Solidity: function keepThreshold() view returns(uint16)
 func (_TBTCSystem *TBTCSystemSession) KeepThreshold() (uint16, error) {
 	return _TBTCSystem.Contract.KeepThreshold(&_TBTCSystem.CallOpts)
 }
 
 // KeepThreshold is a free data retrieval call binding the contract method 0xe5426d2e.
 //
-// Solidity: function keepThreshold() constant returns(uint16)
+// Solidity: function keepThreshold() view returns(uint16)
 func (_TBTCSystem *TBTCSystemCallerSession) KeepThreshold() (uint16, error) {
 	return _TBTCSystem.Contract.KeepThreshold(&_TBTCSystem.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_TBTCSystem *TBTCSystemCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_TBTCSystem *TBTCSystemSession) Owner() (common.Address, error) {
 	return _TBTCSystem.Contract.Owner(&_TBTCSystem.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_TBTCSystem *TBTCSystemCallerSession) Owner() (common.Address, error) {
 	return _TBTCSystem.Contract.Owner(&_TBTCSystem.CallOpts)
 }
 
 // PriceFeed is a free data retrieval call binding the contract method 0x741bef1a.
 //
-// Solidity: function priceFeed() constant returns(address)
+// Solidity: function priceFeed() view returns(address)
 func (_TBTCSystem *TBTCSystemCaller) PriceFeed(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "priceFeed")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "priceFeed")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // PriceFeed is a free data retrieval call binding the contract method 0x741bef1a.
 //
-// Solidity: function priceFeed() constant returns(address)
+// Solidity: function priceFeed() view returns(address)
 func (_TBTCSystem *TBTCSystemSession) PriceFeed() (common.Address, error) {
 	return _TBTCSystem.Contract.PriceFeed(&_TBTCSystem.CallOpts)
 }
 
 // PriceFeed is a free data retrieval call binding the contract method 0x741bef1a.
 //
-// Solidity: function priceFeed() constant returns(address)
+// Solidity: function priceFeed() view returns(address)
 func (_TBTCSystem *TBTCSystemCallerSession) PriceFeed() (common.Address, error) {
 	return _TBTCSystem.Contract.PriceFeed(&_TBTCSystem.CallOpts)
 }
 
 // Relay is a free data retrieval call binding the contract method 0xb59589d1.
 //
-// Solidity: function relay() constant returns(address)
+// Solidity: function relay() view returns(address)
 func (_TBTCSystem *TBTCSystemCaller) Relay(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TBTCSystem.contract.Call(opts, out, "relay")
-	return *ret0, err
+	var out []interface{}
+	err := _TBTCSystem.contract.Call(opts, &out, "relay")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Relay is a free data retrieval call binding the contract method 0xb59589d1.
 //
-// Solidity: function relay() constant returns(address)
+// Solidity: function relay() view returns(address)
 func (_TBTCSystem *TBTCSystemSession) Relay() (common.Address, error) {
 	return _TBTCSystem.Contract.Relay(&_TBTCSystem.CallOpts)
 }
 
 // Relay is a free data retrieval call binding the contract method 0xb59589d1.
 //
-// Solidity: function relay() constant returns(address)
+// Solidity: function relay() view returns(address)
 func (_TBTCSystem *TBTCSystemCallerSession) Relay() (common.Address, error) {
 	return _TBTCSystem.Contract.Relay(&_TBTCSystem.CallOpts)
 }
@@ -1521,21 +1670,21 @@ func (_TBTCSystem *TBTCSystemTransactorSession) RenounceOwnership() (*types.Tran
 
 // RequestNewKeep is a paid mutator transaction binding the contract method 0x82f91968.
 //
-// Solidity: function requestNewKeep(uint64 _requestedLotSizeSatoshis, uint256 _maxSecuredLifetime) returns(address)
+// Solidity: function requestNewKeep(uint64 _requestedLotSizeSatoshis, uint256 _maxSecuredLifetime) payable returns(address)
 func (_TBTCSystem *TBTCSystemTransactor) RequestNewKeep(opts *bind.TransactOpts, _requestedLotSizeSatoshis uint64, _maxSecuredLifetime *big.Int) (*types.Transaction, error) {
 	return _TBTCSystem.contract.Transact(opts, "requestNewKeep", _requestedLotSizeSatoshis, _maxSecuredLifetime)
 }
 
 // RequestNewKeep is a paid mutator transaction binding the contract method 0x82f91968.
 //
-// Solidity: function requestNewKeep(uint64 _requestedLotSizeSatoshis, uint256 _maxSecuredLifetime) returns(address)
+// Solidity: function requestNewKeep(uint64 _requestedLotSizeSatoshis, uint256 _maxSecuredLifetime) payable returns(address)
 func (_TBTCSystem *TBTCSystemSession) RequestNewKeep(_requestedLotSizeSatoshis uint64, _maxSecuredLifetime *big.Int) (*types.Transaction, error) {
 	return _TBTCSystem.Contract.RequestNewKeep(&_TBTCSystem.TransactOpts, _requestedLotSizeSatoshis, _maxSecuredLifetime)
 }
 
 // RequestNewKeep is a paid mutator transaction binding the contract method 0x82f91968.
 //
-// Solidity: function requestNewKeep(uint64 _requestedLotSizeSatoshis, uint256 _maxSecuredLifetime) returns(address)
+// Solidity: function requestNewKeep(uint64 _requestedLotSizeSatoshis, uint256 _maxSecuredLifetime) payable returns(address)
 func (_TBTCSystem *TBTCSystemTransactorSession) RequestNewKeep(_requestedLotSizeSatoshis uint64, _maxSecuredLifetime *big.Int) (*types.Transaction, error) {
 	return _TBTCSystem.Contract.RequestNewKeep(&_TBTCSystem.TransactOpts, _requestedLotSizeSatoshis, _maxSecuredLifetime)
 }
@@ -1712,6 +1861,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseAllowNewDepositsUpdated(log types.Lo
 	if err := _TBTCSystem.contract.UnpackLog(event, "AllowNewDepositsUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1848,6 +1998,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseCollateralizationThresholdsUpdateSta
 	if err := _TBTCSystem.contract.UnpackLog(event, "CollateralizationThresholdsUpdateStarted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1983,6 +2134,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseCollateralizationThresholdsUpdated(l
 	if err := _TBTCSystem.contract.UnpackLog(event, "CollateralizationThresholdsUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2127,6 +2279,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseCourtesyCalled(log types.Log) (*TBTC
 	if err := _TBTCSystem.contract.UnpackLog(event, "CourtesyCalled", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2280,6 +2433,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseCreated(log types.Log) (*TBTCSystemC
 	if err := _TBTCSystem.contract.UnpackLog(event, "Created", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2413,6 +2567,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseEthBtcPriceFeedAdded(log types.Log) 
 	if err := _TBTCSystem.contract.UnpackLog(event, "EthBtcPriceFeedAdded", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2547,6 +2702,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseEthBtcPriceFeedAdditionStarted(log t
 	if err := _TBTCSystem.contract.UnpackLog(event, "EthBtcPriceFeedAdditionStarted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2691,6 +2847,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseExitedCourtesyCall(log types.Log) (*
 	if err := _TBTCSystem.contract.UnpackLog(event, "ExitedCourtesyCall", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2835,6 +2992,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseFraudDuringSetup(log types.Log) (*TB
 	if err := _TBTCSystem.contract.UnpackLog(event, "FraudDuringSetup", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2988,6 +3146,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseFunded(log types.Log) (*TBTCSystemFu
 	if err := _TBTCSystem.contract.UnpackLog(event, "Funded", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -3132,6 +3291,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseFunderAbortRequested(log types.Log) 
 	if err := _TBTCSystem.contract.UnpackLog(event, "FunderAbortRequested", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -3287,6 +3447,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseGotRedemptionSignature(log types.Log
 	if err := _TBTCSystem.contract.UnpackLog(event, "GotRedemptionSignature", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -3423,6 +3584,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseKeepFactoriesUpdateStarted(log types
 	if err := _TBTCSystem.contract.UnpackLog(event, "KeepFactoriesUpdateStarted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -3558,6 +3720,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseKeepFactoriesUpdated(log types.Log) 
 	if err := _TBTCSystem.contract.UnpackLog(event, "KeepFactoriesUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -3702,6 +3865,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseLiquidated(log types.Log) (*TBTCSyst
 	if err := _TBTCSystem.contract.UnpackLog(event, "Liquidated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -3836,6 +4000,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseLotSizesUpdateStarted(log types.Log)
 	if err := _TBTCSystem.contract.UnpackLog(event, "LotSizesUpdateStarted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -3969,6 +4134,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseLotSizesUpdated(log types.Log) (*TBT
 	if err := _TBTCSystem.contract.UnpackLog(event, "LotSizesUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -4121,6 +4287,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseOwnershipTransferred(log types.Log) 
 	if err := _TBTCSystem.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -4274,6 +4441,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseRedeemed(log types.Log) (*TBTCSystem
 	if err := _TBTCSystem.contract.UnpackLog(event, "Redeemed", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -4439,6 +4607,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseRedemptionRequested(log types.Log) (
 	if err := _TBTCSystem.contract.UnpackLog(event, "RedemptionRequested", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -4585,6 +4754,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseRegisteredPubkey(log types.Log) (*TB
 	if err := _TBTCSystem.contract.UnpackLog(event, "RegisteredPubkey", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -4729,6 +4899,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseSetupFailed(log types.Log) (*TBTCSys
 	if err := _TBTCSystem.contract.UnpackLog(event, "SetupFailed", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -4863,6 +5034,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseSignerFeeDivisorUpdateStarted(log ty
 	if err := _TBTCSystem.contract.UnpackLog(event, "SignerFeeDivisorUpdateStarted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -4996,6 +5168,7 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseSignerFeeDivisorUpdated(log types.Lo
 	if err := _TBTCSystem.contract.UnpackLog(event, "SignerFeeDivisorUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -5141,5 +5314,6 @@ func (_TBTCSystem *TBTCSystemFilterer) ParseStartedLiquidation(log types.Log) (*
 	if err := _TBTCSystem.contract.UnpackLog(event, "StartedLiquidation", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
