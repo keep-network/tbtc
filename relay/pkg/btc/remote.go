@@ -1,4 +1,4 @@
-package remote
+package btc
 
 import (
 	"bytes"
@@ -9,11 +9,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/ipfs/go-log"
-	"github.com/keep-network/tbtc/relay/pkg/btc"
 )
-
-var logger = log.Logger("relay-btc-remote")
 
 const connectionTimeout = 3 * time.Second
 
@@ -25,8 +21,8 @@ type remoteChain struct {
 // Connect connects to the Bitcoin chain and returns a chain handle.
 func Connect(
 	ctx context.Context,
-	config *btc.Config,
-) (btc.Handle, error) {
+	config *Config,
+) (Handle, error) {
 	logger.Infof("connecting remote Bitcoin chain")
 
 	connCfg := &rpcclient.ConnConfig{
@@ -69,7 +65,7 @@ func Connect(
 
 // GetHeaderByHeight returns the block header from the longest block chain at
 // the given block height.
-func (rc *remoteChain) GetHeaderByHeight(height int64) (*btc.Header, error) {
+func (rc *remoteChain) GetHeaderByHeight(height int64) (*Header, error) {
 	blockHash, err := rc.client.GetBlockHash(height)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -97,10 +93,10 @@ func (rc *remoteChain) GetHeaderByHeight(height int64) (*btc.Header, error) {
 		)
 	}
 
-	relayHeader := &btc.Header{
-		Hash:       btc.Digest(blockHeader.BlockHash()),
-		PrevHash:   btc.Digest(blockHeader.PrevBlock),
-		MerkleRoot: btc.Digest(blockHeader.MerkleRoot),
+	relayHeader := &Header{
+		Hash:       Digest(blockHeader.BlockHash()),
+		PrevHash:   Digest(blockHeader.PrevBlock),
+		MerkleRoot: Digest(blockHeader.MerkleRoot),
 		Raw:        rawHeader,
 		Height:     height,
 	}
@@ -145,8 +141,8 @@ func serializeHeader(header *wire.BlockHeader) ([]byte, error) {
 
 // GetHeaderByDigest returns the block header for given digest (hash).
 func (rc *remoteChain) GetHeaderByDigest(
-	digest btc.Digest,
-) (*btc.Header, error) {
+	digest Digest,
+) (*Header, error) {
 
 	blockHeader, err := rc.client.GetBlockHeader((*chainhash.Hash)(&digest))
 	if err != nil {
@@ -175,10 +171,10 @@ func (rc *remoteChain) GetHeaderByDigest(
 		)
 	}
 
-	relayHeader := &btc.Header{
-		Hash:       btc.Digest(blockHeader.BlockHash()),
-		PrevHash:   btc.Digest(blockHeader.PrevBlock),
-		MerkleRoot: btc.Digest(blockHeader.MerkleRoot),
+	relayHeader := &Header{
+		Hash:       Digest(blockHeader.BlockHash()),
+		PrevHash:   Digest(blockHeader.PrevBlock),
+		MerkleRoot: Digest(blockHeader.MerkleRoot),
 		Raw:        rawHeader,
 		Height:     int64(headerVerbose.Height),
 	}
