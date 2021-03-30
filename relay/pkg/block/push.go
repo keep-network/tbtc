@@ -78,7 +78,7 @@ func (f *Forwarder) pushHeadersToHostChain(
 
 	if startMod == 0 {
 		// we have a difficulty change first
-		logger.Infof(
+		logger.Info(
 			"adding all headers with retarget as there is a difficulty " +
 				"change at the beginning of headers batch",
 		)
@@ -88,7 +88,7 @@ func (f *Forwarder) pushHeadersToHostChain(
 		}
 	} else if startMod > endMod {
 		// we span a difficulty change
-		logger.Infof(
+		logger.Info(
 			"adding some headers with retarget as there is a difficulty " +
 				"change in the middle of headers batch",
 		)
@@ -111,7 +111,7 @@ func (f *Forwarder) pushHeadersToHostChain(
 		}
 	} else {
 		// no difficulty change
-		logger.Infof(
+		logger.Info(
 			"adding all headers without retarget as there is no " +
 				"difficulty change within headers batch",
 		)
