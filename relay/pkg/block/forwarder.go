@@ -46,8 +46,6 @@ type Forwarder struct {
 
 	headersQueue chan *btc.Header
 	errChan      chan error
-
-	loopExitHandler func()
 }
 
 // RunForwarder creates an instance of the block forwarder and runs its
@@ -61,25 +59,23 @@ func RunForwarder(
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 
 	forwarder := &Forwarder{
-		btcChain:        btcChain,
-		hostChain:       hostChain,
-		headersQueue:    make(chan *btc.Header, headersQueueSize),
-		errChan:         make(chan error, 1),
-		loopExitHandler: cancelLoopCtx,
+		btcChain:     btcChain,
+		hostChain:    hostChain,
+		headersQueue: make(chan *btc.Header, headersQueueSize),
+		errChan:      make(chan error, 1),
 	}
 
-	go forwarder.pushingLoop(loopCtx)
+	go func() {
+		forwarder.pushingLoop(loopCtx)
+		cancelLoopCtx() // loop exited, cancel the context
+	}()
 
 	return forwarder
 }
 
 func (f *Forwarder) pushingLoop(ctx context.Context) {
 	logger.Infof("running new block pushing loop")
-
-	defer func() {
-		logger.Infof("stopping current block pushing loop")
-		f.loopExitHandler()
-	}()
+	defer logger.Infof("stopping current block pushing loop")
 
 	for {
 		select {
