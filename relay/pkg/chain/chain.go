@@ -56,7 +56,8 @@ type Relay interface {
 
 	// MarkNewHeaviestPreflight performs a preflight call of the
 	// MarkNewHeaviest method to check whether its execution will
-	// succeed.
+	// succeed. If the preflight call was successful, `true` is returned.
+	// In case the preflight returns an error, `false` is returned.
 	MarkNewHeaviestPreflight(
 		ancestorDigest [32]byte,
 		currentBestHeader []byte,
