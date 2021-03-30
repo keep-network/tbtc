@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/ipfs/go-log"
@@ -66,7 +67,8 @@ func Connect(
 	return &remoteChain{client: client}, nil
 }
 
-// GetHeaderByHeight returns the block header for the given block height.
+// GetHeaderByHeight returns the block header from the longest block chain at
+// the given block height.
 func (rc *remoteChain) GetHeaderByHeight(height int64) (*btc.Header, error) {
 	blockHash, err := rc.client.GetBlockHash(height)
 	if err != nil {
@@ -106,6 +108,11 @@ func (rc *remoteChain) GetHeaderByHeight(height int64) (*btc.Header, error) {
 	return relayHeader, nil
 }
 
+// GetBlockCount returns the number of blocks in the longest block chain
+func (rc *remoteChain) GetBlockCount() (int64, error) {
+	return rc.client.GetBlockCount()
+}
+
 func testConnection(client *rpcclient.Client, timeout time.Duration) error {
 	errChan := make(chan error, 1)
 
@@ -140,6 +147,41 @@ func serializeHeader(header *wire.BlockHeader) ([]byte, error) {
 func (rc *remoteChain) GetHeaderByDigest(
 	digest btc.Digest,
 ) (*btc.Header, error) {
-	// TODO: implementation
-	return nil, nil
+
+	blockHeader, err := rc.client.GetBlockHeader((*chainhash.Hash)(&digest))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not get block header for hash [%s]: [%v]",
+			digest.String(),
+			err,
+		)
+	}
+
+	headerVerbose, err := rc.client.GetBlockHeaderVerbose((*chainhash.Hash)(&digest))
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not get block header verbose for hash [%s]: [%v]",
+			digest.String(),
+			err,
+		)
+	}
+
+	rawHeader, err := serializeHeader(blockHeader)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to serialize header for block with hash [%s]: [%v]",
+			digest.String(),
+			err,
+		)
+	}
+
+	relayHeader := &btc.Header{
+		Hash:       btc.Digest(blockHeader.BlockHash()),
+		PrevHash:   btc.Digest(blockHeader.PrevBlock),
+		MerkleRoot: btc.Digest(blockHeader.MerkleRoot),
+		Raw:        rawHeader,
+		Height:     int64(headerVerbose.Height),
+	}
+
+	return relayHeader, nil
 }

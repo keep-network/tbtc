@@ -16,6 +16,9 @@ type Handle interface {
 
 	// GetHeaderByDigest returns the block header for given digest (hash).
 	GetHeaderByDigest(digest Digest) (*Header, error)
+
+	// GetBlockCount returns the number of blocks in the longest blockchain
+	GetBlockCount() (int64, error)
 }
 
 // Digests represents a 32-byte little-endian Bitcoin digest.
@@ -38,6 +41,16 @@ type Header struct {
 	MerkleRoot Digest
 	// Raw is the serialized data of the block header (80-byte little-endian).
 	Raw []byte
+}
+
+func (h *Header) Equals(other *Header) bool {
+	if other == nil {
+		return false
+	}
+	return h.Hash == other.Hash &&
+		h.Height == other.Height &&
+		h.PrevHash == other.PrevHash &&
+		h.MerkleRoot == other.MerkleRoot
 }
 
 func (h *Header) String() string {

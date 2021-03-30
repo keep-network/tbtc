@@ -32,6 +32,12 @@ const (
 	// Duration for which the forwarder should rest after performing
 	// a push action.
 	forwarderPushingSleepTime = 45 * time.Second
+
+	// Duration for which the forwarder should rest after reaching the
+	// tip of Bitcoin blockchain. The forwarder waits for this time before
+	// it tries to fetch a new tip from the Bitcoin blockchain, giving it
+	// some time to mine new blocks.
+	forwarderPullingSleepTime = 60 * time.Second
 )
 
 var logger = log.Logger("relay-block-forwarder")
@@ -42,7 +48,11 @@ type Forwarder struct {
 	btcChain  btc.Handle
 	hostChain chain.Handle
 
-	processedHeaders int
+	pullingSleepTime time.Duration
+
+	processedHeaders     int
+	nextPullHeaderHeight int64
+	lastPulledHeader     *btc.Header
 
 	headersQueue chan *btc.Header
 	errChan      chan error
@@ -59,11 +69,17 @@ func RunForwarder(
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 
 	forwarder := &Forwarder{
-		btcChain:     btcChain,
-		hostChain:    hostChain,
-		headersQueue: make(chan *btc.Header, headersQueueSize),
-		errChan:      make(chan error, 1),
+		btcChain:         btcChain,
+		hostChain:        hostChain,
+		pullingSleepTime: forwarderPullingSleepTime,
+		headersQueue:     make(chan *btc.Header, headersQueueSize),
+		errChan:          make(chan error, 1),
 	}
+
+	go func() {
+		forwarder.pullingLoop(loopCtx)
+		cancelLoopCtx() // loop exited, cancel the context
+	}()
 
 	go func() {
 		forwarder.pushingLoop(loopCtx)
@@ -71,6 +87,41 @@ func RunForwarder(
 	}()
 
 	return forwarder
+}
+
+func (f *Forwarder) pullingLoop(ctx context.Context) {
+	logger.Infof("running new block pulling loop")
+	defer logger.Infof("stopping current block pulling loop")
+
+	latestHeader, err := f.findBestHeader()
+	if err != nil {
+		f.errChan <- fmt.Errorf(
+			"could not find best block for pulling loop: [%v]",
+			err,
+		)
+		return
+	}
+
+	// Start pulling Bitcoin headers with the one above the latest header
+	f.nextPullHeaderHeight = latestHeader.Height + 1
+	logger.Infof("starting pulling from block: [%d]", latestHeader.Height+1)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			logger.Infof("pulling new header from BTC chain")
+			header, err := f.pullHeaderFromBtcChain(ctx)
+			if err != nil {
+				f.errChan <- fmt.Errorf("could not pull header: [%v]", err)
+				return
+			}
+
+			logger.Infof("pushing new header to the queue")
+			f.pushHeaderToQueue(header)
+		}
+	}
 }
 
 func (f *Forwarder) pushingLoop(ctx context.Context) {
