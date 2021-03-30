@@ -99,6 +99,10 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 
 			if err := f.pushHeadersToHostChain(ctx, headers); err != nil {
 				f.errChan <- fmt.Errorf("could not push headers: [%v]", err)
+				// We exit on the first error letting the code controlling the
+				// relay to restart it. The relay is stateful and it is easier
+				// to fetch the most recent information from BTC after the
+				// restart instead of trying to recover here.
 				return
 			}
 
