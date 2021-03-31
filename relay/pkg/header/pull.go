@@ -8,6 +8,9 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 )
 
+// pull.go file contains the logic which performs the following flow:
+// pullHeaderFromBtcChain -> putHeaderToQueue -> headersQueue
+
 func (r *Relay) pullHeaderFromBtcChain(
 	ctx context.Context,
 ) (*btc.Header, error) {

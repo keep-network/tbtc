@@ -9,11 +9,8 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 )
 
-// TODO: Make a small refactor:
-//  - On top of push.go and pull.go put a comment explaining the flow:
-//    eg.: f.headersQueue -> getHeadersFromQueue -> pushHeadersToHostChain
-//  - Rename `getHeadersFromQueue` to `getHeadersFromQueue`
-//  - Rename `pushHeadersToQueue` to `putHeadersToQueue`
+// push.go file contains the logic which performs the following flow:
+// headersQueue -> getHeadersFromQueue -> pushHeadersToHostChain
 
 // getHeadersFromQueue blocks until there is `headersBatchSize` headers in
 // the queue or until `headerTimeout` is hit and no more headers are available
