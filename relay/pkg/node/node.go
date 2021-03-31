@@ -3,8 +3,9 @@ package node
 import (
 	"context"
 
+	"github.com/keep-network/tbtc/relay/pkg/header"
+
 	"github.com/ipfs/go-log"
-	"github.com/keep-network/tbtc/relay/pkg/block"
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
@@ -54,7 +55,7 @@ func (n *Node) runForwarderControlLoop(
 	}()
 
 	for {
-		forwarder := block.RunForwarder(ctx, btcChain, hostChain, n.stats)
+		forwarder := header.RunForwarder(ctx, btcChain, hostChain, n.stats)
 
 		select {
 		case err := <-forwarder.ErrChan():
