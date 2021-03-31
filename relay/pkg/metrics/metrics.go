@@ -96,7 +96,7 @@ func ObserveHostChainConnectivity(
 func ObserveBlockForwarding(
 	ctx context.Context,
 	registry *metrics.Registry,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
@@ -123,7 +123,7 @@ func ObserveBlockForwarding(
 func ObserveBlockForwardingErrors(
 	ctx context.Context,
 	registry *metrics.Registry,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
@@ -144,7 +144,7 @@ func ObserveBlockForwardingErrors(
 func ObserveUniqueBlocksPulled(
 	ctx context.Context,
 	registry *metrics.Registry,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
@@ -165,7 +165,7 @@ func ObserveUniqueBlocksPulled(
 func ObserveUniqueBlocksPushed(
 	ctx context.Context,
 	registry *metrics.Registry,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {

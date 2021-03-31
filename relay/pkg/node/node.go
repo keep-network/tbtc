@@ -13,7 +13,7 @@ var logger = log.Logger("relay-node")
 
 // Node represents a relay node.
 type Node struct {
-	stats *Stats
+	stats *stats
 }
 
 // Initialize initializes the relay node.
@@ -65,13 +65,12 @@ func (n *Node) runForwarderControlLoop(
 
 			n.stats.notifyBlockForwardingErrored()
 		case <-ctx.Done():
-			logger.Infof("stopping block forwarding")
 			return
 		}
 	}
 }
 
 // Stats returns relay node statistics.
-func (n *Node) Stats() *Stats {
+func (n *Node) Stats() Stats {
 	return n.stats
 }
