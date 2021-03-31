@@ -42,7 +42,7 @@ func TestRelay_Integration(t *testing.T) {
 		{Hash: to32Bytes(10), Height: 10, PrevHash: to32Bytes(9), Raw: toBytes(10)},
 		{Hash: to32Bytes(11), Height: 11, PrevHash: to32Bytes(10), Raw: toBytes(11)},
 		{Hash: to32Bytes(12), Height: 12, PrevHash: to32Bytes(11), Raw: toBytes(12)},
-		// The second batch: headers span difficulty change (at block 16)
+		// The second batch: headers span difficulty change (at header 16)
 		{Hash: to32Bytes(13), Height: 13, PrevHash: to32Bytes(12), Raw: toBytes(13)},
 		{Hash: to32Bytes(14), Height: 14, PrevHash: to32Bytes(13), Raw: toBytes(14)},
 		{Hash: to32Bytes(15), Height: 15, PrevHash: to32Bytes(14), Raw: toBytes(15)},
@@ -56,11 +56,11 @@ func TestRelay_Integration(t *testing.T) {
 
 	btcChain.SetHeaders(headers)
 
-	// Set the best known digest to block 7, so the relay will be pulling blocks
-	// starting with the 8th block
+	// Set the best known digest to header 7, so the relay will be pulling headers
+	// starting with the 8th header
 	localChain.SetBestKnownDigest(to32Bytes(7))
 
-	// Start the relay with difficulty changing at every eighth block and
+	// Start the relay with difficulty changing at every eighth header and
 	// a shortened pushing loop sleep time
 	const (
 		testDifficultyEpochDuration = 8
