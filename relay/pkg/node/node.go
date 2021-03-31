@@ -32,16 +32,16 @@ func Initialize(
 		stats: newStats(),
 	}
 
-	go node.startRelayController(ctx, btcChain, hostChain)
+	go node.startRelayControlLoop(ctx, btcChain, hostChain)
 
 	return node
 }
 
-// startRelayController starts a headers relay controller which is
+// startRelayControlLoop starts a headers relay control loop which is
 // responsible for starting the relay and acting upon errors by restarting
-// the relay instance. The lifecycle of the controller itself can
+// the relay instance. The lifecycle of the control loop itself can
 // be managed using the passed context.
-func (n *Node) startRelayController(
+func (n *Node) startRelayControlLoop(
 	ctx context.Context,
 	btcChain btc.Handle,
 	hostChain chain.Handle,
