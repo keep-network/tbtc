@@ -4,110 +4,107 @@ import "sync"
 
 // Stats exposes statistics of the relay node.
 type Stats interface {
-	// BlockForwardingEnabled returns whether the block forwarding process
-	// is enabled.
-	BlockForwardingEnabled() bool
+	// HeadersRelayActive returns whether the headers relay process is active.
+	HeadersRelayActive() bool
 
-	// BlockForwardingErrors returns the total number of block
-	// forwarding errors.
-	BlockForwardingErrors() int
+	// HeadersRelayErrors returns the total number of headers relay errors.
+	HeadersRelayErrors() int
 
-	// UniqueBlocksPulled returns the number of unique blocks pulled during the
-	// relay node lifetime.
-	UniqueBlocksPulled() int
+	// UniqueHeadersPulled returns the number of unique headers pulled during
+	// the relay node lifetime.
+	UniqueHeadersPulled() int
 
-	// UniqueBlocksPushed returns the number of unique blocks pushed during the
-	// relay node lifetime.
-	UniqueBlocksPushed() int
+	// UniqueHeadersPushed returns the number of unique headers pushed during
+	// the relay node lifetime.
+	UniqueHeadersPushed() int
 }
 
 // stats gathers and exposes statistics of the relay node.
 type stats struct {
 	mutex sync.RWMutex
 
-	blockForwardingEnabled bool
-	blockForwardingErrors  int
-	uniqueBlocksPulled     map[int64]bool
-	uniqueBlocksPushed     map[int64]bool
+	headersRelayActive  bool
+	headersRelayErrors  int
+	uniqueHeadersPulled map[int64]bool
+	uniqueHeadersPushed map[int64]bool
 }
 
 func newStats() *stats {
 	return &stats{
-		uniqueBlocksPulled: make(map[int64]bool),
-		uniqueBlocksPushed: make(map[int64]bool),
+		uniqueHeadersPulled: make(map[int64]bool),
+		uniqueHeadersPushed: make(map[int64]bool),
 	}
 }
 
-func (s *stats) notifyBlockForwardingEnabled() {
+func (s *stats) notifyHeadersRelayActive() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.blockForwardingEnabled = true
+	s.headersRelayActive = true
 }
 
-func (s *stats) notifyBlockForwardingDisabled() {
+func (s *stats) notifyHeadersRelayInactive() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.blockForwardingEnabled = false
+	s.headersRelayActive = false
 }
 
-func (s *stats) notifyBlockForwardingErrored() {
+func (s *stats) notifyHeadersRelayErrored() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.blockForwardingErrors++
+	s.headersRelayErrors++
 }
 
-// NotifyBlockPulled notifies about new block pulled from the Bitcoin chain.
-func (s *stats) NotifyBlockPulled(blockNumber int64) {
+// NotifyHeaderPulled notifies about new header pulled from the Bitcoin chain.
+func (s *stats) NotifyHeaderPulled(headerHeight int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.uniqueBlocksPulled[blockNumber] = true
+	s.uniqueHeadersPulled[headerHeight] = true
 }
 
-// NotifyBlocksPushed notifies about new block pushed to the host chain.
-func (s *stats) NotifyBlocksPushed(blockNumbers []int64) {
+// NotifyHeadersPushed notifies about new headers pushed to the host chain.
+func (s *stats) NotifyHeadersPushed(headersHeights []int64) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	for _, blockNumber := range blockNumbers {
-		s.uniqueBlocksPushed[blockNumber] = true
+	for _, headerHeight := range headersHeights {
+		s.uniqueHeadersPushed[headerHeight] = true
 	}
 }
 
-// BlockForwardingEnabled returns whether the block forwarding process
-// is enabled.
-func (s *stats) BlockForwardingEnabled() bool {
+// HeadersRelayActive returns whether the headers relay process is active.
+func (s *stats) HeadersRelayActive() bool {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	return s.blockForwardingEnabled
+	return s.headersRelayActive
 }
 
-// BlockForwardingErrors returns the total number of block forwarding errors.
-func (s *stats) BlockForwardingErrors() int {
+// HeadersRelayErrors returns the total number of headers relay errors.
+func (s *stats) HeadersRelayErrors() int {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	return s.blockForwardingErrors
+	return s.headersRelayErrors
 }
 
-// UniqueBlocksPulled returns the number of unique blocks pulled during the
-// relay node lifetime.
-func (s *stats) UniqueBlocksPulled() int {
+// UniqueHeadersPulled returns the number of unique headers pulled during
+// the relay node lifetime.
+func (s *stats) UniqueHeadersPulled() int {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	return len(s.uniqueBlocksPulled)
+	return len(s.uniqueHeadersPulled)
 }
 
-// UniqueBlocksPushed returns the number of unique blocks pushed during the
-// relay node lifetime.
-func (s *stats) UniqueBlocksPushed() int {
+// UniqueHeadersPushed returns the number of unique headers pushed during
+// the relay node lifetime.
+func (s *stats) UniqueHeadersPushed() int {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	return len(s.uniqueBlocksPushed)
+	return len(s.uniqueHeadersPushed)
 }

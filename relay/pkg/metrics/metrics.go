@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/node"
 )
 
-var logger = log.Logger("relay-metrics")
+var logger = log.Logger("tbtc-relay-metrics")
 
 const (
 	// DefaultChainMetricsTick is the default duration of the
@@ -91,16 +91,16 @@ func ObserveHostChainConnectivity(
 	)
 }
 
-// ObserveBlockForwardingActive triggers an observation process of the
-// block_forwarding_active metric.
-func ObserveBlockForwardingActive(
+// ObserveHeadersRelayActive triggers an observation process of the
+// headers_relay_active metric.
+func ObserveHeadersRelayActive(
 	ctx context.Context,
 	registry *metrics.Registry,
 	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
-		isEnabled := nodeStats.BlockForwardingEnabled()
+		isEnabled := nodeStats.HeadersRelayActive()
 
 		if !isEnabled {
 			return 0
@@ -111,70 +111,70 @@ func ObserveBlockForwardingActive(
 
 	observe(
 		ctx,
-		"block_forwarding_active",
+		"headers_relay_active",
 		input,
 		registry,
 		validateTick(tick, DefaultNodeMetricsTick),
 	)
 }
 
-// ObserveBlockForwardingErrors triggers an observation process of the
-// block_forwarding_errors metric.
-func ObserveBlockForwardingErrors(
+// ObserveHeadersRelayErrors triggers an observation process of the
+// headers_relay_errors metric.
+func ObserveHeadersRelayErrors(
 	ctx context.Context,
 	registry *metrics.Registry,
 	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
-		return float64(nodeStats.BlockForwardingErrors())
+		return float64(nodeStats.HeadersRelayErrors())
 	}
 
 	observe(
 		ctx,
-		"block_forwarding_errors",
+		"headers_relay_errors",
 		input,
 		registry,
 		validateTick(tick, DefaultNodeMetricsTick),
 	)
 }
 
-// ObserveUniqueBlocksPulled triggers an observation process of the
-// unique_blocks_pulled metric.
-func ObserveUniqueBlocksPulled(
+// ObserveHeadersPulled triggers an observation process of the
+// headers_pulled metric.
+func ObserveHeadersPulled(
 	ctx context.Context,
 	registry *metrics.Registry,
 	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
-		return float64(nodeStats.UniqueBlocksPulled())
+		return float64(nodeStats.UniqueHeadersPulled())
 	}
 
 	observe(
 		ctx,
-		"unique_blocks_pulled",
+		"headers_pulled",
 		input,
 		registry,
 		validateTick(tick, DefaultNodeMetricsTick),
 	)
 }
 
-// ObserveUniqueBlocksPushed triggers an observation process of the
-// unique_blocks_pushed metric.
-func ObserveUniqueBlocksPushed(
+// ObserveHeadersPushed triggers an observation process of the
+// headers_pushed metric.
+func ObserveHeadersPushed(
 	ctx context.Context,
 	registry *metrics.Registry,
 	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
-		return float64(nodeStats.UniqueBlocksPushed())
+		return float64(nodeStats.UniqueHeadersPushed())
 	}
 
 	observe(
 		ctx,
-		"unique_blocks_pushed",
+		"headers_pushed",
 		input,
 		registry,
 		validateTick(tick, DefaultNodeMetricsTick),
