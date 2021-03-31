@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"math/big"
 
+	"github.com/keep-network/tbtc/relay/pkg/btc"
+
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
@@ -12,7 +14,7 @@ var logger = log.Logger("tbtc-relay-localchain")
 
 // Chain is a local implementation of the host chain interface.
 type Chain struct {
-	bestKnownDigest [32]byte
+	bestKnownDigest btc.Digest
 
 	addHeadersEvents             []*AddHeadersEvent
 	addHeadersWithRetargetEvents []*AddHeadersWithRetargetEvent
@@ -31,15 +33,15 @@ func Connect() (chain.Handle, error) {
 }
 
 // GetBestKnownDigest returns the best known digest.
-func (c *Chain) GetBestKnownDigest() ([32]byte, error) {
+func (c *Chain) GetBestKnownDigest() (btc.Digest, error) {
 	return c.bestKnownDigest, nil
 }
 
 // IsAncestor checks if ancestorDigest is an ancestor of the descendantDigest.
 // The limit parameter determines the number of blocks to check.
 func (c *Chain) IsAncestor(
-	ancestorDigest [32]byte,
-	descendantDigest [32]byte,
+	ancestorDigest btc.Digest,
+	descendantDigest btc.Digest,
 	limit *big.Int,
 ) (bool, error) {
 	// Naive implementation for testing purposes. If the int representation
@@ -51,7 +53,7 @@ func (c *Chain) IsAncestor(
 }
 
 // FindHeight finds the height of a header by its digest.
-func (c *Chain) FindHeight(digest [32]byte) (*big.Int, error) {
+func (c *Chain) FindHeight(digest btc.Digest) (*big.Int, error) {
 	panic("not implemented yet")
 }
 
@@ -97,7 +99,7 @@ func (c *Chain) AddHeadersWithRetarget(
 // while the newBestHeader param should be the header to mark as new best.
 // Limit parameter limits the amount of traversal of the chain.
 func (c *Chain) MarkNewHeaviest(
-	ancestorDigest [32]byte,
+	ancestorDigest btc.Digest,
 	currentBestHeader []byte,
 	newBestHeader []byte,
 	limit *big.Int,
@@ -119,7 +121,7 @@ func (c *Chain) MarkNewHeaviest(
 // MarkNewHeaviest method to check whether its execution will
 // succeed.
 func (c *Chain) MarkNewHeaviestPreflight(
-	ancestorDigest [32]byte,
+	ancestorDigest btc.Digest,
 	currentBestHeader []byte,
 	newBestHeader []byte,
 	limit *big.Int,
@@ -146,7 +148,7 @@ func (c *Chain) MarkNewHeaviestEvents() []*MarkNewHeaviestEvent {
 }
 
 // SetBestKnownDigest sets the internal best known digest for testing purposes.
-func (c *Chain) SetBestKnownDigest(bestKnownDigest [32]byte) {
+func (c *Chain) SetBestKnownDigest(bestKnownDigest btc.Digest) {
 	c.bestKnownDigest = bestKnownDigest
 }
 
@@ -166,7 +168,7 @@ type AddHeadersWithRetargetEvent struct {
 
 // MarkNewHeaviestEvent represents an invocation of the MarkNewHeaviest method.
 type MarkNewHeaviestEvent struct {
-	AncestorDigest    [32]byte
+	AncestorDigest    btc.Digest
 	CurrentBestHeader []byte
 	NewBestHeader     []byte
 	Limit             *big.Int

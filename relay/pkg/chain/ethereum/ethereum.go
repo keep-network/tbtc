@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/tbtc/relay/pkg/btc"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
@@ -146,22 +148,22 @@ func addClientWrappers(
 }
 
 // GetBestKnownDigest returns the best known digest.
-func (ec *ethereumChain) GetBestKnownDigest() ([32]byte, error) {
+func (ec *ethereumChain) GetBestKnownDigest() (btc.Digest, error) {
 	return ec.relayContract.GetBestKnownDigest()
 }
 
 // IsAncestor checks if ancestorDigest is an ancestor of the descendantDigest.
 // The limit parameter determines the number of blocks to check.
 func (ec *ethereumChain) IsAncestor(
-	ancestorDigest [32]byte,
-	descendantDigest [32]byte,
+	ancestorDigest btc.Digest,
+	descendantDigest btc.Digest,
 	limit *big.Int,
 ) (bool, error) {
 	return ec.relayContract.IsAncestor(ancestorDigest, descendantDigest, limit)
 }
 
 // FindHeight finds the height of a header by its digest.
-func (ec *ethereumChain) FindHeight(digest [32]byte) (*big.Int, error) {
+func (ec *ethereumChain) FindHeight(digest btc.Digest) (*big.Int, error) {
 	return ec.relayContract.FindHeight(digest)
 }
 
@@ -214,7 +216,7 @@ func (ec *ethereumChain) AddHeadersWithRetarget(
 // while the newBestHeader param should be the header to mark as new best.
 // Limit parameter limits the amount of traversal of the chain.
 func (ec *ethereumChain) MarkNewHeaviest(
-	ancestorDigest [32]byte,
+	ancestorDigest btc.Digest,
 	currentBestHeader []byte,
 	newBestHeader []byte,
 	limit *big.Int,
@@ -241,7 +243,7 @@ func (ec *ethereumChain) MarkNewHeaviest(
 // MarkNewHeaviest method to check whether its execution will
 // succeed.
 func (ec *ethereumChain) MarkNewHeaviestPreflight(
-	ancestorDigest [32]byte,
+	ancestorDigest btc.Digest,
 	currentBestHeader []byte,
 	newBestHeader []byte,
 	limit *big.Int,
