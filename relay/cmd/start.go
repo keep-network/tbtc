@@ -93,7 +93,7 @@ func initializeMetrics(
 	config *config.Config,
 	btcChain btc.Handle,
 	hostChain chain.Handle,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 ) {
 	registry, isConfigured := metrics.Initialize(
 		config.Metrics.Port,
@@ -122,7 +122,7 @@ func initializeMetrics(
 		time.Duration(config.Metrics.ChainMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveBlockForwarding(
+	metrics.ObserveBlockForwardingActive(
 		ctx,
 		registry,
 		nodeStats,

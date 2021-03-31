@@ -13,10 +13,13 @@ var logger = log.Logger("relay-node")
 
 // Node represents a relay node.
 type Node struct {
-	stats *Stats
+	stats *stats
 }
 
 // Initialize initializes the relay node.
+//
+// TODO: This function will be probably the right place to handle relay auctions
+//  which will require starting and stopping the block forwarder.
 func Initialize(
 	ctx context.Context,
 	btcChain btc.Handle,
@@ -62,13 +65,12 @@ func (n *Node) runForwarderControlLoop(
 
 			n.stats.notifyBlockForwardingErrored()
 		case <-ctx.Done():
-			logger.Infof("stopping block forwarding")
 			return
 		}
 	}
 }
 
 // Stats returns relay node statistics.
-func (n *Node) Stats() *Stats {
+func (n *Node) Stats() Stats {
 	return n.stats
 }

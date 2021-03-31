@@ -91,12 +91,12 @@ func ObserveHostChainConnectivity(
 	)
 }
 
-// ObserveBlockForwarding triggers an observation process of the
-// block_forwarding metric.
-func ObserveBlockForwarding(
+// ObserveBlockForwardingActive triggers an observation process of the
+// block_forwarding_active metric.
+func ObserveBlockForwardingActive(
 	ctx context.Context,
 	registry *metrics.Registry,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
@@ -111,7 +111,7 @@ func ObserveBlockForwarding(
 
 	observe(
 		ctx,
-		"block_forwarding",
+		"block_forwarding_active",
 		input,
 		registry,
 		validateTick(tick, DefaultNodeMetricsTick),
@@ -123,7 +123,7 @@ func ObserveBlockForwarding(
 func ObserveBlockForwardingErrors(
 	ctx context.Context,
 	registry *metrics.Registry,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
@@ -144,7 +144,7 @@ func ObserveBlockForwardingErrors(
 func ObserveUniqueBlocksPulled(
 	ctx context.Context,
 	registry *metrics.Registry,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
@@ -165,7 +165,7 @@ func ObserveUniqueBlocksPulled(
 func ObserveUniqueBlocksPushed(
 	ctx context.Context,
 	registry *metrics.Registry,
-	nodeStats *node.Stats,
+	nodeStats node.Stats,
 	tick time.Duration,
 ) {
 	input := func() float64 {
