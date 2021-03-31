@@ -1,4 +1,4 @@
-package block
+package header
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
-func TestPullHeadersFromQueue(t *testing.T) {
+func TestGetHeadersFromQueue(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	forwarder := &Forwarder{
+	relay := &Relay{
 		headersQueue: make(chan *btc.Header, headersQueueSize),
 	}
 
@@ -28,7 +28,7 @@ func TestPullHeadersFromQueue(t *testing.T) {
 
 	go func() {
 		for ctx.Err() == nil {
-			headers := forwarder.pullHeadersFromQueue(ctx)
+			headers := relay.getHeadersFromQueue(ctx)
 
 			if len(headers) == 0 {
 				continue
@@ -50,7 +50,7 @@ func TestPullHeadersFromQueue(t *testing.T) {
 				time.Sleep(1100 * time.Millisecond)
 			}
 
-			forwarder.headersQueue <- &btc.Header{Height: int64(i)}
+			relay.headersQueue <- &btc.Header{Height: int64(i)}
 		}
 	}()
 
@@ -117,7 +117,7 @@ func TestPushHeadersToHostChain_NoDifficultyChange(t *testing.T) {
 
 	localChain := lc.(*chainlocal.Chain)
 
-	forwarder := &Forwarder{
+	relay := &Relay{
 		btcChain:                btcChain,
 		hostChain:               localChain,
 		difficultyEpochDuration: btcDifficultyEpochDuration,
@@ -132,7 +132,7 @@ func TestPushHeadersToHostChain_NoDifficultyChange(t *testing.T) {
 		{Hash: [32]byte{5}, Height: 5, PrevHash: [32]byte{4}, Raw: []byte{5}},
 	}
 
-	err = forwarder.pushHeadersToHostChain(ctx, headers)
+	err = relay.pushHeadersToHostChain(ctx, headers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +214,7 @@ func TestPushHeadersToHostChain_NoDifficultyChange_WithUpdateBestHeader(
 	// of the first header in the batch.
 	localChain.SetBestKnownDigest([32]byte{1})
 
-	forwarder := &Forwarder{
+	relay := &Relay{
 		btcChain:                btcChain,
 		hostChain:               localChain,
 		difficultyEpochDuration: btcDifficultyEpochDuration,
@@ -230,7 +230,7 @@ func TestPushHeadersToHostChain_NoDifficultyChange_WithUpdateBestHeader(
 		{Hash: [32]byte{6}, Height: 6, PrevHash: [32]byte{5}, Raw: []byte{6}},
 	}
 
-	err = forwarder.pushHeadersToHostChain(ctx, headers)
+	err = relay.pushHeadersToHostChain(ctx, headers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -324,7 +324,7 @@ func TestPushHeadersToHostChain_DifficultyChangeAtBeginning(t *testing.T) {
 
 	localChain := lc.(*chainlocal.Chain)
 
-	forwarder := &Forwarder{
+	relay := &Relay{
 		btcChain:                btcChain,
 		hostChain:               localChain,
 		difficultyEpochDuration: btcDifficultyEpochDuration,
@@ -338,7 +338,7 @@ func TestPushHeadersToHostChain_DifficultyChangeAtBeginning(t *testing.T) {
 		{Hash: to32Bytes(4035), Height: 4035, Raw: toBytes(4035)},
 	}
 
-	err = forwarder.pushHeadersToHostChain(ctx, headers)
+	err = relay.pushHeadersToHostChain(ctx, headers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -421,7 +421,7 @@ func TestPushHeadersToHostChain_DifficultyChangeInMiddle(t *testing.T) {
 
 	localChain := lc.(*chainlocal.Chain)
 
-	forwarder := &Forwarder{
+	relay := &Relay{
 		btcChain:                btcChain,
 		hostChain:               localChain,
 		difficultyEpochDuration: btcDifficultyEpochDuration,
@@ -438,7 +438,7 @@ func TestPushHeadersToHostChain_DifficultyChangeInMiddle(t *testing.T) {
 		{Hash: to32Bytes(4033), Height: 4033, PrevHash: to32Bytes(4032), Raw: toBytes(4033)},
 	}
 
-	err = forwarder.pushHeadersToHostChain(ctx, headers)
+	err = relay.pushHeadersToHostChain(ctx, headers)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,3 +18,14 @@
   URL = "127.0.0.1:8332"
   Password = "password"
   Username = "user"
+
+# The port on which the `/metrics` endpoint will be available and the frequency
+# with which the metrics will be collected can be customized using the
+# below parameters. `ChainMetricsTick` determines the tick of metrics related
+# with BTC and host chains and should be set carefully as it may greatly
+# increase the number of requests sent to the chain clients. `NodeMetricsTick`
+# sets the tick for metrics related with the relay node itself.
+[Metrics]
+  Port = 8080
+  ChainMetricsTick = 600
+  NodeMetricsTick = 10

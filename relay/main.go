@@ -12,7 +12,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var logger = log.Logger("relay-main")
+var logger = log.Logger("tbtc-relay-main")
 
 const (
 	logLevelEnvVariable = "LOG_LEVEL"

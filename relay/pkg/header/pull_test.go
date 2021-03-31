@@ -1,4 +1,4 @@
-package block
+package header
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
-func TestPushHeaderToQueue(t *testing.T) {
-	forwarder := &Forwarder{
+func TestPutHeaderToQueue(t *testing.T) {
+	relay := &Relay{
 		headersQueue:         make(chan *btc.Header, headersQueueSize),
 		nextPullHeaderHeight: 1,
 	}
@@ -22,12 +22,12 @@ func TestPushHeaderToQueue(t *testing.T) {
 	}
 
 	for _, header := range headers {
-		forwarder.pushHeaderToQueue(header)
+		relay.putHeaderToQueue(header)
 	}
 
 	// Check nextPullHeaderHeight
 	expectedNextPullHeight := int64(3)
-	actualNextPullHeight := forwarder.nextPullHeaderHeight
+	actualNextPullHeight := relay.nextPullHeaderHeight
 
 	if expectedNextPullHeight != actualNextPullHeight {
 		t.Errorf(
@@ -41,7 +41,7 @@ func TestPushHeaderToQueue(t *testing.T) {
 
 	// Check headers on the queue
 	expectedQueueLength := 2
-	actualQueueLength := len(forwarder.headersQueue)
+	actualQueueLength := len(relay.headersQueue)
 	if expectedQueueLength != actualQueueLength {
 		t.Errorf(
 			"unexpected header queue length :\n"+
@@ -53,7 +53,7 @@ func TestPushHeaderToQueue(t *testing.T) {
 	}
 
 	for _, expectedHeader := range headers {
-		actualHeader := <-forwarder.headersQueue
+		actualHeader := <-relay.headersQueue
 		if !expectedHeader.Equals(actualHeader) {
 			t.Errorf(
 				"unexpected header in queue:\n"+
@@ -82,7 +82,7 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 		{Height: 2, Hash: [32]byte{2}, Raw: []byte{2}},
 	})
 
-	forwarder := &Forwarder{
+	relay := &Relay{
 		btcChain:             btcChain,
 		pullingSleepTime:     300 * time.Millisecond,
 		nextPullHeaderHeight: 1,
@@ -99,9 +99,9 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 2; i++ {
-			header, err := forwarder.pullHeaderFromBtcChain(ctx)
+			header, err := relay.pullHeaderFromBtcChain(ctx)
 			resultChan <- result{header, err}
-			forwarder.nextPullHeaderHeight++
+			relay.nextPullHeaderHeight++
 		}
 	}()
 
@@ -135,9 +135,9 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 	}
 
 	// Test that function hangs after we have reached the tip of Bitcoin chain
-	// and waits for more blocks to be appended
+	// and waits for more blocks to be appended.
 	go func() {
-		header, err := forwarder.pullHeaderFromBtcChain(ctx)
+		header, err := relay.pullHeaderFromBtcChain(ctx)
 		resultChan <- result{header, err}
 	}()
 
@@ -176,7 +176,7 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 	}
 }
 
-func TestFindBestHeader_HostChainReturnsBestBlock(t *testing.T) {
+func TestFindBestHeader_HostChainReturnsBestHeader(t *testing.T) {
 	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
@@ -197,12 +197,12 @@ func TestFindBestHeader_HostChainReturnsBestBlock(t *testing.T) {
 	localChain := lc.(*chainlocal.Chain)
 	localChain.SetBestKnownDigest([32]byte{2})
 
-	forwarder := &Forwarder{
+	relay := &Relay{
 		btcChain:  btcChain,
 		hostChain: localChain,
 	}
 
-	header, err := forwarder.findBestHeader()
+	header, err := relay.findBestHeader()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,7 +219,7 @@ func TestFindBestHeader_HostChainReturnsBestBlock(t *testing.T) {
 	}
 }
 
-func TestFindBestHeader_HostChainDoesNotReturnBestBlock(t *testing.T) {
+func TestFindBestHeader_HostChainDoesNotReturnBestHeader(t *testing.T) {
 	bc, err := btc.ConnectLocal()
 	if err != nil {
 		t.Fatal(err)
@@ -256,12 +256,12 @@ func TestFindBestHeader_HostChainDoesNotReturnBestBlock(t *testing.T) {
 	localChain := lc.(*chainlocal.Chain)
 	localChain.SetBestKnownDigest([32]byte{7})
 
-	forwarder := &Forwarder{
+	relay := &Relay{
 		btcChain:  btcChain,
 		hostChain: localChain,
 	}
 
-	header, err := forwarder.findBestHeader()
+	header, err := relay.findBestHeader()
 	if err != nil {
 		t.Fatal(err)
 	}

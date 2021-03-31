@@ -7,7 +7,7 @@ import (
 	"github.com/ipfs/go-log"
 )
 
-var logger = log.Logger("relay-btc")
+var logger = log.Logger("tbtc-relay-btc")
 
 // Handle represents a handle to the Bitcoin chain.
 type Handle interface {

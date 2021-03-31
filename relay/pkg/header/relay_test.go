@@ -1,4 +1,4 @@
-package block
+package header
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
-func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
+func TestRelay_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
@@ -26,9 +26,9 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Run forwarder with an empty Bitcoin chain and wait for a moment so
+	// Run relay with an empty Bitcoin chain and wait for a moment so
 	// the pulling loop goes to sleep
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	relay := StartRelay(ctx, btcChain, localChain, &mockObserver{})
 	time.Sleep(100 * time.Millisecond)
 
 	// While the pulling loop is sleeping, add headers to Bitcoin chain and
@@ -40,9 +40,9 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 	cancelCtx()
 	time.Sleep(100 * time.Millisecond)
 
-	// The forwarder's queue should be empty
+	// The relay's queue should be empty
 	expectedQueueLength := 0
-	actualQueueLength := len(forwarder.headersQueue)
+	actualQueueLength := len(relay.headersQueue)
 	if expectedQueueLength != actualQueueLength {
 		t.Errorf(
 			"unexpected headers queue length:\n"+
@@ -54,7 +54,7 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 	}
 }
 
-func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
+func TestRelay_PullingLoop_ErrorShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
@@ -72,18 +72,18 @@ func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
 
 	localChain := lc.(*chainlocal.Chain)
 
-	// Add one block to Bitcoin chain and set a best known digest in host chain
-	// that does not correspond to any block in Bitcoin chain
+	// Add one header to Bitcoin chain and set a best known digest in host chain
+	// that does not correspond to any header in Bitcoin chain
 	btcChain.SetHeaders([]*btc.Header{
 		{Hash: [32]byte{1}, Height: 1, PrevHash: [32]byte{0}},
 	})
 
 	localChain.SetBestKnownDigest([32]byte{2})
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	relay := StartRelay(ctx, btcChain, localChain, &mockObserver{})
 
 	select {
-	case err = <-forwarder.ErrChan():
+	case err = <-relay.ErrChan():
 	case <-time.After(10 * time.Second):
 		t.Fatal("test timeout has been exceeded")
 	}
@@ -91,7 +91,7 @@ func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
 	// An error should appear as the host chain returns digest that the Bitcoin
 	// chain does not recognize
 	expectedError := fmt.Errorf(
-		"could not find best block for pulling loop: " +
+		"could not find best header for pulling loop: " +
 			"[no header with digest " +
 			"[02000000000000000000000000000000000" +
 			"00000000000000000000000000000]]",
@@ -108,7 +108,7 @@ func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
 
 	// Because the pulling loop returns early, the header queue should be empty
 	expectedQueueLength := 0
-	actualQueueLength := len(forwarder.headersQueue)
+	actualQueueLength := len(relay.headersQueue)
 	if expectedQueueLength != actualQueueLength {
 		t.Errorf(
 			"unexpected headers queue length:\n"+
@@ -120,7 +120,7 @@ func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
 	}
 }
 
-func TestForwarder_PushingLoop_ContextCancellationShutdown(t *testing.T) {
+func TestRelay_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
@@ -134,24 +134,24 @@ func TestForwarder_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	relay := StartRelay(ctx, btcChain, localChain, &mockObserver{})
 
 	// Shutdown the pushing loop.
 	cancelCtx()
 
 	// Fill the queue with two headers batches.
 	for i := 0; i < 10; i++ {
-		forwarder.headersQueue <- &btc.Header{Height: int64(i)}
+		relay.headersQueue <- &btc.Header{Height: int64(i)}
 	}
 
-	// Without the shutdown, the forwarder should pick at least a batch of
+	// Without the shutdown, the relay should pick at least a batch of
 	// headers from the queue. Wait some time to make sure this won't happen.
 	time.Sleep(1 * time.Second)
 
 	// All headers should remain in the queue as the pushing loop has
 	// been disabled.
 	expectedQueueLength := 10
-	actualQueueLength := len(forwarder.headersQueue)
+	actualQueueLength := len(relay.headersQueue)
 	if expectedQueueLength != actualQueueLength {
 		t.Errorf(
 			"unexpected headers queue length:\n"+
@@ -163,7 +163,7 @@ func TestForwarder_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 	}
 }
 
-func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
+func TestRelay_PushingLoop_ErrorShutdown(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
@@ -188,7 +188,7 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 	// pushing loop.
 	localChain.(*chainlocal.Chain).SetBestKnownDigest([32]byte{255})
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	relay := StartRelay(ctx, btcChain, localChain, &mockObserver{})
 
 	// Fill the queue with two headers batches.
 	for i := 1; i <= 10; i++ {
@@ -203,11 +203,11 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 			Height:   int64(i),
 			PrevHash: prevHash,
 		}
-		forwarder.headersQueue <- header
+		relay.headersQueue <- header
 	}
 
 	select {
-	case err = <-forwarder.ErrChan():
+	case err = <-relay.ErrChan():
 	case <-time.After(10 * time.Second):
 		t.Fatal("test timeout has been exceeded")
 	}
@@ -234,7 +234,7 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 	// First batch should be picked but the second should still remain as
 	// the pushing loop has been disabled due to an error.
 	expectedQueueLength := 5
-	actualQueueLength := len(forwarder.headersQueue)
+	actualQueueLength := len(relay.headersQueue)
 	if expectedQueueLength != actualQueueLength {
 		t.Errorf(
 			"unexpected headers queue length:\n"+
@@ -244,4 +244,14 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 			actualQueueLength,
 		)
 	}
+}
+
+type mockObserver struct{}
+
+func (mo *mockObserver) NotifyHeaderPulled(headerHeight int64) {
+	// no-op
+}
+
+func (mo *mockObserver) NotifyHeadersPushed(headersHeights []int64) {
+	// no-op
 }

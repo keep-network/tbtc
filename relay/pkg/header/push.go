@@ -1,4 +1,4 @@
-package block
+package header
 
 import (
 	"context"
@@ -9,18 +9,15 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 )
 
-// TODO: Make a small refactor:
-//  - On top of push.go and pull.go put a comment explaining the flow:
-//    eg.: f.headersQueue -> pullHeadersFromQueue -> pushHeadersToHostChain
-//  - Rename `pullHeadersFromQueue` to `getHeadersFromQueue`
-//  - Rename `pushHeadersToQueue` to `putHeadersToQueue`
+// push.go file contains the logic which performs the following flow:
+// headersQueue -> getHeadersFromQueue -> pushHeadersToHostChain
 
-// pullHeadersFromQueue blocks until there is `headersBatchSize` headers in
+// getHeadersFromQueue blocks until there is `headersBatchSize` headers in
 // the queue or until `headerTimeout` is hit and no more headers are available
 // in the queue. Normally, this function returns headers from the queue but not
 // less than one and no more than `headersBatchSize` headers. Empty headers
 // slice can be returned only in case the provided context is cancelled.
-func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
+func (r *Relay) getHeadersFromQueue(ctx context.Context) []*btc.Header {
 	headers := make([]*btc.Header, 0)
 
 	headerTimer := time.NewTimer(headerTimeout)
@@ -30,7 +27,7 @@ func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
 		logger.Debugf("waiting for new header appear on queue")
 
 		select {
-		case header := <-f.headersQueue:
+		case header := <-r.headersQueue:
 			logger.Debugf("got header (%v) from queue", header.Height)
 
 			headers = append(headers, header)
@@ -65,7 +62,7 @@ func (f *Forwarder) pullHeadersFromQueue(ctx context.Context) []*btc.Header {
 	return headers
 }
 
-func (f *Forwarder) pushHeadersToHostChain(
+func (r *Relay) pushHeadersToHostChain(
 	ctx context.Context,
 	headers []*btc.Header,
 ) error {
@@ -73,8 +70,8 @@ func (f *Forwarder) pushHeadersToHostChain(
 		return nil
 	}
 
-	startMod := headers[0].Height % f.difficultyEpochDuration
-	endMod := headers[len(headers)-1].Height % f.difficultyEpochDuration
+	startMod := headers[0].Height % r.difficultyEpochDuration
+	endMod := headers[len(headers)-1].Height % r.difficultyEpochDuration
 
 	if startMod == 0 {
 		// we have a difficulty change first
@@ -83,7 +80,7 @@ func (f *Forwarder) pushHeadersToHostChain(
 				"change at the beginning of headers batch",
 		)
 
-		if err := f.addHeadersWithRetarget(headers); err != nil {
+		if err := r.addHeadersWithRetarget(headers); err != nil {
 			return fmt.Errorf("could not add headers with retarget: [%v]", err)
 		}
 	} else if startMod > endMod {
@@ -93,16 +90,16 @@ func (f *Forwarder) pushHeadersToHostChain(
 				"change in the middle of headers batch",
 		)
 
-		preChangeHeaders, postChangeHeaders := f.splitBatch(headers, startMod)
+		preChangeHeaders, postChangeHeaders := r.splitBatch(headers, startMod)
 
 		if len(preChangeHeaders) > 0 {
-			if err := f.addHeaders(preChangeHeaders); err != nil {
+			if err := r.addHeaders(preChangeHeaders); err != nil {
 				return fmt.Errorf("could not add headers: [%v]", err)
 			}
 		}
 
 		if len(postChangeHeaders) > 0 {
-			if err := f.addHeadersWithRetarget(postChangeHeaders); err != nil {
+			if err := r.addHeadersWithRetarget(postChangeHeaders); err != nil {
 				return fmt.Errorf(
 					"could not add headers with retarget: [%v]",
 					err,
@@ -116,29 +113,29 @@ func (f *Forwarder) pushHeadersToHostChain(
 				"difficulty change within headers batch",
 		)
 
-		if err := f.addHeaders(headers); err != nil {
+		if err := r.addHeaders(headers); err != nil {
 			return fmt.Errorf("could not add headers: [%v]", err)
 		}
 	}
 
-	f.processedHeaders += len(headers)
-	if f.processedHeaders >= headersBatchSize {
+	r.processedHeaders += len(headers)
+	if r.processedHeaders >= headersBatchSize {
 		newBestHeader := headers[len(headers)-1]
 
-		if err := f.updateBestHeader(ctx, newBestHeader); err != nil {
+		if err := r.updateBestHeader(ctx, newBestHeader); err != nil {
 			return fmt.Errorf("could not update best header: [%v]", err)
 		}
 
-		f.processedHeaders = 0
+		r.processedHeaders = 0
 	}
 
 	return nil
 }
 
-func (f *Forwarder) addHeaders(headers []*btc.Header) error {
+func (r *Relay) addHeaders(headers []*btc.Header) error {
 	anchorDigest := headers[0].PrevHash
 
-	anchorHeader, err := f.btcChain.GetHeaderByDigest(anchorDigest)
+	anchorHeader, err := r.btcChain.GetHeaderByDigest(anchorDigest)
 	if err != nil {
 		return fmt.Errorf(
 			"could not get anchor header by digest: [%v]",
@@ -146,14 +143,14 @@ func (f *Forwarder) addHeaders(headers []*btc.Header) error {
 		)
 	}
 
-	return f.hostChain.AddHeaders(anchorHeader.Raw, packHeaders(headers))
+	return r.hostChain.AddHeaders(anchorHeader.Raw, packHeaders(headers))
 }
 
-func (f *Forwarder) addHeadersWithRetarget(headers []*btc.Header) error {
-	epochStart := headers[0].Height - f.difficultyEpochDuration
-	epochEnd := epochStart + f.difficultyEpochDuration - 1
+func (r *Relay) addHeadersWithRetarget(headers []*btc.Header) error {
+	epochStart := headers[0].Height - r.difficultyEpochDuration
+	epochEnd := epochStart + r.difficultyEpochDuration - 1
 
-	oldPeriodStartHeader, err := f.btcChain.GetHeaderByHeight(epochStart)
+	oldPeriodStartHeader, err := r.btcChain.GetHeaderByHeight(epochStart)
 	if err != nil {
 		return fmt.Errorf(
 			"could not get header by height [%v]: [%v]",
@@ -162,7 +159,7 @@ func (f *Forwarder) addHeadersWithRetarget(headers []*btc.Header) error {
 		)
 	}
 
-	oldPeriodEndHeader, err := f.btcChain.GetHeaderByHeight(epochEnd)
+	oldPeriodEndHeader, err := r.btcChain.GetHeaderByHeight(epochEnd)
 	if err != nil {
 		return fmt.Errorf(
 			"could not get header by height [%v]: [%v]",
@@ -171,14 +168,14 @@ func (f *Forwarder) addHeadersWithRetarget(headers []*btc.Header) error {
 		)
 	}
 
-	return f.hostChain.AddHeadersWithRetarget(
+	return r.hostChain.AddHeadersWithRetarget(
 		oldPeriodStartHeader.Raw,
 		oldPeriodEndHeader.Raw,
 		packHeaders(headers),
 	)
 }
 
-func (f *Forwarder) updateBestHeader(
+func (r *Relay) updateBestHeader(
 	ctx context.Context,
 	newBestHeader *btc.Header,
 ) error {
@@ -189,12 +186,12 @@ func (f *Forwarder) updateBestHeader(
 			newBestHeader.Height,
 		)
 
-		currentBestDigest, err := f.hostChain.GetBestKnownDigest()
+		currentBestDigest, err := r.hostChain.GetBestKnownDigest()
 		if err != nil {
 			return fmt.Errorf("could not get best known digest: [%v]", err)
 		}
 
-		currentBestHeader, err := f.btcChain.GetHeaderByDigest(
+		currentBestHeader, err := r.btcChain.GetHeaderByDigest(
 			currentBestDigest,
 		)
 		if err != nil {
@@ -204,7 +201,7 @@ func (f *Forwarder) updateBestHeader(
 			)
 		}
 
-		lastCommonAncestor, err := f.findLastCommonAncestor(
+		lastCommonAncestor, err := r.findLastCommonAncestor(
 			ctx,
 			newBestHeader,
 			currentBestHeader,
@@ -217,13 +214,13 @@ func (f *Forwarder) updateBestHeader(
 			newBestHeader.Height - lastCommonAncestor.Height + 1,
 		)
 
-		if willSucceed := f.hostChain.MarkNewHeaviestPreflight(
+		if willSucceed := r.hostChain.MarkNewHeaviestPreflight(
 			lastCommonAncestor.Hash,
 			currentBestHeader.Raw,
 			newBestHeader.Raw,
 			limit,
 		); willSucceed {
-			return f.hostChain.MarkNewHeaviest(
+			return r.hostChain.MarkNewHeaviest(
 				lastCommonAncestor.Hash,
 				currentBestHeader.Raw,
 				newBestHeader.Raw,
@@ -246,7 +243,7 @@ func (f *Forwarder) updateBestHeader(
 	)
 }
 
-func (f *Forwarder) findLastCommonAncestor(
+func (r *Relay) findLastCommonAncestor(
 	ctx context.Context,
 	newBestHeader *btc.Header,
 	currentBestHeader *btc.Header,
@@ -255,7 +252,7 @@ func (f *Forwarder) findLastCommonAncestor(
 
 	for attempt := 1; attempt <= totalAttempts; attempt++ {
 		logger.Infof(
-			"attempt [%v] to find LCA in in previous 20 blocks",
+			"attempt [%v] to find LCA in in previous 20 headers",
 			attempt,
 		)
 
@@ -268,7 +265,7 @@ func (f *Forwarder) findLastCommonAncestor(
 				return nil, ctx.Err()
 			}
 
-			isAncestor, err := f.hostChain.IsAncestor(
+			isAncestor, err := r.hostChain.IsAncestor(
 				ancestorHeader.Hash,
 				newBestHeader.Hash,
 				big.NewInt(240), // default value used in legacy relay
@@ -281,7 +278,7 @@ func (f *Forwarder) findLastCommonAncestor(
 				return ancestorHeader, nil
 			}
 
-			ancestorHeader, err = f.btcChain.GetHeaderByDigest(
+			ancestorHeader, err = r.btcChain.GetHeaderByDigest(
 				ancestorHeader.PrevHash,
 			)
 			if err != nil {
@@ -316,14 +313,14 @@ func packHeaders(headers []*btc.Header) []byte {
 	return packed
 }
 
-func (f *Forwarder) splitBatch(headers []*btc.Header, startMod int64) (
+func (r *Relay) splitBatch(headers []*btc.Header, startMod int64) (
 	preChangeHeaders,
 	postChangeHeaders []*btc.Header,
 ) {
 	for _, header := range headers {
-		if header.Height%f.difficultyEpochDuration >= startMod {
+		if header.Height%r.difficultyEpochDuration >= startMod {
 			preChangeHeaders = append(preChangeHeaders, header)
-		} else if header.Height%f.difficultyEpochDuration < startMod {
+		} else if header.Height%r.difficultyEpochDuration < startMod {
 			postChangeHeaders = append(postChangeHeaders, header)
 		} else {
 			logger.Errorf(

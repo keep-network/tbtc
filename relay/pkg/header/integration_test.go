@@ -1,4 +1,4 @@
-package block
+package header
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
-func TestForwarderIntegration(t *testing.T) {
+func TestRelay_Integration(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
@@ -66,13 +66,14 @@ func TestForwarderIntegration(t *testing.T) {
 		testDifficultyEpochDuration   = 8
 		testForwarderPushingSleepTime = 200 * time.Millisecond
 	)
-	runForwarder(
+	startRelay(
 		ctx,
 		btcChain,
 		localChain,
 		testDifficultyEpochDuration,
-		forwarderPullingSleepTime,
+		relayPullingSleepTime,
 		testForwarderPushingSleepTime,
+		&mockObserver{},
 	)
 	time.Sleep(10 * time.Millisecond)
 
