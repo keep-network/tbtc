@@ -91,9 +91,9 @@ func ObserveHostChainConnectivity(
 	)
 }
 
-// ObserveBlockForwarding triggers an observation process of the
-// block_forwarding metric.
-func ObserveBlockForwarding(
+// ObserveBlockForwardingActive triggers an observation process of the
+// block_forwarding_active metric.
+func ObserveBlockForwardingActive(
 	ctx context.Context,
 	registry *metrics.Registry,
 	nodeStats node.Stats,
@@ -111,7 +111,7 @@ func ObserveBlockForwarding(
 
 	observe(
 		ctx,
-		"block_forwarding",
+		"block_forwarding_active",
 		input,
 		registry,
 		validateTick(tick, DefaultNodeMetricsTick),

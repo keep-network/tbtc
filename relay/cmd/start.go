@@ -122,7 +122,7 @@ func initializeMetrics(
 		time.Duration(config.Metrics.ChainMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveBlockForwarding(
+	metrics.ObserveBlockForwardingActive(
 		ctx,
 		registry,
 		nodeStats,
