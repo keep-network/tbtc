@@ -106,7 +106,7 @@ func StartRelay(
 }
 
 func (r *Relay) pullingLoop(ctx context.Context) {
-	logger.Infof("running new headers pulling loop")
+	logger.Infof("starting new headers pulling loop")
 	defer logger.Infof("stopping current headers pulling loop")
 
 	latestHeader, err := r.findBestHeader()
@@ -149,7 +149,7 @@ func (r *Relay) pullingLoop(ctx context.Context) {
 }
 
 func (r *Relay) pushingLoop(ctx context.Context) {
-	logger.Infof("running new headers pushing loop")
+	logger.Infof("starting new headers pushing loop")
 	defer logger.Infof("stopping current headers pushing loop")
 
 	for {
