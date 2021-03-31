@@ -1,8 +1,10 @@
 package chain
 
-import "math/big"
+import (
+	"math/big"
 
-// TODO: Use btc.Digest where appropriate.
+	"github.com/keep-network/tbtc/relay/pkg/btc"
+)
 
 // Handle represents a handle to a host chain.
 type Handle interface {
@@ -12,19 +14,19 @@ type Handle interface {
 // Relay is an interface that provides ability to interact with Relay contract.
 type Relay interface {
 	// GetBestKnownDigest returns the best known digest.
-	GetBestKnownDigest() ([32]byte, error)
+	GetBestKnownDigest() (btc.Digest, error)
 
 	// IsAncestor checks if ancestorDigest is an ancestor of the
 	// descendantDigest. The limit parameter determines the number of blocks
 	// to check.
 	IsAncestor(
-		ancestorDigest [32]byte,
-		descendantDigest [32]byte,
+		ancestorDigest btc.Digest,
+		descendantDigest btc.Digest,
 		limit *big.Int,
 	) (bool, error)
 
 	// FindHeight finds the height of a header by its digest.
-	FindHeight(digest [32]byte) (*big.Int, error)
+	FindHeight(digest btc.Digest) (*big.Int, error)
 
 	// AddHeaders adds headers to storage after validating. The anchorHeader
 	// parameter is the header immediately preceding the new chain. Headers
@@ -48,7 +50,7 @@ type Relay interface {
 	// while the newBestHeader param should be the header to mark as new best.
 	// Limit parameter limits the amount of traversal of the chain.
 	MarkNewHeaviest(
-		ancestorDigest [32]byte,
+		ancestorDigest btc.Digest,
 		currentBestHeader []byte,
 		newBestHeader []byte,
 		limit *big.Int,
@@ -59,7 +61,7 @@ type Relay interface {
 	// succeed. If the preflight call was successful, `true` is returned.
 	// In case the preflight returns an error, `false` is returned.
 	MarkNewHeaviestPreflight(
-		ancestorDigest [32]byte,
+		ancestorDigest btc.Digest,
 		currentBestHeader []byte,
 		newBestHeader []byte,
 		limit *big.Int,

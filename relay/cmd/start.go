@@ -21,7 +21,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var logger = log.Logger("relay-cmd")
+var logger = log.Logger("tbtc-relay-cmd")
 
 const startDescription = `
 Starts the relay maintainer in the foreground.
@@ -122,28 +122,28 @@ func initializeMetrics(
 		time.Duration(config.Metrics.ChainMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveBlockForwardingActive(
+	metrics.ObserveHeadersRelayActive(
 		ctx,
 		registry,
 		nodeStats,
 		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveBlockForwardingErrors(
+	metrics.ObserveHeadersRelayErrors(
 		ctx,
 		registry,
 		nodeStats,
 		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveUniqueBlocksPulled(
+	metrics.ObserveHeadersPulled(
 		ctx,
 		registry,
 		nodeStats,
 		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveUniqueBlocksPushed(
+	metrics.ObserveHeadersPushed(
 		ctx,
 		registry,
 		nodeStats,
