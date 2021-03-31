@@ -55,7 +55,13 @@ func (lc *LocalChain) GetHeaderByDigest(
 
 // GetBlockCount returns the number of blocks in the longest blockchain
 func (lc *LocalChain) GetBlockCount() (int64, error) {
-	return int64(len(lc.headers)), nil
+	var count int64
+	for _, header := range lc.headers {
+		if header.Height > count {
+			count = header.Height
+		}
+	}
+	return count, nil
 }
 
 // SetHeaders sets internal headers for testing purposes.

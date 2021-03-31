@@ -73,8 +73,8 @@ func (f *Forwarder) pushHeadersToHostChain(
 		return nil
 	}
 
-	startMod := headers[0].Height % difficultyEpochDuration
-	endMod := headers[len(headers)-1].Height % difficultyEpochDuration
+	startMod := headers[0].Height % f.difficultyEpochDuration
+	endMod := headers[len(headers)-1].Height % f.difficultyEpochDuration
 
 	if startMod == 0 {
 		// we have a difficulty change first
@@ -93,7 +93,7 @@ func (f *Forwarder) pushHeadersToHostChain(
 				"change in the middle of headers batch",
 		)
 
-		preChangeHeaders, postChangeHeaders := splitBatch(headers, startMod)
+		preChangeHeaders, postChangeHeaders := f.splitBatch(headers, startMod)
 
 		if len(preChangeHeaders) > 0 {
 			if err := f.addHeaders(preChangeHeaders); err != nil {
@@ -150,8 +150,8 @@ func (f *Forwarder) addHeaders(headers []*btc.Header) error {
 }
 
 func (f *Forwarder) addHeadersWithRetarget(headers []*btc.Header) error {
-	epochStart := headers[0].Height - difficultyEpochDuration
-	epochEnd := epochStart + difficultyEpochDuration - 1
+	epochStart := headers[0].Height - f.difficultyEpochDuration
+	epochEnd := epochStart + f.difficultyEpochDuration - 1
 
 	oldPeriodStartHeader, err := f.btcChain.GetHeaderByHeight(epochStart)
 	if err != nil {
@@ -316,14 +316,14 @@ func packHeaders(headers []*btc.Header) []byte {
 	return packed
 }
 
-func splitBatch(headers []*btc.Header, startMod int64) (
+func (f *Forwarder) splitBatch(headers []*btc.Header, startMod int64) (
 	preChangeHeaders,
 	postChangeHeaders []*btc.Header,
 ) {
 	for _, header := range headers {
-		if header.Height%difficultyEpochDuration >= startMod {
+		if header.Height%f.difficultyEpochDuration >= startMod {
 			preChangeHeaders = append(preChangeHeaders, header)
-		} else if header.Height%difficultyEpochDuration < startMod {
+		} else if header.Height%f.difficultyEpochDuration < startMod {
 			postChangeHeaders = append(postChangeHeaders, header)
 		} else {
 			logger.Errorf(

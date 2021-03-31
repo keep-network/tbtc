@@ -27,7 +27,7 @@ const (
 	headerTimeout = 1 * time.Second
 
 	// Block duration of a Bitcoin difficulty epoch.
-	difficultyEpochDuration = 2016
+	btcDifficultyEpochDuration = 2016
 
 	// Duration for which the forwarder should rest after performing
 	// a push action.
@@ -56,7 +56,10 @@ type Forwarder struct {
 	btcChain  btc.Handle
 	hostChain chain.Handle
 
+	difficultyEpochDuration int64
+
 	pullingSleepTime time.Duration
+	pushingSleepTime time.Duration
 
 	processedHeaders     int
 	nextPullHeaderHeight int64
@@ -74,14 +77,34 @@ func RunForwarder(
 	btcChain btc.Handle,
 	hostChain chain.Handle,
 ) *Forwarder {
+	return runForwarder(
+		ctx,
+		btcChain,
+		hostChain,
+		btcDifficultyEpochDuration,
+		forwarderPullingSleepTime,
+		forwarderPushingSleepTime,
+	)
+}
+
+func runForwarder(
+	ctx context.Context,
+	btcChain btc.Handle,
+	hostChain chain.Handle,
+	difficultyEpochDuration int64,
+	pullingSleepTime time.Duration,
+	pushingSleepTime time.Duration,
+) *Forwarder {
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 
 	forwarder := &Forwarder{
-		btcChain:         btcChain,
-		hostChain:        hostChain,
-		pullingSleepTime: forwarderPullingSleepTime,
-		headersQueue:     make(chan *btc.Header, headersQueueSize),
-		errChan:          make(chan error, 1),
+		btcChain:                btcChain,
+		hostChain:               hostChain,
+		difficultyEpochDuration: difficultyEpochDuration,
+		pullingSleepTime:        pullingSleepTime,
+		pushingSleepTime:        pushingSleepTime,
+		headersQueue:            make(chan *btc.Header, headersQueueSize),
+		errChan:                 make(chan error, 1),
 	}
 
 	go func() {
@@ -165,12 +188,12 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 
 			logger.Infof(
 				"suspending block pushing loop for [%v]",
-				forwarderPushingSleepTime,
+				f.pushingSleepTime,
 			)
 
 			// Sleep for a while to achieve a limited rate.
 			select {
-			case <-time.After(forwarderPushingSleepTime):
+			case <-time.After(f.pushingSleepTime):
 			case <-ctx.Done():
 			}
 		}
