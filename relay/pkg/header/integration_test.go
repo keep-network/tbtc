@@ -56,15 +56,15 @@ func TestRelay_Integration(t *testing.T) {
 
 	btcChain.SetHeaders(headers)
 
-	// Set the best known digest to block 7, so forwarder will be pulling blocks
+	// Set the best known digest to block 7, so the relay will be pulling blocks
 	// starting with the 8th block
 	localChain.SetBestKnownDigest(to32Bytes(7))
 
-	// Start the forwarder with difficulty changing at every eighth block and
+	// Start the relay with difficulty changing at every eighth block and
 	// a shortened pushing loop sleep time
 	const (
-		testDifficultyEpochDuration   = 8
-		testForwarderPushingSleepTime = 200 * time.Millisecond
+		testDifficultyEpochDuration = 8
+		testRelayPushingSleepTime   = 200 * time.Millisecond
 	)
 	startRelay(
 		ctx,
@@ -72,7 +72,7 @@ func TestRelay_Integration(t *testing.T) {
 		localChain,
 		testDifficultyEpochDuration,
 		relayPullingSleepTime,
-		testForwarderPushingSleepTime,
+		testRelayPushingSleepTime,
 		&mockObserver{},
 	)
 	time.Sleep(10 * time.Millisecond)
@@ -145,7 +145,7 @@ func TestRelay_Integration(t *testing.T) {
 	}
 
 	localChain.SetBestKnownDigest(to32Bytes(12))
-	time.Sleep(testForwarderPushingSleepTime)
+	time.Sleep(testRelayPushingSleepTime)
 
 	//************ Verify processing of the second batch ************
 	addHeadersEvents := localChain.AddHeadersEvents()
@@ -244,7 +244,7 @@ func TestRelay_Integration(t *testing.T) {
 	}
 
 	localChain.SetBestKnownDigest(to32Bytes(17))
-	time.Sleep(testForwarderPushingSleepTime + headerTimeout)
+	time.Sleep(testRelayPushingSleepTime + headerTimeout)
 
 	//************ Verify processing of the third batch ************
 	addHeadersEvents = localChain.AddHeadersEvents()
