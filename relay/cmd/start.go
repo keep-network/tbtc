@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/keep-network/tbtc/relay/pkg/metrics"
 
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 
@@ -54,7 +57,9 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not connect host chain: [%v]", err)
 	}
 
-	node.Initialize(ctx, btcChain, hostChain)
+	node := node.Initialize(ctx, btcChain, hostChain)
+
+	initializeMetrics(ctx, config, btcChain, hostChain, node.Stats())
 
 	logger.Info("relay started")
 
@@ -81,4 +86,67 @@ func connectEthereum(config commoneth.Config) (chain.Handle, error) {
 	}
 
 	return ethereum.Connect(key, &config)
+}
+
+func initializeMetrics(
+	ctx context.Context,
+	config *config.Config,
+	btcChain btc.Handle,
+	hostChain chain.Handle,
+	nodeStats node.Stats,
+) {
+	registry, isConfigured := metrics.Initialize(
+		config.Metrics.Port,
+	)
+	if !isConfigured {
+		logger.Infof("metrics are not configured")
+		return
+	}
+
+	logger.Infof(
+		"enabled metrics on port [%v]",
+		config.Metrics.Port,
+	)
+
+	metrics.ObserveBtcChainConnectivity(
+		ctx,
+		registry,
+		btcChain,
+		time.Duration(config.Metrics.ChainMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveHostChainConnectivity(
+		ctx,
+		registry,
+		hostChain,
+		time.Duration(config.Metrics.ChainMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveBlockForwardingActive(
+		ctx,
+		registry,
+		nodeStats,
+		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveBlockForwardingErrors(
+		ctx,
+		registry,
+		nodeStats,
+		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveUniqueBlocksPulled(
+		ctx,
+		registry,
+		nodeStats,
+		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
+	)
+
+	metrics.ObserveUniqueBlocksPushed(
+		ctx,
+		registry,
+		nodeStats,
+		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
+	)
 }

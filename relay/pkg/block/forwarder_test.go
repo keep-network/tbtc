@@ -28,7 +28,7 @@ func TestForwarder_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 
 	// Run forwarder with an empty Bitcoin chain and wait for a moment so
 	// the pulling loop goes to sleep
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	forwarder := RunForwarder(ctx, btcChain, localChain, &mockObserver{})
 	time.Sleep(100 * time.Millisecond)
 
 	// While the pulling loop is sleeping, add headers to Bitcoin chain and
@@ -80,7 +80,7 @@ func TestForwarder_PullingLoop_ErrorShutdown(t *testing.T) {
 
 	localChain.SetBestKnownDigest([32]byte{2})
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	forwarder := RunForwarder(ctx, btcChain, localChain, &mockObserver{})
 
 	select {
 	case err = <-forwarder.ErrChan():
@@ -134,7 +134,7 @@ func TestForwarder_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	forwarder := RunForwarder(ctx, btcChain, localChain, &mockObserver{})
 
 	// Shutdown the pushing loop.
 	cancelCtx()
@@ -188,7 +188,7 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 	// pushing loop.
 	localChain.(*chainlocal.Chain).SetBestKnownDigest([32]byte{255})
 
-	forwarder := RunForwarder(ctx, btcChain, localChain)
+	forwarder := RunForwarder(ctx, btcChain, localChain, &mockObserver{})
 
 	// Fill the queue with two headers batches.
 	for i := 1; i <= 10; i++ {
@@ -244,4 +244,14 @@ func TestForwarder_PushingLoop_ErrorShutdown(t *testing.T) {
 			actualQueueLength,
 		)
 	}
+}
+
+type mockObserver struct{}
+
+func (mo *mockObserver) NotifyBlockPulled(blockNumber int64) {
+	// no-op
+}
+
+func (mo *mockObserver) NotifyBlocksPushed(blockNumbers []int64) {
+	// no-op
 }

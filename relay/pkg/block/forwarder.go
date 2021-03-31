@@ -50,6 +50,17 @@ const (
 
 var logger = log.Logger("relay-block-forwarder")
 
+// ForwarderObserver represents an observer of the block forwarder events.
+type ForwarderObserver interface {
+	// NotifyBlockPulled notifies the observer about new block pulled from
+	// the Bitcoin chain.
+	NotifyBlockPulled(blockNumber int64)
+
+	// NotifyBlocksPushed notifies the observer about new block pushed to
+	// the host chain.
+	NotifyBlocksPushed(blockNumbers []int64)
+}
+
 // Forwarder takes blocks from the Bitcoin chain and forwards them to the
 // given host chain.
 type Forwarder struct {
@@ -64,6 +75,8 @@ type Forwarder struct {
 
 	headersQueue chan *btc.Header
 	errChan      chan error
+
+	observer ForwarderObserver
 }
 
 // RunForwarder creates an instance of the block forwarder and runs its
@@ -73,6 +86,7 @@ func RunForwarder(
 	ctx context.Context,
 	btcChain btc.Handle,
 	hostChain chain.Handle,
+	observer ForwarderObserver,
 ) *Forwarder {
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 
@@ -82,6 +96,7 @@ func RunForwarder(
 		pullingSleepTime: forwarderPullingSleepTime,
 		headersQueue:     make(chan *btc.Header, headersQueueSize),
 		errChan:          make(chan error, 1),
+		observer:         observer,
 	}
 
 	go func() {
@@ -130,6 +145,8 @@ func (f *Forwarder) pullingLoop(ctx context.Context) {
 			logger.Infof("pushing new header to the queue")
 
 			f.pushHeaderToQueue(header)
+
+			f.observer.NotifyBlockPulled(header.Height)
 		}
 	}
 }
@@ -162,6 +179,13 @@ func (f *Forwarder) pushingLoop(ctx context.Context) {
 				// restart instead of trying to recover here.
 				return
 			}
+
+			pushedHeadersHeights := make([]int64, len(headers))
+			for i, header := range headers {
+				pushedHeadersHeights[i] = header.Height
+			}
+
+			f.observer.NotifyBlocksPushed(pushedHeadersHeights)
 
 			logger.Infof(
 				"suspending block pushing loop for [%v]",
