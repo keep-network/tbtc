@@ -122,28 +122,28 @@ func initializeMetrics(
 		time.Duration(config.Metrics.ChainMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveBlockForwardingActive(
+	metrics.ObserveHeadersRelayActive(
 		ctx,
 		registry,
 		nodeStats,
 		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveBlockForwardingErrors(
+	metrics.ObserveHeadersRelayErrors(
 		ctx,
 		registry,
 		nodeStats,
 		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveUniqueBlocksPulled(
+	metrics.ObserveHeadersPulled(
 		ctx,
 		registry,
 		nodeStats,
 		time.Duration(config.Metrics.NodeMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveUniqueBlocksPushed(
+	metrics.ObserveHeadersPushed(
 		ctx,
 		registry,
 		nodeStats,
