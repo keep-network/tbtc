@@ -11,7 +11,7 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/node"
 )
 
-var logger = log.Logger("relay-metrics")
+var logger = log.Logger("tbtc-relay-metrics")
 
 const (
 	// DefaultChainMetricsTick is the default duration of the

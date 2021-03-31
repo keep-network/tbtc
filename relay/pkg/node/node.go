@@ -10,7 +10,7 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
 
-var logger = log.Logger("relay-node")
+var logger = log.Logger("tbtc-relay-node")
 
 // Node represents a relay node.
 type Node struct {

@@ -18,7 +18,7 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
 
-var logger = log.Logger("relay-chain-ethereum")
+var logger = log.Logger("tbtc-relay-ethereum")
 
 // RelayContractName defines the name of the Relay contract.
 const RelayContractName = "Relay"

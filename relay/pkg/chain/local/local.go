@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
 
-var logger = log.Logger("relay-chain-local")
+var logger = log.Logger("tbtc-relay-localchain")
 
 // Chain is a local implementation of the host chain interface.
 type Chain struct {

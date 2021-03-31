@@ -42,7 +42,7 @@ const (
 	updateBestHeaderBackoffTime = 10 * time.Second
 )
 
-var logger = log.Logger("relay-block-forwarder")
+var logger = log.Logger("tbtc-relay-header")
 
 // RelayObserver represents an observer of headers relay events.
 type RelayObserver interface {

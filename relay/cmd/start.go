@@ -21,7 +21,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var logger = log.Logger("relay-cmd")
+var logger = log.Logger("tbtc-relay-cmd")
 
 const startDescription = `
 Starts the relay maintainer in the foreground.
