@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.2.3",
+    "toml": "^3.0.0",
+    "tomlify-j0.4": "^3.0.0",
+    "web3": "1.2.9"
+  }
+}
