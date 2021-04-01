@@ -36,7 +36,18 @@ module.exports = async function () {
 
       fileContent.ethereum.ContractAddresses.Relay = relayAddress
 
-      const formattedConfigFile = tomlify.toToml(fileContent)
+      // tomlify.toToml() writes integer values as a float. Here we format the
+      // default rendering to write the config file with integer values as needed.
+      const formattedConfigFile = tomlify.toToml(fileContent, {
+        replace: (key, value) => {
+          // Find keys that match exactly `Port` or end with `MetricsTick`.
+          const matcher = /(^Port|MetricsTick)$/
+
+          return typeof key === "string" && key.match(matcher) ?
+              value.toFixed(0) :
+              false
+        },
+      })
 
       fs.writeFileSync(configFilePath, formattedConfigFile, (err) => {
         if (err) throw err
