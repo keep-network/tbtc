@@ -34,8 +34,6 @@ module.exports = async function () {
           fs.readFileSync(configFilePath, "utf8")
       )
 
-      fileContent.ethereum.URL = web3.currentProvider.connection._url
-
       fileContent.ethereum.ContractAddresses.Relay = relayAddress
 
       const formattedConfigFile = tomlify.toToml(fileContent)
