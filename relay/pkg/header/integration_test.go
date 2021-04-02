@@ -109,7 +109,7 @@ func TestRelay_Integration(t *testing.T) {
 		Headers:              toBytes(8, 9, 10, 11, 12),
 	}
 
-	actualAddHeadersWithRetargetEvent := addHeadersWithRetargetEvents[0]
+	actualAddHeadersWithRetargetEvent := addHeadersWithRetargetEvents[0] // last event
 
 	if !reflect.DeepEqual(
 		expectedAddHeadersWithRetargetEvent,
@@ -143,7 +143,7 @@ func TestRelay_Integration(t *testing.T) {
 		NewBestHeader:     toBytes(12),
 		Limit:             big.NewInt(6),
 	}
-	actualMarkNewHeaviestEvent := markNewHeaviestEvents[0]
+	actualMarkNewHeaviestEvent := markNewHeaviestEvents[0] // last event
 	if !reflect.DeepEqual(expectedMarkNewHeaviestEvent, actualMarkNewHeaviestEvent) {
 		t.Errorf(
 			"unexpected mark new heaviest event:\n"+
@@ -183,7 +183,7 @@ func TestRelay_Integration(t *testing.T) {
 		AnchorHeader: toBytes(12),
 		Headers:      toBytes(13, 14, 15),
 	}
-	actualAddHeadersEvent := addHeadersEvents[0]
+	actualAddHeadersEvent := addHeadersEvents[0] // last event
 	if !reflect.DeepEqual(expectedAddHeadersEvent, actualAddHeadersEvent) {
 		t.Errorf(
 			"unexpected add headers event:\n"+
@@ -212,7 +212,7 @@ func TestRelay_Integration(t *testing.T) {
 		OldPeriodEndHeader:   toBytes(15),
 		Headers:              toBytes(16, 17),
 	}
-	actualAddHeadersWithRetargetEvent = addHeadersWithRetargetEvents[1]
+	actualAddHeadersWithRetargetEvent = addHeadersWithRetargetEvents[1] // last event
 	if !reflect.DeepEqual(
 		expectedAddHeadersWithRetargetEvent,
 		actualAddHeadersWithRetargetEvent,
@@ -245,7 +245,7 @@ func TestRelay_Integration(t *testing.T) {
 		NewBestHeader:     toBytes(17),
 		Limit:             big.NewInt(6),
 	}
-	actualMarkNewHeaviestEvent = markNewHeaviestEvents[1]
+	actualMarkNewHeaviestEvent = markNewHeaviestEvents[1] // last event
 	if !reflect.DeepEqual(expectedMarkNewHeaviestEvent, actualMarkNewHeaviestEvent) {
 		t.Errorf(
 			"unexpected mark new heaviest event:\n"+
@@ -285,7 +285,7 @@ func TestRelay_Integration(t *testing.T) {
 		AnchorHeader: toBytes(17),
 		Headers:      toBytes(18, 19, 20),
 	}
-	actualAddHeadersEvent = addHeadersEvents[1]
+	actualAddHeadersEvent = addHeadersEvents[1] // last event
 	if !reflect.DeepEqual(expectedAddHeadersEvent, actualAddHeadersEvent) {
 		t.Errorf(
 			"unexpected add headers event:\n"+
