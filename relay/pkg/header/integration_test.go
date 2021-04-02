@@ -11,6 +11,13 @@ import (
 	chainlocal "github.com/keep-network/tbtc/relay/pkg/chain/local"
 )
 
+const (
+	// Difficulty change every eighth header
+	testDifficultyEpochDuration = 8
+	// Sleep only 300 ms in the pushing loop
+	testRelayPushingSleepTime = 300 * time.Millisecond
+)
+
 func TestRelay_Integration(t *testing.T) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
@@ -60,12 +67,8 @@ func TestRelay_Integration(t *testing.T) {
 	// starting with the 8th header
 	localChain.SetBestKnownDigest(to32Bytes(7))
 
-	// Start the relay with difficulty changing at every eighth header and
-	// a shortened pushing loop sleep time
-	const (
-		testDifficultyEpochDuration = 8
-		testRelayPushingSleepTime   = 200 * time.Millisecond
-	)
+	// Start the relay with shortened difficulty changing period and sleeping time
+	// for easier testing
 	startRelay(
 		ctx,
 		btcChain,
@@ -75,11 +78,17 @@ func TestRelay_Integration(t *testing.T) {
 		testRelayPushingSleepTime,
 		&mockObserver{},
 	)
-	time.Sleep(10 * time.Millisecond)
+
+	// Sleep for a moment, so the relay can start processing headers
+	time.Sleep(100 * time.Millisecond)
 
 	//************ Verify processing of the first batch ************
-	addHeadersWithRetargetEvents := localChain.AddHeadersWithRetargetEvents()
+	// There should be one addHeadersWithRetarget event, because difficulty change
+	// spans all five headers
+	// There should be one markNewHeaviest event, because there are five headers
+	// in the batch, which enough to trigger it
 
+	addHeadersWithRetargetEvents := localChain.AddHeadersWithRetargetEvents()
 	expectedEventsCount := 1
 	actualEventsCount := len(addHeadersWithRetargetEvents)
 	if expectedEventsCount != actualEventsCount {
@@ -114,7 +123,6 @@ func TestRelay_Integration(t *testing.T) {
 	}
 
 	markNewHeaviestEvents := localChain.MarkNewHeaviestEvents()
-
 	expectedEventsCount = 1
 	actualEventsCount = len(markNewHeaviestEvents)
 	if expectedEventsCount != actualEventsCount {
@@ -145,11 +153,18 @@ func TestRelay_Integration(t *testing.T) {
 	}
 
 	localChain.SetBestKnownDigest(to32Bytes(12))
+	// Wait until the pushing loop wakes up and processes the next batch
 	time.Sleep(testRelayPushingSleepTime)
 
 	//************ Verify processing of the second batch ************
-	addHeadersEvents := localChain.AddHeadersEvents()
+	// There should be one addHeaders event for the first three headers as they
+	// have the same difficulty as previously processed batch
+	// There should be one addHeadersWithRetarget event for the two last headers
+	// as they are of a new diffculty
+	// There should be one markNewHeaviest event, because there are five headers
+	// in the batch, which is enough to trigger it
 
+	addHeadersEvents := localChain.AddHeadersEvents()
 	expectedEventsCount = 1
 	actualEventsCount = len(addHeadersEvents)
 	if expectedEventsCount != actualEventsCount {
@@ -178,8 +193,7 @@ func TestRelay_Integration(t *testing.T) {
 	}
 
 	addHeadersWithRetargetEvents = localChain.AddHeadersWithRetargetEvents()
-
-	expectedEventsCount = 2
+	expectedEventsCount = 2 // one from this batch and one from the previous one
 	actualEventsCount = len(addHeadersWithRetargetEvents)
 	if expectedEventsCount != actualEventsCount {
 		t.Fatalf(
@@ -196,9 +210,7 @@ func TestRelay_Integration(t *testing.T) {
 		OldPeriodEndHeader:   toBytes(15),
 		Headers:              toBytes(16, 17),
 	}
-
 	actualAddHeadersWithRetargetEvent = addHeadersWithRetargetEvents[1]
-
 	if !reflect.DeepEqual(
 		expectedAddHeadersWithRetargetEvent,
 		actualAddHeadersWithRetargetEvent,
@@ -213,8 +225,7 @@ func TestRelay_Integration(t *testing.T) {
 	}
 
 	markNewHeaviestEvents = localChain.MarkNewHeaviestEvents()
-
-	expectedEventsCount = 2
+	expectedEventsCount = 2 // one from this batch and one from the previous one
 	actualEventsCount = len(markNewHeaviestEvents)
 	if expectedEventsCount != actualEventsCount {
 		t.Fatalf(
@@ -244,12 +255,19 @@ func TestRelay_Integration(t *testing.T) {
 	}
 
 	localChain.SetBestKnownDigest(to32Bytes(17))
+	// Wait until the pushing loop wakes up and processes the next batch. There
+	// are only three headers in the last batch, so also wait for an additional
+	// header timeout
 	time.Sleep(testRelayPushingSleepTime + headerTimeout)
 
 	//************ Verify processing of the third batch ************
-	addHeadersEvents = localChain.AddHeadersEvents()
+	// There should be one addHeaders event for all three headers as they have
+	// the same diffcuilty as the previously processed headers
+	// There should be one no new markNewHeaviest event, because three headers in
+	// the batch are not enough to trigger it
 
-	expectedEventsCount = 2
+	addHeadersEvents = localChain.AddHeadersEvents()
+	expectedEventsCount = 2 // One from this batch and one from the previous one
 	actualEventsCount = len(addHeadersEvents)
 	if expectedEventsCount != actualEventsCount {
 		t.Fatalf(
@@ -276,8 +294,8 @@ func TestRelay_Integration(t *testing.T) {
 		)
 	}
 
-	// no change in MarkNewHeaviestEvents as there were only 3 headers in the batch
 	markNewHeaviestEvents = localChain.MarkNewHeaviestEvents()
+	// The two events are from previous batches, no change here
 	expectedEventsCount = 2
 	actualEventsCount = len(markNewHeaviestEvents)
 	if expectedEventsCount != actualEventsCount {
