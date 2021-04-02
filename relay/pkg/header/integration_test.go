@@ -35,6 +35,8 @@ func TestRelay_Integration(t *testing.T) {
 	localChain := lc.(*chainlocal.Chain)
 
 	headers := []*btc.Header{
+		// We simulate that the headers from 0 to 7 are already relayed.
+		// We start testing processing of headers beginning with the 8th header
 		{Hash: to32Bytes(0), Height: 0, PrevHash: to32Bytes(0), Raw: toBytes(0)},
 		{Hash: to32Bytes(1), Height: 1, PrevHash: to32Bytes(0), Raw: toBytes(1)},
 		{Hash: to32Bytes(2), Height: 2, PrevHash: to32Bytes(1), Raw: toBytes(2)},
