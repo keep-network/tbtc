@@ -66,7 +66,8 @@ func TestRelay_Integration(t *testing.T) {
 	btcChain.SetHeaders(headers)
 
 	// Set the best known digest to header 7, so the relay will be pulling headers
-	// starting with the 8th header
+	// starting with the 8th header (in real setup the best known digest was set
+	// automatically by the smart contract)
 	localChain.SetBestKnownDigest(to32Bytes(7))
 
 	// Start the relay with shortened difficulty changing period and sleeping time
@@ -154,7 +155,10 @@ func TestRelay_Integration(t *testing.T) {
 		)
 	}
 
+	// Set best known digest to the last processed header (in real setup it's
+	// done automatically by the smart contract when markNewHeaviest executed
 	localChain.SetBestKnownDigest(to32Bytes(12))
+
 	// Wait until the pushing loop wakes up and processes the next batch
 	time.Sleep(testRelayPushingSleepTime)
 
@@ -256,7 +260,10 @@ func TestRelay_Integration(t *testing.T) {
 		)
 	}
 
+	// Set best known digest to the last processed header (in real setup it's
+	// done automatically by the smart contract when markNewHeaviest executed
 	localChain.SetBestKnownDigest(to32Bytes(17))
+
 	// Wait until the pushing loop wakes up and processes the next batch. There
 	// are only three headers in the last batch, so also wait for an additional
 	// header timeout
