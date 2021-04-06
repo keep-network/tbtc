@@ -118,8 +118,9 @@ func TestPushHeadersToHostChain_NoDifficultyChange(t *testing.T) {
 	localChain := lc.(*chainlocal.Chain)
 
 	relay := &Relay{
-		btcChain:  btcChain,
-		hostChain: localChain,
+		btcChain:                btcChain,
+		hostChain:               localChain,
+		difficultyEpochDuration: btcDifficultyEpochDuration,
 	}
 
 	headers := []*btc.Header{
@@ -214,8 +215,9 @@ func TestPushHeadersToHostChain_NoDifficultyChange_WithUpdateBestHeader(
 	localChain.SetBestKnownDigest([32]byte{1})
 
 	relay := &Relay{
-		btcChain:  btcChain,
-		hostChain: localChain,
+		btcChain:                btcChain,
+		hostChain:               localChain,
+		difficultyEpochDuration: btcDifficultyEpochDuration,
 	}
 
 	headers := []*btc.Header{
@@ -323,8 +325,9 @@ func TestPushHeadersToHostChain_DifficultyChangeAtBeginning(t *testing.T) {
 	localChain := lc.(*chainlocal.Chain)
 
 	relay := &Relay{
-		btcChain:  btcChain,
-		hostChain: localChain,
+		btcChain:                btcChain,
+		hostChain:               localChain,
+		difficultyEpochDuration: btcDifficultyEpochDuration,
 	}
 
 	headers := []*btc.Header{
@@ -419,8 +422,9 @@ func TestPushHeadersToHostChain_DifficultyChangeInMiddle(t *testing.T) {
 	localChain := lc.(*chainlocal.Chain)
 
 	relay := &Relay{
-		btcChain:  btcChain,
-		hostChain: localChain,
+		btcChain:                btcChain,
+		hostChain:               localChain,
+		difficultyEpochDuration: btcDifficultyEpochDuration,
 	}
 
 	headers := []*btc.Header{

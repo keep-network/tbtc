@@ -22,7 +22,7 @@ const (
 	headerTimeout = 1 * time.Second
 
 	// Block duration of a Bitcoin difficulty epoch.
-	difficultyEpochDuration = 2016
+	btcDifficultyEpochDuration = 2016
 
 	// Duration for which the relay should rest after performing a push action.
 	relayPushingSleepTime = 45 * time.Second
@@ -60,7 +60,10 @@ type Relay struct {
 	btcChain  btc.Handle
 	hostChain chain.Handle
 
+	difficultyEpochDuration int64
+
 	pullingSleepTime time.Duration
+	pushingSleepTime time.Duration
 
 	processedHeaders     int
 	nextPullHeaderHeight int64
@@ -81,15 +84,37 @@ func StartRelay(
 	hostChain chain.Handle,
 	observer RelayObserver,
 ) *Relay {
+	return startRelay(
+		ctx,
+		btcChain,
+		hostChain,
+		btcDifficultyEpochDuration,
+		relayPullingSleepTime,
+		relayPushingSleepTime,
+		observer,
+	)
+}
+
+func startRelay(
+	ctx context.Context,
+	btcChain btc.Handle,
+	hostChain chain.Handle,
+	difficultyEpochDuration int64,
+	pullingSleepTime time.Duration,
+	pushingSleepTime time.Duration,
+	observer RelayObserver,
+) *Relay {
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
 
 	relay := &Relay{
-		btcChain:         btcChain,
-		hostChain:        hostChain,
-		pullingSleepTime: relayPullingSleepTime,
-		headersQueue:     make(chan *btc.Header, headersQueueSize),
-		errChan:          make(chan error, 1),
-		observer:         observer,
+		btcChain:                btcChain,
+		hostChain:               hostChain,
+		difficultyEpochDuration: difficultyEpochDuration,
+		pullingSleepTime:        pullingSleepTime,
+		pushingSleepTime:        pushingSleepTime,
+		headersQueue:            make(chan *btc.Header, headersQueueSize),
+		errChan:                 make(chan error, 1),
+		observer:                observer,
 	}
 
 	go func() {
@@ -187,12 +212,12 @@ func (r *Relay) pushingLoop(ctx context.Context) {
 
 			logger.Infof(
 				"suspending headers pushing loop for [%v]",
-				relayPushingSleepTime,
+				r.pushingSleepTime,
 			)
 
 			// Sleep for a while to achieve a limited rate.
 			select {
-			case <-time.After(relayPushingSleepTime):
+			case <-time.After(r.pushingSleepTime):
 			case <-ctx.Done():
 			}
 		}
