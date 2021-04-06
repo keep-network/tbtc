@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"time"
 
 	"github.com/keep-network/tbtc/relay/pkg/header"
 
@@ -9,6 +10,11 @@ import (
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 	"github.com/keep-network/tbtc/relay/pkg/chain"
 )
+
+// Back-off time which should be applied when the relay is restarted.
+// It helps to avoid being flooded with error logs in case of a permanent error
+// in the relay.
+const restartBackoffTime = 10 * time.Second
 
 var logger = log.Logger("tbtc-relay-node")
 
@@ -68,6 +74,8 @@ func (n *Node) startRelayControlLoop(
 		case <-ctx.Done():
 			return
 		}
+
+		time.Sleep(restartBackoffTime)
 	}
 }
 
