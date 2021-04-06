@@ -70,8 +70,8 @@ func (r *Relay) pushHeadersToHostChain(
 		return nil
 	}
 
-	startMod := headers[0].Height % difficultyEpochDuration
-	endMod := headers[len(headers)-1].Height % difficultyEpochDuration
+	startMod := headers[0].Height % r.difficultyEpochDuration
+	endMod := headers[len(headers)-1].Height % r.difficultyEpochDuration
 
 	if startMod == 0 {
 		// we have a difficulty change first
@@ -90,7 +90,7 @@ func (r *Relay) pushHeadersToHostChain(
 				"change in the middle of headers batch",
 		)
 
-		preChangeHeaders, postChangeHeaders := splitBatch(headers, startMod)
+		preChangeHeaders, postChangeHeaders := r.splitBatch(headers, startMod)
 
 		if len(preChangeHeaders) > 0 {
 			if err := r.addHeaders(preChangeHeaders); err != nil {
@@ -147,8 +147,8 @@ func (r *Relay) addHeaders(headers []*btc.Header) error {
 }
 
 func (r *Relay) addHeadersWithRetarget(headers []*btc.Header) error {
-	epochStart := headers[0].Height - difficultyEpochDuration
-	epochEnd := epochStart + difficultyEpochDuration - 1
+	epochStart := headers[0].Height - r.difficultyEpochDuration
+	epochEnd := epochStart + r.difficultyEpochDuration - 1
 
 	oldPeriodStartHeader, err := r.btcChain.GetHeaderByHeight(epochStart)
 	if err != nil {
@@ -313,14 +313,14 @@ func packHeaders(headers []*btc.Header) []byte {
 	return packed
 }
 
-func splitBatch(headers []*btc.Header, startMod int64) (
+func (r *Relay) splitBatch(headers []*btc.Header, startMod int64) (
 	preChangeHeaders,
 	postChangeHeaders []*btc.Header,
 ) {
 	for _, header := range headers {
-		if header.Height%difficultyEpochDuration >= startMod {
+		if header.Height%r.difficultyEpochDuration >= startMod {
 			preChangeHeaders = append(preChangeHeaders, header)
-		} else if header.Height%difficultyEpochDuration < startMod {
+		} else if header.Height%r.difficultyEpochDuration < startMod {
 			postChangeHeaders = append(postChangeHeaders, header)
 		} else {
 			logger.Errorf(
