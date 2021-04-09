@@ -23,7 +23,7 @@ KEEP_ECDSA_SOL_ARTIFACTS_PATH=$(realpath $KEEP_ECDSA_SOL_PATH/build/contracts)
 cd $TBTC_SOL_PATH
 
 printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
-npm install
+npm ci
 
 printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
 KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
