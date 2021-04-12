@@ -9,8 +9,7 @@ headers correctly.
 We performed several tests using a real Ethereum chain and a dummy Bitcoin chain
 to check if Relay Maintainer will be able to handle reorgs:
 
-* Reorg occurs while Relay Maintainer is not working (e.g. due to crash or other
-circumstances)
+== Reorg occurs while Relay Maintainer is not working (e.g. due to crash or other circumstances)
 
 It could happen that Relay Maintainer pushes headers to Ethereum blockchain,
 saves the best known header (*header D1 at height 103*) and then crashes for
@@ -28,7 +27,7 @@ height 103 is D, not D1. It should crawl back to header B at height 101 (last
 common ancestor of D1 and D). It should then proceed with pushing headers
 C, D, E to Ethereum blockchain. The reorg has been handled correctly.
 
-* Reorg occurs while Relay Maintainer is working
+== Reorg occurs while Relay Maintainer is working
 
 When pulling headers from Bitcoin blockchain Relay Maintainer only uses a height
 counter and does not check if pulled BTC headers are from the same chain. In the
@@ -54,7 +53,7 @@ pulling headers from height 101 again, but this time a correct sequence of
 headers will be pushed (headers B, C, D, E) to the Ethereum network. The reorg
 has been handled correctly.
 
-* Reorg occurs while Relay Maintainer is working and spans best known digest
+== Reorg occurs while Relay Maintainer is working and spans best known digest
 
 In this scenario Relay Maintainer pushed some headers (A, B, C1, D1) to the
 Ethereum network and saved the best known digest *D1 at height 103*. But then
@@ -79,7 +78,7 @@ and D), which is header B. It than proceeds with pushing headers C, D, E to the
 Ethereum network. When more headers arrive it will also update the best known
 header. The reorg has been handled correctly.
 
-* Reorg occurs and headers get mixed up
+== Reorg occurs and headers get mixed up
 
 Relay Maintainer can push headers to the Ethereum blockchain in batches of up to
 five headers (it happens when Relay Maintainer has a lot of headers to send,
