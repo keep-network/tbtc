@@ -16,7 +16,7 @@ It could happen that Relay Maintainer pushes headers to Ethereum blockchain,
 saves the best known header (*header D1 at height 103*) and then crashes for
 some reason. Before it is restarted a reorg happens:
 
-                            C1 (102) - *D1 (103)*   - longest before reorg
+                            C1 (102) - D1 (103)   - longest before reorg
                           /
 A (height 100)  - B (101)
                           \
@@ -39,7 +39,7 @@ so headers will be pushed in this order: B, C1, D1.
 
                               C1 (102) - D1 (103)   - longest before reorg
                             /
-*A (height 100)*  - B (101)
+A (height 100)  - B (101)
                             \
                               C (102) - D (103) - E (104) - longest after reorg
 
@@ -61,7 +61,7 @@ Ethereum network and saved the best known digest *D1 at height 103*. But then
 a reorg happened, so the saved best known digest (D1) is no longer part of the
 longest BTC chain:
 
-                            C1 (102) - *D1 (103)*   - longest before reorg
+                            C1 (102) - D1 (103)  - longest before reorg
                           /
 A (height 100)  - B (101)
                           \
@@ -85,11 +85,11 @@ Relay Maintainer can push headers to the Ethereum blockchain in batches of up to
 five headers (it happens when Relay Maintainer has a lot of headers to send,
 perhaps it has not run for a while).
 
-                                C1 (102) - D1 (103)   - longest before reorg
-                            /
-*A (height 100)* - B (101)
-                            \
-                                C (102) - D (103) - E (104) - longest after reorg
+                            C1 (102) - D1 (103)   - longest before reorg
+                         /
+A (height 100) - B (101)
+                         \
+                            C (102) - D (103) - E (104) - longest after reorg
 
 The diagram above shows a situation where Relay Maintainer starts pulling blocks
 at height 101 and continues with 102, 103, etc. and the headers will be in one
