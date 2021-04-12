@@ -1,0 +1,108 @@
+= Reorg support
+
+Relay Maintainer handles Bitcoin chain reorgs mainly through checks implemented
+in the deployed smart contracts. When a smart contract function receives headers
+that are in an inconsistent state, it returns an error and Relay Maintainer
+restarts its pulling and pushing functionalities, so that it can start pulling
+headers correctly.
+
+We performed several tests using a real Ethereum chain and a dummy Bitcoin chain
+to check if Relay Maintainer will be able to handle reorgs:
+
+* Reorg occurs while Relay Maintainer is not working (e.g. due to crash or other
+circumstances)
+
+It could happen that Relay Maintainer pushes headers to Ethereum blockchain,
+saves the best known header (*header D1 at height 103*) and then crashes for
+some reason. Before it is restarted a reorg happens:
+
+                            C1 (102) - *D1 (103)*   - longest before reorg
+                          /
+A (height 100)  - B (101)
+                          \
+                            C (102) - D (103) - E (104) - longest after reorg
+
+When Relay Maintainer is started again, it should notice that current best known
+header (D1) is no longer part of the longest BTC chain and the valid block at
+height 103 is D, not D1. It should crawl back to header B at height 101 (last
+common ancestor of D1 and D). It should then proceed with pushing headers
+C, D, E to Ethereum blockchain. The reorg has been handled correctly.
+
+* Reorg occurs while Relay Maintainer is working
+
+When pulling headers from Bitcoin blockchain Relay Maintainer only uses a height
+counter and does not check if pulled BTC headers are from the same chain. In the
+diagram below, we can see that Relay Maintainer has the best known header set to
+*header A at height 100* (it is already stored in the Ethereum blockchain).
+It will start pushing headers starting with the one above the best known header,
+so headers will be pushed in this order: B, C1, D1.
+
+                              C1 (102) - D1 (103)   - longest before reorg
+                            /
+*A (height 100)*  - B (101)
+                            \
+                              C (102) - D (103) - E (104) - longest after reorg
+
+But when Relay Maintainer is waiting for the header at height 104, a reorg
+happens. Relay Maintainer notices a new header arrived (E at height 104) and
+tries to push it to the Ethereum network, but it fails (`addHeaders` returns an
+error) because the chain is in an inconsistent state (E has no parent among
+headers already pushed to the network) and Relay Maintainer restarts.
+
+As the best known header has not been updated, Relay Maintainer will start
+pulling headers from height 101 again, but this time a correct sequence of
+headers will be pushed (headers B, C, D, E) to the Ethereum network. The reorg
+has been handled correctly.
+
+* Reorg occurs while Relay Maintainer is working and spans best known digest
+
+In this scenario Relay Maintainer pushed some headers (A, B, C1, D1) to the
+Ethereum network and saved the best known digest *D1 at height 103*. But then
+a reorg happened, so the saved best known digest (D1) is no longer part of the
+longest BTC chain:
+
+                            C1 (102) - *D1 (103)*   - longest before reorg
+                          /
+A (height 100)  - B (101)
+                          \
+                            C (102) - D (103) - E (104) - longest after reorg
+
+
+Relay Maintainer notices it has a new header at height 104, so it pushes it to
+the Ethereum network, but receives an error, because the chain is now in an
+inconsistent state (E has no parent among the pushed headers on the Ethereum
+network due to the reorg) and Relay Maintainer is restarted.
+After the restart, the situation is similar to the “Reorg occures while Relay
+Maintainer is not working” scenario: Relay Maintainer notices D1 is no longer
+part of the longest BTC chain and crawls back to the last common ancestor of D1
+and D), which is header B. It than proceeds with pushing headers C, D, E to the
+Ethereum network. When more headers arrive it will also update the best known
+header. The reorg has been handled correctly.
+
+* Reorg occurs and headers get mixed up
+
+Relay Maintainer can push headers to the Ethereum blockchain in batches of up to
+five headers (it happens when Relay Maintainer has a lot of headers to send,
+perhaps it has not run for a while).
+
+                                C1 (102) - D1 (103)   - longest before reorg
+                            /
+*A (height 100)* - B (101)
+                            \
+                                C (102) - D (103) - E (104) - longest after reorg
+
+The diagram above shows a situation where Relay Maintainer starts pulling blocks
+at height 101 and continues with 102, 103, etc. and the headers will be in one
+batch.
+
+If a reorg occurs when Relay Maintainer is creating a batch of headers and has
+already pulled header at height 102, but before it pulled header at 103, we will
+end up calling `addHeaders` with a batch of headers: B, C1, D, E.
+
+The result is that `addHeaders` returns error:
+could not add headers: *[got error [execution reverted: Headers do not form a*
+*consistent chain]...]*
+
+Relay Maintainer is then restarted and starts pulling headers again starting at
+101 and this time headers B, C, D, E are pulled and pushed the Ethereum
+blockchain correctly.
