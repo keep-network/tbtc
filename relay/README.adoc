@@ -34,3 +34,7 @@ Then, invoke the start script by doing:
 ```
 And follow the prompts displayed in the console. After that, the relay client
 should be up and running.
+
+== Reorg support
+
+Relay Maintianer's reorg support was tested and <<./docs/reorgs.adoc#title, documented>>.
