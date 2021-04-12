@@ -7,7 +7,7 @@ restarts its pulling and pushing functionalities, so that it can start pulling
 headers correctly.
 
 We performed several tests using a real Ethereum chain and a dummy Bitcoin chain
-to check if Relay Maintainer will be able to handle reorgs:
+to check if Relay Maintainer will be able to handle reorgs.
 
 == Reorg occurs while Relay Maintainer is not working (e.g. due to crash or other circumstances)
 
