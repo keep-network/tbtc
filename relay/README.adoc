@@ -7,7 +7,7 @@
 - https://github.com/ethereum/solidity[Solidity], at least 0.5.17
 - https://nodejs.org/en/[Node.js], at least v11.15.0
 
-== Installation
+== Local Installation
 
 First, run your Bitcoin and Ethereum nodes. Make sure your Ethereum node
 params matches the desired network params in the `solidity/truffle-config.json`
@@ -23,7 +23,7 @@ and env variables.
 After the script finish its work, appropriate relay contract will be deployed
 on Ethereum network and the relay client binary will be ready to use.
 
-== Run
+== Local Run
 
 Make sure the desired config file is placed under `config` directory and its
 content is right.
@@ -34,6 +34,41 @@ Then, invoke the start script by doing:
 ```
 And follow the prompts displayed in the console. After that, the relay client
 should be up and running.
+
+== Metrics
+
+The following metrics are exposed:
+
+* `btc_chain_connectivity`: indicates whether the relay has a working connection
+with the BTC chain. Possible values are `1` and `0` which correspond to `true`
+and `false` respectively
+
+* `host_chain_connectivity`: does the same as the above metric but is related to
+the host chain connectivity
+
+* `headers_relay_active`: indicates whether the header relaying process is
+enabled (`1`) or not (`0`)
+
+* `headers_relay_errors`: indicates the total number of errors raised by the
+header relaying process during the entire relay node lifetime
+
+* `headers_pulled`: indicates the total number of unique headers pulled from the
+BTC chain by the header relaying process, during the entire relay node lifetime.
+This metric doesn't count re-pulls which can occur during recovery after header
+relaying error
+
+* `headers_pushed`: indicates the total number of unique headers pushed to the
+host chain by the header relaying process, during the entire relay node lifetime.
+This metric doesn't count re-pushes which can occur during recovery after header
+relaying error
+
+By default, the first two `*_chain_connectivity` metrics are updated every
+`10 minutes` and this time can be customized via the `Metrics.ChainMetricsTick`
+config property. The rest of the metrics are updated every `10 seconds` and
+their tick can be set using `Metrics.NodeMetricsTick` property. The metrics
+endpoint is `/metrics` and metrics port can be set by the `Metrics.Port`
+property. In case it's not set, metrics will not be enabled.
+
 
 == Reorg support
 
