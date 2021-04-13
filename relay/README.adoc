@@ -7,7 +7,7 @@
 - https://github.com/ethereum/solidity[Solidity], at least 0.5.17
 - https://nodejs.org/en/[Node.js], at least v11.15.0
 
-== Local Installation
+== Local installation
 
 First, run your Bitcoin and Ethereum nodes. Make sure your Ethereum node
 params matches the desired network params in the `solidity/truffle-config.json`
@@ -23,7 +23,7 @@ and env variables.
 After the script finish its work, appropriate relay contract will be deployed
 on Ethereum network and the relay client binary will be ready to use.
 
-== Local Run
+== Local run
 
 Make sure the desired config file is placed under `config` directory and its
 content is right.
@@ -34,6 +34,20 @@ Then, invoke the start script by doing:
 ```
 And follow the prompts displayed in the console. After that, the relay client
 should be up and running.
+
+== Run in Docker container
+
+Create a config file (let's assume its name is `config.toml`), similar to the
+provided `config.toml.SAMPLE`.
+Build a docker image and run it using the following commands:
+```
+docker build -t relay .
+docker run -v /path/to/config:/config relay relay -config /config/config.toml start
+```
+
+Where `/path/to/config` should be replaced with the path to the directory
+containing `config.toml`.
+
 
 == Metrics
 
