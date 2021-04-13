@@ -35,19 +35,33 @@ Then, invoke the start script by doing:
 And follow the prompts displayed in the console. After that, the relay client
 should be up and running.
 
-== Run in Docker container
+== Run using Docker
 
-Create a config file (let's assume its name is `config.toml`), similar to the
-provided `config.toml.SAMPLE`.
+Relay Maintianer can also be run from a Docker container.
+This instruction assumes the Bitcoin and Ethereum nodes are running and relay
+smart contract has been deployed to the Ethereum network.
+
+Create a directory where config files will be stored.
+
+Inside that directory create a TOML config file similar to the provided
+`config.toml.SAMPLE` file (let's assume its name is `config.toml`).
+
+The operator's keystore file (the "UTC" file) should also be put in that
+directory.
+
 Build a docker image and run it using the following commands:
 ```
 docker build -t relay .
-docker run -v /path/to/config:/config relay relay -config /config/config.toml start
+docker run -v /path/to/config:/config -e OPERATOR_KEY_FILE_PASSWORD=password relay relay -config /config/config.toml start
 ```
 
 Where `/path/to/config` should be replaced with the path to the directory
-containing `config.toml`.
+containing `config.toml`. `password` should be replaced with the password
+needed to decrypt the UTC keystore file.
 
+The path to the keystore file in `config.toml` should take into account that it
+will be used inside a container, so it should look like this:
+`/config/UTC-<rest-of-your-utc-file>`.
 
 == Metrics
 
