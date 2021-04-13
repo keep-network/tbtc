@@ -10,7 +10,7 @@
 == Local installation
 
 First, run your Bitcoin and Ethereum nodes. Make sure your Ethereum node
-params matches the desired network params in the `solidity/truffle-config.json`
+params match the desired network params in the `solidity/truffle-config.json`
 file.
 
 Then, run the install script by doing:
