@@ -7,10 +7,10 @@
 - https://github.com/ethereum/solidity[Solidity], at least 0.5.17
 - https://nodejs.org/en/[Node.js], at least v11.15.0
 
-== Installation
+== Local installation
 
 First, run your Bitcoin and Ethereum nodes. Make sure your Ethereum node
-params matches the desired network params in the `solidity/truffle-config.json`
+params match the desired network params in the `solidity/truffle-config.json`
 file.
 
 Then, run the install script by doing:
@@ -23,7 +23,7 @@ and env variables.
 After the script finish its work, appropriate relay contract will be deployed
 on Ethereum network and the relay client binary will be ready to use.
 
-== Run
+== Local run
 
 Make sure the desired config file is placed under `config` directory and its
 content is right.
@@ -34,6 +34,70 @@ Then, invoke the start script by doing:
 ```
 And follow the prompts displayed in the console. After that, the relay client
 should be up and running.
+
+== Run using Docker
+
+Relay Maintianer can also be run from a Docker container.
+This instruction assumes the Bitcoin and Ethereum nodes are running and relay
+smart contract has been deployed to the Ethereum network.
+
+First, create a directory where config files will be stored.
+Inside that directory create a TOML config file using the provided
+`config.toml.SAMPLE` file (let's assume its name is `config.toml`).
+For convenience, put the operator's keystore file (the "UTC" file)
+in that directory too.
+
+Build the docker image using:
+```
+docker build -t relay .
+```
+Once done, run it using the following command:
+```
+docker run -v /path/to/config:/config -e OPERATOR_KEY_FILE_PASSWORD=password relay relay -config /config/config.toml start
+```
+
+Where `/path/to/config` should be replaced with the path to the directory
+containing `config.toml`. `password` should be replaced with the password
+needed to decrypt the UTC keystore file.
+
+The path to the keystore file in `config.toml` should take into account that it
+will be used inside a container, so it should look like this:
+`/config/UTC-<rest-of-your-utc-file>`.
+
+== Metrics
+
+The following metrics are exposed:
+
+* `btc_chain_connectivity`: indicates whether the relay has a working connection
+with the BTC chain. Possible values are `1` and `0` which correspond to `true`
+and `false` respectively
+
+* `host_chain_connectivity`: does the same as the above metric but is related to
+the host chain connectivity
+
+* `headers_relay_active`: indicates whether the header relaying process is
+enabled (`1`) or not (`0`)
+
+* `headers_relay_errors`: indicates the total number of errors raised by the
+header relaying process during the entire relay node lifetime
+
+* `headers_pulled`: indicates the total number of unique headers pulled from the
+BTC chain by the header relaying process, during the entire relay node lifetime.
+This metric doesn't count re-pulls which can occur during recovery after header
+relaying error
+
+* `headers_pushed`: indicates the total number of unique headers pushed to the
+host chain by the header relaying process, during the entire relay node lifetime.
+This metric doesn't count re-pushes which can occur during recovery after header
+relaying error
+
+By default, the first two `*_chain_connectivity` metrics are updated every
+`10 minutes` and this time can be customized via the `Metrics.ChainMetricsTick`
+config property. The rest of the metrics are updated every `10 seconds` and
+their tick can be set using `Metrics.NodeMetricsTick` property. The metrics
+endpoint is `/metrics` and metrics port can be set by the `Metrics.Port`
+property. In case it's not set, metrics will not be enabled.
+
 
 == Reorg support
 
