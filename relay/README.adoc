@@ -41,17 +41,18 @@ Relay Maintianer can also be run from a Docker container.
 This instruction assumes the Bitcoin and Ethereum nodes are running and relay
 smart contract has been deployed to the Ethereum network.
 
-Create a directory where config files will be stored.
-
-Inside that directory create a TOML config file similar to the provided
+First, create a directory where config files will be stored.
+Inside that directory create a TOML config file using the provided
 `config.toml.SAMPLE` file (let's assume its name is `config.toml`).
+For convenience, put the operator's keystore file (the "UTC" file)
+in that directory too.
 
-The operator's keystore file (the "UTC" file) should also be put in that
-directory.
-
-Build a docker image and run it using the following commands:
+Build the docker image using:
 ```
 docker build -t relay .
+```
+Once done, run it using the following command:
+```
 docker run -v /path/to/config:/config -e OPERATOR_KEY_FILE_PASSWORD=password relay relay -config /config/config.toml start
 ```
 
