@@ -58,7 +58,7 @@
     "eslint": "^5.16.0",
     "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.2.0",
     "eslint-config-prettier": "^6.10.0",
-    "eth-gas-reporter": "^0.1.12",
+    "eth-gas-reporter": "^0.2.22",
     "ethlint": "^1.2.4",
     "ganache-cli": "^6.4.3",
     "mocha": "^7.0.1",
