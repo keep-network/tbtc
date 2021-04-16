@@ -27,7 +27,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name == 'workflow_dispatch'
         run: |
             echo "Workflow dispatched on branch: ${{ github.ref }}"
@@ -35,7 +35,7 @@ jobs:
             echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
             echo "ref = ${{ github.event.inputs.ref }}"
 
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name != 'workflow_dispatch'
         run: |
             echo "ref = ${{ github.ref }}"
@@ -125,10 +125,6 @@ jobs:
 
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test, contracts-lint]
-    # if: |
-    #   github.ref == 'refs/heads/master'
-    #     && github.event_name != 'pull_request'
-    # TODO: Decide on execution conditions
     if: |
       (github.ref == 'refs/heads/master'
         && github.event_name == 'push')
@@ -172,7 +168,7 @@ jobs:
       - name: Fetch external contracts artifacts
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-          CONTRACT_DATA_BUCKET_DIR: keep-ecdsa
+          CONTRACT_DATA_BUCKET_DIR: keep-ecdsa-wip # TODO remove '-wip'
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
         run: ./scripts/ci-provision-external-contracts.sh
 
@@ -202,9 +198,9 @@ jobs:
       - name: Upload contract data
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
+        run: | # TODO remove '-wip'
           cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/tbtc
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/tbtc-wip
 
       - name: Copy artifacts
         run: |
