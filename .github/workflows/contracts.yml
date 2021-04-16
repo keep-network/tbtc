@@ -42,10 +42,10 @@ jobs:
             echo "sha = ${{ github.sha }}"
 
       - uses: actions/checkout@v2
-        if: github.event_name == 'pull_request' 
+        if: github.event_name == 'pull_request'
         
       - uses: dorny/paths-filter@v2
-        if: github.event_name == 'pull_request' 
+        if: github.event_name == 'pull_request'
         id: filter
         with:
           filters: |
@@ -92,7 +92,7 @@ jobs:
   contracts-lint:
     needs: contracts-detect-changes
     if: |
-      github.event_name != 'pull_request'
+      github.event_name == 'push'
         || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
