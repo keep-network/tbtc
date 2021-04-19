@@ -124,7 +124,7 @@ jobs:
         run: npm run lint
 
   contracts-migrate-and-publish-ethereum:
-    needs: [contracts-build-and-test, contracts-lint]
+    needs: [contracts-build-and-test]
     if: |
       (github.ref == 'refs/heads/master'
         && github.event_name == 'push')
@@ -232,7 +232,7 @@ jobs:
           version: ${{ github.sha }} # TODO: replace with version once versioning ready
 
   contracts-migrate-and-publish-celo:
-    needs: [contracts-build-and-test, contracts-lint]
+    needs: [contracts-build-and-test]
     if: |
       github.ref == 'refs/heads/master'
         && github.event_name != 'pull_request'
