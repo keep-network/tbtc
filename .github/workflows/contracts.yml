@@ -208,7 +208,7 @@ jobs:
           cp -r build/contracts/* artifacts/
 
       - name: Bump up package version
-        uses: keep-network/npm-version-bump@v1
+        uses: keep-network/npm-version-bump@main
         with:
           workDir: ./solidity
 
