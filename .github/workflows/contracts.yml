@@ -168,12 +168,22 @@ jobs:
       - name: Fetch external contracts artifacts
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-          CONTRACT_DATA_BUCKET_DIR: keep-ecdsa-wip # TODO remove '-wip'
+          CONTRACT_DATA_BUCKET_DIR: keep-ecdsa
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
         run: ./scripts/ci-provision-external-contracts.sh
 
+      - name: Get upstream packages' versions
+        uses: keep-network/upstream-builds-query
+        id: upstream-builds-query
+        with:
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-ecdsa-solidity-version = github.com/keep-network/keep-ecdsa/solidity#version
+
       - name: Resolve latest contracts
-        run: npm update @keep-network/keep-ecdsa
+        run: |
+            npm install --save-exact \
+              @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-solidity-version }}
 
       - name: Migrate contracts
         env:
@@ -182,6 +192,20 @@ jobs:
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      - name: Copy artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r build/contracts/* artifacts/
+
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity
+          environment: ${{ github.event.inputs.environment }}
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
 
       - name: Push contracts to Tenderly
         # TODO: once below action gets tagged replace `@main` with `@v1`
@@ -193,30 +217,19 @@ jobs:
           tenderly-project: thesis/keep-test
           eth-network-id: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
           github-project-name: tbtc
-          # version-tag: # TODO: resolve npm package version
+          version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
       - name: Upload contract data
         env:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: | # TODO remove '-wip'
-          cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/tbtc-wip
-
-      - name: Copy artifacts
         run: |
-          mkdir -p artifacts
-          cp -r build/contracts/* artifacts/
-
-      - name: Bump up package version
-        uses: keep-network/npm-version-bump@main
-        with:
-          workDir: ./solidity
+          cd build/contracts
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/tbtc
 
       - name: Publish to npm
-        # TODO: --dry-run to be removed once testing of workflow is done
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
-          npm publish --access=public --dry-run
+          npm publish --access=public
       
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
@@ -229,7 +242,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           ref: ${{ github.event.inputs.ref }}
-          version: ${{ github.sha }} # TODO: replace with version once versioning ready
+          version: ${{ steps.npm-version-bump.outputs.version }}
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test]
@@ -275,8 +288,18 @@ jobs:
           ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
 
+      - name: Get upstream packages' versions
+        uses: keep-network/upstream-builds-query
+        id: upstream-builds-query
+        with:
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-ecdsa-solidity-version = github.com/keep-network/keep-ecdsa/solidity#version
+
       - name: Resolve latest contracts
-        run: npm update @keep-network/keep-ecdsa
+        run: |
+            npm install --save-exact \
+              @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-solidity-version }}
 
       - name: Migrate contracts
         env:
