@@ -173,7 +173,7 @@ jobs:
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Get upstream packages' versions
-        uses: keep-network/upstream-builds-query
+        uses: keep-network/upstream-builds-query@main
         id: upstream-builds-query
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
@@ -289,7 +289,7 @@ jobs:
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Get upstream packages' versions
-        uses: keep-network/upstream-builds-query
+        uses: keep-network/upstream-builds-query@main
         id: upstream-builds-query
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
