@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@keep-network/tbtc": ">0.14.0-pre <0.14.0-rc",
-    "@truffle/hdwallet-provider": "^1.0.25",
-    "web3": "1.0.0-beta.55"
-  }
-}
