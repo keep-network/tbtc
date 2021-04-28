@@ -1,0 +1,116 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: relay
+  namespace: default
+  labels:
+    keel.sh/policy: all
+    app: keep
+    type: relay
+    network: mainnet
+    chain: ethereum
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keep
+      type: relay
+      network: mainnet
+      chain: ethereum
+  template:
+    metadata:
+      labels:
+        app: keep
+        type: relay
+        network: mainnet
+        chain: ethereum
+    spec:
+      initContainers:
+        - name: initcontainer-provision-relay
+          image: gcr.io/keep-prd-210b/initcontainer-provision-relay:1.0.0
+          imagePullPolicy: Always
+          env:
+            - name: HOST_CHAIN_WS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-mainnet
+                  key: ws-url
+            - name: HOST_CHAIN_RPC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-mainnet
+                  key: rpc-url
+            - name: RELAY_CONTRACT_ADDRESS
+              value: '0x1531b6e3d51BF80f634957dF81A990B92dA4b154'
+            - name: RELAY_ACCOUNT_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: relay-maintainer
+                  key: eth-account-address
+            - name: RELAY_ACCOUNT_KEY_FILE
+              value: /mnt/relay/keyfile/eth-account-keyfile
+            - name: BITCOIN_URL
+              value: bcoin.default.svc.cluster.local:8332
+            - name: BITCOIN_USERNAME
+              value: x
+            - name: BITCOIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bcoin
+                  key: http-api-key
+            - name: METRICS_PORT
+              value: "8080"
+          volumeMounts:
+            - name: relay-env
+              mountPath: /mnt/relay/config
+          command: ['node', '/tmp/provision-relay.js']
+      containers:
+        - name: relay
+          image: gcr.io/keep-prd-210b/relay:1.0.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: OPERATOR_KEY_FILE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: relay
+                  key: eth-account-keyfile-password
+            - name: LOG_LEVEL
+              value: 'info'
+          volumeMounts:
+            - name: relay-env
+              mountPath: /mnt/relay/config
+            - name: eth-account-keyfile
+              mountPath: /mnt/relay/keyfile
+          command:
+            [
+              'relay',
+              '-config',
+              '/mnt/relay/config/relay-config.toml',
+              'start',
+            ]
+      volumes:
+        - name: relay-env
+          persistentVolumeClaim:
+            claimName: relay-env
+        - name: eth-account-keyfile
+          secret:
+            secretName: relay
+            items:
+              - key: eth-account-keyfile
+                path: eth-account-keyfile
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: relay-env
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi
