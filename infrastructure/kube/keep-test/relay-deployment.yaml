@@ -42,7 +42,7 @@ spec:
                   name: eth-network-ropsten
                   key: rpc-url
             - name: RELAY_CONTRACT_ADDRESS
-              value: '0xcf3910EDa57722Ed712D9f9b4D783EaEdbD6534C'
+              value: '0xcF3a6246879aab9eb7beC0d936743208EA51d0Ed'
             - name: RELAY_ACCOUNT_ADDRESS
               valueFrom:
                 configMapKeyRef:
