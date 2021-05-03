@@ -98,9 +98,10 @@ jobs:
 
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test, contracts-lint]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
+    if: | # TODO: remove 'rfc-18' condition one tested
+      (github.ref == 'refs/heads/master'
+        && github.event_name != 'pull_request')
+        || github.ref == 'refs/heads/rfc-18/load-env-var'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -111,6 +112,14 @@ jobs:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@main # TODO: use @v1 once availible
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          environment: 'ropsten'
+          ref: 'master'
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -134,14 +143,13 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          project_id: ${{ env.GOOGLE_PROJECT_ID }}
           service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
       - name: Fetch external contracts artifacts
         env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
           CONTRACT_DATA_BUCKET_DIR: keep-ecdsa
-          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          ETH_NETWORK_ID: ${{ env.NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Resolve latest contracts
@@ -149,7 +157,6 @@ jobs:
 
       - name: Migrate contracts
         env:
-          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_ETH_TRUFFLE_NETWORK }}
           ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
@@ -163,16 +170,14 @@ jobs:
           working-directory: ./solidity
           tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
           tenderly-project: thesis/keep-test
-          eth-network-id: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          eth-network-id: ${{ env.NETWORK_ID }}
           github-project-name: tbtc
           # version-tag: # TODO: resolve npm package version
 
       - name: Upload contract data
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
           cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/tbtc
+          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/tbtc
 
       - name: Copy artifacts
         run: |
@@ -191,9 +196,10 @@ jobs:
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test, contracts-lint]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
+    if: | # TODO: remove 'rfc-18' condition one tested
+      (github.ref == 'refs/heads/master'
+        && github.event_name != 'pull_request')
+        || github.ref == 'refs/heads/rfc-18/load-env-var'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
@@ -201,6 +207,14 @@ jobs:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@main # TODO: use @v1 once availible
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          environment: 'alfajores'
+          ref: 'master'
 
       - uses: actions/setup-node@v2
         with:
@@ -223,14 +237,13 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          project_id: ${{ env.GOOGLE_PROJECT_ID }}
           service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
       - name: Fetch external contracts artifacts
         env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
           CONTRACT_DATA_BUCKET_DIR: keep-ecdsa-celo
-          ETH_NETWORK_ID: ${{ secrets.KEEP_TEST_CELO_NETWORK_ID }}
+          ETH_NETWORK_ID: ${{ env.NETWORK_ID }}
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Resolve latest contracts
@@ -238,16 +251,13 @@ jobs:
 
       - name: Migrate contracts
         env:
-          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_CELO_TRUFFLE_NETWORK }}
           CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Upload contract data
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
           cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/tbtc-celo
+          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/tbtc-celo
 
       # TODO: add NPM publish step once it's clear how artifacts should be tagged
