@@ -114,12 +114,14 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Load environment variables
-        uses: keep-network/load-env-variables@main # TODO: use @v1 once availible
+        uses: keep-network/load-env-variables@v1
         env: 
           CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
           environment: 'ropsten'
-          ref: 'master'
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -208,12 +210,14 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Load environment variables
-        uses: keep-network/load-env-variables@main # TODO: use @v1 once availible
+        uses: keep-network/load-env-variables@v1
         env: 
           CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
           environment: 'alfajores'
-          ref: 'master'
 
       - uses: actions/setup-node@v2
         with:
