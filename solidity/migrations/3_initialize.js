@@ -12,12 +12,22 @@ const TBTCToken = artifacts.require("TBTCToken")
 const TBTCDepositToken = artifacts.require("TBTCDepositToken")
 const FeeRebateToken = artifacts.require("FeeRebateToken")
 const VendingMachine = artifacts.require("VendingMachine")
+
+const {contracts} = require("@keep-network/common.js")
+const {readExternalContractAddress} = contracts
+
 // Used for creating sortition pool.
 const BondedECDSAKeepFactoryJson = require("@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json")
 
-const {BondedECDSAKeepFactoryAddress, ETHBTCMedianizer} = require("./externals")
+const {ETHBTCMedianizer} = require("./externals.js")
 
 module.exports = async function(deployer, network, accounts) {
+  const BondedECDSAKeepFactoryAddress = readExternalContractAddress(
+    "@keep-network/keep-ecdsa",
+    "BondedECDSAKeepFactory",
+    deployer,
+  )
+
   // Don't enact this setup during unit testing.
   if (process.env.NODE_ENV == "test" && !process.env.INTEGRATION_TEST) return
 
