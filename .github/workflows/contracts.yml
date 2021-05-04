@@ -98,9 +98,9 @@ jobs:
 
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test, contracts-lint]
-    if: | # TODO: remove 'rfc-18' condition one tested
-      (github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request')
+    if: |
+      github.ref == 'refs/heads/master'
+        && github.event_name != 'pull_request'
         || github.ref == 'refs/heads/rfc-18/load-env-var'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
@@ -196,10 +196,9 @@ jobs:
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test, contracts-lint]
-    if: | # TODO: remove 'rfc-18' condition one tested
-      (github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request')
-        || github.ref == 'refs/heads/rfc-18/load-env-var'
+    if: |
+      github.ref == 'refs/heads/master'
+        && github.event_name != 'pull_request'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
