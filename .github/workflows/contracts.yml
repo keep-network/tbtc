@@ -140,6 +140,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'ropsten'
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
@@ -175,7 +185,6 @@ jobs:
 
       - name: Migrate contracts
         env:
-          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_ETH_TRUFFLE_NETWORK }}
           ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
@@ -203,7 +212,7 @@ jobs:
           working-directory: ./solidity
           tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
           tenderly-project: thesis/keep-test
-          eth-network-id: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          eth-network-id: ${{ env.NETWORK_ID }}
           github-project-name: tbtc
           version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
@@ -238,6 +247,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'alfajores'
+
       - uses: actions/setup-node@v2
         with:
           node-version: "12.x"
@@ -257,11 +276,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-        with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
       - name: Get upstream packages' versions
         uses: keep-network/upstream-builds-query@main
         id: upstream-builds-query
@@ -277,7 +291,6 @@ jobs:
 
       - name: Migrate contracts
         env:
-          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_CELO_TRUFFLE_NETWORK }}
           CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
