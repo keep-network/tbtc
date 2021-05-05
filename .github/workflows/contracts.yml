@@ -125,10 +125,7 @@ jobs:
 
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test]
-    if: |
-      (github.ref == 'refs/heads/master'
-        && github.event_name == 'push')
-        || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -222,7 +219,6 @@ jobs:
           npm publish --access=public
       
       - name: Notify CI about completion of the workflow
-        if: github.event_name == 'workflow_dispatch'
         uses: keep-network/notify-workflow-completed@main
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -236,9 +232,7 @@ jobs:
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     environment: keep-test
     runs-on: ubuntu-latest
     defaults:
