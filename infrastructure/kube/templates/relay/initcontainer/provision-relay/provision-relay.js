@@ -18,7 +18,6 @@ const operatorKeyFile = process.env.RELAY_ACCOUNT_KEY_FILE
 // Contract owner info.
 const contractOwnerAddress = process.env.CONTRACT_OWNER_ACCOUNT_ADDRESS
 const contractOwnerKey = process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY
-const contractOwnerProvider = new HDWalletProvider(contractOwnerKey, hostChainRpcUrl)
 
 // Bitcoin chain info.
 const bitcoinUrl = process.env.BITCOIN_URL
@@ -43,13 +42,13 @@ const web3Options = {
     transactionPollingTimeout: 480
 }
 
-const web3 = new Web3(contractOwnerProvider, null, web3Options)
-
 async function provisionRelayMaintainer() {
     console.log('###########  Provisioning relay! ###########')
 
-    console.log(`\n<<<<<<<<<<<< Funding operator account ${operatorAddress} >>>>>>>>>>>>`)
-    await fundOperator(operatorAddress, contractOwnerAddress, '10')
+    if (contractOwnerAddress) {
+        console.log(`\n<<<<<<<<<<<< Funding operator account ${operatorAddress} >>>>>>>>>>>>`)
+        await fundOperator(operatorAddress, contractOwnerAddress, '10')
+    }
 
     console.log('\n<<<<<<<<<<<< Creating relay config file >>>>>>>>>>>>')
     await createRelayConfig()
@@ -58,6 +57,9 @@ async function provisionRelayMaintainer() {
 }
 
 async function fundOperator(operatorAddress, purse, requiredEtherBalance) {
+    const contractOwnerProvider = new HDWalletProvider(contractOwnerKey, hostChainRpcUrl)
+    const web3 = new Web3(contractOwnerProvider, null, web3Options)
+
     const requiredBalance = web3.utils.toBN(
         web3.utils.toWei(requiredEtherBalance, 'ether')
     )
