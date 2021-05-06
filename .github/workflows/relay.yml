@@ -6,22 +6,46 @@ on:
       - master
     paths:
       - "relay/**"
-      - ".github/workflows/relay.yml"
   pull_request:
-    branches:
-    paths:
-      - "relay/**"
-      - ".github/workflows/relay.yml"
   workflow_dispatch:
 
 jobs:
-  build-test-publish:
+  relay-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './relay/**'
+
+  relay-build-test-publish:
+    needs: relay-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.relay-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./relay
     steps:
       - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'ropsten'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -54,11 +78,10 @@ jobs:
       - name: Login to Google Container Registry
         if: |
           github.ref == 'refs/heads/master'
-            && (github.event_name == 'push'
-            || github.event_name == 'workflow_dispatch')
+            && github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
-          registry: ${{ secrets.GCR_REGISTRY_URL }}
+          registry: ${{ env.GCR_REGISTRY_URL }}
           username: _json_key
           password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
@@ -66,17 +89,15 @@ jobs:
         uses: docker/build-push-action@v2
         env:
           IMAGE_NAME: 'relay'
-          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           context: ./relay
           # GCR image should be named according to following convention:
           # HOSTNAME/PROJECT-ID/IMAGE:TAG
           # We don't use TAG yet.
-          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
           build-args: |
             REVISION=${{ github.sha }}
           push: |
             ${{ github.ref == 'refs/heads/master'
-              && (github.event_name == 'push'
-              || github.event_name == 'workflow_dispatch') }}
+              && github.event_name != 'pull_request' }}
