@@ -28,5 +28,6 @@ npx truffle migrate --reset --network development
 printf "${LOG_START}Creating links...${LOG_END}"
 ln -sf build/contracts artifacts
 npm link
+npm link @keep-network/keep-ecdsa
 
 printf "${DONE_START}Installation completed!${DONE_END}"
