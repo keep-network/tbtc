@@ -25,7 +25,7 @@ const (
 	btcDifficultyEpochDuration = 2016
 
 	// Duration for which the relay should rest after performing a push action.
-	relayPushingSleepTime = 45 * time.Second
+	relayPushingSleepTime = 60 * time.Second
 
 	// Duration for which the relay should rest after reaching the
 	// tip of Bitcoin blockchain. The relay waits for this time before
@@ -35,11 +35,11 @@ const (
 
 	// Maximum number of attempts which will be performed while trying
 	// to update the best header.
-	updateBestHeaderMaxAttempts = 30
+	updateBestHeaderMaxAttempts = 10
 
 	// Back-off time which should be applied between updating best header
 	// attempts.
-	updateBestHeaderBackoffTime = 10 * time.Second
+	updateBestHeaderBackoffTime = 30 * time.Second
 )
 
 var logger = log.Logger("tbtc-relay-header")
