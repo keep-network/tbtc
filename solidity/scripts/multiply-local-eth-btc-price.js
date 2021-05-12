@@ -4,7 +4,17 @@ async function run() {
   try {
     if (process.argv.length <= 4 || process.argv[4] === 'help') {
       console.log(
-        'run `truffle exec multiply-local-eth-btc-price.js <factor>` to update the current price by a factor of <factor>',
+`
+truffle exec multiply-local-eth-btc-price.js <factor>
+  Updates the local mock ETHBTC price by the specified factor.
+
+  <factor>
+    A factor to multiply the current ETHBTC price by. ETHBTC price
+    is in wei per satoshi, so a factor of 2 means the price of one satoshi
+    has doubled in terms of wei, i.e. it takes twice as many wei to buy
+    one satoshi. In terms of collateralization, this means a deposit that
+    was 100% collateralized is now 50% collateralized.
+`
       )
     } else if (isNaN(parseFloat(process.argv[4]))) {
       console.log('<factor> must be a number.')
@@ -16,7 +26,7 @@ async function run() {
       const newPrice = Math.round(currentPrice * factor)
       await ethBtcPriceFeedMock.setValue(newPrice.toString())
       console.log(
-        `Successfully updated the price by a factor of ${factor} from ${currentPrice} to ${newPrice}`,
+        `Successfully updated the ETHBTC price by a factor of ${factor} from ${currentPrice} wei/satoshi to ${newPrice} wei/satoshi`,
       )
     }
     process.exit(0)
