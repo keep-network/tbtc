@@ -16,7 +16,7 @@ on:
       upstream_builds:
         description: 'Upstream builds'
         required: false
-      ref:
+      upstream_ref:
         description: 'Git reference to checkout (e.g. branch name)'
         required: false
         default: 'master'
@@ -33,7 +33,7 @@ jobs:
             echo "Workflow dispatched on branch: ${{ github.ref }}"
             echo "environment = ${{ github.event.inputs.environment }}"
             echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
-            echo "ref = ${{ github.event.inputs.ref }}"
+            echo "upstream_ref = ${{ github.event.inputs.upstream_ref }}"
 
       - name: Show workflow metadata
         if: github.event_name != 'workflow_dispatch'
@@ -227,7 +227,7 @@ jobs:
           url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
-          ref: ${{ github.event.inputs.ref }}
+          upstream_ref: ${{ github.event.inputs.upstream_ref }}
           version: ${{ steps.npm-version-bump.outputs.version }}
 
   contracts-migrate-and-publish-celo:
