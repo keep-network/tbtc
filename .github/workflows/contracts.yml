@@ -27,20 +27,6 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - name: Show workflow metadata
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-            echo "Workflow dispatched on branch: ${{ github.ref }}"
-            echo "environment = ${{ github.event.inputs.environment }}"
-            echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
-            echo "ref = ${{ github.event.inputs.ref }}"
-
-      - name: Show workflow metadata
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-            echo "ref = ${{ github.ref }}"
-            echo "sha = ${{ github.sha }}"
-
       - uses: actions/checkout@v2
         if: github.event_name == 'pull_request'
         
