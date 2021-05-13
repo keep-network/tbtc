@@ -21,8 +21,8 @@
     "lint:fix": "npm run lint:fix:js && npm run lint:fix:sol",
     "lint:js": "eslint .",
     "lint:fix:js": "eslint --fix .",
-    "lint:sol": "solium -d contracts/ && prettier --list-different **/*.sol",
-    "lint:fix:sol": "solium -d contracts/ --fix && prettier --write **/*.sol"
+    "lint:sol": "solium -d contracts/",
+    "lint:fix:sol": "solium -d contracts/ --fix"
   },
   "precommit": "npm run lint",
   "author": "Satoshi Nakamoto 🤪",
