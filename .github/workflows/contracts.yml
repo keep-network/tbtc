@@ -112,7 +112,7 @@ jobs:
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
-    environment: keep-test # keep-test requires a manual aproval
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -219,7 +219,7 @@ jobs:
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
-    environment: keep-test
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
     defaults:
       run:
