@@ -30,39 +30,41 @@ jsonFiles.forEach((file) => {
   let section = '== `' + json.contractName + '`\n\n'
 
   for (const signature in json.userdoc.methods) {
-    const props = json.userdoc.methods[signature]
+    if (Object.prototype.hasOwnProperty.call(json.userdoc.methods, signature)) {
+      let subsection = '=== `' + signature + '`\n\n'
 
-    let subsection = '=== `' + signature + '`\n\n'
+      const userDocs = json.userdoc.methods[signature]
+      const devDocs = json.devdoc.methods[signature]
 
-    const userDocs = json.userdoc.methods[signature]
-    const devDocs = json.devdoc.methods[signature]
-
-    if (userDocs.notice) {
-      subsection += `${userDocs.notice}\n\n`
-    }
-
-    if (devDocs) {
-      subsection += '==== Developers\n\n'
-
-      if (devDocs.details) {
-        subsection += `${devDocs.details}\n\n`
+      if (userDocs.notice) {
+        subsection += `${userDocs.notice}\n\n`
       }
 
-      if (devDocs.params) {
-        for (const paramName in devDocs.params) {
-          const paramDoc = devDocs.params[paramName]
+      if (devDocs) {
+        subsection += '==== Developers\n\n'
 
-          subsection += `\`${paramName}\`:: ` + paramDoc + '\n'
+        if (devDocs.details) {
+          subsection += `${devDocs.details}\n\n`
         }
-      }
-      if (devDocs.return) {
-        subsection += `Returns:: ${devDocs['return']}`
+
+        if (devDocs.params) {
+          for (const paramName in devDocs.params) {
+            if (Object.prototype.hasOwnProperty.call(devDocs.params, paramName)) {
+              const paramDoc = devDocs.params[paramName]
+
+              subsection += `\`${paramName}\`:: ` + paramDoc + '\n'
+            }
+          }
+        }
+        if (devDocs.return) {
+          subsection += `Returns:: ${devDocs['return']}`
+        }
+
+        subsection += '\n\n'
       }
 
-      subsection += '\n\n'
+      section += subsection
     }
-
-    section += subsection
   }
 
   doc += section

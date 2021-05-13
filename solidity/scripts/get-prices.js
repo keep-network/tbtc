@@ -1,6 +1,4 @@
-const fs = require('fs')
-const path = require('path')
-const Web3 = require('web3')
+const web3 = require('web3')
 
 // These contracts are deployed on Ethereum mainnet.
 const ETHUSDMedianizer = '0x64de91f5a373cd4c28de3600cb34c7c6ce410c85'
