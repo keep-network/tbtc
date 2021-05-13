@@ -1,85 +1,85 @@
-const {contract} = require("@openzeppelin/test-environment")
-const {BN} = require("@openzeppelin/test-helpers")
-const {deploySystem} = require("./utils.js")
+const { contract } = require('@openzeppelin/test-environment')
+const { BN } = require('@openzeppelin/test-helpers')
+const { deploySystem } = require('./utils.js')
 
-const BytesLib = contract.fromArtifact("BytesLib")
-const BTCUtils = contract.fromArtifact("BTCUtils")
-const ValidateSPV = contract.fromArtifact("ValidateSPV")
-const CheckBitcoinSigs = contract.fromArtifact("CheckBitcoinSigs")
-const OutsourceDepositLogging = contract.fromArtifact("OutsourceDepositLogging")
-const DepositStates = contract.fromArtifact("DepositStates")
-const DepositUtils = contract.fromArtifact("DepositUtils")
-const DepositFunding = contract.fromArtifact("DepositFunding")
-const DepositRedemption = contract.fromArtifact("DepositRedemption")
-const DepositLiquidation = contract.fromArtifact("DepositLiquidation")
-const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
-const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
-const TestTBTCToken = contract.fromArtifact("TestTBTCToken")
-const MockRelay = contract.fromArtifact("MockRelay")
-const MockSatWeiPriceFeed = contract.fromArtifact("MockSatWeiPriceFeed")
-const KeepFactorySelection = contract.fromArtifact("KeepFactorySelection")
-const KeepFactorySelectorStub = contract.fromArtifact("KeepFactorySelectorStub")
-const TBTCSystemStub = contract.fromArtifact("TBTCSystemStub")
-const TBTCDepositToken = contract.fromArtifact("TestTBTCDepositToken")
-const FeeRebateToken = contract.fromArtifact("TestFeeRebateToken")
-const DepositFactory = contract.fromArtifact("DepositFactory")
-const VendingMachine = contract.fromArtifact("VendingMachine")
-const TestTBTCConstants = contract.fromArtifact("TestTBTCConstants")
-const TestDeposit = contract.fromArtifact("TestDeposit")
-const RedemptionScript = contract.fromArtifact("RedemptionScript")
-const FundingScript = contract.fromArtifact("FundingScript")
+const BytesLib = contract.fromArtifact('BytesLib')
+const BTCUtils = contract.fromArtifact('BTCUtils')
+const ValidateSPV = contract.fromArtifact('ValidateSPV')
+const CheckBitcoinSigs = contract.fromArtifact('CheckBitcoinSigs')
+const OutsourceDepositLogging = contract.fromArtifact('OutsourceDepositLogging')
+const DepositStates = contract.fromArtifact('DepositStates')
+const DepositUtils = contract.fromArtifact('DepositUtils')
+const DepositFunding = contract.fromArtifact('DepositFunding')
+const DepositRedemption = contract.fromArtifact('DepositRedemption')
+const DepositLiquidation = contract.fromArtifact('DepositLiquidation')
+const ECDSAKeepStub = contract.fromArtifact('ECDSAKeepStub')
+const ECDSAKeepFactoryStub = contract.fromArtifact('ECDSAKeepFactoryStub')
+const TestTBTCToken = contract.fromArtifact('TestTBTCToken')
+const MockRelay = contract.fromArtifact('MockRelay')
+const MockSatWeiPriceFeed = contract.fromArtifact('MockSatWeiPriceFeed')
+const KeepFactorySelection = contract.fromArtifact('KeepFactorySelection')
+const KeepFactorySelectorStub = contract.fromArtifact('KeepFactorySelectorStub')
+const TBTCSystemStub = contract.fromArtifact('TBTCSystemStub')
+const TBTCDepositToken = contract.fromArtifact('TestTBTCDepositToken')
+const FeeRebateToken = contract.fromArtifact('TestFeeRebateToken')
+const DepositFactory = contract.fromArtifact('DepositFactory')
+const VendingMachine = contract.fromArtifact('VendingMachine')
+const TestTBTCConstants = contract.fromArtifact('TestTBTCConstants')
+const TestDeposit = contract.fromArtifact('TestDeposit')
+const RedemptionScript = contract.fromArtifact('RedemptionScript')
+const FundingScript = contract.fromArtifact('FundingScript')
 
 const TEST_DEPOSIT_DEPLOY = [
-  {name: "KeepFactorySelection", contract: KeepFactorySelection},
-  {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
-  {name: "MockRelay", contract: MockRelay},
-  {name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed},
+  { name: 'KeepFactorySelection', contract: KeepFactorySelection },
+  { name: 'OutsourceDepositLogging', contract: OutsourceDepositLogging },
+  { name: 'MockRelay', contract: MockRelay },
+  { name: 'MockSatWeiPriceFeed', contract: MockSatWeiPriceFeed },
   {
-    name: "TBTCSystemStub",
+    name: 'TBTCSystemStub',
     contract: TBTCSystemStub,
-    constructorParams: ["MockSatWeiPriceFeed", "MockRelay"],
+    constructorParams: ['MockSatWeiPriceFeed', 'MockRelay'],
   },
   {
-    name: "DepositFactory",
+    name: 'DepositFactory',
     contract: DepositFactory,
-    constructorParams: ["TBTCSystemStub"],
+    constructorParams: ['TBTCSystemStub'],
   },
   {
-    name: "VendingMachine",
+    name: 'VendingMachine',
     contract: VendingMachine,
-    constructorParams: ["TBTCSystemStub"],
+    constructorParams: ['TBTCSystemStub'],
   },
-  {name: "DepositStates", contract: DepositStates},
-  {name: "TBTCConstants", contract: TestTBTCConstants}, // note the name
-  {name: "DepositUtils", contract: DepositUtils},
-  {name: "DepositRedemption", contract: DepositRedemption},
-  {name: "DepositLiquidation", contract: DepositLiquidation},
-  {name: "DepositFunding", contract: DepositFunding},
-  {name: "TestDeposit", contract: TestDeposit},
-  {name: "BytesLib", contract: BytesLib},
-  {name: "BTCUtils", contract: BTCUtils},
-  {name: "ValidateSPV", contract: ValidateSPV},
-  {name: "CheckBitcoinSigs", contract: CheckBitcoinSigs},
-  {name: "ECDSAKeepFactoryStub", contract: ECDSAKeepFactoryStub},
+  { name: 'DepositStates', contract: DepositStates },
+  { name: 'TBTCConstants', contract: TestTBTCConstants }, // note the name
+  { name: 'DepositUtils', contract: DepositUtils },
+  { name: 'DepositRedemption', contract: DepositRedemption },
+  { name: 'DepositLiquidation', contract: DepositLiquidation },
+  { name: 'DepositFunding', contract: DepositFunding },
+  { name: 'TestDeposit', contract: TestDeposit },
+  { name: 'BytesLib', contract: BytesLib },
+  { name: 'BTCUtils', contract: BTCUtils },
+  { name: 'ValidateSPV', contract: ValidateSPV },
+  { name: 'CheckBitcoinSigs', contract: CheckBitcoinSigs },
+  { name: 'ECDSAKeepFactoryStub', contract: ECDSAKeepFactoryStub },
   {
-    name: "TBTCDepositToken",
+    name: 'TBTCDepositToken',
     contract: TBTCDepositToken,
-    constructorParams: ["DepositFactory"],
+    constructorParams: ['DepositFactory'],
   },
   {
-    name: "FeeRebateToken",
+    name: 'FeeRebateToken',
     contract: FeeRebateToken,
-    constructorParams: ["VendingMachine"],
+    constructorParams: ['VendingMachine'],
   },
   {
-    name: "ECDSAKeepStub",
+    name: 'ECDSAKeepStub',
     contract: ECDSAKeepStub,
-    constructorParams: ["VendingMachine", ""],
+    constructorParams: ['VendingMachine', ''],
   },
   {
-    name: "KeepFactorySelectorStub",
+    name: 'KeepFactorySelectorStub',
     contract: KeepFactorySelectorStub,
-    constructorParams: ["ECDSAKeepFactoryStub"],
+    constructorParams: ['ECDSAKeepFactoryStub'],
   },
 ]
 
@@ -173,7 +173,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     )
 
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
-    await testDeposit.setLotSize(new BN("100000000"))
+    await testDeposit.setLotSize(new BN('100000000'))
   }
 
   await tbtcSystemStub.initialize(
@@ -204,7 +204,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     deployed,
     redemptionScript,
     fundingScript,
-    keepFactorySelectorStub
+    keepFactorySelectorStub,
   }
 }
 

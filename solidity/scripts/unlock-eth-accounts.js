@@ -8,7 +8,7 @@ KEEP_ETHEREUM_PASSWORD=password \
   --network keep_dev
 */
 
-const password = process.env.KEEP_ETHEREUM_PASSWORD || "password"
+const password = process.env.KEEP_ETHEREUM_PASSWORD || 'password'
 
 module.exports = async function() {
   const accounts = await web3.eth.getAccounts()

@@ -1,58 +1,58 @@
 // bitcoin-spv
-const BytesLib = artifacts.require("BytesLib")
-const BTCUtils = artifacts.require("BTCUtils")
-const ValidateSPV = artifacts.require("ValidateSPV")
-const CheckBitcoinSigs = artifacts.require("CheckBitcoinSigs")
+const BytesLib = artifacts.require('BytesLib')
+const BTCUtils = artifacts.require('BTCUtils')
+const ValidateSPV = artifacts.require('ValidateSPV')
+const CheckBitcoinSigs = artifacts.require('CheckBitcoinSigs')
 
 // logging
-const OutsourceDepositLogging = artifacts.require("OutsourceDepositLogging")
-const DepositLog = artifacts.require("DepositLog")
+const OutsourceDepositLogging = artifacts.require('OutsourceDepositLogging')
+const DepositLog = artifacts.require('DepositLog')
 
 // deposit
-const DepositStates = artifacts.require("DepositStates")
-const DepositUtils = artifacts.require("DepositUtils")
-const DepositFunding = artifacts.require("DepositFunding")
-const DepositRedemption = artifacts.require("DepositRedemption")
-const DepositLiquidation = artifacts.require("DepositLiquidation")
-const Deposit = artifacts.require("Deposit")
-const VendingMachine = artifacts.require("VendingMachine")
+const DepositStates = artifacts.require('DepositStates')
+const DepositUtils = artifacts.require('DepositUtils')
+const DepositFunding = artifacts.require('DepositFunding')
+const DepositRedemption = artifacts.require('DepositRedemption')
+const DepositLiquidation = artifacts.require('DepositLiquidation')
+const Deposit = artifacts.require('Deposit')
+const VendingMachine = artifacts.require('VendingMachine')
 
 // price feed
-const ETHBTCPriceFeedMock = artifacts.require("ETHBTCPriceFeedMock")
-const prices = require("./prices")
-const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
+const ETHBTCPriceFeedMock = artifacts.require('ETHBTCPriceFeedMock')
+const prices = require('./prices')
+const SatWeiPriceFeed = artifacts.require('SatWeiPriceFeed')
 
 // Bitcoin difficulty relays.
-const relayConfig = require("./relay-config.json")
+const relayConfig = require('./relay-config.json')
 
 const OnDemandSPV = artifacts.require(
-  "@summa-tx/relay-sol/contracts/OnDemandSPV",
+  '@summa-tx/relay-sol/contracts/OnDemandSPV',
 )
 const TestnetRelay = artifacts.require(
-  "@summa-tx/relay-sol/contracts/TestnetRelay",
+  '@summa-tx/relay-sol/contracts/TestnetRelay',
 )
-const MockRelay = artifacts.require("MockRelay")
+const MockRelay = artifacts.require('MockRelay')
 
 // system
-const TBTCConstants = artifacts.require("TBTCConstants")
-const TBTCDevelopmentConstants = artifacts.require("TBTCDevelopmentConstants")
-const KeepFactorySelection = artifacts.require("KeepFactorySelection")
-const TBTCSystem = artifacts.require("TBTCSystem")
+const TBTCConstants = artifacts.require('TBTCConstants')
+const TBTCDevelopmentConstants = artifacts.require('TBTCDevelopmentConstants')
+const KeepFactorySelection = artifacts.require('KeepFactorySelection')
+const TBTCSystem = artifacts.require('TBTCSystem')
 
 // tokens
-const TBTCToken = artifacts.require("TBTCToken")
-const TBTCDepositToken = artifacts.require("TBTCDepositToken")
-const FeeRebateToken = artifacts.require("FeeRebateToken")
+const TBTCToken = artifacts.require('TBTCToken')
+const TBTCDepositToken = artifacts.require('TBTCDepositToken')
+const FeeRebateToken = artifacts.require('FeeRebateToken')
 
 // deposit factory
-const DepositFactory = artifacts.require("DepositFactory")
+const DepositFactory = artifacts.require('DepositFactory')
 
 // scripts
-const FundingScript = artifacts.require("FundingScript")
-const RedemptionScript = artifacts.require("RedemptionScript")
+const FundingScript = artifacts.require('FundingScript')
+const RedemptionScript = artifacts.require('RedemptionScript')
 
 // bitcoin difficulty relay
-const {RopstenTestnetRelay} = require("./externals")
+const { RopstenTestnetRelay } = require('./externals')
 
 const all = [
   BytesLib,
@@ -77,14 +77,14 @@ module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
     let constantsContract = TBTCConstants
     if (
-      network == "keep_dev" ||
-      network == "development" ||
-      network == "ropsten" ||
-      network == "alfajores"
+      network == 'keep_dev' ||
+      network == 'development' ||
+      network == 'ropsten' ||
+      network == 'alfajores'
     ) {
       // For keep_dev and development, replace constants with testnet constants.
       // Masquerade as TBTCConstants like a sinister fellow.
-      TBTCDevelopmentConstants._json.contractName = "TBTCConstants"
+      TBTCDevelopmentConstants._json.contractName = 'TBTCConstants'
       constantsContract = TBTCDevelopmentConstants
     }
     all.push(constantsContract)
@@ -111,7 +111,7 @@ module.exports = (deployer, network, accounts) => {
     await deployer.link(OutsourceDepositLogging, all)
 
     // price feeds
-    if (network !== "mainnet") {
+    if (network !== 'mainnet') {
       // On mainnet, we use the MakerDAO-deployed price feed.
       // See: https://github.com/makerdao/oracles-v2#live-mainnet-oracles
       // Otherwise, we deploy our own mock price feeds, which are simpler
@@ -126,20 +126,20 @@ module.exports = (deployer, network, accounts) => {
     // On mainnet and Ropsten, we use the Summa-built, Keep-operated relay;
     // see https://github.com/summa-tx/relays . On testnet, we use a local
     // mock.
-    if (network === "mainnet" || relayConfig.forceRelay === "OnDemandSPV") {
-      const {genesis, height, epochStart} = relayConfig.init.bitcoinMain
+    if (network === 'mainnet' || relayConfig.forceRelay === 'OnDemandSPV') {
+      const { genesis, height, epochStart } = relayConfig.init.bitcoinMain
 
       await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
       const difficultyRelay = await OnDemandSPV.deployed()
       difficultyRelayAddress = difficultyRelay.address
-    } else if (network === "ropsten") {
+    } else if (network === 'ropsten') {
       difficultyRelayAddress = RopstenTestnetRelay
     } else if (
-      network === "keep_dev" ||
-      network === "alfajores" ||
-      relayConfig.forceRelay === "TestnetRelay"
+      network === 'keep_dev' ||
+      network === 'alfajores' ||
+      relayConfig.forceRelay === 'TestnetRelay'
     ) {
-      const {genesis, height, epochStart} = relayConfig.init.bitcoinTest
+      const { genesis, height, epochStart } = relayConfig.init.bitcoinTest
 
       await deployer.deploy(TestnetRelay, genesis, height, epochStart, 0)
       const difficultyRelay = await TestnetRelay.deployed()
@@ -151,7 +151,7 @@ module.exports = (deployer, network, accounts) => {
     }
 
     if (!difficultyRelayAddress) {
-      throw new Error("Difficulty relay not found.")
+      throw new Error('Difficulty relay not found.')
     }
 
     // satwei price feed

@@ -2,7 +2,7 @@ const BN = require('bn.js')
 const chai = require('chai')
 const expect = chai.expect
 const bnChai = require('bn-chai')
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require('@openzeppelin/test-environment')
 chai.use(bnChai(BN))
 
 class AssertBalance {

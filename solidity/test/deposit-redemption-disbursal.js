@@ -1,27 +1,27 @@
 // @ts-check
-require("mocha")
-const {expect} = require("chai")
+require('mocha')
+const { expect } = require('chai')
 
-const {accounts, web3} = require("@openzeppelin/test-environment")
-const {BN, expectRevert, time} = require("@openzeppelin/test-helpers")
+const { accounts, web3 } = require('@openzeppelin/test-environment')
+const { BN, expectRevert, time } = require('@openzeppelin/test-helpers')
 
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {redemptionPaymentFixturesFor} = require("./helpers/spec-fixtures.js")
+const { deployAndLinkAll } = require('./helpers/testDeployer.js')
+const { createSnapshot, restoreSnapshot } = require('./helpers/snapshot.js')
+const { redemptionPaymentFixturesFor } = require('./helpers/spec-fixtures.js')
 
 const {
   states,
   resolveAllLogs,
   expectEvent,
   expectNoEvent,
-} = require("./helpers/utils.js")
+} = require('./helpers/utils.js')
 
 /** @typedef { import('bn.js') } BN */
 /** @typedef {import("./helpers/spec-fixtures.js").RedemptionPaymentFixture} RedemptionPaymentFixture */
 
-describe("Deposit redemption disbursal tester", async () => {
+describe('Deposit redemption disbursal tester', async () => {
   // Anchor to run the before hook that actually sets up tests.
-  it("should create disbursal tests", async () => {
+  it('should create disbursal tests', async () => {
     expect(true).to.be.true
   })
 
@@ -39,22 +39,22 @@ describe("Deposit redemption disbursal tester", async () => {
     const depositValue = await testDeposit.lotSizeTbtc.call()
     const depositTerm = await tbtcConstants.getDepositTerm.call()
 
-    await testDeposit.setSignerFeeDivisor(new BN("200"))
+    await testDeposit.setSignerFeeDivisor(new BN('200'))
     /** @type {BN} */
     const signerFee = await testDeposit.signerFeeTbtc.call()
     /** @type {BN} */
     const lotSize = await testDeposit.lotSizeTbtc.call()
 
     // Test setup.
-    describe("DepositRedemption when getting the redemption TBTC requirement", () => {
+    describe('DepositRedemption when getting the redemption TBTC requirement', () => {
       before(async () => {
         // Set reference time for pre- vs at-term deposits.
-        await testDeposit.setFundingInfo("0x0", await time.latest(), "0x0")
+        await testDeposit.setFundingInfo('0x0', await time.latest(), '0x0')
       })
 
       const fixtures = redemptionPaymentFixturesFor(depositValue, signerFee)
-      fixtures.forEach(fixture => {
-        const hasFrt = typeof fixture.frtHolder !== "undefined"
+      fixtures.forEach((fixture) => {
+        const hasFrt = typeof fixture.frtHolder !== 'undefined'
 
         // Below, we define two types of tests:
         // - Baseline tests check situations where the deposit balance has not
@@ -84,7 +84,7 @@ describe("Deposit redemption disbursal tester", async () => {
 
             // If an amount will be owed by the redeemer, set the redeemer's
             // account up to complete that transfer.
-            if (typeof fixture.repaymentAmount !== "undefined") {
+            if (typeof fixture.repaymentAmount !== 'undefined') {
               await tbtcToken.forceMint(
                 accounts[fixture.redeemer],
                 fixture.repaymentAmount,
@@ -92,7 +92,7 @@ describe("Deposit redemption disbursal tester", async () => {
               await tbtcToken.approve(
                 testDeposit.address,
                 fixture.repaymentAmount,
-                {from: accounts[fixture.redeemer]},
+                { from: accounts[fixture.redeemer] },
               )
             }
 
@@ -131,7 +131,7 @@ describe("Deposit redemption disbursal tester", async () => {
             )
           })
 
-          describe("with additional escrow less than signer fee", async () => {
+          describe('with additional escrow less than signer fee', async () => {
             const additionalEscrow = randomBnBelow(signerFee)
 
             let expectedEscrowValue = fixture.repaymentAmount
@@ -175,7 +175,7 @@ describe("Deposit redemption disbursal tester", async () => {
             })
           })
 
-          describe("with additional escrow > signer fee, < lot size", async () => {
+          describe('with additional escrow > signer fee, < lot size', async () => {
             const additionalEscrow = signerFee.add(
               randomBnBelow(lotSize.sub(signerFee)),
             )
@@ -224,7 +224,7 @@ describe("Deposit redemption disbursal tester", async () => {
             })
           })
 
-          describe("with additional escrow > lot size", async () => {
+          describe('with additional escrow > lot size', async () => {
             const additionalEscrow = lotSize.add(randomBnBelow(lotSize.muln(2)))
 
             let expectedEscrowValue = fixture.repaymentAmount
@@ -248,13 +248,13 @@ describe("Deposit redemption disbursal tester", async () => {
             // that's unexpected fixture data and is worth investigating.
             if (!fixture.redemptionShouldRevert) {
               expectedTdtValue = expectedTdtValue.sub(
-                fixture.disbursalAmounts["signers"],
+                fixture.disbursalAmounts['signers'],
               )
 
               // If there's an FRT holder, earlier setup will escrow that in
               // addition to the additional escrow from these tests, so adjust
               // the expected value accordingly.
-              if (typeof fixture.frtHolder !== "undefined") {
+              if (typeof fixture.frtHolder !== 'undefined') {
                 expectedTdtValue = expectedTdtValue.add(signerFee)
 
                 if (fixture.frtHolder != fixture.tdtHolder) {
@@ -323,30 +323,30 @@ describe("Deposit redemption disbursal tester", async () => {
       } else {
         // Unpack return values accordingly.
         const {
-          "0": escrowValue,
-          "1": tdtHolderValue,
-          "2": frtHolderValue,
+          '0': escrowValue,
+          '1': tdtHolderValue,
+          '2': frtHolderValue,
         } = await testDeposit.calculateRedemptionTbtcAmounts(
           accounts[fixture.redeemer],
         )
 
-        expect(escrowValue, "Unexpected redeemer payment requirement").to.eq.BN(
+        expect(escrowValue, 'Unexpected redeemer payment requirement').to.eq.BN(
           expectedRedeemerPayment,
         )
 
-        expect(tdtHolderValue, "Unexpected amount owed to TDT holder").to.eq.BN(
+        expect(tdtHolderValue, 'Unexpected amount owed to TDT holder').to.eq.BN(
           expectedTdtHolderValue,
         )
 
         if (fixture.frtHolder != fixture.tdtHolder) {
           expect(
             frtHolderValue,
-            "Unexpected amount owed to FRT holder",
+            'Unexpected amount owed to FRT holder',
           ).to.eq.BN(fixture.disbursalAmounts[fixture.frtHolder])
         } else {
           expect(
             frtHolderValue,
-            "Unexpected amount owed to FRT holder",
+            'Unexpected amount owed to FRT holder',
           ).to.eq.BN(0)
         }
       }
@@ -380,23 +380,23 @@ describe("Deposit redemption disbursal tester", async () => {
               from: accounts[fixture.redeemer],
             })
           ).receipt,
-          {tbtcToken},
+          { tbtcToken },
         )
 
         // Escrow should only hold the signer fee during redemption.
         expect(
           await tbtcToken.balanceOf(testDeposit.address),
-          "Deposit does not have enough escrowed to pay signers",
+          'Deposit does not have enough escrowed to pay signers',
         ).to.eq.BN(signerFee)
 
         if (expectedRedeemerPayment.gt(new BN(0))) {
-          expectEvent(receipt, "Transfer", {
+          expectEvent(receipt, 'Transfer', {
             from: accounts[fixture.redeemer],
             to: testDeposit.address,
             value: expectedRedeemerPayment,
           })
         } else {
-          expectNoEvent(receipt, "Transfer", {
+          expectNoEvent(receipt, 'Transfer', {
             from: accounts[fixture.redeemer],
             to: testDeposit.address,
           })
@@ -408,7 +408,7 @@ describe("Deposit redemption disbursal tester", async () => {
           // should win.
           fixture.tdtHolder != fixture.frtHolder
         ) {
-          expectEvent(receipt, "Transfer", {
+          expectEvent(receipt, 'Transfer', {
             from: testDeposit.address,
             to: accounts[fixture.frtHolder],
             value: expectedFrtHolderValue,
@@ -417,20 +417,20 @@ describe("Deposit redemption disbursal tester", async () => {
           fixture.frtHolder &&
           fixture.tdtHolder != fixture.frtHolder
         ) {
-          expectNoEvent(receipt, "Transfer", {
+          expectNoEvent(receipt, 'Transfer', {
             from: testDeposit.address,
             to: accounts[fixture.frtHolder],
           })
         }
 
         if (expectedTdtHolderValue.gt(new BN(0))) {
-          expectEvent(receipt, "Transfer", {
+          expectEvent(receipt, 'Transfer', {
             from: testDeposit.address,
             to: accounts[fixture.tdtHolder],
             value: expectedTdtHolderValue,
           })
         } else if (fixture.tdtHolder != fixture.frtHolder) {
-          expectNoEvent(receipt, "Transfer", {
+          expectNoEvent(receipt, 'Transfer', {
             from: testDeposit.address,
             to: accounts[fixture.tdtHolder],
           })
@@ -443,7 +443,7 @@ describe("Deposit redemption disbursal tester", async () => {
           expectedTdtHolderValue.eqn(0) &&
           expectedFrtHolderValue.eqn(0)
         ) {
-          expectNoEvent(receipt, "Transfer", {
+          expectNoEvent(receipt, 'Transfer', {
             from: testDeposit.address,
             to: accounts[fixture.tdtHolder],
           })

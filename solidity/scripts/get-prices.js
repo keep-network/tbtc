@@ -1,10 +1,10 @@
-const fs = require("fs")
-const path = require("path")
-const Web3 = require("web3")
+const fs = require('fs')
+const path = require('path')
+const Web3 = require('web3')
 
 // These contracts are deployed on Ethereum mainnet.
-const ETHUSDMedianizer = "0x64de91f5a373cd4c28de3600cb34c7c6ce410c85"
-const BTCUSDMedianizer = "0xe0F30cb149fAADC7247E953746Be9BbBB6B5751f"
+const ETHUSDMedianizer = '0x64de91f5a373cd4c28de3600cb34c7c6ce410c85'
+const BTCUSDMedianizer = '0xe0F30cb149fAADC7247E953746Be9BbBB6B5751f'
 
 async function run() {
   try {
@@ -17,17 +17,17 @@ async function run() {
     async function getMedianizerValue(address) {
       // We retrieve from contract storage, instead of calling IMedianizer.read(),
       // to save on a conversion to bytes below.
-      let value = await web3.eth.getStorageAt(address, 1)
+      const value = await web3.eth.getStorageAt(address, 1)
       // The storage value is a uint256, but the first 128 bits
       // are not related to the price value.
-      let valueLower128 = value.slice(34, 66)
-      return web3.utils.fromWei("0x" + valueLower128)
+      const valueLower128 = value.slice(34, 66)
+      return web3.utils.fromWei('0x' + valueLower128)
     }
 
-    let eth = await getMedianizerValue(ETHUSDMedianizer)
-    let btc = await getMedianizerValue(BTCUSDMedianizer)
+    const eth = await getMedianizerValue(ETHUSDMedianizer)
+    const btc = await getMedianizerValue(BTCUSDMedianizer)
 
-    let config = {
+    const config = {
       BTCUSD: btc,
       ETHUSD: eth,
     }

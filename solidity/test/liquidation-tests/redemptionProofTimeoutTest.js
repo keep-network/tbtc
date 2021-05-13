@@ -1,12 +1,12 @@
-const { createInstance, toAwaitingWithdrawalProof } = require("./liquidation-test-utils/createInstance.js")
-const { states, increaseTime, expectEvent, resolveAllLogs } = require("../helpers/utils.js")
-const { accounts, web3 } = require("@openzeppelin/test-environment")
-const { BN, expectRevert } = require("@openzeppelin/test-helpers")
-const { expect } = require("chai")
+const { createInstance, toAwaitingWithdrawalProof } = require('./liquidation-test-utils/createInstance.js')
+const { states, increaseTime, expectEvent, resolveAllLogs } = require('../helpers/utils.js')
+const { accounts, web3 } = require('@openzeppelin/test-environment')
+const { BN, expectRevert } = require('@openzeppelin/test-helpers')
+const { expect } = require('chai')
 
-describe("Integration -- Redemption-proof timeout", async function () {
-  const lotSize = new BN("10000000");
-  const lotSizeTbtc = new BN("10000000000").mul(lotSize);
+describe('Integration -- Redemption-proof timeout', async function() {
+  const lotSize = new BN('10000000')
+  const lotSizeTbtc = new BN('10000000000').mul(lotSize)
   const [depositInitiator, redeemer, auctionBuyer] = accounts
 
   let tbtcConstants
@@ -26,28 +26,28 @@ describe("Integration -- Redemption-proof timeout", async function () {
       deposits,
     } = await createInstance(
       { collateral: 125,
-      state: states.AWAITING_WITHDRAWAL_SIGNATURE.toNumber(),
-      depositOwner: depositInitiator }
+        state: states.AWAITING_WITHDRAWAL_SIGNATURE.toNumber(),
+        depositOwner: depositInitiator }
     ))
     testDeposit = deposits
 
     await testDeposit.setRedeemerAddress(redeemer)
   })
 
-  describe("Redemption-proof timeout", async () => {
-    it("unable to start liquidation if timer not elapsed", async () => {
+  describe('Redemption-proof timeout', async () => {
+    it('unable to start liquidation if timer not elapsed', async () => {
       await expectRevert(
         testDeposit.notifyRedemptionProofTimedOut(),
-        "Not currently awaiting a redemption proof",
+        'Not currently awaiting a redemption proof',
       )
       const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
     })
 
-    it("starts liquidation auction", async () => {
+    it('starts liquidation auction', async () => {
       await ecdsaKeepStub.setSuccess(true)
 
-     await toAwaitingWithdrawalProof(testDeposit)
+      await toAwaitingWithdrawalProof(testDeposit)
       //  AWAITING_WITHDRAWAL_SIGNATURE -> AWAITING_WITHDRAWAL_PROOF
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
@@ -58,17 +58,17 @@ describe("Integration -- Redemption-proof timeout", async function () {
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
-    it("reverts if no TBTC balance has been approved by the auction buyer to the Deposit", async () => {
+    it('reverts if no TBTC balance has been approved by the auction buyer to the Deposit', async () => {
       await tbtcToken.resetBalance(lotSizeTbtc, { from: auctionBuyer })
       await expectRevert(
         testDeposit.purchaseSignerBondsAtAuction(),
-        "Not enough TBTC to cover outstanding debt",
+        'Not enough TBTC to cover outstanding debt',
       )
       const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
     })
 
-    it("liquidates correctly", async () => {
+    it('liquidates correctly', async () => {
       const duration = await tbtcConstants.getAuctionDuration.call()
       await increaseTime(duration.toNumber())
 
@@ -77,11 +77,11 @@ describe("Integration -- Redemption-proof timeout", async function () {
 
       expectEvent(
         resolveAllLogs(receipt, { tbtcToken }),
-        "Transfer",
+        'Transfer',
         {
-          "from": auctionBuyer,
-          "to": redeemer,
-          "value": lotSizeTbtc,
+          'from': auctionBuyer,
+          'to': redeemer,
+          'value': lotSizeTbtc,
         }
       )
 

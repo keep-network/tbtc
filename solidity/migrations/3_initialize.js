@@ -1,25 +1,25 @@
-const truffleContract = require("@truffle/contract")
-const Kit = require("@celo/contractkit")
+const truffleContract = require('@truffle/contract')
+const Kit = require('@celo/contractkit')
 
-const TBTCSystem = artifacts.require("TBTCSystem")
+const TBTCSystem = artifacts.require('TBTCSystem')
 
-const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
-const ETHBTCPriceFeedMock = artifacts.require("ETHBTCPriceFeedMock")
+const SatWeiPriceFeed = artifacts.require('SatWeiPriceFeed')
+const ETHBTCPriceFeedMock = artifacts.require('ETHBTCPriceFeedMock')
 
-const DepositFactory = artifacts.require("DepositFactory")
-const Deposit = artifacts.require("Deposit")
-const TBTCToken = artifacts.require("TBTCToken")
-const TBTCDepositToken = artifacts.require("TBTCDepositToken")
-const FeeRebateToken = artifacts.require("FeeRebateToken")
-const VendingMachine = artifacts.require("VendingMachine")
+const DepositFactory = artifacts.require('DepositFactory')
+const Deposit = artifacts.require('Deposit')
+const TBTCToken = artifacts.require('TBTCToken')
+const TBTCDepositToken = artifacts.require('TBTCDepositToken')
+const FeeRebateToken = artifacts.require('FeeRebateToken')
+const VendingMachine = artifacts.require('VendingMachine')
 // Used for creating sortition pool.
-const BondedECDSAKeepFactoryJson = require("@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json")
+const BondedECDSAKeepFactoryJson = require('@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json')
 
-const {BondedECDSAKeepFactoryAddress, ETHBTCMedianizer} = require("./externals")
+const { BondedECDSAKeepFactoryAddress, ETHBTCMedianizer } = require('./externals')
 
 module.exports = async function(deployer, network, accounts) {
   // Don't enact this setup during unit testing.
-  if (process.env.NODE_ENV == "test" && !process.env.INTEGRATION_TEST) return
+  if (process.env.NODE_ENV == 'test' && !process.env.INTEGRATION_TEST) return
 
   const keepThreshold = 3
   const keepGroupSize = 3
@@ -51,11 +51,11 @@ module.exports = async function(deployer, network, accounts) {
     keepGroupSize,
   )
 
-  console.log("TBTCSystem initialized!")
+  console.log('TBTCSystem initialized!')
 
   // Price feed.
   const satWeiPriceFeed = await SatWeiPriceFeed.deployed()
-  if (network === "mainnet") {
+  if (network === 'mainnet') {
     // Inject mainnet price feeds.
     await satWeiPriceFeed.initialize(tbtcSystem.address, ETHBTCMedianizer)
   } else {
@@ -78,7 +78,7 @@ module.exports = async function(deployer, network, accounts) {
     BondedECDSAKeepFactoryAddress,
   )
 
-  if (network === "alfajores") {
+  if (network === 'alfajores') {
     await createSortitionPoolCelo(accounts[0])
   } else {
     await BondedECDSAKeepFactory.createSortitionPool(TBTCSystem.address, {
@@ -92,7 +92,7 @@ module.exports = async function(deployer, network, accounts) {
   console.log(`Sortition pool address: [${sortitionPoolContractAddress}]`)
 
   // Initialize minimum bondable value in newly created sortition pool.
-  console.log("Refreshing minimum bondable value")
+  console.log('Refreshing minimum bondable value')
   await tbtcSystem.refreshMinimumBondableValue()
 }
 
@@ -108,6 +108,6 @@ async function createSortitionPoolCelo(account) {
     TBTCSystem.address,
   )
 
-  const tx = await celoKit.sendTransactionObject(txObject, {from: account})
+  const tx = await celoKit.sendTransactionObject(txObject, { from: account })
   await tx.waitReceipt()
 }

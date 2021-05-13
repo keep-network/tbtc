@@ -1,17 +1,17 @@
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {increaseTime, expectEvent} = require("./helpers/utils.js")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {BN, expectRevert} = require("@openzeppelin/test-helpers")
-const {expect} = require("chai")
-const constants = require("@openzeppelin/test-helpers/src/constants")
+const { deployAndLinkAll } = require('./helpers/testDeployer.js')
+const { increaseTime, expectEvent } = require('./helpers/utils.js')
+const { createSnapshot, restoreSnapshot } = require('./helpers/snapshot.js')
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment')
+const { BN, expectRevert } = require('@openzeppelin/test-helpers')
+const { expect } = require('chai')
+const constants = require('@openzeppelin/test-helpers/src/constants')
 
-const TBTCSystem = contract.fromArtifact("TBTCSystem")
-const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
-const MockMedianizer = contract.fromArtifact("MockMedianizer")
-const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
+const TBTCSystem = contract.fromArtifact('TBTCSystem')
+const SatWeiPriceFeed = contract.fromArtifact('SatWeiPriceFeed')
+const MockMedianizer = contract.fromArtifact('MockMedianizer')
+const ECDSAKeepFactoryStub = contract.fromArtifact('ECDSAKeepFactoryStub')
 
-describe("TBTCSystem governance", async function() {
+describe('TBTCSystem governance', async function() {
   let tbtcSystem
   let keepFactorySelector
   let ecdsaKeepFactory
@@ -73,7 +73,7 @@ describe("TBTCSystem governance", async function() {
     await newEthBtcMedianizer.setValue(1)
   })
 
-  describe("emergencyPauseNewDeposits", async () => {
+  describe('emergencyPauseNewDeposits', async () => {
     let term
 
     beforeEach(async () => {
@@ -84,7 +84,7 @@ describe("TBTCSystem governance", async function() {
       await restoreSnapshot()
     })
 
-    it("pauses new deposit creation", async () => {
+    it('pauses new deposit creation', async () => {
       let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
 
@@ -94,7 +94,7 @@ describe("TBTCSystem governance", async function() {
       expect(allowNewDeposits).to.equal(false)
     })
 
-    it("pauses new deposit creation a day out", async () => {
+    it('pauses new deposit creation a day out', async () => {
       let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
 
@@ -105,7 +105,7 @@ describe("TBTCSystem governance", async function() {
       expect(allowNewDeposits).to.equal(false)
     })
 
-    it("pauses new deposit creation 31 days out", async () => {
+    it('pauses new deposit creation 31 days out', async () => {
       let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
 
@@ -116,7 +116,7 @@ describe("TBTCSystem governance", async function() {
       expect(allowNewDeposits).to.equal(false)
     })
 
-    it("pauses new deposit creation 61 days out", async () => {
+    it('pauses new deposit creation 61 days out', async () => {
       let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
 
@@ -127,28 +127,28 @@ describe("TBTCSystem governance", async function() {
       expect(allowNewDeposits).to.equal(false)
     })
 
-    it("doesn't pause new deposit creation after 6 months have passed", async () => {
+    it('doesn\'t pause new deposit creation after 6 months have passed', async () => {
       let allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
 
       await increaseTime(180 * 24 * 60 * 60 + 1)
       await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits(),
-        "emergencyPauseNewDeposits can only be called within 180 days of initialization",
+        'emergencyPauseNewDeposits can only be called within 180 days of initialization',
       )
 
       allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
       expect(allowNewDeposits).to.equal(true)
     })
 
-    it("reverts if msg.sender is not owner", async () => {
+    it('reverts if msg.sender is not owner', async () => {
       await expectRevert(
-        tbtcSystem.emergencyPauseNewDeposits({from: nonSystemOwner}),
-        "Ownable: caller is not the owner",
+        tbtcSystem.emergencyPauseNewDeposits({ from: nonSystemOwner }),
+        'Ownable: caller is not the owner',
       )
     })
 
-    it("does not allows new deposit re-activation before 10 days", async () => {
+    it('does not allows new deposit re-activation before 10 days', async () => {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
@@ -156,11 +156,11 @@ describe("TBTCSystem governance", async function() {
 
       await expectRevert(
         tbtcSystem.resumeNewDeposits(),
-        "Deposits are still paused",
+        'Deposits are still paused',
       )
     })
 
-    it("allows new deposit creation after 10 days", async () => {
+    it('allows new deposit creation after 10 days', async () => {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
@@ -170,7 +170,7 @@ describe("TBTCSystem governance", async function() {
       expect(allowNewDeposits).to.equal(true)
     })
 
-    it("reverts if emergencyPauseNewDeposits has already been called", async () => {
+    it('reverts if emergencyPauseNewDeposits has already been called', async () => {
       await tbtcSystem.emergencyPauseNewDeposits()
       term = await tbtcSystem.getRemainingPauseTerm()
 
@@ -179,12 +179,12 @@ describe("TBTCSystem governance", async function() {
 
       await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits(),
-        "emergencyPauseNewDeposits can only be called once",
+        'emergencyPauseNewDeposits can only be called once',
       )
     })
   })
 
-  describe("when trying to update Keep factory info", async () => {
+  describe('when trying to update Keep factory info', async () => {
     beforeEach(async () => {
       await createSnapshot()
     })
@@ -193,11 +193,11 @@ describe("TBTCSystem governance", async function() {
       await restoreSnapshot()
     })
 
-    it("does not revert finalizeKeepFactoriesUpdate if upgradeability period has passed", async () => {
+    it('does not revert finalizeKeepFactoriesUpdate if upgradeability period has passed', async () => {
       await tbtcSystem.beginKeepFactoriesUpdate(
-        "0x0000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000002",
-        "0x0000000000000000000000000000000000000003",
+        '0x0000000000000000000000000000000000000001',
+        '0x0000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000003',
       )
 
       const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
@@ -206,54 +206,54 @@ describe("TBTCSystem governance", async function() {
       await tbtcSystem.finalizeKeepFactoriesUpdate()
     })
 
-    it("reverts for beginKeepFactoriesUpdate if upgradeability period has passed", async () => {
+    it('reverts for beginKeepFactoriesUpdate if upgradeability period has passed', async () => {
       const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
       await increaseTime(upgradeabilityTime.addn(1))
 
       await expectRevert(
         tbtcSystem.beginKeepFactoriesUpdate(
-          "0x0000000000000000000000000000000000000001",
-          "0x0000000000000000000000000000000000000002",
-          "0x0000000000000000000000000000000000000003",
+          '0x0000000000000000000000000000000000000001',
+          '0x0000000000000000000000000000000000000002',
+          '0x0000000000000000000000000000000000000003',
         ),
-        "beginKeepFactoriesUpdate can only be called within 180 days of initialization",
+        'beginKeepFactoriesUpdate can only be called within 180 days of initialization',
       )
     })
   })
 
   before(async () => {
     governanceTest({
-      property: "signer fee",
-      change: "SignerFeeDivisorUpdate",
-      goodParametersWithName: [{name: "_signerFeeDivisor", value: new BN(200)}],
+      property: 'signer fee',
+      change: 'SignerFeeDivisorUpdate',
+      goodParametersWithName: [{ name: '_signerFeeDivisor', value: new BN(200) }],
       badInitializationTests: {
-        "smaller than or equal to 9": {
+        'smaller than or equal to 9': {
           parameters: [9],
           error:
-            "Signer fee divisor must be greater than 9, for a signer fee that is <= 10%",
+            'Signer fee divisor must be greater than 9, for a signer fee that is <= 10%',
         },
-        "greater than or equal to 5000": {
+        'greater than or equal to 5000': {
           parameters: [5000],
           error:
-            "Signer fee divisor must be less than 5000, for a signer fee that is > 0.02%",
+            'Signer fee divisor must be less than 5000, for a signer fee that is > 0.02%',
         },
       },
       verifyFinalizationEvents: (receipt, setDivisor) => {
-        expectEvent(receipt, "SignerFeeDivisorUpdated", {
+        expectEvent(receipt, 'SignerFeeDivisorUpdated', {
           _signerFeeDivisor: setDivisor,
         })
       },
-      verifyFinalState: async setDivisor => {
+      verifyFinalState: async (setDivisor) => {
         expect(await tbtcSystem.getSignerFeeDivisor()).to.eq.BN(setDivisor)
       },
     })
 
     governanceTest({
-      property: "lot sizes",
-      change: "LotSizesUpdate",
+      property: 'lot sizes',
+      change: 'LotSizesUpdate',
       goodParametersWithName: [
         {
-          name: "_lotSizes",
+          name: '_lotSizes',
           value: [
             new BN(50 * 10 ** 3), // lower bound
             new BN(10 ** 6),
@@ -263,42 +263,42 @@ describe("TBTCSystem governance", async function() {
         },
       ],
       badInitializationTests: {
-        "array is empty": {
+        'array is empty': {
           parameters: [[]],
-          error: "Lot size array must always contain 1 BTC",
+          error: 'Lot size array must always contain 1 BTC',
         },
-        "array does not contain a 1 BTC lot size": {
+        'array does not contain a 1 BTC lot size': {
           parameters: [[10 ** 7]],
-          error: "Lot size array must always contain 1 BTC",
+          error: 'Lot size array must always contain 1 BTC',
         },
-        "array contains a lot size < 0.0005 BTC": {
+        'array contains a lot size < 0.0005 BTC': {
           parameters: [[5 * 10 ** 3 - 1, 10 ** 7, 10 ** 8]],
-          error: "Lot sizes less than 0.0005 BTC are not allowed",
+          error: 'Lot sizes less than 0.0005 BTC are not allowed',
         },
-        "array contains a lot size > 100 BTC": {
+        'array contains a lot size > 100 BTC': {
           parameters: [[10 ** 7, 10 ** 8, 10 ** 10 + 1]],
-          error: "Lot sizes greater than 100 BTC are not allowed",
+          error: 'Lot sizes greater than 100 BTC are not allowed',
         },
-        "array is not sorted": {
+        'array is not sorted': {
           parameters: [[10 ** 6, 10 ** 8, 10 ** 7]],
-          error: "Lot size array must be sorted",
+          error: 'Lot size array must be sorted',
         },
-        "array has duplicate lots": {
+        'array has duplicate lots': {
           parameters: [[10 ** 6, 10 ** 7, 10 ** 7, 10 ** 8]],
-          error: "Lot size array must not have duplicates",
+          error: 'Lot size array must not have duplicates',
         },
       },
       verifyFinalizationEvents: (receipt, setLotSizes) => {
-        expectEvent(receipt, "LotSizesUpdated", {_lotSizes: setLotSizes})
+        expectEvent(receipt, 'LotSizesUpdated', { _lotSizes: setLotSizes })
       },
-      verifyFinalState: async setLotSizes => {
+      verifyFinalState: async (setLotSizes) => {
         const lotSizes = await tbtcSystem.getAllowedLotSizes()
         lotSizes.forEach((_, i) => expect(_).to.eq.BN(setLotSizes[i]))
       },
     })
 
-    describe("when finalizing lot size update", async () => {
-      it("updates the minimum bondable value", async () => {
+    describe('when finalizing lot size update', async () => {
+      it('updates the minimum bondable value', async () => {
         const lotSizes = [
           new BN(10 ** 5),
           new BN(10 ** 8), // required
@@ -312,39 +312,39 @@ describe("TBTCSystem governance", async function() {
 
         const minimum = await ecdsaKeepFactory.minimumBondableValue()
         // (10**28 / 10**11) * 10**5 * 150%
-        expect(minimum).to.eq.BN(new BN("15000000000000000000000"))
+        expect(minimum).to.eq.BN(new BN('15000000000000000000000'))
       })
     })
 
     governanceTest({
-      property: "collateralization thresholds",
-      change: "CollateralizationThresholdsUpdate",
+      property: 'collateralization thresholds',
+      change: 'CollateralizationThresholdsUpdate',
       goodParametersWithName: [
-        {name: "_initialCollateralizedPercent", value: new BN(213)},
-        {name: "_undercollateralizedThresholdPercent", value: new BN(156)},
+        { name: '_initialCollateralizedPercent', value: new BN(213) },
+        { name: '_undercollateralizedThresholdPercent', value: new BN(156) },
         {
-          name: "_severelyUndercollateralizedThresholdPercent",
+          name: '_severelyUndercollateralizedThresholdPercent',
           value: new BN(128),
         },
       ],
       badInitializationTests: {
-        "contain initial collateralized percent > 300": {
+        'contain initial collateralized percent > 300': {
           parameters: [301, 130, 120],
-          error: "Initial collateralized percent must be <= 300%",
+          error: 'Initial collateralized percent must be <= 300%',
         },
-        "contain initial collateralized percent < 100": {
+        'contain initial collateralized percent < 100': {
           parameters: [99, 130, 120],
-          error: "Initial collateralized percent must be >= 100%",
+          error: 'Initial collateralized percent must be >= 100%',
         },
-        "contain undercollateralized threshold > initial collateralized percent": {
+        'contain undercollateralized threshold > initial collateralized percent': {
           parameters: [150, 160, 120],
           error:
-            "Undercollateralized threshold must be < initial collateralized percent",
+            'Undercollateralized threshold must be < initial collateralized percent',
         },
-        "contain severe undercollateralized threshold > undercollateralized threshold": {
+        'contain severe undercollateralized threshold > undercollateralized threshold': {
           parameters: [150, 130, 131],
           error:
-            "Severe undercollateralized threshold must be < undercollateralized threshold",
+            'Severe undercollateralized threshold must be < undercollateralized threshold',
         },
       },
       verifyFinalizationEvents: (
@@ -353,7 +353,7 @@ describe("TBTCSystem governance", async function() {
         setUnder,
         setSeverelyUnder,
       ) => {
-        expectEvent(receipt, "CollateralizationThresholdsUpdated", {
+        expectEvent(receipt, 'CollateralizationThresholdsUpdated', {
           _initialCollateralizedPercent: setInitial,
           _undercollateralizedThresholdPercent: setUnder,
           _severelyUndercollateralizedThresholdPercent: setSeverelyUnder,
@@ -373,30 +373,30 @@ describe("TBTCSystem governance", async function() {
     })
 
     governanceTest({
-      property: "keep factory update",
-      change: "KeepFactoriesUpdate",
+      property: 'keep factory update',
+      change: 'KeepFactoriesUpdate',
       goodParametersWithName: [
         {
-          name: "_keepStakedFactory",
+          name: '_keepStakedFactory',
           value: newKeepStakedFactory.address,
         },
         {
-          name: "_fullyBackedFactory",
+          name: '_fullyBackedFactory',
           value: newFullyBackedFactory.address,
         },
         {
-          name: "_factorySelector",
+          name: '_factorySelector',
           value: keepFactorySelector.address,
         },
       ],
       badInitializationTests: {
-        "KEEP staked factory is unset": {
+        'KEEP staked factory is unset': {
           parameters: [
-            "0x0000000000000000000000000000000000000000",
-            "0x0000000000000000000000000000000000000002",
-            "0x0000000000000000000000000000000000000003",
+            '0x0000000000000000000000000000000000000000',
+            '0x0000000000000000000000000000000000000002',
+            '0x0000000000000000000000000000000000000003',
           ],
-          error: "KEEP staked factory must be a nonzero address",
+          error: 'KEEP staked factory must be a nonzero address',
         },
       },
       verifyFinalizationEvents: async (
@@ -405,7 +405,7 @@ describe("TBTCSystem governance", async function() {
         setFullyBackedFactory,
         setFactorySelector,
       ) => {
-        expectEvent(receipt, "KeepFactoriesUpdated", {
+        expectEvent(receipt, 'KeepFactoriesUpdated', {
           _keepStakedFactory: setKeepStakedFactory,
           _fullyBackedFactory: setFullyBackedFactory,
           _factorySelector: setFactorySelector,
@@ -461,24 +461,24 @@ describe("TBTCSystem governance", async function() {
     // of good values, similar as we do in `badInitializationTests`.
     governanceTest({
       property:
-        "keep factory update with zeroed fully backed factory and factory selector",
-      change: "KeepFactoriesUpdate",
+        'keep factory update with zeroed fully backed factory and factory selector',
+      change: 'KeepFactoriesUpdate',
       goodParametersWithName: [
         {
-          name: "_keepStakedFactory",
+          name: '_keepStakedFactory',
           value: newKeepStakedFactory.address,
         },
         {
-          name: "_fullyBackedFactory",
+          name: '_fullyBackedFactory',
           value: constants.ZERO_ADDRESS,
         },
         {
-          name: "_factorySelector",
+          name: '_factorySelector',
           value: constants.ZERO_ADDRESS,
         },
       ],
       verifyFinalizationEvents: async (receipt, setKeepStakedFactory) => {
-        expectEvent(receipt, "KeepFactoriesUpdated", {
+        expectEvent(receipt, 'KeepFactoriesUpdated', {
           _keepStakedFactory: setKeepStakedFactory,
           _fullyBackedFactory: constants.ZERO_ADDRESS,
           _factorySelector: constants.ZERO_ADDRESS,
@@ -513,20 +513,20 @@ describe("TBTCSystem governance", async function() {
     })
 
     governanceTest({
-      property: "the ETHBTC feeds with a new entry",
-      change: "EthBtcPriceFeedAddition",
-      timeDelayGetter: "getPriceFeedGovernanceTimeDelay",
+      property: 'the ETHBTC feeds with a new entry',
+      change: 'EthBtcPriceFeedAddition',
+      timeDelayGetter: 'getPriceFeedGovernanceTimeDelay',
       goodParametersWithName: [
-        {name: "_priceFeed", value: newEthBtcMedianizer.address},
+        { name: '_priceFeed', value: newEthBtcMedianizer.address },
       ],
       badInitializationTests: {
-        "adding inactive feed": {
+        'adding inactive feed': {
           parameters: [badEthBtcMedianizer.address],
-          error: "Cannot add inactive feed",
+          error: 'Cannot add inactive feed',
         },
       },
       verifyFinalizationEvents: (receipt, newFeedAddress) => {
-        expectEvent(receipt, "EthBtcPriceFeedAdded", {
+        expectEvent(receipt, 'EthBtcPriceFeedAdded', {
           _priceFeed: newFeedAddress,
         })
       },
@@ -540,10 +540,10 @@ describe("TBTCSystem governance", async function() {
         )
       },
       badFinalizationTests: {
-        "finalizing inactive feed": {
+        'finalizing inactive feed': {
           parameters: [newEthBtcMedianizer.address],
           beforeFinalizing: async () => newEthBtcMedianizer.setValue(0),
-          error: "Cannot add inactive feed",
+          error: 'Cannot add inactive feed',
         },
       },
     })
@@ -559,7 +559,7 @@ describe("TBTCSystem governance", async function() {
     verifyFinalState,
     badFinalizationTests,
   }) {
-    timeDelayGetter = timeDelayGetter || "getGovernanceTimeDelay"
+    timeDelayGetter = timeDelayGetter || 'getGovernanceTimeDelay'
     badInitializationTests = badInitializationTests || {}
     badFinalizationTests = badFinalizationTests || {}
 
@@ -585,23 +585,23 @@ describe("TBTCSystem governance", async function() {
       const newParametersWithName = []
 
       for (let i = 0; i < parametersWithName.length; ++i) {
-        const {name, value} = parametersWithName[i]
+        const { name, value } = parametersWithName[i]
         let updatedValue = value
         if (value instanceof BN) {
           updatedValue = value.add(new BN(1))
-        } else if (typeof value == "number") {
+        } else if (typeof value == 'number') {
           updatedValue = value + 1
-        } else if (value instanceof String && value.startsWith("0x")) {
+        } else if (value instanceof String && value.startsWith('0x')) {
           // Assume address, generate one.
-          updatedValue = "0x"
+          updatedValue = '0x'
           for (let j = 0; j < 20; ++i) {
             updatedValue += (
-              "0" + Math.floor(Math.random() * 255).toString("hex")
+              '0' + Math.floor(Math.random() * 255).toString('hex')
             ).substr(-2)
           }
         }
 
-        newParametersWithName.push({name: name, value: updatedValue})
+        newParametersWithName.push({ name: name, value: updatedValue })
       }
 
       return [
@@ -614,7 +614,7 @@ describe("TBTCSystem governance", async function() {
     const goodParametersByName = parametersAsObject(goodParametersWithName)
 
     async function invoke(prefix, suffix, params) {
-      const fn = tbtcSystem[`${prefix || ""}${change}${suffix || ""}`]
+      const fn = tbtcSystem[`${prefix || ''}${change}${suffix || ''}`]
       if (!fn) {
         console.error(`${prefix}${change}${suffix}`)
       }
@@ -630,15 +630,15 @@ describe("TBTCSystem governance", async function() {
         await restoreSnapshot()
       })
 
-      describe("when initiating the update", async () => {
-        it("executes and fires the update start event", async () => {
-          const receipt = await invoke("begin", "", goodParameters)
+      describe('when initiating the update', async () => {
+        it('executes and fires the update start event', async () => {
+          const receipt = await invoke('begin', '', goodParameters)
 
           expectEvent(receipt, `${change}Started`, goodParametersByName)
         })
 
-        it("does not commit updates immediately", async () => {
-          await invoke("begin", "", goodParameters)
+        it('does not commit updates immediately', async () => {
+          await invoke('begin', '', goodParameters)
 
           let failed = true
           try {
@@ -649,12 +649,12 @@ describe("TBTCSystem governance", async function() {
           }
 
           if (!failed) {
-            expect.fail("Expected final state verification to fail.")
+            expect.fail('Expected final state verification to fail.')
           }
         })
 
-        it("overrides previous update and resets timer", async () => {
-          await invoke("begin", "", goodParameters)
+        it('overrides previous update and resets timer', async () => {
+          await invoke('begin', '', goodParameters)
           await increaseTime(50)
 
           const governanceTime = await tbtcSystem[timeDelayGetter].call()
@@ -662,8 +662,8 @@ describe("TBTCSystem governance", async function() {
           const [updatedParametersByName, updatedParameters] = tweakParameters(
             goodParametersWithName,
           )
-          const receipt = await invoke("begin", "", updatedParameters)
-          const remainingTime = await invoke("getRemaining", "Time")
+          const receipt = await invoke('begin', '', updatedParameters)
+          const remainingTime = await invoke('getRemaining', 'Time')
 
           expectEvent(receipt, `${change}Started`, updatedParametersByName)
           expect([
@@ -672,88 +672,88 @@ describe("TBTCSystem governance", async function() {
           ]).to.include(governanceTime.toString())
         })
 
-        it("reverts if msg.sender != owner", async () => {
+        it('reverts if msg.sender != owner', async () => {
           await expectRevert.unspecified(
-            invoke("begin", "", goodParameters.concat([{from: accounts[1]}])),
+            invoke('begin', '', goodParameters.concat([{ from: accounts[1] }])),
           )
         })
 
         for (const [scenario, props] of Object.entries(
           badInitializationTests,
         )) {
-          const {parameters, error} = props
+          const { parameters, error } = props
 
           it(`reverts when ${scenario}`, async () => {
-            await expectRevert(invoke("begin", "", parameters), error)
+            await expectRevert(invoke('begin', '', parameters), error)
           })
         }
       })
 
-      describe("when finalizing the update", async () => {
-        it("reverts if the governance timer has not elapsed", async () => {
-          await invoke("begin", "", goodParameters)
+      describe('when finalizing the update', async () => {
+        it('reverts if the governance timer has not elapsed', async () => {
+          await invoke('begin', '', goodParameters)
 
           await expectRevert(
-            invoke("finalize"),
-            "Governance delay has not elapsed.",
+            invoke('finalize'),
+            'Governance delay has not elapsed.',
           )
         })
 
-        it("reverts if a change has not been initiated", async () => {
-          await expectRevert(invoke("finalize"), "Change not initiated.")
+        it('reverts if a change has not been initiated', async () => {
+          await expectRevert(invoke('finalize'), 'Change not initiated.')
         })
 
         for (const [scenario, props] of Object.entries(badFinalizationTests)) {
-          const {beforeFinalizing, parameters, error} = props
+          const { beforeFinalizing, parameters, error } = props
 
           it(`reverts when ${scenario}`, async () => {
-            await invoke("begin", "", parameters)
-            const remainingTime = await invoke("getRemaining", "Time")
+            await invoke('begin', '', parameters)
+            const remainingTime = await invoke('getRemaining', 'Time')
             await increaseTime(remainingTime.toNumber() + 1)
 
             if (beforeFinalizing) {
               await beforeFinalizing()
             }
 
-            await expectRevert(invoke("finalize"), error)
+            await expectRevert(invoke('finalize'), error)
           })
         }
 
         it(`updates ${property} and fires event if the governance timer has elapsed`, async () => {
-          await invoke("begin", "", goodParameters)
-          const remainingTime = await invoke("getRemaining", "Time")
+          await invoke('begin', '', goodParameters)
+          const remainingTime = await invoke('getRemaining', 'Time')
           await increaseTime(remainingTime.toNumber() + 1)
 
-          const receipt = await invoke("finalize")
+          const receipt = await invoke('finalize')
           await verifyFinalizationEvents(receipt, ...goodParameters)
           await verifyFinalState(...goodParameters)
         })
       })
 
-      describe("after finalizing the update", async () => {
-        it("allows to initiate a new update", async () => {
-          await invoke("begin", "", goodParameters)
-          const remainingTime = await invoke("getRemaining", "Time")
+      describe('after finalizing the update', async () => {
+        it('allows to initiate a new update', async () => {
+          await invoke('begin', '', goodParameters)
+          const remainingTime = await invoke('getRemaining', 'Time')
           await increaseTime(remainingTime.toNumber() + 1)
-          await invoke("finalize")
+          await invoke('finalize')
 
-          await invoke("begin", "", goodParameters)
+          await invoke('begin', '', goodParameters)
         })
 
-        it("reverts if finalizing a change twice", async () => {
-          await invoke("begin", "", goodParameters)
-          const remainingTime = await invoke("getRemaining", "Time")
+        it('reverts if finalizing a change twice', async () => {
+          await invoke('begin', '', goodParameters)
+          const remainingTime = await invoke('getRemaining', 'Time')
           await increaseTime(remainingTime.toNumber() + 1)
-          await invoke("finalize")
+          await invoke('finalize')
 
-          await expectRevert(invoke("finalize"), "Change not initiated.")
+          await expectRevert(invoke('finalize'), 'Change not initiated.')
         })
       })
     })
   }
 
-  describe("when refreshing minimum bondable value", async () => {
-    it("uses the most recent ETHBTC price", async () => {
+  describe('when refreshing minimum bondable value', async () => {
+    it('uses the most recent ETHBTC price', async () => {
       const lotSizes = [
         new BN(10 ** 5),
         new BN(10 ** 6),
@@ -769,7 +769,7 @@ describe("TBTCSystem governance", async function() {
 
       await ethBtcMedianizer.setValue(new BN(10 ** 13))
       // (10**28 / 10 ** 13) * 10**5 * 150%
-      const expected = new BN("150000000000000000000")
+      const expected = new BN('150000000000000000000')
       await tbtcSystem.refreshMinimumBondableValue()
       expect(await ecdsaKeepFactory.minimumBondableValue()).to.eq.BN(expected)
     })

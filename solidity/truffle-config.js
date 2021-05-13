@@ -1,5 +1,5 @@
-require('babel-register');
-require('babel-polyfill');
+require('babel-register')
+require('babel-polyfill')
 
 /**
  * Use this file to configure your truffle project. It's seeded with some
@@ -27,8 +27,8 @@ require('babel-polyfill');
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
-const HDWalletProvider = require('@truffle/hdwallet-provider');
-const Kit = require("@celo/contractkit");
+const HDWalletProvider = require('@truffle/hdwallet-provider')
+const Kit = require('@celo/contractkit')
 
 const mnemonic = 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
 
@@ -51,18 +51,18 @@ module.exports = {
     // options below to some value.
     //
     development: {
-      host: "localhost",     // Localhost (default: none)
-      port: 8545,            // Standard Ethereum port (default: none)
-      network_id: "*",       // Any network (default: none)
+      host: 'localhost', // Localhost (default: none)
+      port: 8545, // Standard Ethereum port (default: none)
+      network_id: '*', // Any network (default: none)
       //  gas: 100000000000000,
-      gasPrice: 1
+      gasPrice: 1,
     },
 
     keep_dev: {
-      provider: function () {
+      provider: function() {
         return new HDWalletProvider({
           privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
-          providerOrUrl: "http://localhost:8545",
+          providerOrUrl: 'http://localhost:8545',
         })
       },
       gas: 6721975,
@@ -70,7 +70,7 @@ module.exports = {
     },
 
     ropsten: {
-      provider: function () {
+      provider: function() {
         return new HDWalletProvider({
           privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
           providerOrUrl: process.env.ETH_HOSTNAME,
@@ -84,8 +84,8 @@ module.exports = {
     },
 
     alfajores: {
-      provider: function () {
-        const kit = Kit.newKit("https://alfajores-forno.celo-testnet.org")
+      provider: function() {
+        const kit = Kit.newKit('https://alfajores-forno.celo-testnet.org')
         kit.addAccount(process.env.CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY)
         return kit.web3.currentProvider
       },
@@ -94,10 +94,10 @@ module.exports = {
 
     mainnet: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://mainnet.infura.io/")
+        return new HDWalletProvider(mnemonic, 'https://mainnet.infura.io/')
       },
-      network_id: 1
-    }
+      network_id: 1,
+    },
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port
@@ -133,23 +133,23 @@ module.exports = {
     reporter: 'eth-gas-reporter',
     reporterOptions: {
       currency: 'USD',
-      gasPrice: 21
-    }
+      gasPrice: 21,
+    },
   },
 
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.5.17",
+      version: '0.5.17',
       // version: "0.5.1",    // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      settings: {          // See the solidity docs for advice about optimization and evmVersion
+      settings: { // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
           enabled: true,
-          runs: 200
+          runs: 200,
         },
         //  evmVersion: "byzantium"
-      }
-    }
-  }
+      },
+    },
+  },
 }

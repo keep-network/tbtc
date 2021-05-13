@@ -1,13 +1,13 @@
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {contract, accounts} = require("@openzeppelin/test-environment")
-const {BN, expectRevert, constants} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = constants
-const {expect} = require("chai")
+const { createSnapshot, restoreSnapshot } = require('./helpers/snapshot.js')
+const { contract, accounts } = require('@openzeppelin/test-environment')
+const { BN, expectRevert, constants } = require('@openzeppelin/test-helpers')
+const { ZERO_ADDRESS } = constants
+const { expect } = require('chai')
 
-const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
-const MockMedianizer = contract.fromArtifact("MockMedianizer")
+const SatWeiPriceFeed = contract.fromArtifact('SatWeiPriceFeed')
+const MockMedianizer = contract.fromArtifact('MockMedianizer')
 
-describe("SatWeiPriceFeed", async function() {
+describe('SatWeiPriceFeed', async function() {
   let satWeiPriceFeed
   let ethbtc
 
@@ -18,22 +18,22 @@ describe("SatWeiPriceFeed", async function() {
     await satWeiPriceFeed.initialize(accounts[0], ethbtc.address)
   })
 
-  describe("#getPrice", async () => {
+  describe('#getPrice', async () => {
     beforeEach(async () => await createSnapshot())
     afterEach(async () => await restoreSnapshot())
 
-    it("does not allow direct access for anyone other than TBTC system", async () => {
+    it('does not allow direct access for anyone other than TBTC system', async () => {
       await ethbtc.setValue(1) // make sure the feed is active
 
       await expectRevert(
         satWeiPriceFeed.getPrice.call(),
-        "Caller must be tbtcSystem contract",
+        'Caller must be tbtcSystem contract',
       )
 
-      await satWeiPriceFeed.getPrice.call({from: accounts[0]})
+      await satWeiPriceFeed.getPrice.call({ from: accounts[0] })
     })
 
-    it("returns correct satwei price feed value", async () => {
+    it('returns correct satwei price feed value', async () => {
       const ethusd = new BN(150)
       const btcusd = new BN(7000)
       // multiplication before division since BN does not store decimal points
@@ -41,7 +41,7 @@ describe("SatWeiPriceFeed", async function() {
 
       await ethbtc.setValue(ethbtcPrice)
 
-      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
+      const price = await satWeiPriceFeed.getPrice.call({ from: accounts[0] })
       const expectedSatWeiPrice = btcusd
         .mul(new BN(10).pow(new BN(10)))
         .div(ethusd)
@@ -49,35 +49,35 @@ describe("SatWeiPriceFeed", async function() {
       expect(new BN(price)).to.eq.BN(new BN(expectedSatWeiPrice))
     })
 
-    it("casts down medianizer input price to lower 128 bits", async () => {
+    it('casts down medianizer input price to lower 128 bits', async () => {
       const ethbtcPrice =
-        "0xdef00000000000000000000000000000000000000000000000000004000000"
+        '0xdef00000000000000000000000000000000000000000000000000004000000'
 
       await ethbtc.setValue(ethbtcPrice)
 
-      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
-      const expectedSatWei = new BN(10).pow(new BN(28)).div(new BN("67108864"))
+      const price = await satWeiPriceFeed.getPrice.call({ from: accounts[0] })
+      const expectedSatWei = new BN(10).pow(new BN(28)).div(new BN('67108864'))
 
       expect(price).to.eq.BN(expectedSatWei)
     })
 
-    it("Reverts if there are no active price feeds", async () => {
+    it('Reverts if there are no active price feeds', async () => {
       await ethbtc.setValue(0)
       await expectRevert(
-        satWeiPriceFeed.getPrice.call({from: accounts[0]}),
-        "Price feed offline",
+        satWeiPriceFeed.getPrice.call({ from: accounts[0] }),
+        'Price feed offline',
       )
     })
 
-    it("Retrieve price through array of empty feeds", async () => {
+    it('Retrieve price through array of empty feeds', async () => {
       // set non-zero value temporarily to avoid addEthBtcFeed revert
       await ethbtc.setValue(1)
-      await satWeiPriceFeed.addEthBtcFeed(ethbtc.address, {from: accounts[0]})
+      await satWeiPriceFeed.addEthBtcFeed(ethbtc.address, { from: accounts[0] })
       await ethbtc.setValue(0)
 
       // Array should now contain 2 inactive price feeds, append a working one
       const workingEthBtcFeed = await MockMedianizer.new()
-      const ethBtc = "123"
+      const ethBtc = '123'
 
       await workingEthBtcFeed.setValue(ethBtc)
       await satWeiPriceFeed.addEthBtcFeed(workingEthBtcFeed.address, {
@@ -88,43 +88,43 @@ describe("SatWeiPriceFeed", async function() {
       // ensure the feed we read from is indeed workingBtcFeed and workingEthFeed
       expect(activeEthBtcFeed).to.equal(workingEthBtcFeed.address)
 
-      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
+      const price = await satWeiPriceFeed.getPrice.call({ from: accounts[0] })
       const expectedSatWei = new BN(10).pow(new BN(28)).div(new BN(ethBtc))
 
       expect(price).to.eq.BN(expectedSatWei)
     })
   })
 
-  describe("Add price feed", async () => {
+  describe('Add price feed', async () => {
     beforeEach(async () => await createSnapshot())
     afterEach(async () => await restoreSnapshot())
 
-    it("Only allowed address can add feed", async () => {
+    it('Only allowed address can add feed', async () => {
       const med = await MockMedianizer.new()
 
       await expectRevert(
         satWeiPriceFeed.addEthBtcFeed(med.address),
-        "Caller must be tbtcSystem contract",
+        'Caller must be tbtcSystem contract',
       )
     })
 
-    it("Cannot add dead feed", async () => {
+    it('Cannot add dead feed', async () => {
       const med = await MockMedianizer.new()
 
       await expectRevert(
-        satWeiPriceFeed.addEthBtcFeed(med.address, {from: accounts[0]}),
-        "Cannot add inactive feed",
+        satWeiPriceFeed.addEthBtcFeed(med.address, { from: accounts[0] }),
+        'Cannot add inactive feed',
       )
     })
   })
 
-  describe("Get Working ETH/BTC feed", async () => {
+  describe('Get Working ETH/BTC feed', async () => {
     beforeEach(async () => await createSnapshot())
     afterEach(async () => await restoreSnapshot())
 
-    it("Returns first active feed", async () => {
+    it('Returns first active feed', async () => {
       const workingEthBtcFeed = await MockMedianizer.new()
-      const ethBtc = "123"
+      const ethBtc = '123'
 
       await workingEthBtcFeed.setValue(ethBtc)
       await satWeiPriceFeed.addEthBtcFeed(workingEthBtcFeed.address, {
@@ -136,7 +136,7 @@ describe("SatWeiPriceFeed", async function() {
       expect(activeEthBtcFeed).to.equal(workingEthBtcFeed.address)
     })
 
-    it("Returns address(0) if no active feed found ", async () => {
+    it('Returns address(0) if no active feed found ', async () => {
       const activeEthBtcFeed = await satWeiPriceFeed.getWorkingEthBtcFeed()
 
       expect(activeEthBtcFeed).to.equal(ZERO_ADDRESS)
