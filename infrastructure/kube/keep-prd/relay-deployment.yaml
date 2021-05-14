@@ -8,7 +8,7 @@ metadata:
     keel.sh/policy: all
     app: keep
     type: relay
-    network: ropsten
+    network: mainnet
     chain: ethereum
 spec:
   replicas: 1
@@ -16,52 +16,42 @@ spec:
     matchLabels:
       app: keep
       type: relay
-      network: ropsten
+      network: mainnet
       chain: ethereum
   template:
     metadata:
       labels:
         app: keep
         type: relay
-        network: ropsten
+        network: mainnet
         chain: ethereum
     spec:
       initContainers:
         - name: initcontainer-provision-relay
-          image: gcr.io/keep-test-f3e0/initcontainer-provision-relay
+          image: gcr.io/keep-prd-210b/initcontainer-provision-relay:1.0.0
           imagePullPolicy: Always
           env:
             - name: HOST_CHAIN_WS_URL
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-ropsten
+                  name: eth-network-mainnet
                   key: ws-url
             - name: HOST_CHAIN_RPC_URL
               valueFrom:
                 secretKeyRef:
-                  name: eth-network-ropsten
+                  name: eth-network-mainnet
                   key: rpc-url
             - name: RELAY_CONTRACT_ADDRESS
-              value: '0xcF3a6246879aab9eb7beC0d936743208EA51d0Ed'
+              value: '0x1531b6e3d51BF80f634957dF81A990B92dA4b154'
             - name: RELAY_ACCOUNT_ADDRESS
               valueFrom:
-                configMapKeyRef:
-                  name: eth-account-info
-                  key: account-50-address
-            - name: RELAY_ACCOUNT_KEY_FILE
-              value: /mnt/relay/keyfile/account-50-keyfile
-            - name: CONTRACT_OWNER_ACCOUNT_ADDRESS
-              valueFrom:
-                configMapKeyRef:
-                  name: eth-network-ropsten
-                  key: contract-owner-eth-account-address
-            - name: CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY
-              valueFrom:
                 secretKeyRef:
-                  name: eth-network-ropsten
-                  key: contract-owner-eth-account-private-key
+                  name: relay-maintainer
+                  key: eth-account-address
+            - name: RELAY_ACCOUNT_KEY_FILE
+              value: /mnt/relay/keyfile/eth-account-keyfile
             - name: BITCOIN_URL
-              value: bcoin.default.svc.cluster.local:18332
+              value: bcoin.default.svc.cluster.local:8332
             - name: BITCOIN_USERNAME
               value: x
             - name: BITCOIN_PASSWORD
@@ -77,7 +67,7 @@ spec:
           command: ['node', '/tmp/provision-relay.js']
       containers:
         - name: relay
-          image: gcr.io/keep-test-f3e0/relay
+          image: gcr.io/keep-prd-210b/relay:1.0.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -85,8 +75,8 @@ spec:
             - name: OPERATOR_KEY_FILE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: eth-account-passphrases
-                  key: account-50
+                  name: relay
+                  key: eth-account-keyfile-password
             - name: LOG_LEVEL
               value: 'info'
           volumeMounts:
@@ -106,11 +96,11 @@ spec:
           persistentVolumeClaim:
             claimName: relay-env
         - name: eth-account-keyfile
-          configMap:
-            name: eth-account-info
+          secret:
+            secretName: relay
             items:
-              - key: account-50-keyfile
-                path: account-50-keyfile
+              - key: eth-account-keyfile
+                path: eth-account-keyfile
 
 ---
 apiVersion: v1
