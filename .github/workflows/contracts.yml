@@ -27,20 +27,6 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - name: Show workflow metadata
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-            echo "Workflow dispatched on branch: ${{ github.ref }}"
-            echo "environment = ${{ github.event.inputs.environment }}"
-            echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
-            echo "upstream_ref = ${{ github.event.inputs.upstream_ref }}"
-
-      - name: Show workflow metadata
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-            echo "ref = ${{ github.ref }}"
-            echo "sha = ${{ github.sha }}"
-
       - uses: actions/checkout@v2
         if: github.event_name == 'pull_request'
         
@@ -126,7 +112,7 @@ jobs:
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
-    environment: keep-test # keep-test requires a manual aproval
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -233,7 +219,7 @@ jobs:
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
-    environment: keep-test
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
     defaults:
       run:
