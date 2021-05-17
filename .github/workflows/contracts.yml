@@ -205,7 +205,7 @@ jobs:
           npm publish --access=public
       
       - name: Notify CI about completion of the workflow
-        uses: keep-network/notify-workflow-completed@main
+        uses: keep-network/notify-workflow-completed@v1
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
