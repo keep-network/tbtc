@@ -256,6 +256,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # TODO: Add copy to `artifacts` dir and NPM publish steps once it's clear
+      # how artifacts should be tagged. Once that's done, no longer fetch/publish
+      # contracts from/to GC Bucket.
+
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ env.GOOGLE_PROJECT_ID }}
@@ -280,5 +284,3 @@ jobs:
         run: |
           cd build/contracts
           gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/tbtc-celo
-
-      # TODO: add NPM publish step once it's clear how artifacts should be tagged
