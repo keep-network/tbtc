@@ -248,7 +248,7 @@ func (r *Relay) findLastCommonAncestor(
 	newBestHeader *btc.Header,
 	currentBestHeader *btc.Header,
 ) (*btc.Header, error) {
-	totalAttempts := 5
+	totalAttempts := 10
 
 	for attempt := 1; attempt <= totalAttempts; attempt++ {
 		logger.Infof(
@@ -291,7 +291,7 @@ func (r *Relay) findLastCommonAncestor(
 
 		// wait a constant back-off time
 		select {
-		case <-time.After(15 * time.Second):
+		case <-time.After(30 * time.Second):
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		}
