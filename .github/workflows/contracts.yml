@@ -8,6 +8,18 @@ on:
       - "solidity/**"
   pull_request:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment for workflow execution'
+        required: false
+        default: 'dev'
+      upstream_builds:
+        description: 'Upstream builds'
+        required: false
+      upstream_ref:
+        description: 'Git reference to checkout (e.g. branch name)'
+        required: false
+        default: 'master'
 
 jobs:
   contracts-detect-changes:
@@ -15,15 +27,16 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-    - uses: actions/checkout@v2
-      if: github.event_name == 'pull_request' 
-    - uses: dorny/paths-filter@v2
-      if: github.event_name == 'pull_request' 
-      id: filter
-      with:
-        filters: |
-          path-filter:
-            - './solidity/**'
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request'
+        
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './solidity/**'
 
   contracts-build-and-test:
     needs: contracts-detect-changes
@@ -65,7 +78,7 @@ jobs:
   contracts-lint:
     needs: contracts-detect-changes
     if: |
-      github.event_name != 'pull_request'
+      github.event_name == 'push'
         || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
@@ -97,11 +110,9 @@ jobs:
         run: npm run lint
 
   contracts-migrate-and-publish-ethereum:
-    needs: [contracts-build-and-test, contracts-lint]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
-    environment: keep-test # keep-test requires a manual aproval
+    needs: [contracts-build-and-test]
+    if: github.event_name == 'workflow_dispatch'
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -142,19 +153,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - uses: google-github-actions/setup-gcloud@v0.2.0
+      - name: Get upstream packages' versions
+        uses: keep-network/upstream-builds-query@v1
+        id: upstream-builds-query
         with:
-          project_id: ${{ env.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Fetch external contracts artifacts
-        env:
-          CONTRACT_DATA_BUCKET_DIR: keep-ecdsa
-          ETH_NETWORK_ID: ${{ env.NETWORK_ID }}
-        run: ./scripts/ci-provision-external-contracts.sh
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-ecdsa-solidity-version = github.com/keep-network/keep-ecdsa/solidity#version
 
       - name: Resolve latest contracts
-        run: npm update @keep-network/keep-ecdsa
+        run: |
+            npm install --save-exact \
+              @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-solidity-version }}
 
       - name: Migrate contracts
         env:
@@ -162,6 +172,20 @@ jobs:
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      - name: Copy artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r build/contracts/* artifacts/
+
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity
+          environment: ${{ github.event.inputs.environment }}
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
 
       - name: Push contracts to Tenderly
         # TODO: once below action gets tagged replace `@main` with `@v1`
@@ -173,34 +197,29 @@ jobs:
           tenderly-project: thesis/keep-test
           eth-network-id: ${{ env.NETWORK_ID }}
           github-project-name: tbtc
-          # version-tag: # TODO: resolve npm package version
-
-      - name: Upload contract data
-        run: |
-          cd build/contracts
-          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/tbtc
-
-      - name: Copy artifacts
-        run: |
-          mkdir -p artifacts
-          cp -r build/contracts/* artifacts/
-
-      - name: Bump up package version
-        uses: keep-network/npm-version-bump@v1
-        with:
-          workDir: ./solidity
+          version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
       - name: Publish to npm
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
+      
+      - name: Notify CI about completion of the workflow
+        uses: keep-network/notify-workflow-completed@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/tbtc/solidity"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          upstream_ref: ${{ github.event.inputs.upstream_ref }}
+          version: ${{ steps.npm-version-bump.outputs.version }}
 
   contracts-migrate-and-publish-celo:
-    needs: [contracts-build-and-test, contracts-lint]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
-    environment: keep-test
+    needs: [contracts-build-and-test]
+    if: github.event_name == 'workflow_dispatch'
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -237,6 +256,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # TODO: Add copy to `artifacts` dir and NPM publish steps once it's clear
+      # how artifacts should be tagged. Once that's done, no longer fetch/publish
+      # contracts from/to GC Bucket.
+
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ env.GOOGLE_PROJECT_ID }}
@@ -249,7 +272,7 @@ jobs:
         run: ./scripts/ci-provision-external-contracts.sh
 
       - name: Resolve latest contracts
-        run: npm update @keep-network/keep-ecdsa
+        run: npm update @keep-network/keep-ecdsa 
 
       - name: Migrate contracts
         env:
@@ -261,5 +284,3 @@ jobs:
         run: |
           cd build/contracts
           gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/tbtc-celo
-
-      # TODO: add NPM publish step once it's clear how artifacts should be tagged
