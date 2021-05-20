@@ -67,7 +67,7 @@ spec:
           command: ['node', '/tmp/provision-relay.js']
       containers:
         - name: relay
-          image: gcr.io/keep-prd-210b/relay:1.0.0
+          image: gcr.io/keep-prd-210b/relay:1.1.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
