@@ -1,13 +1,13 @@
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {contract, accounts} = require("@openzeppelin/test-environment")
-const {BN, expectRevert, constants} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = constants
-const {expect} = require("chai")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { contract, accounts } = require("@openzeppelin/test-environment")
+const { BN, expectRevert, constants } = require("@openzeppelin/test-helpers")
+const { ZERO_ADDRESS } = constants
+const { expect } = require("chai")
 
 const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
 const MockMedianizer = contract.fromArtifact("MockMedianizer")
 
-describe("SatWeiPriceFeed", async function() {
+describe("SatWeiPriceFeed", async function () {
   let satWeiPriceFeed
   let ethbtc
 
@@ -27,10 +27,10 @@ describe("SatWeiPriceFeed", async function() {
 
       await expectRevert(
         satWeiPriceFeed.getPrice.call(),
-        "Caller must be tbtcSystem contract",
+        "Caller must be tbtcSystem contract"
       )
 
-      await satWeiPriceFeed.getPrice.call({from: accounts[0]})
+      await satWeiPriceFeed.getPrice.call({ from: accounts[0] })
     })
 
     it("returns correct satwei price feed value", async () => {
@@ -41,7 +41,7 @@ describe("SatWeiPriceFeed", async function() {
 
       await ethbtc.setValue(ethbtcPrice)
 
-      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
+      const price = await satWeiPriceFeed.getPrice.call({ from: accounts[0] })
       const expectedSatWeiPrice = btcusd
         .mul(new BN(10).pow(new BN(10)))
         .div(ethusd)
@@ -55,7 +55,7 @@ describe("SatWeiPriceFeed", async function() {
 
       await ethbtc.setValue(ethbtcPrice)
 
-      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
+      const price = await satWeiPriceFeed.getPrice.call({ from: accounts[0] })
       const expectedSatWei = new BN(10).pow(new BN(28)).div(new BN("67108864"))
 
       expect(price).to.eq.BN(expectedSatWei)
@@ -64,15 +64,15 @@ describe("SatWeiPriceFeed", async function() {
     it("Reverts if there are no active price feeds", async () => {
       await ethbtc.setValue(0)
       await expectRevert(
-        satWeiPriceFeed.getPrice.call({from: accounts[0]}),
-        "Price feed offline",
+        satWeiPriceFeed.getPrice.call({ from: accounts[0] }),
+        "Price feed offline"
       )
     })
 
     it("Retrieve price through array of empty feeds", async () => {
       // set non-zero value temporarily to avoid addEthBtcFeed revert
       await ethbtc.setValue(1)
-      await satWeiPriceFeed.addEthBtcFeed(ethbtc.address, {from: accounts[0]})
+      await satWeiPriceFeed.addEthBtcFeed(ethbtc.address, { from: accounts[0] })
       await ethbtc.setValue(0)
 
       // Array should now contain 2 inactive price feeds, append a working one
@@ -88,7 +88,7 @@ describe("SatWeiPriceFeed", async function() {
       // ensure the feed we read from is indeed workingBtcFeed and workingEthFeed
       expect(activeEthBtcFeed).to.equal(workingEthBtcFeed.address)
 
-      const price = await satWeiPriceFeed.getPrice.call({from: accounts[0]})
+      const price = await satWeiPriceFeed.getPrice.call({ from: accounts[0] })
       const expectedSatWei = new BN(10).pow(new BN(28)).div(new BN(ethBtc))
 
       expect(price).to.eq.BN(expectedSatWei)
@@ -104,7 +104,7 @@ describe("SatWeiPriceFeed", async function() {
 
       await expectRevert(
         satWeiPriceFeed.addEthBtcFeed(med.address),
-        "Caller must be tbtcSystem contract",
+        "Caller must be tbtcSystem contract"
       )
     })
 
@@ -112,8 +112,8 @@ describe("SatWeiPriceFeed", async function() {
       const med = await MockMedianizer.new()
 
       await expectRevert(
-        satWeiPriceFeed.addEthBtcFeed(med.address, {from: accounts[0]}),
-        "Cannot add inactive feed",
+        satWeiPriceFeed.addEthBtcFeed(med.address, { from: accounts[0] }),
+        "Cannot add inactive feed"
       )
     })
   })

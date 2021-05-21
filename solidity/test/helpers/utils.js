@@ -1,11 +1,11 @@
 const headerChains = require("./headerchains.json")
 const tx = require("./tx.json")
 const createHash = require("create-hash")
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require("@openzeppelin/test-environment")
 
 const ozHelpers = require("@openzeppelin/test-helpers")
-const {BN} = ozHelpers
-const {expect} = require("chai")
+const { BN } = ozHelpers
+const { expect } = require("chai")
 
 // Header with insufficient work. It's used for negative scenario tests when we
 // want to validate invalid header which hash (work) doesn't meet requirement of
@@ -30,12 +30,8 @@ const states = {
 
 function hash160(hexString) {
   const buffer = Buffer.from(hexString, "hex")
-  const t = createHash("sha256")
-    .update(buffer)
-    .digest()
-  const u = createHash("rmd160")
-    .update(t)
-    .digest()
+  const t = createHash("sha256").update(buffer).digest()
+  const u = createHash("rmd160").update(t).digest()
   return "0x" + u.toString("hex")
 }
 
@@ -67,7 +63,7 @@ async function deploySystem(deployList) {
       contract = await deployList[i].contract.new()
     } else {
       const resolvedConstructorParams = deployList[i].constructorParams.map(
-        param => linkable[param] || param,
+        (param) => linkable[param] || param
       )
       contract = await deployList[i].contract.new(...resolvedConstructorParams)
     }
@@ -92,7 +88,7 @@ function increaseTime(duration) {
         params: [durationNumber],
         id: id,
       },
-      err1 => {
+      (err1) => {
         if (err1) return reject(err1)
 
         web3.currentProvider.send(
@@ -103,9 +99,9 @@ function increaseTime(duration) {
           },
           (err2, res) => {
             return err2 ? reject(err2) : resolve(res)
-          },
+          }
         )
-      },
+      }
     )
   })
 }
@@ -118,14 +114,14 @@ function getCurrentTime() {
       {
         jsonrpc: "2.0",
         method: "eth_getBlockByNumber",
-        params: ['latest', true],
+        params: ["latest", true],
         id: id,
       },
       (err1, { result: tx }) => {
         if (err1) return reject(err1)
 
         resolve(parseInt(tx.timestamp))
-      },
+      }
     )
   })
 }
@@ -147,42 +143,42 @@ function getCurrentTime() {
  *         include all resolved logs.
  */
 function resolveAllLogs(receipt, contractContainer) {
-    const contracts =
-        Object
-            .entries(contractContainer)
-            .map(([, value]) => value)
-            .filter(_ => _.contract && _.address)
+  const contracts = Object.entries(contractContainer)
+    .map(([, value]) => value)
+    .filter((_) => _.contract && _.address)
 
-    const { resolved: resolvedLogs } = contracts.reduce(
-        ({ raw, resolved }, contract) => {
-            const events = contract.contract._jsonInterface.filter(_ => _.type === "event")
-            const contractLogs = raw.filter(_ => _.address == contract.address)
+  const { resolved: resolvedLogs } = contracts.reduce(
+    ({ raw, resolved }, contract) => {
+      const events = contract.contract._jsonInterface.filter(
+        (_) => _.type === "event"
+      )
+      const contractLogs = raw.filter((_) => _.address == contract.address)
 
-            const decoded = contractLogs.map(log => {
-                const event = events.find(_ => log.topics.includes(_.signature))
-                const decoded = web3.eth.abi.decodeLog(
-                    event.inputs,
-                    log.data,
-                    log.topics.slice(1)
-                )
+      const decoded = contractLogs.map((log) => {
+        const event = events.find((_) => log.topics.includes(_.signature))
+        const decoded = web3.eth.abi.decodeLog(
+          event.inputs,
+          log.data,
+          log.topics.slice(1)
+        )
 
-                return Object.assign({}, log, {
-                    event: event.name,
-                    args: decoded,
-                })
-            })
+        return Object.assign({}, log, {
+          event: event.name,
+          args: decoded,
+        })
+      })
 
-            return {
-                raw: raw.filter(_ => _.address != contract.address),
-                resolved: resolved.concat(decoded),
-            }
-        },
-        { raw: receipt.rawLogs, resolved: [] },
-    )
+      return {
+        raw: raw.filter((_) => _.address != contract.address),
+        resolved: resolved.concat(decoded),
+      }
+    },
+    { raw: receipt.rawLogs, resolved: [] }
+  )
 
-    return Object.assign({}, receipt, {
-        logs: resolvedLogs,
-    })
+  return Object.assign({}, receipt, {
+    logs: resolvedLogs,
+  })
 }
 
 /**
@@ -200,7 +196,7 @@ function resolveAllLogs(receipt, contractContainer) {
 function expectEvent(receipt, eventName, parameters, customMessage) {
   parameters = parameters || {}
 
-  const matchingLogs = receipt.logs.filter(_ => _.event == eventName)
+  const matchingLogs = receipt.logs.filter((_) => _.event == eventName)
   expect(matchingLogs).not.to.have.lengthOf(
     0,
     customMessage ||
@@ -209,23 +205,25 @@ function expectEvent(receipt, eventName, parameters, customMessage) {
   expect(
     matchingLogs,
     customMessage ||
-      `Could not find parameter match for\n${JSON.stringify(parameters)}\nin\n` +
-        `${matchingLogs.map(_ => JSON.stringify(_.args)).join("\n")}.`,
+      `Could not find parameter match for\n${JSON.stringify(
+        parameters
+      )}\nin\n` +
+        `${matchingLogs.map((_) => JSON.stringify(_.args)).join("\n")}.`
   ).to.satisfy((matchingLogs) => {
     // Check array-of-BN parameters in nested fashion, directly.
-    return matchingLogs.some(log => 
+    return matchingLogs.some((log) =>
       Object.entries(log.args).every(([argName, argValue]) => {
-        if (! parameters.hasOwnProperty(argName)) {
+        if (!parameters.hasOwnProperty(argName)) {
           return true
         } else if (web3.utils.isBN(parameters[argName])) {
-          return parameters[argName].toString() ==
-              web3.utils.isBN(argValue) ? argValue.toString() : argValue
+          return parameters[argName].toString() == web3.utils.isBN(argValue)
+            ? argValue.toString()
+            : argValue
         } else if (web3.utils.isBN(parameters[argName][0])) {
           return parameters[argName].every((bn, i) => {
-            return bn.toString() ==
-              web3.utils.isBN(argValue[i]) ?
-                argValue[i].toString() :
-                argValue[i]
+            return bn.toString() == web3.utils.isBN(argValue[i])
+              ? argValue[i].toString()
+              : argValue[i]
           })
         } else {
           return parameters[argName] == argValue
@@ -252,37 +250,39 @@ function expectEvent(receipt, eventName, parameters, customMessage) {
  */
 function expectNoEvent(receipt, eventName, parameters) {
   parameters = parameters || {}
-  const matchingLogs =
-    receipt.logs
-      .filter(_ => _.event == eventName)
-      .filter(log => {
-        for (const [parameterName, parameterValue] of Object.entries(parameters)) {
-          if (! log.args.hasOwnProperty(parameterName)) {
-            // If the parameter doesn't exist, this doesn't match.
-            return false
-          }
-
-          let matching
-          const eventValue = log.args[parameterName]
-          if (web3.utils.isBN(parameterValue[0])) {
-            matching = parameterValue
-                  .filter((bn, i) => bn.eq(eventValue[i]))
-                  .length == parameterValue.length
-          } else if (web3.utils.isBN(parameterValue)) {
-            matching = parameterValue.eq(eventValue)
-          } else {
-            matching = parameterValue == eventValue
-          }
-
-          if (!matching) {
-            return false
-          }
+  const matchingLogs = receipt.logs
+    .filter((_) => _.event == eventName)
+    .filter((log) => {
+      for (const [parameterName, parameterValue] of Object.entries(
+        parameters
+      )) {
+        if (!log.args.hasOwnProperty(parameterName)) {
+          // If the parameter doesn't exist, this doesn't match.
+          return false
         }
 
-        return true
-      })
+        let matching
+        const eventValue = log.args[parameterName]
+        if (web3.utils.isBN(parameterValue[0])) {
+          matching =
+            parameterValue.filter((bn, i) => bn.eq(eventValue[i])).length ==
+            parameterValue.length
+        } else if (web3.utils.isBN(parameterValue)) {
+          matching = parameterValue.eq(eventValue)
+        } else {
+          matching = parameterValue == eventValue
+        }
 
-  expect(matchingLogs, `Unexpected event: ${JSON.stringify(matchingLogs[0])}`).to.be.empty
+        if (!matching) {
+          return false
+        }
+      }
+
+      return true
+    })
+
+  expect(matchingLogs, `Unexpected event: ${JSON.stringify(matchingLogs[0])}`)
+    .to.be.empty
 }
 
 // real tx from mainnet bitcoin, interpreted as funding tx
@@ -294,7 +294,8 @@ const fundingTx = {
   txidLE: "0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c",
   difficulty: 6353030562983,
   version: "0x01000000",
-  txInputVector: "0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff",
+  txInputVector:
+    "0x01913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d0000000000ffffffff",
   txOutputVector:
     "0x012040351d0000000016001486e7303082a6a21d5837176bc808bf4828371ab6",
   fundingOutputIndex: 0,
@@ -314,7 +315,8 @@ const fundingTx = {
     "0x5f40bccf997d221cd0e9cb6564643f9808a89a5e1c65ea5e6530c0b51c18487c00000000",
   outputValue: 490029088,
   outValueBytes: "0x2040351d00000000",
-  prevoutOutpoint: "0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000",
+  prevoutOutpoint:
+    "0x913e39197867de39bff2c93c75173e086388ee7e8707c90ce4a02dd23f7d2c0d00000000",
   prevoutValueBytes: "0xf078351d00000000",
 }
 
@@ -324,32 +326,41 @@ const fundingTx = {
 const depositRoundTrip = {
   fundingTx: {
     difficulty: 16104807485529,
-    version:"0x01000000",
-    txInputVector:"0x01f401c5aed1e842101320b73ae5410f1e927135ca7e002463d8e89484d2c0bda50000000000ffffff00",
-    txOutputVector:"0x02a0860100000000001600146ff21a38ce66b538e2dfbf78e268763c8aa105bdafafdc1d0000000016001425258f81f2e400e47ef80365e2bde9c93345db3d",
-    txLocktime:"0x00000000",
-    fundingOutputIndex:0,
-    merkleProof:"0x3881a52c9bb1652fa09625d97974e8e2b19a3ad1e5c7ce41e3fa827e4a2dafa9c2e6fd123afcf06a73dbcd8611eb1f9cc1a1d08862ccdb3dc4ad14dede55d108d3e33b3739d6d340d8844bae7e8db2022f590aa6fe2915e056a0003477c8083b68f8e1906e72b81b070c8b929a98ed74ba19fb3e8298457948a1d2174d29926a0003a513b93318055827bc971680e75ba2265543036dcfe06d46eca99c8282e442cbe0adf95bf23a961e76384d08aa455f72d376d1946c85e41e0b68669084b562e862c5833ff76eae5e3f22cd15b1720827a3a327e9affe508dcc4c48a139e24a55a1fdc70dfbe1456562d2847cb684c3b3fdf1fc10830c89ce3becbdc03a75483e1301e5de2d5a4d143a73465700bbc6b4f67650a51b29481601709938436be39a519dd161c56f7cd2661b28006d878d5fff61749368bfac9522afcc1ea196635c577b0ee5c92bb76490eb83dc6fb5aed206f7a50e6af1a3705193bcee5876726ae4f28ee93c8f5f360838591075b30f5e86810afaf016fa048ba3c4e7404a",
-    txIndexInBlock:"102",
-    bitcoinHeaders:"0x0000802081bf9fde653c5831b396f1100d4581ee10a9bf92e85a0500000000000000000065fb243f6fbfe87b315f09df6c1d103c09aed448405ed57ac5948a332c2eb38fcd07bf5e397a1117450be633000080209b8b7afc8ffa3320cb89ba1aa874d5fb5a3f745e3acc090000000000000000000dc3deadaa3b28a0c4f07fd3144998412bba636be4ae03afd50473312d28e5cd1008bf5e397a11173a5d164600000020be7e0bbbd59079dd4965e584d478267424733744d6ad05000000000000000000a3c6d2bf63f06f649bba3f70ec900ef90ff5bfe641088b40903143301ae80075d50dbf5e397a11172755494200004020c24fb2df05de3bee29d31168cc82d008a904684179390000000000000000000074f9ff1d3f11aef31795f21d646d009d6059ff94957067aec6a7ee6a0272c04be50ebf5e397a11171befabf100008020c4ec41da448bab7c1be4b5e5357fa5d28322972c81b70b000000000000000000015654f89c6bb323f17ef92a31832bf1d6d9e926550680a57c571b739358bd1f000fbf5e397a11171ad46a68000000206d5bc32c9a37c05891ee9a260a73edb22647ef29aa1807000000000000000000fe7b1b8fb96e889f6aed650b0c19ae426aefbaccc2040e2a840095dcc573ea3d4211bf5e397a111784dc4846",
+    version: "0x01000000",
+    txInputVector:
+      "0x01f401c5aed1e842101320b73ae5410f1e927135ca7e002463d8e89484d2c0bda50000000000ffffff00",
+    txOutputVector:
+      "0x02a0860100000000001600146ff21a38ce66b538e2dfbf78e268763c8aa105bdafafdc1d0000000016001425258f81f2e400e47ef80365e2bde9c93345db3d",
+    txLocktime: "0x00000000",
+    fundingOutputIndex: 0,
+    merkleProof:
+      "0x3881a52c9bb1652fa09625d97974e8e2b19a3ad1e5c7ce41e3fa827e4a2dafa9c2e6fd123afcf06a73dbcd8611eb1f9cc1a1d08862ccdb3dc4ad14dede55d108d3e33b3739d6d340d8844bae7e8db2022f590aa6fe2915e056a0003477c8083b68f8e1906e72b81b070c8b929a98ed74ba19fb3e8298457948a1d2174d29926a0003a513b93318055827bc971680e75ba2265543036dcfe06d46eca99c8282e442cbe0adf95bf23a961e76384d08aa455f72d376d1946c85e41e0b68669084b562e862c5833ff76eae5e3f22cd15b1720827a3a327e9affe508dcc4c48a139e24a55a1fdc70dfbe1456562d2847cb684c3b3fdf1fc10830c89ce3becbdc03a75483e1301e5de2d5a4d143a73465700bbc6b4f67650a51b29481601709938436be39a519dd161c56f7cd2661b28006d878d5fff61749368bfac9522afcc1ea196635c577b0ee5c92bb76490eb83dc6fb5aed206f7a50e6af1a3705193bcee5876726ae4f28ee93c8f5f360838591075b30f5e86810afaf016fa048ba3c4e7404a",
+    txIndexInBlock: "102",
+    bitcoinHeaders:
+      "0x0000802081bf9fde653c5831b396f1100d4581ee10a9bf92e85a0500000000000000000065fb243f6fbfe87b315f09df6c1d103c09aed448405ed57ac5948a332c2eb38fcd07bf5e397a1117450be633000080209b8b7afc8ffa3320cb89ba1aa874d5fb5a3f745e3acc090000000000000000000dc3deadaa3b28a0c4f07fd3144998412bba636be4ae03afd50473312d28e5cd1008bf5e397a11173a5d164600000020be7e0bbbd59079dd4965e584d478267424733744d6ad05000000000000000000a3c6d2bf63f06f649bba3f70ec900ef90ff5bfe641088b40903143301ae80075d50dbf5e397a11172755494200004020c24fb2df05de3bee29d31168cc82d008a904684179390000000000000000000074f9ff1d3f11aef31795f21d646d009d6059ff94957067aec6a7ee6a0272c04be50ebf5e397a11171befabf100008020c4ec41da448bab7c1be4b5e5357fa5d28322972c81b70b000000000000000000015654f89c6bb323f17ef92a31832bf1d6d9e926550680a57c571b739358bd1f000fbf5e397a11171ad46a68000000206d5bc32c9a37c05891ee9a260a73edb22647ef29aa1807000000000000000000fe7b1b8fb96e889f6aed650b0c19ae426aefbaccc2040e2a840095dcc573ea3d4211bf5e397a111784dc4846",
   },
   redemptionTx: {
     difficulty: 16104807485529,
-    version:"0x01000000",
+    version: "0x01000000",
     outputScript: "0x16001480768eb6cb7b50c8da5c1178665d71e8c290c161",
     outputValueBytes: "0xd07e010000000000",
-    txInputVector:"0x01dfca5cff90459a5c3add9d64a7fa3db9be9f00ab939aa1e0f0a8b4242d0651a3000000000000000000",
-    txOutputVector:"0x01d07e01000000000016001480768eb6cb7b50c8da5c1178665d71e8c290c161",
-    txLocktime:"0x00000000",
-    merkleProof:"0x8a0873e58a1335ec458287e5a2df523ebb900ebd67bcffcf32f87df6d1537e372cc9bd8a2e001d4cc8beef2cf56a6960dd62293a2b09571af1850406cd5dcb620a65ee63ab9205bad53c3570348d8b0d8020025f07518091fab53ff249c1eb902a5a3cbb57fe21fa68826ec8f3e61b1ad6a6c7635c72dbfcfdb398c09d28c933c4121e75d58f49d0c4f3d2c0da121752e06e2b280108e78d89b1c64b307c702aac5667d775c18f54c239d4b62dfbd4157bf5a4d03206d9dc3f018dc8a614addc85766bb574bdb308520a6c48efff78969559547885aecc5385908043b81f48d3c9dec5f905b3816c2b96280f8eb463658f20ada1b025a7498c2954fc8ad9209804ba85bb923ce65c98bbd35a81fc1e4413e89c77dc6d4e6bf1574efb9df79ba237ab53843a6b1714f174466d838b45bf181ca88e83eef4f2a7d4958459cebafeded6ed6b373123c63ece31720e854c14d802ca687f933bec19efd6b8a7447d8bc182b315e94295a1b353f6ddad7eeada4dcd403fc7b8b56f3b500249ae66cf9d",
-    txIndexInBlock:"2010",
-    bitcoinHeaders:"0x0000002037663aa575820cb0808f0aa43a71dd33476449f20044040000000000000000001865a9657f89d65a533836ef7ce76d2685ad5763efcaa2604ae1d08f94ee80496e89bf5e397a1117287de35400000020878951b7d5ad6a5e2389be975548a794db04b06d38dd050000000000000000000807a61d298355301971d13527d2aa5859c063be213dbb77bba07bb4878605abd489bf5e397a11174ddefb30000040204a6da5bc5c5296dbd5d3bb3d01a79413c6efc4353b2e0d0000000000000000003cb45755636f5d481d6dbafabc2347756481224b61c9c7ba9fc22b727915979d468abf5e397a1117459044de00e0ff370b0a718aebc9f08f9db9f51e455f1aa8a06c9d62247206000000000000000000d271e46a103502a7d3ed928d9a83bdba4e46000a006bca944a88d8d1e1168f26478fbf5e397a11170528ff5100200020c7b8641da255cec9a3074adb5ed310dd4f2f42cb77e206000000000000000000994bb5f00f875e91844938f295920794314a6a5f3334fe1281340366c0afa8726a92bf5e397a111745d0c9430000c0209518ab1842a42d181fc027139019ae2304e14778eaf90800000000000000000076fb6dc5bb1e4f3d3d9ee30cfdc71a991f39386f1edfdfacb06fe564f9d2eba0d49cbf5e397a111730b17d590000002051cb8a1c57ba8fa4490a3c0a76e3c4a829ce659233e30c000000000000000000a8a9d2e475e386889ef239426017848bfd19a6d90d500824182146828fcb8d6e2ba4bf5e397a11178558f372",
+    txInputVector:
+      "0x01dfca5cff90459a5c3add9d64a7fa3db9be9f00ab939aa1e0f0a8b4242d0651a3000000000000000000",
+    txOutputVector:
+      "0x01d07e01000000000016001480768eb6cb7b50c8da5c1178665d71e8c290c161",
+    txLocktime: "0x00000000",
+    merkleProof:
+      "0x8a0873e58a1335ec458287e5a2df523ebb900ebd67bcffcf32f87df6d1537e372cc9bd8a2e001d4cc8beef2cf56a6960dd62293a2b09571af1850406cd5dcb620a65ee63ab9205bad53c3570348d8b0d8020025f07518091fab53ff249c1eb902a5a3cbb57fe21fa68826ec8f3e61b1ad6a6c7635c72dbfcfdb398c09d28c933c4121e75d58f49d0c4f3d2c0da121752e06e2b280108e78d89b1c64b307c702aac5667d775c18f54c239d4b62dfbd4157bf5a4d03206d9dc3f018dc8a614addc85766bb574bdb308520a6c48efff78969559547885aecc5385908043b81f48d3c9dec5f905b3816c2b96280f8eb463658f20ada1b025a7498c2954fc8ad9209804ba85bb923ce65c98bbd35a81fc1e4413e89c77dc6d4e6bf1574efb9df79ba237ab53843a6b1714f174466d838b45bf181ca88e83eef4f2a7d4958459cebafeded6ed6b373123c63ece31720e854c14d802ca687f933bec19efd6b8a7447d8bc182b315e94295a1b353f6ddad7eeada4dcd403fc7b8b56f3b500249ae66cf9d",
+    txIndexInBlock: "2010",
+    bitcoinHeaders:
+      "0x0000002037663aa575820cb0808f0aa43a71dd33476449f20044040000000000000000001865a9657f89d65a533836ef7ce76d2685ad5763efcaa2604ae1d08f94ee80496e89bf5e397a1117287de35400000020878951b7d5ad6a5e2389be975548a794db04b06d38dd050000000000000000000807a61d298355301971d13527d2aa5859c063be213dbb77bba07bb4878605abd489bf5e397a11174ddefb30000040204a6da5bc5c5296dbd5d3bb3d01a79413c6efc4353b2e0d0000000000000000003cb45755636f5d481d6dbafabc2347756481224b61c9c7ba9fc22b727915979d468abf5e397a1117459044de00e0ff370b0a718aebc9f08f9db9f51e455f1aa8a06c9d62247206000000000000000000d271e46a103502a7d3ed928d9a83bdba4e46000a006bca944a88d8d1e1168f26478fbf5e397a11170528ff5100200020c7b8641da255cec9a3074adb5ed310dd4f2f42cb77e206000000000000000000994bb5f00f875e91844938f295920794314a6a5f3334fe1281340366c0afa8726a92bf5e397a111745d0c9430000c0209518ab1842a42d181fc027139019ae2304e14778eaf90800000000000000000076fb6dc5bb1e4f3d3d9ee30cfdc71a991f39386f1edfdfacb06fe564f9d2eba0d49cbf5e397a111730b17d590000002051cb8a1c57ba8fa4490a3c0a76e3c4a829ce659233e30c000000000000000000a8a9d2e475e386889ef239426017848bfd19a6d90d500824182146828fcb8d6e2ba4bf5e397a11178558f372",
   },
   signerPubkey: {
-    x:"0x025df4a0c6e84e385ae5bbcdfe455d31b42989cdd9d3c1ddd47853a54f0717be",
-    y:"0xf84082821e1bff2c50e2b253b5e4318a3cc33c1fde640c895fccf92909dc03bd",
-    concatenated: "0x025df4a0c6e84e385ae5bbcdfe455d31b42989cdd9d3c1ddd47853a54f0717bef84082821e1bff2c50e2b253b5e4318a3cc33c1fde640c895fccf92909dc03bd",
-  }
+    x: "0x025df4a0c6e84e385ae5bbcdfe455d31b42989cdd9d3c1ddd47853a54f0717be",
+    y: "0xf84082821e1bff2c50e2b253b5e4318a3cc33c1fde640c895fccf92909dc03bd",
+    concatenated:
+      "0x025df4a0c6e84e385ae5bbcdfe455d31b42989cdd9d3c1ddd47853a54f0717bef84082821e1bff2c50e2b253b5e4318a3cc33c1fde640c895fccf92909dc03bd",
+  },
 }
 
 module.exports = {

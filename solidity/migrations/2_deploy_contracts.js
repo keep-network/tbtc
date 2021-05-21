@@ -26,10 +26,10 @@ const SatWeiPriceFeed = artifacts.require("SatWeiPriceFeed")
 const relayConfig = require("./relay-config.json")
 
 const OnDemandSPV = artifacts.require(
-  "@summa-tx/relay-sol/contracts/OnDemandSPV",
+  "@summa-tx/relay-sol/contracts/OnDemandSPV"
 )
 const TestnetRelay = artifacts.require(
-  "@summa-tx/relay-sol/contracts/TestnetRelay",
+  "@summa-tx/relay-sol/contracts/TestnetRelay"
 )
 const MockRelay = artifacts.require("MockRelay")
 
@@ -52,7 +52,7 @@ const FundingScript = artifacts.require("FundingScript")
 const RedemptionScript = artifacts.require("RedemptionScript")
 
 // bitcoin difficulty relay
-const {RopstenTestnetRelay} = require("./externals")
+const { RopstenTestnetRelay } = require("./externals")
 
 const all = [
   BytesLib,
@@ -127,7 +127,7 @@ module.exports = (deployer, network, accounts) => {
     // see https://github.com/summa-tx/relays . On testnet, we use a local
     // mock.
     if (network === "mainnet" || relayConfig.forceRelay === "OnDemandSPV") {
-      const {genesis, height, epochStart} = relayConfig.init.bitcoinMain
+      const { genesis, height, epochStart } = relayConfig.init.bitcoinMain
 
       await deployer.deploy(OnDemandSPV, genesis, height, epochStart, 0)
       const difficultyRelay = await OnDemandSPV.deployed()
@@ -139,7 +139,7 @@ module.exports = (deployer, network, accounts) => {
       network === "alfajores" ||
       relayConfig.forceRelay === "TestnetRelay"
     ) {
-      const {genesis, height, epochStart} = relayConfig.init.bitcoinTest
+      const { genesis, height, epochStart } = relayConfig.init.bitcoinTest
 
       await deployer.deploy(TestnetRelay, genesis, height, epochStart, 0)
       const difficultyRelay = await TestnetRelay.deployed()
@@ -165,7 +165,7 @@ module.exports = (deployer, network, accounts) => {
     await deployer.deploy(
       TBTCSystem,
       SatWeiPriceFeed.address,
-      difficultyRelayAddress,
+      difficultyRelayAddress
     )
 
     await deployer.deploy(DepositFactory, TBTCSystem.address)
@@ -201,13 +201,13 @@ module.exports = (deployer, network, accounts) => {
       VendingMachine.address,
       TBTCToken.address,
       TBTCDepositToken.address,
-      FeeRebateToken.address,
+      FeeRebateToken.address
     )
     await deployer.deploy(
       RedemptionScript,
       VendingMachine.address,
       TBTCToken.address,
-      FeeRebateToken.address,
+      FeeRebateToken.address
     )
   })
 }

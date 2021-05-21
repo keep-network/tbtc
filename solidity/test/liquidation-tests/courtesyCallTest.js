@@ -5,8 +5,8 @@ const { BN, expectRevert } = require("@openzeppelin/test-helpers")
 const { expect } = require("chai")
 
 describe("Integration -- courtesy_call", async function () {
-  const lotSize = new BN("10000000");
-  const lotSizeTbtc = new BN("10000000000").mul(lotSize);
+  const lotSize = new BN("10000000")
+  const lotSizeTbtc = new BN("10000000000").mul(lotSize)
   const satwei = new BN("466666666666")
   const auctionBuyer = accounts[3]
   const liqInitiator = accounts[4]
@@ -14,23 +14,21 @@ describe("Integration -- courtesy_call", async function () {
   let testDeposit
 
   before(async () => {
-    ; ({
+    ;({
       mockSatWeiPriceFeed,
       ecdsaKeepStub,
       tbtcConstants,
       tbtcToken,
       collateralAmount,
-      deposits
-    } = await createInstance(
-      { collateral: 125, depositOwner: accounts[1] }
-    ))
+      deposits,
+    } = await createInstance({ collateral: 125, depositOwner: accounts[1] }))
     testDeposit = deposits
   })
 
   it("unable start courtesy-call with sufficient collateral", async () => {
     await expectRevert(
       testDeposit.notifyCourtesyCall(),
-      "Signers have sufficient collateral",
+      "Signers have sufficient collateral"
     )
     const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.ACTIVE)
@@ -48,7 +46,7 @@ describe("Integration -- courtesy_call", async function () {
   it("unabse to liquidate if timer has not elapsed", async () => {
     await expectRevert(
       testDeposit.notifyCourtesyCallExpired(),
-      "Courtesy period has not elapsed",
+      "Courtesy period has not elapsed"
     )
     const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.COURTESY_CALL)
@@ -65,7 +63,7 @@ describe("Integration -- courtesy_call", async function () {
   it("cannot exit courtesy_call from ACTIVE state", async () => {
     await expectRevert(
       testDeposit.exitCourtesyCall(),
-      "Not currently in courtesy call",
+      "Not currently in courtesy call"
     )
 
     const depositState = await testDeposit.currentState.call()
@@ -94,7 +92,7 @@ describe("Integration -- courtesy_call", async function () {
     await mockSatWeiPriceFeed.setPrice(satwei)
     await expectRevert(
       testDeposit.exitCourtesyCall(),
-      "Not currently in courtesy call",
+      "Not currently in courtesy call"
     )
 
     const depositState = await testDeposit.currentState.call()
@@ -105,7 +103,7 @@ describe("Integration -- courtesy_call", async function () {
     await tbtcToken.resetBalance(lotSizeTbtc, { from: auctionBuyer })
     await expectRevert(
       testDeposit.purchaseSignerBondsAtAuction(),
-      "Not enough TBTC to cover outstanding debt",
+      "Not enough TBTC to cover outstanding debt"
     )
     const depositState = await testDeposit.currentState.call()
     expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
@@ -115,10 +113,14 @@ describe("Integration -- courtesy_call", async function () {
     const duration = await tbtcConstants.getAuctionDuration.call()
     await increaseTime(duration.toNumber())
 
-    await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
+    await tbtcToken.approve(testDeposit.address, lotSizeTbtc, {
+      from: auctionBuyer,
+    })
     await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-    const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
+    const allowance = await testDeposit.withdrawableAmount({
+      from: auctionBuyer,
+    })
     await testDeposit.withdrawFunds({ from: auctionBuyer })
 
     const depositState = await testDeposit.currentState.call()
@@ -130,16 +132,17 @@ describe("Integration -- courtesy_call", async function () {
   })
 
   it("starts liquidation correctly - end-time period - FRT minted", async () => {
-    ;({ deposits, feeRebateToken, vendingMachine} = await createInstance(
-      { collateral: 125, depositOwner: accounts[1] }
-    ))
+    ;({ deposits, feeRebateToken, vendingMachine } = await createInstance({
+      collateral: 125,
+      depositOwner: accounts[1],
+    }))
     testDeposit = deposits
     tdtId = await web3.utils.toBN(testDeposit.address)
     await tbtcDepositToken.approve(vendingMachine.address, tdtId, {
-      from: depositOwner
+      from: depositOwner,
     })
 
-    await vendingMachine.tdtToTbtc(tdtId, {from: depositOwner})
+    await vendingMachine.tdtToTbtc(tdtId, { from: depositOwner })
     const tdtOwner = await feeRebateToken.ownerOf(tdtId)
     expect(tdtOwner).to.equal(depositOwner)
 
@@ -159,10 +162,14 @@ describe("Integration -- courtesy_call", async function () {
     await increaseTime(duration.toNumber())
 
     await tbtcToken.resetBalance(lotSizeTbtc, { from: auctionBuyer })
-    await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
+    await tbtcToken.approve(testDeposit.address, lotSizeTbtc, {
+      from: auctionBuyer,
+    })
     await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-    const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
+    const allowance = await testDeposit.withdrawableAmount({
+      from: auctionBuyer,
+    })
     await testDeposit.withdrawFunds({ from: auctionBuyer })
 
     const depositState = await testDeposit.currentState.call()

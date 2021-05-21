@@ -13,7 +13,7 @@ const defaultValues = {
   satweiPrice: "466666666666", // price of a satoshi in wei
   signerFeeDivisor: "200", // 1/200 == 50bps == 0.5% == 0.005
   collateral: 150, // signer collateralization on lotSize, 150% default
-  numToCreate: 1 // Number of depositInstances to generate
+  numToCreate: 1, // Number of depositInstances to generate
 }
 
 const currentDifficulty = 6353030562983
@@ -32,24 +32,22 @@ const publicKey =
   "0xd4aee75e57179f7cd18adcbaa7e2fca4ff7b1b446df88bf0b4398e4a26965a6ee8bfb23428a4efecb3ebdc636139de9a568ed427fff20d28baa33ed48e9c44e1"
 const redeemerOutputScript = "0x160014" + "33".repeat(20)
 const pubkeyX =
-"0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
+  "0x4f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa"
 const pubkeyY =
-"0x385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1"
+  "0x385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c1"
 const digest =
-"0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc"
+  "0x02d449a31fbb267c8f352e9968a79e3e5fc95c1bbeaa502fd6454ebde5a4bedc"
 const v = 27
-const r =
-"0xd7e83e8687ba8b555f553f22965c74e81fd08b619a7337c5c16e4b02873b537e"
-const s =
-"0x633bf745cdf7ae303ca8a6f41d71b2c3a21fcbd1aed9e7ffffa295c08918c1b3"
+const r = "0xd7e83e8687ba8b555f553f22965c74e81fd08b619a7337c5c16e4b02873b537e"
+const s = "0x633bf745cdf7ae303ca8a6f41d71b2c3a21fcbd1aed9e7ffffa295c08918c1b3"
 
 // globs
-let signerFee;
+let signerFee
 /**
  * Create Deposit instances using the DepositFactory, then organically transition the state
  * to that specified in the `values` object. default values can be overridden. see `substitutions` param.
- * 
- * @param {*} substitutions An object containing desired overrides to default settings found in 
+ *
+ * @param {*} substitutions An object containing desired overrides to default settings found in
  *                          the `values` mapping
  *
  * @return {object} An object with properties for all deployed contracts listed here:
@@ -67,34 +65,39 @@ let signerFee;
  *   - feeRebateToken
  *    see '../../helpers/testDeployer.js` for more info on these specific return values
  *    The object also returns a Deposit contract (or an array of multiple deposits of so specified)
- *    These deposit contracts are generated and the required state 
+ *    These deposit contracts are generated and the required state
  */
 const createInstance = async (substitutions = {}) => {
   const values = JSON.parse(JSON.stringify(defaultValues))
   const keys = Object.keys(substitutions)
-  if(!keys.length == 0){
+  if (!keys.length == 0) {
     for (const key of keys) {
-      if(key in values){
+      if (key in values) {
         values[key] = substitutions[key]
       }
     }
   }
-  signerFee = new BN(values.lotSize).div(new BN(values.signerFeeDivisor)).mul(new BN("10000000000"))
-  const collateralAmount = new BN(values.lotSize).mul(new BN(values.satweiPrice)).mul(new BN(values.collateral)).div(new BN(100))
+  signerFee = new BN(values.lotSize)
+    .div(new BN(values.signerFeeDivisor))
+    .mul(new BN("10000000000"))
+  const collateralAmount = new BN(values.lotSize)
+    .mul(new BN(values.satweiPrice))
+    .mul(new BN(values.collateral))
+    .div(new BN(100))
   const blockNumber = await web3.eth.getBlockNumber()
   let deposits = []
-    ; ({
-      mockRelay,
-      depositFactory,
-      ecdsaKeepFactoryStub,
-      tbtcSystem,
-      mockSatWeiPriceFeed,
-      tbtcConstants,
-      tbtcToken,
-      tbtcDepositToken,
-      feeRebateToken,
-      vendingMachine
-    } = await deployAndLinkAll())
+  ;({
+    mockRelay,
+    depositFactory,
+    ecdsaKeepFactoryStub,
+    tbtcSystem,
+    mockSatWeiPriceFeed,
+    tbtcConstants,
+    tbtcToken,
+    tbtcDepositToken,
+    feeRebateToken,
+    vendingMachine,
+  } = await deployAndLinkAll())
 
   token = tbtcToken
   mockSatWeiPriceFeed.setPrice(new BN(values.satweiPrice))
@@ -109,19 +112,24 @@ const createInstance = async (substitutions = {}) => {
     await ecdsaKeepStub.send(collateralAmount, { from: accounts[9] })
     const openKeepFee = await tbtcSystem.getNewDepositFeeEstimate.call()
     await ecdsaKeepStub.setPublicKey(publicKey)
-    await depositFactory.createDeposit(new BN(values.lotSize), { value: openKeepFee, from: values.depositOwner })
+    await depositFactory.createDeposit(new BN(values.lotSize), {
+      value: openKeepFee,
+      from: values.depositOwner,
+    })
     const eventList = await depositFactory.getPastEvents(
       "DepositCloneCreated",
-      { fromBlock: blockNumber, toBlock: "latest" },
+      { fromBlock: blockNumber, toBlock: "latest" }
     )
     //  Deposit at clone address received from depositFactory event
-    const testDeposit = await TestDeposit.at(eventList[i].returnValues.depositCloneAddress)
+    const testDeposit = await TestDeposit.at(
+      eventList[i].returnValues.depositCloneAddress
+    )
 
     await determineStateTransitionPath(testDeposit, values)
 
     deposits.push(testDeposit)
 
-    if(values.numToCreate == 1){
+    if (values.numToCreate == 1) {
       deposits = testDeposit
     }
   }
@@ -139,17 +147,17 @@ const createInstance = async (substitutions = {}) => {
     vendingMachine,
     collateralAmount,
     ecdsaKeepStub,
-    feeRebateToken
+    feeRebateToken,
   }
 }
 
 // move from AWAITING_SIGNER_SETUP to AWAITING_BTC_FUNDING_PROOF
 const toAwaitingFundingProof = async (testDeposit) => {
-    // retrieve pubkey and move to AWAITING_BTC_FUNDING_PROOF.
-    await testDeposit.retrieveSignerPubkey()
+  // retrieve pubkey and move to AWAITING_BTC_FUNDING_PROOF.
+  await testDeposit.retrieveSignerPubkey()
 }
 
-// move from AWAITING_BTC_FUNDING_PROOF to ACTIVE 
+// move from AWAITING_BTC_FUNDING_PROOF to ACTIVE
 const toActive = async (testDeposit) => {
   // provide the funding proof and move to ACTIVE state.
   await testDeposit.provideBTCFundingProof(
@@ -160,13 +168,16 @@ const toActive = async (testDeposit) => {
     _fundingOutputIndex,
     _merkleProof,
     _txIndexInBlock,
-    _bitcoinHeaders,
+    _bitcoinHeaders
   )
 }
 
 // move from ACTIVE to AWAITING_WITHDRAWAL_SIGNATURE
-const toAwaitingWithdrawalSignature = async (testDeposit, values = defaultValues) => {
-  await tbtcToken.resetBalance(signerFee, {from: values.depositOwner})
+const toAwaitingWithdrawalSignature = async (
+  testDeposit,
+  values = defaultValues
+) => {
+  await tbtcToken.resetBalance(signerFee, { from: values.depositOwner })
 
   await tbtcToken.approve(testDeposit.address, signerFee, {
     from: values.depositOwner,
@@ -175,49 +186,56 @@ const toAwaitingWithdrawalSignature = async (testDeposit, values = defaultValues
   await testDeposit.requestRedemption(
     "0x1111111100000000",
     redeemerOutputScript,
-    { from: values.depositOwner },// only TDT owner can redeem pre-term
+    { from: values.depositOwner } // only TDT owner can redeem pre-term
   )
 }
 
 // move from AWAITING_WITHDRAWAL_SIGNATURE to AWAITING_WITHDRAWAL_PROOF
-const toAwaitingWithdrawalProof = async (testDeposit, values = defaultValues) => {
+const toAwaitingWithdrawalProof = async (
+  testDeposit,
+  values = defaultValues
+) => {
   await testDeposit.setSigningGroupPublicKey(pubkeyX, pubkeyY)
   await testDeposit.setRequestInfo(
     values.depositOwner,
     "0x" + "11".repeat(20),
     0,
     0,
-    digest,
+    digest
   )
   await testDeposit.provideRedemptionSignature(v, r, s)
-  
 }
 
 // Determine what the requires state is and call the appropriate functions to reach it.
-const determineStateTransitionPath = async (testDeposit, values = defaultValues) => {
-  switch(values.state){
+const determineStateTransitionPath = async (
+  testDeposit,
+  values = defaultValues
+) => {
+  switch (values.state) {
     case states.AWAITING_SIGNER_SETUP.toNumber():
-      break;
+      break
     case states.AWAITING_BTC_FUNDING_PROOF.toNumber():
       await toAwaitingFundingProof(testDeposit, values)
-      break;
+      break
     case states.ACTIVE.toNumber():
       await toAwaitingFundingProof(testDeposit, values)
       await toActive(testDeposit, values)
-      break;
+      break
     case states.AWAITING_WITHDRAWAL_SIGNATURE.toNumber():
       await toAwaitingFundingProof(testDeposit, values)
       await toActive(testDeposit, values)
       await toAwaitingWithdrawalSignature(testDeposit, values)
-      break;
+      break
     case states.AWAITING_WITHDRAWAL_PROOF.toNumber():
       await toAwaitingFundingProof(testDeposit, values)
       await toActive(testDeposit, values)
       await toAwaitingWithdrawalSignature(testDeposit, values)
       await toAwaitingWithdrawalProof(testDeposit, values)
-      break;
+      break
     default:
-      throw new Error('required state destination does not have a supported path')
+      throw new Error(
+        "required state destination does not have a supported path"
+      )
   }
 }
 
@@ -226,4 +244,3 @@ module.exports.toActive = toActive
 module.exports.toAwaitingFundingProof = toAwaitingFundingProof
 module.exports.toAwaitingWithdrawalSignature = toAwaitingWithdrawalSignature
 module.exports.toAwaitingWithdrawalProof = toAwaitingWithdrawalProof
-
