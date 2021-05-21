@@ -65,8 +65,8 @@
     "prettier": "^2.0.2",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "solc": "0.5.17",
-    "solium": "^1.0.0",
-    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#0.1.2",
+    "solium": "^1.2.5",
+    "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#v0.2.0",
     "truffle": "^5.3.1"
   },
   "engines": {
