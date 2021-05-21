@@ -6,7 +6,9 @@ import {DepositFunding} from "./DepositFunding.sol";
 import {DepositRedemption} from "./DepositRedemption.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
-import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {
+    IERC721
+} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 
@@ -38,7 +40,6 @@ import "../system/DepositFactoryAuthority.sol";
 ///      `DepositUtils.Deposit` that contains all aspects of the deposit state
 ///      itself.
 contract Deposit is DepositFactoryAuthority {
-
     using DepositRedemption for DepositUtils.Deposit;
     using DepositFunding for DepositUtils.Deposit;
     using DepositLiquidation for DepositUtils.Deposit;
@@ -51,22 +52,25 @@ contract Deposit is DepositFactoryAuthority {
     ///      using the `DepositFactory.createDeposit` method, and are clones of
     ///      the constructed deposit. The factory will set the initial values
     ///      for a new clone using `initializeDeposit`.
-    constructor () public {
+    constructor() public {
         // The constructed Deposit will never be used, so the deposit factory
         // address can be anything. Clones are updated as per above.
         initialize(address(0xdeadbeef));
     }
 
     /// @notice Deposits do not accept arbitrary ETH.
-    function () external payable {
-        require(msg.data.length == 0, "Deposit contract was called with unknown function selector.");
+    function() external payable {
+        require(
+            msg.data.length == 0,
+            "Deposit contract was called with unknown function selector."
+        );
     }
 
-//----------------------------- METADATA LOOKUP ------------------------------//
+    //----------------------------- METADATA LOOKUP ------------------------------//
 
     /// @notice Get this deposit's BTC lot size in satoshis.
     /// @return uint64 lot size in satoshis.
-    function lotSizeSatoshis() external view returns (uint64){
+    function lotSizeSatoshis() external view returns (uint64) {
         return self.lotSizeSatoshis;
     }
 
@@ -74,7 +78,7 @@ contract Deposit is DepositFactoryAuthority {
     /// @dev This is the same as lotSizeSatoshis(), but is multiplied to scale
     ///      to 18 decimal places.
     /// @return uint256 lot size in TBTC precision (max 18 decimal places).
-    function lotSizeTbtc() external view returns (uint256){
+    function lotSizeTbtc() external view returns (uint256) {
         return self.lotSizeTbtc();
     }
 
@@ -114,7 +118,7 @@ contract Deposit is DepositFactoryAuthority {
     ///      lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at
     ///         term.
-    function remainingTerm() external view returns(uint256){
+    function remainingTerm() external view returns (uint256) {
         return self.remainingTerm();
     }
 
@@ -144,7 +148,11 @@ contract Deposit is DepositFactoryAuthority {
     ///      can be changed by governance, but the value for a particular
     ///      deposit is static once the deposit is created.
     /// @return The undercollateralized level for this deposit.
-    function undercollateralizedThresholdPercent() external view returns (uint16) {
+    function undercollateralizedThresholdPercent()
+        external
+        view
+        returns (uint16)
+    {
         return self.undercollateralizedThresholdPercent;
     }
 
@@ -158,7 +166,11 @@ contract Deposit is DepositFactoryAuthority {
     ///      but the value for a particular deposit is static once the deposit
     ///      is created.
     /// @return The severely undercollateralized level for this deposit.
-    function severelyUndercollateralizedThresholdPercent() external view returns (uint16) {
+    function severelyUndercollateralizedThresholdPercent()
+        external
+        view
+        returns (uint16)
+    {
         return self.severelyUndercollateralizedThresholdPercent;
     }
 
@@ -169,9 +181,9 @@ contract Deposit is DepositFactoryAuthority {
     ///      AWAITING_SIGNER_SETUP, and AWAITING_BTC_FUNDING_PROOF), this value
     ///      would not be valid.
     /// @return The value of the funding UTXO in satoshis.
-    function utxoValue() external view returns (uint256){
+    function utxoValue() external view returns (uint256) {
         require(
-            ! self.inFunding(),
+            !self.inFunding(),
             "Deposit has not yet been funded and has no available funding info"
         );
 
@@ -185,9 +197,17 @@ contract Deposit is DepositFactoryAuthority {
     ///      AWAITING_SIGNER_SETUP, and AWAITING_BTC_FUNDING_PROOF), none of
     ///      these values are set or valid.
     /// @return A tuple of (uxtoValueBytes, fundedAt, uxtoOutpoint).
-    function fundingInfo() external view returns (bytes8 utxoValueBytes, uint256 fundedAt, bytes memory utxoOutpoint) {
+    function fundingInfo()
+        external
+        view
+        returns (
+            bytes8 utxoValueBytes,
+            uint256 fundedAt,
+            bytes memory utxoOutpoint
+        )
+    {
         require(
-            ! self.inFunding(),
+            !self.inFunding(),
             "Deposit has not yet been funded and has no available funding info"
         );
 
@@ -219,7 +239,7 @@ contract Deposit is DepositFactoryAuthority {
         return self.getWithdrawableAmount();
     }
 
-//------------------------------ FUNDING FLOW --------------------------------//
+    //------------------------------ FUNDING FLOW --------------------------------//
 
     /// @notice Notify the contract that signing group setup has timed out if
     ///         retrieveSignerPubkey is not successfully called within the
@@ -272,7 +292,8 @@ contract Deposit is DepositFactoryAuthority {
     ///      but stores no additional state.
     /// @param _abortOutputScript The output script the funder wishes to request
     ///        a return of their UTXO to.
-    function requestFunderAbort(bytes memory _abortOutputScript) public { // not external to allow bytes memory parameters
+    function requestFunderAbort(bytes memory _abortOutputScript) public {
+        // not external to allow bytes memory parameters
         require(
             self.depositOwner() == msg.sender,
             "Only TDT holder can request funder abort"
@@ -297,8 +318,15 @@ contract Deposit is DepositFactoryAuthority {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public { // not external to allow bytes memory parameters
-        self.provideFundingECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
+    ) public {
+        // not external to allow bytes memory parameters
+        self.provideFundingECDSAFraudProof(
+            _v,
+            _r,
+            _s,
+            _signedDigest,
+            _preimage
+        );
     }
 
     /// @notice Anyone may submit a funding proof to the deposit showing that
@@ -330,7 +358,8 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         self.provideBTCFundingProof(
             _txVersion,
             _txInputVector,
@@ -343,7 +372,7 @@ contract Deposit is DepositFactoryAuthority {
         );
     }
 
-//---------------------------- LIQUIDATION FLOW ------------------------------//
+    //---------------------------- LIQUIDATION FLOW ------------------------------//
 
     /// @notice Notify the contract that the signers are undercollateralized.
     /// @dev This call will revert if the signers are not in fact
@@ -413,7 +442,8 @@ contract Deposit is DepositFactoryAuthority {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         self.provideECDSAFraudProof(_v, _r, _s, _signedDigest, _preimage);
     }
 
@@ -458,7 +488,7 @@ contract Deposit is DepositFactoryAuthority {
         self.purchaseSignerBondsAtAuction();
     }
 
-//---------------------------- REDEMPTION FLOW -------------------------------//
+    //---------------------------- REDEMPTION FLOW -------------------------------//
 
     /// @notice Get TBTC amount required for redemption by a specified
     ///         _redeemer.
@@ -467,8 +497,13 @@ contract Deposit is DepositFactoryAuthority {
     ///        requested.
     /// @return The amount in TBTC needed by the `_redeemer` to redeem the
     ///         deposit.
-    function getRedemptionTbtcRequirement(address _redeemer) external view returns (uint256){
-        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, false);
+    function getRedemptionTbtcRequirement(address _redeemer)
+        external
+        view
+        returns (uint256)
+    {
+        (uint256 tbtcPayment, , ) =
+            self.calculateRedemptionTbtcAmounts(_redeemer, false);
         return tbtcPayment;
     }
 
@@ -476,8 +511,13 @@ contract Deposit is DepositFactoryAuthority {
     ///         is this deposit's owner (TDT holder).
     /// @param _redeemer The assumed owner of the deposit's TDT .
     /// @return The amount in TBTC needed to redeem the deposit.
-    function getOwnerRedemptionTbtcRequirement(address _redeemer) external view returns (uint256){
-        (uint256 tbtcPayment,,) = self.calculateRedemptionTbtcAmounts(_redeemer, true);
+    function getOwnerRedemptionTbtcRequirement(address _redeemer)
+        external
+        view
+        returns (uint256)
+    {
+        (uint256 tbtcPayment, , ) =
+            self.calculateRedemptionTbtcAmounts(_redeemer, true);
         return tbtcPayment;
     }
 
@@ -497,7 +537,8 @@ contract Deposit is DepositFactoryAuthority {
     function requestRedemption(
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         self.requestRedemption(_outputValueBytes, _redeemerOutputScript);
     }
 
@@ -532,7 +573,10 @@ contract Deposit is DepositFactoryAuthority {
         bytes8 _previousOutputValueBytes,
         bytes8 _newOutputValueBytes
     ) external {
-        self.increaseRedemptionFee(_previousOutputValueBytes, _newOutputValueBytes);
+        self.increaseRedemptionFee(
+            _previousOutputValueBytes,
+            _newOutputValueBytes
+        );
     }
 
     /// @notice Anyone may submit a redemption proof to the deposit showing that
@@ -564,7 +608,8 @@ contract Deposit is DepositFactoryAuthority {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         self.provideRedemptionProof(
             _txVersion,
             _txInputVector,
@@ -576,7 +621,7 @@ contract Deposit is DepositFactoryAuthority {
         );
     }
 
-//--------------------------- MUTATING HELPERS -------------------------------//
+    //--------------------------- MUTATING HELPERS -------------------------------//
 
     /// @notice This function can only be called by the deposit factory; use
     ///         `DepositFactory.createDeposit` to create a new deposit.
@@ -601,7 +646,7 @@ contract Deposit is DepositFactoryAuthority {
         FeeRebateToken _feeRebateToken,
         address _vendingMachineAddress,
         uint64 _lotSizeSatoshis
-    ) public onlyFactory payable {
+    ) public payable onlyFactory {
         self.tbtcSystem = _tbtcSystem;
         self.tbtcToken = _tbtcToken;
         self.tbtcDepositToken = _tbtcDepositToken;
@@ -622,7 +667,8 @@ contract Deposit is DepositFactoryAuthority {
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript,
         address payable _finalRecipient
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         require(
             msg.sender == self.vendingMachineAddress,
             "Only the vending machine can call transferAndRequestRedemption"

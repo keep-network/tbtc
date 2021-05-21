@@ -1,4 +1,4 @@
-const { web3 } = require('@openzeppelin/test-environment')
+const { web3 } = require("@openzeppelin/test-environment")
 
 /**
  * Snapshots are a feature of some EVM implementations ([1]) for improved dev UX.
@@ -41,18 +41,20 @@ const { web3 } = require('@openzeppelin/test-environment')
  * [3]: https://sourcegraph.com/github.com/0xProject/0x-monorepo@ec92cea/-/blob/contracts/asset-proxy/test/authorizable.ts#L27
  */
 
-
 const snapshotIdsStack = []
 async function createSnapshot() {
   const snapshotId = await new Promise((res, rej) => {
-    web3.currentProvider.send({
-      jsonrpc: '2.0',
-      method: 'evm_snapshot',
-      id: 12345,
-    }, function(err, result) {
-      if (err) rej(err)
-      else res(result.result)
-    })
+    web3.currentProvider.send(
+      {
+        jsonrpc: "2.0",
+        method: "evm_snapshot",
+        id: 12345,
+      },
+      function (err, result) {
+        if (err) rej(err)
+        else res(result.result)
+      }
+    )
   })
 
   snapshotIdsStack.push(snapshotId)
@@ -63,15 +65,18 @@ async function restoreSnapshot() {
 
   try {
     await new Promise((res, rej) => {
-      web3.currentProvider.send({
-        jsonrpc: '2.0',
-        method: 'evm_revert',
-        id: 12345,
-        params: [snapshotId],
-      }, function(err, result) {
-        if (err) rej(err)
-        else res(result.result)
-      })
+      web3.currentProvider.send(
+        {
+          jsonrpc: "2.0",
+          method: "evm_revert",
+          id: 12345,
+          params: [snapshotId],
+        },
+        function (err, result) {
+          if (err) rej(err)
+          else res(result.result)
+        }
+      )
     })
   } catch (ex) {
     throw new Error(`Snapshot with id #${snapshotId} failed to revert`)

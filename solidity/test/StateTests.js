@@ -1,6 +1,6 @@
 const states = require("./states/deposit.js")
-const {deployAndLinkAll} = require("./helpers/fullDeployer.js")
-const {runStatePath} = require("./states/run.js")
+const { deployAndLinkAll } = require("./helpers/fullDeployer.js")
+const { runStatePath } = require("./states/run.js")
 
 describe("tBTC states", () => {
   describe("when running a redemption", () => {
@@ -11,7 +11,7 @@ describe("tBTC states", () => {
       "awaitingSignerSetup",
       "awaitingFundingProof",
       "active",
-      "awaitingWithdrawalSignature",
+      "awaitingWithdrawalSignature"
     )
   })
   describe("when liquidating from a courtesy call", () => {
@@ -23,7 +23,7 @@ describe("tBTC states", () => {
       "awaitingFundingProof",
       "active",
       "courtesyCall",
-      "liquidationInProgress",
+      "liquidationInProgress"
     )
   })
   describe("when fraud liquidating from a courtesy call", () => {
@@ -35,7 +35,7 @@ describe("tBTC states", () => {
       "awaitingFundingProof",
       "active",
       "courtesyCall",
-      "liquidationInProgress_fraud",
+      "liquidationInProgress_fraud"
     )
   })
   describe("when liquidating from severe undercollateralization", () => {
@@ -46,7 +46,7 @@ describe("tBTC states", () => {
       "awaitingSignerSetup",
       "awaitingFundingProof",
       "active",
-      "liquidationInProgress",
+      "liquidationInProgress"
     )
   })
   describe("when liquidiating during a redemption", () => {
@@ -58,7 +58,7 @@ describe("tBTC states", () => {
       "awaitingFundingProof",
       "active",
       "awaitingWithdrawalSignature",
-      "liquidationInProgress",
+      "liquidationInProgress"
     )
   })
   describe("when minting TBTC then running a redemption", () => {
@@ -70,7 +70,7 @@ describe("tBTC states", () => {
       "awaitingFundingProof",
       "active",
       "minted",
-      "awaitingWithdrawalSignature",
+      "awaitingWithdrawalSignature"
     )
   })
   describe("when minting TBTC then redeeming from a courtesy call", () => {
@@ -83,7 +83,7 @@ describe("tBTC states", () => {
       "active",
       "minted",
       "courtesyCall",
-      "awaitingWithdrawalSignature",
+      "awaitingWithdrawalSignature"
     )
   })
   describe("when minting TBTC then liquidating from a courtesy call", () => {
@@ -96,7 +96,7 @@ describe("tBTC states", () => {
       "active",
       "minted",
       "courtesyCall",
-      "liquidationInProgress",
+      "liquidationInProgress"
     )
   })
   describe("when minting TBTC then fraud liquidating from a courtesy call", () => {
@@ -109,7 +109,7 @@ describe("tBTC states", () => {
       "active",
       "minted",
       "courtesyCall",
-      "liquidationInProgress_fraud",
+      "liquidationInProgress_fraud"
     )
   })
   describe("when minting TBTC then liquidating from severe undercollateralization", () => {
@@ -121,7 +121,7 @@ describe("tBTC states", () => {
       "awaitingFundingProof",
       "active",
       "minted",
-      "liquidationInProgress",
+      "liquidationInProgress"
     )
   })
   describe("when minting TBTC then liquidiating during a redemption", () => {
@@ -134,7 +134,7 @@ describe("tBTC states", () => {
       "active",
       "minted",
       "awaitingWithdrawalSignature",
-      "liquidationInProgress",
+      "liquidationInProgress"
     )
   })
 })

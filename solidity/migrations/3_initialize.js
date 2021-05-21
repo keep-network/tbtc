@@ -13,19 +13,19 @@ const TBTCDepositToken = artifacts.require("TBTCDepositToken")
 const FeeRebateToken = artifacts.require("FeeRebateToken")
 const VendingMachine = artifacts.require("VendingMachine")
 
-const {contracts} = require("@keep-network/common.js")
-const {readExternalContractAddress} = contracts
+const { contracts } = require("@keep-network/common.js")
+const { readExternalContractAddress } = contracts
 
 // Used for creating sortition pool.
 const BondedECDSAKeepFactoryJson = require("@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json")
 
-const {ETHBTCMedianizer} = require("./externals.js")
+const { ETHBTCMedianizer } = require("./externals.js")
 
-module.exports = async function(deployer, network, accounts) {
+module.exports = async function (deployer, network, accounts) {
   const BondedECDSAKeepFactoryAddress = readExternalContractAddress(
     "@keep-network/keep-ecdsa",
     "BondedECDSAKeepFactory",
-    deployer,
+    deployer
   )
 
   // Don't enact this setup during unit testing.
@@ -44,7 +44,7 @@ module.exports = async function(deployer, network, accounts) {
       `  feeRebateToken: ${FeeRebateToken.address}\n` +
       `  vendingMachine: ${VendingMachine.address}\n` +
       `  keepThreshold: ${keepThreshold}\n` +
-      `  keepSize: ${keepGroupSize}`,
+      `  keepSize: ${keepGroupSize}`
   )
 
   // System.
@@ -58,7 +58,7 @@ module.exports = async function(deployer, network, accounts) {
     FeeRebateToken.address,
     VendingMachine.address,
     keepThreshold,
-    keepGroupSize,
+    keepGroupSize
   )
 
   console.log("TBTCSystem initialized!")
@@ -73,19 +73,19 @@ module.exports = async function(deployer, network, accounts) {
     const ethBtcPriceFeedMock = await ETHBTCPriceFeedMock.deployed()
     await satWeiPriceFeed.initialize(
       tbtcSystem.address,
-      ethBtcPriceFeedMock.address,
+      ethBtcPriceFeedMock.address
     )
   }
 
   // Create sortition pool for new TBTCSystem.
   console.log(`Creating sortition pool for TBTCSystem: [${TBTCSystem.address}]`)
   const BondedECDSAKeepFactoryContract = truffleContract(
-    BondedECDSAKeepFactoryJson,
+    BondedECDSAKeepFactoryJson
   )
   BondedECDSAKeepFactoryContract.setProvider(deployer.provider)
 
   const BondedECDSAKeepFactory = await BondedECDSAKeepFactoryContract.at(
-    BondedECDSAKeepFactoryAddress,
+    BondedECDSAKeepFactoryAddress
   )
 
   if (network === "alfajores") {
@@ -97,7 +97,7 @@ module.exports = async function(deployer, network, accounts) {
   }
 
   const sortitionPoolContractAddress = await BondedECDSAKeepFactory.getSortitionPool.call(
-    TBTCSystem.address,
+    TBTCSystem.address
   )
   console.log(`Sortition pool address: [${sortitionPoolContractAddress}]`)
 
@@ -111,13 +111,13 @@ async function createSortitionPoolCelo(account) {
 
   const BondedECDSAKeepFactory = new web3.eth.Contract(
     BondedECDSAKeepFactoryJson.abi,
-    BondedECDSAKeepFactoryAddress,
+    BondedECDSAKeepFactoryAddress
   )
 
   const txObject = await BondedECDSAKeepFactory.methods.createSortitionPool(
-    TBTCSystem.address,
+    TBTCSystem.address
   )
 
-  const tx = await celoKit.sendTransactionObject(txObject, {from: account})
+  const tx = await celoKit.sendTransactionObject(txObject, { from: account })
   await tx.waitReceipt()
 }

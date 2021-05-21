@@ -1,13 +1,13 @@
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {BN, expectRevert} = require("@openzeppelin/test-helpers")
-const {expect} = require("chai")
+const { deployAndLinkAll } = require("./helpers/testDeployer.js")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { BN, expectRevert } = require("@openzeppelin/test-helpers")
+const { expect } = require("chai")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
 const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
 const MockMedianizer = contract.fromArtifact("MockMedianizer")
 
-describe("TBTCSystem", async function() {
+describe("TBTCSystem", async function () {
   let tbtcSystem
   let ecdsaKeepFactory
   let tdt
@@ -27,7 +27,7 @@ describe("TBTCSystem", async function() {
       {
         TBTCSystemStub: TBTCSystem,
         MockSatWeiPriceFeed: SatWeiPriceFeed,
-      },
+      }
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
@@ -58,7 +58,7 @@ describe("TBTCSystem", async function() {
       const actualKeepOwner = await ecdsaKeepFactory.keepOwner.call()
 
       expect(keepOwner, "incorrect keep owner address").to.equal(
-        actualKeepOwner,
+        actualKeepOwner
       )
     })
 
@@ -71,7 +71,7 @@ describe("TBTCSystem", async function() {
         {
           value: openKeepFee,
           from: keepOwner,
-        },
+        }
       )
 
       expect(expectedKeepAddress, "incorrect keep address").to.equal(result)
@@ -89,7 +89,7 @@ describe("TBTCSystem", async function() {
       const balanceCheck = new BN(finalBalance).sub(new BN(initialBalance))
       expect(
         balanceCheck,
-        "TBTCSystem did not correctly forward value to keep factory",
+        "TBTCSystem did not correctly forward value to keep factory"
       ).to.eq.BN(openKeepFee)
     })
 
@@ -99,7 +99,7 @@ describe("TBTCSystem", async function() {
           value: openKeepFee,
           from: accounts[0],
         }),
-        "Caller must be a Deposit contract",
+        "Caller must be a Deposit contract"
       )
     })
 
@@ -109,7 +109,7 @@ describe("TBTCSystem", async function() {
           value: openKeepFee,
           from: tdtOwner,
         }),
-        "Caller must be a Deposit contract",
+        "Caller must be a Deposit contract"
       )
     })
   })
@@ -121,7 +121,7 @@ describe("TBTCSystem", async function() {
     it("should revert if the caller does not have an associated TDT", async () => {
       await expectRevert(
         tbtcSystem.fetchBitcoinPrice(),
-        "Caller must be a Deposit contract",
+        "Caller must be a Deposit contract"
       )
     })
 
@@ -132,7 +132,7 @@ describe("TBTCSystem", async function() {
         .div(new BN(medianizerValue))
 
       expect(
-        await tbtcSystem.fetchBitcoinPrice.call({from: keepOwner}),
+        await tbtcSystem.fetchBitcoinPrice.call({ from: keepOwner })
       ).to.eq.BN(priceFeedValue)
     })
   })

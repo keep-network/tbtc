@@ -14,11 +14,11 @@ import "./VendingMachineAuthority.sol";
 ///         the signer fee if the redeemer is not the TDT holder and Deposit is not
 ///         at-term or in COURTESY_CALL.
 contract FeeRebateToken is ERC721Metadata, VendingMachineAuthority {
-
     constructor(address _vendingMachine)
+        public
         ERC721Metadata("tBTC Fee Rebate Token", "FRT")
         VendingMachineAuthority(_vendingMachine)
-    public {
+    {
         // solium-disable-previous-line no-empty-blocks
     }
 

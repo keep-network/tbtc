@@ -4,7 +4,6 @@ pragma solidity 0.5.17;
 /// @notice Contract to secure function calls to the TBTC System contract.
 /// @dev    The `TBTCSystem` contract address is passed as a constructor parameter.
 contract TBTCSystemAuthority {
-
     address internal tbtcSystemAddress;
 
     /// @notice Set the address of the System contract on contract initialization.
@@ -13,8 +12,11 @@ contract TBTCSystemAuthority {
     }
 
     /// @notice Function modifier ensures modified function is only called by TBTCSystem.
-    modifier onlyTbtcSystem(){
-        require(msg.sender == tbtcSystemAddress, "Caller must be tbtcSystem contract");
+    modifier onlyTbtcSystem() {
+        require(
+            msg.sender == tbtcSystemAddress,
+            "Caller must be tbtcSystem contract"
+        );
         _;
     }
 }

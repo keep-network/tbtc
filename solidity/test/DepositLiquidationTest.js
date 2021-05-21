@@ -1,10 +1,10 @@
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {states} = require("./helpers/utils.js")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {accounts, web3} = require("@openzeppelin/test-environment")
+const { deployAndLinkAll } = require("./helpers/testDeployer.js")
+const { states } = require("./helpers/utils.js")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { accounts, web3 } = require("@openzeppelin/test-environment")
 const [owner] = accounts
-const {BN, expectRevert} = require("@openzeppelin/test-helpers")
-const {expect} = require("chai")
+const { BN, expectRevert } = require("@openzeppelin/test-helpers")
+const { expect } = require("chai")
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -15,7 +15,7 @@ const {expect} = require("chai")
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0xs234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-describe("DepositLiquidation", async function() {
+describe("DepositLiquidation", async function () {
   let tbtcConstants
   let tbtcSystemStub
   let tbtcToken
@@ -50,20 +50,20 @@ describe("DepositLiquidation", async function() {
     const severeThreshold = await tbtcSystemStub.getSeverelyUndercollateralizedThresholdPercent()
 
     await testDeposit.setUndercollateralizedThresholdPercent(
-      new BN(underThreshold),
+      new BN(underThreshold)
     )
     await testDeposit.setSeverelyUndercollateralizedThresholdPercent(
-      new BN(severeThreshold),
+      new BN(severeThreshold)
     )
     await testDeposit.setSignerFeeDivisor(new BN("200"))
 
     await tbtcDepositToken.forceMint(
       beneficiary,
-      web3.utils.toBN(testDeposit.address),
+      web3.utils.toBN(testDeposit.address)
     )
     await feeRebateToken.forceMint(
       beneficiary,
-      web3.utils.toBN(testDeposit.address),
+      web3.utils.toBN(testDeposit.address)
     )
     await testDeposit.reset()
     await ecdsaKeepStub.reset()
@@ -145,7 +145,7 @@ describe("DepositLiquidation", async function() {
     beforeEach(async () => {
       await testDeposit.setState(states.LIQUIDATION_IN_PROGRESS)
       for (let i = 0; i < 2; i++) {
-        await tbtcToken.resetBalance(lotSize, {from: accounts[i]})
+        await tbtcToken.resetBalance(lotSize, { from: accounts[i] })
         await tbtcToken.resetAllowance(testDeposit.address, lotSize, {
           from: accounts[i],
         })
@@ -155,7 +155,7 @@ describe("DepositLiquidation", async function() {
     it("sets state to liquidated, logs Liquidated, ", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
-      await testDeposit.purchaseSignerBondsAtAuction({from: owner})
+      await testDeposit.purchaseSignerBondsAtAuction({ from: owner })
 
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATED)
@@ -172,7 +172,7 @@ describe("DepositLiquidation", async function() {
 
       await expectRevert(
         testDeposit.purchaseSignerBondsAtAuction(),
-        "No active auction",
+        "No active auction"
       )
     })
 
@@ -182,19 +182,19 @@ describe("DepositLiquidation", async function() {
 
       await expectRevert(
         testDeposit.purchaseSignerBondsAtAuction(),
-        "Not enough TBTC to cover outstanding debt",
+        "Not enough TBTC to cover outstanding debt"
       )
     })
 
     it(`burns msg.sender's tokens`, async () => {
       const initialTokenBalance = await tbtcToken.balanceOf(buyer)
 
-      await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
+      await testDeposit.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalTokenBalance = await tbtcToken.balanceOf(buyer)
       const tokenCheck = new BN(finalTokenBalance).add(new BN(lotSize))
       expect(tokenCheck, "tokens not burned correctly").to.eq.BN(
-        initialTokenBalance,
+        initialTokenBalance
       )
     })
 
@@ -205,15 +205,15 @@ describe("DepositLiquidation", async function() {
 
       const initialTokenBalance = await tbtcToken.balanceOf(beneficiary)
 
-      await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
+      await testDeposit.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalTokenBalance = await tbtcToken.balanceOf(beneficiary)
       const tokenCheck = new BN(initialTokenBalance).add(
-        new BN(beneficiaryReward).add(lotSize),
+        new BN(beneficiaryReward).add(lotSize)
       )
       expect(
         finalTokenBalance,
-        "tokens not returned to beneficiary correctly",
+        "tokens not returned to beneficiary correctly"
       ).to.eq.BN(tokenCheck)
     })
 
@@ -222,13 +222,13 @@ describe("DepositLiquidation", async function() {
       const block = await web3.eth.getBlock("latest")
       const notifiedTime = block.timestamp
 
-      await testDeposit.send(value, {from: accounts[8]})
+      await testDeposit.send(value, { from: accounts[8] })
 
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testDeposit.setState(states.LIQUIDATION_IN_PROGRESS)
       const auctionValue = await testDeposit.auctionValue.call()
 
-      await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
+      await testDeposit.purchaseSignerBondsAtAuction({ from: buyer })
 
       // calculate the split of the un-purchased signer bond
       const split = value.sub(auctionValue).div(new BN(2))
@@ -241,7 +241,7 @@ describe("DepositLiquidation", async function() {
 
       expect(depositBalance).to.eq.BN(auctionValue.add(split))
       expect(withdrawable, "buyer should have a withdrawable balance").to.eq.BN(
-        auctionValue,
+        auctionValue
       )
     })
 
@@ -252,10 +252,10 @@ describe("DepositLiquidation", async function() {
       const value = 1000000000000
       const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
-      await testDeposit.send(value, {from: accounts[8]})
+      await testDeposit.send(value, { from: accounts[8] })
 
       const initialSignerBalance = await web3.eth.getBalance(
-        ecdsaKeepStub.address,
+        ecdsaKeepStub.address
       )
 
       await testDeposit.setLiquidationInitiator(liquidationInitiator)
@@ -264,14 +264,14 @@ describe("DepositLiquidation", async function() {
       const auctionValue = await testDeposit.auctionValue.call()
       // Buy auction immediately. No scaling takes place. Auction value is base
       // percentage of signer bond.
-      await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
+      await testDeposit.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalSignerBalance = await web3.eth.getBalance(
-        ecdsaKeepStub.address,
+        ecdsaKeepStub.address
       )
 
       const signerBalanceDiff = new BN(finalSignerBalance).sub(
-        new BN(initialSignerBalance),
+        new BN(initialSignerBalance)
       )
 
       const totalReward = (value * (100 - basePercentage)) / 100
@@ -294,24 +294,24 @@ describe("DepositLiquidation", async function() {
       const value = 1000000000000
       const basePercentage = await testDeposit.getAuctionBasePercentage.call()
 
-      await testDeposit.send(value, {from: accounts[8]})
+      await testDeposit.send(value, { from: accounts[8] })
 
       const initialSignerBalance = await web3.eth.getBalance(
-        ecdsaKeepStub.address,
+        ecdsaKeepStub.address
       )
 
       await testDeposit.setState(states.FRAUD_LIQUIDATION_IN_PROGRESS)
       await testDeposit.setLiquidationAndCourtesyInitated(notifiedTime, 0)
       await testDeposit.setLiquidationInitiator(liquidationInitiator)
       // Buy auction immediately. No scaling taken place. Auction value is base percentage of signer bond.
-      await testDeposit.purchaseSignerBondsAtAuction({from: buyer})
+      await testDeposit.purchaseSignerBondsAtAuction({ from: buyer })
 
       const finalSignerBalance = await web3.eth.getBalance(
-        ecdsaKeepStub.address,
+        ecdsaKeepStub.address
       )
 
       const signerBalanceDiff = new BN(finalSignerBalance).sub(
-        new BN(initialSignerBalance),
+        new BN(initialSignerBalance)
       )
 
       const withdrawable = await testDeposit.withdrawableAmount.call({
@@ -381,7 +381,7 @@ describe("DepositLiquidation", async function() {
 
       await expectRevert(
         testDeposit.notifyCourtesyCall(),
-        "Can only courtesy call from active state",
+        "Can only courtesy call from active state"
       )
     })
 
@@ -395,7 +395,7 @@ describe("DepositLiquidation", async function() {
       await ecdsaKeepStub.setBondAmount(bondValue)
       await expectRevert(
         testDeposit.notifyCourtesyCall(),
-        "Signers have sufficient collateral",
+        "Signers have sufficient collateral"
       )
     })
   })
@@ -412,7 +412,7 @@ describe("DepositLiquidation", async function() {
       await testDeposit.setFundingInfo(
         "0x" + "00".repeat(8),
         fundedTime,
-        "0x" + "00".repeat(36),
+        "0x" + "00".repeat(36)
       )
       await testDeposit.setLiquidationAndCourtesyInitated(0, notifiedTime)
     })
@@ -432,7 +432,7 @@ describe("DepositLiquidation", async function() {
 
       const eventList = await tbtcSystemStub.getPastEvents(
         "ExitedCourtesyCall",
-        {fromBlock: blockNumber, toBlock: "latest"},
+        { fromBlock: blockNumber, toBlock: "latest" }
       )
       expect(eventList.length).to.equal(1)
     })
@@ -442,7 +442,7 @@ describe("DepositLiquidation", async function() {
 
       await expectRevert(
         testDeposit.exitCourtesyCall(),
-        "Not currently in courtesy call",
+        "Not currently in courtesy call"
       )
     })
 
@@ -452,7 +452,7 @@ describe("DepositLiquidation", async function() {
 
       await expectRevert(
         testDeposit.exitCourtesyCall(),
-        "Deposit is still undercollateralized",
+        "Deposit is still undercollateralized"
       )
     })
   })
@@ -476,7 +476,7 @@ describe("DepositLiquidation", async function() {
     beforeEach(async () => {
       await testDeposit.setState(states.ACTIVE)
       await ecdsaKeepStub.setBondAmount(0)
-      await ecdsaKeepStub.send(1000000, {from: owner})
+      await ecdsaKeepStub.send(1000000, { from: owner })
     })
 
     it("executes and moves state to LIQUIDATION_IN_PROGRESS", async () => {
@@ -503,7 +503,7 @@ describe("DepositLiquidation", async function() {
 
       await expectRevert(
         testDeposit.notifyUndercollateralizedLiquidation(),
-        "Deposit not in active or courtesy call",
+        "Deposit not in active or courtesy call"
       )
     })
 
@@ -518,12 +518,12 @@ describe("DepositLiquidation", async function() {
 
       await expectRevert(
         testDeposit.notifyUndercollateralizedLiquidation(),
-        "Deposit has sufficient collateral",
+        "Deposit has sufficient collateral"
       )
     })
 
     it("assert starts signer abort liquidation", async () => {
-      await ecdsaKeepStub.send(1000000, {from: owner})
+      await ecdsaKeepStub.send(1000000, { from: owner })
       await testDeposit.notifyUndercollateralizedLiquidation()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
@@ -532,7 +532,7 @@ describe("DepositLiquidation", async function() {
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
       expect(
         liquidationTime[0],
-        "liquidation timestamp not recorded",
+        "liquidation timestamp not recorded"
       ).not.to.eq.BN(0)
     })
   })
@@ -550,7 +550,7 @@ describe("DepositLiquidation", async function() {
       courtesyTime = blockTimestamp - timer.toNumber() // has not expired
       await testDeposit.setState(states.COURTESY_CALL)
       await testDeposit.setLiquidationAndCourtesyInitated(0, courtesyTime)
-      await ecdsaKeepStub.send(1000000, {from: owner})
+      await ecdsaKeepStub.send(1000000, { from: owner })
     })
 
     it("executes and moves state to LIQUIDATION_IN_PROGRESS", async () => {
@@ -563,7 +563,7 @@ describe("DepositLiquidation", async function() {
       await testDeposit.setState(states.START)
       await expectRevert(
         testDeposit.notifyCourtesyCallExpired(),
-        "Not in a courtesy call period",
+        "Not in a courtesy call period"
       )
     })
 
@@ -571,12 +571,12 @@ describe("DepositLiquidation", async function() {
       await testDeposit.setLiquidationAndCourtesyInitated(0, courtesyTime * 5)
       await expectRevert(
         testDeposit.notifyCourtesyCallExpired(),
-        "Courtesy period has not elapsed",
+        "Courtesy period has not elapsed"
       )
     })
 
     it("assert starts signer abort liquidation", async () => {
-      await ecdsaKeepStub.send(1000000, {from: owner})
+      await ecdsaKeepStub.send(1000000, { from: owner })
       await testDeposit.notifyCourtesyCallExpired()
 
       const bond = await web3.eth.getBalance(ecdsaKeepStub.address)
@@ -585,7 +585,7 @@ describe("DepositLiquidation", async function() {
       const liquidationTime = await testDeposit.getLiquidationAndCourtesyInitiated.call()
       expect(
         liquidationTime[0],
-        "liquidation timestamp not recorded",
+        "liquidation timestamp not recorded"
       ).not.to.eq.BN(0)
     })
   })

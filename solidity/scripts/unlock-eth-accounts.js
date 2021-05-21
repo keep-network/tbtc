@@ -10,7 +10,7 @@ KEEP_ETHEREUM_PASSWORD=password \
 
 const password = process.env.KEEP_ETHEREUM_PASSWORD || "password"
 
-module.exports = async function() {
+module.exports = async function () {
   const accounts = await web3.eth.getAccounts()
 
   console.log(`Total accounts: ${accounts.length}`)

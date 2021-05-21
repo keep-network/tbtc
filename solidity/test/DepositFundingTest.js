@@ -1,10 +1,10 @@
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {states, fundingTx} = require("./helpers/utils.js")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = constants
-const {expect} = require("chai")
+const { deployAndLinkAll } = require("./helpers/testDeployer.js")
+const { states, fundingTx } = require("./helpers/utils.js")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { BN, constants, expectRevert } = require("@openzeppelin/test-helpers")
+const { ZERO_ADDRESS } = constants
+const { expect } = require("chai")
 const ECDSAKeepStub = contract.fromArtifact("ECDSAKeepStub")
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
 
@@ -17,7 +17,7 @@ const TBTCSystem = contract.fromArtifact("TBTCSystem")
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
 
-describe("DepositFunding", async function() {
+describe("DepositFunding", async function () {
   let tbtcConstants
   let mockRelay
   let tbtcSystemStub
@@ -50,7 +50,7 @@ describe("DepositFunding", async function() {
     beneficiary = accounts[4]
     await tbtcDepositToken.forceMint(
       beneficiary,
-      web3.utils.toBN(testDeposit.address),
+      web3.utils.toBN(testDeposit.address)
     )
 
     await testDeposit.reset()
@@ -83,13 +83,13 @@ describe("DepositFunding", async function() {
         ZERO_ADDRESS,
         ZERO_ADDRESS,
         fullBtc,
-        {value: funderBondAmount},
+        { value: funderBondAmount }
       )
 
       // state updates
       const depositState = await testDeposit.getState.call()
       expect(depositState, "state not as expected").to.eq.BN(
-        states.AWAITING_SIGNER_SETUP,
+        states.AWAITING_SIGNER_SETUP
       )
 
       const systemSignerFeeDivisor = await tbtcSystemStub.getSignerFeeDivisor()
@@ -98,19 +98,19 @@ describe("DepositFunding", async function() {
 
       const keepAddress = await testDeposit.keepAddress.call()
       expect(keepAddress, "keepAddress not as expected").to.equal(
-        expectedKeepAddress,
+        expectedKeepAddress
       )
 
       const stakeLockDuration = await ecdsaKeepFactory.stakeLockDuration.call()
       expect(
         stakeLockDuration,
-        "stake lock duration not as expected",
+        "stake lock duration not as expected"
       ).not.to.eq.BN(await tbtcConstants.getDepositTerm.call())
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
       expect(
         signingGroupRequestedAt,
-        "signing group timestamp not as expected",
+        "signing group timestamp not as expected"
       ).not.to.eq.BN(0)
 
       // fired an event
@@ -119,7 +119,7 @@ describe("DepositFunding", async function() {
         toBlock: "latest",
       })
       expect(eventList[0].returnValues._keepAddress).to.equal(
-        expectedKeepAddress,
+        expectedKeepAddress
       )
     })
 
@@ -136,9 +136,9 @@ describe("DepositFunding", async function() {
           tbtcDepositToken.address,
           ZERO_ADDRESS,
           ZERO_ADDRESS,
-          fullBtc,
+          fullBtc
         ),
-        "Insufficient signer bonds to cover setup fee",
+        "Insufficient signer bonds to cover setup fee"
       )
     })
 
@@ -152,9 +152,9 @@ describe("DepositFunding", async function() {
           tbtcDepositToken.address,
           ZERO_ADDRESS,
           ZERO_ADDRESS,
-          fullBtc,
+          fullBtc
         ),
-        "Deposit setup already requested",
+        "Deposit setup already requested"
       )
     })
 
@@ -168,9 +168,9 @@ describe("DepositFunding", async function() {
           tbtcDepositToken.address,
           ZERO_ADDRESS,
           ZERO_ADDRESS,
-          fullBtc,
+          fullBtc
         ),
-        "New deposits aren't allowed.",
+        "New deposits aren't allowed."
       )
     })
   })
@@ -188,14 +188,14 @@ describe("DepositFunding", async function() {
         tbtcDepositToken,
         testDeposit,
         ecdsaKeepStub,
-      } = await deployAndLinkAll([], {TBTCSystemStub: TBTCSystem}))
+      } = await deployAndLinkAll([], { TBTCSystemStub: TBTCSystem }))
 
       openKeepFee = await ecdsaKeepFactory.openKeepFeeEstimate.call()
       await testDeposit.setKeepSetupFee(openKeepFee)
       owner = accounts[1]
       await tbtcDepositToken.forceMint(
         owner,
-        web3.utils.toBN(testDeposit.address),
+        web3.utils.toBN(testDeposit.address)
       )
       timer = await tbtcConstants.getSigningGroupFormationTimeout.call()
     })
@@ -222,7 +222,7 @@ describe("DepositFunding", async function() {
 
     it("updates state to setup failed, deconstes state, logs SetupFailed, and refunds TDT owner", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
-      await testDeposit.notifySignerSetupFailed({from: owner})
+      await testDeposit.notifySignerSetupFailed({ from: owner })
 
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
 
@@ -236,13 +236,13 @@ describe("DepositFunding", async function() {
 
       expect(
         signingGroupRequestedAt,
-        "signingGroupRequestedAt should be 0",
+        "signingGroupRequestedAt should be 0"
       ).to.eq.BN(0)
 
       const fundingProofTimerStart = await testDeposit.getFundingProofTimerStart.call()
       expect(
         fundingProofTimerStart,
-        "fundingProofTimerStart should be 0",
+        "fundingProofTimerStart should be 0"
       ).to.eq.BN(0)
 
       const eventList = await tbtcSystemStub.getPastEvents("SetupFailed", {
@@ -257,7 +257,7 @@ describe("DepositFunding", async function() {
 
       await expectRevert(
         testDeposit.notifySignerSetupFailed(),
-        "Not awaiting setup",
+        "Not awaiting setup"
       )
     })
 
@@ -266,7 +266,7 @@ describe("DepositFunding", async function() {
 
       await expectRevert(
         testDeposit.notifySignerSetupFailed(),
-        "Signing group formation timeout not yet elapsed",
+        "Signing group formation timeout not yet elapsed"
       )
     })
   })
@@ -305,11 +305,11 @@ describe("DepositFunding", async function() {
       })
       expect(
         eventList[0].returnValues._signingGroupPubkeyX,
-        "Logged X is wrong",
+        "Logged X is wrong"
       ).to.equal(pubkeyX)
       expect(
         eventList[0].returnValues._signingGroupPubkeyY,
-        "Logged Y is wrong",
+        "Logged Y is wrong"
       ).to.equal(pubkeyY)
     })
 
@@ -318,7 +318,7 @@ describe("DepositFunding", async function() {
 
       await expectRevert(
         testDeposit.retrieveSignerPubkey(),
-        "Not currently awaiting signer setup",
+        "Not currently awaiting signer setup"
       )
     })
 
@@ -327,7 +327,7 @@ describe("DepositFunding", async function() {
 
       await expectRevert(
         testDeposit.retrieveSignerPubkey(),
-        "public key not set or not 64-bytes long",
+        "public key not set or not 64-bytes long"
       )
     })
 
@@ -336,7 +336,7 @@ describe("DepositFunding", async function() {
 
       await expectRevert(
         testDeposit.retrieveSignerPubkey(),
-        "Keep returned bad pubkey",
+        "Keep returned bad pubkey"
       )
     })
   })
@@ -377,7 +377,7 @@ describe("DepositFunding", async function() {
 
       await expectRevert(
         testDeposit.notifyFundingTimedOut(),
-        "Funding timeout has not started",
+        "Funding timeout has not started"
       )
     })
 
@@ -386,7 +386,7 @@ describe("DepositFunding", async function() {
 
       await expectRevert(
         testDeposit.notifyFundingTimedOut(),
-        "Funding timeout has not elapsed",
+        "Funding timeout has not elapsed"
       )
     })
   })
@@ -400,7 +400,7 @@ describe("DepositFunding", async function() {
       owner = accounts[1]
       await tbtcDepositToken.forceMint(
         owner,
-        web3.utils.toBN(testDeposit.address),
+        web3.utils.toBN(testDeposit.address)
       )
     })
 
@@ -415,8 +415,8 @@ describe("DepositFunding", async function() {
 
     it("fails if the deposit has not failed setup", () => {
       expectRevert(
-        testDeposit.requestFunderAbort("0x1234", {from: owner}),
-        "The deposit has not failed funding",
+        testDeposit.requestFunderAbort("0x1234", { from: owner }),
+        "The deposit has not failed funding"
       )
     })
 
@@ -425,14 +425,14 @@ describe("DepositFunding", async function() {
       await testDeposit.notifyFundingTimedOut()
 
       const outputScript = "0x012345"
-      await testDeposit.requestFunderAbort(outputScript, {from: owner})
+      await testDeposit.requestFunderAbort(outputScript, { from: owner })
 
       const eventList = await tbtcSystemStub.getPastEvents(
         "FunderAbortRequested",
         {
           fromBlock: blockNumber,
           toBlock: "latest",
-        },
+        }
       )
       expect(eventList.length).to.equal(1)
       expect(eventList[0].name == "FunderAbortRequested")
@@ -449,16 +449,16 @@ describe("DepositFunding", async function() {
       await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
       await testDeposit.setSigningGroupPublicKey(
         fundingTx.signerPubkeyX,
-        fundingTx.signerPubkeyY,
+        fundingTx.signerPubkeyY
       )
-      await ecdsaKeepStub.send(1000000, {from: accounts[0]})
+      await ecdsaKeepStub.send(1000000, { from: accounts[0] })
     })
 
     it("updates to active, stores UTXO info, deconstes funding info, logs Funded", async () => {
       const blockNumber = await web3.eth.getBlockNumber()
 
       const {
-        receipt: {blockNumber: proofBlock},
+        receipt: { blockNumber: proofBlock },
       } = await testDeposit.provideBTCFundingProof(
         fundingTx.version,
         fundingTx.txInputVector,
@@ -467,7 +467,7 @@ describe("DepositFunding", async function() {
         fundingTx.fundingOutputIndex,
         fundingTx.merkleProof,
         fundingTx.txIndexInBlock,
-        fundingTx.bitcoinHeaders,
+        fundingTx.bitcoinHeaders
       )
       const expectedFundedAt = (await web3.eth.getBlock(proofBlock)).timestamp
 
@@ -479,13 +479,13 @@ describe("DepositFunding", async function() {
       const signingGroupRequestedAt = await testDeposit.getSigningGroupRequestedAt.call()
       expect(
         signingGroupRequestedAt,
-        "signingGroupRequestedAt not deconsted",
+        "signingGroupRequestedAt not deconsted"
       ).to.not.equal(0)
 
       const fundingProofTimerStart = await testDeposit.getFundingProofTimerStart.call()
       expect(
         fundingProofTimerStart,
-        "fundingProofTimerStart not deconsted",
+        "fundingProofTimerStart not deconsted"
       ).to.not.equal(0)
 
       const depositState = await testDeposit.getState.call()
@@ -498,7 +498,7 @@ describe("DepositFunding", async function() {
       expect(eventList.length).to.equal(1)
       expect(
         eventList[0].returnValues._txid,
-        "Incorrect logged TX ID",
+        "Incorrect logged TX ID"
       ).to.equal(fundingTx.txidLE)
     })
 
@@ -514,9 +514,9 @@ describe("DepositFunding", async function() {
           fundingTx.fundingOutputIndex,
           fundingTx.merkleProof,
           fundingTx.txIndexInBlock,
-          fundingTx.bitcoinHeaders,
+          fundingTx.bitcoinHeaders
         ),
-        "Not awaiting funding",
+        "Not awaiting funding"
       )
     })
   })

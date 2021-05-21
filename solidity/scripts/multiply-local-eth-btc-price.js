@@ -4,7 +4,7 @@ async function run() {
   try {
     if (process.argv.length <= 4 || process.argv[4] === "help") {
       console.log(
-        "run `truffle exec multiply-local-eth-btc-price.js <factor>` to update the current price by a factor of <factor>",
+        "run `truffle exec multiply-local-eth-btc-price.js <factor>` to update the current price by a factor of <factor>"
       )
     } else if (isNaN(parseFloat(process.argv[4]))) {
       console.log("<factor> must be a number.")
@@ -16,7 +16,7 @@ async function run() {
       const newPrice = Math.round(currentPrice * factor)
       await ethBtcPriceFeedMock.setValue(newPrice.toString())
       console.log(
-        `Successfully updated the price by a factor of ${factor} from ${currentPrice} to ${newPrice}`,
+        `Successfully updated the price by a factor of ${factor} from ${currentPrice} to ${newPrice}`
       )
     }
     process.exit(0)

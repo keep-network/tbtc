@@ -1,37 +1,39 @@
-const { createInstance, toAwaitingWithdrawalSignature } = require("./liquidation-test-utils/createInstance.js")
+const {
+  createInstance,
+  toAwaitingWithdrawalSignature,
+} = require("./liquidation-test-utils/createInstance.js")
 const { states, increaseTime } = require("../helpers/utils.js")
 const { accounts, web3 } = require("@openzeppelin/test-environment")
 const { BN, expectRevert } = require("@openzeppelin/test-helpers")
 const { expect } = require("chai")
 
 describe("Integration -- Signature-timeout", async function () {
-  const lotSize = "10000000";
-  const lotSizeTbtc = new BN("10000000000").mul(new BN(lotSize));
+  const lotSize = "10000000"
+  const lotSizeTbtc = new BN("10000000000").mul(new BN(lotSize))
   const depositInitiator = accounts[1]
   const auctionBuyer = accounts[3]
   let testDeposit
 
   describe("Signature-timeout no FRT minted", async () => {
-
     before(async () => {
       ;({
         tbtcConstants,
         tbtcToken,
         collateralAmount,
-        deposits
-      } = await createInstance(
-        { collateral: 125,
-          lotSize : lotSize,
+        deposits,
+      } = await createInstance({
+        collateral: 125,
+        lotSize: lotSize,
         state: states.AWAITING_WITHDRAWAL_SIGNATURE.toNumber(),
-        depositOwner: depositInitiator }
-      ))
+        depositOwner: depositInitiator,
+      }))
       testDeposit = deposits
     })
 
     it("unable to start liquidation when timer has not elapsed", async () => {
       await expectRevert(
         testDeposit.notifyRedemptionSignatureTimedOut(),
-        "Signature timer has not elapsed",
+        "Signature timer has not elapsed"
       )
       const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
@@ -53,7 +55,7 @@ describe("Integration -- Signature-timeout", async function () {
       await tbtcToken.resetBalance(lotSizeTbtc, { from: auctionBuyer })
       await expectRevert(
         testDeposit.purchaseSignerBondsAtAuction(),
-        "Not enough TBTC to cover outstanding debt",
+        "Not enough TBTC to cover outstanding debt"
       )
       const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
@@ -63,10 +65,14 @@ describe("Integration -- Signature-timeout", async function () {
       const duration = await tbtcConstants.getAuctionDuration.call()
       await increaseTime(duration.toNumber())
 
-      await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
+      await tbtcToken.approve(testDeposit.address, lotSizeTbtc, {
+        from: auctionBuyer,
+      })
       await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
+      const allowance = await testDeposit.withdrawableAmount({
+        from: auctionBuyer,
+      })
       await testDeposit.withdrawFunds({ from: auctionBuyer })
 
       const depositState = await testDeposit.currentState.call()
@@ -79,42 +85,42 @@ describe("Integration -- Signature-timeout", async function () {
   })
 
   describe("Signature-timeout - FRT minted", async () => {
-
     before(async () => {
       ;({
         tbtcConstants,
         tbtcToken,
         collateralAmount,
         feeRebateToken,
-        deposits
-      } = await createInstance(
-        { collateral: 125,
+        deposits,
+      } = await createInstance({
+        collateral: 125,
         state: states.ACTIVE.toNumber(),
-        depositOwner: depositInitiator }
-      ))
+        depositOwner: depositInitiator,
+      }))
       testDeposit = deposits
     })
 
     it("trades TDT for TBTC and FRT via the VendingMachine", async () => {
       tdtId = await web3.utils.toBN(testDeposit.address)
       await tbtcDepositToken.approve(vendingMachine.address, tdtId, {
-        from: depositInitiator
+        from: depositInitiator,
       })
-      await vendingMachine.tdtToTbtc(tdtId, {from: depositInitiator})
+      await vendingMachine.tdtToTbtc(tdtId, { from: depositInitiator })
       const frtOwner = await feeRebateToken.ownerOf(tdtId)
       expect(frtOwner).to.equal(depositInitiator)
-      
     })
     it("Faisl to redeem while sufficiently collateralized, within term, and TDT owner not caller", async () => {
       await expectRevert(
         toAwaitingWithdrawalSignature(testDeposit),
-        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL"
       )
     })
     it("Purchases TDT and moves to AWAITING_WITHDRAWAL_SIGNATURE", async () => {
       await tbtcToken.resetBalance(lotSizeTbtc, { from: depositInitiator })
-      await tbtcToken.approve(vendingMachine.address, lotSizeTbtc, { from: depositInitiator })
-      await vendingMachine.tbtcToTdt(tdtId, {from: depositInitiator})
+      await tbtcToken.approve(vendingMachine.address, lotSizeTbtc, {
+        from: depositInitiator,
+      })
+      await vendingMachine.tbtcToTdt(tdtId, { from: depositInitiator })
 
       const tdtOwner = await tbtcDepositToken.ownerOf(tdtId)
       await toAwaitingWithdrawalSignature(testDeposit)
@@ -122,13 +128,12 @@ describe("Integration -- Signature-timeout", async function () {
 
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
       expect(tdtOwner).to.equal(depositInitiator)
-
     })
 
     it("unable to start liquidation when timer has not elapsed", async () => {
       await expectRevert(
         testDeposit.notifyRedemptionSignatureTimedOut(),
-        "Signature timer has not elapsed",
+        "Signature timer has not elapsed"
       )
     })
 
@@ -148,7 +153,7 @@ describe("Integration -- Signature-timeout", async function () {
       await tbtcToken.resetBalance(lotSizeTbtc, { from: auctionBuyer })
       await expectRevert(
         testDeposit.purchaseSignerBondsAtAuction(),
-        "Not enough TBTC to cover outstanding debt",
+        "Not enough TBTC to cover outstanding debt"
       )
       const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
@@ -158,10 +163,14 @@ describe("Integration -- Signature-timeout", async function () {
       const duration = await tbtcConstants.getAuctionDuration.call()
       await increaseTime(duration.toNumber())
 
-      await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
+      await tbtcToken.approve(testDeposit.address, lotSizeTbtc, {
+        from: auctionBuyer,
+      })
       await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
 
-      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
+      const allowance = await testDeposit.withdrawableAmount({
+        from: auctionBuyer,
+      })
       await testDeposit.withdrawFunds({ from: auctionBuyer })
 
       const depositState = await testDeposit.currentState.call()

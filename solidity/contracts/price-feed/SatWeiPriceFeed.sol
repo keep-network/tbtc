@@ -16,7 +16,7 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
     IMedianizer[] private ethBtcFeeds;
 
     constructor() public {
-    // solium-disable-previous-line no-empty-blocks
+        // solium-disable-previous-line no-empty-blocks
     }
 
     /// @notice Initialises the addresses of the ETHBTC price feeds.
@@ -25,9 +25,7 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
     function initialize(
         address _tbtcSystemAddress,
         IMedianizer _ETHBTCPriceFeed
-    )
-        external onlyOwner
-    {
+    ) external onlyOwner {
         require(!_initialized, "Already initialized.");
         tbtcSystemAddress = _tbtcSystemAddress;
         ethBtcFeeds.push(_ETHBTCPriceFeed);
@@ -37,15 +35,13 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
     /// @notice Get the current price of 1 satoshi in wei.
     /// @dev This does not account for any 'Flippening' event.
     /// @return The price of one satoshi in wei.
-    function getPrice()
-        external onlyTbtcSystem view returns (uint256)
-    {
+    function getPrice() external view onlyTbtcSystem returns (uint256) {
         bool ethBtcActive = false;
         uint256 ethBtc = 0;
 
-        for(uint i = 0; i < ethBtcFeeds.length; i++){
+        for (uint256 i = 0; i < ethBtcFeeds.length; i++) {
             (ethBtc, ethBtcActive) = ethBtcFeeds[i].peek();
-            if(ethBtcActive) {
+            if (ethBtcActive) {
                 break;
             }
         }
@@ -60,12 +56,12 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
 
     /// @notice Get the first active Medianizer contract from the ethBtcFeeds array.
     /// @return The address of the first Active Medianizer. address(0) if none found
-    function getWorkingEthBtcFeed() external view returns (address){
+    function getWorkingEthBtcFeed() external view returns (address) {
         bool ethBtcActive;
 
-        for(uint i = 0; i < ethBtcFeeds.length; i++){
+        for (uint256 i = 0; i < ethBtcFeeds.length; i++) {
             (, ethBtcActive) = ethBtcFeeds[i].peek();
-            if(ethBtcActive) {
+            if (ethBtcActive) {
                 return address(ethBtcFeeds[i]);
             }
         }
@@ -82,8 +78,11 @@ contract SatWeiPriceFeed is Ownable, ISatWeiPriceFeed {
     }
 
     /// @notice Function modifier ensures modified function is only called by tbtcSystemAddress.
-    modifier onlyTbtcSystem(){
-        require(msg.sender == tbtcSystemAddress, "Caller must be tbtcSystem contract");
+    modifier onlyTbtcSystem() {
+        require(
+            msg.sender == tbtcSystemAddress,
+            "Caller must be tbtcSystem contract"
+        );
         _;
     }
 }

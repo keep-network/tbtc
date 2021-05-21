@@ -5,7 +5,6 @@ pragma solidity 0.5.17;
 /// @dev    Secured by setting the depositFactory address and using the onlyFactory
 ///         modifier on functions requiring restriction.
 contract DepositFactoryAuthority {
-
     bool internal _initialized = false;
     address internal _depositFactory;
 
@@ -19,16 +18,19 @@ contract DepositFactoryAuthority {
     ///      creates a new clone should also trigger initialization.
     function initialize(address _factory) public {
         require(_factory != address(0), "Factory cannot be the zero address.");
-        require(! _initialized, "Factory can only be initialized once.");
+        require(!_initialized, "Factory can only be initialized once.");
 
         _depositFactory = _factory;
         _initialized = true;
     }
 
     /// @notice Function modifier ensures modified function is only called by set deposit factory.
-    modifier onlyFactory(){
+    modifier onlyFactory() {
         require(_initialized, "Factory initialization must have been called.");
-        require(msg.sender == _depositFactory, "Caller must be depositFactory contract");
+        require(
+            msg.sender == _depositFactory,
+            "Caller must be depositFactory contract"
+        );
         _;
     }
 }

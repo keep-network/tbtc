@@ -1,18 +1,18 @@
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
+const { deployAndLinkAll } = require("./helpers/testDeployer.js")
 const {
   states,
   bytes32zero,
   expectEvent,
   resolveAllLogs,
 } = require("./helpers/utils.js")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {AssertBalance} = require("./helpers/assertBalance.js")
-const {accounts, web3} = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { AssertBalance } = require("./helpers/assertBalance.js")
+const { accounts, web3 } = require("@openzeppelin/test-environment")
 const [owner] = accounts
-const {BN, expectRevert} = require("@openzeppelin/test-helpers")
-const {expect} = require("chai")
+const { BN, expectRevert } = require("@openzeppelin/test-helpers")
+const { expect } = require("chai")
 
-describe("DepositFraud", async function() {
+describe("DepositFraud", async function () {
   let tbtcConstants
   let tbtcSystemStub
   let tbtcDepositToken
@@ -35,7 +35,7 @@ describe("DepositFraud", async function() {
     assertBalance = new AssertBalance(tbtcToken)
     tbtcDepositToken.forceMint(
       beneficiary,
-      web3.utils.toBN(testDeposit.address),
+      web3.utils.toBN(testDeposit.address)
     )
   })
 
@@ -55,7 +55,7 @@ describe("DepositFraud", async function() {
     beforeEach(async () => {
       await ecdsaKeepStub.setSuccess(true)
       await testDeposit.setState(states.AWAITING_BTC_FUNDING_PROOF)
-      await ecdsaKeepStub.send(bond, {from: owner})
+      await ecdsaKeepStub.send(bond, { from: owner })
     })
 
     it("updates to awaiting fraud funding proof, distributes signer bond to funder, and logs FraudDuringSetup", async () => {
@@ -66,7 +66,7 @@ describe("DepositFraud", async function() {
         bytes32zero,
         bytes32zero,
         bytes32zero,
-        "0x00",
+        "0x00"
       )
 
       await assertBalance.eth(ecdsaKeepStub.address, new BN(0))
@@ -96,9 +96,9 @@ describe("DepositFraud", async function() {
           bytes32zero,
           bytes32zero,
           bytes32zero,
-          "0x00",
+          "0x00"
         ),
-        "Signer fraud during funding flow only available while awaiting funding",
+        "Signer fraud during funding flow only available while awaiting funding"
       )
     })
 
@@ -111,9 +111,9 @@ describe("DepositFraud", async function() {
           bytes32zero,
           bytes32zero,
           bytes32zero,
-          "0x00",
+          "0x00"
         ),
-        "Signature is not fraudulent",
+        "Signature is not fraudulent"
       )
     })
   })
@@ -122,7 +122,7 @@ describe("DepositFraud", async function() {
     let signerBond
     before(async () => {
       signerBond = 10000000
-      await ecdsaKeepStub.send(signerBond, {from: accounts[1]})
+      await ecdsaKeepStub.send(signerBond, { from: accounts[1] })
     })
 
     beforeEach(async () => {
@@ -134,22 +134,24 @@ describe("DepositFraud", async function() {
     })
 
     it("executes and emits StartedLiquidation event", async () => {
-      const {receipt} = await testDeposit.startLiquidation(true, {from: owner})
+      const { receipt } = await testDeposit.startLiquidation(true, {
+        from: owner,
+      })
       const block = await web3.eth.getBlock(receipt.blockNumber)
 
       expectEvent(
-        resolveAllLogs(receipt, {tbtcSystemStub}),
+        resolveAllLogs(receipt, { tbtcSystemStub }),
         "StartedLiquidation",
         {
           _depositContractAddress: testDeposit.address,
           _wasFraud: true,
           _timestamp: new BN(block.timestamp),
-        },
+        }
       )
 
       expect(await testDeposit.getLiquidationInitiator()).to.equal(owner)
       expect(await testDeposit.getLiquidationTimestamp()).to.eq.BN(
-        block.timestamp,
+        block.timestamp
       )
     })
 
@@ -159,14 +161,14 @@ describe("DepositFraud", async function() {
       await testDeposit.setState(states.AWAITING_WITHDRAWAL_SIGNATURE)
 
       const currentBond = await web3.eth.getBalance(ecdsaKeepStub.address)
-      const {receipt} = await testDeposit.startLiquidation(true)
+      const { receipt } = await testDeposit.startLiquidation(true)
 
       const withdrawable = await testDeposit.withdrawableAmount.call({
         from: owner,
       })
       expect(withdrawable).to.eq.BN(new BN(currentBond))
 
-      expectEvent(resolveAllLogs(receipt, {tbtcSystemStub}), "Liquidated", {
+      expectEvent(resolveAllLogs(receipt, { tbtcSystemStub }), "Liquidated", {
         _depositContractAddress: testDeposit.address,
       })
 
@@ -178,7 +180,7 @@ describe("DepositFraud", async function() {
     let signerBond
     before(async () => {
       signerBond = 10000000
-      await ecdsaKeepStub.send(signerBond, {from: accounts[1]})
+      await ecdsaKeepStub.send(signerBond, { from: accounts[1] })
     })
 
     beforeEach(async () => {
@@ -191,8 +193,8 @@ describe("DepositFraud", async function() {
 
     it("executes and emits StartedLiquidation event", async () => {
       const {
-        receipt: {blockNumber: liquidationBlock},
-      } = await testDeposit.startLiquidation(false, {from: owner})
+        receipt: { blockNumber: liquidationBlock },
+      } = await testDeposit.startLiquidation(false, { from: owner })
       const block = await web3.eth.getBlock(liquidationBlock)
 
       const events = await tbtcSystemStub.getPastEvents("StartedLiquidation", {
@@ -213,7 +215,7 @@ describe("DepositFraud", async function() {
   describe("provideECDSAFraudProof", async () => {
     before(async () => {
       await testDeposit.setState(states.ACTIVE)
-      await ecdsaKeepStub.send(1000000, {from: owner})
+      await ecdsaKeepStub.send(1000000, { from: owner })
     })
 
     beforeEach(async () => {
@@ -230,7 +232,7 @@ describe("DepositFraud", async function() {
         bytes32zero,
         bytes32zero,
         bytes32zero,
-        "0x00",
+        "0x00"
       )
       const depositState = await testDeposit.getState.call()
       expect(depositState).to.eq.BN(states.FRAUD_LIQUIDATION_IN_PROGRESS)
@@ -245,9 +247,9 @@ describe("DepositFraud", async function() {
           bytes32zero,
           bytes32zero,
           bytes32zero,
-          "0x00",
+          "0x00"
         ),
-        "Use provideFundingECDSAFraudProof instead",
+        "Use provideFundingECDSAFraudProof instead"
       )
     })
 
@@ -260,9 +262,9 @@ describe("DepositFraud", async function() {
           bytes32zero,
           bytes32zero,
           bytes32zero,
-          "0x00",
+          "0x00"
         ),
-        "Signer liquidation already in progress",
+        "Signer liquidation already in progress"
       )
     })
 
@@ -275,9 +277,9 @@ describe("DepositFraud", async function() {
           bytes32zero,
           bytes32zero,
           bytes32zero,
-          "0x00",
+          "0x00"
         ),
-        "Contract has halted",
+        "Contract has halted"
       )
     })
 
@@ -290,9 +292,9 @@ describe("DepositFraud", async function() {
           bytes32zero,
           bytes32zero,
           bytes32zero,
-          "0x00",
+          "0x00"
         ),
-        "Signature is not fraud",
+        "Signature is not fraud"
       )
     })
   })

@@ -2,7 +2,9 @@ pragma solidity 0.5.17;
 
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
-import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {
+    IBondedECDSAKeep
+} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -12,7 +14,6 @@ import {TBTCToken} from "../system/TBTCToken.sol";
 import {ITBTCSystem} from "../interfaces/ITBTCSystem.sol";
 
 library DepositLiquidation {
-
     using BTCUtils for bytes;
     using BytesLib for bytes;
     using SafeMath for uint256;
@@ -47,8 +48,11 @@ library DepositLiquidation {
     /// @dev        Compares the bond value and lot value.
     /// @param _d   Deposit storage pointer.
     /// @return     Collateralization percentage as uint.
-    function collateralizationPercentage(DepositUtils.Deposit storage _d) public view returns (uint256) {
-
+    function collateralizationPercentage(DepositUtils.Deposit storage _d)
+        public
+        view
+        returns (uint256)
+    {
         // Determine value of the lot in wei
         uint256 _satoshiPrice = _d.fetchBitcoinPrice();
         uint64 _lotSizeSatoshis = _d.lotSizeSatoshis;
@@ -68,7 +72,9 @@ library DepositLiquidation {
     ///                   see purchaseSignerBondsAtAuction().
     /// @param _wasFraud  True if liquidation is being started due to fraud, false if for any other reason.
     /// @param _d         Deposit storage pointer.
-    function startLiquidation(DepositUtils.Deposit storage _d, bool _wasFraud) internal {
+    function startLiquidation(DepositUtils.Deposit storage _d, bool _wasFraud)
+        internal
+    {
         _d.logStartedLiquidation(_wasFraud);
 
         uint256 seized = _d.seizeSignerBonds();
@@ -87,12 +93,11 @@ library DepositLiquidation {
         }
 
         _d.liquidationInitiator = msg.sender;
-        _d.liquidationInitiated = block.timestamp;  // Store the timestamp for auction
+        _d.liquidationInitiated = block.timestamp; // Store the timestamp for auction
 
-        if(_wasFraud){
+        if (_wasFraud) {
             _d.setFraudLiquidationInProgress();
-        }
-        else{
+        } else {
             _d.setLiquidationInProgress();
         }
     }
@@ -112,11 +117,9 @@ library DepositLiquidation {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public { // not external to allow bytes memory parameters
-        require(
-            !_d.inFunding(),
-            "Use provideFundingECDSAFraudProof instead"
-        );
+    ) public {
+        // not external to allow bytes memory parameters
+        require(!_d.inFunding(), "Use provideFundingECDSAFraudProof instead");
         require(
             !_d.inSignerLiquidation(),
             "Signer liquidation already in progress"
@@ -127,11 +130,12 @@ library DepositLiquidation {
         startLiquidation(_d, true);
     }
 
-
     /// @notice     Closes an auction and purchases the signer bonds. Payout to buyer, funder, then signers if not fraud.
     /// @dev        For interface, reading auctionValue will give a past value. the current is better.
     /// @param  _d  Deposit storage pointer.
-    function purchaseSignerBondsAtAuction(DepositUtils.Deposit storage _d) external {
+    function purchaseSignerBondsAtAuction(DepositUtils.Deposit storage _d)
+        external
+    {
         bool _wasFraud = _d.inFraudLiquidationInProgress();
         require(_d.inSignerLiquidation(), "No active auction");
 
@@ -148,12 +152,14 @@ library DepositLiquidation {
         }
         uint256 lotSizeTbtc = _d.lotSizeTbtc();
 
-        require(_d.tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc, "Not enough TBTC to cover outstanding debt");
+        require(
+            _d.tbtcToken.balanceOf(msg.sender) >= lotSizeTbtc,
+            "Not enough TBTC to cover outstanding debt"
+        );
 
-        if(tbtcRecipient == _d.vendingMachineAddress){
-            _d.tbtcToken.burnFrom(msg.sender, lotSizeTbtc);  // burn minimal amount to cover size
-        }
-        else{
+        if (tbtcRecipient == _d.vendingMachineAddress) {
+            _d.tbtcToken.burnFrom(msg.sender, lotSizeTbtc); // burn minimal amount to cover size
+        } else {
             _d.tbtcToken.transferFrom(msg.sender, tbtcRecipient, lotSizeTbtc);
         }
 
@@ -171,11 +177,12 @@ library DepositLiquidation {
         uint256 contractEthBalance = address(this).balance;
         address payable initiator = _d.liquidationInitiator;
 
-        if (initiator == address(0)){
+        if (initiator == address(0)) {
             initiator = address(0xdead);
         }
         if (contractEthBalance > valueToDistribute + 1) {
-            uint256 remainingUnallocated = contractEthBalance.sub(valueToDistribute);
+            uint256 remainingUnallocated =
+                contractEthBalance.sub(valueToDistribute);
             if (_wasFraud) {
                 _d.enableWithdrawal(initiator, remainingUnallocated);
             } else {
@@ -190,9 +197,13 @@ library DepositLiquidation {
     /// @notice     Notify the contract that the signers are undercollateralized.
     /// @dev        Calls out to the system for oracle info.
     /// @param  _d  Deposit storage pointer.
-    function notifyCourtesyCall(DepositUtils.Deposit storage _d) external  {
+    function notifyCourtesyCall(DepositUtils.Deposit storage _d) external {
         require(_d.inActive(), "Can only courtesy call from active state");
-        require(collateralizationPercentage(_d) < _d.undercollateralizedThresholdPercent, "Signers have sufficient collateral");
+        require(
+            collateralizationPercentage(_d) <
+                _d.undercollateralizedThresholdPercent,
+            "Signers have sufficient collateral"
+        );
         _d.courtesyCallInitiated = block.timestamp;
         _d.setCourtesyCall();
         _d.logCourtesyCalled();
@@ -203,7 +214,11 @@ library DepositLiquidation {
     /// @param  _d  Deposit storage pointer.
     function exitCourtesyCall(DepositUtils.Deposit storage _d) external {
         require(_d.inCourtesyCall(), "Not currently in courtesy call");
-        require(collateralizationPercentage(_d) >= _d.undercollateralizedThresholdPercent, "Deposit is still undercollateralized");
+        require(
+            collateralizationPercentage(_d) >=
+                _d.undercollateralizedThresholdPercent,
+            "Deposit is still undercollateralized"
+        );
         _d.setActive();
         _d.logExitedCourtesyCall();
     }
@@ -211,18 +226,35 @@ library DepositLiquidation {
     /// @notice     Notify the contract that the signers are undercollateralized.
     /// @dev        Calls out to the system for oracle info.
     /// @param  _d  Deposit storage pointer.
-    function notifyUndercollateralizedLiquidation(DepositUtils.Deposit storage _d) external {
-        require(_d.inRedeemableState(), "Deposit not in active or courtesy call");
-        require(collateralizationPercentage(_d) < _d.severelyUndercollateralizedThresholdPercent, "Deposit has sufficient collateral");
+    function notifyUndercollateralizedLiquidation(
+        DepositUtils.Deposit storage _d
+    ) external {
+        require(
+            _d.inRedeemableState(),
+            "Deposit not in active or courtesy call"
+        );
+        require(
+            collateralizationPercentage(_d) <
+                _d.severelyUndercollateralizedThresholdPercent,
+            "Deposit has sufficient collateral"
+        );
         startLiquidation(_d, false);
     }
 
     /// @notice     Notifies the contract that the courtesy period has elapsed.
     /// @dev        This is treated as an abort, rather than fraud.
     /// @param  _d  Deposit storage pointer.
-    function notifyCourtesyCallExpired(DepositUtils.Deposit storage _d) external {
+    function notifyCourtesyCallExpired(DepositUtils.Deposit storage _d)
+        external
+    {
         require(_d.inCourtesyCall(), "Not in a courtesy call period");
-        require(block.timestamp >= _d.courtesyCallInitiated.add(TBTCConstants.getCourtesyCallTimeout()), "Courtesy period has not elapsed");
+        require(
+            block.timestamp >=
+                _d.courtesyCallInitiated.add(
+                    TBTCConstants.getCourtesyCallTimeout()
+                ),
+            "Courtesy period has not elapsed"
+        );
         startLiquidation(_d, false);
     }
 }
