@@ -4,14 +4,14 @@ import {DepositLog} from "../DepositLog.sol";
 import {DepositUtils} from "./DepositUtils.sol";
 
 library OutsourceDepositLogging {
-
-
     /// @notice               Fires a Created event.
     /// @dev                  `DepositLog.logCreated` fires a Created event with
     ///                       _keepAddress, msg.sender and block.timestamp.
     ///                       msg.sender will be the calling Deposit's address.
     /// @param  _keepAddress  The address of the associated keep.
-    function logCreated(DepositUtils.Deposit storage _d, address _keepAddress) external {
+    function logCreated(DepositUtils.Deposit storage _d, address _keepAddress)
+        external
+    {
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logCreated(_keepAddress);
     }
@@ -33,7 +33,8 @@ library OutsourceDepositLogging {
         bytes memory _redeemerOutputScript,
         uint256 _requestedFee,
         bytes memory _outpoint
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logRedemptionRequested(
             _redeemer,
@@ -58,11 +59,7 @@ library OutsourceDepositLogging {
         bytes32 _s
     ) external {
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
-        _logger.logGotRedemptionSignature(
-            _digest,
-            _r,
-            _s
-        );
+        _logger.logGotRedemptionSignature(_digest, _r, _s);
     }
 
     /// @notice     Fires a RegisteredPubkey event.
@@ -73,9 +70,7 @@ library OutsourceDepositLogging {
         bytes32 _signingGroupPubkeyY
     ) external {
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
-        _logger.logRegisteredPubkey(
-            _signingGroupPubkeyX,
-            _signingGroupPubkeyY);
+        _logger.logRegisteredPubkey(_signingGroupPubkeyX, _signingGroupPubkeyY);
     }
 
     /// @notice     Fires a SetupFailed event.
@@ -90,7 +85,8 @@ library OutsourceDepositLogging {
     function logFunderRequestedAbort(
         DepositUtils.Deposit storage _d,
         bytes memory _abortOutputScript
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logFunderRequestedAbort(_abortOutputScript);
     }
@@ -104,7 +100,9 @@ library OutsourceDepositLogging {
 
     /// @notice     Fires a Funded event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
-    function logFunded(DepositUtils.Deposit storage _d, bytes32 _txid) external {
+    function logFunded(DepositUtils.Deposit storage _d, bytes32 _txid)
+        external
+    {
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logFunded(_txid);
     }
@@ -119,14 +117,19 @@ library OutsourceDepositLogging {
     /// @notice             Fires a StartedLiquidation event.
     /// @dev                We append the sender, which is the deposit contract that called.
     /// @param _wasFraud    True if liquidating for fraud.
-    function logStartedLiquidation(DepositUtils.Deposit storage _d, bool _wasFraud) external {
+    function logStartedLiquidation(
+        DepositUtils.Deposit storage _d,
+        bool _wasFraud
+    ) external {
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logStartedLiquidation(_wasFraud);
     }
 
     /// @notice     Fires a Redeemed event.
     /// @dev        The logger is on a system contract, so all logs from all deposits are from the same address.
-    function logRedeemed(DepositUtils.Deposit storage _d, bytes32 _txid) external {
+    function logRedeemed(DepositUtils.Deposit storage _d, bytes32 _txid)
+        external
+    {
         DepositLog _logger = DepositLog(address(_d.tbtcSystem));
         _logger.logRedeemed(_txid);
     }

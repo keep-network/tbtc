@@ -1,7 +1,9 @@
 pragma solidity 0.5.17;
 
 import {ERC20} from "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import {ERC20Detailed} from "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
+import {
+    ERC20Detailed
+} from "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import {VendingMachineAuthority} from "./VendingMachineAuthority.sol";
 import {ITokenRecipient} from "../interfaces/ITokenRecipient.sol";
 
@@ -12,9 +14,10 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     /// @dev Constructor, calls ERC20Detailed constructor to set Token info
     ///      ERC20Detailed(TokenName, TokenSymbol, NumberOfDecimals)
     constructor(address _VendingMachine)
+        public
         ERC20Detailed("tBTC", "TBTC", 18)
         VendingMachineAuthority(_VendingMachine)
-    public {
+    {
         // solium-disable-previous-line no-empty-blocks
     }
 
@@ -22,7 +25,11 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
     ///                  Uses the internal _mint function.
     /// @param _account  The account that will receive the created tokens.
     /// @param _amount   The amount of tokens that will be created.
-    function mint(address _account, uint256 _amount) external onlyVendingMachine returns (bool) {
+    function mint(address _account, uint256 _amount)
+        external
+        onlyVendingMachine
+        returns (bool)
+    {
         // NOTE: this is a public function with unchecked minting. Only the
         // vending machine is allowed to call it, and it is in charge of
         // ensuring minting is permitted.
@@ -61,9 +68,15 @@ contract TBTCToken is ERC20Detailed, ERC20, VendingMachineAuthority {
         ITokenRecipient _spender,
         uint256 _value,
         bytes memory _extraData
-    ) public returns (bool) { // not external to allow bytes memory parameters
+    ) public returns (bool) {
+        // not external to allow bytes memory parameters
         if (approve(address(_spender), _value)) {
-            _spender.receiveApproval(msg.sender, _value, address(this), _extraData);
+            _spender.receiveApproval(
+                msg.sender,
+                _value,
+                address(this),
+                _extraData
+            );
             return true;
         }
         return false;

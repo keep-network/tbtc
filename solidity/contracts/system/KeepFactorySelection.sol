@@ -1,13 +1,14 @@
 pragma solidity 0.5.17;
 
-import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
+import {
+    IBondedECDSAKeepFactory
+} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
 /// @title Bonded ECDSA keep factory selection strategy.
 /// @notice The strategy defines the algorithm for selecting a factory. tBTC
 /// uses two bonded ECDSA keep factories, selecting one of them for each new
 /// deposit being opened.
 interface KeepFactorySelector {
-
     /// @notice Selects keep factory for the new deposit.
     /// @param _seed Request seed.
     /// @param _keepStakedFactory Regular, KEEP-stake based keep factory.
@@ -26,18 +27,13 @@ interface KeepFactorySelector {
 /// a reference to both factories as well as a reference to a selection strategy
 /// deciding which factory to choose for the new deposit being opened.
 library KeepFactorySelection {
-
     struct Storage {
         uint256 requestCounter;
-
         IBondedECDSAKeepFactory selectedFactory;
-
         KeepFactorySelector factorySelector;
-
         // Standard ECDSA keep factory: KEEP stake and ETH bond.
         // Guaranteed to be set for initialized factory.
         IBondedECDSAKeepFactory keepStakedFactory;
-
         // Fully backed ECDSA keep factory: ETH bond only.
         IBondedECDSAKeepFactory fullyBackedFactory;
     }
@@ -67,9 +63,11 @@ library KeepFactorySelection {
     /// separate calls).
     /// @return Selected keep factory. The same vale will be returned for every
     /// call of this function until selectFactoryAndRefresh is executed.
-    function selectFactory(
-        Storage storage _self
-    ) public view returns (IBondedECDSAKeepFactory) {
+    function selectFactory(Storage storage _self)
+        public
+        view
+        returns (IBondedECDSAKeepFactory)
+    {
         return _self.selectedFactory;
     }
 
@@ -80,9 +78,10 @@ library KeepFactorySelection {
     /// the same factory for which open keep fee estimate was evaluated (fee
     /// estimate and open keep requests are two separate calls).
     /// @return Selected keep factory.
-    function selectFactoryAndRefresh(
-        Storage storage _self
-    ) external returns (IBondedECDSAKeepFactory) {
+    function selectFactoryAndRefresh(Storage storage _self)
+        external
+        returns (IBondedECDSAKeepFactory)
+    {
         IBondedECDSAKeepFactory factory = selectFactory(_self);
         refreshFactory(_self);
 
@@ -134,9 +133,10 @@ library KeepFactorySelection {
         }
 
         _self.requestCounter++;
-        uint256 seed = uint256(
-            keccak256(abi.encodePacked(address(this), _self.requestCounter))
-        );
+        uint256 seed =
+            uint256(
+                keccak256(abi.encodePacked(address(this), _self.requestCounter))
+            );
         _self.selectedFactory = _self.factorySelector.selectFactory(
             seed,
             _self.keepStakedFactory,

@@ -2,7 +2,9 @@ pragma solidity 0.5.17;
 
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
-import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {
+    IBondedECDSAKeep
+} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
 import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {TBTCToken} from "../system/TBTCToken.sol";
 import {DepositUtils} from "./DepositUtils.sol";
@@ -12,7 +14,6 @@ import {OutsourceDepositLogging} from "./OutsourceDepositLogging.sol";
 import {TBTCConstants} from "../system/TBTCConstants.sol";
 
 library DepositFunding {
-
     using SafeMath for uint256;
     using SafeMath for uint64;
     using BTCUtils for bytes;
@@ -51,7 +52,10 @@ library DepositFunding {
         DepositUtils.Deposit storage _d,
         uint64 _lotSizeSatoshis
     ) public {
-        require(_d.tbtcSystem.getAllowNewDeposits(), "New deposits aren't allowed.");
+        require(
+            _d.tbtcSystem.getAllowNewDeposits(),
+            "New deposits aren't allowed."
+        );
         require(_d.inStart(), "Deposit setup already requested");
 
         _d.lotSizeSatoshis = _lotSizeSatoshis;
@@ -68,12 +72,21 @@ library DepositFunding {
             TBTCConstants.getDepositTerm()
         );
 
-        require(_d.fetchBondAmount() >= _d.keepSetupFee, "Insufficient signer bonds to cover setup fee");
+        require(
+            _d.fetchBondAmount() >= _d.keepSetupFee,
+            "Insufficient signer bonds to cover setup fee"
+        );
 
         _d.signerFeeDivisor = _d.tbtcSystem.getSignerFeeDivisor();
-        _d.undercollateralizedThresholdPercent = _d.tbtcSystem.getUndercollateralizedThresholdPercent();
-        _d.severelyUndercollateralizedThresholdPercent = _d.tbtcSystem.getSeverelyUndercollateralizedThresholdPercent();
-        _d.initialCollateralizedPercent = _d.tbtcSystem.getInitialCollateralizedPercent();
+        _d.undercollateralizedThresholdPercent = _d
+            .tbtcSystem
+            .getUndercollateralizedThresholdPercent();
+        _d.severelyUndercollateralizedThresholdPercent = _d
+            .tbtcSystem
+            .getSeverelyUndercollateralizedThresholdPercent();
+        _d.initialCollateralizedPercent = _d
+            .tbtcSystem
+            .getInitialCollateralizedPercent();
         _d.signingGroupRequestedAt = block.timestamp;
 
         _d.setAwaitingSignerSetup();
@@ -85,14 +98,17 @@ library DepositFunding {
     function notifySignerSetupFailed(DepositUtils.Deposit storage _d) external {
         require(_d.inAwaitingSignerSetup(), "Not awaiting setup");
         require(
-            block.timestamp > _d.signingGroupRequestedAt.add(TBTCConstants.getSigningGroupFormationTimeout()),
+            block.timestamp >
+                _d.signingGroupRequestedAt.add(
+                    TBTCConstants.getSigningGroupFormationTimeout()
+                ),
             "Signing group formation timeout not yet elapsed"
         );
 
         // refund the deposit owner the cost to create a new Deposit at the time the Deposit was opened.
         uint256 _seized = _d.seizeSignerBonds();
 
-        if(_seized >= _d.keepSetupFee){
+        if (_seized >= _d.keepSetupFee) {
             /* solium-disable-next-line security/no-send */
             _d.enableWithdrawal(_d.depositOwner(), _d.keepSetupFee);
             _d.pushFundsToKeepGroup(_seized.sub(_d.keepSetupFee));
@@ -109,20 +125,29 @@ library DepositFunding {
     /// @param  _d          Deposit storage pointer.
     /// @return             True if successful, otherwise revert.
     function retrieveSignerPubkey(DepositUtils.Deposit storage _d) public {
-        require(_d.inAwaitingSignerSetup(), "Not currently awaiting signer setup");
+        require(
+            _d.inAwaitingSignerSetup(),
+            "Not currently awaiting signer setup"
+        );
 
-        bytes memory _publicKey = IBondedECDSAKeep(_d.keepAddress).getPublicKey();
-        require(_publicKey.length == 64, "public key not set or not 64-bytes long");
+        bytes memory _publicKey =
+            IBondedECDSAKeep(_d.keepAddress).getPublicKey();
+        require(
+            _publicKey.length == 64,
+            "public key not set or not 64-bytes long"
+        );
 
         _d.signingGroupPubkeyX = _publicKey.slice(0, 32).toBytes32();
         _d.signingGroupPubkeyY = _publicKey.slice(32, 32).toBytes32();
-        require(_d.signingGroupPubkeyY != bytes32(0) && _d.signingGroupPubkeyX != bytes32(0), "Keep returned bad pubkey");
+        require(
+            _d.signingGroupPubkeyY != bytes32(0) &&
+                _d.signingGroupPubkeyX != bytes32(0),
+            "Keep returned bad pubkey"
+        );
         _d.fundingProofTimerStart = block.timestamp;
 
         _d.setAwaitingBTCFundingProof();
-        _d.logRegisteredPubkey(
-            _d.signingGroupPubkeyX,
-            _d.signingGroupPubkeyY);
+        _d.logRegisteredPubkey(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
     }
 
     /// @notice Anyone may notify the contract that the funder has failed to
@@ -133,9 +158,15 @@ library DepositFunding {
     ///      funding proof.
     /// @param _d Deposit storage pointer.
     function notifyFundingTimedOut(DepositUtils.Deposit storage _d) external {
-        require(_d.inAwaitingBTCFundingProof(), "Funding timeout has not started");
         require(
-            block.timestamp > _d.fundingProofTimerStart.add(TBTCConstants.getFundingTimeout()),
+            _d.inAwaitingBTCFundingProof(),
+            "Funding timeout has not started"
+        );
+        require(
+            block.timestamp >
+                _d.fundingProofTimerStart.add(
+                    TBTCConstants.getFundingTimeout()
+                ),
             "Funding timeout has not elapsed."
         );
         _d.setFailedSetup();
@@ -159,11 +190,9 @@ library DepositFunding {
     function requestFunderAbort(
         DepositUtils.Deposit storage _d,
         bytes memory _abortOutputScript
-    ) public { // not external to allow bytes memory parameters
-        require(
-            _d.inFailedSetup(),
-            "The deposit has not failed funding"
-        );
+    ) public {
+        // not external to allow bytes memory parameters
+        require(_d.inFailedSetup(), "The deposit has not failed funding");
 
         _d.logFunderRequestedAbort(_abortOutputScript);
     }
@@ -184,7 +213,8 @@ library DepositFunding {
         bytes32 _s,
         bytes32 _signedDigest,
         bytes memory _preimage
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         require(
             _d.inAwaitingBTCFundingProof(),
             "Signer fraud during funding flow only available while awaiting funding"
@@ -224,12 +254,13 @@ library DepositFunding {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
 
         require(_d.inAwaitingBTCFundingProof(), "Not awaiting funding");
 
         bytes8 _valueBytes;
-        bytes memory  _utxoOutpoint;
+        bytes memory _utxoOutpoint;
 
         (_valueBytes, _utxoOutpoint) = _d.validateAndParseFundingSPVProof(
             _txVersion,
@@ -247,7 +278,15 @@ library DepositFunding {
         _d.utxoOutpoint = _utxoOutpoint;
         _d.fundedAt = block.timestamp;
 
-        bytes32 _txid = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+        bytes32 _txid =
+            abi
+                .encodePacked(
+                _txVersion,
+                _txInputVector,
+                _txOutputVector,
+                _txLocktime
+            )
+                .hash256();
 
         fundingTeardown(_d);
         _d.setActive();
