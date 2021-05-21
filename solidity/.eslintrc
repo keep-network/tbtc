@@ -1,5 +1,5 @@
 {
-  "extends": ["eslint-config-keep", "prettier"],
+  "extends": ["eslint-config-keep"],
   "parserOptions": {
     "ecmaVersion": 2017,
     "sourceType": "module"
