@@ -60,7 +60,7 @@ A redemption request can be submitted in a few cases:
   <<bonding/index.adoc#liquidation,signer liquidation>>), pre-term, and the
   requester holds the corresponding tBTC Deposit Token.
 * If the deposit is in good standing and is at or past <<at-term,term>>,
-  irrespective of whether the requester holds the corresponding tBTC Deopsit
+  irrespective of whether the requester holds the corresponding tBTC Deposit
   Token.
 * If the deposit has entered <<bonding/index.adoc#pre-liquidation,courtesy
   call>>, an undercollateralization state designed to allow closing deposits

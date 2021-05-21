@@ -122,8 +122,8 @@ generation, they MUST put up a bond (the _signer bond_) in the native token
 of the host chain. This bond is used in a few cases:
 
 - To liquidate deposits in case they are in danger of undercollateralization.
-- To punish a signing group if it signs an unauthorized piece of data is
-  once distributed key generation is complete.
+- To punish a signing group if it signs an unauthorized piece of data once
+  distributed key generation is complete.
 - To punish a signing group that fails to produce a signature for the system
   when requested.
 - To ensure a depositor is refunded if the signing group fails to form.
@@ -156,7 +156,7 @@ The distributed key generation protocol should result in three properties:
 2. Each member of the signing group should have a _threshold ECDSA secret key
    share_{threshold-signature}, which can be used to create a
    _threshold ECDSA signature share_ for any transactions involving the
-   signing group's wallet.
+   signing of the group's wallet.
 3. Each member of the signing group should be able to combine a threshold number
    of signature shares from itself and other members of the group to produce a
    signed version of a given transaction to be performed on behalf of the
