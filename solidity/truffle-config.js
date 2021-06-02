@@ -1,5 +1,5 @@
-require('babel-register');
-require('babel-polyfill');
+require("babel-register")
+require("babel-polyfill")
 
 /**
  * Use this file to configure your truffle project. It's seeded with some
@@ -27,10 +27,11 @@ require('babel-polyfill');
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
-const HDWalletProvider = require('@truffle/hdwallet-provider');
-const Kit = require("@celo/contractkit");
+const HDWalletProvider = require("@truffle/hdwallet-provider")
+const Kit = require("@celo/contractkit")
 
-const mnemonic = 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'
+const mnemonic =
+  "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat"
 
 module.exports = {
   /**
@@ -51,11 +52,11 @@ module.exports = {
     // options below to some value.
     //
     development: {
-      host: "localhost",     // Localhost (default: none)
-      port: 8545,            // Standard Ethereum port (default: none)
-      network_id: "*",       // Any network (default: none)
+      host: "localhost", // Localhost (default: none)
+      port: 8545, // Standard Ethereum port (default: none)
+      network_id: "*", // Any network (default: none)
       //  gas: 100000000000000,
-      gasPrice: 1
+      gasPrice: 1,
     },
 
     keep_dev: {
@@ -93,11 +94,11 @@ module.exports = {
     },
 
     mainnet: {
-      provider: function() {
+      provider: function () {
         return new HDWalletProvider(mnemonic, "https://mainnet.infura.io/")
       },
-      network_id: 1
-    }
+      network_id: 1,
+    },
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port
@@ -130,11 +131,11 @@ module.exports = {
   // Set default mocha options here, use special reporters etc.
   mocha: {
     useColors: true,
-    reporter: 'eth-gas-reporter',
+    reporter: "eth-gas-reporter",
     reporterOptions: {
-      currency: 'USD',
-      gasPrice: 21
-    }
+      currency: "USD",
+      gasPrice: 21,
+    },
   },
 
   // Configure your compilers
@@ -143,13 +144,14 @@ module.exports = {
       version: "0.5.17",
       // version: "0.5.1",    // Fetch exact version from solc-bin (default: truffle's version)
       // docker: true,        // Use "0.5.1" you've installed locally with docker (default: false)
-      settings: {          // See the solidity docs for advice about optimization and evmVersion
+      settings: {
+        // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
           enabled: true,
-          runs: 200
+          runs: 200,
         },
         //  evmVersion: "byzantium"
-      }
-    }
-  }
+      },
+    },
+  },
 }

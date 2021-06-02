@@ -1,5 +1,5 @@
-const {contract} = require("@openzeppelin/test-environment")
-const {deploySystem, increaseTime} = require("./utils.js")
+const { contract } = require("@openzeppelin/test-environment")
+const { deploySystem, increaseTime } = require("./utils.js")
 
 const Deposit = contract.fromArtifact("Deposit")
 const BytesLib = contract.fromArtifact("BytesLib")
@@ -27,10 +27,10 @@ const TBTCConstants = contract.fromArtifact("TBTCConstants")
 const TestDeposit = contract.fromArtifact("TestDeposit")
 
 const TEST_DEPOSIT_DEPLOY = [
-  {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
-  {name: "MockRelay", contract: MockRelay},
-  {name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed},
-  {name: "KeepFactorySelection", contract: KeepFactorySelection},
+  { name: "OutsourceDepositLogging", contract: OutsourceDepositLogging },
+  { name: "MockRelay", contract: MockRelay },
+  { name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed },
+  { name: "KeepFactorySelection", contract: KeepFactorySelection },
   {
     name: "TBTCSystem",
     contract: TBTCSystem,
@@ -46,17 +46,17 @@ const TEST_DEPOSIT_DEPLOY = [
     contract: VendingMachine,
     constructorParams: ["TBTCSystem"],
   },
-  {name: "DepositStates", contract: DepositStates},
-  {name: "TBTCConstants", contract: TBTCConstants}, // note the name
-  {name: "DepositUtils", contract: DepositUtils},
-  {name: "DepositRedemption", contract: DepositRedemption},
-  {name: "DepositLiquidation", contract: DepositLiquidation},
-  {name: "DepositFunding", contract: DepositFunding},
-  {name: "TestDeposit", contract: TestDeposit},
-  {name: "BytesLib", contract: BytesLib},
-  {name: "BTCUtils", contract: BTCUtils},
-  {name: "ValidateSPV", contract: ValidateSPV},
-  {name: "CheckBitcoinSigs", contract: CheckBitcoinSigs},
+  { name: "DepositStates", contract: DepositStates },
+  { name: "TBTCConstants", contract: TBTCConstants }, // note the name
+  { name: "DepositUtils", contract: DepositUtils },
+  { name: "DepositRedemption", contract: DepositRedemption },
+  { name: "DepositLiquidation", contract: DepositLiquidation },
+  { name: "DepositFunding", contract: DepositFunding },
+  { name: "TestDeposit", contract: TestDeposit },
+  { name: "BytesLib", contract: BytesLib },
+  { name: "BTCUtils", contract: BTCUtils },
+  { name: "ValidateSPV", contract: ValidateSPV },
+  { name: "CheckBitcoinSigs", contract: CheckBitcoinSigs },
   {
     name: "TBTCDepositToken",
     contract: TBTCDepositToken,
@@ -150,7 +150,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     feeRebateToken.address,
     vendingMachine.address,
     1,
-    1,
+    1
   )
 
   await tbtcSystem.beginLotSizesUpdate([100000, 1e8])

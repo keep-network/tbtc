@@ -1,4 +1,4 @@
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
+const { deployAndLinkAll } = require("./helpers/testDeployer.js")
 const {
   HEADER_PROOFS,
   TX,
@@ -6,17 +6,17 @@ const {
   LOW_WORK_HEADER,
   increaseTime,
 } = require("./helpers/utils.js")
-const {states} = require("./helpers/utils.js")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const { states } = require("./helpers/utils.js")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const [owner] = accounts
-const {BN, constants, expectRevert} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = constants
-const {expect} = require("chai")
+const { BN, constants, expectRevert } = require("@openzeppelin/test-helpers")
+const { ZERO_ADDRESS } = constants
+const { expect } = require("chai")
 const TestDepositUtils = contract.fromArtifact("TestDepositUtils")
 const TestDepositUtilsSPV = contract.fromArtifact("TestDepositUtilsSPV")
 
-describe("DepositUtils", async function() {
+describe("DepositUtils", async function () {
   let beneficiary
   const fullBtc = 100000000
   let tbtcConstants
@@ -40,14 +40,14 @@ describe("DepositUtils", async function() {
       testDeposit,
       ecdsaKeepStub,
       depositUtils,
-    } = await deployAndLinkAll([], {TestDeposit: TestDepositUtils}))
+    } = await deployAndLinkAll([], { TestDeposit: TestDepositUtils }))
 
     beneficiary = accounts[2]
 
     feeRebateToken.forceMint(beneficiary, web3.utils.toBN(testDeposit.address))
     tbtcDepositToken.forceMint(
       beneficiary,
-      web3.utils.toBN(testDeposit.address),
+      web3.utils.toBN(testDeposit.address)
     )
 
     const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
@@ -63,7 +63,7 @@ describe("DepositUtils", async function() {
       feeRebateToken.address,
       ZERO_ADDRESS,
       fullBtc,
-      {value: depositFee},
+      { value: depositFee }
     )
   })
 
@@ -83,7 +83,7 @@ describe("DepositUtils", async function() {
 
     it("Does not revert when receiving value directly (no msg.data)", async () => {
       // receive value from different contract
-      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, {value: 10})
+      await ecdsaKeepStub.pushFundsFromKeep(testDeposit.address, { value: 10 })
       // receive value from direct send
       await testDeposit.send(10)
     })
@@ -95,7 +95,7 @@ describe("DepositUtils", async function() {
           to: testDeposit.address,
           data: "0xbaddecaf",
         }),
-        "Deposit contract was called with unknown function selector.",
+        "Deposit contract was called with unknown function selector."
       )
     })
   })
@@ -128,7 +128,7 @@ describe("DepositUtils", async function() {
 
       await expectRevert(
         testDeposit.evaluateProofDifficulty(HEADER_PROOFS[0]),
-        "not at current or previous difficulty",
+        "not at current or previous difficulty"
       )
     })
 
@@ -145,9 +145,9 @@ describe("DepositUtils", async function() {
     it("reverts on low difficulty", async () => {
       await expectRevert(
         testDeposit.evaluateProofDifficulty(
-          HEADER_PROOFS[0].slice(0, 160 * 4 + 2),
+          HEADER_PROOFS[0].slice(0, 160 * 4 + 2)
         ),
-        "Insufficient accumulated difficulty in header chain",
+        "Insufficient accumulated difficulty in header chain"
       )
     })
 
@@ -166,7 +166,7 @@ describe("DepositUtils", async function() {
 
         await expectRevert(
           testDeposit.evaluateProofDifficulty(badLengthChain),
-          "Invalid length of the headers chain",
+          "Invalid length of the headers chain"
         )
       })
 
@@ -179,14 +179,14 @@ describe("DepositUtils", async function() {
 
         await expectRevert(
           testDeposit.evaluateProofDifficulty(invalidChain),
-          "Invalid headers chain",
+          "Invalid headers chain"
         )
       })
 
       it("insufficient work in a header", async () => {
         await expectRevert(
           testDeposit.evaluateProofDifficulty(LOW_WORK_HEADER),
-          "Insufficient work in a header",
+          "Insufficient work in a header"
         )
       })
     })
@@ -195,7 +195,7 @@ describe("DepositUtils", async function() {
   describe("checkProofFromTxId()", async () => {
     let testDeposit
     before(async () => {
-      ;({mockRelay, testDeposit} = await deployAndLinkAll([], {
+      ;({ mockRelay, testDeposit } = await deployAndLinkAll([], {
         TestDeposit: TestDepositUtilsSPV,
       }))
 
@@ -207,7 +207,7 @@ describe("DepositUtils", async function() {
         TX.tx_id_le,
         TX.proof,
         TX.index,
-        HEADER_PROOFS.slice(-1)[0],
+        HEADER_PROOFS.slice(-1)[0]
       )
     })
 
@@ -217,9 +217,9 @@ describe("DepositUtils", async function() {
           TX.tx_id_le,
           TX.proof,
           0,
-          HEADER_PROOFS.slice(-1)[0],
+          HEADER_PROOFS.slice(-1)[0]
         ),
-        "Tx merkle proof is not valid for provided header and txId",
+        "Tx merkle proof is not valid for provided header and txId"
       )
     })
 
@@ -232,9 +232,9 @@ describe("DepositUtils", async function() {
           TX.tx_id_le,
           TX.proof,
           TX.index,
-          HEADER_PROOFS.slice(-1)[0],
+          HEADER_PROOFS.slice(-1)[0]
         ),
-        "not at current or previous difficulty",
+        "not at current or previous difficulty"
       )
     })
   })
@@ -251,30 +251,30 @@ describe("DepositUtils", async function() {
     it("correctly returns valuebytes", async () => {
       await testDeposit.setPubKey(
         fundingTx.signerPubkeyX,
-        fundingTx.signerPubkeyY,
+        fundingTx.signerPubkeyY
       )
       const valueBytes = await testDeposit.findAndParseFundingOutput.call(
         fundingTx.txOutputVector,
-        fundingTx.fundingOutputIndex,
+        fundingTx.fundingOutputIndex
       )
       expect(
         fundingTx.outValueBytes,
-        "Got incorrect value bytes from funding output",
+        "Got incorrect value bytes from funding output"
       ).to.equal(valueBytes)
     })
 
     it("fails with incorrect signer pubKey", async () => {
       await testDeposit.setPubKey(
         "0x" + "11".repeat(20),
-        "0x" + "11".repeat(20),
+        "0x" + "11".repeat(20)
       )
 
       await expectRevert(
         testDeposit.findAndParseFundingOutput.call(
           fundingTx.txOutputVector,
-          fundingTx.fundingOutputIndex,
+          fundingTx.fundingOutputIndex
         ),
-        "Could not identify output funding the required public key hash",
+        "Could not identify output funding the required public key hash"
       )
     })
 
@@ -288,12 +288,12 @@ describe("DepositUtils", async function() {
     }
 
     for (const [type, script] of Object.entries(
-      unsupportedFundingOutputScripts,
+      unsupportedFundingOutputScripts
     )) {
       it(`reverts if ${type} output is used to fund the deposit`, async () => {
         await testDeposit.setPubKey(
           fundingTx.signerPubkeyX,
-          fundingTx.signerPubkeyY,
+          fundingTx.signerPubkeyY
         )
 
         const txOutputVector = fundingOutputBase + script
@@ -301,9 +301,9 @@ describe("DepositUtils", async function() {
         await expectRevert(
           testDeposit.findAndParseFundingOutput.call(
             txOutputVector,
-            fundingTx.fundingOutputIndex,
+            fundingTx.fundingOutputIndex
           ),
-          "Funding transaction output type unsupported: only p2wpkh outputs are supported",
+          "Funding transaction output type unsupported: only p2wpkh outputs are supported"
         )
       })
     }
@@ -324,17 +324,17 @@ describe("DepositUtils", async function() {
         tbtcDepositToken,
         feeRebateToken,
         testDeposit,
-      } = await deployAndLinkAll([], {TestDeposit: TestDepositUtilsSPV}))
+      } = await deployAndLinkAll([], { TestDeposit: TestDepositUtilsSPV }))
 
       beneficiary = accounts[2]
 
       tbtcDepositToken.forceMint(
         beneficiary,
-        web3.utils.toBN(testDeposit.address),
+        web3.utils.toBN(testDeposit.address)
       )
       feeRebateToken.forceMint(
         beneficiary,
-        web3.utils.toBN(testDeposit.address),
+        web3.utils.toBN(testDeposit.address)
       )
       const depositFee = await tbtcSystemStub.getNewDepositFeeEstimate()
 
@@ -349,12 +349,12 @@ describe("DepositUtils", async function() {
         feeRebateToken.address,
         ZERO_ADDRESS,
         fullBtc,
-        {value: depositFee},
+        { value: depositFee }
       )
 
       await testDeposit.setPubKey(
         fundingTx.signerPubkeyX,
-        fundingTx.signerPubkeyY,
+        fundingTx.signerPubkeyY
       )
       await mockRelay.setCurrentEpochDifficulty(fundingTx.difficulty)
     })
@@ -368,7 +368,7 @@ describe("DepositUtils", async function() {
         fundingTx.fundingOutputIndex,
         fundingTx.merkleProof,
         fundingTx.txIndexInBlock,
-        fundingTx.bitcoinHeaders,
+        fundingTx.bitcoinHeaders
       )
       expect(parseResults[0]).to.equal(fundingTx.outValueBytes)
       expect(parseResults[1]).to.equal(fundingTx.expectedUTXOOutpoint)
@@ -384,9 +384,9 @@ describe("DepositUtils", async function() {
           fundingTx.fundingOutputIndex,
           fundingTx.merkleProof,
           fundingTx.txIndexInBlock,
-          fundingTx.bitcoinHeaders,
+          fundingTx.bitcoinHeaders
         ),
-        "invalid input vector provided",
+        "invalid input vector provided"
       )
     })
 
@@ -400,9 +400,9 @@ describe("DepositUtils", async function() {
           fundingTx.fundingOutputIndex,
           fundingTx.merkleProof,
           fundingTx.txIndexInBlock,
-          fundingTx.bitcoinHeaders,
+          fundingTx.bitcoinHeaders
         ),
-        "invalid output vector provided",
+        "invalid output vector provided"
       )
     })
 
@@ -416,9 +416,9 @@ describe("DepositUtils", async function() {
           fundingTx.fundingOutputIndex,
           "0x" + "00".repeat(32),
           fundingTx.txIndexInBlock,
-          fundingTx.bitcoinHeaders,
+          fundingTx.bitcoinHeaders
         ),
-        "Tx merkle proof is not valid for provided header and txId",
+        "Tx merkle proof is not valid for provided header and txId"
       )
     })
 
@@ -435,9 +435,9 @@ describe("DepositUtils", async function() {
           fundingTx.fundingOutputIndex,
           fundingTx.merkleProof,
           fundingTx.txIndexInBlock,
-          badheaders,
+          badheaders
         ),
-        "Insufficient accumulated difficulty in header chain",
+        "Insufficient accumulated difficulty in header chain"
       )
     })
   })
@@ -473,7 +473,7 @@ describe("DepositUtils", async function() {
     })
 
     it("returns base value if no time has elapsed", async () => {
-      await testDeposit.send(auctionValue, {from: accounts[8]})
+      await testDeposit.send(auctionValue, { from: accounts[8] })
 
       const block = await web3.eth.getBlock("latest")
 
@@ -484,7 +484,7 @@ describe("DepositUtils", async function() {
     })
 
     it("returns full value if auction Duration has elapsed ", async () => {
-      await testDeposit.send(auctionValue, {from: accounts[8]})
+      await testDeposit.send(auctionValue, { from: accounts[8] })
 
       const block = await web3.eth.getBlock("latest")
 
@@ -496,7 +496,7 @@ describe("DepositUtils", async function() {
     })
 
     it("scales auction value correctly", async () => {
-      await testDeposit.send(auctionValue, {from: accounts[8]})
+      await testDeposit.send(auctionValue, { from: accounts[8] })
 
       const block = await web3.eth.getBlock("latest")
 
@@ -528,7 +528,7 @@ describe("DepositUtils", async function() {
 
         expectRevert(
           testDeposit.auctionValue.call(),
-          "Deposit has no funds currently at auction",
+          "Deposit has no funds currently at auction"
         )
       }
     })
@@ -544,14 +544,14 @@ describe("DepositUtils", async function() {
   describe("determineCompressionPrefix()", async () => {
     it("selects 2 for even", async () => {
       const res = await depositUtils.determineCompressionPrefix.call(
-        "0x" + "00".repeat(32),
+        "0x" + "00".repeat(32)
       )
       expect(res).to.equal("0x02")
     })
 
     it("selects 3 for odd", async () => {
       const res = await depositUtils.determineCompressionPrefix.call(
-        "0x" + "00".repeat(31) + "01",
+        "0x" + "00".repeat(31) + "01"
       )
       expect(res).to.equal("0x03")
     })
@@ -561,7 +561,7 @@ describe("DepositUtils", async function() {
     it("returns a 33 byte array with a prefix", async () => {
       const compressed = await depositUtils.compressPubkey.call(
         "0x" + "00".repeat(32),
-        "0x" + "00".repeat(32),
+        "0x" + "00".repeat(32)
       )
       expect(compressed).to.equal("0x02" + "00".repeat(32))
     })
@@ -571,7 +571,7 @@ describe("DepositUtils", async function() {
     it("returns the concatenated signer X and Y coordinates", async () => {
       await testDeposit.setPubKey(
         fundingTx.signerPubkeyX,
-        fundingTx.signerPubkeyY,
+        fundingTx.signerPubkeyY
       )
       const signerPubkey = await testDeposit.signerPubkey.call()
       expect(signerPubkey).to.equal(fundingTx.concatenatedKeys)
@@ -589,7 +589,7 @@ describe("DepositUtils", async function() {
       const expectedSignerPKH = "0xa99c23add58e3d0712278b2873c3c0bd21657115"
       await testDeposit.setPubKey(
         fundingTx.signerPubkeyX,
-        fundingTx.signerPubkeyX,
+        fundingTx.signerPubkeyX
       )
       const signerPKH = await testDeposit.signerPKH.call()
       expect(signerPKH).to.equal(expectedSignerPKH)
@@ -609,7 +609,7 @@ describe("DepositUtils", async function() {
 
         await expectRevert(
           testDeposit.utxoValue.call(),
-          "Deposit has not yet been funded and has no available funding info",
+          "Deposit has not yet been funded and has no available funding info"
         )
       }
     })
@@ -664,7 +664,7 @@ describe("DepositUtils", async function() {
       const expectedApprovalTime = new BN(0)
 
       const approvalTime = await testDeposit.wasDigestApprovedForSigning.call(
-        digest,
+        digest
       )
 
       expect(approvalTime).to.eq.BN(expectedApprovalTime)
@@ -677,7 +677,7 @@ describe("DepositUtils", async function() {
       await testDeposit.setDigestApprovedAtTime(digest, expectedApprovalTime)
 
       const approvalTime = await testDeposit.wasDigestApprovedForSigning.call(
-        digest,
+        digest
       )
 
       expect(approvalTime).to.eq.BN(expectedApprovalTime)
@@ -698,7 +698,7 @@ describe("DepositUtils", async function() {
         "0x" + "11".repeat(20),
         5,
         6,
-        "0x" + "33".repeat(32),
+        "0x" + "33".repeat(32)
       )
       const requestInfo = await testDeposit.getRequestInfo.call()
       expect(requestInfo[4]).to.equal("0x" + "33".repeat(32))
@@ -713,7 +713,7 @@ describe("DepositUtils", async function() {
     it("calls out to the keep system and returns the seized amount", async () => {
       const value = new BN(5000)
       const currentBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
-      await ecdsaKeepStub.send(value, {from: owner})
+      await ecdsaKeepStub.send(value, { from: owner })
 
       const seized = await testDeposit.seizeSignerBonds.call()
       await testDeposit.seizeSignerBonds()
@@ -724,7 +724,7 @@ describe("DepositUtils", async function() {
     it("errors if no funds were seized", async () => {
       await expectRevert(
         testDeposit.seizeSignerBonds.call(),
-        "No funds received, unexpected",
+        "No funds received, unexpected"
       )
     })
   })
@@ -780,10 +780,10 @@ describe("DepositUtils", async function() {
         const beneficiary = accounts[1]
         const initialBalance = await web3.eth.getBalance(beneficiary)
 
-        await testDeposit.send(value, {from: accounts[8]})
+        await testDeposit.send(value, { from: accounts[8] })
 
         await testDeposit.enableWithdrawal(beneficiary, value)
-        const tx = await testDeposit.withdrawFunds({from: beneficiary})
+        const tx = await testDeposit.withdrawFunds({ from: beneficiary })
         const finalBalance = await web3.eth.getBalance(beneficiary)
 
         const withdrawable = await testDeposit.withdrawableAmount.call({
@@ -795,7 +795,7 @@ describe("DepositUtils", async function() {
 
         expect(withdrawable).to.eq.BN(0)
         expect(new BN(finalBalance).add(totalTxCost)).to.eq.BN(
-          new BN(initialBalance).add(value),
+          new BN(initialBalance).add(value)
         )
         await restoreSnapshot()
       }
@@ -819,7 +819,7 @@ describe("DepositUtils", async function() {
 
         await expectRevert(
           testDeposit.withdrawFunds(),
-          "Contract not yet terminated",
+          "Contract not yet terminated"
         )
       }
     })
@@ -852,7 +852,7 @@ describe("DepositUtils", async function() {
       const tokenCheck = new BN(initialTokenBalance).add(new BN(reward))
       expect(
         finalTokenBalance,
-        "tokens not rewarded to beneficiary correctly",
+        "tokens not rewarded to beneficiary correctly"
       ).to.eq.BN(tokenCheck)
     })
 
@@ -876,7 +876,7 @@ describe("DepositUtils", async function() {
   describe("pushFundsToKeepGroup()", async () => {
     it("calls out to the keep contract", async () => {
       const value = 10000
-      await testDeposit.send(value, {from: accounts[8]})
+      await testDeposit.send(value, { from: accounts[8] })
       await testDeposit.pushFundsToKeepGroup(value)
       const keepBalance = await web3.eth.getBalance(ecdsaKeepStub.address)
       expect(keepBalance).to.eq.BN(new BN(value))
@@ -885,7 +885,7 @@ describe("DepositUtils", async function() {
     it("reverts if insufficient value", async () => {
       await expectRevert(
         testDeposit.pushFundsToKeepGroup.call(10000000000000),
-        "Not enough funds to send",
+        "Not enough funds to send"
       )
     })
   })
@@ -905,7 +905,7 @@ describe("DepositUtils", async function() {
       await testDeposit.setFundingInfo(
         prevoutValueBytes,
         block.timestamp,
-        outpoint,
+        outpoint
       )
       const remainingTerm = await testDeposit.remainingTerm.call()
       const finalBlock = await web3.eth.getBlock("latest")
@@ -921,7 +921,7 @@ describe("DepositUtils", async function() {
       await testDeposit.setFundingInfo(
         prevoutValueBytes,
         block.timestamp,
-        outpoint,
+        outpoint
       )
       const increaseTimeErrorMargin = 10
       await increaseTime(depositTerm.toNumber() + increaseTimeErrorMargin)

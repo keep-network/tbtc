@@ -1,12 +1,20 @@
-const { createInstance, toAwaitingWithdrawalProof } = require("./liquidation-test-utils/createInstance.js")
-const { states, increaseTime, expectEvent, resolveAllLogs } = require("../helpers/utils.js")
+const {
+  createInstance,
+  toAwaitingWithdrawalProof,
+} = require("./liquidation-test-utils/createInstance.js")
+const {
+  states,
+  increaseTime,
+  expectEvent,
+  resolveAllLogs,
+} = require("../helpers/utils.js")
 const { accounts, web3 } = require("@openzeppelin/test-environment")
 const { BN, expectRevert } = require("@openzeppelin/test-helpers")
 const { expect } = require("chai")
 
 describe("Integration -- Redemption-proof timeout", async function () {
-  const lotSize = new BN("10000000");
-  const lotSizeTbtc = new BN("10000000000").mul(lotSize);
+  const lotSize = new BN("10000000")
+  const lotSizeTbtc = new BN("10000000000").mul(lotSize)
   const [depositInitiator, redeemer, auctionBuyer] = accounts
 
   let tbtcConstants
@@ -18,17 +26,17 @@ describe("Integration -- Redemption-proof timeout", async function () {
   let collateralAmount
 
   before(async () => {
-    ; ({
+    ;({
       ecdsaKeepStub,
       tbtcConstants,
       tbtcToken,
       collateralAmount,
       deposits,
-    } = await createInstance(
-      { collateral: 125,
+    } = await createInstance({
+      collateral: 125,
       state: states.AWAITING_WITHDRAWAL_SIGNATURE.toNumber(),
-      depositOwner: depositInitiator }
-    ))
+      depositOwner: depositInitiator,
+    }))
     testDeposit = deposits
 
     await testDeposit.setRedeemerAddress(redeemer)
@@ -38,7 +46,7 @@ describe("Integration -- Redemption-proof timeout", async function () {
     it("unable to start liquidation if timer not elapsed", async () => {
       await expectRevert(
         testDeposit.notifyRedemptionProofTimedOut(),
-        "Not currently awaiting a redemption proof",
+        "Not currently awaiting a redemption proof"
       )
       const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.AWAITING_WITHDRAWAL_SIGNATURE)
@@ -47,7 +55,7 @@ describe("Integration -- Redemption-proof timeout", async function () {
     it("starts liquidation auction", async () => {
       await ecdsaKeepStub.setSuccess(true)
 
-     await toAwaitingWithdrawalProof(testDeposit)
+      await toAwaitingWithdrawalProof(testDeposit)
       //  AWAITING_WITHDRAWAL_SIGNATURE -> AWAITING_WITHDRAWAL_PROOF
       const timer = await tbtcConstants.getRedemptionProofTimeout.call()
       await increaseTime(timer.toNumber())
@@ -62,7 +70,7 @@ describe("Integration -- Redemption-proof timeout", async function () {
       await tbtcToken.resetBalance(lotSizeTbtc, { from: auctionBuyer })
       await expectRevert(
         testDeposit.purchaseSignerBondsAtAuction(),
-        "Not enough TBTC to cover outstanding debt",
+        "Not enough TBTC to cover outstanding debt"
       )
       const depositState = await testDeposit.currentState.call()
       expect(depositState).to.eq.BN(states.LIQUIDATION_IN_PROGRESS)
@@ -72,20 +80,22 @@ describe("Integration -- Redemption-proof timeout", async function () {
       const duration = await tbtcConstants.getAuctionDuration.call()
       await increaseTime(duration.toNumber())
 
-      await tbtcToken.approve(testDeposit.address, lotSizeTbtc, { from: auctionBuyer })
-      const { receipt } = await testDeposit.purchaseSignerBondsAtAuction({ from: auctionBuyer })
+      await tbtcToken.approve(testDeposit.address, lotSizeTbtc, {
+        from: auctionBuyer,
+      })
+      const { receipt } = await testDeposit.purchaseSignerBondsAtAuction({
+        from: auctionBuyer,
+      })
 
-      expectEvent(
-        resolveAllLogs(receipt, { tbtcToken }),
-        "Transfer",
-        {
-          "from": auctionBuyer,
-          "to": redeemer,
-          "value": lotSizeTbtc,
-        }
-      )
+      expectEvent(resolveAllLogs(receipt, { tbtcToken }), "Transfer", {
+        from: auctionBuyer,
+        to: redeemer,
+        value: lotSizeTbtc,
+      })
 
-      const allowance = await testDeposit.withdrawableAmount({ from: auctionBuyer })
+      const allowance = await testDeposit.withdrawableAmount({
+        from: auctionBuyer,
+      })
       await testDeposit.withdrawFunds({ from: auctionBuyer })
 
       const depositState = await testDeposit.currentState.call()

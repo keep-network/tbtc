@@ -1,6 +1,6 @@
-const {contract} = require("@openzeppelin/test-environment")
-const {BN} = require("@openzeppelin/test-helpers")
-const {deploySystem} = require("./utils.js")
+const { contract } = require("@openzeppelin/test-environment")
+const { BN } = require("@openzeppelin/test-helpers")
+const { deploySystem } = require("./utils.js")
 
 const BytesLib = contract.fromArtifact("BytesLib")
 const BTCUtils = contract.fromArtifact("BTCUtils")
@@ -30,10 +30,10 @@ const RedemptionScript = contract.fromArtifact("RedemptionScript")
 const FundingScript = contract.fromArtifact("FundingScript")
 
 const TEST_DEPOSIT_DEPLOY = [
-  {name: "KeepFactorySelection", contract: KeepFactorySelection},
-  {name: "OutsourceDepositLogging", contract: OutsourceDepositLogging},
-  {name: "MockRelay", contract: MockRelay},
-  {name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed},
+  { name: "KeepFactorySelection", contract: KeepFactorySelection },
+  { name: "OutsourceDepositLogging", contract: OutsourceDepositLogging },
+  { name: "MockRelay", contract: MockRelay },
+  { name: "MockSatWeiPriceFeed", contract: MockSatWeiPriceFeed },
   {
     name: "TBTCSystemStub",
     contract: TBTCSystemStub,
@@ -49,18 +49,18 @@ const TEST_DEPOSIT_DEPLOY = [
     contract: VendingMachine,
     constructorParams: ["TBTCSystemStub"],
   },
-  {name: "DepositStates", contract: DepositStates},
-  {name: "TBTCConstants", contract: TestTBTCConstants}, // note the name
-  {name: "DepositUtils", contract: DepositUtils},
-  {name: "DepositRedemption", contract: DepositRedemption},
-  {name: "DepositLiquidation", contract: DepositLiquidation},
-  {name: "DepositFunding", contract: DepositFunding},
-  {name: "TestDeposit", contract: TestDeposit},
-  {name: "BytesLib", contract: BytesLib},
-  {name: "BTCUtils", contract: BTCUtils},
-  {name: "ValidateSPV", contract: ValidateSPV},
-  {name: "CheckBitcoinSigs", contract: CheckBitcoinSigs},
-  {name: "ECDSAKeepFactoryStub", contract: ECDSAKeepFactoryStub},
+  { name: "DepositStates", contract: DepositStates },
+  { name: "TBTCConstants", contract: TestTBTCConstants }, // note the name
+  { name: "DepositUtils", contract: DepositUtils },
+  { name: "DepositRedemption", contract: DepositRedemption },
+  { name: "DepositLiquidation", contract: DepositLiquidation },
+  { name: "DepositFunding", contract: DepositFunding },
+  { name: "TestDeposit", contract: TestDeposit },
+  { name: "BytesLib", contract: BytesLib },
+  { name: "BTCUtils", contract: BTCUtils },
+  { name: "ValidateSPV", contract: ValidateSPV },
+  { name: "CheckBitcoinSigs", contract: CheckBitcoinSigs },
+  { name: "ECDSAKeepFactoryStub", contract: ECDSAKeepFactoryStub },
   {
     name: "TBTCDepositToken",
     contract: TBTCDepositToken,
@@ -153,13 +153,13 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
   const redemptionScript = await RedemptionScript.new(
     vendingMachine.address,
     tbtcToken.address,
-    feeRebateToken.address,
+    feeRebateToken.address
   )
   const fundingScript = await FundingScript.new(
     vendingMachine.address,
     tbtcToken.address,
     tbtcDepositToken.address,
-    feeRebateToken.address,
+    feeRebateToken.address
   )
   if (testDeposit.setExteriorAddresses) {
     // Test setup if this is in fact a TestDeposit. If it's been substituted
@@ -169,7 +169,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
       tbtcToken.address,
       tbtcDepositToken.address,
       feeRebateToken.address,
-      vendingMachine.address,
+      vendingMachine.address
     )
 
     await testDeposit.setKeepAddress(ecdsaKeepStub.address)
@@ -185,7 +185,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     feeRebateToken.address,
     vendingMachine.address,
     1,
-    1,
+    1
   )
 
   return {
@@ -204,7 +204,7 @@ async function deployAndLinkAll(additions = [], substitutions = {}) {
     deployed,
     redemptionScript,
     fundingScript,
-    keepFactorySelectorStub
+    keepFactorySelectorStub,
   }
 }
 

@@ -3,8 +3,12 @@ pragma solidity 0.5.17;
 import {ValidateSPV} from "@summa-tx/bitcoin-spv-sol/contracts/ValidateSPV.sol";
 import {BTCUtils} from "@summa-tx/bitcoin-spv-sol/contracts/BTCUtils.sol";
 import {BytesLib} from "@summa-tx/bitcoin-spv-sol/contracts/BytesLib.sol";
-import {IBondedECDSAKeep} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
-import {IERC721} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
+import {
+    IBondedECDSAKeep
+} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeep.sol";
+import {
+    IERC721
+} from "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 import {SafeMath} from "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import {DepositStates} from "./DepositStates.sol";
 import {TBTCConstants} from "../system/TBTCConstants.sol";
@@ -13,7 +17,6 @@ import {TBTCToken} from "../system/TBTCToken.sol";
 import {FeeRebateToken} from "../system/FeeRebateToken.sol";
 
 library DepositUtils {
-
     using SafeMath for uint256;
     using SafeMath for uint64;
     using BytesLib for bytes;
@@ -24,7 +27,6 @@ library DepositUtils {
     using DepositStates for DepositUtils.Deposit;
 
     struct Deposit {
-
         // SET DURING CONSTRUCTION
         ITBTCSystem tbtcSystem;
         TBTCToken tbtcToken;
@@ -38,39 +40,32 @@ library DepositUtils {
         uint16 undercollateralizedThresholdPercent;
         uint16 severelyUndercollateralizedThresholdPercent;
         uint256 keepSetupFee;
-
         // SET ON FRAUD
-        uint256 liquidationInitiated;  // Timestamp of when liquidation starts
+        uint256 liquidationInitiated; // Timestamp of when liquidation starts
         uint256 courtesyCallInitiated; // When the courtesy call is issued
         address payable liquidationInitiator;
-
         // written when we request a keep
-        address keepAddress;  // The address of our keep contract
-        uint256 signingGroupRequestedAt;  // timestamp of signing group request
-
+        address keepAddress; // The address of our keep contract
+        uint256 signingGroupRequestedAt; // timestamp of signing group request
         // written when we get a keep result
-        uint256 fundingProofTimerStart;  // start of the funding proof period. reused for funding fraud proof period
-        bytes32 signingGroupPubkeyX;  // The X coordinate of the signing group's pubkey
-        bytes32 signingGroupPubkeyY;  // The Y coordinate of the signing group's pubkey
-
+        uint256 fundingProofTimerStart; // start of the funding proof period. reused for funding fraud proof period
+        bytes32 signingGroupPubkeyX; // The X coordinate of the signing group's pubkey
+        bytes32 signingGroupPubkeyY; // The Y coordinate of the signing group's pubkey
         // INITIALLY WRITTEN BY REDEMPTION FLOW
-        address payable redeemerAddress;  // The redeemer's address, used as fallback for fraud in redemption
-        bytes redeemerOutputScript;  // The redeemer output script
-        uint256 initialRedemptionFee;  // the initial fee as requested
+        address payable redeemerAddress; // The redeemer's address, used as fallback for fraud in redemption
+        bytes redeemerOutputScript; // The redeemer output script
+        uint256 initialRedemptionFee; // the initial fee as requested
         uint256 latestRedemptionFee; // the fee currently required by a redemption transaction
-        uint256 withdrawalRequestTime;  // the most recent withdrawal request timestamp
-        bytes32 lastRequestedDigest;  // the digest most recently requested for signing
-
+        uint256 withdrawalRequestTime; // the most recent withdrawal request timestamp
+        bytes32 lastRequestedDigest; // the digest most recently requested for signing
         // written when we get funded
-        bytes8 utxoValueBytes;  // LE uint. the size of the deposit UTXO in satoshis
+        bytes8 utxoValueBytes; // LE uint. the size of the deposit UTXO in satoshis
         uint256 fundedAt; // timestamp when funding proof was received
-        bytes utxoOutpoint;  // the 36-byte outpoint of the custodied UTXO
-
+        bytes utxoOutpoint; // the 36-byte outpoint of the custodied UTXO
         /// @dev Map of ETH balances an address can withdraw after contract reaches ends-state.
         mapping(address => uint256) withdrawableAmounts;
-
         /// @dev Map of timestamps representing when transaction digests were approved for signing
-        mapping (bytes32 => uint256) approvedDigests;
+        mapping(bytes32 => uint256) approvedDigests;
     }
 
     /// @notice Closes keep associated with the deposit.
@@ -84,14 +79,22 @@ library DepositUtils {
     /// @notice         Gets the current block difficulty.
     /// @dev            Calls the light relay and gets the current block difficulty.
     /// @return         The difficulty.
-    function currentBlockDifficulty(Deposit storage _d) public view returns (uint256) {
+    function currentBlockDifficulty(Deposit storage _d)
+        public
+        view
+        returns (uint256)
+    {
         return _d.tbtcSystem.fetchRelayCurrentDifficulty();
     }
 
     /// @notice         Gets the previous block difficulty.
     /// @dev            Calls the light relay and gets the previous block difficulty.
     /// @return         The difficulty.
-    function previousBlockDifficulty(Deposit storage _d) public view returns (uint256) {
+    function previousBlockDifficulty(Deposit storage _d)
+        public
+        view
+        returns (uint256)
+    {
         return _d.tbtcSystem.fetchRelayPreviousDifficulty();
     }
 
@@ -99,11 +102,15 @@ library DepositUtils {
     /// @dev                        Uses the light oracle to source recent difficulty.
     /// @param  _bitcoinHeaders     The header chain to evaluate.
     /// @return                     True if acceptable, otherwise revert.
-    function evaluateProofDifficulty(Deposit storage _d, bytes memory _bitcoinHeaders) public view {
+    function evaluateProofDifficulty(
+        Deposit storage _d,
+        bytes memory _bitcoinHeaders
+    ) public view {
         uint256 _reqDiff;
         uint256 _current = currentBlockDifficulty(_d);
         uint256 _previous = previousBlockDifficulty(_d);
-        uint256 _firstHeaderDiff = _bitcoinHeaders.extractTarget().calculateDifficulty();
+        uint256 _firstHeaderDiff =
+            _bitcoinHeaders.extractTarget().calculateDifficulty();
 
         if (_firstHeaderDiff == _current) {
             _reqDiff = _current;
@@ -115,12 +122,22 @@ library DepositUtils {
 
         uint256 _observedDiff = _bitcoinHeaders.validateHeaderChain();
 
-        require(_observedDiff != ValidateSPV.getErrBadLength(), "Invalid length of the headers chain");
-        require(_observedDiff != ValidateSPV.getErrInvalidChain(), "Invalid headers chain");
-        require(_observedDiff != ValidateSPV.getErrLowWork(), "Insufficient work in a header");
+        require(
+            _observedDiff != ValidateSPV.getErrBadLength(),
+            "Invalid length of the headers chain"
+        );
+        require(
+            _observedDiff != ValidateSPV.getErrInvalidChain(),
+            "Invalid headers chain"
+        );
+        require(
+            _observedDiff != ValidateSPV.getErrLowWork(),
+            "Insufficient work in a header"
+        );
 
         require(
-            _observedDiff >= _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),
+            _observedDiff >=
+                _reqDiff.mul(TBTCConstants.getTxProofDifficultyFactor()),
             "Insufficient accumulated difficulty in header chain"
         );
     }
@@ -138,14 +155,15 @@ library DepositUtils {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public view{
+    ) public view {
         require(
             _txId.prove(
                 _bitcoinHeaders.extractMerkleRootLE().toBytes32(),
                 _merkleProof,
                 _txIndexInBlock
             ),
-            "Tx merkle proof is not valid for provided header and txId");
+            "Tx merkle proof is not valid for provided header and txId"
+        );
         evaluateProofDifficulty(_d, _bitcoinHeaders);
     }
 
@@ -168,12 +186,14 @@ library DepositUtils {
         _output = _txOutputVector.extractOutputAtIndex(_fundingOutputIndex);
 
         require(
-            keccak256(_output.extractHash()) == keccak256(abi.encodePacked(signerPKH(_d))),
+            keccak256(_output.extractHash()) ==
+                keccak256(abi.encodePacked(signerPKH(_d))),
             "Could not identify output funding the required public key hash"
         );
         require(
             _output.length == 31 &&
-                _output.keccak256Slice(8, 23) == keccak256(abi.encodePacked(hex"160014", signerPKH(_d))),
+                _output.keccak256Slice(8, 23) ==
+                keccak256(abi.encodePacked(hex"160014", signerPKH(_d))),
             "Funding transaction output type unsupported: only p2wpkh outputs are supported"
         );
 
@@ -203,30 +223,63 @@ library DepositUtils {
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint){ // not external to allow bytes memory parameters
+    ) public view returns (bytes8 _valueBytes, bytes memory _utxoOutpoint) {
+        // not external to allow bytes memory parameters
         require(_txInputVector.validateVin(), "invalid input vector provided");
-        require(_txOutputVector.validateVout(), "invalid output vector provided");
+        require(
+            _txOutputVector.validateVout(),
+            "invalid output vector provided"
+        );
 
-        bytes32 txID = abi.encodePacked(_txVersion, _txInputVector, _txOutputVector, _txLocktime).hash256();
+        bytes32 txID =
+            abi
+                .encodePacked(
+                _txVersion,
+                _txInputVector,
+                _txOutputVector,
+                _txLocktime
+            )
+                .hash256();
 
-        _valueBytes = findAndParseFundingOutput(_d, _txOutputVector, _fundingOutputIndex);
+        _valueBytes = findAndParseFundingOutput(
+            _d,
+            _txOutputVector,
+            _fundingOutputIndex
+        );
 
-        require(bytes8LEToUint(_valueBytes) >= _d.lotSizeSatoshis, "Deposit too small");
+        require(
+            bytes8LEToUint(_valueBytes) >= _d.lotSizeSatoshis,
+            "Deposit too small"
+        );
 
-        checkProofFromTxId(_d, txID, _merkleProof, _txIndexInBlock, _bitcoinHeaders);
+        checkProofFromTxId(
+            _d,
+            txID,
+            _merkleProof,
+            _txIndexInBlock,
+            _bitcoinHeaders
+        );
 
         // The utxoOutpoint is the LE txID plus the index of the output as a 4-byte LE int
         // _fundingOutputIndex is a uint8, so we know it is only 1 byte
         // Therefore, pad with 3 more bytes
-        _utxoOutpoint = abi.encodePacked(txID, _fundingOutputIndex, hex"000000");
+        _utxoOutpoint = abi.encodePacked(
+            txID,
+            _fundingOutputIndex,
+            hex"000000"
+        );
     }
 
     /// @notice Retreive the remaining term of the deposit
     /// @dev    The return value is not guaranteed since block.timestmap can be lightly manipulated by miners.
     /// @return The remaining term of the deposit in seconds. 0 if already at term
-    function remainingTerm(DepositUtils.Deposit storage _d) public view returns(uint256){
+    function remainingTerm(DepositUtils.Deposit storage _d)
+        public
+        view
+        returns (uint256)
+    {
         uint256 endOfTerm = _d.fundedAt.add(TBTCConstants.getDepositTerm());
-        if(block.timestamp < endOfTerm ) {
+        if (block.timestamp < endOfTerm) {
             return endOfTerm.sub(block.timestamp);
         }
         return 0;
@@ -245,7 +298,10 @@ library DepositUtils {
 
         // This should make a smooth flow from base% to 100%
         uint256 _basePercentage = getAuctionBasePercentage(_d);
-        uint256 _elapsedPercentage = uint256(100).sub(_basePercentage).mul(_elapsed).div(TBTCConstants.getAuctionDuration());
+        uint256 _elapsedPercentage =
+            uint256(100).sub(_basePercentage).mul(_elapsed).div(
+                TBTCConstants.getAuctionDuration()
+            );
         uint256 _percentage = _basePercentage.add(_elapsedPercentage);
 
         return _available.mul(_percentage).div(100);
@@ -253,7 +309,7 @@ library DepositUtils {
 
     /// @notice         Gets the lot size in erc20 decimal places (max 18)
     /// @return         uint256 lot size in 10**18 decimals.
-    function lotSizeTbtc(Deposit storage _d) public view returns (uint256){
+    function lotSizeTbtc(Deposit storage _d) public view returns (uint256) {
         return _d.lotSizeSatoshis.mul(TBTCConstants.getSatoshiMultiplier());
     }
 
@@ -268,11 +324,15 @@ library DepositUtils {
     /// @dev                The prefix encodes the parity of the Y coordinate.
     /// @param  _pubkeyY    The Y coordinate of the public key.
     /// @return             The 1-byte prefix for the compressed key.
-    function determineCompressionPrefix(bytes32 _pubkeyY) public pure returns (bytes memory) {
-        if(uint256(_pubkeyY) & 1 == 1) {
-            return hex"03";  // Odd Y
+    function determineCompressionPrefix(bytes32 _pubkeyY)
+        public
+        pure
+        returns (bytes memory)
+    {
+        if (uint256(_pubkeyY) & 1 == 1) {
+            return hex"03"; // Odd Y
         } else {
-            return hex"02";  // Even Y
+            return hex"02"; // Even Y
         }
     }
 
@@ -281,14 +341,22 @@ library DepositUtils {
     /// @param  _pubkeyX    The X coordinate of the public key.
     /// @param  _pubkeyY    The Y coordinate of the public key.
     /// @return             The 33-byte compressed pubkey.
-    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY) public pure returns (bytes memory) {
+    function compressPubkey(bytes32 _pubkeyX, bytes32 _pubkeyY)
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodePacked(determineCompressionPrefix(_pubkeyY), _pubkeyX);
     }
 
     /// @notice    Returns the packed public key (64 bytes) for the signing group.
     /// @dev       We store it as 2 bytes32, (2 slots) then repack it on demand.
     /// @return    64 byte public key.
-    function signerPubkey(Deposit storage _d) external view returns (bytes memory) {
+    function signerPubkey(Deposit storage _d)
+        external
+        view
+        returns (bytes memory)
+    {
         return abi.encodePacked(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
     }
 
@@ -296,9 +364,10 @@ library DepositUtils {
     /// @dev       This is used in bitcoin output scripts for the signers.
     /// @return    20-bytes public key hash.
     function signerPKH(Deposit storage _d) public view returns (bytes20) {
-        bytes memory _pubkey = compressPubkey(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
+        bytes memory _pubkey =
+            compressPubkey(_d.signingGroupPubkeyX, _d.signingGroupPubkeyY);
         bytes memory _digest = _pubkey.hash160();
-        return bytes20(_digest.toAddress(0));  // dirty solidity hack
+        return bytes20(_digest.toAddress(0)); // dirty solidity hack
     }
 
     /// @notice    Returns the size of the deposit UTXO in satoshi.
@@ -311,14 +380,22 @@ library DepositUtils {
     /// @notice     Gets the current price of Bitcoin in Ether.
     /// @dev        Polls the price feed via the system contract.
     /// @return     The current price of 1 sat in wei.
-    function fetchBitcoinPrice(Deposit storage _d) external view returns (uint256) {
+    function fetchBitcoinPrice(Deposit storage _d)
+        external
+        view
+        returns (uint256)
+    {
         return _d.tbtcSystem.fetchBitcoinPrice();
     }
 
     /// @notice     Fetches the Keep's bond amount in wei.
     /// @dev        Calls the keep contract to do so.
     /// @return     The amount of bonded ETH in wei.
-    function fetchBondAmount(Deposit storage _d) external view returns (uint256) {
+    function fetchBondAmount(Deposit storage _d)
+        external
+        view
+        returns (uint256)
+    {
         IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
         return _keep.checkBondAmount();
     }
@@ -335,17 +412,27 @@ library DepositUtils {
     /// @param _digest  Digest to check approval for.
     /// @return         Timestamp from the moment of recording the digest for signing.
     ///                 Returns 0 if the digest was not approved for signing.
-    function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest) external view returns (uint256) {
+    function wasDigestApprovedForSigning(Deposit storage _d, bytes32 _digest)
+        external
+        view
+        returns (uint256)
+    {
         return _d.approvedDigests[_digest];
     }
 
     /// @notice         Looks up the Fee Rebate Token holder.
     /// @return         The current token holder if the Token exists.
     ///                 address(0) if the token does not exist.
-    function feeRebateTokenHolder(Deposit storage _d) public view returns (address payable) {
+    function feeRebateTokenHolder(Deposit storage _d)
+        public
+        view
+        returns (address payable)
+    {
         address tokenHolder = address(0);
-        if(_d.feeRebateToken.exists(uint256(address(this)))){
-            tokenHolder = address(uint160(_d.feeRebateToken.ownerOf(uint256(address(this)))));
+        if (_d.feeRebateToken.exists(uint256(address(this)))) {
+            tokenHolder = address(
+                uint160(_d.feeRebateToken.ownerOf(uint256(address(this))))
+            );
         }
         return address(uint160(tokenHolder));
     }
@@ -353,8 +440,15 @@ library DepositUtils {
     /// @notice         Looks up the deposit beneficiary by calling the tBTC system.
     /// @dev            We cast the address to a uint256 to match the 721 standard.
     /// @return         The current deposit beneficiary.
-    function depositOwner(Deposit storage _d) public view returns (address payable) {
-        return address(uint160(_d.tbtcDepositToken.ownerOf(uint256(address(this)))));
+    function depositOwner(Deposit storage _d)
+        public
+        view
+        returns (address payable)
+    {
+        return
+            address(
+                uint160(_d.tbtcDepositToken.ownerOf(uint256(address(this))))
+            );
     }
 
     /// @notice     Deletes state after termination of redemption process.
@@ -366,12 +460,15 @@ library DepositUtils {
         _d.lastRequestedDigest = bytes32(0);
     }
 
-
     /// @notice     Get the starting percentage of the bond at auction.
     /// @dev        This will return the same value regardless of collateral price.
     /// @return     The percentage of the InitialCollateralizationPercent that will result
     ///             in a 100% bond value base auction given perfect collateralization.
-    function getAuctionBasePercentage(Deposit storage _d) internal view returns (uint256) {
+    function getAuctionBasePercentage(Deposit storage _d)
+        internal
+        view
+        returns (uint256)
+    {
         return uint256(10000).div(_d.initialCollateralizedPercent);
     }
 
@@ -385,14 +482,24 @@ library DepositUtils {
         _keep.seizeSignerBonds();
 
         uint256 _postCallBalance = address(this).balance;
-        require(_postCallBalance > _preCallBalance, "No funds received, unexpected");
+        require(
+            _postCallBalance > _preCallBalance,
+            "No funds received, unexpected"
+        );
         return _postCallBalance.sub(_preCallBalance);
     }
 
     /// @notice     Adds a given amount to the withdraw allowance for the address.
     /// @dev        Withdrawals can only happen when a contract is in an end-state.
-    function enableWithdrawal(DepositUtils.Deposit storage _d, address _withdrawer, uint256 _amount) internal {
-        _d.withdrawableAmounts[_withdrawer] = _d.withdrawableAmounts[_withdrawer].add(_amount);
+    function enableWithdrawal(
+        DepositUtils.Deposit storage _d,
+        address _withdrawer,
+        uint256 _amount
+    ) internal {
+        _d.withdrawableAmounts[_withdrawer] = _d.withdrawableAmounts[
+            _withdrawer
+        ]
+            .add(_amount);
     }
 
     /// @notice     Withdraw caller's allowance.
@@ -402,22 +509,26 @@ library DepositUtils {
 
         require(_d.inEndState(), "Contract not yet terminated");
         require(available > 0, "Nothing to withdraw");
-        require(address(this).balance >= available, "Insufficient contract balance");
+        require(
+            address(this).balance >= available,
+            "Insufficient contract balance"
+        );
 
         // zero-out to prevent reentrancy
         _d.withdrawableAmounts[msg.sender] = 0;
 
         /* solium-disable-next-line security/no-call-value */
-        (bool ok,) = msg.sender.call.value(available)("");
-        require(
-            ok,
-            "Failed to send withdrawable amount to sender"
-        );
+        (bool ok, ) = msg.sender.call.value(available)("");
+        require(ok, "Failed to send withdrawable amount to sender");
     }
 
     /// @notice     Get the caller's withdraw allowance.
     /// @return     The caller's withdraw allowance in wei.
-    function getWithdrawableAmount(DepositUtils.Deposit storage _d) internal view returns (uint256) {
+    function getWithdrawableAmount(DepositUtils.Deposit storage _d)
+        internal
+        view
+        returns (uint256)
+    {
         return _d.withdrawableAmounts[msg.sender];
     }
 
@@ -427,12 +538,12 @@ library DepositUtils {
         address rebateTokenHolder = feeRebateTokenHolder(_d);
 
         // exit the function if there is nobody to send the rebate to
-        if(rebateTokenHolder == address(0)){
+        if (rebateTokenHolder == address(0)) {
             return;
         }
 
         // pay out the rebate if it is available
-        if(_d.tbtcToken.balanceOf(address(this)) >= signerFeeTbtc(_d)) {
+        if (_d.tbtcToken.balanceOf(address(this)) >= signerFeeTbtc(_d)) {
             _d.tbtcToken.transfer(rebateTokenHolder, signerFeeTbtc(_d));
         }
     }
@@ -440,9 +551,11 @@ library DepositUtils {
     /// @notice             Pushes ether held by the deposit to the signer group.
     /// @dev                Ether is returned to signing group members bonds.
     /// @param  _ethValue   The amount of ether to send.
-    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue) internal {
+    function pushFundsToKeepGroup(Deposit storage _d, uint256 _ethValue)
+        internal
+    {
         require(address(this).balance >= _ethValue, "Not enough funds to send");
-        if(_ethValue > 0){
+        if (_ethValue > 0) {
             IBondedECDSAKeep _keep = IBondedECDSAKeep(_d.keepAddress);
             _keep.returnPartialSignerBonds.value(_ethValue)();
         }
@@ -471,14 +584,18 @@ library DepositUtils {
         DepositUtils.Deposit storage _d,
         address _redeemer,
         bool _assumeRedeemerHoldsTdt
-    ) internal view returns (
-        uint256 owedToDeposit,
-        uint256 owedToTdtHolder,
-        uint256 owedToFrtHolder
-    ) {
+    )
+        internal
+        view
+        returns (
+            uint256 owedToDeposit,
+            uint256 owedToTdtHolder,
+            uint256 owedToFrtHolder
+        )
+    {
         bool redeemerHoldsTdt =
             _assumeRedeemerHoldsTdt || depositOwner(_d) == _redeemer;
-        bool preTerm = remainingTerm(_d) > 0 &&  !_d.inCourtesyCall();
+        bool preTerm = remainingTerm(_d) > 0 && !_d.inCourtesyCall();
 
         require(
             redeemerHoldsTdt || !preTerm,
@@ -489,21 +606,22 @@ library DepositUtils {
         bool redeemerHoldsFrt = feeRebateTokenHolder(_d) == _redeemer;
         uint256 signerFee = signerFeeTbtc(_d);
 
-        uint256 feeEscrow = calculateRedemptionFeeEscrow(
-            signerFee,
-            preTerm,
-            frtExists,
-            redeemerHoldsTdt,
-            redeemerHoldsFrt
-        );
+        uint256 feeEscrow =
+            calculateRedemptionFeeEscrow(
+                signerFee,
+                preTerm,
+                frtExists,
+                redeemerHoldsTdt,
+                redeemerHoldsFrt
+            );
 
         // Base redemption + fee = total we need to have escrowed to start
         // redemption.
-        owedToDeposit =
-            calculateBaseRedemptionCharge(
-                lotSizeTbtc(_d),
-                redeemerHoldsTdt
-            ).add(feeEscrow);
+        owedToDeposit = calculateBaseRedemptionCharge(
+            lotSizeTbtc(_d),
+            redeemerHoldsTdt
+        )
+            .add(feeEscrow);
 
         // Adjust the amount owed to the deposit based on any balance the
         // deposit already has.
@@ -524,8 +642,9 @@ library DepositUtils {
         }
 
         // The TDT holder gets any leftover balance.
-        owedToTdtHolder =
-            balance.add(owedToDeposit).sub(signerFee).sub(owedToFrtHolder);
+        owedToTdtHolder = balance.add(owedToDeposit).sub(signerFee).sub(
+            owedToFrtHolder
+        );
 
         return (owedToDeposit, owedToTdtHolder, owedToFrtHolder);
     }
@@ -537,7 +656,7 @@ library DepositUtils {
     function calculateBaseRedemptionCharge(
         uint256 _lotSize,
         bool _redeemerHoldsTdt
-    ) internal pure returns (uint256){
+    ) internal pure returns (uint256) {
         if (_redeemerHoldsTdt) {
             return 0;
         }
@@ -562,15 +681,15 @@ library DepositUtils {
         // redeemer holds the FRT, in which case we simply don't require the
         // rebate from them.
         bool escrowRequiresFeeRebate =
-            _preTerm && _frtExists && ! _redeemerHoldsFrt;
+            _preTerm && _frtExists && !_redeemerHoldsFrt;
 
         bool escrowRequiresFee =
             _preTerm ||
-            // If the FRT exists at term/courtesy call, the fee is
-            // "required", but should already be escrowed before redemption.
-            _frtExists ||
-            // The TDT holder always owes fees if there is no FRT.
-            _redeemerHoldsTdt;
+                // If the FRT exists at term/courtesy call, the fee is
+                // "required", but should already be escrowed before redemption.
+                _frtExists ||
+                // The TDT holder always owes fees if there is no FRT.
+                _redeemerHoldsTdt;
 
         uint256 feeEscrow = 0;
         if (escrowRequiresFee) {

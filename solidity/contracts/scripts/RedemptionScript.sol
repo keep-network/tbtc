@@ -40,8 +40,12 @@ contract RedemptionScript is ITokenRecipient {
         uint256 _amount,
         address,
         bytes memory _extraData
-    ) public { // not external to allow bytes memory parameters
-        require(msg.sender == address(tbtcToken), "Only token contract can call receiveApproval");
+    ) public {
+        // not external to allow bytes memory parameters
+        require(
+            msg.sender == address(tbtcToken),
+            "Only token contract can call receiveApproval"
+        );
 
         tbtcToken.transferFrom(_from, address(this), _amount);
         tbtcToken.approve(address(vendingMachine), _amount);
@@ -59,7 +63,8 @@ contract RedemptionScript is ITokenRecipient {
         // We capture the `returnData` in order to forward any nested revert message
         // from the contract call.
         // solium-disable-next-line security/no-low-level-calls
-        (bool success, bytes memory returnData) = address(vendingMachine).call(_extraData);
+        (bool success, bytes memory returnData) =
+            address(vendingMachine).call(_extraData);
 
         string memory revertMessage;
         assembly {

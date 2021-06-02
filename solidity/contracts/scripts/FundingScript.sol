@@ -39,8 +39,12 @@ contract FundingScript is ITokenRecipient {
         uint256 _tokenId,
         address,
         bytes memory _extraData
-    ) public { // not external to allow bytes memory parameters
-        require(msg.sender == address(tbtcDepositToken), "Only token contract can call receiveApproval");
+    ) public {
+        // not external to allow bytes memory parameters
+        require(
+            msg.sender == address(tbtcDepositToken),
+            "Only token contract can call receiveApproval"
+        );
 
         tbtcDepositToken.transferFrom(_from, address(this), _tokenId);
         tbtcDepositToken.approve(address(vendingMachine), _tokenId);
@@ -51,7 +55,8 @@ contract FundingScript is ITokenRecipient {
             functionSignature := and(mload(add(_extraData, 0x20)), not(0xff))
         }
         require(
-            functionSignature == vendingMachine.unqualifiedDepositToTbtc.selector,
+            functionSignature ==
+                vendingMachine.unqualifiedDepositToTbtc.selector,
             "Bad _extraData signature. Call must be to unqualifiedDepositToTbtc."
         );
 
@@ -61,7 +66,8 @@ contract FundingScript is ITokenRecipient {
         // We capture the `returnData` in order to forward any nested revert message
         // from the contract call.
         /* solium-disable-next-line security/no-low-level-calls */
-        (bool success, bytes memory returnData) = address(vendingMachine).call(_extraData);
+        (bool success, bytes memory returnData) =
+            address(vendingMachine).call(_extraData);
 
         string memory revertMessage;
         assembly {

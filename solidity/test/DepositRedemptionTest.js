@@ -1,4 +1,4 @@
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
+const { deployAndLinkAll } = require("./helpers/testDeployer.js")
 const {
   states,
   bytes32zero,
@@ -8,16 +8,16 @@ const {
   resolveAllLogs,
   expectNoEvent,
 } = require("./helpers/utils.js")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {accounts, web3} = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { accounts, web3 } = require("@openzeppelin/test-environment")
 const {
   BN,
   constants,
   expectRevert,
   time,
 } = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = constants
-const {expect} = require("chai")
+const { ZERO_ADDRESS } = constants
+const { expect } = require("chai")
 
 // spare signature:
 // signing with privkey '11' * 32
@@ -27,7 +27,7 @@ const {expect} = require("chai")
 // const v = 28
 // const r = '0x9a40a074721355f427762f5e6d5cb16a0a9ada06011984e49fc81b3ce89cab6d'
 // const s = '0x234e909713e74a9a49bf9484a69968dabcb1953bf091fa3e31d48531695cf293'
-describe("DepositRedemption", async function() {
+describe("DepositRedemption", async function () {
   const redeemerOutputScript =
     "0x16001486e7303082a6a21d5837176bc808bf4828371ab6"
 
@@ -109,7 +109,7 @@ describe("DepositRedemption", async function() {
 
       await feeRebateToken.forceMint(
         frtHolder,
-        web3.utils.toBN(testDeposit.address),
+        web3.utils.toBN(testDeposit.address)
       )
       await tbtcDepositToken.forceMint(tdtHolder, tdtId)
 
@@ -117,7 +117,7 @@ describe("DepositRedemption", async function() {
       await testDeposit.setFundingInfo(valueBytes, 0, outpoint)
 
       // make sure there is sufficient balance to request redemption. Then approve deposit
-      await tbtcToken.resetBalance(requiredBalance, {from: owner})
+      await tbtcToken.resetBalance(requiredBalance, { from: owner })
       await tbtcToken.resetAllowance(testDeposit.address, requiredBalance, {
         from: owner,
       })
@@ -134,7 +134,7 @@ describe("DepositRedemption", async function() {
       await testDeposit.requestRedemption(
         "0x0000111111111111",
         redeemerOutputScript,
-        {from: owner},
+        { from: owner }
       )
 
       const requestInfo = await testDeposit.getRequestInfo()
@@ -145,7 +145,7 @@ describe("DepositRedemption", async function() {
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents(
         "RedemptionRequested",
-        {fromBlock: blockNumber, toBlock: "latest"},
+        { fromBlock: blockNumber, toBlock: "latest" }
       )
       expect(eventList[0].returnValues._digest).to.equal(sighash)
     })
@@ -160,7 +160,7 @@ describe("DepositRedemption", async function() {
       await testDeposit.requestRedemption(
         "0x0000111111111111",
         redeemerOutputScript,
-        {from: owner},
+        { from: owner }
       )
 
       const requestInfo = await testDeposit.getRequestInfo()
@@ -171,7 +171,7 @@ describe("DepositRedemption", async function() {
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents(
         "RedemptionRequested",
-        {fromBlock: blockNumber, toBlock: "latest"},
+        { fromBlock: blockNumber, toBlock: "latest" }
       )
       expect(eventList[0].returnValues._digest).to.equal(sighash)
     })
@@ -183,9 +183,9 @@ describe("DepositRedemption", async function() {
         testDeposit.requestRedemption(
           "0x1111111100000000",
           "0x" + "33".repeat(20),
-          {from: owner},
+          { from: owner }
         ),
-        "Redemption only available from Active or Courtesy state",
+        "Redemption only available from Active or Courtesy state"
       )
     })
 
@@ -194,9 +194,9 @@ describe("DepositRedemption", async function() {
         testDeposit.requestRedemption(
           "0x0011111111111111",
           "0x1976a914" + "33".repeat(20) + "88ac",
-          {from: owner},
+          { from: owner }
         ),
-        "Fee is too low",
+        "Fee is too low"
       )
     })
 
@@ -205,9 +205,9 @@ describe("DepositRedemption", async function() {
         testDeposit.requestRedemption(
           "0x8888888888888808",
           "0x1976a914" + "33".repeat(20) + "88ac",
-          {from: owner},
+          { from: owner }
         ),
-        "Initial fee cannot exceed half of the deposit's value",
+        "Initial fee cannot exceed half of the deposit's value"
       )
     })
 
@@ -217,8 +217,8 @@ describe("DepositRedemption", async function() {
           await testDeposit.requestRedemption(
             "0x8a88888888888808",
             "0x1976a914" + "33".repeat(20) + "88ac",
-            {from: owner},
-          ),
+            { from: owner }
+          )
       ).does.not.throw()
     })
 
@@ -226,16 +226,16 @@ describe("DepositRedemption", async function() {
       await testDeposit.setFundingInfo(
         valueBytes,
         await time.latest(),
-        outpoint,
+        outpoint
       )
 
       await expectRevert(
         testDeposit.requestRedemption(
           "0x1111111100000000",
           "0x" + "33".repeat(20),
-          {from: owner},
+          { from: owner }
         ),
-        "Output script must be a standard type",
+        "Output script must be a standard type"
       )
     })
 
@@ -244,14 +244,14 @@ describe("DepositRedemption", async function() {
         tdtHolder,
         vendingMachine.address,
         tdtId,
-        {from: tdtHolder},
+        { from: tdtHolder }
       )
-      await feeRebateToken.burn(tdtId, {from: frtHolder})
+      await feeRebateToken.burn(tdtId, { from: frtHolder })
 
       await testDeposit.setFundingInfo(
         valueBytes,
         await time.latest(),
-        outpoint,
+        outpoint
       )
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
       await testDeposit.setState(states.COURTESY_CALL)
@@ -259,7 +259,7 @@ describe("DepositRedemption", async function() {
       await testDeposit.requestRedemption(
         "0x0000111111111111",
         redeemerOutputScript,
-        {from: owner},
+        { from: owner }
       )
 
       expect(await tbtcToken.balanceOf(testDeposit.address)).to.eq.BN(signerFee)
@@ -280,14 +280,14 @@ describe("DepositRedemption", async function() {
         await testDeposit.setFundingInfo(
           valueBytes,
           await time.latest(),
-          outpoint,
+          outpoint
         )
 
         await expectRevert(
           testDeposit.requestRedemption("0x1111111100000000", script, {
             from: tdtHolder,
           }),
-          "Output script must be a standard type",
+          "Output script must be a standard type"
         )
       })
     }
@@ -296,7 +296,7 @@ describe("DepositRedemption", async function() {
       await testDeposit.setFundingInfo(
         valueBytes,
         await time.latest(),
-        outpoint,
+        outpoint
       )
 
       await tbtcDepositToken.transferFrom(tdtHolder, frtHolder, tdtId, {
@@ -307,9 +307,9 @@ describe("DepositRedemption", async function() {
         testDeposit.requestRedemption(
           "0x1111111100000000",
           "0x1976a914" + "33".repeat(20) + "88ac",
-          {from: owner},
+          { from: owner }
         ),
-        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL",
+        "Only TDT holder can redeem unless deposit is at-term or in COURTESY_CALL"
       )
     })
   })
@@ -336,14 +336,14 @@ describe("DepositRedemption", async function() {
       await testDeposit.setFundingInfo(valueBytes, 0, outpoint)
 
       // make sure there is sufficient balance to request redemption. Then approve deposit
-      await tbtcToken.resetBalance(requiredBalance, {from: owner})
+      await tbtcToken.resetBalance(requiredBalance, { from: owner })
       await tbtcToken.resetAllowance(testDeposit.address, requiredBalance, {
         from: owner,
       })
 
       await feeRebateToken.forceMint(
         frtHolder,
-        web3.utils.toBN(testDeposit.address),
+        web3.utils.toBN(testDeposit.address)
       )
 
       await tbtcDepositToken.forceMint(tdtHolder, tdtId)
@@ -366,7 +366,7 @@ describe("DepositRedemption", async function() {
         "0x0000111111111111",
         redeemerOutputScript,
         owner,
-        {from: owner},
+        { from: owner }
       )
       const tdtOwner = await tbtcDepositToken.ownerOf(tdtId)
       const requestInfo = await testDeposit.getRequestInfo()
@@ -378,7 +378,7 @@ describe("DepositRedemption", async function() {
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents(
         "RedemptionRequested",
-        {fromBlock: blockNumber, toBlock: "latest"},
+        { fromBlock: blockNumber, toBlock: "latest" }
       )
       expect(eventList[0].returnValues._digest).to.equal(sighash)
     })
@@ -388,9 +388,9 @@ describe("DepositRedemption", async function() {
           "0x1111111100000000",
           redeemerOutputScript,
           owner,
-          {from: owner},
+          { from: owner }
         ),
-        "Only the vending machine can call transferAndRequestRedemption",
+        "Only the vending machine can call transferAndRequestRedemption"
       )
     })
   })
@@ -406,7 +406,7 @@ describe("DepositRedemption", async function() {
     it("calls keep for signing", async () => {
       const digest = "0x" + "08".repeat(32)
 
-      await testDeposit.approveDigest(digest).catch(err => {
+      await testDeposit.approveDigest(digest).catch((err) => {
         assert.fail(`cannot approve digest: ${err}`)
       })
 
@@ -415,31 +415,33 @@ describe("DepositRedemption", async function() {
       // Check if ECDSAKeep has been called and event emitted.
       const eventList = await ecdsaKeepStub.getPastEvents(
         "SignatureRequested",
-        {fromBlock: blockNumber, toBlock: "latest"},
+        { fromBlock: blockNumber, toBlock: "latest" }
       )
       expect(
         eventList[0].returnValues.digest,
-        "incorrect digest in emitted event",
+        "incorrect digest in emitted event"
       ).to.equal(digest)
     })
 
     it("registers timestamp for digest approval", async () => {
       const digest = "0x" + "02".repeat(32)
 
-      const approvalTx = await testDeposit.approveDigest(digest).catch(err => {
-        assert.fail(`cannot approve digest: ${err}`)
-      })
+      const approvalTx = await testDeposit
+        .approveDigest(digest)
+        .catch((err) => {
+          assert.fail(`cannot approve digest: ${err}`)
+        })
 
       const block = await web3.eth.getBlock(approvalTx.receipt.blockNumber)
       const expectedTimestamp = block.timestamp
 
       const timestamp = await testDeposit
         .wasDigestApprovedForSigning(digest)
-        .catch(err => {
+        .catch((err) => {
           assert.fail(`cannot check digest approval: ${err}`)
         })
       expect(timestamp, "incorrect registered timestamp").to.eq.BN(
-        new BN(expectedTimestamp),
+        new BN(expectedTimestamp)
       )
     })
   })
@@ -477,7 +479,7 @@ describe("DepositRedemption", async function() {
         "0x" + "11".repeat(20),
         0,
         0,
-        digest,
+        digest
       )
 
       await testDeposit.provideRedemptionSignature(v, r, s)
@@ -488,7 +490,7 @@ describe("DepositRedemption", async function() {
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents(
         "GotRedemptionSignature",
-        {fromBlock: blockNumber, toBlock: "latest"},
+        { fromBlock: blockNumber, toBlock: "latest" }
       )
       expect(eventList[0].returnValues._r).to.equal(r)
       expect(eventList[0].returnValues._s).to.equal(s)
@@ -499,14 +501,14 @@ describe("DepositRedemption", async function() {
 
       await expectRevert(
         testDeposit.provideRedemptionSignature(v, r, s),
-        "Not currently awaiting a signature",
+        "Not currently awaiting a signature"
       )
     })
 
     it("errors on invaid sig", async () => {
       await expectRevert(
         testDeposit.provideRedemptionSignature(28, r, s),
-        "Invalid signature",
+        "Invalid signature"
       )
     })
 
@@ -515,7 +517,7 @@ describe("DepositRedemption", async function() {
         "0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A1"
       await expectRevert(
         testDeposit.provideRedemptionSignature(0, "0x0", s),
-        "Malleable signature - s should be in the low half of secp256k1 curve's order",
+        "Malleable signature - s should be in the low half of secp256k1 curve's order"
       )
     })
   })
@@ -555,7 +557,7 @@ describe("DepositRedemption", async function() {
       withdrawalRequestTime = blockTimestamp - feeIncreaseTimer.toNumber()
       await testDeposit.setDigestApprovedAtTime(
         prevSighash,
-        withdrawalRequestTime,
+        withdrawalRequestTime
       )
       await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
       await testDeposit.setSigningGroupPublicKey(keepPubkeyX, keepPubkeyY)
@@ -565,12 +567,12 @@ describe("DepositRedemption", async function() {
         redeemerOutputScript,
         initialFee,
         withdrawalRequestTime,
-        prevSighash,
+        prevSighash
       )
 
       await feeRebateToken.forceMint(
         frtHolder,
-        web3.utils.toBN(testDeposit.address),
+        web3.utils.toBN(testDeposit.address)
       )
 
       await tbtcDepositToken.forceMint(tdtHolder, tdtId)
@@ -584,7 +586,7 @@ describe("DepositRedemption", async function() {
       // Fee increment that will reach the full UTXO value on the 4th bump.
       const feeIncrement = startValue.divn(4)
 
-      const outputBytes = [1, 2, 3, 4].map(increment => {
+      const outputBytes = [1, 2, 3, 4].map((increment) => {
         const hexIncrement = startValue
           .sub(feeIncrement.muln(increment))
           .toString(16)
@@ -609,7 +611,7 @@ describe("DepositRedemption", async function() {
         redeemerOutputScript,
         "0x3fffffffffffffff",
         blockTimestamp,
-        sigHashes[0],
+        sigHashes[0]
       )
 
       // Loop through first several fee bumps to check them normally; the last
@@ -621,7 +623,7 @@ describe("DepositRedemption", async function() {
 
         await testDeposit.increaseRedemptionFee(
           outputBytes[i],
-          outputBytes[i + 1],
+          outputBytes[i + 1]
         )
 
         const updatedFee = await testDeposit.getLatestRedemptionFee.call()
@@ -636,7 +638,7 @@ describe("DepositRedemption", async function() {
 
       await testDeposit.increaseRedemptionFee(
         outputBytes.slice(-2)[0],
-        outputBytes.slice(-2)[1],
+        outputBytes.slice(-2)[1]
       )
 
       const updatedFee = await testDeposit.getLatestRedemptionFee.call()
@@ -647,7 +649,7 @@ describe("DepositRedemption", async function() {
       const blockNumber = await web3.eth.getBlockNumber()
       await testDeposit.increaseRedemptionFee(
         previousOutputBytes,
-        newOutputBytes,
+        newOutputBytes
       )
       const requestInfo = await testDeposit.getRequestInfo.call()
       expect(requestInfo[4]).to.equal(nextSighash)
@@ -655,7 +657,7 @@ describe("DepositRedemption", async function() {
       // fired an event
       const eventList = await tbtcSystemStub.getPastEvents(
         "RedemptionRequested",
-        {fromBlock: blockNumber, toBlock: "latest"},
+        { fromBlock: blockNumber, toBlock: "latest" }
       )
       expect(eventList[0].returnValues._digest).to.equal(nextSighash)
     })
@@ -665,7 +667,7 @@ describe("DepositRedemption", async function() {
 
       await expectRevert(
         testDeposit.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
-        "Fee increase only available after signature provided",
+        "Fee increase only available after signature provided"
       )
     })
 
@@ -675,12 +677,12 @@ describe("DepositRedemption", async function() {
         redeemerOutputScript,
         initialFee,
         await time.latest(),
-        prevSighash,
+        prevSighash
       )
 
       await expectRevert(
         testDeposit.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
-        "Fee increase not yet permitted",
+        "Fee increase not yet permitted"
       )
     })
 
@@ -688,9 +690,9 @@ describe("DepositRedemption", async function() {
       await expectRevert(
         testDeposit.increaseRedemptionFee(
           previousOutputBytes,
-          "0x1101010101102201",
+          "0x1101010101102201"
         ),
-        "Not an allowed fee step",
+        "Not an allowed fee step"
       )
     })
 
@@ -700,7 +702,7 @@ describe("DepositRedemption", async function() {
         redeemerOutputScript,
         initialFee,
         withdrawalRequestTime,
-        keepPubkeyX,
+        keepPubkeyX
       )
 
       // Previous sigHash is not approved for signing.
@@ -708,7 +710,7 @@ describe("DepositRedemption", async function() {
 
       await expectRevert(
         testDeposit.increaseRedemptionFee(previousOutputBytes, newOutputBytes),
-        "Provided previous value does not yield previous sighash",
+        "Provided previous value does not yield previous sighash"
       )
     })
   })
@@ -724,7 +726,7 @@ describe("DepositRedemption", async function() {
       await testDeposit.setFundingInfo(
         fundingTx.prevoutValueBytes,
         0,
-        fundingTx.prevoutOutpoint,
+        fundingTx.prevoutOutpoint
       )
       await testDeposit.setState(states.AWAITING_WITHDRAWAL_PROOF)
       await testDeposit.setRequestInfo(
@@ -732,7 +734,7 @@ describe("DepositRedemption", async function() {
         redeemerOutputScript,
         14544,
         0,
-        "0x" + "11" * 32,
+        "0x" + "11" * 32
       )
       await testDeposit.setLatestRedemptionFee(14544)
     })
@@ -749,7 +751,7 @@ describe("DepositRedemption", async function() {
         fundingTx.txLocktime,
         fundingTx.merkleProof,
         fundingTx.txIndexInBlock,
-        fundingTx.bitcoinHeaders,
+        fundingTx.bitcoinHeaders
       )
 
       const depositState = await testDeposit.getState.call()
@@ -757,7 +759,7 @@ describe("DepositRedemption", async function() {
 
       const requestInfo = await testDeposit.getRequestInfo.call()
       expect(requestInfo[0]).to.equal(
-        "0x1111111111111111111111111111111111111111",
+        "0x1111111111111111111111111111111111111111"
       ) // this value should not be cleared
       expect(requestInfo[1]).to.equal(null)
       expect(requestInfo[4]).to.equal(bytes32zero)
@@ -780,9 +782,9 @@ describe("DepositRedemption", async function() {
           fundingTx.txLocktime,
           fundingTx.merkleProof,
           fundingTx.txIndexInBlock,
-          fundingTx.bitcoinHeaders,
+          fundingTx.bitcoinHeaders
         ),
-        "Redemption proof only allowed from redemption flow",
+        "Redemption proof only allowed from redemption flow"
       )
     })
 
@@ -795,9 +797,9 @@ describe("DepositRedemption", async function() {
           fundingTx.txLocktime,
           fundingTx.merkleProof,
           0,
-          fundingTx.bitcoinHeaders,
+          fundingTx.bitcoinHeaders
         ),
-        "Tx merkle proof is not valid for provided header",
+        "Tx merkle proof is not valid for provided header"
       )
     })
 
@@ -812,9 +814,9 @@ describe("DepositRedemption", async function() {
           fundingTx.txLocktime,
           fundingTx.merkleProof,
           fundingTx.txIndexInBlock,
-          fundingTx.bitcoinHeaders,
+          fundingTx.bitcoinHeaders
         ),
-        "Incorrect fee amount",
+        "Incorrect fee amount"
       )
     })
   })
@@ -824,21 +826,21 @@ describe("DepositRedemption", async function() {
       await testDeposit.setFundingInfo(
         fundingTx.prevoutValueBytes,
         0,
-        fundingTx.prevoutOutpoint,
+        fundingTx.prevoutOutpoint
       )
       await testDeposit.setRequestInfo(
         "0x" + "11".repeat(20),
         redeemerOutputScript,
         14544,
         0,
-        "0x" + "11" * 32,
+        "0x" + "11" * 32
       )
     })
 
     it("returns the output value", async () => {
       const redemptionChecks = await testDeposit.redemptionTransactionChecks.call(
         fundingTx.txInputVector,
-        fundingTx.txOutputVector,
+        fundingTx.txOutputVector
       )
       expect(redemptionChecks).to.eq.BN(new BN(fundingTx.outputValue))
     })
@@ -859,11 +861,11 @@ describe("DepositRedemption", async function() {
           "0x" + script,
           14544,
           0,
-          "0x" + "11" * 32,
+          "0x" + "11" * 32
         )
         const redemptionChecks = await testDeposit.redemptionTransactionChecks.call(
           fundingTx.txInputVector,
-          tempOutputVector,
+          tempOutputVector
         )
         expect(redemptionChecks).to.eq.BN(new BN(fundingTx.outputValue))
       }
@@ -873,9 +875,9 @@ describe("DepositRedemption", async function() {
       await expectRevert(
         testDeposit.redemptionTransactionChecks(
           "0x00",
-          fundingTx.txOutputVector,
+          fundingTx.txOutputVector
         ),
-        "invalid input vector provided",
+        "invalid input vector provided"
       )
     })
 
@@ -883,9 +885,9 @@ describe("DepositRedemption", async function() {
       await expectRevert(
         testDeposit.redemptionTransactionChecks(
           fundingTx.txInputVector,
-          "0x00",
+          "0x00"
         ),
-        "invalid output vector provided",
+        "invalid output vector provided"
       )
     })
 
@@ -893,15 +895,15 @@ describe("DepositRedemption", async function() {
       await testDeposit.setFundingInfo(
         fundingTx.prevoutValueBytes,
         0,
-        "0x" + "33".repeat(36),
+        "0x" + "33".repeat(36)
       )
 
       await expectRevert(
         testDeposit.redemptionTransactionChecks.call(
           fundingTx.txInputVector,
-          fundingTx.txOutputVector,
+          fundingTx.txOutputVector
         ),
-        "Tx spends the wrong UTXO",
+        "Tx spends the wrong UTXO"
       )
     })
 
@@ -911,39 +913,39 @@ describe("DepositRedemption", async function() {
         "0x" + "11".repeat(20),
         14544,
         0,
-        "0x" + "11" * 32,
+        "0x" + "11" * 32
       )
 
       await expectRevert(
         testDeposit.redemptionTransactionChecks.call(
           fundingTx.txInputVector,
-          fundingTx.txOutputVector,
+          fundingTx.txOutputVector
         ),
-        "Tx sends value to wrong output script",
+        "Tx sends value to wrong output script"
       )
     })
   })
 
   const abortScenarios = {
     "signature timeout": {
-      timeoutFn: constants => constants.getSignatureTimeout,
+      timeoutFn: (constants) => constants.getSignatureTimeout,
       timeoutError: "Signature timer has not elapsed",
       state: states.AWAITING_WITHDRAWAL_SIGNATURE,
       stateError: "Not currently awaiting a signature",
-      notifyFn: deposit => deposit.notifyRedemptionSignatureTimedOut,
+      notifyFn: (deposit) => deposit.notifyRedemptionSignatureTimedOut,
     },
     "proof timeout": {
-      timeoutFn: constants => constants.getRedemptionProofTimeout,
+      timeoutFn: (constants) => constants.getRedemptionProofTimeout,
       timeoutError: "Proof timer has not elapsed",
       state: states.AWAITING_WITHDRAWAL_PROOF,
       stateError: "Not currently awaiting a redemption proof",
-      notifyFn: deposit => deposit.notifyRedemptionProofTimedOut,
+      notifyFn: (deposit) => deposit.notifyRedemptionProofTimedOut,
     },
   }
 
   for (const [
     scenario,
-    {timeoutFn, timeoutError, state, stateError, notifyFn},
+    { timeoutFn, timeoutError, state, stateError, notifyFn },
   ] of Object.entries(abortScenarios)) {
     describe(`when reporting a signer abort due to ${scenario}`, async () => {
       let abortTimeout
@@ -963,7 +965,7 @@ describe("DepositRedemption", async function() {
           ZERO_ADDRESS,
           0,
           await time.latest(),
-          bytes32zero,
+          bytes32zero
         )
       })
 
@@ -985,7 +987,7 @@ describe("DepositRedemption", async function() {
 
         await expectRevert(
           notifyFn(testDeposit)(),
-          "No funds received, unexpected",
+          "No funds received, unexpected"
         )
       })
 
@@ -993,13 +995,13 @@ describe("DepositRedemption", async function() {
         await time.increase(time.duration.seconds(abortTimeout + 1))
 
         const signerBonds = new BN("1000000")
-        await ecdsaKeepStub.send(signerBonds, {from: owner})
+        await ecdsaKeepStub.send(signerBonds, { from: owner })
         await testDeposit.setRedeemerAddress(redeemer)
 
-        const {receipt} = await notifyFn(testDeposit)()
+        const { receipt } = await notifyFn(testDeposit)()
         const notificationTime = (await web3.eth.getBlock(receipt.blockNumber))
           .timestamp
-        const fullReceipt = resolveAllLogs(receipt, {tbtcSystemStub})
+        const fullReceipt = resolveAllLogs(receipt, { tbtcSystemStub })
 
         expectNoEvent(fullReceipt, "Liquidated")
 

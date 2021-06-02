@@ -1,9 +1,9 @@
-const {deployAndLinkAll} = require("./helpers/testDeployer.js")
-const {increaseTime, expectEvent} = require("./helpers/utils.js")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {BN, expectRevert} = require("@openzeppelin/test-helpers")
-const {expect} = require("chai")
+const { deployAndLinkAll } = require("./helpers/testDeployer.js")
+const { increaseTime, expectEvent } = require("./helpers/utils.js")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { BN, expectRevert } = require("@openzeppelin/test-helpers")
+const { expect } = require("chai")
 const constants = require("@openzeppelin/test-helpers/src/constants")
 
 const TBTCSystem = contract.fromArtifact("TBTCSystem")
@@ -11,7 +11,7 @@ const SatWeiPriceFeed = contract.fromArtifact("SatWeiPriceFeed")
 const MockMedianizer = contract.fromArtifact("MockMedianizer")
 const ECDSAKeepFactoryStub = contract.fromArtifact("ECDSAKeepFactoryStub")
 
-describe("TBTCSystem governance", async function() {
+describe("TBTCSystem governance", async function () {
   let tbtcSystem
   let keepFactorySelector
   let ecdsaKeepFactory
@@ -44,7 +44,7 @@ describe("TBTCSystem governance", async function() {
       {
         TBTCSystemStub: TBTCSystem,
         MockSatWeiPriceFeed: SatWeiPriceFeed,
-      },
+      }
     )
     // Refer to this correctly throughout the rest of the test.
     tbtcSystem = tbtcSystemStub
@@ -60,7 +60,7 @@ describe("TBTCSystem governance", async function() {
 
     newFullyBackedFactory = await ECDSAKeepFactoryStub.new()
     await newFullyBackedFactory.setOpenKeepFeeEstimate(
-      newFullyBackedOpenKeepFee,
+      newFullyBackedOpenKeepFee
     )
 
     ethBtcMedianizer = await MockMedianizer.new()
@@ -134,7 +134,7 @@ describe("TBTCSystem governance", async function() {
       await increaseTime(180 * 24 * 60 * 60 + 1)
       await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits(),
-        "emergencyPauseNewDeposits can only be called within 180 days of initialization",
+        "emergencyPauseNewDeposits can only be called within 180 days of initialization"
       )
 
       allowNewDeposits = await tbtcSystem.getAllowNewDeposits()
@@ -143,8 +143,8 @@ describe("TBTCSystem governance", async function() {
 
     it("reverts if msg.sender is not owner", async () => {
       await expectRevert(
-        tbtcSystem.emergencyPauseNewDeposits({from: nonSystemOwner}),
-        "Ownable: caller is not the owner",
+        tbtcSystem.emergencyPauseNewDeposits({ from: nonSystemOwner }),
+        "Ownable: caller is not the owner"
       )
     })
 
@@ -156,7 +156,7 @@ describe("TBTCSystem governance", async function() {
 
       await expectRevert(
         tbtcSystem.resumeNewDeposits(),
-        "Deposits are still paused",
+        "Deposits are still paused"
       )
     })
 
@@ -179,7 +179,7 @@ describe("TBTCSystem governance", async function() {
 
       await expectRevert(
         tbtcSystem.emergencyPauseNewDeposits(),
-        "emergencyPauseNewDeposits can only be called once",
+        "emergencyPauseNewDeposits can only be called once"
       )
     })
   })
@@ -197,7 +197,7 @@ describe("TBTCSystem governance", async function() {
       await tbtcSystem.beginKeepFactoriesUpdate(
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
-        "0x0000000000000000000000000000000000000003",
+        "0x0000000000000000000000000000000000000003"
       )
 
       const upgradeabilityTime = await tbtcSystem.getRemainingKeepFactoriesUpgradeabilityTime()
@@ -214,9 +214,9 @@ describe("TBTCSystem governance", async function() {
         tbtcSystem.beginKeepFactoriesUpdate(
           "0x0000000000000000000000000000000000000001",
           "0x0000000000000000000000000000000000000002",
-          "0x0000000000000000000000000000000000000003",
+          "0x0000000000000000000000000000000000000003"
         ),
-        "beginKeepFactoriesUpdate can only be called within 180 days of initialization",
+        "beginKeepFactoriesUpdate can only be called within 180 days of initialization"
       )
     })
   })
@@ -225,7 +225,9 @@ describe("TBTCSystem governance", async function() {
     governanceTest({
       property: "signer fee",
       change: "SignerFeeDivisorUpdate",
-      goodParametersWithName: [{name: "_signerFeeDivisor", value: new BN(200)}],
+      goodParametersWithName: [
+        { name: "_signerFeeDivisor", value: new BN(200) },
+      ],
       badInitializationTests: {
         "smaller than or equal to 9": {
           parameters: [9],
@@ -243,7 +245,7 @@ describe("TBTCSystem governance", async function() {
           _signerFeeDivisor: setDivisor,
         })
       },
-      verifyFinalState: async setDivisor => {
+      verifyFinalState: async (setDivisor) => {
         expect(await tbtcSystem.getSignerFeeDivisor()).to.eq.BN(setDivisor)
       },
     })
@@ -289,9 +291,9 @@ describe("TBTCSystem governance", async function() {
         },
       },
       verifyFinalizationEvents: (receipt, setLotSizes) => {
-        expectEvent(receipt, "LotSizesUpdated", {_lotSizes: setLotSizes})
+        expectEvent(receipt, "LotSizesUpdated", { _lotSizes: setLotSizes })
       },
-      verifyFinalState: async setLotSizes => {
+      verifyFinalState: async (setLotSizes) => {
         const lotSizes = await tbtcSystem.getAllowedLotSizes()
         lotSizes.forEach((_, i) => expect(_).to.eq.BN(setLotSizes[i]))
       },
@@ -320,8 +322,8 @@ describe("TBTCSystem governance", async function() {
       property: "collateralization thresholds",
       change: "CollateralizationThresholdsUpdate",
       goodParametersWithName: [
-        {name: "_initialCollateralizedPercent", value: new BN(213)},
-        {name: "_undercollateralizedThresholdPercent", value: new BN(156)},
+        { name: "_initialCollateralizedPercent", value: new BN(213) },
+        { name: "_undercollateralizedThresholdPercent", value: new BN(156) },
         {
           name: "_severelyUndercollateralizedThresholdPercent",
           value: new BN(128),
@@ -351,7 +353,7 @@ describe("TBTCSystem governance", async function() {
         receipt,
         setInitial,
         setUnder,
-        setSeverelyUnder,
+        setSeverelyUnder
       ) => {
         expectEvent(receipt, "CollateralizationThresholdsUpdated", {
           _initialCollateralizedPercent: setInitial,
@@ -361,13 +363,13 @@ describe("TBTCSystem governance", async function() {
       },
       verifyFinalState: async (setInitial, setUnder, setSeverelyUnder) => {
         expect(await tbtcSystem.getInitialCollateralizedPercent()).to.eq.BN(
-          setInitial,
+          setInitial
         )
         expect(
-          await tbtcSystem.getUndercollateralizedThresholdPercent(),
+          await tbtcSystem.getUndercollateralizedThresholdPercent()
         ).to.eq.BN(setUnder)
         expect(
-          await tbtcSystem.getSeverelyUndercollateralizedThresholdPercent(),
+          await tbtcSystem.getSeverelyUndercollateralizedThresholdPercent()
         ).to.eq.BN(setSeverelyUnder)
       },
     })
@@ -403,7 +405,7 @@ describe("TBTCSystem governance", async function() {
         receipt,
         setKeepStakedFactory,
         setFullyBackedFactory,
-        setFactorySelector,
+        setFactorySelector
       ) => {
         expectEvent(receipt, "KeepFactoriesUpdated", {
           _keepStakedFactory: setKeepStakedFactory,
@@ -418,7 +420,7 @@ describe("TBTCSystem governance", async function() {
 
         // Expect value from the default KEEP staked factory to be returned
         expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
-          defaultOpenKeepFee,
+          defaultOpenKeepFee
         )
 
         // Expect this to work normally, and update to the new factory for the
@@ -430,7 +432,7 @@ describe("TBTCSystem governance", async function() {
 
         // Expect new KEEP-staked factory to be called
         expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
-          newKeepStakedOpenKeepFee,
+          newKeepStakedOpenKeepFee
         )
 
         keepFactorySelector.setFullyBackedMode()
@@ -449,7 +451,7 @@ describe("TBTCSystem governance", async function() {
         })
 
         expect(await newFullyBackedFactory.keepOwner.call()).to.equal(
-          mockDeposit,
+          mockDeposit
         )
       },
     })
@@ -498,7 +500,7 @@ describe("TBTCSystem governance", async function() {
 
         // Expect new KEEP-staked factory to be called
         expect(await tbtcSystem.getNewDepositFeeEstimate()).to.eq.BN(
-          newKeepStakedOpenKeepFee,
+          newKeepStakedOpenKeepFee
         )
 
         await tbtcSystem.requestNewKeep(10 ** 8, 123, {
@@ -507,7 +509,7 @@ describe("TBTCSystem governance", async function() {
         })
 
         expect(await newKeepStakedFactory.keepOwner.call()).to.equal(
-          mockDeposit,
+          mockDeposit
         )
       },
     })
@@ -517,7 +519,7 @@ describe("TBTCSystem governance", async function() {
       change: "EthBtcPriceFeedAddition",
       timeDelayGetter: "getPriceFeedGovernanceTimeDelay",
       goodParametersWithName: [
-        {name: "_priceFeed", value: newEthBtcMedianizer.address},
+        { name: "_priceFeed", value: newEthBtcMedianizer.address },
       ],
       badInitializationTests: {
         "adding inactive feed": {
@@ -536,7 +538,7 @@ describe("TBTCSystem governance", async function() {
 
         // check new feed
         expect(await satWeiPriceFeed.getWorkingEthBtcFeed()).to.equal(
-          newEthBtcMedianizer.address,
+          newEthBtcMedianizer.address
         )
       },
       badFinalizationTests: {
@@ -585,7 +587,7 @@ describe("TBTCSystem governance", async function() {
       const newParametersWithName = []
 
       for (let i = 0; i < parametersWithName.length; ++i) {
-        const {name, value} = parametersWithName[i]
+        const { name, value } = parametersWithName[i]
         let updatedValue = value
         if (value instanceof BN) {
           updatedValue = value.add(new BN(1))
@@ -601,7 +603,7 @@ describe("TBTCSystem governance", async function() {
           }
         }
 
-        newParametersWithName.push({name: name, value: updatedValue})
+        newParametersWithName.push({ name: name, value: updatedValue })
       }
 
       return [
@@ -660,7 +662,7 @@ describe("TBTCSystem governance", async function() {
           const governanceTime = await tbtcSystem[timeDelayGetter].call()
 
           const [updatedParametersByName, updatedParameters] = tweakParameters(
-            goodParametersWithName,
+            goodParametersWithName
           )
           const receipt = await invoke("begin", "", updatedParameters)
           const remainingTime = await invoke("getRemaining", "Time")
@@ -674,14 +676,14 @@ describe("TBTCSystem governance", async function() {
 
         it("reverts if msg.sender != owner", async () => {
           await expectRevert.unspecified(
-            invoke("begin", "", goodParameters.concat([{from: accounts[1]}])),
+            invoke("begin", "", goodParameters.concat([{ from: accounts[1] }]))
           )
         })
 
         for (const [scenario, props] of Object.entries(
-          badInitializationTests,
+          badInitializationTests
         )) {
-          const {parameters, error} = props
+          const { parameters, error } = props
 
           it(`reverts when ${scenario}`, async () => {
             await expectRevert(invoke("begin", "", parameters), error)
@@ -695,7 +697,7 @@ describe("TBTCSystem governance", async function() {
 
           await expectRevert(
             invoke("finalize"),
-            "Governance delay has not elapsed.",
+            "Governance delay has not elapsed."
           )
         })
 
@@ -704,7 +706,7 @@ describe("TBTCSystem governance", async function() {
         })
 
         for (const [scenario, props] of Object.entries(badFinalizationTests)) {
-          const {beforeFinalizing, parameters, error} = props
+          const { beforeFinalizing, parameters, error } = props
 
           it(`reverts when ${scenario}`, async () => {
             await invoke("begin", "", parameters)

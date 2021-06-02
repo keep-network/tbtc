@@ -13,7 +13,7 @@ import "./TBTCSystemAuthority.sol";
 ///         to TBTC (`TBTCToken`) and vice versa.
 /// @dev    The Vending Machine should have exclusive TBTC and FRT (`FeeRebateToken`) minting
 ///         privileges.
-contract VendingMachine is TBTCSystemAuthority{
+contract VendingMachine is TBTCSystemAuthority {
     using SafeMath for uint256;
 
     TBTCToken tbtcToken;
@@ -23,8 +23,9 @@ contract VendingMachine is TBTCSystemAuthority{
     uint256 createdAt;
 
     constructor(address _systemAddress)
+        public
         TBTCSystemAuthority(_systemAddress)
-    public {
+    {
         createdAt = block.timestamp;
     }
 
@@ -50,15 +51,24 @@ contract VendingMachine is TBTCSystemAuthority{
     ///         by the caller to burn the required amount.
     /// @param _tdtId ID of tBTC Deposit Token to buy.
     function tbtcToTdt(uint256 _tdtId) external {
-        require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
+        require(
+            tbtcDepositToken.exists(_tdtId),
+            "tBTC Deposit Token does not exist"
+        );
         require(isQualified(address(_tdtId)), "Deposit must be qualified");
 
         uint256 depositValue = Deposit(address(uint160(_tdtId))).lotSizeTbtc();
-        require(tbtcToken.balanceOf(msg.sender) >= depositValue, "Not enough TBTC for TDT exchange");
+        require(
+            tbtcToken.balanceOf(msg.sender) >= depositValue,
+            "Not enough TBTC for TDT exchange"
+        );
         tbtcToken.burnFrom(msg.sender, depositValue);
 
         // TODO do we need the owner check below? transferFrom can be approved for a user, which might be an interesting use case.
-        require(tbtcDepositToken.ownerOf(_tdtId) == address(this), "Deposit is locked");
+        require(
+            tbtcDepositToken.ownerOf(_tdtId) == address(this),
+            "Deposit is locked"
+        );
         tbtcDepositToken.transferFrom(address(this), msg.sender, _tdtId);
     }
 
@@ -67,7 +77,10 @@ contract VendingMachine is TBTCSystemAuthority{
     ///         Vending Machine must be approved to transfer TDT by the caller.
     /// @param _tdtId ID of tBTC Deposit Token to sell.
     function tdtToTbtc(uint256 _tdtId) public {
-        require(tbtcDepositToken.exists(_tdtId), "tBTC Deposit Token does not exist");
+        require(
+            tbtcDepositToken.exists(_tdtId),
+            "tBTC Deposit Token does not exist"
+        );
         require(isQualified(address(_tdtId)), "Deposit must be qualified");
 
         tbtcDepositToken.transferFrom(msg.sender, address(this), _tdtId);
@@ -76,19 +89,21 @@ contract VendingMachine is TBTCSystemAuthority{
         uint256 signerFee = deposit.signerFeeTbtc();
         uint256 depositValue = deposit.lotSizeTbtc();
 
-        require(canMint(depositValue), "Can't mint more than the max supply cap");
+        require(
+            canMint(depositValue),
+            "Can't mint more than the max supply cap"
+        );
 
         // If the backing Deposit does not have a signer fee in escrow, mint it.
-        if(tbtcToken.balanceOf(address(_tdtId)) < signerFee) {
+        if (tbtcToken.balanceOf(address(_tdtId)) < signerFee) {
             tbtcToken.mint(msg.sender, depositValue.sub(signerFee));
             tbtcToken.mint(address(_tdtId), signerFee);
-        }
-        else{
+        } else {
             tbtcToken.mint(msg.sender, depositValue);
         }
 
         // owner of the TDT during first TBTC mint receives the FRT
-        if(!feeRebateToken.exists(_tdtId)){
+        if (!feeRebateToken.exists(_tdtId)) {
             feeRebateToken.mint(msg.sender, _tdtId);
         }
     }
@@ -103,7 +118,11 @@ contract VendingMachine is TBTCSystemAuthority{
 
     /// @notice Determines whether a deposit is qualified for minting TBTC.
     /// @param _depositAddress The address of the deposit
-    function isQualified(address payable _depositAddress) public view returns (bool) {
+    function isQualified(address payable _depositAddress)
+        public
+        view
+        returns (bool)
+    {
         return Deposit(_depositAddress).inActive();
     }
 
@@ -122,47 +141,47 @@ contract VendingMachine is TBTCSystemAuthority{
     function getMaxSupply() public view returns (uint256) {
         uint256 age = block.timestamp - createdAt;
 
-        if(age < 2 days) {
-            return 2 * 10 ** 18;
+        if (age < 2 days) {
+            return 2 * 10**18;
         }
 
         if (age < 7 days) {
-            return 100 * 10 ** 18;
+            return 100 * 10**18;
         }
 
         if (age < 14 days) {
-            return 250 * 10 ** 18;
+            return 250 * 10**18;
         }
 
         if (age < 21 days) {
-            return 500 * 10 ** 18;
+            return 500 * 10**18;
         }
 
         if (age < 28 days) {
-            return 750 * 10 ** 18;
+            return 750 * 10**18;
         }
 
         if (age < 35 days) {
-            return 1000 * 10 ** 18;
+            return 1000 * 10**18;
         }
 
         if (age < 42 days) {
-            return 1500 * 10 ** 18;
+            return 1500 * 10**18;
         }
 
         if (age < 49 days) {
-            return 2000 * 10 ** 18;
+            return 2000 * 10**18;
         }
 
         if (age < 56 days) {
-            return 2500 * 10 ** 18;
+            return 2500 * 10**18;
         }
 
         if (age < 63 days) {
-            return 3000 * 10 ** 18;
+            return 3000 * 10**18;
         }
 
-        return 21e6 * 10 ** 18;
+        return 21e6 * 10**18;
     }
 
     // WRAPPERS
@@ -179,7 +198,8 @@ contract VendingMachine is TBTCSystemAuthority{
         bytes memory _merkleProof,
         uint256 _txIndexInBlock,
         bytes memory _bitcoinHeaders
-    ) public { // not external to allow bytes memory parameters
+    ) public {
+        // not external to allow bytes memory parameters
         Deposit _d = Deposit(_depositAddress);
         _d.provideBTCFundingProof(
             _txVersion,
@@ -206,8 +226,12 @@ contract VendingMachine is TBTCSystemAuthority{
         address payable _depositAddress,
         bytes8 _outputValueBytes,
         bytes memory _redeemerOutputScript
-    ) public { // not external to allow bytes memory parameters
-        require(tbtcDepositToken.exists(uint256(_depositAddress)), "tBTC Deposit Token does not exist");
+    ) public {
+        // not external to allow bytes memory parameters
+        require(
+            tbtcDepositToken.exists(uint256(_depositAddress)),
+            "tBTC Deposit Token does not exist"
+        );
         Deposit _d = Deposit(_depositAddress);
 
         tbtcToken.burnFrom(msg.sender, _d.lotSizeTbtc());
@@ -215,11 +239,15 @@ contract VendingMachine is TBTCSystemAuthority{
 
         uint256 tbtcOwed = _d.getOwnerRedemptionTbtcRequirement(msg.sender);
 
-        if(tbtcOwed != 0){
+        if (tbtcOwed != 0) {
             tbtcToken.transferFrom(msg.sender, address(this), tbtcOwed);
             tbtcToken.approve(_depositAddress, tbtcOwed);
         }
 
-        _d.transferAndRequestRedemption(_outputValueBytes, _redeemerOutputScript, msg.sender);
+        _d.transferAndRequestRedemption(
+            _outputValueBytes,
+            _redeemerOutputScript,
+            msg.sender
+        );
     }
 }

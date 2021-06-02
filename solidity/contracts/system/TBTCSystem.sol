@@ -1,7 +1,9 @@
 /* solium-disable function-order */
 pragma solidity 0.5.17;
 
-import {IBondedECDSAKeepFactory} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
+import {
+    IBondedECDSAKeepFactory
+} from "@keep-network/keep-ecdsa/contracts/api/IBondedECDSAKeepFactory.sol";
 
 import {VendingMachine} from "./VendingMachine.sol";
 import {DepositFactory} from "../proxy/DepositFactory.sol";
@@ -25,13 +27,18 @@ import "./KeepFactorySelection.sol";
 ///         value governance, and price feed.
 /// @dev    Governable values should only affect new deposit creation.
 contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
-
     using SafeMath for uint256;
     using KeepFactorySelection for KeepFactorySelection.Storage;
 
-    event EthBtcPriceFeedAdditionStarted(address _priceFeed, uint256 _timestamp);
+    event EthBtcPriceFeedAdditionStarted(
+        address _priceFeed,
+        uint256 _timestamp
+    );
     event LotSizesUpdateStarted(uint64[] _lotSizes, uint256 _timestamp);
-    event SignerFeeDivisorUpdateStarted(uint16 _signerFeeDivisor, uint256 _timestamp);
+    event SignerFeeDivisorUpdateStarted(
+        uint16 _signerFeeDivisor,
+        uint256 _timestamp
+    );
     event CollateralizationThresholdsUpdateStarted(
         uint16 _initialCollateralizedPercent,
         uint16 _undercollateralizedThresholdPercent,
@@ -76,7 +83,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     bool private allowNewDeposits = false;
     uint16 private signerFeeDivisor = 2000; // 1/2000 == 5bps == 0.05% == 0.0005
     uint16 private initialCollateralizedPercent = 150; // percent
-    uint16 private undercollateralizedThresholdPercent = 125;  // percent
+    uint16 private undercollateralizedThresholdPercent = 125; // percent
     uint16 private severelyUndercollateralizedThresholdPercent = 110; // percent
     uint64[] lotSizesSatoshis = [10**6, 10**7, 2 * 10**7, 5 * 10**7, 10**8]; // [0.01, 0.1, 0.2, 0.5, 1.0] BTC
 
@@ -173,9 +180,15 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice One-time-use emergency function to disallow future deposit creation for 10 days.
     function emergencyPauseNewDeposits() external onlyOwner {
-        require(pausedTimestamp == 0, "emergencyPauseNewDeposits can only be called once");
+        require(
+            pausedTimestamp == 0,
+            "emergencyPauseNewDeposits can only be called once"
+        );
         uint256 sinceInit = block.timestamp - initializedTimestamp;
-        require(sinceInit < 180 days, "emergencyPauseNewDeposits can only be called within 180 days of initialization");
+        require(
+            sinceInit < 180 days,
+            "emergencyPauseNewDeposits can only be called within 180 days of initialization"
+        );
         pausedTimestamp = block.timestamp;
         allowNewDeposits = false;
         emit AllowNewDepositsUpdated(false);
@@ -183,18 +196,22 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Anyone can reactivate deposit creations after the pause duration is over.
     function resumeNewDeposits() external {
-        require(! allowNewDeposits, "New deposits are currently allowed");
+        require(!allowNewDeposits, "New deposits are currently allowed");
         require(pausedTimestamp != 0, "Deposit has not been paused");
-        require(block.timestamp.sub(pausedTimestamp) >= pausedDuration, "Deposits are still paused");
+        require(
+            block.timestamp.sub(pausedTimestamp) >= pausedDuration,
+            "Deposits are still paused"
+        );
         allowNewDeposits = true;
         emit AllowNewDepositsUpdated(true);
     }
 
     function getRemainingPauseTerm() external view returns (uint256) {
-        require(! allowNewDeposits, "New deposits are currently allowed");
-        return (block.timestamp.sub(pausedTimestamp) >= pausedDuration)?
-            0:
-            pausedDuration.sub(block.timestamp.sub(pausedTimestamp));
+        require(!allowNewDeposits, "New deposits are currently allowed");
+        return
+            (block.timestamp.sub(pausedTimestamp) >= pausedDuration)
+                ? 0
+                : pausedDuration.sub(block.timestamp.sub(pausedTimestamp));
     }
 
     /// @notice Set the system signer fee divisor.
@@ -202,7 +219,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///         Anytime after `governanceTimeDelay` has elapsed.
     /// @param _signerFeeDivisor The signer fee divisor.
     function beginSignerFeeDivisorUpdate(uint16 _signerFeeDivisor)
-        external onlyOwner
+        external
+        onlyOwner
     {
         require(
             _signerFeeDivisor > 9,
@@ -227,10 +245,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///         anytime after `governanceTimeDelay` has elapsed.
     /// @param _lotSizes Array of allowed lot sizes.
     function beginLotSizesUpdate(uint64[] calldata _lotSizes)
-        external onlyOwner
+        external
+        onlyOwner
     {
         bool hasSingleBitcoin = false;
-        for (uint i = 0; i < _lotSizes.length; i++) {
+        for (uint256 i = 0; i < _lotSizes.length; i++) {
             if (_lotSizes[i] == 10**8) {
                 hasSingleBitcoin = true;
             } else if (_lotSizes[i] < 50 * 10**3) {
@@ -239,9 +258,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             } else if (_lotSizes[i] > 10 * 10**9) {
                 // Failed the maximum requirement, break on out.
                 revert("Lot sizes greater than 100 BTC are not allowed");
-            } else if (i > 0 && _lotSizes[i] == _lotSizes[i-1]) {
+            } else if (i > 0 && _lotSizes[i] == _lotSizes[i - 1]) {
                 revert("Lot size array must not have duplicates");
-            } else if (i > 0 && _lotSizes[i] < _lotSizes[i-1]) {
+            } else if (i > 0 && _lotSizes[i] < _lotSizes[i - 1]) {
                 revert("Lot size array must be sorted");
             }
         }
@@ -273,11 +292,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
             "Initial collateralized percent must be >= 100%"
         );
         require(
-            _initialCollateralizedPercent > _undercollateralizedThresholdPercent,
+            _initialCollateralizedPercent >
+                _undercollateralizedThresholdPercent,
             "Undercollateralized threshold must be < initial collateralized percent"
         );
         require(
-            _undercollateralizedThresholdPercent > _severelyUndercollateralizedThresholdPercent,
+            _undercollateralizedThresholdPercent >
+                _severelyUndercollateralizedThresholdPercent,
             "Severe undercollateralized threshold must be < undercollateralized threshold"
         );
 
@@ -317,9 +338,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         address _keepStakedFactory,
         address _fullyBackedFactory,
         address _factorySelector
-    )
-        external onlyOwner
-    {
+    ) external onlyOwner {
         uint256 sinceInit = block.timestamp - initializedTimestamp;
         require(
             sinceInit < keepFactoriesUpgradeabilityPeriod,
@@ -350,14 +369,20 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     /// @notice Add a new ETH/BTC price feed contract to the priecFeed.
     /// @dev This can be finalized by calling `finalizeEthBtcPriceFeedAddition`
     ///      anytime after `priceFeedGovernanceTimeDelay` has elapsed.
-    function beginEthBtcPriceFeedAddition(IMedianizer _ethBtcPriceFeed) external onlyOwner {
+    function beginEthBtcPriceFeedAddition(IMedianizer _ethBtcPriceFeed)
+        external
+        onlyOwner
+    {
         bool ethBtcActive;
         (, ethBtcActive) = _ethBtcPriceFeed.peek();
         require(ethBtcActive, "Cannot add inactive feed");
 
         nextEthBtcPriceFeed = _ethBtcPriceFeed;
         ethBtcPriceFeedAdditionInitiated = block.timestamp;
-        emit EthBtcPriceFeedAdditionStarted(address(_ethBtcPriceFeed), block.timestamp);
+        emit EthBtcPriceFeedAdditionStarted(
+            address(_ethBtcPriceFeed),
+            block.timestamp
+        );
     }
 
     modifier onlyAfterGovernanceDelay(
@@ -379,13 +404,17 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function finalizeSignerFeeDivisorUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(signerFeeDivisorChangeInitiated, governanceTimeDelay)
+        onlyAfterGovernanceDelay(
+            signerFeeDivisorChangeInitiated,
+            governanceTimeDelay
+        )
     {
         signerFeeDivisor = newSignerFeeDivisor;
         emit SignerFeeDivisorUpdated(newSignerFeeDivisor);
         newSignerFeeDivisor = 0;
         signerFeeDivisorChangeInitiated = 0;
     }
+
     /// @notice Finish setting the accepted system lot sizes.
     /// @dev `beginLotSizesUpdate` must be called first, once `governanceTimeDelay`
     ///       has passed, this function can be called to set the lot sizes to the
@@ -393,8 +422,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function finalizeLotSizesUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(lotSizesChangeInitiated, governanceTimeDelay) {
-
+        onlyAfterGovernanceDelay(lotSizesChangeInitiated, governanceTimeDelay)
+    {
         lotSizesSatoshis = newLotSizesSatoshis;
         emit LotSizesUpdated(newLotSizesSatoshis);
         lotSizesChangeInitiated = 0;
@@ -413,8 +442,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         onlyAfterGovernanceDelay(
             collateralizationThresholdsChangeInitiated,
             governanceTimeDelay
-        ) {
-
+        )
+    {
         initialCollateralizedPercent = newInitialCollateralizedPercent;
         undercollateralizedThresholdPercent = newUndercollateralizedThresholdPercent;
         severelyUndercollateralizedThresholdPercent = newSeverelyUndercollateralizedThresholdPercent;
@@ -443,8 +472,8 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
         onlyAfterGovernanceDelay(
             keepFactoriesUpdateInitiated,
             governanceTimeDelay
-        ) {
-
+        )
+    {
         keepFactorySelection.setFactories(
             newKeepStakedFactory,
             newFullyBackedFactory,
@@ -468,12 +497,13 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///      `ethBtcPriceFeedAdditionInitiated` has passed, this function can be
     ///      called to append a new price feed.
     function finalizeEthBtcPriceFeedAddition()
-            external
-            onlyOwner
-            onlyAfterGovernanceDelay(
-                ethBtcPriceFeedAdditionInitiated,
-                priceFeedGovernanceTimeDelay
-            ) {
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            ethBtcPriceFeedAdditionInitiated,
+            priceFeedGovernanceTimeDelay
+        )
+    {
         // This process interacts with external contracts, so
         // Checks-Effects-Interactions it.
         IMedianizer _nextEthBtcPriceFeed = nextEthBtcPriceFeed;
@@ -487,21 +517,31 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Gets the system signer fee divisor.
     /// @return The signer fee divisor.
-    function getSignerFeeDivisor() external view returns (uint16) { return signerFeeDivisor; }
+    function getSignerFeeDivisor() external view returns (uint16) {
+        return signerFeeDivisor;
+    }
 
     /// @notice Gets the allowed lot sizes
     /// @return Uint64 array of allowed lot sizes
-    function getAllowedLotSizes() external view returns (uint64[] memory){
+    function getAllowedLotSizes() external view returns (uint64[] memory) {
         return lotSizesSatoshis;
     }
 
     /// @notice Get the system undercollateralization level for new deposits
-    function getUndercollateralizedThresholdPercent() external view returns (uint16) {
+    function getUndercollateralizedThresholdPercent()
+        external
+        view
+        returns (uint16)
+    {
         return undercollateralizedThresholdPercent;
     }
 
     /// @notice Get the system severe undercollateralization level for new deposits
-    function getSeverelyUndercollateralizedThresholdPercent() external view returns (uint16) {
+    function getSeverelyUndercollateralizedThresholdPercent()
+        external
+        view
+        returns (uint16)
+    {
         return severelyUndercollateralizedThresholdPercent;
     }
 
@@ -534,53 +574,79 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Get the time remaining until the signer fee divisor can be updated.
-    function getRemainingSignerFeeDivisorUpdateTime() external view returns (uint256) {
-        return getRemainingChangeTime(
-            signerFeeDivisorChangeInitiated,
-            governanceTimeDelay
-        );
+    function getRemainingSignerFeeDivisorUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                signerFeeDivisorChangeInitiated,
+                governanceTimeDelay
+            );
     }
 
     /// @notice Get the time remaining until the lot sizes can be updated.
     function getRemainingLotSizesUpdateTime() external view returns (uint256) {
-        return getRemainingChangeTime(
-            lotSizesChangeInitiated,
-            governanceTimeDelay
-        );
+        return
+            getRemainingChangeTime(
+                lotSizesChangeInitiated,
+                governanceTimeDelay
+            );
     }
 
     /// @notice Get the time remaining until the collateralization thresholds can be updated.
-    function getRemainingCollateralizationThresholdsUpdateTime() external view returns (uint256) {
-        return getRemainingChangeTime(
-            collateralizationThresholdsChangeInitiated,
-            governanceTimeDelay
-        );
+    function getRemainingCollateralizationThresholdsUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                collateralizationThresholdsChangeInitiated,
+                governanceTimeDelay
+            );
     }
 
     /// @notice Get the time remaining until the Keep ETH-only-backed ECDSA keep
     ///         factory and the selection strategy that will choose between it
     ///         and the KEEP-backed factory can be updated.
-    function getRemainingKeepFactoriesUpdateTime() external view returns (uint256) {
-        return getRemainingChangeTime(
-            keepFactoriesUpdateInitiated,
-            governanceTimeDelay
-        );
+    function getRemainingKeepFactoriesUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                keepFactoriesUpdateInitiated,
+                governanceTimeDelay
+            );
     }
 
     /// @notice Get the time remaining until the signer fee divisor can be updated.
-    function getRemainingEthBtcPriceFeedAdditionTime() external view returns (uint256) {
-        return getRemainingChangeTime(
-            ethBtcPriceFeedAdditionInitiated,
-            priceFeedGovernanceTimeDelay
-        );
+    function getRemainingEthBtcPriceFeedAdditionTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                ethBtcPriceFeedAdditionInitiated,
+                priceFeedGovernanceTimeDelay
+            );
     }
 
     /// @notice Get the time remaining until Keep factories can no longer be updated.
-    function getRemainingKeepFactoriesUpgradeabilityTime() external view returns (uint256) {
-        return getRemainingChangeTime(
-            initializedTimestamp,
-            keepFactoriesUpgradeabilityPeriod
-        );
+    function getRemainingKeepFactoriesUpgradeabilityTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                initializedTimestamp,
+                keepFactoriesUpgradeabilityPeriod
+            );
     }
 
     /// @notice Refreshes the minimum bondable value required from the operator
@@ -604,7 +670,11 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     }
 
     /// @notice Returns the time period when keep factories upgrades are allowed.
-    function getKeepFactoriesUpgradeabilityPeriod() public pure returns (uint256) {
+    function getKeepFactoriesUpgradeabilityPeriod()
+        public
+        pure
+        returns (uint256)
+    {
         return keepFactoriesUpgradeabilityPeriod;
     }
 
@@ -616,12 +686,9 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
 
     /// @notice Gets a fee estimate for creating a new Deposit.
     /// @return Uint256 estimate.
-    function getNewDepositFeeEstimate()
-        external
-        view
-        returns (uint256)
-    {
-        IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactory();
+    function getNewDepositFeeEstimate() external view returns (uint256) {
+        IBondedECDSAKeepFactory _keepFactory =
+            keepFactorySelection.selectFactory();
         return _keepFactory.openKeepFeeEstimate();
     }
 
@@ -632,25 +699,39 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function requestNewKeep(
         uint64 _requestedLotSizeSatoshis,
         uint256 _maxSecuredLifetime
-    )
-        external
-        payable
-        returns (address)
-    {
-        require(tbtcDepositToken.exists(uint256(msg.sender)), "Caller must be a Deposit contract");
-        require(isAllowedLotSize(_requestedLotSizeSatoshis), "provided lot size not supported");
+    ) external payable returns (address) {
+        require(
+            tbtcDepositToken.exists(uint256(msg.sender)),
+            "Caller must be a Deposit contract"
+        );
+        require(
+            isAllowedLotSize(_requestedLotSizeSatoshis),
+            "provided lot size not supported"
+        );
 
-        IBondedECDSAKeepFactory _keepFactory = keepFactorySelection.selectFactoryAndRefresh();
+        IBondedECDSAKeepFactory _keepFactory =
+            keepFactorySelection.selectFactoryAndRefresh();
         uint256 bond = calculateBondRequirementWei(_requestedLotSizeSatoshis);
-        return _keepFactory.openKeep.value(msg.value)(keepSize, keepThreshold, msg.sender, bond, _maxSecuredLifetime);
+        return
+            _keepFactory.openKeep.value(msg.value)(
+                keepSize,
+                keepThreshold,
+                msg.sender,
+                bond,
+                _maxSecuredLifetime
+            );
     }
 
     /// @notice Check if a lot size is allowed.
     /// @param _requestedLotSizeSatoshis Lot size to check.
     /// @return True if lot size is allowed, false otherwise.
-    function isAllowedLotSize(uint64 _requestedLotSizeSatoshis) public view returns (bool){
-        for( uint i = 0; i < lotSizesSatoshis.length; i++){
-            if (lotSizesSatoshis[i] == _requestedLotSizeSatoshis){
+    function isAllowedLotSize(uint64 _requestedLotSizeSatoshis)
+        public
+        view
+        returns (bool)
+    {
+        for (uint256 i = 0; i < lotSizesSatoshis.length; i++) {
+            if (lotSizesSatoshis[i] == _requestedLotSizeSatoshis) {
                 return true;
             }
         }
@@ -661,16 +742,19 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     ///         satoshis based on the current ETHBTC price.
     /// @param _requestedLotSizeSatoshis Lot size in satoshis.
     /// @return Bond requirement in wei.
-    function calculateBondRequirementWei(
-        uint256 _requestedLotSizeSatoshis
-    ) internal view returns (uint256) {
-        uint256 lotSizeInWei = _fetchBitcoinPrice().mul(_requestedLotSizeSatoshis);
+    function calculateBondRequirementWei(uint256 _requestedLotSizeSatoshis)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 lotSizeInWei =
+            _fetchBitcoinPrice().mul(_requestedLotSizeSatoshis);
         return lotSizeInWei.mul(initialCollateralizedPercent).div(100);
     }
 
     function _fetchBitcoinPrice() internal view returns (uint256) {
         uint256 price = priceFeed.getPrice();
-        if (price == 0 || price > 10 ** 18) {
+        if (price == 0 || price > 10**18) {
             // This is if a sat is worth 0 wei, or is worth >1 ether. Revert at
             // once.
             revert("System returned a bad price");
@@ -682,7 +766,7 @@ contract TBTCSystem is Ownable, ITBTCSystem, DepositLog {
     function getRemainingChangeTime(
         uint256 _changeTimestamp,
         uint256 _delayAmount
-    ) internal view returns (uint256){
+    ) internal view returns (uint256) {
         require(_changeTimestamp > 0, "Update not initiated");
         uint256 elapsed = block.timestamp.sub(_changeTimestamp);
         if (elapsed >= _delayAmount) {

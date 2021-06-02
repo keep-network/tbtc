@@ -8,15 +8,13 @@ import "../system/FeeRebateToken.sol";
 import "../system/TBTCSystemAuthority.sol";
 import {TBTCDepositToken} from "../system/TBTCDepositToken.sol";
 
-
 /// @title Deposit Factory
 /// @notice Factory for the creation of new deposit clones.
 /// @dev We avoid redeployment of deposit contract by using the clone factory.
 /// Proxy delegates calls to Deposit and therefore does not affect deposit state.
 /// This means that we only need to deploy the deposit contracts once.
 /// The factory provides clean state for every new deposit clone.
-contract DepositFactory is CloneFactory, TBTCSystemAuthority{
-
+contract DepositFactory is CloneFactory, TBTCSystemAuthority {
     // Holds the address of the deposit contract
     // which will be used as a master contract for cloning.
     address payable public masterDepositAddress;
@@ -27,8 +25,9 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     address public vendingMachineAddress;
 
     constructor(address _systemAddress)
+        public
         TBTCSystemAuthority(_systemAddress)
-    public {}
+    {}
 
     /// @dev                          Set the required external variables.
     /// @param _masterDepositAddress  The address of the master deposit contract.
@@ -66,22 +65,29 @@ contract DepositFactory is CloneFactory, TBTCSystemAuthority{
     ///      of the deposit creation fee, should the signer group fail to
     ///      complete its setup process.
     /// @return The address of the new deposit.
-    function createDeposit(uint64 _lotSizeSatoshis) external payable returns(address) {
+    function createDeposit(uint64 _lotSizeSatoshis)
+        external
+        payable
+        returns (address)
+    {
         address cloneAddress = createClone(masterDepositAddress);
         emit DepositCloneCreated(cloneAddress);
 
-        TBTCDepositToken(tbtcDepositToken).mint(msg.sender, uint256(cloneAddress));
+        TBTCDepositToken(tbtcDepositToken).mint(
+            msg.sender,
+            uint256(cloneAddress)
+        );
 
         Deposit deposit = Deposit(address(uint160(cloneAddress)));
         deposit.initialize(address(this));
         deposit.initializeDeposit.value(msg.value)(
-                tbtcSystem,
-                tbtcToken,
-                tbtcDepositToken,
-                feeRebateToken,
-                vendingMachineAddress,
-                _lotSizeSatoshis
-            );
+            tbtcSystem,
+            tbtcToken,
+            tbtcDepositToken,
+            feeRebateToken,
+            vendingMachineAddress,
+            _lotSizeSatoshis
+        );
 
         return cloneAddress;
     }

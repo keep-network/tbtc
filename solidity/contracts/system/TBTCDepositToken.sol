@@ -1,6 +1,8 @@
 pragma solidity 0.5.17;
 
-import {ERC721Metadata} from "openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol";
+import {
+    ERC721Metadata
+} from "openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol";
 import {DepositFactoryAuthority} from "./DepositFactoryAuthority.sol";
 import {ITokenRecipient} from "../interfaces/ITokenRecipient.sol";
 
@@ -19,10 +21,10 @@ import {ITokenRecipient} from "../interfaces/ITokenRecipient.sol";
 ///      automatically by the factory during each deposit's initialization. See
 ///      DepositFactory.createNewDeposit() for more info on how the TDT is minted.
 contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
-
     constructor(address _depositFactoryAddress)
+        public
         ERC721Metadata("tBTC Deposit Token", "TDT")
-    public {
+    {
         initialize(_depositFactoryAddress);
     }
 
@@ -55,7 +57,8 @@ contract TBTCDepositToken is ERC721Metadata, DepositFactoryAuthority {
         ITokenRecipient _spender,
         uint256 _tdtId,
         bytes memory _extraData
-    ) public returns (bool) { // not external to allow bytes memory parameters
+    ) public returns (bool) {
+        // not external to allow bytes memory parameters
         approve(address(_spender), _tdtId);
         _spender.receiveApproval(msg.sender, _tdtId, address(this), _extraData);
         return true;
