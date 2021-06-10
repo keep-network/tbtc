@@ -86,7 +86,7 @@ module.exports = {
 
     alfajores: {
       provider: function () {
-        const kit = Kit.newKit("https://alfajores-forno.celo-testnet.org")
+        const kit = Kit.newKit(process.env.CELO_HOSTNAME)
         kit.addAccount(process.env.CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY)
         return kit.web3.currentProvider
       },
