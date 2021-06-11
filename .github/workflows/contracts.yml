@@ -121,8 +121,6 @@ jobs:
 
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
-        env: 
-          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
           environment: ${{ github.event.inputs.environment }}
 
