@@ -161,16 +161,16 @@ jobs:
       - name: Migrate contracts on Ethereum
         if: github.event.inputs.environment != 'alfajores'
         env:
-          ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
-          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Migrate contracts on Celo
         if: github.event.inputs.environment == 'alfajores'
         env:
-          CELO_HOSTNAME: ${{ secrets.KEEP_TEST_CELO_HOSTNAME }}
-          CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_CELO_HOSTNAME }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
