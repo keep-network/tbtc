@@ -64,7 +64,7 @@ jobs:
           tags: go-build-env
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-relay-cache
-          cache-to: type=local,dest=/tmp/.buildx-relay-cache
+          cache-to: type=local,dest=/tmp/.buildx-relay-cache-new
 
       - name: Run Go tests
         run: |
@@ -99,3 +99,13 @@ jobs:
           push: |
             ${{ github.ref == 'refs/heads/master'
               && github.event_name != 'pull_request' }}
+
+      - # Temp fix - move cache instead of copying (added below step and
+        # modified value of `cache-to`).
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        # Without the change some jobs were failing with `no space left on device`
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-relay-cache
+          mv /tmp/.buildx-relay-cache-new /tmp/.buildx-relay-cache
