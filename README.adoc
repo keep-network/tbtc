@@ -98,7 +98,7 @@ repository. To start a discussion, prefer https://discord.gg/4R6RGFf[Discord]
 over GitHub issues.
 
 *Read the
-https://github.com/keep-network/tbtc/blob/master/CONTRIBUTING.md[Contributing
+https://github.com/keep-network/tbtc/blob/main/CONTRIBUTING.md[Contributing
 guidelines].*
 
 === Setup environment

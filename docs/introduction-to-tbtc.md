@@ -87,7 +87,7 @@ The redemption flow is as follows:
 
 The "happy paths" have been covered, but there hasn't been discussion of when *things fall apart*. 
 
-To disincentivise signers from stealing bitcoin, deposits are overcollateralised with ETH. The collateral is priced using an on-chain [ETH:BTC price feed](https://github.com/keep-network/tbtc/blob/master/solidity/contracts/price-feed/SatWeiPriceFeed.sol), which works using a price-feed operated by MakerDAO. This collateral also ensures  guarantees of signer availability within the protocol.
+To disincentivise signers from stealing bitcoin, deposits are overcollateralised with ETH. The collateral is priced using an on-chain [ETH:BTC price feed](https://github.com/keep-network/tbtc/blob/main/solidity/contracts/price-feed/SatWeiPriceFeed.sol), which works using a price-feed operated by MakerDAO. This collateral also ensures  guarantees of signer availability within the protocol.
 
 ---
 
