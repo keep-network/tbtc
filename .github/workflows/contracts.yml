@@ -112,11 +112,13 @@ jobs:
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
-    environment: keep-test # line can be deleted once we'll no longer use environment protection
+    # TODO - bring back: environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [12.x]
+    outputs:
+      version: ${{ steps.npm-version-bump.outputs.version }}
     defaults:
       run:
         working-directory: ./solidity
@@ -201,7 +203,75 @@ jobs:
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
-      
+
+  contracts-build-and-publish-relay-maintainer-initcontainer:
+    needs: [contracts-migrate-and-publish-ethereum]
+    if: needs.contracts-migrate-and-publish-ethereum.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'ropsten'
+
+      - name: Resolve latest tbtc
+        working-directory: ./infrastructure/kube/templates/relay/initcontainer/provision-relay/
+        run: npm update @keep-network/tbtc
+
+      - name: Resolve latest contracts
+        run: |
+            npm install --save-exact \
+              @keep-network/tbtc@${{ needs.contracts-migrate-and-publish-ethereum.outputs.version }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+            
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Build and publish initcontainer
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: 'initcontainer-provision-relay-maintainer-wip' #TODO: delete `-wip` before merging to master
+        with:
+          context: ./infrastructure/kube/templates/relay/initcontainer/provision-relay/
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: |
+            revision=${{ github.sha }}
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - # Temp fix - move cache instead of copying (added below step and
+        # modified value of `cache-to`).
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        # Without the change some jobs were failing with `no space left on device`
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
       - name: Notify CI about completion of the workflow
         uses: keep-network/notify-workflow-completed@v1
         env:
@@ -212,7 +282,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
-          version: ${{ steps.npm-version-bump.outputs.version }}
+          version: ${{ needs.contracts-migrate-and-publish-ethereum.outputs.version }}
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test]
