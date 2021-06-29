@@ -112,7 +112,7 @@ jobs:
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
-    # TODO - bring back: environment: keep-test # line can be deleted once we'll no longer use environment protection
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -249,7 +249,7 @@ jobs:
       - name: Build and publish initcontainer
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'initcontainer-provision-relay-maintainer-wip' #TODO: delete `-wip` before merging to master
+          IMAGE_NAME: 'initcontainer-provision-relay-maintainer'
         with:
           context: ./infrastructure/kube/templates/relay/initcontainer/provision-relay/
           # GCR image should be named according to following convention:
