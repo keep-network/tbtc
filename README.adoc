@@ -2,8 +2,7 @@
 
 = tBTC
 
-https://circleci.com/gh/keep-network/tbtc[image:https://circleci.com/gh/keep-network/tbtc.svg?style=svg&circle-token=ec728f5ca814b6cb2db5ffeb7258151b752a207e[CircleCI
-Build Status]]
+https://github.com/keep-network/tbtc/actions/workflows/contracts.yml[image:https://img.shields.io/github/workflow/status/keep-network/tbtc/Solidity/master?event=push&label=Solidity build[Solidity contracts build status]]
 http://docs.keep.network/tbtc/solidity/[image:https://img.shields.io/badge/docs-website-green.svg[Docs]]
 https://discord.gg/4R6RGFf[image:https://img.shields.io/badge/chat-Discord-blueViolet.svg[Chat
 with us on Discord]]
@@ -97,9 +96,7 @@ All contributions are welcome. To report bugs, please create an issue on this
 repository. To start a discussion, prefer https://discord.gg/4R6RGFf[Discord]
 over GitHub issues.
 
-*Read the
-https://github.com/keep-network/tbtc/blob/master/CONTRIBUTING.md[Contributing
-guidelines].*
+*Read the xref:CONTRIBUTING.adoc[Contributing guidelines].*
 
 === Setup environment
 

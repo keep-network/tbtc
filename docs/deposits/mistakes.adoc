@@ -4,11 +4,10 @@ The system is designed to function with a few predefined lot sizes for all
 deposits, which are given as system parameter. **Depositors should send the
 exact lot amount of BTC in the funding transaction, or expect loss of funds.**
 Since it is not possible for the system to force users into sending any specific
-amount, ideally the the system would gracefully handle overpayment and
-underpayment. The primary impact of overpayment and underpayment is on the
-specific deposit's collateralization ratio. The system treats overpayment and
-underpayment as faulty depositor behavior, and passes on the associated costs
-to the depositor.
+amount, ideally the system would gracefully handle overpayment and underpayment.
+The primary impact of overpayment and underpayment is on the specific deposit's
+collateralization ratio. The system treats overpayment and underpayment as
+faulty depositor behavior, and passes on the associated costs to the depositor.
 
 == Overpayment
 
