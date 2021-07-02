@@ -190,11 +190,11 @@ supply is in line with BTC custodied by TBTC-backing deposits.]
 Forced liquidation should be rare, as rational signers will redeem deposits
 before liquidation becomes necessary. However, the possibility of extreme
 punishment via liquidation is necessary to prevent dishonest behavior from
-signers. Liquidation may occur because because signers
-<<failure/index.adoc#abort,didn't produce a valid signature in response to a
-redemption request>>, because the value of the signing bond dropped below the
-liquidation threshold, because they did not respond to the courtesy call, or
-because the signers <<failure/index.adoc#fraud, produced a fraudulent
+signers. Liquidation may occur because signers <<failure/index.adoc#abort,didn't
+produce a valid signature in response to a redemption request>>, because the
+value of the signing bond dropped below the liquidation threshold, because they
+did not respond to the courtesy call, or because the signers
+<<failure/index.adoc#fraud, produced a fraudulent
 signature>>{fraudulent-signature}.
 
 The primary goal of the liquidation process is to make the deposit owner
