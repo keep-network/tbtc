@@ -3,7 +3,7 @@ name: Relay
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "relay/**"
   pull_request:
@@ -75,7 +75,7 @@ jobs:
 
       - name: Login to Google Container Registry
         if: |
-          github.ref == 'refs/heads/master'
+          github.ref == 'refs/heads/main'
             && github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
@@ -97,5 +97,5 @@ jobs:
           build-args: |
             REVISION=${{ github.sha }}
           push: |
-            ${{ github.ref == 'refs/heads/master'
+            ${{ github.ref == 'refs/heads/main'
               && github.event_name != 'pull_request' }}

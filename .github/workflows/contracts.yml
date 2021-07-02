@@ -3,7 +3,7 @@ name: Solidity
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "solidity/**"
   pull_request:
@@ -19,7 +19,7 @@ on:
       upstream_ref:
         description: 'Git reference to checkout (e.g. branch name)'
         required: false
-        default: 'master'
+        default: 'main'
 
 jobs:
   contracts-detect-changes:
