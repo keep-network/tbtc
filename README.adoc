@@ -96,9 +96,7 @@ All contributions are welcome. To report bugs, please create an issue on this
 repository. To start a discussion, prefer https://discord.gg/4R6RGFf[Discord]
 over GitHub issues.
 
-*Read the
-https://github.com/keep-network/tbtc/blob/master/CONTRIBUTING.md[Contributing
-guidelines].*
+*Read the xref:CONTRIBUTING.adoc[Contributing guidelines].*
 
 === Setup environment
 
