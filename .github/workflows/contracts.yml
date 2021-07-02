@@ -207,8 +207,8 @@ jobs:
           npm publish --access=public
 
   contracts-build-and-publish-relay-maintainer-initcontainer:
-    needs: [contracts-migrate-and-publish-ethereum]
-    if: needs.contracts-migrate-and-publish-ethereum.result == 'success'
+    needs: [contracts-migrate-and-publish]
+    if: needs.contracts-migrate-and-publish.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -225,7 +225,7 @@ jobs:
       - name: Resolve latest contracts
         run: |
             npm install --save-exact \
-              @keep-network/tbtc@${{ needs.contracts-migrate-and-publish-ethereum.outputs.version }}
+              @keep-network/tbtc@${{ needs.contracts-migrate-and-publish.outputs.version }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
