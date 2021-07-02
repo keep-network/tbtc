@@ -62,7 +62,7 @@ module.exports = {
     keep_dev: {
       provider: function () {
         return new HDWalletProvider({
-          privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
+          privateKeys: [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY],
           providerOrUrl: "http://localhost:8545",
         })
       },
@@ -73,8 +73,8 @@ module.exports = {
     ropsten: {
       provider: function () {
         return new HDWalletProvider({
-          privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
-          providerOrUrl: process.env.ETH_HOSTNAME,
+          privateKeys: [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY],
+          providerOrUrl: process.env.CHAIN_API_URL,
         })
       },
       gas: 8000000,
@@ -86,8 +86,8 @@ module.exports = {
 
     alfajores: {
       provider: function () {
-        const kit = Kit.newKit("https://alfajores-forno.celo-testnet.org")
-        kit.addAccount(process.env.CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY)
+        const kit = Kit.newKit(process.env.CHAIN_API_URL)
+        kit.addAccount(process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY)
         return kit.web3.currentProvider
       },
       network_id: 44787,
