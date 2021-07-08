@@ -77,7 +77,7 @@ module.exports = {
           providerOrUrl: process.env.CHAIN_API_URL,
         })
       },
-      gas: 8000000,
+      gas: 6000000,
       network_id: 3,
       skipDryRun: true,
       networkCheckTimeout: 120000,
