@@ -1,0 +1,16 @@
+name: Temp test
+
+# This workflow was created only temporary, to check invoking of an action moved
+# to repository with other content.
+
+on:
+  pull_request:
+
+jobs:
+  test-actions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: keep-network/ci/actions/upstream-builds-query@move-actions-to-ci
+        with:
+          upstream-builds: dummy-value
+          query: dummy-value
