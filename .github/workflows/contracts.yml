@@ -120,7 +120,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Load environment variables
-        uses: keep-network/load-env-variables@v1
+        uses: keep-network/ci/actions/load-env-variables@move-actions-to-ci # TODO: change to @v1 before merging to main
         with:
           environment: ${{ github.event.inputs.environment }}
 
@@ -144,7 +144,7 @@ jobs:
         run: npm ci
 
       - name: Get upstream packages' versions
-        uses: keep-network/upstream-builds-query@v1
+        uses: keep-network/ci/actions/upstream-builds-query@move-actions-to-ci # TODO: change to @v1 before merging to main
         id: upstream-builds-query
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
@@ -207,7 +207,7 @@ jobs:
       - name: Notify CI about completion of the workflow
         # For Alfajores we want to break the chain of deployments on tBTC contracts.
         if: github.event.inputs.environment != 'alfajores'
-        uses: keep-network/notify-workflow-completed@v1
+        uses: keep-network/ci/actions/notify-workflow-completed@move-actions-to-ci # TODO: change to @v1 before merging to main
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
