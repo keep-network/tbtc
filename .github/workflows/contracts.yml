@@ -188,8 +188,7 @@ jobs:
 
       - name: Push contracts to Tenderly
         if: github.event.inputs.environment == 'ropsten'
-        # TODO: once below action gets tagged replace `@main` with `@v1`
-        uses: keep-network/tenderly-push-action@main
+        uses: keep-network/tenderly-push-action@v1
         continue-on-error: true
         with:
           working-directory: ./solidity
