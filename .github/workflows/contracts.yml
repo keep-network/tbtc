@@ -151,12 +151,12 @@ jobs:
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
-            keep-ecdsa-solidity-version = github.com/keep-network/keep-ecdsa/solidity#version
+            keep-ecdsa-contracts-version = github.com/keep-network/keep-ecdsa/solidity#version
 
       - name: Resolve latest contracts
         run: |
             npm install --save-exact \
-              @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-solidity-version }}
+              @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }}
 
       - name: Migrate contracts on Ethereum
         if: github.event.inputs.environment != 'alfajores'

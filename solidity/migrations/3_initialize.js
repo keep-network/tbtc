@@ -89,7 +89,7 @@ module.exports = async function (deployer, network, accounts) {
   )
 
   if (network === "alfajores") {
-    await createSortitionPoolCelo(accounts[0])
+    await createSortitionPoolCelo(accounts[0], BondedECDSAKeepFactoryAddress)
   } else {
     await BondedECDSAKeepFactory.createSortitionPool(TBTCSystem.address, {
       from: accounts[0],
@@ -106,7 +106,7 @@ module.exports = async function (deployer, network, accounts) {
   await tbtcSystem.refreshMinimumBondableValue()
 }
 
-async function createSortitionPoolCelo(account) {
+async function createSortitionPoolCelo(account, BondedECDSAKeepFactoryAddress) {
   const celoKit = Kit.newKitFromWeb3(web3)
 
   const BondedECDSAKeepFactory = new web3.eth.Contract(
