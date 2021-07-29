@@ -122,8 +122,8 @@ generation, they MUST put up a bond (the _signer bond_) in the native token
 of the host chain. This bond is used in a few cases:
 
 - To liquidate deposits in case they are in danger of undercollateralization.
-- To punish a signing group if it signs an unauthorized piece of data is
-  once distributed key generation is complete.
+- To punish a signing group if it signs an unauthorized piece of data once
+  distributed key generation is complete.
 - To punish a signing group that fails to produce a signature for the system
   when requested.
 - To ensure a depositor is refunded if the signing group fails to form.
