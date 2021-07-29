@@ -142,7 +142,7 @@ jobs:
       - name: Build and publish initcontainer
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'initcontainer-provision-relay-maintainer-wip'
+          IMAGE_NAME: 'initcontainer-provision-relay-maintainer'
         with:
           context: ./infrastructure/kube/templates/relay/initcontainer/provision-relay/
           # GCR image should be named according to following convention:
