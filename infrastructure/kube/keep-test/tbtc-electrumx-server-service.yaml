@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tbtc-electrumx-server
+  namespace: tbtc
+  labels:
+    app: tbtc
+    type: electrumx-server
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 443
+    targetPort: 443
+    name: ssl
+  - port: 8080
+    targetPort: 8080
+    name: ws
+  - port: 8443
+    targetPort: 8443
+    name: wss
+  - port: 8000
+    targetPort: 8000
+    name: rpc
+  selector:
+    app: tbtc
+    type: electrumx-server

@@ -1,0 +1,96 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: tbtc-maintainers
+  namespace: default
+  labels:
+    keel.sh/policy: all
+    app: tbtc
+    type: maintainers
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tbtc
+      type: maintainers
+  template:
+    metadata:
+      labels:
+        app: tbtc
+        type: maintainers
+    spec:
+      initContainers:
+        - name: initcontainer-provision-tbtc-maintainers
+          image: gcr.io/keep-test-f3e0/initcontainer-provision-tbtc-maintainers
+          imagePullPolicy: Always
+          env:
+            - name: ETH_RPC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-ropsten
+                  key: rpc-url
+            - name: ETH_WS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-ropsten
+                  key: ws-url
+            - name: ETH_NETWORK_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-ropsten
+                  key: network-id
+            - name: TBTC_MAINTAINERS_ETH_ACCOUNT_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-account-info
+                  key: account-0-address
+            - name: TBTC_MAINTAINERS_ETH_ACCOUNT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eth-account-privatekeys
+                  key: account-0
+            - name: CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: eth-network-ropsten
+                  key: contract-owner-eth-account-address
+            - name: CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eth-network-ropsten
+                  key: contract-owner-eth-account-private-key
+          volumeMounts:
+            - name: tbtc-maintainers
+              mountPath: /mnt/tbtc-maintainers/config
+          command: ['node', '/tmp/provision-tbtc-maintainers.js']
+      containers:
+        - name: tbtc-maintainers
+          image: gcr.io/keep-test-f3e0/tbtc-maintainer
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: tbtc-maintainers
+              mountPath: /mnt/tbtc-maintainers/config
+          command:
+            [
+              'tbtc-maintainer',
+              '-config',
+              '/mnt/tbtc-maintainers/config/tbtc-maintainers-config.toml',
+              'start',
+            ]
+      volumes:
+        - name: tbtc-maintainers
+          persistentVolumeClaim:
+            claimName: tbtc-maintainers
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tbtc-maintainers
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Mi

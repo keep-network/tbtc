@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tbtc-electrumx-server
+  namespace: tbtc
+  labels:
+    app: tbtc
+    type: electrumx-server
+spec:
+  replicas: 1
+  serviceName: tbtc-electrumx-server
+  volumeClaimTemplates:
+  - metadata:
+      name: tbtc-electrumx-server-data
+    spec:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 30Gi
+  selector:
+    matchLabels:
+      app: tbtc
+      type: electrumx-server
+  template:
+    metadata:
+      labels:
+        app: tbtc
+        type: electrumx-server
+    spec:
+      containers:
+      - name: electrumx-server
+        image: lukechilds/electrumx
+        ports:
+          - containerPort: 443
+          - containerPort: 8080
+          - containerPort: 8443
+          - containerPort: 8000
+        # Full list of env vars: https://electrumx.readthedocs.io/en/latest/environment.html
+        env:
+          - name: DB_DIRECTORY
+            value: /mnt/electrum/data
+          - name: SSL_CERTFILE
+            value: /mnt/electrum/cert/tls.crt
+          - name: SSL_KEYFILE
+            value: /mnt/electrum/cert/tls.key
+          - name: DAEMON_URL
+            valueFrom:
+              secretKeyRef:
+                name: bcoin
+                key: bcoin-url
+          - name: SERVICES
+            value: ssl://:443,ws://:8080,wss://:8443,rpc://0.0.0.0:8000
+          - name: COIN
+            value: BitcoinSegwit
+          - name: NET
+            value: testnet
+          - name: COST_SOFT_LIMIT
+            value: '0'
+          - name: COST_HARD_LIMIT
+            value: '0'
+          - name: LOG_LEVEL
+            value: debug
+        volumeMounts:
+          - name: tbtc-electrumx-server-data
+            mountPath: /mnt/electrum/data
+          - name: cloudflare-origin-cert
+            mountPath: /mnt/electrum/cert
+      volumes:
+      - name: tbtc-electrumx-server-data
+        persistentVolumeClaim:
+          claimName: tbtc-electrumx-server-data
+      - name: cloudflare-origin-cert
+        secret:
+          secretName: electrumx-server-test-tbtc-network

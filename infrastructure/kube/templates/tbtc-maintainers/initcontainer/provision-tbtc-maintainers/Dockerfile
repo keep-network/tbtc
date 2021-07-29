@@ -1,0 +1,16 @@
+FROM node:11 AS runtime
+
+WORKDIR /tmp
+
+COPY ./package.json /tmp/package.json
+COPY ./package-lock.json /tmp/package-lock.json
+
+RUN npm install
+
+COPY ./MockRelay.json /tmp/MockRelay.json
+
+COPY ./tbtc-maintainers-config-template.toml /tmp/tbtc-maintainers-config-template.toml
+
+COPY ./provision-tbtc-maintainers.js /tmp/provision-tbtc-maintainers.js
+
+ENTRYPOINT ["node", "./provision-tbtc-maintainers.js"]
