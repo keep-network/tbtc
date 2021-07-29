@@ -3,7 +3,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: tbtc-electrumx-compact-history
-  namespace: tbtc
+  namespace: default
   labels:
     app: tbtc
     type: electrumx-compact-history

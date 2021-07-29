@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: tbtc-electrumx-server
-  namespace: tbtc
+  namespace: default
   labels:
     app: tbtc
     type: electrumx-server
