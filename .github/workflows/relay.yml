@@ -109,3 +109,58 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-relay-cache
           mv /tmp/.buildx-relay-cache-new /tmp/.buildx-relay-cache
+
+  relay-build-and-publish-initcontainer:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        with:
+          environment: ropsten
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+            
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Build and publish initcontainer
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: 'initcontainer-provision-relay-maintainer'
+        with:
+          context: ./infrastructure/kube/templates/relay/initcontainer/provision-relay/
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: |
+            revision=${{ github.sha }}
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - # Temp fix - move cache instead of copying (added below step and
+        # modified value of `cache-to`).
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        # Without the change some jobs were failing with `no space left on device`
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
