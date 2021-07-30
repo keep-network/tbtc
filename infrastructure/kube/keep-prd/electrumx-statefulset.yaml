@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
       - name: electrumx-server
-        image: lukechilds/electrumx:v1.14.0
+        image: lukechilds/electrumx:v1.16.0
         ports:
           - containerPort: 443
           - containerPort: 8080
