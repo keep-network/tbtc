@@ -26,6 +26,7 @@ npm run clean
 npx truffle migrate --reset --network development
 
 printf "${LOG_START}Copying contract artifacts...${LOG_END}"
+rm -rf artifacts
 cp -r build/contracts artifacts
 npm link
 npm link @keep-network/keep-ecdsa
