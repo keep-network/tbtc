@@ -38,6 +38,7 @@ const TBTCConstants = artifacts.require("TBTCConstants")
 const TBTCDevelopmentConstants = artifacts.require("TBTCDevelopmentConstants")
 const KeepFactorySelection = artifacts.require("KeepFactorySelection")
 const TBTCSystem = artifacts.require("TBTCSystem")
+const TBTCSystemTestnet = artifacts.require("TBTCSystemTestnet")
 
 // tokens
 const TBTCToken = artifacts.require("TBTCToken")
@@ -67,7 +68,6 @@ const all = [
   DepositRedemption,
   DepositLiquidation,
   Deposit,
-  TBTCSystem,
   SatWeiPriceFeed,
   VendingMachine,
   FeeRebateToken,
@@ -76,6 +76,7 @@ const all = [
 module.exports = (deployer, network, accounts) => {
   deployer.then(async () => {
     let constantsContract = TBTCConstants
+    let tbtcSystemContract = TBTCSystem
     if (
       network == "keep_dev" ||
       network == "development" ||
@@ -86,8 +87,12 @@ module.exports = (deployer, network, accounts) => {
       // Masquerade as TBTCConstants like a sinister fellow.
       TBTCDevelopmentConstants._json.contractName = "TBTCConstants"
       constantsContract = TBTCDevelopmentConstants
+
+      TBTCSystemTestnet._json.contractName = "TBTCSystem"
+      tbtcSystemContract = TBTCSystemTestnet
     }
     all.push(constantsContract)
+    all.push(tbtcSystemContract)
 
     // bitcoin-spv
     await deployer.deploy(BytesLib)
@@ -159,18 +164,18 @@ module.exports = (deployer, network, accounts) => {
 
     // keep factory selection
     await deployer.deploy(KeepFactorySelection)
-    await deployer.link(KeepFactorySelection, TBTCSystem)
+    await deployer.link(KeepFactorySelection, tbtcSystemContract)
 
     // system
     await deployer.deploy(
-      TBTCSystem,
+      tbtcSystemContract,
       SatWeiPriceFeed.address,
       difficultyRelayAddress
     )
 
-    await deployer.deploy(DepositFactory, TBTCSystem.address)
+    await deployer.deploy(DepositFactory, tbtcSystemContract.address)
 
-    await deployer.deploy(VendingMachine, TBTCSystem.address)
+    await deployer.deploy(VendingMachine, tbtcSystemContract.address)
 
     // deposit
     await deployer.deploy(DepositStates)
