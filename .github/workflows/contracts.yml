@@ -159,7 +159,7 @@ jobs:
       - name: Migrate contracts on Ethereum
         if: github.event.inputs.environment != 'alfajores'
         env:
-          CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME_WS }}
           CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
