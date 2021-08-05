@@ -5,7 +5,7 @@ const ETHBTCMedianizer = "0xABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE"
 
 // Ropsten contracts.
 const RopstenETHBTCPriceFeed = "0xe9046e086137d2c0ffe60035391f6d7b4ec16733"
-const RopstenTestnetRelay = "0xcF3a6246879aab9eb7beC0d936743208EA51d0Ed"
+const RopstenTestnetRelay = "0xcf3910EDa57722Ed712D9f9b4D783EaEdbD6534C"
 
 module.exports = {
   ETHBTCMedianizer,
