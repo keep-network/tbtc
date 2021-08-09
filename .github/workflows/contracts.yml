@@ -113,8 +113,6 @@ jobs:
     needs: [contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.npm-version-bump.outputs.version }}
     defaults:
       run:
         working-directory: ./solidity
@@ -217,4 +215,4 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
-          version: ${{ needs.contracts-migrate-and-publish.outputs.version }}
+          version: ${{ steps.npm-version-bump.outputs.version }}
