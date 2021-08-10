@@ -96,9 +96,7 @@ jobs:
           labels: revision=${{ github.sha }}
           build-args: |
             REVISION=${{ github.sha }}
-          push: |
-            ${{ github.ref == 'refs/heads/main'
-              && github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' }}
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).
@@ -111,7 +109,9 @@ jobs:
           mv /tmp/.buildx-relay-cache-new /tmp/.buildx-relay-cache
 
   relay-build-and-publish-initcontainer:
-    if: github.event_name == 'workflow_dispatch'
+    if: |
+      github.event_name != 'pull_request'
+        || needs.relay-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -151,7 +151,7 @@ jobs:
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: |
             revision=${{ github.sha }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
