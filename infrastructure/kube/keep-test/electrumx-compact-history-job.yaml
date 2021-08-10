@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tbtc-electrumx-compact-history
+  labels:
+    app: tbtc
+    type: electrumx-compact-history
+  namespace: tbtc
+spec:
+  backoffLimit: 0
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: tbtc
+        job-name: tbtc-electrumx-compact-history
+        type: electrumx-server
+    spec:
+      containers:
+      - command:
+        - /electrumx/electrumx_compact_history
+        env:
+        - name: DB_DIRECTORY
+          value: /mnt/electrum/data
+        - name: SSL_CERTFILE
+          value: /mnt/electrum/cert/tls.crt
+        - name: SSL_KEYFILE
+          value: /mnt/electrum/cert/tls.key
+        - name: DAEMON_URL
+          valueFrom:
+            secretKeyRef:
+              key: bcoin-url
+              name: bcoin
+        - name: COIN
+          value: BitcoinSegwit
+        - name: NET
+          value: testnet
+        - name: COST_SOFT_LIMIT
+          value: "0"
+        - name: COST_HARD_LIMIT
+          value: "0"
+        - name: LOG_LEVEL
+          value: debug
+        image: lukechilds/electrumx
+        imagePullPolicy: Always
+        name: electrumx-server
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /mnt/electrum/data
+          name: tbtc-electrumx-server-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Never
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: tbtc-electrumx-server-data
+        persistentVolumeClaim:
+          claimName: tbtc-electrumx-server-data-tbtc-electrumx-server-1

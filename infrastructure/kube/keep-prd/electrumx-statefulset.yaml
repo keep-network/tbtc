@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
       - name: electrumx-server
-        image: lukechilds/electrumx:v1.14.0
+        image: lukechilds/electrumx:v1.16.0
         ports:
           - containerPort: 443
           - containerPort: 8080
@@ -51,7 +51,7 @@ spec:
                 name: bcoin
                 key: bcoin-url
           - name: SERVICES
-            value: ssl://:443,ws://:8080,wss://:8443,rpc://localhost:8000
+            value: ssl://:443,ws://:8080,wss://:8443,rpc://0.0.0.0:8000
           - name: COIN
             value: BitcoinSegwit
           - name: NET
