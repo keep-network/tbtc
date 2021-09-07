@@ -87,7 +87,6 @@ jobs:
           password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
       - name: Build and publish Docker Runtime Image
-        if: github.event_name != 'schedule'
         uses: docker/build-push-action@v2
         env:
           IMAGE_NAME: 'relay'
@@ -102,7 +101,8 @@ jobs:
             REVISION=${{ github.sha }}
           push: |
             ${{ github.ref == 'refs/heads/main'
-              && github.event_name != 'pull_request' }}
+              && github.event_name != 'pull_request'
+              && github.event_name != 'schedule' }}
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).
@@ -110,7 +110,6 @@ jobs:
         # https://github.com/moby/buildkit/issues/1896
         # Without the change some jobs were failing with `no space left on device`
         name: Move cache
-        if: github.event_name != 'schedule'
         run: |
           rm -rf /tmp/.buildx-relay-cache
           mv /tmp/.buildx-relay-cache-new /tmp/.buildx-relay-cache
