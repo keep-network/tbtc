@@ -1,6 +1,8 @@
 name: Relay
 
 on:
+  schedule:
+    - cron: '0 0 * * *'
   push:
     branches:
       - main
@@ -74,7 +76,9 @@ jobs:
             gotestsum
 
       - name: Login to Google Container Registry
-        if: github.event_name != 'pull_request'
+        if: |
+          github.event_name != 'pull_request'
+            && github.event_name != 'schedule'
         uses: docker/login-action@v1
         with:
           registry: ${{ env.GCR_REGISTRY_URL }}
@@ -93,7 +97,9 @@ jobs:
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
           build-args: REVISION=${{ github.sha }}
-          push: ${{ github.event_name != 'pull_request' }}
+          push: |
+            ${{ github.event_name != 'pull_request'
+              && github.event_name != 'schedule' }}
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).

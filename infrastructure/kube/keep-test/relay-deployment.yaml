@@ -42,14 +42,14 @@ spec:
                   name: eth-network-ropsten
                   key: rpc-url
             - name: RELAY_CONTRACT_ADDRESS
-              value: '0xcF3a6246879aab9eb7beC0d936743208EA51d0Ed'
+              value: '0x7406a59e123a12830A2AFC7d7e8491C66766d8D3'
             - name: RELAY_ACCOUNT_ADDRESS
               valueFrom:
                 configMapKeyRef:
                   name: eth-account-info
-                  key: account-50-address
+                  key: account-99-address
             - name: RELAY_ACCOUNT_KEY_FILE
-              value: /mnt/relay/keyfile/account-50-keyfile
+              value: /mnt/relay/keyfile/account-99-keyfile
             - name: CONTRACT_OWNER_ACCOUNT_ADDRESS
               valueFrom:
                 configMapKeyRef:
@@ -86,7 +86,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: eth-account-passphrases
-                  key: account-50
+                  key: account-99
             - name: LOG_LEVEL
               value: 'info'
           volumeMounts:
@@ -109,8 +109,8 @@ spec:
           configMap:
             name: eth-account-info
             items:
-              - key: account-50-keyfile
-                path: account-50-keyfile
+              - key: account-99-keyfile
+                path: account-99-keyfile
 
 ---
 apiVersion: v1
