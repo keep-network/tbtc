@@ -204,7 +204,7 @@ jobs:
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
-      
+
       - name: Notify CI about completion of the workflow
         # For Alfajores we want to break the chain of deployments on tBTC contracts.
         if: github.event.inputs.environment != 'alfajores'
