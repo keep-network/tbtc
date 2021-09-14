@@ -174,6 +174,25 @@ jobs:
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
+      - name: Verify Ethereum contracts on Etherscan
+        if: github.event.inputs.environment != 'alfajores'
+        continue-on-error: true
+        id: verify-contracts
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          TRUFFLE_NETWORK: ${{ env.TRUFFLE_NETWORK}}
+        run: ./scripts/etherscan-verify.sh
+
+      - name: Annotate in case of verification failure
+        if: steps.verify-contracts.outcome == 'failure'
+        continue-on-error: true
+        uses: thesis/github-action-create-annotations@v0.2.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          json-file-path: "./.github/annotations.json"
+          fail-on-error: false
+          check-name: "contracts-migrate-and-publish"
+
       - name: Copy artifacts
         run: |
           mkdir -p artifacts
