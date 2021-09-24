@@ -41,7 +41,7 @@ type TBTCSystem struct {
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
-	miningWaiter      *ethlike.MiningWaiter
+	miningWaiter      *chainutil.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
 
 	transactionMutex *sync.Mutex
@@ -53,7 +53,7 @@ func NewTBTCSystem(
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethlike.NonceManager,
-	miningWaiter *ethlike.MiningWaiter,
+	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*TBTCSystem, error) {
@@ -117,7 +117,7 @@ func (tbtcs *TBTCSystem) BeginCollateralizationThresholdsUpdate(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction beginCollateralizationThresholdsUpdate",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_initialCollateralizedPercent,
 			_undercollateralizedThresholdPercent,
@@ -166,22 +166,17 @@ func (tbtcs *TBTCSystem) BeginCollateralizationThresholdsUpdate(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction beginCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction beginCollateralizationThresholdsUpdate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.BeginCollateralizationThresholdsUpdate(
-				transactorOptions,
+				newTransactorOptions,
 				_initialCollateralizedPercent,
 				_undercollateralizedThresholdPercent,
 				_severelyUndercollateralizedThresholdPercent,
@@ -199,15 +194,12 @@ func (tbtcs *TBTCSystem) BeginCollateralizationThresholdsUpdate(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction beginCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction beginCollateralizationThresholdsUpdate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -271,7 +263,7 @@ func (tbtcs *TBTCSystem) BeginEthBtcPriceFeedAddition(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction beginEthBtcPriceFeedAddition",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_ethBtcPriceFeed,
 		),
@@ -314,22 +306,17 @@ func (tbtcs *TBTCSystem) BeginEthBtcPriceFeedAddition(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction beginEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction beginEthBtcPriceFeedAddition with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.BeginEthBtcPriceFeedAddition(
-				transactorOptions,
+				newTransactorOptions,
 				_ethBtcPriceFeed,
 			)
 			if err != nil {
@@ -343,15 +330,12 @@ func (tbtcs *TBTCSystem) BeginEthBtcPriceFeedAddition(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction beginEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction beginEthBtcPriceFeedAddition with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -409,7 +393,7 @@ func (tbtcs *TBTCSystem) BeginKeepFactoriesUpdate(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction beginKeepFactoriesUpdate",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_keepStakedFactory,
 			_fullyBackedFactory,
@@ -458,22 +442,17 @@ func (tbtcs *TBTCSystem) BeginKeepFactoriesUpdate(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction beginKeepFactoriesUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction beginKeepFactoriesUpdate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.BeginKeepFactoriesUpdate(
-				transactorOptions,
+				newTransactorOptions,
 				_keepStakedFactory,
 				_fullyBackedFactory,
 				_factorySelector,
@@ -491,15 +470,12 @@ func (tbtcs *TBTCSystem) BeginKeepFactoriesUpdate(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction beginKeepFactoriesUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction beginKeepFactoriesUpdate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -563,7 +539,7 @@ func (tbtcs *TBTCSystem) BeginLotSizesUpdate(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction beginLotSizesUpdate",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_lotSizes,
 		),
@@ -606,22 +582,17 @@ func (tbtcs *TBTCSystem) BeginLotSizesUpdate(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction beginLotSizesUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction beginLotSizesUpdate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.BeginLotSizesUpdate(
-				transactorOptions,
+				newTransactorOptions,
 				_lotSizes,
 			)
 			if err != nil {
@@ -635,15 +606,12 @@ func (tbtcs *TBTCSystem) BeginLotSizesUpdate(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction beginLotSizesUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction beginLotSizesUpdate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -699,7 +667,7 @@ func (tbtcs *TBTCSystem) BeginSignerFeeDivisorUpdate(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction beginSignerFeeDivisorUpdate",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_signerFeeDivisor,
 		),
@@ -742,22 +710,17 @@ func (tbtcs *TBTCSystem) BeginSignerFeeDivisorUpdate(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction beginSignerFeeDivisorUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction beginSignerFeeDivisorUpdate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.BeginSignerFeeDivisorUpdate(
-				transactorOptions,
+				newTransactorOptions,
 				_signerFeeDivisor,
 			)
 			if err != nil {
@@ -771,15 +734,12 @@ func (tbtcs *TBTCSystem) BeginSignerFeeDivisorUpdate(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction beginSignerFeeDivisorUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction beginSignerFeeDivisorUpdate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -871,22 +831,17 @@ func (tbtcs *TBTCSystem) EmergencyPauseNewDeposits(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction emergencyPauseNewDeposits with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction emergencyPauseNewDeposits with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.EmergencyPauseNewDeposits(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -898,15 +853,12 @@ func (tbtcs *TBTCSystem) EmergencyPauseNewDeposits(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction emergencyPauseNewDeposits with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction emergencyPauseNewDeposits with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -993,22 +945,17 @@ func (tbtcs *TBTCSystem) FinalizeCollateralizationThresholdsUpdate(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction finalizeCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction finalizeCollateralizationThresholdsUpdate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.FinalizeCollateralizationThresholdsUpdate(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -1020,15 +967,12 @@ func (tbtcs *TBTCSystem) FinalizeCollateralizationThresholdsUpdate(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction finalizeCollateralizationThresholdsUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction finalizeCollateralizationThresholdsUpdate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1115,22 +1059,17 @@ func (tbtcs *TBTCSystem) FinalizeEthBtcPriceFeedAddition(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction finalizeEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction finalizeEthBtcPriceFeedAddition with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.FinalizeEthBtcPriceFeedAddition(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -1142,15 +1081,12 @@ func (tbtcs *TBTCSystem) FinalizeEthBtcPriceFeedAddition(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction finalizeEthBtcPriceFeedAddition with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction finalizeEthBtcPriceFeedAddition with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1237,22 +1173,17 @@ func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction finalizeKeepFactoriesUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction finalizeKeepFactoriesUpdate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.FinalizeKeepFactoriesUpdate(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -1264,15 +1195,12 @@ func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction finalizeKeepFactoriesUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction finalizeKeepFactoriesUpdate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1359,22 +1287,17 @@ func (tbtcs *TBTCSystem) FinalizeLotSizesUpdate(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction finalizeLotSizesUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction finalizeLotSizesUpdate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.FinalizeLotSizesUpdate(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -1386,15 +1309,12 @@ func (tbtcs *TBTCSystem) FinalizeLotSizesUpdate(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction finalizeLotSizesUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction finalizeLotSizesUpdate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1481,22 +1401,17 @@ func (tbtcs *TBTCSystem) FinalizeSignerFeeDivisorUpdate(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction finalizeSignerFeeDivisorUpdate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction finalizeSignerFeeDivisorUpdate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.FinalizeSignerFeeDivisorUpdate(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -1508,15 +1423,12 @@ func (tbtcs *TBTCSystem) FinalizeSignerFeeDivisorUpdate(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction finalizeSignerFeeDivisorUpdate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction finalizeSignerFeeDivisorUpdate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1575,7 +1487,7 @@ func (tbtcs *TBTCSystem) Initialize(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction initialize",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_defaultKeepFactory,
 			_depositFactory,
@@ -1642,22 +1554,17 @@ func (tbtcs *TBTCSystem) Initialize(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction initialize with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction initialize with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.Initialize(
-				transactorOptions,
+				newTransactorOptions,
 				_defaultKeepFactory,
 				_depositFactory,
 				_masterDepositAddress,
@@ -1687,15 +1594,12 @@ func (tbtcs *TBTCSystem) Initialize(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction initialize with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction initialize with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1819,22 +1723,17 @@ func (tbtcs *TBTCSystem) LogCourtesyCalled(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logCourtesyCalled with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogCourtesyCalled(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -1846,15 +1745,12 @@ func (tbtcs *TBTCSystem) LogCourtesyCalled(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logCourtesyCalled with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logCourtesyCalled with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1905,7 +1801,7 @@ func (tbtcs *TBTCSystem) LogCreated(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction logCreated",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_keepAddress,
 		),
@@ -1948,22 +1844,17 @@ func (tbtcs *TBTCSystem) LogCreated(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logCreated with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logCreated with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogCreated(
-				transactorOptions,
+				newTransactorOptions,
 				_keepAddress,
 			)
 			if err != nil {
@@ -1977,15 +1868,12 @@ func (tbtcs *TBTCSystem) LogCreated(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logCreated with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logCreated with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2077,22 +1965,17 @@ func (tbtcs *TBTCSystem) LogExitedCourtesyCall(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logExitedCourtesyCall with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogExitedCourtesyCall(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -2104,15 +1987,12 @@ func (tbtcs *TBTCSystem) LogExitedCourtesyCall(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logExitedCourtesyCall with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logExitedCourtesyCall with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2199,22 +2079,17 @@ func (tbtcs *TBTCSystem) LogFraudDuringSetup(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logFraudDuringSetup with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogFraudDuringSetup(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -2226,15 +2101,12 @@ func (tbtcs *TBTCSystem) LogFraudDuringSetup(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logFraudDuringSetup with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logFraudDuringSetup with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2285,7 +2157,7 @@ func (tbtcs *TBTCSystem) LogFunded(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction logFunded",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_txid,
 		),
@@ -2328,22 +2200,17 @@ func (tbtcs *TBTCSystem) LogFunded(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logFunded with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logFunded with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogFunded(
-				transactorOptions,
+				newTransactorOptions,
 				_txid,
 			)
 			if err != nil {
@@ -2357,15 +2224,12 @@ func (tbtcs *TBTCSystem) LogFunded(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logFunded with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logFunded with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2421,7 +2285,7 @@ func (tbtcs *TBTCSystem) LogFunderRequestedAbort(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction logFunderRequestedAbort",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_abortOutputScript,
 		),
@@ -2464,22 +2328,17 @@ func (tbtcs *TBTCSystem) LogFunderRequestedAbort(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logFunderRequestedAbort with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logFunderRequestedAbort with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogFunderRequestedAbort(
-				transactorOptions,
+				newTransactorOptions,
 				_abortOutputScript,
 			)
 			if err != nil {
@@ -2493,15 +2352,12 @@ func (tbtcs *TBTCSystem) LogFunderRequestedAbort(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logFunderRequestedAbort with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logFunderRequestedAbort with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2559,7 +2415,7 @@ func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction logGotRedemptionSignature",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_digest,
 			_r,
@@ -2608,22 +2464,17 @@ func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logGotRedemptionSignature with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logGotRedemptionSignature with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogGotRedemptionSignature(
-				transactorOptions,
+				newTransactorOptions,
 				_digest,
 				_r,
 				_s,
@@ -2641,15 +2492,12 @@ func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logGotRedemptionSignature with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logGotRedemptionSignature with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2749,22 +2597,17 @@ func (tbtcs *TBTCSystem) LogLiquidated(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logLiquidated with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogLiquidated(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -2776,15 +2619,12 @@ func (tbtcs *TBTCSystem) LogLiquidated(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logLiquidated with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logLiquidated with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2835,7 +2675,7 @@ func (tbtcs *TBTCSystem) LogRedeemed(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction logRedeemed",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_txid,
 		),
@@ -2878,22 +2718,17 @@ func (tbtcs *TBTCSystem) LogRedeemed(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logRedeemed with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logRedeemed with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogRedeemed(
-				transactorOptions,
+				newTransactorOptions,
 				_txid,
 			)
 			if err != nil {
@@ -2907,15 +2742,12 @@ func (tbtcs *TBTCSystem) LogRedeemed(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logRedeemed with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logRedeemed with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2976,7 +2808,7 @@ func (tbtcs *TBTCSystem) LogRedemptionRequested(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction logRedemptionRequested",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_requester,
 			_digest,
@@ -3034,22 +2866,17 @@ func (tbtcs *TBTCSystem) LogRedemptionRequested(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logRedemptionRequested with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logRedemptionRequested with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogRedemptionRequested(
-				transactorOptions,
+				newTransactorOptions,
 				_requester,
 				_digest,
 				_utxoValue,
@@ -3073,15 +2900,12 @@ func (tbtcs *TBTCSystem) LogRedemptionRequested(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logRedemptionRequested with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logRedemptionRequested with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -3158,7 +2982,7 @@ func (tbtcs *TBTCSystem) LogRegisteredPubkey(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction logRegisteredPubkey",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_signingGroupPubkeyX,
 			_signingGroupPubkeyY,
@@ -3204,22 +3028,17 @@ func (tbtcs *TBTCSystem) LogRegisteredPubkey(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logRegisteredPubkey with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logRegisteredPubkey with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogRegisteredPubkey(
-				transactorOptions,
+				newTransactorOptions,
 				_signingGroupPubkeyX,
 				_signingGroupPubkeyY,
 			)
@@ -3235,15 +3054,12 @@ func (tbtcs *TBTCSystem) LogRegisteredPubkey(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logRegisteredPubkey with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logRegisteredPubkey with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -3339,22 +3155,17 @@ func (tbtcs *TBTCSystem) LogSetupFailed(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logSetupFailed with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogSetupFailed(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -3366,15 +3177,12 @@ func (tbtcs *TBTCSystem) LogSetupFailed(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logSetupFailed with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logSetupFailed with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -3425,7 +3233,7 @@ func (tbtcs *TBTCSystem) LogStartedLiquidation(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction logStartedLiquidation",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_wasFraud,
 		),
@@ -3468,22 +3276,17 @@ func (tbtcs *TBTCSystem) LogStartedLiquidation(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction logStartedLiquidation with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction logStartedLiquidation with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.LogStartedLiquidation(
-				transactorOptions,
+				newTransactorOptions,
 				_wasFraud,
 			)
 			if err != nil {
@@ -3497,15 +3300,12 @@ func (tbtcs *TBTCSystem) LogStartedLiquidation(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction logStartedLiquidation with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction logStartedLiquidation with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -3597,22 +3397,17 @@ func (tbtcs *TBTCSystem) RefreshMinimumBondableValue(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction refreshMinimumBondableValue with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction refreshMinimumBondableValue with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.RefreshMinimumBondableValue(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -3624,15 +3419,12 @@ func (tbtcs *TBTCSystem) RefreshMinimumBondableValue(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction refreshMinimumBondableValue with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction refreshMinimumBondableValue with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -3719,22 +3511,17 @@ func (tbtcs *TBTCSystem) RenounceOwnership(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction renounceOwnership with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction renounceOwnership with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.RenounceOwnership(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -3746,15 +3533,12 @@ func (tbtcs *TBTCSystem) RenounceOwnership(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction renounceOwnership with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction renounceOwnership with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -3807,12 +3591,12 @@ func (tbtcs *TBTCSystem) RequestNewKeep(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction requestNewKeep",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_requestedLotSizeSatoshis,
 			_maxSecuredLifetime,
 		),
-		"value: ", value,
+		" value: ", value,
 	)
 
 	tbtcs.transactionMutex.Lock()
@@ -3856,22 +3640,17 @@ func (tbtcs *TBTCSystem) RequestNewKeep(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction requestNewKeep with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction requestNewKeep with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.RequestNewKeep(
-				transactorOptions,
+				newTransactorOptions,
 				_requestedLotSizeSatoshis,
 				_maxSecuredLifetime,
 			)
@@ -3887,15 +3666,12 @@ func (tbtcs *TBTCSystem) RequestNewKeep(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction requestNewKeep with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction requestNewKeep with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -3992,22 +3768,17 @@ func (tbtcs *TBTCSystem) ResumeNewDeposits(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction resumeNewDeposits with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction resumeNewDeposits with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.ResumeNewDeposits(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, tbtcs.errorResolver.ResolveError(
@@ -4019,15 +3790,12 @@ func (tbtcs *TBTCSystem) ResumeNewDeposits(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction resumeNewDeposits with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction resumeNewDeposits with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -4078,7 +3846,7 @@ func (tbtcs *TBTCSystem) TransferOwnership(
 ) (*types.Transaction, error) {
 	tbtcsLogger.Debug(
 		"submitting transaction transferOwnership",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			newOwner,
 		),
@@ -4121,22 +3889,17 @@ func (tbtcs *TBTCSystem) TransferOwnership(
 	}
 
 	tbtcsLogger.Infof(
-		"submitted transaction transferOwnership with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction transferOwnership with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go tbtcs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tbtcs.contract.TransferOwnership(
-				transactorOptions,
+				newTransactorOptions,
 				newOwner,
 			)
 			if err != nil {
@@ -4150,15 +3913,12 @@ func (tbtcs *TBTCSystem) TransferOwnership(
 			}
 
 			tbtcsLogger.Infof(
-				"submitted transaction transferOwnership with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction transferOwnership with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 

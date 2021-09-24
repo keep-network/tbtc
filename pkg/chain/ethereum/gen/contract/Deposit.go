@@ -37,7 +37,7 @@ type Deposit struct {
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
-	miningWaiter      *ethlike.MiningWaiter
+	miningWaiter      *chainutil.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
 
 	transactionMutex *sync.Mutex
@@ -49,7 +49,7 @@ func NewDeposit(
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethlike.NonceManager,
-	miningWaiter *ethlike.MiningWaiter,
+	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*Deposit, error) {
@@ -147,22 +147,17 @@ func (d *Deposit) ExitCourtesyCall(
 	}
 
 	dLogger.Infof(
-		"submitted transaction exitCourtesyCall with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction exitCourtesyCall with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.ExitCourtesyCall(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -174,15 +169,12 @@ func (d *Deposit) ExitCourtesyCall(
 			}
 
 			dLogger.Infof(
-				"submitted transaction exitCourtesyCall with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction exitCourtesyCall with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -234,7 +226,7 @@ func (d *Deposit) IncreaseRedemptionFee(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction increaseRedemptionFee",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_previousOutputValueBytes,
 			_newOutputValueBytes,
@@ -280,22 +272,17 @@ func (d *Deposit) IncreaseRedemptionFee(
 	}
 
 	dLogger.Infof(
-		"submitted transaction increaseRedemptionFee with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction increaseRedemptionFee with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.IncreaseRedemptionFee(
-				transactorOptions,
+				newTransactorOptions,
 				_previousOutputValueBytes,
 				_newOutputValueBytes,
 			)
@@ -311,15 +298,12 @@ func (d *Deposit) IncreaseRedemptionFee(
 			}
 
 			dLogger.Infof(
-				"submitted transaction increaseRedemptionFee with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction increaseRedemptionFee with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -379,7 +363,7 @@ func (d *Deposit) Initialize(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction initialize",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_factory,
 		),
@@ -422,22 +406,17 @@ func (d *Deposit) Initialize(
 	}
 
 	dLogger.Infof(
-		"submitted transaction initialize with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction initialize with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.Initialize(
-				transactorOptions,
+				newTransactorOptions,
 				_factory,
 			)
 			if err != nil {
@@ -451,15 +430,12 @@ func (d *Deposit) Initialize(
 			}
 
 			dLogger.Infof(
-				"submitted transaction initialize with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction initialize with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -521,7 +497,7 @@ func (d *Deposit) InitializeDeposit(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction initializeDeposit",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_tbtcSystem,
 			_tbtcToken,
@@ -530,7 +506,7 @@ func (d *Deposit) InitializeDeposit(
 			_vendingMachineAddress,
 			_lotSizeSatoshis,
 		),
-		"value: ", value,
+		" value: ", value,
 	)
 
 	d.transactionMutex.Lock()
@@ -582,22 +558,17 @@ func (d *Deposit) InitializeDeposit(
 	}
 
 	dLogger.Infof(
-		"submitted transaction initializeDeposit with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction initializeDeposit with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.InitializeDeposit(
-				transactorOptions,
+				newTransactorOptions,
 				_tbtcSystem,
 				_tbtcToken,
 				_tbtcDepositToken,
@@ -621,15 +592,12 @@ func (d *Deposit) InitializeDeposit(
 			}
 
 			dLogger.Infof(
-				"submitted transaction initializeDeposit with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction initializeDeposit with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -742,22 +710,17 @@ func (d *Deposit) NotifyCourtesyCall(
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifyCourtesyCall with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction notifyCourtesyCall with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.NotifyCourtesyCall(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -769,15 +732,12 @@ func (d *Deposit) NotifyCourtesyCall(
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifyCourtesyCall with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction notifyCourtesyCall with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -864,22 +824,17 @@ func (d *Deposit) NotifyCourtesyCallExpired(
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifyCourtesyCallExpired with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction notifyCourtesyCallExpired with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.NotifyCourtesyCallExpired(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -891,15 +846,12 @@ func (d *Deposit) NotifyCourtesyCallExpired(
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifyCourtesyCallExpired with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction notifyCourtesyCallExpired with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -986,22 +938,17 @@ func (d *Deposit) NotifyFundingTimedOut(
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifyFundingTimedOut with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction notifyFundingTimedOut with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.NotifyFundingTimedOut(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -1013,15 +960,12 @@ func (d *Deposit) NotifyFundingTimedOut(
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifyFundingTimedOut with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction notifyFundingTimedOut with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1108,22 +1052,17 @@ func (d *Deposit) NotifyRedemptionProofTimedOut(
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifyRedemptionProofTimedOut with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction notifyRedemptionProofTimedOut with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.NotifyRedemptionProofTimedOut(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -1135,15 +1074,12 @@ func (d *Deposit) NotifyRedemptionProofTimedOut(
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifyRedemptionProofTimedOut with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction notifyRedemptionProofTimedOut with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1230,22 +1166,17 @@ func (d *Deposit) NotifyRedemptionSignatureTimedOut(
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifyRedemptionSignatureTimedOut with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction notifyRedemptionSignatureTimedOut with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.NotifyRedemptionSignatureTimedOut(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -1257,15 +1188,12 @@ func (d *Deposit) NotifyRedemptionSignatureTimedOut(
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifyRedemptionSignatureTimedOut with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction notifyRedemptionSignatureTimedOut with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1352,22 +1280,17 @@ func (d *Deposit) NotifySignerSetupFailed(
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifySignerSetupFailed with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction notifySignerSetupFailed with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.NotifySignerSetupFailed(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -1379,15 +1302,12 @@ func (d *Deposit) NotifySignerSetupFailed(
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifySignerSetupFailed with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction notifySignerSetupFailed with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1474,22 +1394,17 @@ func (d *Deposit) NotifyUndercollateralizedLiquidation(
 	}
 
 	dLogger.Infof(
-		"submitted transaction notifyUndercollateralizedLiquidation with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction notifyUndercollateralizedLiquidation with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.NotifyUndercollateralizedLiquidation(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -1501,15 +1416,12 @@ func (d *Deposit) NotifyUndercollateralizedLiquidation(
 			}
 
 			dLogger.Infof(
-				"submitted transaction notifyUndercollateralizedLiquidation with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction notifyUndercollateralizedLiquidation with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1567,7 +1479,7 @@ func (d *Deposit) ProvideBTCFundingProof(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction provideBTCFundingProof",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_txVersion,
 			_txInputVector,
@@ -1631,22 +1543,17 @@ func (d *Deposit) ProvideBTCFundingProof(
 	}
 
 	dLogger.Infof(
-		"submitted transaction provideBTCFundingProof with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction provideBTCFundingProof with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.ProvideBTCFundingProof(
-				transactorOptions,
+				newTransactorOptions,
 				_txVersion,
 				_txInputVector,
 				_txOutputVector,
@@ -1674,15 +1581,12 @@ func (d *Deposit) ProvideBTCFundingProof(
 			}
 
 			dLogger.Infof(
-				"submitted transaction provideBTCFundingProof with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction provideBTCFundingProof with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1770,7 +1674,7 @@ func (d *Deposit) ProvideECDSAFraudProof(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction provideECDSAFraudProof",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_v,
 			_r,
@@ -1825,22 +1729,17 @@ func (d *Deposit) ProvideECDSAFraudProof(
 	}
 
 	dLogger.Infof(
-		"submitted transaction provideECDSAFraudProof with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction provideECDSAFraudProof with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.ProvideECDSAFraudProof(
-				transactorOptions,
+				newTransactorOptions,
 				_v,
 				_r,
 				_s,
@@ -1862,15 +1761,12 @@ func (d *Deposit) ProvideECDSAFraudProof(
 			}
 
 			dLogger.Infof(
-				"submitted transaction provideECDSAFraudProof with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction provideECDSAFraudProof with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1946,7 +1842,7 @@ func (d *Deposit) ProvideFundingECDSAFraudProof(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction provideFundingECDSAFraudProof",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_v,
 			_r,
@@ -2001,22 +1897,17 @@ func (d *Deposit) ProvideFundingECDSAFraudProof(
 	}
 
 	dLogger.Infof(
-		"submitted transaction provideFundingECDSAFraudProof with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction provideFundingECDSAFraudProof with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.ProvideFundingECDSAFraudProof(
-				transactorOptions,
+				newTransactorOptions,
 				_v,
 				_r,
 				_s,
@@ -2038,15 +1929,12 @@ func (d *Deposit) ProvideFundingECDSAFraudProof(
 			}
 
 			dLogger.Infof(
-				"submitted transaction provideFundingECDSAFraudProof with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction provideFundingECDSAFraudProof with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2124,7 +2012,7 @@ func (d *Deposit) ProvideRedemptionProof(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction provideRedemptionProof",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_txVersion,
 			_txInputVector,
@@ -2185,22 +2073,17 @@ func (d *Deposit) ProvideRedemptionProof(
 	}
 
 	dLogger.Infof(
-		"submitted transaction provideRedemptionProof with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction provideRedemptionProof with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.ProvideRedemptionProof(
-				transactorOptions,
+				newTransactorOptions,
 				_txVersion,
 				_txInputVector,
 				_txOutputVector,
@@ -2226,15 +2109,12 @@ func (d *Deposit) ProvideRedemptionProof(
 			}
 
 			dLogger.Infof(
-				"submitted transaction provideRedemptionProof with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction provideRedemptionProof with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2316,7 +2196,7 @@ func (d *Deposit) ProvideRedemptionSignature(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction provideRedemptionSignature",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_v,
 			_r,
@@ -2365,22 +2245,17 @@ func (d *Deposit) ProvideRedemptionSignature(
 	}
 
 	dLogger.Infof(
-		"submitted transaction provideRedemptionSignature with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction provideRedemptionSignature with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.ProvideRedemptionSignature(
-				transactorOptions,
+				newTransactorOptions,
 				_v,
 				_r,
 				_s,
@@ -2398,15 +2273,12 @@ func (d *Deposit) ProvideRedemptionSignature(
 			}
 
 			dLogger.Infof(
-				"submitted transaction provideRedemptionSignature with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction provideRedemptionSignature with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2506,22 +2378,17 @@ func (d *Deposit) PurchaseSignerBondsAtAuction(
 	}
 
 	dLogger.Infof(
-		"submitted transaction purchaseSignerBondsAtAuction with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction purchaseSignerBondsAtAuction with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.PurchaseSignerBondsAtAuction(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -2533,15 +2400,12 @@ func (d *Deposit) PurchaseSignerBondsAtAuction(
 			}
 
 			dLogger.Infof(
-				"submitted transaction purchaseSignerBondsAtAuction with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction purchaseSignerBondsAtAuction with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2592,7 +2456,7 @@ func (d *Deposit) RequestFunderAbort(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction requestFunderAbort",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_abortOutputScript,
 		),
@@ -2635,22 +2499,17 @@ func (d *Deposit) RequestFunderAbort(
 	}
 
 	dLogger.Infof(
-		"submitted transaction requestFunderAbort with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction requestFunderAbort with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.RequestFunderAbort(
-				transactorOptions,
+				newTransactorOptions,
 				_abortOutputScript,
 			)
 			if err != nil {
@@ -2664,15 +2523,12 @@ func (d *Deposit) RequestFunderAbort(
 			}
 
 			dLogger.Infof(
-				"submitted transaction requestFunderAbort with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction requestFunderAbort with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2729,7 +2585,7 @@ func (d *Deposit) RequestRedemption(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction requestRedemption",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_outputValueBytes,
 			_redeemerOutputScript,
@@ -2775,22 +2631,17 @@ func (d *Deposit) RequestRedemption(
 	}
 
 	dLogger.Infof(
-		"submitted transaction requestRedemption with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction requestRedemption with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.RequestRedemption(
-				transactorOptions,
+				newTransactorOptions,
 				_outputValueBytes,
 				_redeemerOutputScript,
 			)
@@ -2806,15 +2657,12 @@ func (d *Deposit) RequestRedemption(
 			}
 
 			dLogger.Infof(
-				"submitted transaction requestRedemption with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction requestRedemption with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2910,22 +2758,17 @@ func (d *Deposit) RetrieveSignerPubkey(
 	}
 
 	dLogger.Infof(
-		"submitted transaction retrieveSignerPubkey with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction retrieveSignerPubkey with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.RetrieveSignerPubkey(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -2937,15 +2780,12 @@ func (d *Deposit) RetrieveSignerPubkey(
 			}
 
 			dLogger.Infof(
-				"submitted transaction retrieveSignerPubkey with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction retrieveSignerPubkey with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -2998,7 +2838,7 @@ func (d *Deposit) TransferAndRequestRedemption(
 ) (*types.Transaction, error) {
 	dLogger.Debug(
 		"submitting transaction transferAndRequestRedemption",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_outputValueBytes,
 			_redeemerOutputScript,
@@ -3047,22 +2887,17 @@ func (d *Deposit) TransferAndRequestRedemption(
 	}
 
 	dLogger.Infof(
-		"submitted transaction transferAndRequestRedemption with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction transferAndRequestRedemption with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.TransferAndRequestRedemption(
-				transactorOptions,
+				newTransactorOptions,
 				_outputValueBytes,
 				_redeemerOutputScript,
 				_finalRecipient,
@@ -3080,15 +2915,12 @@ func (d *Deposit) TransferAndRequestRedemption(
 			}
 
 			dLogger.Infof(
-				"submitted transaction transferAndRequestRedemption with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction transferAndRequestRedemption with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -3188,22 +3020,17 @@ func (d *Deposit) WithdrawFunds(
 	}
 
 	dLogger.Infof(
-		"submitted transaction withdrawFunds with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction withdrawFunds with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go d.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := d.contract.WithdrawFunds(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, d.errorResolver.ResolveError(
@@ -3215,15 +3042,12 @@ func (d *Deposit) WithdrawFunds(
 			}
 
 			dLogger.Infof(
-				"submitted transaction withdrawFunds with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction withdrawFunds with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
