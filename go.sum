@@ -300,6 +300,8 @@ github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 h1:ZHuwnjpP8LsVsUYqTq
 github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9/go.mod h1:Od972xHfMJowv7NGVDiWVxk2zxnWgjLlJzE+F4F7AGU=
 github.com/keep-network/keep-common v1.7.1-0.20210924121220-c02e9cae0242 h1:ORBcL0H/d5X7scQJhdO4bdsSaKnOu4F531NHn0JcYTc=
 github.com/keep-network/keep-common v1.7.1-0.20210924121220-c02e9cae0242/go.mod h1:g4RTDmhQMgwnlkU5bzW6cSz9dM+0UiQDPtow5NWdYbc=
+github.com/keep-network/keep-common v1.7.1-0.20211004103702-0975a955b3bb h1:wjCtclUjdaYWXFaJXJQut4/Ug1Ne/NqkKXNDad78kus=
+github.com/keep-network/keep-common v1.7.1-0.20211004103702-0975a955b3bb/go.mod h1:g4RTDmhQMgwnlkU5bzW6cSz9dM+0UiQDPtow5NWdYbc=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
