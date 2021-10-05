@@ -163,7 +163,7 @@ func (d *Deposit) ExitCourtesyCall(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.ExitCourtesyCall(
@@ -298,7 +298,7 @@ func (d *Deposit) IncreaseRedemptionFee(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.IncreaseRedemptionFee(
@@ -442,7 +442,7 @@ func (d *Deposit) Initialize(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.Initialize(
@@ -604,7 +604,7 @@ func (d *Deposit) InitializeDeposit(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.InitializeDeposit(
@@ -766,7 +766,7 @@ func (d *Deposit) NotifyCourtesyCall(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.NotifyCourtesyCall(
@@ -890,7 +890,7 @@ func (d *Deposit) NotifyCourtesyCallExpired(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.NotifyCourtesyCallExpired(
@@ -1014,7 +1014,7 @@ func (d *Deposit) NotifyFundingTimedOut(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.NotifyFundingTimedOut(
@@ -1138,7 +1138,7 @@ func (d *Deposit) NotifyRedemptionProofTimedOut(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.NotifyRedemptionProofTimedOut(
@@ -1262,7 +1262,7 @@ func (d *Deposit) NotifyRedemptionSignatureTimedOut(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.NotifyRedemptionSignatureTimedOut(
@@ -1386,7 +1386,7 @@ func (d *Deposit) NotifySignerSetupFailed(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.NotifySignerSetupFailed(
@@ -1510,7 +1510,7 @@ func (d *Deposit) NotifyUndercollateralizedLiquidation(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.NotifyUndercollateralizedLiquidation(
@@ -1669,7 +1669,7 @@ func (d *Deposit) ProvideBTCFundingProof(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.ProvideBTCFundingProof(
@@ -1865,7 +1865,7 @@ func (d *Deposit) ProvideECDSAFraudProof(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.ProvideECDSAFraudProof(
@@ -2043,7 +2043,7 @@ func (d *Deposit) ProvideFundingECDSAFraudProof(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.ProvideFundingECDSAFraudProof(
@@ -2229,7 +2229,7 @@ func (d *Deposit) ProvideRedemptionProof(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.ProvideRedemptionProof(
@@ -2411,7 +2411,7 @@ func (d *Deposit) ProvideRedemptionSignature(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.ProvideRedemptionSignature(
@@ -2554,7 +2554,7 @@ func (d *Deposit) PurchaseSignerBondsAtAuction(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.PurchaseSignerBondsAtAuction(
@@ -2685,7 +2685,7 @@ func (d *Deposit) RequestFunderAbort(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.RequestFunderAbort(
@@ -2827,7 +2827,7 @@ func (d *Deposit) RequestRedemption(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.RequestRedemption(
@@ -2964,7 +2964,7 @@ func (d *Deposit) RetrieveSignerPubkey(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.RetrieveSignerPubkey(
@@ -3103,7 +3103,7 @@ func (d *Deposit) TransferAndRequestRedemption(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.TransferAndRequestRedemption(
@@ -3246,7 +3246,7 @@ func (d *Deposit) WithdrawFunds(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := d.contract.WithdrawFunds(

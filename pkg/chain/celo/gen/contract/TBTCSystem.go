@@ -182,7 +182,7 @@ func (tbtcs *TBTCSystem) BeginCollateralizationThresholdsUpdate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.BeginCollateralizationThresholdsUpdate(
@@ -332,7 +332,7 @@ func (tbtcs *TBTCSystem) BeginEthBtcPriceFeedAddition(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.BeginEthBtcPriceFeedAddition(
@@ -478,7 +478,7 @@ func (tbtcs *TBTCSystem) BeginKeepFactoriesUpdate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.BeginKeepFactoriesUpdate(
@@ -628,7 +628,7 @@ func (tbtcs *TBTCSystem) BeginLotSizesUpdate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.BeginLotSizesUpdate(
@@ -766,7 +766,7 @@ func (tbtcs *TBTCSystem) BeginSignerFeeDivisorUpdate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.BeginSignerFeeDivisorUpdate(
@@ -897,7 +897,7 @@ func (tbtcs *TBTCSystem) EmergencyPauseNewDeposits(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.EmergencyPauseNewDeposits(
@@ -1021,7 +1021,7 @@ func (tbtcs *TBTCSystem) FinalizeCollateralizationThresholdsUpdate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.FinalizeCollateralizationThresholdsUpdate(
@@ -1145,7 +1145,7 @@ func (tbtcs *TBTCSystem) FinalizeEthBtcPriceFeedAddition(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.FinalizeEthBtcPriceFeedAddition(
@@ -1269,7 +1269,7 @@ func (tbtcs *TBTCSystem) FinalizeKeepFactoriesUpdate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.FinalizeKeepFactoriesUpdate(
@@ -1393,7 +1393,7 @@ func (tbtcs *TBTCSystem) FinalizeLotSizesUpdate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.FinalizeLotSizesUpdate(
@@ -1517,7 +1517,7 @@ func (tbtcs *TBTCSystem) FinalizeSignerFeeDivisorUpdate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.FinalizeSignerFeeDivisorUpdate(
@@ -1680,7 +1680,7 @@ func (tbtcs *TBTCSystem) Initialize(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.Initialize(
@@ -1859,7 +1859,7 @@ func (tbtcs *TBTCSystem) LogCourtesyCalled(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogCourtesyCalled(
@@ -1990,7 +1990,7 @@ func (tbtcs *TBTCSystem) LogCreated(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogCreated(
@@ -2121,7 +2121,7 @@ func (tbtcs *TBTCSystem) LogExitedCourtesyCall(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogExitedCourtesyCall(
@@ -2245,7 +2245,7 @@ func (tbtcs *TBTCSystem) LogFraudDuringSetup(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogFraudDuringSetup(
@@ -2376,7 +2376,7 @@ func (tbtcs *TBTCSystem) LogFunded(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogFunded(
@@ -2514,7 +2514,7 @@ func (tbtcs *TBTCSystem) LogFunderRequestedAbort(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogFunderRequestedAbort(
@@ -2660,7 +2660,7 @@ func (tbtcs *TBTCSystem) LogGotRedemptionSignature(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogGotRedemptionSignature(
@@ -2803,7 +2803,7 @@ func (tbtcs *TBTCSystem) LogLiquidated(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogLiquidated(
@@ -2934,7 +2934,7 @@ func (tbtcs *TBTCSystem) LogRedeemed(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogRedeemed(
@@ -3092,7 +3092,7 @@ func (tbtcs *TBTCSystem) LogRedemptionRequested(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogRedemptionRequested(
@@ -3264,7 +3264,7 @@ func (tbtcs *TBTCSystem) LogRegisteredPubkey(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogRegisteredPubkey(
@@ -3401,7 +3401,7 @@ func (tbtcs *TBTCSystem) LogSetupFailed(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogSetupFailed(
@@ -3532,7 +3532,7 @@ func (tbtcs *TBTCSystem) LogStartedLiquidation(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.LogStartedLiquidation(
@@ -3663,7 +3663,7 @@ func (tbtcs *TBTCSystem) RefreshMinimumBondableValue(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.RefreshMinimumBondableValue(
@@ -3787,7 +3787,7 @@ func (tbtcs *TBTCSystem) RenounceOwnership(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.RenounceOwnership(
@@ -3926,7 +3926,7 @@ func (tbtcs *TBTCSystem) RequestNewKeep(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.RequestNewKeep(
@@ -4064,7 +4064,7 @@ func (tbtcs *TBTCSystem) ResumeNewDeposits(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.ResumeNewDeposits(
@@ -4195,7 +4195,7 @@ func (tbtcs *TBTCSystem) TransferOwnership(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := tbtcs.contract.TransferOwnership(
