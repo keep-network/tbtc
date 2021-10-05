@@ -174,25 +174,6 @@ jobs:
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
-      - name: Verify Ethereum contracts on Etherscan
-        if: github.event.inputs.environment != 'alfajores'
-        continue-on-error: true
-        id: verify-contracts
-        env:
-          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-          TRUFFLE_NETWORK: ${{ env.TRUFFLE_NETWORK}}
-        run: ./scripts/etherscan-verify.sh
-
-      - name: Annotate in case of verification failure
-        if: steps.verify-contracts.outcome == 'failure'
-        continue-on-error: true
-        uses: thesis/github-action-create-annotations@v0.2.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          json-file-path: "./.github/annotations.json"
-          fail-on-error: false
-          check-name: "contracts-migrate-and-publish"
-
       - name: Copy artifacts
         run: |
           mkdir -p artifacts
@@ -237,3 +218,48 @@ jobs:
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
           version: ${{ steps.npm-version-bump.outputs.version }}
+
+      - name: Upload files needed for etherscan verification
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts for etherscan verifcation
+          path: |
+            ./solidity/build
+            ./solidity/package.json
+            ./solidity/package-lock.json
+
+  contracts-etherscan-verification:
+    needs: [contracts-migrate-and-publish]
+    if: github.event.inputs.environment != 'alfajores'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download files needed for etherscan verification
+        uses: actions/download-artifact@v2
+        with:
+          name: Artifacts for etherscan verifcation
+          path: ./solidity
+
+      - name: Load environment variables
+        uses: keep-network/ci/actions/load-env-variables@v1
+        with:
+          environment: ${{ github.event.inputs.environment }}
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "npm"
+          cache-dependency-path: solidity/package-lock.json
+
+      - name: Install needed dependencies
+        run: npm ci
+
+      - name: Verify Ethereum contracts on Etherscan
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          TRUFFLE_NETWORK: ${{ env.TRUFFLE_NETWORK}}
+        run: ./scripts/etherscan-verify.sh
