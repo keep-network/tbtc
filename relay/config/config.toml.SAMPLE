@@ -29,3 +29,14 @@
   Port = 8080
   ChainMetricsTick = 600
   NodeMetricsTick = 10
+
+[Relay]
+# Maximum number of headers which can be relayed in one batch. This setting
+# also implies the frequency of difficulty updates. A bigger value means
+# that biggest batches are used and updates occur less often but the summarized
+# transaction cost incurred by the relay is lower. On the other hand, lower
+# batch size means batch size are smaller and updates occur more frequently
+# at a price of higher cost.
+#
+# HeadersBatchSize = 5
+

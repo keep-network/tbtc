@@ -57,7 +57,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not connect host chain: [%v]", err)
 	}
 
-	node := node.Initialize(ctx, btcChain, hostChain)
+	node := node.Initialize(ctx, config, btcChain, hostChain)
 
 	initializeMetrics(ctx, config, btcChain, hostChain, node.Stats())
 

@@ -23,7 +23,7 @@ func (r *Relay) getHeadersFromQueue(ctx context.Context) []*btc.Header {
 	headerTimer := time.NewTimer(headerTimeout)
 	defer headerTimer.Stop()
 
-	for len(headers) < headersBatchSize {
+	for len(headers) < r.headersBatchSize {
 		logger.Debugf("waiting for new header appear on queue")
 
 		select {
@@ -119,7 +119,7 @@ func (r *Relay) pushHeadersToHostChain(
 	}
 
 	r.processedHeaders += len(headers)
-	if r.processedHeaders >= headersBatchSize {
+	if r.processedHeaders >= r.headersBatchSize {
 		newBestHeader := headers[len(headers)-1]
 
 		if err := r.updateBestHeader(ctx, newBestHeader); err != nil {

@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"github.com/keep-network/tbtc/relay/config"
 	"time"
 
 	"github.com/keep-network/tbtc/relay/pkg/header"
@@ -29,6 +30,7 @@ type Node struct {
 //  which will require starting and stopping the headers relay.
 func Initialize(
 	ctx context.Context,
+	config *config.Config,
 	btcChain btc.Handle,
 	hostChain chain.Handle,
 ) *Node {
@@ -38,7 +40,7 @@ func Initialize(
 		stats: newStats(),
 	}
 
-	go node.startRelayControlLoop(ctx, btcChain, hostChain)
+	go node.startRelayControlLoop(ctx, config.Relay, btcChain, hostChain)
 
 	return node
 }
@@ -49,6 +51,7 @@ func Initialize(
 // be managed using the passed context.
 func (n *Node) startRelayControlLoop(
 	ctx context.Context,
+	config config.Relay,
 	btcChain btc.Handle,
 	hostChain chain.Handle,
 ) {
@@ -61,7 +64,7 @@ func (n *Node) startRelayControlLoop(
 	}()
 
 	for {
-		relay := header.StartRelay(ctx, btcChain, hostChain, n.stats)
+		relay := header.StartRelay(ctx, config, btcChain, hostChain, n.stats)
 
 		select {
 		case err := <-relay.ErrChan():
