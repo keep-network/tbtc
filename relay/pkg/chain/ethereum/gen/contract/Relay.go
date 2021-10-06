@@ -16,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/event"
 
 	"github.com/ipfs/go-log"
@@ -42,7 +41,7 @@ type Relay struct {
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
-	miningWaiter      *ethlike.MiningWaiter
+	miningWaiter      *chainutil.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
 
 	transactionMutex *sync.Mutex
@@ -54,7 +53,7 @@ func NewRelay(
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethlike.NonceManager,
-	miningWaiter *ethlike.MiningWaiter,
+	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*Relay, error) {
@@ -62,27 +61,15 @@ func NewRelay(
 		From: accountKey.Address,
 	}
 
-	// FIXME Switch to bind.NewKeyedTransactorWithChainID when go-ethereum dep
-	// FIXME bumps beyond 1.9.25.
-	key := accountKey.PrivateKey
-	keyAddress := crypto.PubkeyToAddress(key.PublicKey)
-	if chainId == nil {
-		return nil, fmt.Errorf("no chain id specified")
-	}
-	transactorOptions := &bind.TransactOpts{
-		From: keyAddress,
-		Signer: func(_ types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-			signer := types.NewEIP155Signer(chainId)
-
-			if address != keyAddress {
-				return nil, fmt.Errorf("not authorized to sign this account")
-			}
-			signature, err := crypto.Sign(signer.Hash(tx).Bytes(), key)
-			if err != nil {
-				return nil, err
-			}
-			return tx.WithSignature(signer, signature)
-		},
+	// FIXME Switch to bind.NewKeyedTransactorWithChainID when
+	// FIXME celo-org/celo-blockchain merges in changes from upstream
+	// FIXME ethereum/go-ethereum beyond v1.9.25.
+	transactorOptions, err := chainutil.NewKeyedTransactorWithChainID(
+		accountKey.PrivateKey,
+		chainId,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate transactor: [%v]", err)
 	}
 
 	contract, err := abi.NewRelay(
@@ -129,7 +116,7 @@ func (r *Relay) AddHeaders(
 ) (*types.Transaction, error) {
 	rLogger.Debug(
 		"submitting transaction addHeaders",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_anchor,
 			_headers,
@@ -175,22 +162,27 @@ func (r *Relay) AddHeaders(
 	}
 
 	rLogger.Infof(
-		"submitted transaction addHeaders with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction addHeaders with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go r.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
 
 			transaction, err := r.contract.AddHeaders(
-				transactorOptions,
+				newTransactorOptions,
 				_anchor,
 				_headers,
 			)
@@ -206,15 +198,12 @@ func (r *Relay) AddHeaders(
 			}
 
 			rLogger.Infof(
-				"submitted transaction addHeaders with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction addHeaders with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -276,7 +265,7 @@ func (r *Relay) AddHeadersWithRetarget(
 ) (*types.Transaction, error) {
 	rLogger.Debug(
 		"submitting transaction addHeadersWithRetarget",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_oldPeriodStartHeader,
 			_oldPeriodEndHeader,
@@ -325,22 +314,27 @@ func (r *Relay) AddHeadersWithRetarget(
 	}
 
 	rLogger.Infof(
-		"submitted transaction addHeadersWithRetarget with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction addHeadersWithRetarget with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go r.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
 
 			transaction, err := r.contract.AddHeadersWithRetarget(
-				transactorOptions,
+				newTransactorOptions,
 				_oldPeriodStartHeader,
 				_oldPeriodEndHeader,
 				_headers,
@@ -358,15 +352,12 @@ func (r *Relay) AddHeadersWithRetarget(
 			}
 
 			rLogger.Infof(
-				"submitted transaction addHeadersWithRetarget with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction addHeadersWithRetarget with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -433,7 +424,7 @@ func (r *Relay) MarkNewHeaviest(
 ) (*types.Transaction, error) {
 	rLogger.Debug(
 		"submitting transaction markNewHeaviest",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_ancestor,
 			_currentBest,
@@ -485,22 +476,27 @@ func (r *Relay) MarkNewHeaviest(
 	}
 
 	rLogger.Infof(
-		"submitted transaction markNewHeaviest with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction markNewHeaviest with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
 	go r.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
 
 			transaction, err := r.contract.MarkNewHeaviest(
-				transactorOptions,
+				newTransactorOptions,
 				_ancestor,
 				_currentBest,
 				_newBest,
@@ -520,15 +516,12 @@ func (r *Relay) MarkNewHeaviest(
 			}
 
 			rLogger.Infof(
-				"submitted transaction markNewHeaviest with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction markNewHeaviest with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 

@@ -101,4 +101,4 @@ property. In case it's not set, metrics will not be enabled.
 
 == Reorg support
 
-Relay Maintianer's reorg support was tested and <<./docs/reorgs.adoc#title, documented>>.
+Relay Maintainer's reorg support was tested and <<./docs/reorgs.adoc#title, documented>>.
