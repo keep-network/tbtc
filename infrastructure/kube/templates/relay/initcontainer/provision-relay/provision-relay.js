@@ -29,6 +29,9 @@ const metricsPort = Number(process.env.METRICS_PORT || 0)
 const metricsChainTick = Number(process.env.METRICS_CHAIN_TICK || 0)
 const metricsNodeTick = Number(process.env.METRICS_NODE_TICK || 0)
 
+// Relay info.
+const relayHeadersBatchSize = Number(process.env.RELAY_HEADERS_BATCH_SIZE || 0)
+
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because
 they're 25 and 50 blocks respectively at default.  The result of this on small
@@ -109,6 +112,8 @@ async function createRelayConfig() {
     configFile.Metrics.Port = metricsPort
     configFile.Metrics.ChainMetricsTick = metricsChainTick
     configFile.Metrics.NodeMetricsTick = metricsNodeTick
+
+    configFile.Relay.HeadersBatchSize = relayHeadersBatchSize
 
     // tomlify.toToml() writes integer values as a float. Here we format the
     // default rendering to write the config file with integer values as needed.

@@ -117,6 +117,8 @@ func startRelay(
 		headersBatchSize = config.HeadersBatchSize
 	}
 
+	logger.Infof("using headers batch size of [%v]", headersBatchSize)
+
 	relay := &Relay{
 		btcChain:                btcChain,
 		hostChain:               hostChain,
