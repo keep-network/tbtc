@@ -14,6 +14,7 @@ func TestPutHeaderToQueue(t *testing.T) {
 	relay := &Relay{
 		headersQueue:         make(chan *btc.Header, headersQueueSize),
 		nextPullHeaderHeight: 1,
+		headersBatchSize:     5,
 	}
 
 	headers := []*btc.Header{
@@ -86,6 +87,7 @@ func TestPullHeaderFromBtcChain(t *testing.T) {
 		btcChain:             btcChain,
 		pullingSleepTime:     300 * time.Millisecond,
 		nextPullHeaderHeight: 1,
+		headersBatchSize:     5,
 	}
 
 	// Test that we can pull headers without waiting when we have not reached
@@ -198,8 +200,9 @@ func TestFindBestHeader_HostChainReturnsBestHeader(t *testing.T) {
 	localChain.SetBestKnownDigest([32]byte{2})
 
 	relay := &Relay{
-		btcChain:  btcChain,
-		hostChain: localChain,
+		btcChain:         btcChain,
+		hostChain:        localChain,
+		headersBatchSize: 5,
 	}
 
 	header, err := relay.findBestHeader()
@@ -257,8 +260,9 @@ func TestFindBestHeader_HostChainDoesNotReturnBestHeader(t *testing.T) {
 	localChain.SetBestKnownDigest([32]byte{7})
 
 	relay := &Relay{
-		btcChain:  btcChain,
-		hostChain: localChain,
+		btcChain:         btcChain,
+		hostChain:        localChain,
+		headersBatchSize: 5,
 	}
 
 	header, err := relay.findBestHeader()

@@ -18,7 +18,8 @@ func TestGetHeadersFromQueue(t *testing.T) {
 	defer cancelCtx()
 
 	relay := &Relay{
-		headersQueue: make(chan *btc.Header, headersQueueSize),
+		headersQueue:     make(chan *btc.Header, headersQueueSize),
+		headersBatchSize: 5,
 	}
 
 	var wg sync.WaitGroup
@@ -121,6 +122,7 @@ func TestPushHeadersToHostChain_NoDifficultyChange(t *testing.T) {
 		btcChain:                btcChain,
 		hostChain:               localChain,
 		difficultyEpochDuration: btcDifficultyEpochDuration,
+		headersBatchSize:        5,
 	}
 
 	headers := []*btc.Header{
@@ -218,6 +220,7 @@ func TestPushHeadersToHostChain_NoDifficultyChange_WithUpdateBestHeader(
 		btcChain:                btcChain,
 		hostChain:               localChain,
 		difficultyEpochDuration: btcDifficultyEpochDuration,
+		headersBatchSize:        5,
 	}
 
 	headers := []*btc.Header{
@@ -328,6 +331,7 @@ func TestPushHeadersToHostChain_DifficultyChangeAtBeginning(t *testing.T) {
 		btcChain:                btcChain,
 		hostChain:               localChain,
 		difficultyEpochDuration: btcDifficultyEpochDuration,
+		headersBatchSize:        5,
 	}
 
 	headers := []*btc.Header{
@@ -425,6 +429,7 @@ func TestPushHeadersToHostChain_DifficultyChangeInMiddle(t *testing.T) {
 		btcChain:                btcChain,
 		hostChain:               localChain,
 		difficultyEpochDuration: btcDifficultyEpochDuration,
+		headersBatchSize:        5,
 	}
 
 	headers := []*btc.Header{
