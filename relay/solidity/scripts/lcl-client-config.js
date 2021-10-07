@@ -40,8 +40,9 @@ module.exports = async function () {
       // default rendering to write the config file with integer values as needed.
       const formattedConfigFile = tomlify.toToml(fileContent, {
         replace: (key, value) => {
-          // Find keys that match exactly `Port` or end with `MetricsTick`.
-          const matcher = /(^Port|MetricsTick)$/
+          // Find keys that match exactly `Port`, end with `MetricsTick`,
+          // or match exactly `HeadersBatchSize`.
+          const matcher = /(^Port|MetricsTick|^HeadersBatchSize)$/
 
           return typeof key === "string" && key.match(matcher) ?
               value.toFixed(0) :
