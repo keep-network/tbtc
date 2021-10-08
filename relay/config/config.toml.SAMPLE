@@ -38,5 +38,5 @@
 # batch size means batch size are smaller and updates occur more frequently
 # at a price of higher cost.
 #
-# HeadersBatchSize = 5
+#  HeadersBatchSize = 5
 
