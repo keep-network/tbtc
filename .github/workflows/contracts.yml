@@ -174,7 +174,7 @@ jobs:
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access=public
+        run: npm publish --access=public --tag ${{ github.event.inputs.environment }}
 
       - name: Notify CI about completion of the workflow
         # For Alfajores we want to break the chain of deployments on tBTC contracts.
