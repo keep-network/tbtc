@@ -111,6 +111,7 @@ jobs:
           node-version: "14.x"
           cache: "npm"
           cache-dependency-path: solidity/package-lock.json
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: npm ci
@@ -171,9 +172,9 @@ jobs:
           version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
       - name: Publish to npm
-        run: |
-          echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
-          npm publish --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access=public --tag ${{ github.event.inputs.environment }}
 
       - name: Notify CI about completion of the workflow
         # For Alfajores we want to break the chain of deployments on tBTC contracts.
