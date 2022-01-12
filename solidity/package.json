@@ -33,7 +33,7 @@
   "homepage": "https://tbtc.network/",
   "dependencies": {
     "@celo/contractkit": "^1.0.2",
-    "@keep-network/keep-ecdsa": ">1.8.0-dev <1.8.0-ropsten",
+    "@keep-network/keep-ecdsa": ">1.9.0-dev <1.9.0-ropsten",
     "@summa-tx/bitcoin-spv-sol": "^3.1.0",
     "@summa-tx/relay-sol": "^2.0.2",
     "openzeppelin-solidity": "2.3.0"
