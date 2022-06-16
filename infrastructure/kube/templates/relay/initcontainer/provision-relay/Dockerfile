@@ -1,6 +1,13 @@
 FROM node:13-alpine AS install
 
-RUN apk --no-cache add git
+ENV LD_LIBRARY_PATH=/usr/local/lib/
+
+RUN apk add --update --no-cache \
+	g++ \
+	linux-headers \
+    make \
+	python3 \
+    git
 
 WORKDIR /tmp
 
