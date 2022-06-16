@@ -9,6 +9,7 @@ const hostChain = process.env.HOST_CHAIN || "ethereum"
 // Host chain info.
 const hostChainWsUrl = process.env.HOST_CHAIN_WS_URL
 const hostChainRpcUrl = process.env.HOST_CHAIN_RPC_URL
+const miningCheckInterval = Number(process.env.MINING_CHECK_INTERVAL || 0)
 const relayContractAddress = process.env.RELAY_CONTRACT_ADDRESS
 
 // Relay operator info.
@@ -102,6 +103,7 @@ async function createRelayConfig() {
 
     configFile[hostChain].URL = hostChainWsUrl
     configFile[hostChain].URLRPC = hostChainRpcUrl
+    configFile[hostChain].MiningCheckInterval = miningCheckInterval
     configFile[hostChain].account.KeyFile = operatorKeyFile
     configFile[hostChain].ContractAddresses.Relay = relayContractAddress
 
@@ -121,8 +123,8 @@ async function createRelayConfig() {
         space: 2,
         replace: (key, value) => {
             // Find keys that match exactly `Port`, end with `MetricsTick`,
-            // or match exactly `HeadersBatchSize`.
-            const matcher = /(^Port|MetricsTick|^HeadersBatchSize)$/
+            // match exactly `HeadersBatchSize` or match exactly `MiningCheckInterval`.
+            const matcher = /(^Port|MetricsTick|^HeadersBatchSize|^MiningCheckInterval)$/
 
             return typeof key === "string" && key.match(matcher) ?
                 value.toFixed(0) :

@@ -4,6 +4,7 @@
 [ethereum]
   URL = ""
   URLRPC = ""
+  MiningCheckInterval = ""
 
 # Account details for Ethereum blockchain.
 [ethereum.account]

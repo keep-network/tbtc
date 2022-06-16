@@ -41,6 +41,8 @@ spec:
                 secretKeyRef:
                   name: eth-network-mainnet
                   key: rpc-url
+            - name: MINING_CHECK_INTERVAL
+              value: "600"
             - name: RELAY_CONTRACT_ADDRESS
               value: '0x1531b6e3d51BF80f634957dF81A990B92dA4b154'
             - name: RELAY_ACCOUNT_ADDRESS
