@@ -21,6 +21,7 @@ type Config struct {
 	Ethereum ethereum.Config
 	Bitcoin  btc.Config
 	Metrics  Metrics
+	Relay    Relay
 }
 
 // Metrics stores meta-info about metrics.
@@ -28,6 +29,11 @@ type Metrics struct {
 	Port             int
 	ChainMetricsTick int
 	NodeMetricsTick  int
+}
+
+// Relay stores relay config.
+type Relay struct {
+	HeadersBatchSize int
 }
 
 // ReadConfig reads in the configuration file in .toml format. Chain key file

@@ -71,6 +71,8 @@ spec:
                   key: http-api-key
             - name: METRICS_PORT
               value: "8080"
+            - name: RELAY_HEADERS_BATCH_SIZE
+              value: "1"
           volumeMounts:
             - name: relay-env
               mountPath: /mnt/relay/config

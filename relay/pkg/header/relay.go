@@ -3,6 +3,7 @@ package header
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/tbtc/relay/config"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -14,8 +15,8 @@ const (
 	// Size of the headers queue.
 	headersQueueSize = 50
 
-	// Maximum size of processed headers batch.
-	headersBatchSize = 5
+	// Default maximum size of processed headers batch.
+	defaultHeadersBatchSize = 5
 
 	// Maximum time for which the pushing process will wait for a single header
 	// to be delivered by the headers queue.
@@ -73,6 +74,8 @@ type Relay struct {
 	errChan      chan error
 
 	observer RelayObserver
+
+	headersBatchSize int
 }
 
 // StartRelay creates an instance of the headers relay and runs its
@@ -80,12 +83,14 @@ type Relay struct {
 // passed context. The relay exits automatically once an error occurs.
 func StartRelay(
 	ctx context.Context,
+	config config.Relay,
 	btcChain btc.Handle,
 	hostChain chain.Handle,
 	observer RelayObserver,
 ) *Relay {
 	return startRelay(
 		ctx,
+		config,
 		btcChain,
 		hostChain,
 		btcDifficultyEpochDuration,
@@ -97,6 +102,7 @@ func StartRelay(
 
 func startRelay(
 	ctx context.Context,
+	config config.Relay,
 	btcChain btc.Handle,
 	hostChain chain.Handle,
 	difficultyEpochDuration int64,
@@ -105,6 +111,13 @@ func startRelay(
 	observer RelayObserver,
 ) *Relay {
 	loopCtx, cancelLoopCtx := context.WithCancel(ctx)
+
+	headersBatchSize := defaultHeadersBatchSize
+	if config.HeadersBatchSize != 0 {
+		headersBatchSize = config.HeadersBatchSize
+	}
+
+	logger.Infof("using headers batch size of [%v]", headersBatchSize)
 
 	relay := &Relay{
 		btcChain:                btcChain,
@@ -115,6 +128,7 @@ func startRelay(
 		headersQueue:            make(chan *btc.Header, headersQueueSize),
 		errChan:                 make(chan error, 1),
 		observer:                observer,
+		headersBatchSize:        headersBatchSize,
 	}
 
 	go func() {

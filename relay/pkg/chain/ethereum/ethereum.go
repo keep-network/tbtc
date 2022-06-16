@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/keep-network/tbtc/relay/pkg/btc"
 
@@ -25,21 +24,6 @@ var logger = log.Logger("tbtc-relay-ethereum")
 // RelayContractName defines the name of the Relay contract.
 const RelayContractName = "Relay"
 
-var (
-	// DefaultMiningCheckInterval is the default interval in which transaction
-	// mining status is checked. If the transaction is not mined within this
-	// time, the gas price is increased and transaction is resubmitted.
-	// This value can be overwritten in the configuration file.
-	DefaultMiningCheckInterval = 60 * time.Second
-
-	// DefaultMaxGasPrice specifies the default maximum gas price the client is
-	// willing to pay for the transaction to be mined. The offered transaction
-	// gas price can not be higher than the max gas price value. If the maximum
-	// allowed gas price is reached, no further resubmission attempts are
-	// performed. This value can be overwritten in the configuration file.
-	DefaultMaxGasPrice = big.NewInt(1000000000000) // 1000 Gwei
-)
-
 // ethereumChain is an implementation of the host chain interface for Ethereum.
 type ethereumChain struct {
 	config        *ethereum.Config
@@ -47,7 +31,7 @@ type ethereumChain struct {
 	client        ethutil.EthereumClient
 	relayContract *contract.Relay
 	blockCounter  *ethlike.BlockCounter
-	miningWaiter  *ethlike.MiningWaiter
+	miningWaiter  *ethutil.MiningWaiter
 	nonceManager  *ethlike.NonceManager
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -92,11 +76,7 @@ func Connect(
 
 	nonceManager := ethutil.NewNonceManager(wrappedClient, accountKey.Address)
 
-	miningWaiter := ethutil.NewMiningWaiter(
-		wrappedClient,
-		DefaultMiningCheckInterval,
-		DefaultMaxGasPrice,
-	)
+	miningWaiter := ethutil.NewMiningWaiter(wrappedClient, *config)
 
 	blockCounter, err := ethutil.NewBlockCounter(wrappedClient)
 	if err != nil {

@@ -3,6 +3,7 @@ package header
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/tbtc/relay/config"
 	"reflect"
 	"testing"
 	"time"
@@ -28,7 +29,7 @@ func TestRelay_PullingLoop_ContextCancellationShutdown(t *testing.T) {
 
 	// Run relay with an empty Bitcoin chain and wait for a moment so
 	// the pulling loop goes to sleep
-	relay := StartRelay(ctx, btcChain, localChain, &mockObserver{})
+	relay := StartRelay(ctx, config.Relay{}, btcChain, localChain, &mockObserver{})
 	time.Sleep(100 * time.Millisecond)
 
 	// While the pulling loop is sleeping, add headers to Bitcoin chain and
@@ -80,7 +81,7 @@ func TestRelay_PullingLoop_ErrorShutdown(t *testing.T) {
 
 	localChain.SetBestKnownDigest([32]byte{2})
 
-	relay := StartRelay(ctx, btcChain, localChain, &mockObserver{})
+	relay := StartRelay(ctx, config.Relay{}, btcChain, localChain, &mockObserver{})
 
 	select {
 	case err = <-relay.ErrChan():
@@ -134,7 +135,7 @@ func TestRelay_PushingLoop_ContextCancellationShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	relay := StartRelay(ctx, btcChain, localChain, &mockObserver{})
+	relay := StartRelay(ctx, config.Relay{}, btcChain, localChain, &mockObserver{})
 
 	// Shutdown the pushing loop.
 	cancelCtx()
@@ -188,7 +189,7 @@ func TestRelay_PushingLoop_ErrorShutdown(t *testing.T) {
 	// pushing loop.
 	localChain.(*chainlocal.Chain).SetBestKnownDigest([32]byte{255})
 
-	relay := StartRelay(ctx, btcChain, localChain, &mockObserver{})
+	relay := StartRelay(ctx, config.Relay{}, btcChain, localChain, &mockObserver{})
 
 	// Fill the queue with two headers batches.
 	for i := 1; i <= 10; i++ {

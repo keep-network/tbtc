@@ -4,6 +4,7 @@
 package abi
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,18 +18,24 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 )
 
+// RelayMetaData contains all meta data concerning the Relay contract.
+var RelayMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_genesisHeader\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"_height\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_periodStart\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_first\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_last\",\"type\":\"bytes32\"}],\"name\":\"Extension\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_from\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_to\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_gcd\",\"type\":\"bytes32\"}],\"name\":\"NewTip\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[],\"name\":\"HEIGHT_INTERVAL\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_anchor\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_headers\",\"type\":\"bytes\"}],\"name\":\"addHeaders\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_oldPeriodStartHeader\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_oldPeriodEndHeader\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_headers\",\"type\":\"bytes\"}],\"name\":\"addHeadersWithRetarget\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_digest\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"_offset\",\"type\":\"uint256\"}],\"name\":\"findAncestor\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_digest\",\"type\":\"bytes32\"}],\"name\":\"findHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getBestKnownDigest\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getCurrentEpochDifficulty\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getLastReorgCommonAncestor\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getPrevEpochDifficulty\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getRelayGenesis\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_ancestor\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"_descendant\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"_limit\",\"type\":\"uint256\"}],\"name\":\"isAncestor\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_ancestor\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_currentBest\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_newBest\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"_limit\",\"type\":\"uint256\"}],\"name\":\"markNewHeaviest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+}
+
 // RelayABI is the input ABI used to generate the binding from.
-const RelayABI = "[{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_genesisHeader\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"_height\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_periodStart\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_first\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_last\",\"type\":\"bytes32\"}],\"name\":\"Extension\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_from\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_to\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"_gcd\",\"type\":\"bytes32\"}],\"name\":\"NewTip\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[],\"name\":\"HEIGHT_INTERVAL\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_anchor\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_headers\",\"type\":\"bytes\"}],\"name\":\"addHeaders\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_oldPeriodStartHeader\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_oldPeriodEndHeader\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_headers\",\"type\":\"bytes\"}],\"name\":\"addHeadersWithRetarget\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_digest\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"_offset\",\"type\":\"uint256\"}],\"name\":\"findAncestor\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_digest\",\"type\":\"bytes32\"}],\"name\":\"findHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getBestKnownDigest\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getCurrentEpochDifficulty\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getLastReorgCommonAncestor\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getPrevEpochDifficulty\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getRelayGenesis\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_ancestor\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"_descendant\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"_limit\",\"type\":\"uint256\"}],\"name\":\"isAncestor\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_ancestor\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_currentBest\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"_newBest\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"_limit\",\"type\":\"uint256\"}],\"name\":\"markNewHeaviest\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+// Deprecated: Use RelayMetaData.ABI instead.
+var RelayABI = RelayMetaData.ABI
 
 // Relay is an auto generated Go binding around an Ethereum contract.
 type Relay struct {
@@ -138,7 +145,7 @@ func bindRelay(address common.Address, caller bind.ContractCaller, transactor bi
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Relay *RelayRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Relay *RelayRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Relay.Contract.RelayCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +164,7 @@ func (_Relay *RelayRaw) Transact(opts *bind.TransactOpts, method string, params 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Relay *RelayCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Relay *RelayCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Relay.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,234 +181,279 @@ func (_Relay *RelayTransactorRaw) Transact(opts *bind.TransactOpts, method strin
 
 // HEIGHTINTERVAL is a free data retrieval call binding the contract method 0x70d53c18.
 //
-// Solidity: function HEIGHT_INTERVAL() constant returns(uint32)
+// Solidity: function HEIGHT_INTERVAL() view returns(uint32)
 func (_Relay *RelayCaller) HEIGHTINTERVAL(opts *bind.CallOpts) (uint32, error) {
-	var (
-		ret0 = new(uint32)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "HEIGHT_INTERVAL")
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "HEIGHT_INTERVAL")
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
 }
 
 // HEIGHTINTERVAL is a free data retrieval call binding the contract method 0x70d53c18.
 //
-// Solidity: function HEIGHT_INTERVAL() constant returns(uint32)
+// Solidity: function HEIGHT_INTERVAL() view returns(uint32)
 func (_Relay *RelaySession) HEIGHTINTERVAL() (uint32, error) {
 	return _Relay.Contract.HEIGHTINTERVAL(&_Relay.CallOpts)
 }
 
 // HEIGHTINTERVAL is a free data retrieval call binding the contract method 0x70d53c18.
 //
-// Solidity: function HEIGHT_INTERVAL() constant returns(uint32)
+// Solidity: function HEIGHT_INTERVAL() view returns(uint32)
 func (_Relay *RelayCallerSession) HEIGHTINTERVAL() (uint32, error) {
 	return _Relay.Contract.HEIGHTINTERVAL(&_Relay.CallOpts)
 }
 
 // FindAncestor is a free data retrieval call binding the contract method 0x30017b3b.
 //
-// Solidity: function findAncestor(bytes32 _digest, uint256 _offset) constant returns(bytes32)
+// Solidity: function findAncestor(bytes32 _digest, uint256 _offset) view returns(bytes32)
 func (_Relay *RelayCaller) FindAncestor(opts *bind.CallOpts, _digest [32]byte, _offset *big.Int) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "findAncestor", _digest, _offset)
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "findAncestor", _digest, _offset)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // FindAncestor is a free data retrieval call binding the contract method 0x30017b3b.
 //
-// Solidity: function findAncestor(bytes32 _digest, uint256 _offset) constant returns(bytes32)
+// Solidity: function findAncestor(bytes32 _digest, uint256 _offset) view returns(bytes32)
 func (_Relay *RelaySession) FindAncestor(_digest [32]byte, _offset *big.Int) ([32]byte, error) {
 	return _Relay.Contract.FindAncestor(&_Relay.CallOpts, _digest, _offset)
 }
 
 // FindAncestor is a free data retrieval call binding the contract method 0x30017b3b.
 //
-// Solidity: function findAncestor(bytes32 _digest, uint256 _offset) constant returns(bytes32)
+// Solidity: function findAncestor(bytes32 _digest, uint256 _offset) view returns(bytes32)
 func (_Relay *RelayCallerSession) FindAncestor(_digest [32]byte, _offset *big.Int) ([32]byte, error) {
 	return _Relay.Contract.FindAncestor(&_Relay.CallOpts, _digest, _offset)
 }
 
 // FindHeight is a free data retrieval call binding the contract method 0x60b5c390.
 //
-// Solidity: function findHeight(bytes32 _digest) constant returns(uint256)
+// Solidity: function findHeight(bytes32 _digest) view returns(uint256)
 func (_Relay *RelayCaller) FindHeight(opts *bind.CallOpts, _digest [32]byte) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "findHeight", _digest)
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "findHeight", _digest)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // FindHeight is a free data retrieval call binding the contract method 0x60b5c390.
 //
-// Solidity: function findHeight(bytes32 _digest) constant returns(uint256)
+// Solidity: function findHeight(bytes32 _digest) view returns(uint256)
 func (_Relay *RelaySession) FindHeight(_digest [32]byte) (*big.Int, error) {
 	return _Relay.Contract.FindHeight(&_Relay.CallOpts, _digest)
 }
 
 // FindHeight is a free data retrieval call binding the contract method 0x60b5c390.
 //
-// Solidity: function findHeight(bytes32 _digest) constant returns(uint256)
+// Solidity: function findHeight(bytes32 _digest) view returns(uint256)
 func (_Relay *RelayCallerSession) FindHeight(_digest [32]byte) (*big.Int, error) {
 	return _Relay.Contract.FindHeight(&_Relay.CallOpts, _digest)
 }
 
 // GetBestKnownDigest is a free data retrieval call binding the contract method 0x1910d973.
 //
-// Solidity: function getBestKnownDigest() constant returns(bytes32)
+// Solidity: function getBestKnownDigest() view returns(bytes32)
 func (_Relay *RelayCaller) GetBestKnownDigest(opts *bind.CallOpts) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "getBestKnownDigest")
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "getBestKnownDigest")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // GetBestKnownDigest is a free data retrieval call binding the contract method 0x1910d973.
 //
-// Solidity: function getBestKnownDigest() constant returns(bytes32)
+// Solidity: function getBestKnownDigest() view returns(bytes32)
 func (_Relay *RelaySession) GetBestKnownDigest() ([32]byte, error) {
 	return _Relay.Contract.GetBestKnownDigest(&_Relay.CallOpts)
 }
 
 // GetBestKnownDigest is a free data retrieval call binding the contract method 0x1910d973.
 //
-// Solidity: function getBestKnownDigest() constant returns(bytes32)
+// Solidity: function getBestKnownDigest() view returns(bytes32)
 func (_Relay *RelayCallerSession) GetBestKnownDigest() ([32]byte, error) {
 	return _Relay.Contract.GetBestKnownDigest(&_Relay.CallOpts)
 }
 
 // GetCurrentEpochDifficulty is a free data retrieval call binding the contract method 0x113764be.
 //
-// Solidity: function getCurrentEpochDifficulty() constant returns(uint256)
+// Solidity: function getCurrentEpochDifficulty() view returns(uint256)
 func (_Relay *RelayCaller) GetCurrentEpochDifficulty(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "getCurrentEpochDifficulty")
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "getCurrentEpochDifficulty")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetCurrentEpochDifficulty is a free data retrieval call binding the contract method 0x113764be.
 //
-// Solidity: function getCurrentEpochDifficulty() constant returns(uint256)
+// Solidity: function getCurrentEpochDifficulty() view returns(uint256)
 func (_Relay *RelaySession) GetCurrentEpochDifficulty() (*big.Int, error) {
 	return _Relay.Contract.GetCurrentEpochDifficulty(&_Relay.CallOpts)
 }
 
 // GetCurrentEpochDifficulty is a free data retrieval call binding the contract method 0x113764be.
 //
-// Solidity: function getCurrentEpochDifficulty() constant returns(uint256)
+// Solidity: function getCurrentEpochDifficulty() view returns(uint256)
 func (_Relay *RelayCallerSession) GetCurrentEpochDifficulty() (*big.Int, error) {
 	return _Relay.Contract.GetCurrentEpochDifficulty(&_Relay.CallOpts)
 }
 
 // GetLastReorgCommonAncestor is a free data retrieval call binding the contract method 0xc58242cd.
 //
-// Solidity: function getLastReorgCommonAncestor() constant returns(bytes32)
+// Solidity: function getLastReorgCommonAncestor() view returns(bytes32)
 func (_Relay *RelayCaller) GetLastReorgCommonAncestor(opts *bind.CallOpts) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "getLastReorgCommonAncestor")
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "getLastReorgCommonAncestor")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // GetLastReorgCommonAncestor is a free data retrieval call binding the contract method 0xc58242cd.
 //
-// Solidity: function getLastReorgCommonAncestor() constant returns(bytes32)
+// Solidity: function getLastReorgCommonAncestor() view returns(bytes32)
 func (_Relay *RelaySession) GetLastReorgCommonAncestor() ([32]byte, error) {
 	return _Relay.Contract.GetLastReorgCommonAncestor(&_Relay.CallOpts)
 }
 
 // GetLastReorgCommonAncestor is a free data retrieval call binding the contract method 0xc58242cd.
 //
-// Solidity: function getLastReorgCommonAncestor() constant returns(bytes32)
+// Solidity: function getLastReorgCommonAncestor() view returns(bytes32)
 func (_Relay *RelayCallerSession) GetLastReorgCommonAncestor() ([32]byte, error) {
 	return _Relay.Contract.GetLastReorgCommonAncestor(&_Relay.CallOpts)
 }
 
 // GetPrevEpochDifficulty is a free data retrieval call binding the contract method 0x2b97be24.
 //
-// Solidity: function getPrevEpochDifficulty() constant returns(uint256)
+// Solidity: function getPrevEpochDifficulty() view returns(uint256)
 func (_Relay *RelayCaller) GetPrevEpochDifficulty(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "getPrevEpochDifficulty")
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "getPrevEpochDifficulty")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetPrevEpochDifficulty is a free data retrieval call binding the contract method 0x2b97be24.
 //
-// Solidity: function getPrevEpochDifficulty() constant returns(uint256)
+// Solidity: function getPrevEpochDifficulty() view returns(uint256)
 func (_Relay *RelaySession) GetPrevEpochDifficulty() (*big.Int, error) {
 	return _Relay.Contract.GetPrevEpochDifficulty(&_Relay.CallOpts)
 }
 
 // GetPrevEpochDifficulty is a free data retrieval call binding the contract method 0x2b97be24.
 //
-// Solidity: function getPrevEpochDifficulty() constant returns(uint256)
+// Solidity: function getPrevEpochDifficulty() view returns(uint256)
 func (_Relay *RelayCallerSession) GetPrevEpochDifficulty() (*big.Int, error) {
 	return _Relay.Contract.GetPrevEpochDifficulty(&_Relay.CallOpts)
 }
 
 // GetRelayGenesis is a free data retrieval call binding the contract method 0xe3d8d8d8.
 //
-// Solidity: function getRelayGenesis() constant returns(bytes32)
+// Solidity: function getRelayGenesis() view returns(bytes32)
 func (_Relay *RelayCaller) GetRelayGenesis(opts *bind.CallOpts) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "getRelayGenesis")
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "getRelayGenesis")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // GetRelayGenesis is a free data retrieval call binding the contract method 0xe3d8d8d8.
 //
-// Solidity: function getRelayGenesis() constant returns(bytes32)
+// Solidity: function getRelayGenesis() view returns(bytes32)
 func (_Relay *RelaySession) GetRelayGenesis() ([32]byte, error) {
 	return _Relay.Contract.GetRelayGenesis(&_Relay.CallOpts)
 }
 
 // GetRelayGenesis is a free data retrieval call binding the contract method 0xe3d8d8d8.
 //
-// Solidity: function getRelayGenesis() constant returns(bytes32)
+// Solidity: function getRelayGenesis() view returns(bytes32)
 func (_Relay *RelayCallerSession) GetRelayGenesis() ([32]byte, error) {
 	return _Relay.Contract.GetRelayGenesis(&_Relay.CallOpts)
 }
 
 // IsAncestor is a free data retrieval call binding the contract method 0xb985621a.
 //
-// Solidity: function isAncestor(bytes32 _ancestor, bytes32 _descendant, uint256 _limit) constant returns(bool)
+// Solidity: function isAncestor(bytes32 _ancestor, bytes32 _descendant, uint256 _limit) view returns(bool)
 func (_Relay *RelayCaller) IsAncestor(opts *bind.CallOpts, _ancestor [32]byte, _descendant [32]byte, _limit *big.Int) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Relay.contract.Call(opts, out, "isAncestor", _ancestor, _descendant, _limit)
-	return *ret0, err
+	var out []interface{}
+	err := _Relay.contract.Call(opts, &out, "isAncestor", _ancestor, _descendant, _limit)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsAncestor is a free data retrieval call binding the contract method 0xb985621a.
 //
-// Solidity: function isAncestor(bytes32 _ancestor, bytes32 _descendant, uint256 _limit) constant returns(bool)
+// Solidity: function isAncestor(bytes32 _ancestor, bytes32 _descendant, uint256 _limit) view returns(bool)
 func (_Relay *RelaySession) IsAncestor(_ancestor [32]byte, _descendant [32]byte, _limit *big.Int) (bool, error) {
 	return _Relay.Contract.IsAncestor(&_Relay.CallOpts, _ancestor, _descendant, _limit)
 }
 
 // IsAncestor is a free data retrieval call binding the contract method 0xb985621a.
 //
-// Solidity: function isAncestor(bytes32 _ancestor, bytes32 _descendant, uint256 _limit) constant returns(bool)
+// Solidity: function isAncestor(bytes32 _ancestor, bytes32 _descendant, uint256 _limit) view returns(bool)
 func (_Relay *RelayCallerSession) IsAncestor(_ancestor [32]byte, _descendant [32]byte, _limit *big.Int) (bool, error) {
 	return _Relay.Contract.IsAncestor(&_Relay.CallOpts, _ancestor, _descendant, _limit)
 }
@@ -618,6 +670,7 @@ func (_Relay *RelayFilterer) ParseExtension(log types.Log) (*RelayExtension, err
 	if err := _Relay.contract.UnpackLog(event, "Extension", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -779,5 +832,6 @@ func (_Relay *RelayFilterer) ParseNewTip(log types.Log) (*RelayNewTip, error) {
 	if err := _Relay.contract.UnpackLog(event, "NewTip", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

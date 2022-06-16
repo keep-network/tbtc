@@ -2,6 +2,7 @@ package header
 
 import (
 	"context"
+	"github.com/keep-network/tbtc/relay/config"
 	"math/big"
 	"reflect"
 	"testing"
@@ -74,6 +75,7 @@ func TestRelay_Integration(t *testing.T) {
 	// for easier testing
 	startRelay(
 		ctx,
+		config.Relay{},
 		btcChain,
 		localChain,
 		testDifficultyEpochDuration,
