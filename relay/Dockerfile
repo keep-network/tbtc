@@ -10,6 +10,7 @@ ENV GOPATH=/go \
 	APP_NAME=relay \
 	APP_DIR=/go/src/github.com/keep-network/tbtc/relay \
 	BIN_PATH=/usr/local/bin \
+	LD_LIBRARY_PATH=/usr/local/lib/ \
 	GO111MODULE=on
 
 RUN apk add --update --no-cache \
@@ -18,6 +19,7 @@ RUN apk add --update --no-cache \
 	make \
 	nodejs \
 	npm \
+	python3 \
 	git && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
