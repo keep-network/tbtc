@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/tbtc",
-  "version": "1.1.2-pre",
+  "version": "1.1.2-dev",
   "description": "The tBTC smart contracts implementing the TBTC trustlessly Bitcoin-backed ERC-20 token.",
   "repository": {
     "type": "git",
@@ -33,7 +33,7 @@
   "homepage": "https://tbtc.network/",
   "dependencies": {
     "@celo/contractkit": "^1.0.2",
-    "@keep-network/keep-ecdsa": ">1.8.0-dev <1.8.0-ropsten",
+    "@keep-network/keep-ecdsa": ">1.9.0-dev <1.9.0-ropsten",
     "@summa-tx/bitcoin-spv-sol": "^3.1.0",
     "@summa-tx/relay-sol": "^2.0.2",
     "openzeppelin-solidity": "2.3.0"
@@ -67,7 +67,8 @@
     "solc": "0.5.17",
     "solium": "^1.2.5",
     "solium-config-keep": "git+https://github.com/keep-network/solium-config-keep.git#v0.2.0",
-    "truffle": "^5.3.1"
+    "truffle": "^5.3.1",
+    "truffle-plugin-verify": "^0.5.15"
   },
   "engines": {
     "node": ">= 12.0.0"

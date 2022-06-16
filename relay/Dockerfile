@@ -41,6 +41,9 @@ RUN go mod download
 COPY ./solidity $APP_DIR/solidity
 RUN cd $APP_DIR/solidity && npm install
 
+# Configure git to don't use unauthenticated protocol.
+RUN git config --global url."https://".insteadOf git://
+
 # Generate code.
 COPY ./pkg/chain/ethereum/gen $APP_DIR/pkg/chain/ethereum/gen
 RUN go generate ./...

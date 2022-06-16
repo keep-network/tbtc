@@ -34,8 +34,8 @@ tBTC contracts are currently published in the NPM Registry as the package
 https://www.npmjs.com/package/@keep-network/tbtc[`@keep-network/tbtc`].
 Packages have versions corresponding to their network:
 
-- `-pre` packages contain prerelease packages for the internal Keep testnet.
-- `-rc` packages contain prerelease packages for the Ropsten Ethereum testnet.
+- `-dev` packages contain prerelease packages for the internal Keep testnet.
+- `-ropsten` packages contain prerelease packages for the Ropsten Ethereum testnet.
 
 Note that only the latest package in a series is expected to reference
 contracts that have a backing set of signers.
@@ -44,6 +44,18 @@ To install the package:
 
 ```sh
 $ npm install @keep-network/tbtc
+```
+
+*NOTE:* The `tbtc` package contains an indirect dependency to
+`@summa-tx/relay-sol@2.0.2` package, which downloads one of its sub-dependencies
+via unathenticated `git://` protocol. That protocol is no longer supported by
+GitHub. This means that in certain situations installation of the package may
+result in `The unauthenticated git protocol on port 9418 is no longer supported`
+error. +
+As a workaround, we advise changing Git configuration to use `https://` protocol
+instead of `git://` by executing:
+```
+git config --global url."https://".insteadOf git://
 ```
 
 == Usage

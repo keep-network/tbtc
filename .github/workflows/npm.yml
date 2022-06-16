@@ -1,0 +1,57 @@
+name: NPM
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "solidity/contracts/**"
+      - "solidity/package.json"
+      - "solidity/package-lock.json"
+  workflow_dispatch:
+
+jobs:
+  npm-compile-publish-contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "npm"
+          cache-dependency-path: solidity/package-lock.json
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve latest contracts
+        working-directory: ./solidity
+        run: |
+          npm update --save-exact @keep-network/keep-ecdsa
+
+      - name: Compile contracts
+        run: npx truffle compile
+
+      - name: Copy artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r build/contracts/* artifacts/
+
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity
+          environment: dev
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
+
+      - name: Publish package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --tag development
