@@ -1,0 +1,264 @@
+:toc: macro
+:toclevels: 4
+:title-page:
+:tbtc:
+
+// Blank root prefix since this is the root doc.
+:root-prefix:
+
+include::constants.adoc[]
+
+= tBTC: Um token ERC-20 resgatável e descentralizado, apoiado por BTC
+
+ifndef::release[]
+.DRAFT
+****
+NOTE: Este documento é um rascunho. O conteúdo pode ser impreciso, não totalmente desenvolvido e certamente não é definitivo.
+****
+endif::[]
+
+toc::[]
+
+[abstract]
+.Abstract
+--
+--
+
+== Visão geral
+
+== Convenções
+
+As palavras-chave tais como "DEVEM", "NÃO DEVEM", "NECESSÁRIO",  "RECOMENDADO", "PODE", "NÃO PODE" e "OPCIONAL" neste documento são para ser interpretado como descrito em https://tools.ietf.org/html/rfc2119[RFC 2119].
+
+== Uma observação sobre a nomeação
+
+O sistema, na sua totalidade, é chamado "tBTC". Neste documento e em todo o projeto, o token fungível suportado por Bitcoin é chamado "TBTC" para distinguir do resto do projeto e sugerir fortemente um eventual ticker.
+
+Discussões adicionais podem ser encontradas em 
+https://github.com/keep-network/tbtc/issues/17[Github].
+
+== Trabalho prévio
+
+Os esforços anteriores em direção a um bitcoin multi-blockchain (cross-chain) são bem conhecidos. Uma pegada de Bitcoin é desejável para sidechains - para extensões de funcionalidade e escalabilidade para a conservadoramente atualizada blockchain principal do Bitcoin. Devido ao interesse precoce em sidechains, existem várias abordagens de Bitcoin peg, anteriores ao Ethereum.
+
+=== Centralizado, Provável, Resgatável
+
+Two solutions in the wild today provide centralized pegs that rely on trusted
+third parties based on variants of the "federated peg" model.
+
+In a federated peg, a multi-sig wallet is used to lock up bitcoins. Another
+blockchain then issues tokens representing those bitcoin. The signers of the
+multisig on the Bitcoin chain are expected to validate the sidechain, and only
+allow issued tokes to be burned in exchange for bitcoin withdrawals following
+the rules of the sidechain.
+
+https://blockstream.com/liquid/[Liquid], a sidechain developed by
+https://blockstream.com/[Blockstream], is an inter-exchange settlement network
+based on a federated peg sidechain. Bitcoin is locked in a 15-signer multi-sig
+wallet comprised of exchanges and Liquid participants pre-vetted by Blockstream.
+These signers validate the sidechain in an approach the team calls "strong
+federation", where a majority vote to sign blocks, and agree to approve exits
+to the main chain.
+
+https://wbtc.network[WBTC] is a Bitcoin-backed ERC-20 token using a similar
+approach. The token is part of a greater effort called "Wrapped Tokens".
+
+[quote, the Wrapped Tokens whitepaper]
+____
+Wrapped tokens follow the centralized model, but instead of relying entirely on
+one institution, they rely on a consortium of institutions performing different
+roles in the network.
+____
+
+The WBTC consortium votes on adding and removing custodians that manage the
+token's Bitcoin reserves. Each custodian operates a multi-sig Bitcoin wallet,
+with control of all keys. Custodians are able to move custodied bitcoin at
+will, and are responsible for minting WBTC on Ethereum.
+
+Together, the custodians act similarly to a traditional federated peg. Instead
+of requiring a majority to sign Bitcoin withdrawals, however, a single member
+can withdraw their share of the Bitcoin reserves at any time.
+
+==== Trade-offs
+
+These approaches have a few clear benefits
+
+* They each effectively peg Bitcoin on other blockchains.
+* Backing reserves are easily audited on-chain at any time.
+* Both are simple mechanisms, lowering the chance of operational failure as
+well as the total cost to operate.
+
+However, there are downsides. The most obvious is introducing a trust model
+incompatible with Bitcoin.
+
+Custodians need to be fully trusted, either as a group, as in Liquid's model,
+or individually, following the Wrapped Tokens model. A malicious custodian can
+block withdrawals and in some cases collude to abscond with funds. Custodians
+may also be compelled by governments, hackers, or other forces to tamper with
+reserves, despite their good intentions.
+
+=== Decentralized, Synthetic, Irredeemable
+
+An alternative approach to a centralized peg is to create a decentralized
+synthetic asset.
+
+One approach that's been popular on Ethereum is
+https://makerdao.com/whitepaper/[Maker's] Dai stablecoin.
+
+Dai is a token synthetically pegged to the US dollar. Ether is locked up in
+reserves, which, coupled with a robust price feed and a number of stability
+mechanisms, allow for maintenance of the peg under adverse conditions.
+
+While Maker hasn't launched a Bitcoin synthetic, the same network maintaining
+Dai's peg could easily be applied to maintain a similar Bitcoin product.
+
+==== Trade-offs
+
+The biggest benefit of a synthetic Bitcoin peg is its flexibility. A synthetic
+doesn't need to follow the rules governing the pegged asset, for better or
+worse.
+
+For example, a synthetic might effectively "inflate" the supply of the
+underlying asset, which might be desirable for some financial systems- and
+directly fly in the face of the purpose of a currency aspiring to be hard money.
+
+Despite the potential reuse of Maker's network, launching such a synthetic has
+other risks. A synthetic peg to a volatile asset like Bitcoin, backed by a
+volatile, under-diversified reserve entirely of Ether, is a dangerous
+combination.
+
+== Design Goals
+
+The goal of tBTC is the creation an ERC-20 token that maintains the most
+important property of Bitcoin- its status as "hard money".
+
+To maintain the "hard money" status of its backing BTC deposits, tBTC must
+remain
+
+* Censorship and seizure resistant, across friendly and unfriendly
+jurisdictions
+* Inflation-resistant. TBTC may only be minted after proof is provided of a
+backing BTC deposit.
+* Leverage-resistant. The existence of tBTC shouldn't allow cross-chain
+"printing" of additional synthetic Bitcoin. We can't stop someone from launching
+a synthetic, but artificially expanding the Bitcoin supply is not a goal of the
+project.
+* Without middlemen, in the same sense as Bitcoin. The only rent extraction
+should be from the minimal participation of signers required to secure the
+network, similar to miners on the Bitcoin network.
+* Redeemable. The ability to trade scrip for its backing deposit freely is what
+distinguishes a backed currency from fiat money. The supply of tBTC is always
+backed by an equal number of reserved BTC. This means for every token in
+circulation, 1 BTC has been removed from circulation.
+
+Together, these properties ensure a strong supply peg across chains, and the
+closest to "hard money" status that a Bitcoin-pegged asset can achieve.
+
+Notably, these properties don't require an artificial price peg as is common
+in stable coin projects -- they instead require a supply peg across chains.
+
+== Developing Intuition: A simple single-signer protocol
+
+To understand how we might develop a protocol and token that satisfies those
+requirements, it's useful to consider a simple, under-specified variant that
+could theoretically do the job.
+
+Imagine an off-chain actor, which we'll call `Signer`; an Ethereum smart
+contract that implements the ERC-20 interface, `PeggedBitcoin`; with ticker
+`PBTC`, and another contract with the permission to mint and burn
+`PBTC` called `PeggedBitcoinReserve`.
+
+Another off-chain actor, `Depositor`, wants to mint a token on the
+`PeggedBitcoin` contract. `Depositor` requests the `PeggedBitcoinReserve`
+accept a 1 BTC deposit. `PeggedBitcoinReserve` waits for `Signer` to
+acknowledge and return a new BTC address, as well as depositing 150% collateral
+of the deposit's value in ETH into the `PeggedBitcoinReserve`. `Depositor`
+deposits 1 BTC into the new BTC address, and provides proof to
+`PeggedBitcoinReserve` - which in turn mints 1 `PBTC`, sending 0.99 to
+`Depositor` and .01 to `Signer` for the convenience.
+
+Withdrawals happen in reverse- any participant can send 1 `PBTC` to
+`PeggedBitcoinReserve` with a Bitcoin address. `Signer` pays that Bitcoin
+address 1 BTC minus any Bitcoin transaction fees, and provides proof of
+payment to `PeggedBitcoinReserve`, which burns the remaining 1 `PBTC`,
+maintaining a 1:1 backing of `PBTC`. `Signer` is now free to withdraw the
+corresponding collateral from `PeggedBitcoinReserve`.
+
+===  Flaws
+
+While this simple design is attractive, it's skipped over some of the more
+difficult issues—efficient Bitcoin proof of payment validation on the EVM and
+a reliable price feed implementation, for example.
+
+It's also based on a deeply insecure custody solution.
+
+First, the protocol relies on a single signer. If the value of deposits ever
+exceeds the value of the collateral `Signer` has put down, there's nothing
+stopping `Signer` from walking with the BTC. `Signer` can also decide or be
+coerced to censor particular withdrawals, removing any hope of censorship or
+seizure resistance.
+
+Second, the protocol relies on a single *hot wallet*. As the market cap of
+`PBTC` conceivably grows, the risk due to hacking that wallet increases
+tremendously.
+
+Finally, the protocol does nothing to localize failure. If there's an issue
+with a single deposit or withdrawal, it could impact the entire `PeggedBitcoin`
+supply, blocking all further deposits and withdrawals.
+
+== System Architecture: Designing a robust multi-wallet multi-signer protocol
+
+The rest of this document is devoted to specifying a protocol that addresses
+those flaws, providing a robust BTC-backed bearer asset on Ethereum.
+
+At a high level, that means the protocol described must
+
+* have a multi-wallet architecture
+* with many geographically distributed signers
+* that removes single points of failure
+
+This protocol must also counter the secondary effects of these requirements
+and the details we skipped in the single signer example, including multi-signer
+payment, a more complex bonding system, an approach for detecting and dealing
+with undercollateralized signers, a Bitcoin proof system, and robust handling
+of failures on both chains.
+
+Some components necessary to this protocol are described outside this document
+and will be assumed. In particular, we assume the existence of
+
+* a well-distributed work token for signer selection
+* a random beacon for signer selection
+* an efficient distributed key generation protocol on the secp256k1 curve
+* an efficient multi-party threshold ECDSA protocol on the secp256k1 curve
+
+all of which are implemented by the https://keep.network[Keep network]. The
+importance of these is described in the following sections.
+
+The architecture is broken down into:
+
+* Deposits and signer selection
+* Bonding and price feeds
+* Minting
+* Signer fees
+* Signing
+* Wallet failure
+* Redemption
+
+include::deposits/index.adoc[leveloffset=+2]
+
+include::bonding/index.adoc[leveloffset=+2]
+
+include::price-feed/index.adoc[leveloffset=+2]
+
+include::minting/index.adoc[leveloffset=+2]
+
+include::signer-fees/index.adoc[leveloffset=+2]
+
+include::signing/index.adoc[leveloffset=+2]
+
+include::failure/index.adoc[leveloffset=+2]
+
+include::redemption/index.adoc[leveloffset=+2]
+
+include::appendix/index.adoc[leveloffset=+2]
+
