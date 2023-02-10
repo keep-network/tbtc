@@ -9,13 +9,13 @@ with us on Discord]]
 
 tBTC is a trustlessly Bitcoin-backed ERC-20 token.
 
-The goal of the project is to provide a stronger 2-way peg than
-federated sidechains like https://blockstream.com/liquid/[Liquid],
-expanding use cases possible via today's Bitcoin network, while bringing
-superior money to other chains.
+The goal of the project is to provide a stronger 2-way peg than federated
+sidechains like https://blockstream.com/liquid/[Liquid], expanding use cases
+possible via today's Bitcoin network, while bringing superior money to other
+chains.
 
-This repo contains the Solidity link:solidity/[smart contracts]
-and link:docs/[specification].
+This repo contains the Solidity link:solidity/[smart contracts] and
+link:docs/[specification].
 
 toc::[]
 
@@ -23,22 +23,21 @@ toc::[]
 
 * Read the link:./docs/introduction-to-tbtc.md[introduction to tBTC].
 * Read the http://docs.keep.network/tbtc/[specification].
-* Consult http://docs.keep.network/tbtc/solidity/[Solidity API
-documentation].
-* For questions and support, join the #tbtc-protocol channel on
-https://discord.gg/4R6RGFf[Discord].
+* Consult http://docs.keep.network/tbtc/solidity/[Solidity API documentation].
+* For questions and support, join the https://discord.gg/threshold[Discord].
 
 == Installation
 
 tBTC contracts are currently published in the NPM Registry as the package
-https://www.npmjs.com/package/@keep-network/tbtc[`@keep-network/tbtc`].
-Packages have versions corresponding to their network:
+https://www.npmjs.com/package/@keep-network/tbtc[`@keep-network/tbtc`]. Packages
+have versions corresponding to their network:
 
 - `-dev` packages contain prerelease packages for the internal Keep testnet.
-- `-ropsten` packages contain prerelease packages for the Ropsten Ethereum testnet.
+- `-ropsten` packages contain prerelease packages for the Ropsten Ethereum
+  testnet.
 
-Note that only the latest package in a series is expected to reference
-contracts that have a backing set of signers.
+Note that only the latest package in a series is expected to reference contracts
+that have a backing set of signers.
 
 To install the package:
 
@@ -51,9 +50,8 @@ $ npm install @keep-network/tbtc
 via unathenticated `git://` protocol. That protocol is no longer supported by
 GitHub. This means that in certain situations installation of the package may
 result in `The unauthenticated git protocol on port 9418 is no longer supported`
-error. +
-As a workaround, we advise changing Git configuration to use `https://` protocol
-instead of `git://` by executing:
+error. + As a workaround, we advise changing Git configuration to use `https://`
+protocol instead of `git://` by executing:
 ```
 git config --global url."https://".insteadOf git://
 ```
@@ -64,8 +62,7 @@ git config --global url."https://".insteadOf git://
 https://www.trufflesuite.com/docs/truffle/reference/configuration#compiler-configuration[configure
 solc in your `truffle-config.js`].
 
-Once installed, you can use the contracts in the library by importing
-them:
+Once installed, you can use the contracts in the library by importing them:
 
 [source,sol]
 ----
@@ -83,15 +80,26 @@ contract MySystem {
 == Security
 
 tBTC's first 6-week audit was completed by ConsenSys Diligence on March 27,
-2020, against https://github.com/keep-network/tbtc/commit/fbb2018c41456d19ec20eb28a17070ee2b10eb5d[fbb2018c41].
-They've published a detailed https://diligence.consensys.net/audits/2020/02/thesis-tbtc-and-keep/[audit report]
-and https://diligence.consensys.net/audits/2020/03/thesis-cryptographic-review/[cryptographic review].
+2020, against
+https://github.com/keep-network/tbtc/commit/fbb2018c41456d19ec20eb28a17070ee2b10eb5d[fbb2018c41].
+They've published a detailed
+https://diligence.consensys.net/audits/2020/02/thesis-tbtc-and-keep/[audit
+report] and
+https://diligence.consensys.net/audits/2020/03/thesis-cryptographic-review/[cryptographic
+review].
 
 A Bitcoin-focused audit was conducted by security researcher
 https://twitter.com/sr_gi[Sergi Delgado] from May 25 to May 31, 2020. You can
-https://srgi.me/resources/reports/tbtc_audit.pdf[review Sergi's results on his site].
+https://srgi.me/resources/reports/tbtc_audit.pdf[review Sergi's results on his
+site].
 
-https://www.trailofbits.com/[Trail of Bits] conducted an audit of tBTC in June, 2020, and published a https://github.com/trailofbits/publications/blob/db9414def9f575465a47fef5489eb54d9c543eb5/reviews/thesis-summary.pdf[a summary of their results]. https://github.com/samczsun[`@samczsun`] opened issues he discovered https://github.com/keep-network/tbtc/issues?q=is%3Aissue+author%3Asamczsun[on the repo], all of which have been addressed.
+https://www.trailofbits.com/[Trail of Bits] conducted an audit of tBTC in June,
+2020, and published a
+https://github.com/trailofbits/publications/blob/db9414def9f575465a47fef5489eb54d9c543eb5/reviews/thesis-summary.pdf[a
+summary of their results]. https://github.com/samczsun[`@samczsun`] opened
+issues he discovered
+https://github.com/keep-network/tbtc/issues?q=is%3Aissue+author%3Asamczsun[on
+the repo], all of which have been addressed.
 
 A focused treatment of tBTC's security model can be
 https://tbtc.network/developers/tbtc-security-model/[found here].
@@ -116,7 +124,7 @@ You should have installed:
 
 * Node.js, https://docs.npmjs.com/cli/install[npm].
 * A local Ethereum blockchain. We recommend
-https://www.trufflesuite.com/ganache[Ganache].
+  https://www.trufflesuite.com/ganache[Ganache].
 * https://www.trufflesuite.com/docs/truffle/overview[Truffle framework].
 
 === Build
@@ -144,8 +152,8 @@ Tests are written in JS using Mocha.
 To run the test suite, execute `truffle test`.
 
 To run specific tests, add
-https://jaketrent.com/post/run-single-mocha-test/[`.only`] to the
-`contract` block:
+https://jaketrent.com/post/run-single-mocha-test/[`.only`] to the `contract`
+block:
 
 [source,js]
 ----
@@ -165,9 +173,9 @@ npm run js:lint:fix
 
 == Documentation
 
-The documentation includes a project overview and rationale, as well as
-the on-chain specification. Docs should always be updated before or in
-tandem with code.
+The documentation includes a project overview and rationale, as well as the
+on-chain specification. Docs should always be updated before or in tandem with
+code.
 
 === Prerequisites
 
