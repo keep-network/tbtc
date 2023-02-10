@@ -107,7 +107,6 @@ https://tbtc.network/developers/tbtc-security-model/[found here].
 Please dislose any security issues you find or suspect to
 mailto:security@keep.network[security@keep.network], or to
 https://keybase.io/shadowfiend[`@shadowfiend`],
-https://keybase.io/frdwrd[`@frdwrd`], or
 https://keybase.io/mhluongo[`@mhluongo`] via Keybase.
 
 == Contributing
