@@ -2,9 +2,9 @@
 
 = tBTC
 
-https://github.com/keep-network/tbtc/actions/workflows/contracts.yml[image:https://img.shields.io/github/workflow/status/keep-network/tbtc/Solidity/master?event=push&label=Solidity build[Solidity contracts build status]]
+https://github.com/keep-network/tbtc/actions/workflows/contracts.yml[image:https://img.shields.io/github/actions/workflow/status/keep-network/tbtc/contracts.yml?branch=main&label=Solidity%20Build[Solidity contracts build status]]
 http://docs.keep.network/tbtc/solidity/[image:https://img.shields.io/badge/docs-website-green.svg[Docs]]
-https://discord.gg/4R6RGFf[image:https://img.shields.io/badge/chat-Discord-blueViolet.svg[Chat
+https://discord.gg/threshold[image:https://img.shields.io/badge/chat-Discord-5865f2.svg[Chat
 with us on Discord]]
 
 tBTC is a trustlessly Bitcoin-backed ERC-20 token.
