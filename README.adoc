@@ -1,11 +1,14 @@
 :toc: macro
 
+ifdef::env-github[]
+:important-caption: :heavy_exclamation_mark:
+endif::[]
+
 = tBTC
 
-https://github.com/keep-network/tbtc/actions/workflows/contracts.yml[image:https://img.shields.io/github/workflow/status/keep-network/tbtc/Solidity/master?event=push&label=Solidity build[Solidity contracts build status]]
-http://docs.keep.network/tbtc/solidity/[image:https://img.shields.io/badge/docs-website-green.svg[Docs]]
-https://discord.gg/4R6RGFf[image:https://img.shields.io/badge/chat-Discord-blueViolet.svg[Chat
-with us on Discord]]
+
+IMPORTANT: This repository has been archived. tBTC v1 is no longer actively maintained and has been superseded by tBTC v2.
+           tBTC v2 code is available in the link:https://github.com/keep-network/tbtc-v2[keep-network/tbtc-v2] repository.
 
 tBTC is a trustlessly Bitcoin-backed ERC-20 token.
 
